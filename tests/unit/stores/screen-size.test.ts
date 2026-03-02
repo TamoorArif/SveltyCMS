@@ -1,6 +1,14 @@
 /**
- * @file tests/bun/stores/screenSize.test.ts
+ * @file tests/unit/stores/screen-size.test.ts
  * @description Tests for screen size detection and responsive state management
+ *
+ * Tests:
+ * - Screen size detection
+ * - Breakpoint boundaries
+ * - Common device sizes
+ * - Edge cases
+ * - Tailwind CSS alignment
+ * - Enum values
  */
 
 import { describe, expect, it } from 'bun:test';

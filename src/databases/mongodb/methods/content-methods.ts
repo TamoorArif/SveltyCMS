@@ -17,6 +17,7 @@
 
 import type { ContentNode, DatabaseId, ISODateString } from '@src/content/types';
 import { logger } from '@utils/logger';
+import { safeQuery } from '@src/utils/security/safe-query';
 import mongoose, { type Model, type QueryFilter as MongoQueryFilter } from 'mongoose';
 import type {
 	BaseEntity,
@@ -116,15 +117,16 @@ export class MongoContentMethods {
 	 */
 	async getStructure(
 		mode: 'flat' | 'nested' = 'flat',
-		filter: Partial<ContentNode> = {},
-		bypassCache = false
+		options: { filter?: Partial<ContentNode>; tenantId?: string | null; sudo?: boolean; bypassCache?: boolean } = {}
 	): Promise<DatabaseResult<ContentNode[]>> {
-		// Create cache key based on mode and filter
+		const { filter = {}, tenantId = null, sudo = false, bypassCache = false } = options;
+
+		// Create cache key based on mode, filter, and tenantId
 		const filterKey = JSON.stringify(filter);
-		const cacheKey = `content:structure:${mode}:${filterKey}`;
+		const cacheKey = `content:structure:${mode}:${tenantId}:${filterKey}`;
 
 		const fetchData = async (): Promise<DatabaseResult<ContentNode[]>> => {
-			const result = await this.nodesRepo.findMany(filter);
+			const result = await this.nodesRepo.findMany(filter, { tenantId, sudo });
 			if (!result.success) {
 				return result;
 			}
@@ -193,14 +195,18 @@ export class MongoContentMethods {
 			path: string;
 			id?: string;
 			changes: Partial<ContentNode>;
-		}>
-	): Promise<DatabaseResult<{ modifiedCount: number }>> {
+		}>,
+		options: { tenantId?: string | null; sudo?: boolean; bypassCache?: boolean } = {}
+	): Promise<DatabaseResult<ContentNode[]>> {
 		if (updates.length === 0) {
-			return { success: true, data: { modifiedCount: 0 } };
+			return { success: true, data: [] };
 		}
 		try {
 			logger.trace(`[bulkUpdateNodes] Processing ${updates.length} updates`);
 			const operations = updates.map(({ path, id, changes }) => {
+				// Use provided tenantId or fallback to what's in changes
+				const tenantId = options.tenantId ?? (changes as any).tenantId;
+
 				// Extract _id for potential use in $setOnInsert
 				const { _id, createdAt: _createdAt, ...safeChanges } = changes;
 
@@ -229,23 +235,15 @@ export class MongoContentMethods {
 					setOnInsert._id = targetId;
 				}
 
-				// Prepare filter: use ID if available, otherwise path + tenantId
-				const filter: Record<string, unknown> = targetId ? { _id: targetId } : { path };
+				// Prepare base filter: use ID if available, otherwise path
+				const baseFilter: Record<string, unknown> = targetId ? { _id: targetId } : { path };
 
-				// CRITICAL FIX: If we are filtering by path, we MUST also filter by tenantId
-				// to avoid hitting the unique index { tenantId: 1, path: 1 } with a duplicate
-				// or finding the wrong document in a multi-tenant setup.
-				// If tenantId is not in changes, we assume it might be null/undefined (global),
-				// but strictly speaking, updates should usually have the context.
-				// For now, if we have it in changes, we assume it's part of the unique key criteria.
-				if (!targetId && 'tenantId' in normalizedChanges) {
-					filter.tenantId = normalizedChanges.tenantId;
-				}
+				// Wrap filter with safeQuery to enforce tenant context and handle sudo
+				const secureFilter = safeQuery(baseFilter as any, tenantId, { sudo: options.sudo }) as MongoQueryFilter<ContentNode>;
 
 				return {
 					updateOne: {
-						// Prefer ID if available (handles path moves), fallback to path + tenantId
-						filter: filter as MongoQueryFilter<ContentNode>,
+						filter: secureFilter,
 						update: {
 							$set: { ...normalizedChanges, path, updatedAt: new Date().toISOString() as unknown as ISODateString },
 							$setOnInsert: setOnInsert
@@ -265,7 +263,7 @@ export class MongoContentMethods {
 
 			return {
 				success: true,
-				data: { modifiedCount: result.modifiedCount + result.upsertedCount }
+				data: updates.map((u) => ({ ...u.changes, path: u.path }) as ContentNode)
 			};
 		} catch (error) {
 			return {

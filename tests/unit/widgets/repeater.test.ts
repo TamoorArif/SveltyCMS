@@ -1,6 +1,12 @@
 /**
  * @file tests/unit/widgets/repeater.test.ts
  * @description Unit tests for the Repeater widget
+ *
+ * Tests:
+ * - Default configuration
+ * - Validation schema
+ * - Min/max enforcement
+ * - Required field handling
  */
 
 import { describe, expect, it, mock } from 'bun:test';

@@ -1,6 +1,14 @@
 /**
  * @file tests/bun/hooks/preload.ts
  * @description Preload script that mocks SvelteKit modules for hooks tests
+ *
+ * Features:
+ * - Controllable mock state for system-state tests
+ * - Mock API permissions for api-requests tests
+ * - Mock CacheService for API caching tests
+ * - Mock MetricsService for metrics tracking tests
+ * - Mock $app/environment
+ * - Mock stores for locale tests
  */
 
 import { mock } from 'bun:test';

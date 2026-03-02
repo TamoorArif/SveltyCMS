@@ -17,7 +17,8 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 	// ParaglideJS
 	import { button_cancel, button_delete, button_save, modaledit_avatarfilesallowed, modaledit_avatarfilesize } from '@src/paraglide/messages';
 	// Stores
-	import { avatarSrc, toaster } from '@src/stores/store.svelte.ts';
+	import { avatarSrc, } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@src/utils/logger';
 	import { modalState } from '@utils/modal-state.svelte';
 	import { showConfirm } from '@utils/modal-utils';
@@ -187,13 +188,13 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 			if ((error as ValiError<typeof avatarSchema>).issues) {
 				const valiError = error as ValiError<typeof avatarSchema>;
 				logger.error(valiError.issues[0]?.message);
-				toaster.error({
+				toast.error({
 					description: valiError.issues[0]?.message || 'Invalid file'
 				});
 				return;
 			}
 			logger.error((error as Error).message);
-			toaster.error({ description: (error as Error).message || 'Upload failed' });
+			toast.error({ description: (error as Error).message || 'Upload failed' });
 			return;
 		}
 	}
@@ -276,12 +277,12 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 			await invalidateAll();
 
 			// Show success toast
-			toaster.success({ description: 'Avatar updated successfully!' });
+			toast.success('Avatar updated successfully!');
 			modalState.close();
 		} catch (error) {
 			console.error('Avatar upload failed:', error);
 			imageLoadError = true;
-			toaster.error({ description: 'Failed to update avatar' });
+			toast.error('Failed to update avatar');
 			// Revert preview on error
 			previewUrl = null;
 		} finally {
@@ -324,7 +325,7 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 						previewUrl = null;
 
 						// Show success message
-						toaster.success({
+						toast.success({
 							description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Deleted'
 						});
 
@@ -341,7 +342,7 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 
 					const msg = error instanceof Error ? error.message : 'Failed to delete avatar';
 
-					toaster.error({
+					toast.error({
 						description: `<iconify-icon icon="radix-icons:cross-2" width={24} ></iconify-icon> ${msg}`
 					});
 				}

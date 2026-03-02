@@ -1,6 +1,12 @@
 /**
  * @file tests/bun/utils/crypto.test.ts
  * @description Tests for cryptographic utility functions
+ *
+ * Tests:
+ * - Password hashing
+ * - Random token generation
+ * - Checksum generation
+ * - Security properties
  */
 
 import { describe, expect, it } from 'bun:test';

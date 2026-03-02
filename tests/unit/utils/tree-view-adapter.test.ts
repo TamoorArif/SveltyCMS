@@ -3,6 +3,13 @@
  * @description Unit tests for the TreeView adapter that converts ContentNode
  * structures to/from svelte-treeview format. Tests cover path generation,
  * parent-child relationships, and path recalculation after DnD operations.
+ *
+ * Tests:
+ * - Conversion to TreeView data
+ * - Path generation
+ * - Parent-child relationships
+ * - Order calculation
+ * - Path recalculation
  */
 
 import { describe, expect, test } from 'bun:test';

@@ -1,3 +1,17 @@
+/**
+ * @file tests/unit/services/security-response-service.test.ts
+ * @description Unit tests for the Security Response Service
+ *
+ * Tests:
+ * - XSS Pattern Detection
+ * - SQL Injection Detection
+ * - Path Traversal Detection
+ * - Rate Limiting
+ * - IP Blacklisting
+ * - Request Analysis
+ * - Response Handling
+ */
+
 import { describe, expect, test } from 'bun:test';
 import { securityResponseService } from '../../../src/services/security-response-service';
 

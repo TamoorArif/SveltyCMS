@@ -22,7 +22,7 @@ Displays real-time system state and individual service health with comprehensive
 	import type { ServiceHealth, SystemState } from '@src/stores/system/types';
 	import { formatDisplayDate } from '@utils/date-utils';
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onDestroy, onMount } from 'svelte';
 
 	// Type for service data
@@ -184,12 +184,12 @@ Displays real-time system state and individual service health with comprehensive
 
 			if (retryCount < MAX_RETRIES) {
 				retryCount++;
-				showToast(`Health check failed. Retrying... (${retryCount}/${MAX_RETRIES})`, 'warning', 2000);
+				toast.warning('Health check failed. Retrying... (${retryCount}/${MAX_RETRIES})', { duration: 2000 });
 
 				// Exponential backoff
 				setTimeout(() => fetchHealth(), 1000 * 2 ** retryCount);
 			} else {
-				showToast('Failed to fetch system health after multiple retries', 'error', 5000);
+				toast.error('Failed to fetch system health after multiple retries', { duration: 5000 });
 				retryCount = 0;
 			}
 		} finally {
@@ -211,7 +211,7 @@ Displays real-time system state and individual service health with comprehensive
 		isReinitializing = true;
 
 		try {
-			showToast('Reinitializing system...', 'warning');
+			toast.warning('Reinitializing system...');
 
 			const response = await fetch('/api/system', {
 				method: 'POST',
@@ -226,7 +226,7 @@ Displays real-time system state and individual service health with comprehensive
 
 			if (response.ok) {
 				const result = await response.json();
-				showToast(result.message || `System reinitialized: ${result.status}`, 'success', 5000);
+				toast.success(result.message || `System reinitialized: ${result.status}`, { duration: 5000 });
 
 				// Wait a bit before fetching health
 				setTimeout(() => fetchHealth(), 1000);
@@ -237,8 +237,9 @@ Displays real-time system state and individual service health with comprehensive
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Unknown error';
 			logger.error('Reinitialization failed:', err);
+			toast.error(`Reinitialization failed: ${message}`);
 
-			showToast(`Failed to reinitialize: ${message}`, 'error', 5000);
+			toast.error('Failed to reinitialize: ${message}', { duration: 5000 });
 		} finally {
 			isReinitializing = false;
 		}
@@ -249,14 +250,14 @@ Displays real-time system state and individual service health with comprehensive
 		try {
 			await navigator.clipboard.writeText(apiHealthUrl);
 			copiedEndpoint = true;
-			showToast('Endpoint copied to clipboard', 'success', 2000);
+			toast.success('Endpoint copied to clipboard', { duration: 2000 });
 
 			setTimeout(() => {
 				copiedEndpoint = false;
 			}, 2000);
 		} catch (err) {
 			logger.error('Failed to copy:', err);
-			showToast('Failed to copy endpoint', 'error', 2000);
+			toast.error('Failed to copy endpoint', { duration: 2000 });
 		}
 	}
 

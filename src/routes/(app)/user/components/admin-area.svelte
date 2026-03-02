@@ -83,7 +83,8 @@
 		username
 	} from '@src/paraglide/messages';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-	import { avatarSrc, normalizeAvatarUrl, toaster } from '@src/stores/store.svelte.ts';
+	import { avatarSrc, normalizeAvatarUrl, } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
 	// Stores
 	import { logger } from '@utils/logger';
 	import { modalState } from '@utils/modal-state.svelte';
@@ -145,7 +146,7 @@
 				} catch (err) {
 					const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 					logger.error('AdminArea fetch error:', errorMessage);
-					toaster.error({ description: `Error fetching data: ${errorMessage}` });
+					toast.error(`Error fetching data: ${errorMessage}`);
 					tableData = [];
 					totalItems = 0;
 				}
@@ -321,7 +322,7 @@
 				if (result?.success) {
 					fetchData();
 				} else if (result?.success === false) {
-					toaster.error({
+					toast.error({
 						description: result.error || 'Failed to update token'
 					});
 				}
@@ -418,7 +419,7 @@
 
 		// Prevent admins from blocking themselves
 		if (currentUser && user._id === currentUser._id) {
-			toaster.warning({ description: 'You cannot block your own account' });
+			toast.warning('You cannot block your own account');
 			return;
 		}
 
@@ -464,13 +465,13 @@
 					'_id' in item && (item as User)._id === user._id ? { ...item, blocked: !item.blocked } : item
 				);
 				tableData = updatedData;
-				toaster.success({ description: `User ${actionPastTense} successfully` });
+				toast.success(`User ${actionPastTense} successfully`);
 			} else {
 				throw new Error(result.message || `Failed to ${action} user`);
 			}
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-			toaster.error({ description: `Failed to ${action} user: ${errorMessage}` });
+			toast.error(`Failed to ${action} user: ${errorMessage}`);
 		}
 	}
 
@@ -523,15 +524,13 @@
 					return isTokenItem && item.token === token.token ? { ...item, blocked: !item.blocked } : item;
 				});
 				tableData = updatedData;
-				toaster.success({ description: `Token ${actionPastTense} successfully` });
+				toast.success(`Token ${actionPastTense} successfully`);
 			} else {
 				throw new Error(result.message || `Failed to ${action} token`);
 			}
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-			toaster.error({
-				description: `Failed to ${action} token: ${errorMessage}`
-			});
+			toast.error(`Failed to ${action} token: ${errorMessage}`);
 		}
 	}
 
@@ -889,10 +888,10 @@
 															navigator.clipboard
 																.writeText(val)
 																.then(() => {
-																	toaster.success({ description: 'User ID copied to clipboard' });
+																	toast.success('User ID copied to clipboard');
 																})
 																.catch(() => {
-																	toaster.error({ description: 'Failed to copy' });
+																	toast.error('Failed to copy');
 																});
 														}}
 													>
@@ -914,10 +913,10 @@
 															navigator.clipboard
 																.writeText(val)
 																.then(() => {
-																	toaster.success({ description: 'Token copied to clipboard' });
+																	toast.success('Token copied to clipboard');
 																})
 																.catch(() => {
-																	toaster.error({ description: 'Failed to copy' });
+																	toast.error('Failed to copy');
 																});
 														}}
 													>

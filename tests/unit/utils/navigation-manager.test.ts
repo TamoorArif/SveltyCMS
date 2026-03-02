@@ -1,6 +1,12 @@
 /**
  * @file tests/bun/utils/navigationManager.test.ts
  * @description Tests for navigationManager functions
+ *
+ * Tests:
+ * - Navigation to list view
+ * - State clearing
+ * - Concurrency prevention
+ * - Loading state management
  */
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { navigationManager } from '@src/utils/navigation-manager';

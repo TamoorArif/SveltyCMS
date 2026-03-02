@@ -1,6 +1,13 @@
 /**
  * @file tests/bun/hooks/locale.test.ts
  * @description Comprehensive tests for handleLocale middleware
+ *
+ * Tests:
+ * - Valid locale detection
+ * - Invalid locale cleanup
+ * - Store synchronization
+ * - Missing cookie handling
+ * - Store availability check
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

@@ -1,6 +1,18 @@
 /**
  * @file tests/bun/hooks/rate-limit.test.ts
  * @description Comprehensive tests for handleRateLimit middleware
+ *
+ * Tests:
+ * - Localhost exemption
+ * - Static asset exemption
+ * - Build process exemption
+ * - IP detection
+ * - General route rate limiting
+ * - API route rate limiting
+ * - Admin route rate limiting
+ * - Rate limit enforcement
+ * - Rate limit headers
+ * - Rate limit response
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

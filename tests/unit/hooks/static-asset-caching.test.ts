@@ -2,6 +2,14 @@
  * @file tests/bun/hooks/static-asset-caching.test.ts
  * @description Type-safe tests for static asset caching middleware.
  * Verifies aggressive caching policies for immutable assets.
+ *
+ * Tests:
+ * - Regex validation
+ * - Cache header logic
+ * - Static asset caching
+ * - Dynamic route passthrough
+ * - Header preservation
+ * - Query parameter handling
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

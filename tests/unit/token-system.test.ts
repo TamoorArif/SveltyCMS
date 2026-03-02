@@ -1,5 +1,13 @@
-/** @file test/bun/token-system.test.ts
+/**
+ * @file tests/unit/token-system.test.ts
  * @description Tests the token system
+ *
+ * Tests:
+ * - Basic token replacement
+ * - Modifier application
+ * - Conditional logic
+ * - Restricted field blocking
+ * - Escape character handling
  */
 
 import { describe, expect, it } from 'bun:test';

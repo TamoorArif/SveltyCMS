@@ -42,7 +42,7 @@ None (TreeView has its own keyboard navigation)
 	// Stores
 	import { setCollectionValue, setContentStructure, setMode } from '@src/stores/collection-store.svelte';
 	// Skeleton
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
 	// Logger
 	import { logger } from '@utils/logger';
@@ -119,13 +119,13 @@ None (TreeView has its own keyboard navigation)
 
 					if (result.type === 'success' && actionData.success) {
 						currentConfig = currentConfig.filter((n) => n._id.toString() !== node._id?.toString());
-						toaster.success({ description: 'Item deleted successfully' });
+						toast.success('Item deleted successfully');
 					} else {
 						throw new Error(actionData.message || 'Deletion failed');
 					}
 				} catch (err) {
 					logger.error('Delete failed', err);
-					toaster.error({ description: 'Failed to delete item' });
+					toast.error('Failed to delete item');
 				} finally {
 					isLoading = false;
 				}
@@ -162,15 +162,13 @@ None (TreeView has its own keyboard navigation)
 
 		currentConfig = [...currentConfig, newNode];
 		nodesToSave[newId.toString()] = { type: 'create', node: newNode };
-		toaster.success({
-			description: 'Item duplicated. Click Save to persist change.'
-		});
+		toast.success('Item duplicated. Click Save to persist change.');
 	}
 
 	async function handleSave() {
 		const items = Object.values(nodesToSave);
 		if (items.length === 0) {
-			toaster.info({ description: 'No changes to save.' });
+			toast.info('No changes to save.');
 			return;
 		}
 
@@ -192,7 +190,7 @@ None (TreeView has its own keyboard navigation)
 			const actionData = result.type === 'success' || result.type === 'failure' ? result.data : result;
 
 			if (result.type === 'success' && actionData.success) {
-				toaster.success({ description: 'Organization updated successfully' });
+				toast.success('Organization updated successfully');
 				nodesToSave = {};
 				if (actionData.contentStructure) {
 					currentConfig = actionData.contentStructure;
@@ -203,7 +201,7 @@ None (TreeView has its own keyboard navigation)
 			}
 		} catch (error) {
 			logger.error('Error saving categories:', error);
-			toaster.error({ description: 'Failed to save configuration' });
+			toast.error('Failed to save configuration');
 		} finally {
 			isLoading = false;
 		}

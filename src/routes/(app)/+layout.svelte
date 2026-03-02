@@ -43,6 +43,7 @@
 	import { initializeDarkMode } from '@src/stores/theme-store.svelte.ts';
 	import { ui } from '@src/stores/ui-store.svelte';
 	import { widgets } from '@src/stores/widget-store.svelte.ts';
+	import { Portal } from '@skeletonlabs/skeleton-svelte';
 	// Utils
 	import { isSearchVisible } from '@utils/global-search-index';
 	import { getTextDirection } from '@utils/utils';
@@ -294,7 +295,9 @@
 		</div>
 
 		{#if data.user}
-			<FloatingChat />
+			<Portal>
+				<FloatingChat />
+			</Portal>
 		{/if}
 	</div>
 {/if}

@@ -676,7 +676,10 @@ class ContentManager {
 			throw new Error('Database adapter is not available');
 		}
 
-		const result = await dbAdapter.content.nodes.getStructure(format);
+		const { isSetupComplete } = await import('@utils/setup-check');
+		const result = await dbAdapter.content.nodes.getStructure(format, {
+			sudo: !isSetupComplete()
+		});
 
 		if (!result.success) {
 			logger.error('[ContentManager] Failed to get content structure from database:', result.error);
@@ -1688,6 +1691,8 @@ class ContentManager {
 		adapter?: IDBAdapter
 	): Promise<void> {
 		const dbAdapter = adapter || ((await getDbAdapter()) as IDBAdapter);
+		const { isSetupComplete } = await import('@utils/setup-check');
+		const setupComplete = isSetupComplete();
 
 		// [NEW] Filter schemas relevant to the current tenant context
 		// - If tenantId is provided: Include global schemas (no tenantId) AND schemas for this tenant. Exclude other tenants.
@@ -1733,7 +1738,11 @@ class ContentManager {
 			// trusting the DB state would lead to an emptycontent-manager(0 nodes).
 			try {
 				// Check for at least one node
-				const countResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true);
+				const countResult = await dbAdapter.content.nodes.getStructure('flat', {
+					tenantId,
+					sudo: true, // Always use sudo for system-wide verification
+					bypassCache: true
+				});
 				if (!(countResult.success && countResult.data) || countResult.data.length === 0) {
 					logger.warn('[ContentManager] ⚠️ Skip reconciliation requested, but DB is EMPTY! Forcing reconciliation to restore content.');
 					skipReconciliation = false;
@@ -1774,7 +1783,9 @@ class ContentManager {
 			logger.trace('---------------------------------');
 
 			const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
-				tenantId
+				tenantId,
+				sudo: !setupComplete,
+				bypassCache: true
 			});
 
 			const dbNodeMap = new Map<string, ContentNode>(
@@ -1999,7 +2010,12 @@ class ContentManager {
 		logger.debug(`Current Ops Paths Count: ${currentPaths.size}`);
 		logger.debug(`Ops Paths: ${JSON.stringify(Array.from(currentPaths))}`);
 
-		const dbResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId } as Partial<ContentNode>, true);
+		const { isSetupComplete: checkSetup } = await import('@utils/setup-check');
+		const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
+			tenantId,
+			sudo: !checkSetup(),
+			bypassCache: true
+		});
 
 		if (dbResult.success && dbResult.data) {
 			const orphanedNodes = dbResult.data.filter((node: ContentNode) => node.path && !currentPaths.has(node.path));
@@ -2070,7 +2086,12 @@ class ContentManager {
 		// CRITICAL: Fetch the final structure from database after all phases complete
 		// This ensures we have the correct parentId relationships and MongoDB-assigned _ids
 		logger.debug('[ContentManager] Final phase: Fetching complete structure from database', { tenantId });
-		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true); // bypassCache = true
+		const { isSetupComplete: finalCheckSetup } = await import('@utils/setup-check');
+		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', {
+			tenantId,
+			sudo: !finalCheckSetup(),
+			bypassCache: true
+		});
 
 		if (!(finalStructureResult.success && finalStructureResult.data)) {
 			logger.error('[ContentManager] Failed to fetch final structure from database');

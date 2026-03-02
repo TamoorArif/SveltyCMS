@@ -1,6 +1,18 @@
 /**
  * @file tests/bun/hooks/api-requests.test.ts
  * @description Tests for handleApiRequests middleware (API permissions, caching, mutations)
+ *
+ * Tests:
+ * - Non-API route passthrough
+ * - Setup API exemption
+ * - Authentication requirement
+ * - Role-based API access
+ * - Public API route bypass
+ * - GET request caching
+ * - Cache bypass with query parameters
+ * - GraphQL bypass
+ * - Mutation handling
+ * - Error handling
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

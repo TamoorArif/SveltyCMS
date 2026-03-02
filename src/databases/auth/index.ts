@@ -1,4 +1,13 @@
-/** @file src/databases/auth/index.ts @description Quantum-resistant authentication and authorization system with multi-tenant support features: [Argon2id hashing, AES-256-GCM encryption, session management, RBAC, tenant scoping] */
+/**
+ * @file src/databases/auth/index.ts
+ * @description Quantum-resistant authentication and authorization system with multi-tenant support
+ * Features:
+ * - Argon2id hashing
+ * - AES-256-GCM encryption
+ * - session management
+ * - RBAC
+ * - tenant scoping
+ */
 
 import type { ISODateString } from '@src/content/types';
 import type { DatabaseAdapter, DatabaseResult } from '@src/databases/db-interface';
@@ -66,9 +75,10 @@ export class Auth {
 	// Combined Performance-Optimized Methods (wrapper for db.auth methods)
 	async createUserAndSession(
 		userData: Partial<User>,
-		sessionData: { expires: ISODateString; tenantId?: string }
+		sessionData: { expires: ISODateString; tenantId?: string },
+		options?: { sudo?: boolean }
 	): Promise<DatabaseResult<{ user: User; session: Session }>> {
-		return this.db.auth.createUserAndSession(userData, sessionData);
+		return this.db.auth.createUserAndSession(userData, sessionData, options);
 	}
 
 	async deleteUserAndSessions(userId: string, tenantId?: string): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
@@ -131,10 +141,10 @@ export class Auth {
 		}
 	}
 
-	async getUserById(userId: string, tenantId?: string): Promise<User | null> {
+	async getUserById(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<User | null> {
 		// No caching - getUserById is fast enough and avoids cache invalidation complexity
 		// Session cache already stores user data for authenticated requests
-		const result = (await this.db.auth.getUserById(userId, tenantId)) as unknown;
+		const result = (await this.db.auth.getUserById(userId, tenantId, options)) as unknown;
 		if (result && typeof result === 'object' && result !== null && 'success' in (result as Record<string, unknown>)) {
 			const r = result as DatabaseResult<User | null>;
 			if (r.success && r.data) {
@@ -144,10 +154,10 @@ export class Auth {
 		}
 		return (result as User | null) ?? null;
 	}
-	async getUserByEmail(criteria: { email: string; tenantId?: string }): Promise<User | null> {
+	async getUserByEmail(criteria: { email: string; tenantId?: string }, options?: { sudo?: boolean }): Promise<User | null> {
 		// No caching - getUserByEmail is only used during login/registration
 		// Caching here adds complexity without significant performance benefit
-		const result = (await this.db.auth.getUserByEmail(criteria)) as unknown;
+		const result = (await this.db.auth.getUserByEmail(criteria, options)) as unknown;
 
 		if (result && typeof result === 'object' && result !== null && 'success' in (result as Record<string, unknown>)) {
 			const r = result as DatabaseResult<User | null>;
@@ -161,8 +171,8 @@ export class Auth {
 		}
 		return (result as User | null) ?? null;
 	}
-	async updateUser(userId: string, updates: Partial<User>, tenantId?: string): Promise<void> {
-		const result = await this.db.auth.updateUserAttributes(userId, updates, tenantId);
+	async updateUser(userId: string, updates: Partial<User>, tenantId?: string, options?: { sudo?: boolean }): Promise<void> {
+		const result = await this.db.auth.updateUserAttributes(userId, updates, tenantId, options);
 		if (!result?.success) {
 			throw error(500, 'Failed to update user');
 		}
@@ -197,16 +207,16 @@ export class Auth {
 		return [];
 	}
 
-	async getUserCount(filter?: { tenantId?: string }): Promise<number> {
-		const result = await this.db.auth.getUserCount(filter);
+	async getUserCount(filter?: { tenantId?: string }, options?: { sudo?: boolean }): Promise<number> {
+		const result = await this.db.auth.getUserCount(filter, options);
 		if (result?.success) {
 			return result.data;
 		}
 		return 0;
 	}
 
-	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }): Promise<Session> {
-		const sr = (await this.db.auth.createSession(sessionData)) as unknown;
+	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }, options?: { sudo?: boolean }): Promise<Session> {
+		const sr = (await this.db.auth.createSession(sessionData, options)) as unknown;
 		let session: Session | null = null;
 		if (sr && typeof sr === 'object' && sr !== null && 'success' in (sr as Record<string, unknown>)) {
 			const sessionResult = sr as DatabaseResult<Session>;
@@ -222,7 +232,7 @@ export class Auth {
 			throw error(500, 'Session creation failed');
 		}
 
-		const ur = (await this.db.auth.getUserById(sessionData.user_id, sessionData.tenantId)) as unknown;
+		const ur = (await this.db.auth.getUserById(sessionData.user_id, sessionData.tenantId, options)) as unknown;
 		let user: User | null = null;
 		if (ur && typeof ur === 'object' && ur !== null && 'success' in (ur as Record<string, unknown>)) {
 			const userResult = ur as DatabaseResult<User | null>;
@@ -488,7 +498,8 @@ export class Auth {
 	}
 
 	async updateUserAttributes(userId: string, attributes: Partial<User>, tenantId?: string): Promise<User> {
-		if (attributes.password && typeof window === 'undefined') {
+		const isServer = typeof window === 'undefined' || (typeof process !== 'undefined' && process.versions != null);
+		if (attributes.password && isServer) {
 			attributes.password = await cryptoHashPassword(attributes.password);
 		}
 		if (attributes.email === null) {
@@ -565,13 +576,18 @@ export class Auth {
 		}
 	}
 
-	async updateUserPassword(email: string, password: string, tenantId?: string): Promise<{ status: boolean; message?: string }> {
-		const user = await this.getUserByEmail({ email, tenantId });
+	async updateUserPassword(
+		email: string,
+		password: string,
+		tenantId?: string,
+		options?: { sudo?: boolean }
+	): Promise<{ status: boolean; message?: string }> {
+		const user = await this.getUserByEmail({ email, tenantId }, options);
 		if (!user) {
 			return { status: false, message: 'User not found' };
 		}
 		const hashedPassword = await cryptoHashPassword(password);
-		await this.updateUser(user._id, { password: hashedPassword }, tenantId);
+		await this.updateUser(user._id, { password: hashedPassword }, tenantId, options);
 		return { status: true };
 	}
 }

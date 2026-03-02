@@ -45,7 +45,7 @@
 	import { logger } from '@utils/logger';
 	import { showCloneModal, showScheduleModal } from '@utils/modal-utils';
 	import { navigationManager } from '@utils/navigation-manager';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { untrack } from 'svelte';
 	// Modal types import
 	// Stores
@@ -152,7 +152,7 @@
 
 	async function save(): Promise<void> {
 		if (!isFormValid) {
-			showToast(validation_fix_before_save(), 'warning');
+			toast.warning(validation_fix_before_save());
 			return;
 		}
 
@@ -204,7 +204,7 @@
 			count: 1,
 			onConfirm: async () => {
 				if (!(currentEntry && currentCollection?._id)) {
-					showToast('No entry or collection selected.', 'warning');
+					toast.warning('No entry or collection selected.');
 					return;
 				}
 				const payload = { ...currentEntry };
@@ -216,11 +216,11 @@
 
 				const result = await createEntry(currentCollection._id, payload);
 				if (result.success) {
-					showToast('Entry cloned successfully.', 'success');
+					toast.success('Entry cloned successfully.');
 					invalidateCollectionCache(currentCollection._id);
 					setMode('view');
 				} else {
-					showToast(result.error || 'Failed to clone', 'error');
+					toast.error(result.error || 'Failed to clone');
 				}
 			}
 		});

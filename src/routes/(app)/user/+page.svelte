@@ -45,7 +45,7 @@
 	import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
 	import '@src/stores/store.svelte.ts';
 	import { setCollection } from '@src/stores/collection-store.svelte';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { triggerActionStore } from '@utils/global-search-index';
 	import { modalState } from '@utils/modal-state.svelte';
 	import { showConfirm } from '@utils/modal-utils';
@@ -100,7 +100,7 @@
 			});
 
 			if (res.ok) {
-				toaster.success('Preferences updated');
+				toast.success('Preferences updated');
 				await invalidateAll();
 				// If RTC was disabled, close connection
 				if (key === 'enabled' && !value) {
@@ -109,10 +109,10 @@
 					collaboration.connect();
 				}
 			} else {
-				toaster.error('Failed to update preferences');
+				toast.error('Failed to update preferences');
 			}
 		} catch {
-			toaster.error('Error updating preferences');
+			toast.error('Error updating preferences');
 		}
 	}
 
@@ -158,7 +158,7 @@
 			},
 			async (r: any) => {
 				if (r) {
-					toaster.success({
+					toast.success({
 						description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
 					});
 				}
@@ -204,12 +204,12 @@
 				a.download = `sveltycms-data-export-${user.username}-${new Date().toISOString().split('T')[0]}.json`;
 				a.click();
 				URL.revokeObjectURL(url);
-				toaster.success('Data export started');
+				toast.success('Data export started');
 			} else {
-				toaster.error(result.error || 'Export failed');
+				toast.error(result.error || 'Export failed');
 			}
 		} catch (_err) {
-			toaster.error('Failed to export data');
+			toast.error('Failed to export data');
 		}
 	}
 
@@ -231,14 +231,14 @@
 					});
 					const result = await res.json();
 					if (result.success) {
-						toaster.success('Account anonymized successfully');
+						toast.success('Account anonymized successfully');
 						// Force logout by redirecting to logout
 						window.location.href = '/api/user/logout';
 					} else {
-						toaster.error(result.error || 'Anonymization failed');
+						toast.error(result.error || 'Anonymization failed');
 					}
 				} catch (_err) {
-					toaster.error('Failed to anonymize account');
+					toast.error('Failed to anonymize account');
 				}
 			}
 		});

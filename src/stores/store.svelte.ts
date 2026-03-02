@@ -1,4 +1,13 @@
-/** @file src/stores/store.svelte.ts @description Global state management with Enterprise-grade reactivity features: [language persistence, translation progress, UI state management, validation store, change tracking] */
+/** @file src/stores/store.svelte.ts
+ * @description Global state management with Enterprise-grade reactivity
+ *
+ * Features:
+ * - language persistence
+ * - translation progress
+ * - UI state management
+ * - validation store
+ * - change tracking
+ */
 
 import type { Locale } from '@src/paraglide/runtime';
 import { publicEnv } from '@src/stores/global-settings.svelte';
@@ -251,8 +260,8 @@ class DataChangeStore {
 
 export const dataChangeStore = new DataChangeStore();
 
-// Custom Lightweight Toaster Store
-export { toaster } from './toaster.svelte';
+// Custom Lightweight Toast Store
+export { toast } from './toast.svelte.ts';
 
 // Static Constants
 export const tableHeaders = ['id', 'email', 'username', 'role', 'createdAt'] as const;

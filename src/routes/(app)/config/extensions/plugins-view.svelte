@@ -11,7 +11,7 @@ Features:
 	/**
 	 * @file src/routes/(app)/config/extensions/PluginsView.svelte
 	 */
-	// import { showToast } from '@utils/toast'; // Need to check if this exists in current codebase
+	// import { toast } from '@src/stores/toast.svelte.ts'; // Need to check if this exists in current codebase
 
 	interface Props {
 		data: {

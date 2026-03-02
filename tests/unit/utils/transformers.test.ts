@@ -1,6 +1,11 @@
 /**
  * @file tests/unit/utils/transformers.test.ts
  * @description Unit tests for TypeScript AST transformers used in compilation
+ *
+ * Tests:
+ * - Schema UUID injection
+ * - Schema tenant ID injection
+ * - Import path transformation
  */
 
 import { describe, expect, it } from 'bun:test';

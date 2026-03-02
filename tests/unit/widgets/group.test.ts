@@ -1,6 +1,12 @@
 /**
  * @file tests/unit/widgets/group.test.ts
  * @description Unit tests for the Group widget
+ *
+ * Tests:
+ * - Default values
+ * - Custom configuration
+ * - Nested fields
+ * - Validation
  */
 
 import { describe, expect, it } from 'bun:test';

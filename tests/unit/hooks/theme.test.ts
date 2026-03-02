@@ -2,6 +2,13 @@
  * @file tests/bun/hooks/theme.test.ts
  * @description Robust, type-safe tests for the handleTheme middleware.
  * Refactored to remove flakiness and ensure strict typing.
+ *
+ * Tests:
+ * - Cookie detection
+ * - Locals synchronization
+ * - HTML class injection
+ * - Theme manager integration
+ * - Edge cases
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

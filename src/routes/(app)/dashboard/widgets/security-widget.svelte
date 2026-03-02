@@ -39,7 +39,7 @@ and automated response visualization for enterprise security operations.
 <script lang="ts">
 	import type { WidgetSize } from '@src/content/types';
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onDestroy, onMount } from 'svelte';
 	import BaseWidget from '../base-widget.svelte';
 
@@ -216,13 +216,13 @@ and automated response visualization for enterprise security operations.
 			});
 
 			if (response.ok) {
-				showToast('Incident resolved successfully', 'success');
+				toast.success('Incident resolved successfully');
 				await fetchSecurityData(); // Refresh data
 			} else {
 				throw new Error('Failed to resolve incident');
 			}
 		} catch (err) {
-			showToast(`Failed to resolve incident: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+			toast.error(`Failed to resolve incident: ${err instanceof Error ? err.message : 'Unknown error'}`);
 		}
 	}
 
@@ -235,13 +235,13 @@ and automated response visualization for enterprise security operations.
 			});
 
 			if (response.ok) {
-				showToast(`IP ${ip} unblocked successfully`, 'success');
+				toast.success(`IP ${ip} unblocked successfully`);
 				await fetchSecurityData(); // Refresh data
 			} else {
 				throw new Error('Failed to unblock IP');
 			}
 		} catch (err) {
-			showToast(`Failed to unblock IP: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+			toast.error(`Failed to unblock IP: ${err instanceof Error ? err.message : 'Unknown error'}`);
 		}
 	}
 

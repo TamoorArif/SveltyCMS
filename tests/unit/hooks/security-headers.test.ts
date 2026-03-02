@@ -1,6 +1,18 @@
 /**
  * @file tests/bun/hooks/security-headers.test.ts
  * @description Comprehensive tests for addSecurityHeaders middleware
+ *
+ * Tests:
+ * - X-Frame-Options header
+ * - X-Content-Type-Options header
+ * - Referrer-Policy header
+ * - Permissions-Policy header
+ * - Strict-Transport-Security (HSTS) header
+ * - X-DNS-Prefetch-Control header
+ * - X-XSS-Protection header
+ * - X-Permitted-Cross-Domain-Policies header
+ * - CSP header (disabled in production)
+ * - Security best practices
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

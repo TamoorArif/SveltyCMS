@@ -21,7 +21,7 @@ It provides the following functionality:
 
 	// Auth
 	import type { Role } from '@src/databases/auth/types';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Skeleton
 	import { modalState } from '@utils/modal-state.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -111,7 +111,7 @@ It provides the following functionality:
 		if (!isEditMode) {
 			items = [...items, newRole];
 			modifiedRoles.add(roleId);
-			toaster.info({
+			toast.info({
 				description: 'Role added. Click "Save" at the top to apply changes.'
 			});
 		} else if (currentRoleId) {
@@ -119,7 +119,7 @@ It provides the following functionality:
 			items[index] = newRole;
 			items = [...items];
 			modifiedRoles.add(currentRoleId);
-			toaster.info({
+			toast.info({
 				description: 'Role updated. Click "Save" at the top to apply changes.'
 			});
 		}
@@ -143,7 +143,7 @@ It provides the following functionality:
 		items = [...items];
 		roles = items;
 		selectedRoles.clear();
-		toaster.info({
+		toast.info({
 			description: 'Roles deleted. Click "Save" at the top to apply changes.'
 		});
 

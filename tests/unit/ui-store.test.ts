@@ -1,3 +1,13 @@
+/**
+ * @file tests/unit/ui-store.test.ts
+ * @description Unit tests for the UIStore.
+ *
+ * Tests:
+ * - UI element visibility toggling
+ * - Layout update calls
+ * - Initialization methods
+ */
+
 import { describe, expect, it, mock } from 'bun:test';
 
 // Mock implementation of UIStore

@@ -86,7 +86,7 @@ bulk actions, and predictive preloading.
 	// Skeleton
 	import { showDeleteConfirm, showStatusChangeConfirm } from '@utils/modal-utils';
 	import { preloadEntry, reflectModeInURL } from '@utils/navigation-utils';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { debounce, getFieldName, meta_data } from '@utils/utils';
 	import { untrack } from 'svelte';
 	import { flip } from 'svelte/animate';
@@ -698,7 +698,7 @@ bulk actions, and predictive preloading.
 	setModifyEntry(async (status?: keyof typeof statusMap): Promise<void> => {
 		const selectedIds = getSelectedIds();
 		if (!selectedIds.length) {
-			showToast('No entries selected', 'warning');
+			toast.warning('No entries selected');
 			return;
 		}
 
@@ -770,7 +770,7 @@ bulk actions, and predictive preloading.
 	const onDelete = (isPermanent = false) => {
 		const selectedIds = getSelectedIds();
 		if (!selectedIds.length) {
-			showToast('No entries selected', 'warning');
+			toast.warning('No entries selected');
 			return;
 		}
 
@@ -790,7 +790,7 @@ bulk actions, and predictive preloading.
 							if (collId) {
 								const result = await batchDeleteEntries(collId, selectedIds);
 								if (result.success) {
-									showToast(`${selectedIds.length} ${selectedIds.length === 1 ? 'entry' : 'entries'} deleted successfully`, 'success');
+									toast.success(`${selectedIds.length} ${selectedIds.length === 1 ? 'entry' : 'entries'} deleted successfully`);
 								} else {
 									throw new Error('Batch delete failed');
 								}
@@ -806,14 +806,14 @@ bulk actions, and predictive preloading.
 									return Promise.resolve();
 								})
 							);
-							showToast(`${selectedIds.length} ${selectedIds.length === 1 ? 'entry' : 'entries'} deleted successfully`, 'success');
+							toast.success(`${selectedIds.length} ${selectedIds.length === 1 ? 'entry' : 'entries'} deleted successfully`);
 						}
 					} else {
 						await setEntriesStatus(selectedIds, StatusTypes.archive, () => {});
 					}
 					onActionSuccess();
 				} catch (error) {
-					showToast(`Failed to ${actionVerb} entries: ${(error as Error).message}`, 'error');
+					toast.error(`Failed to ${actionVerb} entries: ${(error as Error).message}`);
 				}
 			}
 		});
@@ -1129,14 +1129,14 @@ bulk actions, and predictive preloading.
 																if (!collId) return;
 																const result = await updateEntryStatus(collId, entry._id as string, String(nextStatus));
 																if (result.success) {
-																	showToast(`Entry status updated to ${nextStatus}`, 'success');
+																	toast.success(`Entry status updated to ${nextStatus}`);
 																	onActionSuccess();
 																} else {
-																	showToast(result.error || 'Failed to update entry status', 'error');
+																	toast.error(result.error || 'Failed to update entry status');
 																}
 															} catch (error) {
 																logger.error('Error updating entry status:', error);
-																showToast('An error occurred while updating entry status', 'error');
+																toast.error('An error occurred while updating entry status');
 															}
 														}
 													});

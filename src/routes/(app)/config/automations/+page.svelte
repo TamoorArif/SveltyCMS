@@ -16,7 +16,7 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 	import PageTitle from '@src/components/page-title.svelte';
 	import type { AutomationFlow } from '@src/services/automation/types';
 	import { AUTOMATION_EVENTS, OPERATION_TYPES } from '@src/services/automation/types';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { goto } from '$app/navigation';
@@ -32,10 +32,10 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			if (result.success) {
 				flows = result.data;
 			} else {
-				showToast(result.error || 'Failed to load automations', 'error');
+				toast.error(result.error || 'Failed to load automations');
 			}
 		} catch (_err) {
-			showToast('Error loading automations', 'error');
+			toast.error('Error loading automations');
 		} finally {
 			isLoading = false;
 		}
@@ -51,10 +51,10 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			const result = await res.json();
 			if (result.success) {
 				flow.active = !flow.active;
-				showToast(`${flow.name} ${flow.active ? 'activated' : 'paused'}`, 'success');
+				toast.success(`${flow.name} ${flow.active ? 'activated' : 'paused'}`);
 			}
 		} catch (_err) {
-			showToast('Failed to toggle automation', 'error');
+			toast.error('Failed to toggle automation');
 		}
 	}
 
@@ -70,10 +70,10 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			const result = await res.json();
 			if (result.success) {
 				flows = flows.filter((f) => f.id !== flow.id);
-				showToast('Automation deleted', 'success');
+				toast.success('Automation deleted');
 			}
 		} catch (_err) {
-			showToast('Failed to delete automation', 'error');
+			toast.error('Failed to delete automation');
 		}
 	}
 
@@ -93,15 +93,15 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			const result = await res.json();
 			if (result.success) {
 				flows = [...flows, result.data];
-				showToast('Automation duplicated', 'success');
+				toast.success('Automation duplicated');
 			}
 		} catch (_err) {
-			showToast('Failed to duplicate', 'error');
+			toast.error('Failed to duplicate');
 		}
 	}
 
 	async function testFlow(flow: AutomationFlow) {
-		showToast(`Testing "${flow.name}"...`, 'info');
+		toast.info(`Testing "${flow.name}"...`);
 		try {
 			const res = await fetch(`/api/automations/${flow.id}/test`, {
 				method: 'POST'
@@ -109,12 +109,12 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			const result = await res.json();
 			if (result.success) {
 				const s = result.data;
-				showToast(`Test ${s.status}: ${s.operationResults.length} operations in ${s.duration}ms`, s.status === 'success' ? 'success' : 'warning');
+				toast[s.status === 'success' ? 'success' : 'warning'](`Test ${s.status}: ${s.operationResults.length} operations in ${s.duration}ms`);
 			} else {
-				showToast(result.error || 'Test failed', 'error');
+				toast.error(result.error || 'Test failed');
 			}
 		} catch (_err) {
-			showToast('Test execution error', 'error');
+			toast.error('Test execution error');
 		}
 	}
 

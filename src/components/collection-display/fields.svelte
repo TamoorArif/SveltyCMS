@@ -36,7 +36,8 @@
 	// Stores
 	import { collection, collectionValue, setCollectionValue } from '@src/stores/collection-store.svelte';
 	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { contentLanguage, dataChangeStore, toaster, translationProgress, validationStore } from '@src/stores/store.svelte';
+	import { contentLanguage, dataChangeStore, translationProgress, validationStore } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
 	import { widgetFunctions as widgetFunctionsStore } from '@src/stores/widget-store.svelte';
 	import { showConfirm } from '@utils/modal-utils';
 	import WidgetLoader from './widget-loader.svelte';
@@ -294,9 +295,7 @@
 				};
 				setCollectionValue(revertData);
 				currentCollectionValue = revertData; // also update local state
-				toaster.info({
-					description: 'Content reverted. Please save your changes.'
-				});
+				toast.info('Content reverted. Please save your changes.');
 				localTabSet = '0';
 			}
 		});
@@ -568,7 +567,7 @@
 					class="preset-outline-surface-500 btn"
 					onclick={() => {
 						navigator.clipboard.writeText(apiUrl);
-						toaster.success({ description: 'API URL Copied' });
+						toast.success('API URL Copied');
 					}}
 				>
 					Copy

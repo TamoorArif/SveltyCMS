@@ -1,6 +1,13 @@
 /**
  * @file tests/bun/hooks/token-resolution.test.ts
  * @description Integration tests for token resolution middleware
+ *
+ * Tests:
+ * - Token resolution in JSON responses
+ * - Skipping non-JSON responses
+ * - Skipping non-API routes
+ * - Handling relation tokens
+ * - Error handling
  */
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { handleTokenResolution } from '@src/hooks/token-resolution';

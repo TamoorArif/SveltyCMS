@@ -1,6 +1,12 @@
 /**
  * @file tests/bun/utils/dateUtils.test.ts
  * @description Tests for date utility functions
+ *
+ * Tests:
+ * - Type guards
+ * - Conversions
+ * - Formatting
+ * - Edge cases
  */
 
 import { describe, expect, it } from 'bun:test';

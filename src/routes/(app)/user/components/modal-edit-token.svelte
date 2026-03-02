@@ -30,7 +30,7 @@ It handles token creation, updates, and deletion with proper validation and erro
 	} from '@src/paraglide/messages';
 
 	// Skeleton & Stores
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { Form } from '@utils/form.svelte.ts';
 	import { addUserTokenSchema } from '@utils/form-schemas';
 	// Utils
@@ -142,20 +142,20 @@ It handles token creation, updates, and deletion with proper validation and erro
 
 			// Check if SMTP is not configured
 			if (responseData.smtp_not_configured) {
-				toaster.warning({
+				toast.warning({
 					title: 'Warning',
 					description: `${isEditMode ? 'Token updated' : 'Token created'} - Email not sent: SMTP not configured. Token is listed in Admin Area.`
 				});
 			} else if (responseData.dev_mode && !responseData.email_sent) {
 				// Email was skipped due to dev mode or dummy config
-				toaster.info({
+				toast.info({
 					title: 'Info',
 					description: `${isEditMode ? 'Token updated' : 'Token created'} - Email sending skipped (dev mode)`
 				});
 			} else {
 				// Success - email sent
 				// TODO: Add 'user_token_created' to messages or find correct key
-				toaster.success({ title: 'Success', description: 'User token created' });
+				toast.success({ title: 'Success', description: 'User token created' });
 			}
 
 			// Invalidate data first, then close modal
@@ -167,7 +167,7 @@ It handles token creation, updates, and deletion with proper validation and erro
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'An unknown error occurred';
-			toaster.error({ title: 'Error', description: message });
+			toast.error({ title: 'Error', description: message });
 		} finally {
 			tokenForm.submitting = false;
 		}
@@ -189,7 +189,7 @@ It handles token creation, updates, and deletion with proper validation and erro
 				throw new Error(data.message || 'Failed to delete token');
 			}
 
-			toaster.success({
+			toast.success({
 				title: 'Success',
 				description: modal_token_deleted_successfully()
 			});
@@ -203,7 +203,7 @@ It handles token creation, updates, and deletion with proper validation and erro
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to delete token';
 			// This catch block will now receive a proper error message if the API fails.
-			toaster.error({ title: 'Error', description: message });
+			toast.error({ title: 'Error', description: message });
 		}
 	}
 

@@ -1,6 +1,13 @@
 /**
  * @file tests/bun/utils/errorHandling.test.ts
  * @description Tests for error handling utilities
+ *
+ * Tests:
+ * - AppError class
+ * - Type guards
+ * - Error messages
+ * - Wrap error
+ * - Integration
  */
 
 import { describe, expect, it } from 'bun:test';

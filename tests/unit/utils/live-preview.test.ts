@@ -1,6 +1,13 @@
 /**
  * @file tests/unit/utils/livePreview.test.ts
  * @description Unit tests for the Live Preview listener utility
+ *
+ * Tests:
+ * - Message listener registration
+ * - Readiness signal
+ * - onUpdate callback invocation
+ * - Origin validation
+ * - Cleanup
  */
 
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';

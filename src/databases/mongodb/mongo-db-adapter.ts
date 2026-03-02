@@ -424,13 +424,13 @@ export class MongoDBAdapter implements IDBAdapter {
 
 			this._realContent = {
 				nodes: {
-					getStructure: (m, f, b) => this._wrapResult(() => contentMethods.getStructure(m, f, b)),
+					getStructure: (m, o) => this._wrapResult(() => contentMethods.getStructure(m, o)),
 					upsertContentStructureNode: (n) => this._wrapResult(() => contentMethods.upsertNodeByPath(n)),
 					create: (n) => this.crud.insert('system_content_structure', n),
 					createMany: (n) => this.crud.insertMany('system_content_structure', n),
 					update: (p, c) => this.crud.update('system_content_structure', p as DatabaseId, c),
-					bulkUpdate: (u) =>
-						this._wrapResult(() => contentMethods.bulkUpdateNodes(u)) as Promise<DatabaseResult<import('../db-interface').ContentNode[]>>,
+					bulkUpdate: (u, o) =>
+						this._wrapResult(() => contentMethods.bulkUpdateNodes(u, o)) as Promise<DatabaseResult<import('../db-interface').ContentNode[]>>,
 					fixMismatchedNodeIds: (n) => contentMethods.fixMismatchedNodeIds(n),
 					delete: (p) => this.crud.delete('system_content_structure', p as DatabaseId),
 					deleteMany: (p, o) => {
@@ -718,7 +718,8 @@ export class MongoDBAdapter implements IDBAdapter {
 		};
 
 		return {
-			findOne: (c, q, o) => this._wrapResult(() => getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId })),
+			findOne: (c, q, o) =>
+				this._wrapResult(() => getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId, sudo: o?.sudo })),
 			findMany: (c, q, o) =>
 				this._wrapResult(() => {
 					let sort: Record<string, 1 | -1> | undefined;
@@ -736,25 +737,27 @@ export class MongoDBAdapter implements IDBAdapter {
 						limit: o?.limit,
 						skip: o?.offset,
 						fields: o?.fields as (keyof BaseEntity)[],
-						sort
+						sort,
+						tenantId: o?.tenantId,
+						sudo: o?.sudo
 					});
 				}),
-			insert: (c, d) => this._wrapResult(() => getRepo(c).insert(d)),
-			update: (c, id, d) => this._wrapResult(() => getRepo(c).update(id, d)),
-			delete: (c, id) => this._wrapResult(() => getRepo(c).delete(id)),
-			findByIds: (c, ids) => this._wrapResult(() => getRepo(c).findByIds(ids)),
-			insertMany: (c, d) => this._wrapResult(() => getRepo(c).insertMany(d)),
-			updateMany: (c, q, d) => this._wrapResult(() => getRepo(c).updateMany(q, d)),
-			deleteMany: (c, q) => this._wrapResult(() => getRepo(c).deleteMany(q)),
-			upsert: (c, q, d) => this._wrapResult(() => getRepo(c).upsert(q, d)),
-			upsertMany: (c, items) => this._wrapResult(() => getRepo(c).upsertMany(items)),
-			count: (c, q) => this._wrapResult(() => getRepo(c).count(q)),
-			exists: (c, q) =>
+			insert: (c, d, t, o) => this._wrapResult(() => getRepo(c).insert(d, t, { sudo: o?.sudo })),
+			update: (c, id, d, t, o) => this._wrapResult(() => getRepo(c).update(id, d, t, { sudo: o?.sudo })),
+			delete: (c, id, t) => this._wrapResult(() => getRepo(c).delete(id, t)),
+			findByIds: (c, ids, o) => this._wrapResult(() => getRepo(c).findByIds(ids, o as any)),
+			insertMany: (c, d, t, o) => this._wrapResult(() => getRepo(c).insertMany(d as any, t, { sudo: o?.sudo })),
+			updateMany: (c, q, d, t, o) => this._wrapResult(() => getRepo(c).updateMany(q as any, d as any, t, { sudo: o?.sudo })),
+			deleteMany: (c, q, t, o) => this._wrapResult(() => getRepo(c).deleteMany(q as any, t, { sudo: o?.sudo })),
+			upsert: (c, q, d, t, o) => this._wrapResult(() => getRepo(c).upsert(q as any, d as any, t, { sudo: o?.sudo })),
+			upsertMany: (c, items, t, o) => this._wrapResult(() => getRepo(c).upsertMany(items as any, t, { sudo: o?.sudo })),
+			count: (c, q, t, o) => this._wrapResult(() => getRepo(c).count(q as any, t, { sudo: o?.sudo })),
+			exists: (c, q, t, o) =>
 				this._wrapResult(async () => {
-					const res = await getRepo(c).count(q);
+					const res = await getRepo(c).count(q as any, t, { sudo: o?.sudo });
 					return res.success ? res.data > 0 : false;
 				}),
-			aggregate: (c, p) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[]))
+			aggregate: (c, p, t, o) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[], t, { sudo: o?.sudo }))
 		};
 	}
 

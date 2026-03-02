@@ -7,7 +7,7 @@
 	import type { FieldInstance } from '@src/content/types';
 	import BuzzForm from '@src/routes/(app)/config/collectionbuilder/buzz-form/buzz-form.svelte';
 	import { collection, setTargetWidget } from '@src/stores/collection-store.svelte';
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
 	import { sveltyRegistry } from '@src/services/json-render/catalog';
 	import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
@@ -111,7 +111,7 @@
 				id: idx + 1
 			}));
 		updateStore();
-		toaster.info({ description: 'Field removed from collection' });
+		toast.info('Field removed from collection');
 	}
 
 	function duplicateField(field: (typeof items)[number]) {
@@ -188,7 +188,7 @@
 				...newWidget
 			});
 			updateStore();
-			toaster.success({ description: `Added ${key} field` });
+			toast.success(`Added ${key} field`);
 		}
 	}
 </script>

@@ -10,11 +10,11 @@
 - Exports user data to JSON
 - Anonymizes user data
 - Supports both dark and light mode
-- Uses toaster for notifications
+- Uses toast for notifications
 -->
 
 <script lang="ts">
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import type { SettingGroup } from '../../routes/(app)/config/systemsetting/settings-groups';
 
 	interface Props {
@@ -53,12 +53,12 @@
 				a.click();
 				document.body.removeChild(a);
 				window.URL.revokeObjectURL(url);
-				toaster.success({ description: 'Data export downloaded successfully.' });
+				toast.success('Data export downloaded successfully.');
 			} else {
-				toaster.error({ description: result.error || 'Export failed' });
+				toast.error({ description: result.error || 'Export failed' });
 			}
 		} catch (err: any) {
-			toaster.error({ description: err.message || 'Export error' });
+			toast.error({ description: err.message || 'Export error' });
 		} finally {
 			loadingExport = false;
 		}
@@ -82,16 +82,14 @@
 			});
 			const result = await res.json();
 			if (result.success) {
-				toaster.success({
-					description: `User ${userIdAnonymize} successfully anonymized.`
-				});
+				toast.success(`User ${userIdAnonymize} successfully anonymized.`);
 				userIdAnonymize = '';
 				confirmAnonymize = false;
 			} else {
-				toaster.error({ description: result.error || 'Anonymization failed' });
+				toast.error({ description: result.error || 'Anonymization failed' });
 			}
 		} catch (err: any) {
-			toaster.error({ description: err.message || 'Anonymization error' });
+			toast.error({ description: err.message || 'Anonymization error' });
 		} finally {
 			loadingAnonymize = false;
 		}

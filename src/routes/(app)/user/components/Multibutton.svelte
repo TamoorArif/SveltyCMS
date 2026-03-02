@@ -19,7 +19,8 @@ Manages actions (edit, delete, block, unblock) with debounced submissions.
 	import { multibuttontoken_modalbody, multibuttontoken_modaltitle, usermodaluser_editbody, usermodaluser_edittitle } from '@src/paraglide/messages';
 	// Stores
 	// Skeleton & Utils
-	import { storeListboxValue, toaster } from '@src/stores/store.svelte.ts';
+	import { storeListboxValue, } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { modalState } from '@utils/modal-state.svelte';
 	import { showConfirm } from '@utils/modal-utils';
@@ -388,7 +389,7 @@ Manages actions (edit, delete, block, unblock) with debounced submissions.
 			// Generate smart toast message based on what actually changed
 			let toastMessage = data.message || config.toastMessage();
 
-			toaster.success({ description: toastMessage });
+			toast.success({ description: toastMessage });
 
 			// Dispatch update event for parent component to handle local state updates
 			if (action === 'block' || action === 'unblock' || action === 'delete') {
@@ -408,24 +409,24 @@ Manages actions (edit, delete, block, unblock) with debounced submissions.
 		} catch (error) {
 			logger.error(`Error during action '${action}' for type '${type}':`, error);
 			const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-			toaster.error({ description: errorMessage });
+			toast.error({ description: errorMessage });
 		}
 	}
 
 	async function handleAction(action: ActionType) {
 		if (isDisabled) {
-			toaster.error({ description: `Please select ${type}(s) to ${action}` });
+			toast.error(`Please select ${type}(s) to ${action}`);
 			return;
 		}
 
 		// Check if delete is disabled for users
 		if (action === 'delete' && isDeleteDisabled) {
-			toaster.error({ description: 'Cannot delete the last user in the system' });
+			toast.error('Cannot delete the last user in the system');
 			return;
 		}
 
 		if (action === 'edit' && isMultipleSelected) {
-			toaster.error({ description: `Please select only one ${type} to edit` });
+			toast.error(`Please select only one ${type} to edit`);
 			return;
 		}
 
@@ -433,15 +434,11 @@ Manages actions (edit, delete, block, unblock) with debounced submissions.
 		if (!availableActions.includes(action)) {
 			const currentBlockState = blockState;
 			if (currentBlockState() === 'all-blocked' && action === 'block') {
-				toaster.warning({
-					description: 'All selected items are already blocked'
-				});
+				toast.warning('All selected items are already blocked');
 				return;
 			}
 			if (currentBlockState() === 'all-unblocked' && action === 'unblock') {
-				toaster.warning({
-					description: 'All selected items are already unblocked'
-				});
+				toast.warning('All selected items are already unblocked');
 				return;
 			}
 		}
@@ -450,7 +447,7 @@ Manages actions (edit, delete, block, unblock) with debounced submissions.
 		if (action === 'edit' && type === 'token') {
 			const tokenData = isToken(safeSelectedRows[0]) ? safeSelectedRows[0] : undefined;
 			if (!tokenData?.token) {
-				toaster.error({ description: 'Invalid token data selected' });
+				toast.error('Invalid token data selected');
 				return;
 			}
 		}

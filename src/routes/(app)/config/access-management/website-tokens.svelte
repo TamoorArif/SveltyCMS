@@ -20,7 +20,7 @@
 	import type { Permission, User } from '@src/databases/auth/types';
 	import type { WebsiteToken } from '@src/databases/schemas';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { showConfirm } from '@utils/modal-utils';
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
@@ -114,10 +114,10 @@
 				const result = await response.json();
 				usersRef.value = result.data;
 			} else {
-				toaster.error({ description: 'Failed to fetch users' });
+				toast.error('Failed to fetch users');
 			}
 		} catch {
-			toaster.error({ description: 'An error occurred while fetching users' });
+			toast.error('An error occurred while fetching users');
 		}
 		users = usersRef.value;
 	}
@@ -159,12 +159,10 @@
 						tokensRef.value = result.data;
 						totalItemsRef.value = result.pagination.totalItems;
 					} else {
-						toaster.error({ description: 'Failed to fetch tokens' });
+						toast.error('Failed to fetch tokens');
 					}
 				} catch {
-					toaster.error({
-						description: 'An error occurred while fetching tokens'
-					});
+					toast.error('An error occurred while fetching tokens');
 				}
 			},
 			'Fetching website tokens'
@@ -207,7 +205,7 @@
 	async function generateToken() {
 		const currentNewTokenName = newTokenName;
 		if (!currentNewTokenName) {
-			toaster.error({ description: 'Please enter a name for the token.' });
+			toast.error('Please enter a name for the token.');
 			return;
 		}
 
@@ -224,21 +222,17 @@
 
 			if (response.ok) {
 				await fetchTokens();
-				toaster.success({
-					description: `Token generated for ${currentNewTokenName}`
-				});
+				toast.success(`Token generated for ${currentNewTokenName}`);
 				newTokenName = '';
 				selectedPermissions = [];
 				expirationOption = '90d';
 			} else if (response.status === 409) {
-				toaster.error({ description: 'A token with this name already exists' });
+				toast.error('A token with this name already exists');
 			} else {
-				toaster.error({ description: 'Failed to generate token' });
+				toast.error('Failed to generate token');
 			}
 		} catch {
-			toaster.error({
-				description: 'An error occurred while generating the token'
-			});
+			toast.error('An error occurred while generating the token');
 		}
 	}
 
@@ -254,14 +248,12 @@
 
 					if (response.ok) {
 						await fetchTokens();
-						toaster.success({ description: 'Token deleted.' });
+						toast.success('Token deleted.');
 					} else {
-						toaster.error({ description: 'Failed to delete token' });
+						toast.error('Failed to delete token');
 					}
 				} catch {
-					toaster.error({
-						description: 'An error occurred while deleting the token'
-					});
+					toast.error('An error occurred while deleting the token');
 				}
 			}
 		});
@@ -456,7 +448,7 @@
 												<button
 													onclick={async () => {
 														await navigator.clipboard.writeText(token.token);
-														toaster.success({ description: 'Token copied to clipboard' });
+														toast.success('Token copied to clipboard');
 													}}
 													class="preset-outline-surface-500 btn-icon btn-icon-sm"
 													aria-label="Copy token to clipboard"

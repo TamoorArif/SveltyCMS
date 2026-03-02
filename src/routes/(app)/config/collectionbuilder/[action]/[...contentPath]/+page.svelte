@@ -21,7 +21,8 @@
 	import ModalSchemaWarning from '@src/routes/(app)/config/collectionbuilder/modal-schema-warning.svelte';
 	// Stores
 	import { collection, setCollection } from '@src/stores/collection-store.svelte';
-	import { toaster, validationStore } from '@src/stores/store.svelte';
+	import { validationStore } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
 	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
 	import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
 	// Utils
@@ -103,9 +104,7 @@
 
 	async function handleCollectionSave(confirmDeletions = false) {
 		if (validationStore.errors && Object.keys(validationStore.errors).length > 0) {
-			toaster.error({
-				description: 'Please fix validation errors before saving'
-			});
+			toast.error('Please fix validation errors before saving');
 			return;
 		}
 
@@ -140,14 +139,12 @@
 			if (data?.driftDetected) {
 				migrationPlan = data.plan;
 				showWarningModal = true;
-				toaster.info({
-					description: 'Manual confirmation required for schema changes'
-				});
+				toast.info('Manual confirmation required for schema changes');
 				return;
 			}
 
 			if (response.status === 200 || (data && data.status === 200)) {
-				toaster.success({ description: 'Collection Saved Successfully' });
+				toast.success('Collection Saved Successfully');
 				showWarningModal = false;
 				migrationPlan = null;
 				if (originalName !== currentCollection?.name) {
@@ -157,7 +154,7 @@
 			}
 		} catch (error) {
 			logger.error('Save failed', error);
-			toaster.error({ description: 'Failed to save collection' });
+			toast.error('Failed to save collection');
 		} finally {
 			isLoading = false;
 		}
@@ -174,10 +171,10 @@
 				});
 
 				if (response.ok) {
-					toaster.success({ description: 'Collection Deleted' });
+					toast.success('Collection Deleted');
 					goto('/config/collectionbuilder');
 				} else {
-					toaster.error({ description: 'Failed to delete collection' });
+					toast.error('Failed to delete collection');
 				}
 			}
 		});

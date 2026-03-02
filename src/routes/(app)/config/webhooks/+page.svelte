@@ -6,7 +6,7 @@
 <script lang="ts">
 	import PageTitle from '@src/components/page-title.svelte';
 	import type { Webhook } from '@src/services/webhook-service';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 
@@ -26,10 +26,10 @@
 			if (result.success) {
 				webhooks = result.data;
 			} else {
-				showToast(result.message || 'Failed to load webhooks', 'error');
+				toast.error(result.message || 'Failed to load webhooks');
 			}
 		} catch (_err) {
-			showToast('Error loading webhooks', 'error');
+			toast.error('Error loading webhooks');
 		} finally {
 			isLoading = false;
 		}
@@ -37,7 +37,7 @@
 
 	async function saveWebhook() {
 		if (!(editingWebhook?.url && editingWebhook?.name)) {
-			showToast('Name and URL are required', 'warning');
+			toast.warning('Name and URL are required');
 			return;
 		}
 
@@ -54,14 +54,14 @@
 			const result = await res.json();
 
 			if (result.success) {
-				showToast(`Webhook ${editingWebhook.id ? 'updated' : 'created'} successfully`, 'success');
+				toast.success(`Webhook ${editingWebhook.id ? 'updated' : 'created'} successfully`);
 				showModal = false;
 				await loadWebhooks();
 			} else {
-				showToast(result.message || 'Failed to save webhook', 'error');
+				toast.error(result.message || 'Failed to save webhook');
 			}
 		} catch (_err) {
-			showToast('Error saving webhook', 'error');
+			toast.error('Error saving webhook');
 		} finally {
 			isSaving = false;
 		}
@@ -76,28 +76,28 @@
 			const res = await fetch(`/api/webhooks/${id}`, { method: 'DELETE' });
 			const result = await res.json();
 			if (result.success) {
-				showToast('Webhook deleted', 'success');
+				toast.success('Webhook deleted');
 				await loadWebhooks();
 			}
 		} catch (_err) {
-			showToast('Error deleting webhook', 'error');
+			toast.error('Error deleting webhook');
 		}
 	}
 
 	async function testWebhook(webhook: Webhook) {
-		showToast(`Sending test payload to ${webhook.name}...`, 'info');
+		toast.info(`Sending test payload to ${webhook.name}...`);
 		try {
 			const res = await fetch(`/api/webhooks/${webhook.id}/test`, {
 				method: 'POST'
 			});
 			const result = await res.json();
 			if (result.success) {
-				showToast('Test webhook sent successfully!', 'success');
+				toast.success('Test webhook sent successfully!');
 			} else {
-				showToast(result.message || 'Webhook test failed', 'error');
+				toast.error(result.message || 'Webhook test failed');
 			}
 		} catch (_err) {
-			showToast('Error testing webhook', 'error');
+			toast.error('Error testing webhook');
 		}
 	}
 

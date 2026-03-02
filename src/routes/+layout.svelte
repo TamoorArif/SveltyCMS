@@ -1,4 +1,15 @@
-<!-- @file src/routes/+layout.svelte @description Global layout component with theme, i18n, and UI managers features: [Paraglide i18n integration, Theme Management, Skeleton v4 Toasts & Modals, WebMCP Support, Flash Messaging] -->
+<!--
+ @file src/routes/+layout.svelte
+ @component
+ **Global layout for the entire application**
+
+ ### Features
+ - Paraglide i18n integration
+ - Theme Management
+ - Skeleton v4 Toasts & Modals
+ - WebMCP Support
+ - Flash Messaging
+ -->
 
 <script lang="ts">
 	// Selected theme
@@ -9,14 +20,15 @@
 	import { onMount, untrack } from 'svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 
 	// WebMCP Support (Polyfill + Plugin)
 	import '@mcp-b/webmcp-polyfill';
-	import { Portal } from '@skeletonlabs/skeleton-svelte';
+
 	// Components
 	import DialogManager from '@src/components/system/dialog-manager.svelte';
 	import FloatingNav from '@src/components/system/floating-nav.svelte';
-	import ToastManager from '@src/components/system/toast-manager.svelte';
+	import ToastContainer from '@src/components/toast-container.svelte';
 	// Paraglide locale bridge
 	import { locales as availableLocales, getLocale, setLocale } from '@src/paraglide/runtime';
 	import CookieConsent from '@src/plugins/cookie-consent/cookie-consent.svelte';
@@ -26,7 +38,9 @@
 	// Stores
 	import { screen as screenSize } from '@src/stores/screen-size-store.svelte.ts';
 	// Skeleton v4
-	import { app, toaster } from '@src/stores/store.svelte';
+	import { app } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
+	import { Portal } from '@skeletonlabs/skeleton-svelte';
 	// Theme management
 	import { initializeDarkMode, initializeThemeStore, themeStore } from '@src/stores/theme-store.svelte';
 
@@ -45,6 +59,10 @@
 
 	let currentLocale = $state(getLocale());
 	let isMounted = $state(false);
+
+	// Navigation-aware toast handling
+	beforeNavigate(() => toast.handleBeforeNavigate());
+	afterNavigate(() => toast.handleAfterNavigate());
 
 	// ============================================================================
 	// Initialization
@@ -83,6 +101,9 @@
 		// Initialize dark mode
 		initializeDarkMode();
 
+		// Initialize toast navigation handlers (must be called from onMount)
+		toast.init();
+
 		// Initialize WebMCP (Client-side AI Tools)
 		if (browser) {
 			// Tiny delay to ensure polyfill overrides are settled
@@ -96,7 +117,7 @@
 
 	/**
 	 * Reactive Flash Message Detection
-	 * Watches for URL changes and triggers toaster's flash message processor.
+	 * Watches for URL changes and triggers toast's flash message processor.
 	 */
 	$effect(() => {
 		if (!(browser && isMounted)) {
@@ -106,8 +127,8 @@
 		// Depend on page.url to trigger this effect on every navigation
 		void page.url.pathname;
 
-		// Delegate to toaster store
-		toaster.checkFlash();
+		// Delegate to toast store
+		toast.checkFlash();
 	});
 
 	// ============================================================================
@@ -215,7 +236,7 @@
 <svelte:head><title>{siteName}</title></svelte:head>
 
 <DialogManager />
-<Portal><ToastManager position="bottom-center" /></Portal>
+<ToastContainer position="responsive" />
 
 {#key currentLocale}
 	{#if screenSize.isMobile && !page.url.pathname.includes('/setup')}

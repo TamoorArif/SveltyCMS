@@ -34,7 +34,7 @@
 	import type { WidgetSize } from '@src/content/types';
 
 	// Utils
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Widgets
 	import BaseWidget from '../base-widget.svelte';
 
@@ -75,7 +75,7 @@
 
 	async function reinitializeSystem() {
 		try {
-			showToast('Reinitializing system...', 'warning');
+			toast.warning('Reinitializing system...');
 
 			const response = await fetch('/api/system', {
 				method: 'POST',
@@ -85,13 +85,13 @@
 
 			if (response.ok) {
 				const result = await response.json();
-				showToast(result.message || `System reinitialized: ${result.status}`, 'success');
+				toast.success(result.message || `System reinitialized: ${result.status}`);
 			} else {
 				const error = await response.json();
 				throw new Error(error.error || 'Reinitialization failed');
 			}
 		} catch (error) {
-			showToast(`Failed to reinitialize: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+			toast.error(`Failed to reinitialize: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 	function getStateColor(state: SystemState): string {

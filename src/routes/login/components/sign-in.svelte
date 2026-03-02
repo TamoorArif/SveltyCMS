@@ -59,7 +59,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
 	import { screen } from '@src/stores/screen-size-store.svelte';
 	// Skeleton
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { Form } from '@utils/form.svelte.ts';
 	import { forgotFormSchema, loginFormSchema, resetFormSchema } from '@utils/form-schemas';
 	import { browser } from '$app/environment';
@@ -188,7 +188,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 				globalLoadingStore.stopLoading(loadingOperations.authentication);
 
 				// Show 2FA required message
-				toaster.warning({
+				toast.warning({
 					title: 'Two-Factor Authentication Required',
 					description: 'Please enter your authentication code to continue'
 				});
@@ -203,7 +203,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 				const errorMessage =
 					result.type === 'failure' ? result.data?.message || 'Invalid email or password' : result.error?.message || 'An unexpected error occurred';
 
-				toaster.error({
+				toast.error({
 					title: 'Sign In Failed',
 					description: errorMessage
 				});
@@ -248,7 +248,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 				// If it's 400 with errors, it's 'failure'
 
 				// For now, just show generic error or message from result
-				toaster.info({
+				toast.info({
 					description: result.error?.message || 'An error occurred'
 				});
 				return;
@@ -258,7 +258,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 				// Check if user exists (success with data)
 				if (result.data && result.data.userExists === true) {
 					PWreset = true;
-					toaster.success({ description: signin_forgottontoast() });
+					toast.success({ description: signin_forgottontoast() });
 					return;
 				}
 				// Fallback or specific logic for User check
@@ -267,15 +267,13 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 					// Actually, standard SvelteKit 'success' means 200 OK.
 					// If backend returns { userExists: false }, we handle it.
 					PWreset = false;
-					toaster.error({
-						description: 'No account found with this email address.'
-					});
+					toast.error('No account found with this email address.');
 					formElement?.classList.add('wiggle');
 					setTimeout(() => formElement?.classList.remove('wiggle'), 300);
 				} else {
 					// Default success
 					PWreset = true;
-					toaster.success({
+					toast.success({
 						title: 'Email Sent',
 						description: 'Password reset instructions have been sent to your email'
 					});
@@ -283,7 +281,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 			} else if (result.type === 'failure') {
 				const errorMessage = result.data?.message || 'Password reset failed';
 
-				toaster.error({
+				toast.error({
 					title: 'Reset Failed',
 					description: errorMessage
 				});
@@ -315,7 +313,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 			PWforgot = false;
 
 			if (result.type === 'success' || result.type === 'redirect') {
-				toaster.success({
+				toast.success({
 					title: 'Password Reset Successful',
 					description: 'You can now sign in with your new password'
 				});
@@ -345,12 +343,12 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 		}
 
 		if (!useBackupCode && twoFACode.length !== 6) {
-			toaster.error({ description: twofa_error_invalid_code() });
+			toast.error({ description: twofa_error_invalid_code() });
 			return;
 		}
 
 		if (useBackupCode && twoFACode.length < 8) {
-			toaster.error({ description: 'Invalid backup code format' });
+			toast.error('Invalid backup code format');
 			return;
 		}
 
@@ -369,7 +367,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 			// Parse response
 			if (response.ok) {
 				// Success - redirect will be handled by SvelteKit
-				toaster.success({
+				toast.success({
 					title: 'Verification Successful',
 					description: 'Redirecting to your dashboard...'
 				});
@@ -381,7 +379,7 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 				throw new Error(errorData.message || twofa_error_invalid_code());
 			}
 		} catch (error) {
-			toaster.error({
+			toast.error({
 				description: error instanceof Error ? error.message : twofa_error_invalid_code()
 			});
 		} finally {

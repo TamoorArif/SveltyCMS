@@ -131,8 +131,9 @@ export class SchedulerService {
 			// We can't easily query JSON fields across all DB types, so we fetch all 'schedule' items
 			// and filter in memory. Assuming the number of *pending* scheduled items is small.
 			const result = await db.content.nodes.getStructure('flat', {
-				status: StatusTypes.schedule
-			} as Record<string, unknown>);
+				filter: { status: StatusTypes.schedule } as any,
+				sudo: true
+			});
 			if (!this.intervalId) {
 				return; // Check if stopped during await
 			}

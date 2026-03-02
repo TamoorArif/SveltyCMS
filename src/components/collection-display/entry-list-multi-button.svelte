@@ -43,7 +43,7 @@
 	} from '@src/paraglide/messages';
 	import { storeListboxValue } from '@src/stores/store.svelte';
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onDestroy, onMount } from 'svelte';
 	import { quintOut } from 'svelte/easing';
 	import { scale } from 'svelte/transition';
@@ -393,7 +393,7 @@
 			const limitMsg = entrylist_multibutton_limit_warning
 				? entrylist_multibutton_limit_warning({ count: batchSizeLimit })
 				: 'Slow connection: Batch size limited';
-			showToast(limitMsg, 'warning');
+			toast.warning(limitMsg);
 			return;
 		}
 
@@ -434,7 +434,7 @@
 			}
 		} catch (error) {
 			const errMsg = (error as Error).message;
-			showToast(errMsg, 'error');
+			toast.error(errMsg);
 			logger.error(`[MultiButton] Action ${action} failed:`, error);
 		} finally {
 			isProcessing = false;

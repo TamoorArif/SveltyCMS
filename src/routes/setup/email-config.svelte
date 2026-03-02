@@ -80,7 +80,7 @@
 	} from '@src/paraglide/messages';
 	import { setupStore } from '@src/stores/setup-store.svelte.ts';
 	import { type SmtpConfigSchema, smtpConfigSchema } from '@utils/form-schemas';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { safeParse } from 'valibot';
 	import { deserialize } from '$app/forms';
 
@@ -396,7 +396,7 @@
 
 	async function testConnection() {
 		if (!isFormValid) {
-			showToast(setup_email_test_required(), 'warning');
+			toast.warning(setup_email_test_required());
 			return;
 		}
 
@@ -440,20 +440,20 @@
 					const message = testEmailSent
 						? `${setup_email_test_success()} ${setup_email_test_email_sent({ email: wizard.adminUser.email })}`
 						: setup_email_test_success();
-					showToast(message, 'success');
+					toast.success(message);
 				} else {
 					testError = data.error || 'Connection failed';
-					showToast(`${setup_email_test_failed()}: ${testError}`, 'error');
+					toast.error(`${setup_email_test_failed()}: ${testError}`);
 				}
 			} else {
 				// Handle failure/error type
 				const errorMsg = (result as { data?: { error?: string } }).data?.error || 'Connection failed'; // Attempt to get error from failure data
 				testError = errorMsg;
-				showToast(`${setup_email_test_failed()}: ${testError}`, 'error');
+				toast.error(`${setup_email_test_failed()}: ${testError}`);
 			}
 		} catch (error) {
 			testError = error instanceof Error ? error.message : 'Unknown error occurred';
-			showToast(`${setup_email_test_failed()}: ${testError}`, 'error');
+			toast.error(`${setup_email_test_failed()}: ${testError}`);
 		} finally {
 			isTesting = false;
 		}

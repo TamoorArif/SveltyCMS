@@ -351,31 +351,42 @@ export const actions: Actions = {
 			const setupAuth = new Auth(dbAdapter, getDefaultSessionStore());
 
 			// Check if user already exists
-			const existingUser = await setupAuth.getUserByEmail({
-				email: admin.email,
-				tenantId: undefined
-			});
+			const existingUser = await setupAuth.getUserByEmail(
+				{
+					email: admin.email,
+					tenantId: undefined
+				},
+				{ sudo: true }
+			);
 			let session: any;
 
 			if (existingUser) {
 				logger.info('Admin user already exists, updating credentials...');
 
 				// Update password
-				await setupAuth.updateUserPassword(admin.email, admin.password);
+				await setupAuth.updateUserPassword(admin.email, admin.password, undefined);
 
 				// Update other attributes
-				await setupAuth.updateUser(existingUser._id, {
-					username: admin.username,
-					role: 'admin',
-					isRegistered: true
-				});
+				await setupAuth.updateUser(
+					existingUser._id,
+					{
+						username: admin.username,
+						role: 'admin',
+						isRegistered: true
+					},
+					undefined,
+					{ sudo: true }
+				);
 
 				// Create new session
-				session = await setupAuth.createSession({
-					user_id: existingUser._id,
-					expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as ISODateString,
-					tenantId: undefined
-				});
+				session = await setupAuth.createSession(
+					{
+						user_id: existingUser._id,
+						expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as ISODateString,
+						tenantId: undefined
+					},
+					{ sudo: true }
+				);
 			} else {
 				// Create new user
 				const authResult = await setupAuth.createUserAndSession(
@@ -388,7 +399,8 @@ export const actions: Actions = {
 					},
 					{
 						expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as ISODateString
-					}
+					},
+					{ sudo: true }
 				);
 
 				if (!(authResult.success && authResult.data)) {

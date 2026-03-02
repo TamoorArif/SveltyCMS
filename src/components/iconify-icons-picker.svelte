@@ -27,7 +27,7 @@ Advanced icon picker with search, pagination, and favorites.
 	import { loadIcons } from '@iconify/svelte';
 	import { iconpicker_placeholder } from '@src/paraglide/messages';
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onDestroy, onMount } from 'svelte';
 	import { quintOut } from 'svelte/easing';
 	import { fade, scale, slide } from 'svelte/transition';
@@ -337,7 +337,7 @@ Advanced icon picker with search, pagination, and favorites.
 		recentSelections = [fullIconName, ...recentSelections.filter((i) => i !== fullIconName)].slice(0, MAX_RECENT);
 
 		showDropdown = false;
-		showToast(`Icon selected: ${fullIconName}`, 'success');
+		toast.success(`Icon selected: ${fullIconName}`);
 	}
 
 	// Favorites management
@@ -349,10 +349,10 @@ Advanced icon picker with search, pagination, and favorites.
 
 		if (favorites.includes(targetIcon)) {
 			favorites = favorites.filter((i) => i !== targetIcon);
-			showToast('Removed from favorites', 'info');
+			toast.info('Removed from favorites');
 		} else {
 			favorites = [...favorites, targetIcon];
-			showToast('Added to favorites', 'success');
+			toast.success('Added to favorites');
 		}
 	}
 
@@ -364,10 +364,10 @@ Advanced icon picker with search, pagination, and favorites.
 
 		try {
 			await navigator.clipboard.writeText(iconselected);
-			showToast('Icon name copied to clipboard', 'success');
+			toast.success('Icon name copied to clipboard');
 		} catch (error) {
 			logger.error('Copy failed:', error);
-			showToast('Failed to copy icon name', 'error');
+			toast.error('Failed to copy icon name');
 		}
 	}
 

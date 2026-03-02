@@ -20,7 +20,7 @@ Displays a prominent banner when server restart is required with countdown and s
 -->
 
 <script lang="ts">
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onDestroy, onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 
@@ -58,7 +58,7 @@ Displays a prominent banner when server restart is required with countdown and s
 			});
 
 			if (response.ok) {
-				showToast('Server is restarting... Please wait.', 'success');
+				toast.success('Server is restarting... Please wait.');
 
 				// Optionally reload page after delay
 				setTimeout(() => {
@@ -70,7 +70,7 @@ Displays a prominent banner when server restart is required with countdown and s
 			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Failed to restart server';
-			showToast(message, 'error');
+			toast.error(message);
 			isRestarting = false;
 		}
 	}

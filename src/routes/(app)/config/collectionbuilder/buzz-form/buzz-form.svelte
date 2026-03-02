@@ -16,7 +16,7 @@
 
 <script lang="ts">
 	import { collections, setTargetWidget } from '@src/stores/collection-store.svelte';
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { widgets } from '@src/stores/widget-store.svelte.ts';
 	import { asAny, getGuiFields } from '@utils/utils';
 	import BuzzFormCanvas from './buzz-form-canvas.svelte';
@@ -50,7 +50,7 @@
 
 			// Auto-select the new field
 			handleSelectField(newField);
-			toaster.success({ description: `Added ${key} field to canvas` });
+			toast.success(`Added ${key} field to canvas`);
 		}
 	}
 
@@ -75,7 +75,7 @@
 			collections.active.fields = newFields.map((f, i) => ({ ...f, id: i + 1 }));
 			selectedFieldId = undefined;
 			setTargetWidget({ permissions: {} });
-			toaster.info({ description: 'Field removed from canvas' });
+			toast.info('Field removed from canvas');
 		}
 	}
 </script>

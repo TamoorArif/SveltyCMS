@@ -127,7 +127,7 @@ export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string): 
 					...(tenantId && { tenantId })
 				};
 
-				const result = await dbAdapter.auth.createRole(roleToCreate);
+				const result = await dbAdapter.auth.createRole(roleToCreate, { sudo: true });
 				// createRole returns DatabaseResult — check success instead of relying on exceptions
 				if (result && 'success' in result && !result.success) {
 					logger.warn(
@@ -287,7 +287,11 @@ export async function seedCollectionsForSetup(
 
 			if (updates.length > 0) {
 				logger.info(`💾 Persisting ${updates.length} content nodes to database...`);
-				const structResult = await dbAdapter.content.nodes.bulkUpdate(updates);
+				const structResult = await dbAdapter.content.nodes.bulkUpdate(updates, {
+					tenantId,
+					sudo: true,
+					bypassCache: true
+				});
 				if (structResult.success) {
 					logger.info(`✅ Successfully persisted ${structResult.data.length} content nodes.`);
 				} else {
@@ -370,7 +374,7 @@ export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: S
 				];
 
 				// Use insertMany to trigger the new dynamic table + packData logic
-				await dbAdapter.crud.insertMany(collectionId, posts);
+				await dbAdapter.crud.insertMany(collectionId, posts, tenantId, { sudo: true });
 				logger.info(`✅ Seeded ${posts.length} demo posts into ${collectionId}`);
 			}
 
@@ -391,7 +395,7 @@ export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: S
 						...(tenantId && { tenantId })
 					}
 				];
-				await dbAdapter.crud.insertMany(collectionId, menuItems);
+				await dbAdapter.crud.insertMany(collectionId, menuItems, tenantId, { sudo: true });
 				logger.info(`✅ Seeded ${menuItems.length} demo menu items into ${collectionId}`);
 			}
 		}
@@ -474,9 +478,14 @@ export async function initSystemFast(
 				// For MongoDB, it's typically 'content_nodes'
 				if (adapter.crud) {
 					// Use database-agnostic crud interface to delete ghost nodes
-					await adapter.crud.deleteMany('system_content_structure', {
-						...(tenantId && { tenantId })
-					});
+					await adapter.crud.deleteMany(
+						'system_content_structure',
+						{
+							...(tenantId && { tenantId })
+						},
+						tenantId,
+						{ sudo: true }
+					);
 					logger.info('✅ Content structure cleared successfully');
 				}
 			} catch (clearError) {
@@ -1161,19 +1170,22 @@ export async function seedDemoTenant(dbAdapter: DatabaseAdapter, tenantId: strin
 	// 4. Create Admin User
 	// We need to import auth service or use dbAdapter.auth directly
 	if (dbAdapter.auth) {
-		const result = await dbAdapter.auth.getRoleById('admin', tenantId);
+		const result = await dbAdapter.auth.getRoleById('admin', tenantId, { sudo: true });
 		const adminRole = result.success ? result.data : null;
 		if (adminRole) {
 			const email = `demo-${tenantId.substring(0, 8)}@sveltycms.com`;
 			const password = 'demo'; // Simple password for demo
 			try {
-				await dbAdapter.auth.createUser({
-					email,
-					password,
-					role: adminRole._id,
-					username: 'Demo Admin',
-					tenantId
-				});
+				await dbAdapter.auth.createUser(
+					{
+						email,
+						password,
+						role: adminRole._id,
+						username: 'Demo Admin',
+						tenantId
+					},
+					{ sudo: true }
+				);
 				logger.info(`✅ Demo admin user created: ${email}`);
 			} catch (e) {
 				logger.warn(`Demo user creation failed (might exist): ${e instanceof Error ? e.message : String(e)}`);

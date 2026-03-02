@@ -1,6 +1,11 @@
 /**
  * @file tests/unit/services/automationService.test.ts
  * @description Unit tests for the Automation Service
+ *
+ * Tests:
+ * - Initialization
+ * - Flow CRUD
+ * - Execution Logic
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';

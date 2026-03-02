@@ -8,7 +8,7 @@ Allows synchronization between filesystem and database, and full system backup/r
 	import ImportExportManager from '@src/components/admin/import-export-manager.svelte';
 	import PageTitle from '@src/components/page-title.svelte';
 	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 
@@ -45,7 +45,7 @@ Allows synchronization between filesystem and database, and full system backup/r
 			console.debug('[Config Sync] Received status:', status);
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : String(err);
-			showToast(`Failed to fetch status: ${errorMsg}`, 'error');
+			toast.error(`Failed to fetch status: ${errorMsg}`);
 			status = null;
 		} finally {
 			isLoading = false;
@@ -54,7 +54,7 @@ Allows synchronization between filesystem and database, and full system backup/r
 
 	async function performSync() {
 		if (!status || status.unmetRequirements.length > 0) {
-			showToast('Sync blocked due to unmet requirements.', 'warning');
+			toast.warning('Sync blocked due to unmet requirements.');
 			return;
 		}
 
@@ -62,7 +62,7 @@ Allows synchronization between filesystem and database, and full system backup/r
 		try {
 			// Standard filesystem sync
 			const payload = { action: 'import' };
-			showToast('Performing standard filesystem sync...', 'info');
+			toast.info('Performing standard filesystem sync...');
 
 			const res = await fetch('/api/config_sync', {
 				method: 'POST',
@@ -75,11 +75,11 @@ Allows synchronization between filesystem and database, and full system backup/r
 				throw new Error(result.message || `HTTP ${res.status}`);
 			}
 
-			showToast(result.message || 'Sync successful!', 'success');
+			toast.success(result.message || 'Sync successful!');
 			await loadStatus(); // Refresh status after sync
 		} catch (err) {
 			const errorMsg = err instanceof Error ? err.message : String(err);
-			showToast(`Sync failed: ${errorMsg}`, 'error');
+			toast.error(`Sync failed: ${errorMsg}`);
 		} finally {
 			isProcessing = false;
 		}

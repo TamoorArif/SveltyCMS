@@ -1,6 +1,15 @@
 /**
  * @file tests/bun/hooks/authorization.test.ts
  * @description Tests for handleAuthorization middleware (permissions, roles, user counting)
+ *
+ * Tests:
+ * - Public route access
+ * - Authenticated user access
+ * - Unauthenticated user handling
+ * - Role caching
+ * - User count caching
+ * - Permission checks
+ * - Redirect to setup when no roles
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

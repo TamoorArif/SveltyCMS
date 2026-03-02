@@ -1,0 +1,98 @@
+/**
+ * @file tests/unit/stores/toast.svelte.test.ts
+ * @description Unit tests for the ToastStore.
+ */
+import { describe, expect, it, beforeEach, spyOn, afterEach } from 'bun:test';
+import { toast } from '@src/stores/toast.svelte.ts';
+
+describe('ToastStore', () => {
+	beforeEach(() => {
+		toast.clear();
+		sessionStorage.clear();
+	});
+
+	afterEach(() => {
+		toast.clear();
+	});
+
+	it('should add a basic toast', () => {
+		const id = toast.info('Test Info');
+		expect(toast.toasts.length).toBe(1);
+		expect(toast.toasts[0].id).toBe(id);
+		expect(toast.toasts[0].message).toBe('Test Info');
+		expect(toast.toasts[0].type).toBe('info');
+	});
+
+	it('should support multiple toast types', () => {
+		toast.success('Success');
+		toast.error('Error');
+		toast.warning('Warning');
+		toast.info('Info');
+
+		expect(toast.toasts.length).toBe(4);
+		expect(toast.toasts.map((t) => t.type)).toEqual(['success', 'error', 'warning', 'info']);
+	});
+
+	it('should adhere to maximum toast limits by removing non-persistent first', () => {
+		// Default max limit is 5
+		for (let i = 0; i < 6; i++) {
+			toast.info(`Message ${i}`);
+		}
+		expect(toast.toasts.length).toBe(5);
+		// The oldest one (Message 0) should be gone
+		expect(toast.toasts[0].message).toBe('Message 1');
+
+		toast.clear();
+
+		// Interleave persistent toast
+		toast.info({ message: 'Persistent', persistent: true });
+		for (let i = 0; i < 5; i++) {
+			toast.info(`Message ${i}`);
+		}
+		expect(toast.toasts.length).toBe(5);
+		// The persistent toast should survive, and the oldest non-persistent should be gone
+		expect(toast.toasts.find((t) => t.message === 'Persistent')).toBeDefined();
+	});
+
+	it('should cleanly remove a toast manually', () => {
+		const id = toast.success('To manually close');
+		expect(toast.toasts.length).toBe(1);
+		toast.close(id);
+		expect(toast.toasts.length).toBe(0);
+	});
+
+	it('should handle pause and resume logic', () => {
+		const id = toast.info('Pause Test', { duration: 5000 });
+		expect(toast.isPaused(id)).toBe(false);
+
+		toast.pause(id);
+		expect(toast.isPaused(id)).toBe(true);
+
+		toast.resume(id);
+		expect(toast.isPaused(id)).toBe(false);
+	});
+
+	it('should store and read flash messages across sessions', () => {
+		const spySet = spyOn(globalThis.sessionStorage, 'setItem');
+		const spyRemove = spyOn(globalThis.sessionStorage, 'removeItem');
+
+		toast.flash({ type: 'success', message: 'Flash Success' });
+
+		expect(spySet).toHaveBeenCalledWith('toast_flash', expect.any(String));
+
+		// Check flash logic
+		toast.checkFlash();
+		expect(toast.toasts.length).toBe(1);
+		expect(toast.toasts[0].message).toBe('Flash Success');
+		expect(spyRemove).toHaveBeenCalledWith('toast_flash');
+
+		spySet.mockRestore();
+		spyRemove.mockRestore();
+	});
+
+	it('should backward-compatibly support legacy API calls', () => {
+		toast.success({ description: 'Legacy API' });
+		expect(toast.toasts.length).toBe(1);
+		expect(toast.toasts[0].message).toBe('Legacy API');
+	});
+});

@@ -24,6 +24,7 @@ import type { Permission, Role, User } from '@src/databases/auth';
 import { getAllPermissions } from '@src/databases/auth/permissions';
 import type { DatabaseResult, PaginationOption } from '@src/databases/db-interface';
 import { generateId } from '@src/databases/mongodb/methods/mongodb-utils';
+import { safeQuery } from '@src/utils/security/safe-query';
 import { getPrivateSettingSync } from '@src/services/settings-service';
 // System Logging
 import { logger } from '@utils/logger';
@@ -130,13 +131,16 @@ export class UserAdapter {
 	}
 
 	// Create a new user
-	async createUser(userData: Partial<User>): Promise<DatabaseResult<User>> {
+	async createUser(userData: Partial<User>, options?: { sudo?: boolean }): Promise<DatabaseResult<User>> {
 		try {
 			// Normalize email to lowercase if present
 			const normalizedUserData = {
 				...userData,
 				email: userData.email?.toLowerCase()
 			};
+
+			// Validate tenant context if multi-tenant is enabled
+			safeQuery({}, userData.tenantId, { sudo: options?.sudo });
 
 			// Log exactly what we received (redacted)
 			logger.debug('UserAdapter.createUser received data:', {
@@ -189,12 +193,14 @@ export class UserAdapter {
 	}
 
 	// Edit a user
-	async updateUserAttributes(userId: string, userData: Partial<User>, tenantId?: string): Promise<DatabaseResult<User>> {
+	async updateUserAttributes(
+		userId: string,
+		userData: Partial<User>,
+		tenantId?: string,
+		options?: { sudo?: boolean }
+	): Promise<DatabaseResult<User>> {
 		try {
-			const filter: Record<string, unknown> = { _id: userId };
-			if (tenantId) {
-				filter.tenantId = tenantId;
-			}
+			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
 
 			const user = await this.UserModel.findOneAndUpdate(filter, userData, {
 				returnDocument: 'after'
@@ -231,9 +237,10 @@ export class UserAdapter {
 	}
 
 	// Get all users with optional filtering, sorting, and pagination
-	async getAllUsers(options?: PaginationOption): Promise<DatabaseResult<User[]>> {
+	async getAllUsers(options?: PaginationOption, dbOptions?: { sudo?: boolean }): Promise<DatabaseResult<User[]>> {
 		try {
-			let query = this.UserModel.find(options?.filter || {}).lean();
+			const filter = safeQuery(options?.filter || {}, options?.filter?.tenantId as string, { sudo: dbOptions?.sudo });
+			let query = this.UserModel.find(filter).lean();
 
 			if (options?.sort) {
 				const sortOptions: Record<string, 1 | -1> = {};
@@ -277,9 +284,10 @@ export class UserAdapter {
 	}
 
 	// Get the count of users
-	async getUserCount(filter?: Record<string, unknown>): Promise<DatabaseResult<number>> {
+	async getUserCount(filter?: Record<string, unknown>, options?: { sudo?: boolean }): Promise<DatabaseResult<number>> {
 		try {
-			const count = await this.UserModel.countDocuments(filter || {});
+			const safeFilter = safeQuery(filter || {}, filter?.tenantId as string, { sudo: options?.sudo });
+			const count = await this.UserModel.countDocuments(safeFilter);
 			logger.debug(`User count retrieved: ${count}`);
 			return {
 				success: true,
@@ -607,12 +615,9 @@ export class UserAdapter {
 	}
 
 	// Delete a user
-	async deleteUser(userId: string, tenantId?: string): Promise<DatabaseResult<void>> {
+	async deleteUser(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<void>> {
 		try {
-			const filter: Record<string, unknown> = { _id: userId };
-			if (tenantId) {
-				filter.tenantId = tenantId;
-			}
+			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
 
 			await this.UserModel.findOneAndDelete(filter);
 			logger.info(`User deleted: ${userId}`, { tenantId });
@@ -663,12 +668,9 @@ export class UserAdapter {
 	}
 
 	// Get a user by ID
-	async getUserById(userId: string, tenantId?: string): Promise<DatabaseResult<User | null>> {
+	async getUserById(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>> {
 		try {
-			const filter: Record<string, unknown> = { _id: userId };
-			if (tenantId) {
-				filter.tenantId = tenantId;
-			}
+			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
 
 			const user = await this.UserModel.findOne(filter).lean();
 			if (user) {
@@ -700,7 +702,7 @@ export class UserAdapter {
 			};
 		}
 	} // Get a user by email
-	async getUserByEmail(criteria: { email: string; tenantId?: string }): Promise<DatabaseResult<User | null>> {
+	async getUserByEmail(criteria: { email: string; tenantId?: string }, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>> {
 		try {
 			if (!criteria.email || typeof criteria.email !== 'string') {
 				logger.error('getUserByEmail called with invalid email:', {
@@ -713,10 +715,7 @@ export class UserAdapter {
 				};
 			}
 			const normalizedEmail = criteria.email.toLowerCase();
-			const filter: Record<string, unknown> = { email: normalizedEmail };
-			if (criteria.tenantId) {
-				filter.tenantId = criteria.tenantId;
-			}
+			const filter = safeQuery({ email: normalizedEmail } as any, criteria.tenantId, { sudo: options?.sudo });
 
 			const user = await this.UserModel.findOne(filter).lean();
 			if (user) {

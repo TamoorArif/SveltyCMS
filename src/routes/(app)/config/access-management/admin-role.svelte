@@ -21,7 +21,7 @@ It provides functionality to:
 	// Types
 	import type { Role } from '@src/databases/auth/types';
 	// Components
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { tick } from 'svelte';
 
 	const { roleData, setRoleData } = $props();
@@ -80,7 +80,7 @@ It provides functionality to:
 				});
 				setRoleData(result);
 			} catch (_error) {
-				showToast('Network error occurred while updating config file', 'error');
+				toast.error('Network error occurred while updating config file');
 			}
 			notification = 'Admin role changed. Click "Save" at the top to apply changes.';
 		} catch (err) {

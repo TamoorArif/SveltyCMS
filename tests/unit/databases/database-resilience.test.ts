@@ -1,6 +1,12 @@
 /**
  * @file tests\unit\databases\database-resilience.test.ts
  * @description Unit tests for the Database Resilience (Retry/Circuit Breaker) logic
+ *
+ * Tests:
+ * - Successful execution on first attempt
+ * - Retry on failure and eventual success
+ * - Failure after maximum attempts
+ * - Metric tracking
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

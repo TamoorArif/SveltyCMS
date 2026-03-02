@@ -33,7 +33,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 	import { publicEnv } from '@src/stores/global-settings.svelte';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
 	// Skeleton
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Removed axios import
 	// Stores
 	import { toggleUIElement } from '@src/stores/ui-store.svelte.ts';
@@ -249,19 +249,19 @@ Displays a collection of media files (images, documents, audio, video) with:
 		// Validate folder name
 		const trimmedName = folderName.trim();
 		if (!trimmedName) {
-			toaster.error({ description: 'Folder name cannot be empty' });
+			toast.error('Folder name cannot be empty');
 			return;
 		}
 
 		if (/[\\/:"*?<>|]/.test(trimmedName)) {
-			toaster.error({
+			toast.error({
 				description: 'Folder name contains invalid characters (\\ / : * ? " < > |)'
 			});
 			return;
 		}
 
 		if (trimmedName.length > 50) {
-			toaster.error({ description: 'Folder name must be 50 characters or less' });
+			toast.error('Folder name must be 50 characters or less');
 			return;
 		}
 
@@ -294,7 +294,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 					})
 				);
 
-				toaster.success({ description: 'Folder created successfully' });
+				toast.success('Folder created successfully');
 			} else {
 				throw new Error(result.error || 'Failed to create folder');
 			}
@@ -306,7 +306,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 					: error instanceof Error && error.message.includes('invalid')
 						? 'Invalid folder name'
 						: 'Failed to create folder';
-			toaster.error({ description: errorMessage });
+			toast.error({ description: errorMessage });
 		} finally {
 			isLoading = false;
 			globalLoadingStore.stopLoading(loadingOperations.dataFetch);
@@ -328,7 +328,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 			throw new Error(result.error || 'Failed to fetch folders');
 		} catch (error) {
 			logger.error('Error fetching updated folders:', error);
-			toaster.error({ description: 'Failed to fetch folders' });
+			toast.error('Failed to fetch folders');
 			return [];
 		}
 	}
@@ -375,7 +375,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 					errorMessage = 'Network error - please check your connection';
 				}
 			}
-			toaster.error({ description: errorMessage });
+			toast.error({ description: errorMessage });
 			files = [];
 		} finally {
 			isLoading = false;
@@ -400,7 +400,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 			await fetchMediaFiles();
 		} catch (error) {
 			logger.error('Error opening folder:', error);
-			toaster.error({ description: 'Failed to open folder' });
+			toast.error('Failed to open folder');
 		}
 	}
 
@@ -478,7 +478,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 					const success = Array.isArray(data) ? data[0]?.success : data?.success;
 
 					if (success) {
-						toaster.success({ description: 'Media deleted successfully.' });
+						toast.success('Media deleted successfully.');
 
 						// Reactively remove the deleted file from the files array
 						// Svelte 5 runes will automatically update all derived state
@@ -491,7 +491,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : String(error);
 					logger.error('Error deleting media:', errorMessage);
-					toaster.error({ description: `Error deleting media: ${errorMessage}` });
+					toast.error(`Error deleting media: ${errorMessage}`);
 				}
 			}
 		});
@@ -546,15 +546,15 @@ Displays a collection of media files (images, documents, audio, video) with:
 
 					// Show result
 					if (failCount === 0) {
-						toaster.success({
+						toast.success({
 							description: `Successfully deleted ${successCount} file${successCount > 1 ? 's' : ''}`
 						});
 					} else if (successCount === 0) {
-						toaster.error({
+						toast.error({
 							description: `Failed to delete ${failCount} file${failCount > 1 ? 's' : ''}`
 						});
 					} else {
-						toaster.warning({
+						toast.warning({
 							description: `Deleted ${successCount} file${successCount > 1 ? 's' : ''}, ${failCount} failed`
 						});
 					}
@@ -567,7 +567,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : String(error);
 					logger.error('Error in bulk delete:', errorMessage);
-					toaster.error({ description: `Error deleting media: ${errorMessage}` });
+					toast.error(`Error deleting media: ${errorMessage}`);
 				}
 			}
 		});
@@ -593,12 +593,12 @@ Displays a collection of media files (images, documents, audio, video) with:
 			advancedSearchCriteria = criteria;
 			modalState.close(); // Close the modal
 
-			toaster.success({
+			toast.success({
 				description: `Found ${result.totalCount} file${result.totalCount === 1 ? '' : 's'} matching ${result.matchedCriteria.length} criteria`
 			});
 		} catch (error) {
 			logger.error('Advanced search error:', error);
-			toaster.error({ description: 'Search failed. Please try again.' });
+			toast.error('Search failed. Please try again.');
 		}
 	}
 
@@ -645,7 +645,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 
 		if (!fullUrl) {
 			console.error('Failed to construct URL for image:', file);
-			toaster.error({ description: 'Cannot edit image: Invalid URL' });
+			toast.error('Cannot edit image: Invalid URL');
 			return;
 		}
 
@@ -694,7 +694,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 			});
 
 			if (response.ok) {
-				toaster.success({ description: 'Image saved successfully!' });
+				toast.success('Image saved successfully!');
 				// Full page reload to ensure all state is refreshed
 				window.location.href = '/mediagallery';
 			} else {
@@ -702,7 +702,7 @@ Displays a collection of media files (images, documents, audio, video) with:
 				throw new Error(errorData.error || 'Failed to save edited image');
 			}
 		} catch (err) {
-			toaster.error({
+			toast.error({
 				description: err instanceof Error ? err.message : 'Error saving image'
 			});
 			logger.error('Error saving edited image', err);

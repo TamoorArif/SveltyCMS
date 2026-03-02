@@ -1,3 +1,15 @@
+/**
+ * @file tests/unit/services/telemetry-service.test.ts
+ * @description Tests for telemetry service
+ *
+ * Tests:
+ * - Environment checks
+ * - Test mode detection
+ * - CI detection
+ * - Vitest detection
+ * - Node env detection
+ */
+
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { telemetryService } from '../../../src/services/telemetry-service';
 

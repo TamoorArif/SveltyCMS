@@ -1,6 +1,12 @@
 /**
  * @file tests/unit/widgets/address.test.ts
  * @description Unit tests for the Address widget validation logic
+ *
+ * Tests:
+ * - Valid address validation
+ * - Missing field rejection
+ * - Invalid type rejection
+ * - Country code validation
  */
 
 import { describe, expect, it } from 'bun:test';

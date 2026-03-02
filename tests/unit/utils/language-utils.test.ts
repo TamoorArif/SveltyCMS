@@ -1,6 +1,11 @@
 /**
  * @file tests/bun/utils/languageUtils.test.ts
  * @description Tests for language utility functions
+ *
+ * Tests:
+ * - Language name retrieval
+ * - Display locale support
+ * - Edge cases
  */
 
 import { describe, expect, it } from 'bun:test';

@@ -6,7 +6,7 @@
 
 import type { AutomationEventPayload } from '@src/services/automation/types';
 import { collections } from '@src/stores/collection-store.svelte';
-import { toaster } from '@src/stores/store.svelte';
+import { toast } from '@src/stores/toast.svelte.ts';
 import { isReady } from '@src/stores/system/state';
 import { ui } from '@src/stores/ui-store.svelte';
 import { get } from 'svelte/store';
@@ -183,19 +183,19 @@ class CollaborationStore {
 
 		switch (payload.event) {
 			case 'entry:publish':
-				toaster.success({
+				toast.success({
 					title: 'Content Published',
 					description: `${username} published an entry in ${payload.collection}`
 				});
 				break;
 			case 'entry:create':
-				toaster.info({
+				toast.info({
 					title: 'New Entry',
 					description: `${username} created a new record in ${payload.collection}`
 				});
 				break;
 			case 'webhook:failure':
-				toaster.error({
+				toast.error({
 					title: 'Automation Failed',
 					description: `Webhook for ${payload.collection} returned an error.`
 				});
@@ -231,7 +231,7 @@ class CollaborationStore {
 
 		// If panel is closed, show a toast or notification
 		if (ui.state.chatPanel === 'hidden') {
-			toaster.info({
+			toast.info({
 				title: `Message from ${msg.user?.username || 'User'}`,
 				description: msg.content.length > 50 ? `${msg.content.substring(0, 50)}...` : msg.content
 			});
@@ -272,7 +272,7 @@ class CollaborationStore {
 			}
 		} catch (err) {
 			console.error('RTC: Send message error', err);
-			toaster.error({ title: 'Error', description: 'Failed to send message' });
+			toast.error({ title: 'Error', description: 'Failed to send message' });
 		}
 	}
 

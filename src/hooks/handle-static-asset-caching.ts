@@ -40,7 +40,7 @@ import type { Handle } from '@sveltejs/kit';
  * Optimized for performance with specific path prefixes and file extensions.
  */
 const STATIC_ASSET_REGEX =
-	/^\/(?:_app\/|static\/|files\/|favicon\.ico|manifest\.webmanifest|apple-touch-icon.*\.png|robots\.txt|sitemap\.xml)|.*\.(?:js|css|map|svg|png|jpe?g|gif|webp|avif|woff2?|ttf|eot)$/;
+	/^\/(?:_app\/|static\/|files\/|favicon\.ico|manifest\.webmanifest|apple-touch-icon.*\.png|robots\.txt|sitemap\.xml|@vite\/|@fs\/|@id\/|\.svelte-kit\/|src\/|node_modules\/)|.*\.(?:js|css|map|svg|png|jpe?g|gif|webp|avif|woff2?|ttf|eot|svelte|ts)$/;
 
 /**
  * Alternative function-based approach for more readable asset detection.

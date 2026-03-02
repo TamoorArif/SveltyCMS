@@ -59,7 +59,7 @@ This component provides a user interface for managing 2FA settings:
 		twofa_verify_setup_title,
 		twofa_verifying
 	} from '@src/paraglide/messages';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { invalidateAll } from '$app/navigation';
 	// Skeleton & Stores
@@ -102,10 +102,10 @@ This component provides a user interface for managing 2FA settings:
 
 	// Show success toast
 	function showSuccessToast(message: string) {
-		toaster.success({ title: 'Success', description: message });
+		toast.success({ title: 'Success', description: message });
 	}
 	function showErrorToast(message: string) {
-		toaster.error({ title: 'Error', description: message });
+		toast.error({ title: 'Error', description: message });
 	}
 
 	// Load setup data (QR code, secret, backup codes)

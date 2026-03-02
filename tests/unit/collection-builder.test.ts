@@ -1,4 +1,14 @@
-// tests/bun/collection-builder.test.ts
+/**
+ * @file tests/unit/collection-builder.test.ts
+ * @description Unit tests for the Collection Builder widget integration
+ *
+ * Tests:
+ * - Widget selection filtering
+ * - Search functionality
+ * - GUI schema access
+ * - Field instance creation
+ * - Widget activation/deactivation
+ */
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { WidgetConfig } from '../../src/widgets/widget-factory';

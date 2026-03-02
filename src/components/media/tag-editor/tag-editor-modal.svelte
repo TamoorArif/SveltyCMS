@@ -9,7 +9,7 @@ Features:
 - Tag Management
 -->
 <script lang="ts">
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@utils/logger';
 	import type { MediaImage } from '@utils/media/media-models';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -72,10 +72,10 @@ Features:
 				file = result.data;
 				onUpdate(result.data);
 			}
-			toaster.success({ description: 'AI tags generated!' });
+			toast.success('AI tags generated!');
 		} catch (e: any) {
 			logger.error('AI Tagging error:', e);
-			toaster.error({ description: e.message || 'An unexpected error occurred' });
+			toast.error({ description: e.message || 'An unexpected error occurred' });
 		} finally {
 			isGenerating = false;
 		}
@@ -107,9 +107,9 @@ Features:
 				onUpdate(result.data);
 			}
 			newTagInput = '';
-			toaster.success({ description: 'Tag added!' });
+			toast.success('Tag added!');
 		} catch (e: any) {
-			toaster.error({ description: e.message });
+			toast.error({ description: e.message });
 		}
 	}
 
@@ -140,7 +140,7 @@ Features:
 				onUpdate(result.data);
 			}
 		} catch (e: any) {
-			toaster.error({ description: e.message });
+			toast.error({ description: e.message });
 		}
 	}
 
@@ -173,7 +173,7 @@ Features:
 				onUpdate(result.data);
 			}
 		} catch (e: any) {
-			toaster.error({ description: e.message });
+			toast.error({ description: e.message });
 		} finally {
 			editingTag = null;
 		}
@@ -211,9 +211,9 @@ Features:
 				file = result.data;
 				onUpdate(result.data);
 			}
-			toaster.success({ description: 'Tags saved!' });
+			toast.success('Tags saved!');
 		} catch (e: any) {
-			toaster.error({ description: e.message });
+			toast.error({ description: e.message });
 		} finally {
 			isSaving = false;
 		}

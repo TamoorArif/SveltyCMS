@@ -17,6 +17,7 @@ import { error } from '@sveltejs/kit';
 import { AppError, handleApiError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 import { isSetupComplete } from '@utils/setup-check';
+import { STATIC_ASSET_REGEX } from './handle-static-asset-caching';
 
 // Track initialization state more robustly
 let initializationState: 'pending' | 'in-progress' | 'complete' | 'failed' = 'pending';
@@ -32,20 +33,24 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 
 	let systemState = getSystemState();
 
-	// Skip trace logging for static assets and health checks to reduce log noise
+	// Skip trace logging and heavy logic for static assets and health checks
 	const isHealthCheck = pathname.startsWith('/api/system/health') || pathname.startsWith('/api/dashboard/health');
-	const isStaticAsset = pathname.startsWith('/static') || pathname.startsWith('/assets') || pathname.startsWith('/_');
+	const isAsset = STATIC_ASSET_REGEX.test(pathname);
 
-	if (!(isHealthCheck || isStaticAsset)) {
+	if (isAsset) {
+		return await resolve(event);
+	}
+
+	if (!isHealthCheck) {
 		const requestType = event.isDataRequest ? 'API' : 'PAGE';
 		logger.debug(
 			`[handleSystemState] ${event.request.method} ${pathname}${event.url.search} [${requestType}], state: ${systemState.overallState}, initState: ${initializationState}`
 		);
 	}
 
-	// Bypass state checks in TEST_MODE to prevent blocking tests on transient failures
+	// Bypass state checks in TEST_MODE
 	if (process.env.TEST_MODE === 'true') {
-		if (!(isHealthCheck || isStaticAsset)) {
+		if (!isHealthCheck) {
 			logger.warn(`[handleSystemState] TEST_MODE enabled. Bypassing state checks for ${pathname}`);
 		}
 		return await resolve(event);

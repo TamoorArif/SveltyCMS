@@ -21,7 +21,7 @@
 	import { getCollections } from '@utils/api-client';
 	import { logger } from '@utils/logger';
 	// Skeleton components
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 
 	interface ExportOptions {
 		collections: string[];
@@ -277,7 +277,7 @@
 	// --- UI & Utility Functions ---
 
 	function showAlertMessage(message: string, type: 'success' | 'error' | 'info' | 'warning') {
-		showToast(message, type, 5000);
+		if(type==='success'){toast.success(message);}else if(type==='error'){toast.error(message);}else if(type==='warning'){toast.warning(message);}else{toast.info(message);}
 	}
 
 	function downloadExport() {

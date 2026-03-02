@@ -44,7 +44,7 @@
 	} from '@src/paraglide/messages';
 	import { publicEnv } from '@src/stores/global-settings.svelte';
 	import { screen } from '@src/stores/screen-size-store.svelte';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { Form } from '@utils/form.svelte.ts';
 	import { signUpFormSchema } from '@utils/form-schemas';
 	import { logger } from '@utils/logger';
@@ -125,7 +125,7 @@
 			if (result.type === 'redirect') {
 				isRedirecting = true;
 
-				toaster.success({
+				toast.success({
 					title: 'Account Created!',
 					description: 'Welcome to SveltyCMS. Redirecting to your dashboard...'
 				});
@@ -142,7 +142,7 @@
 				const errorMessage =
 					result.type === 'failure' ? result.data?.message || 'Failed to create account' : result.error?.message || 'An unexpected error occurred';
 
-				toaster.error({
+				toast.error({
 					title: 'Sign Up Failed',
 					description: errorMessage
 				});
@@ -155,7 +155,7 @@
 
 			if (result.type === 'success') {
 				response = result.data?.message;
-				toaster.success({
+				toast.success({
 					title: 'Account Created',
 					description: result.data?.message || 'Your account has been successfully created'
 				});

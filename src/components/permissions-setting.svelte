@@ -28,7 +28,7 @@ Advanced permission management interface with bulk actions and presets.
 <script lang="ts">
 	import type { Role } from '@src/databases/auth/types';
 	import { PermissionAction } from '@src/databases/auth/types';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 
@@ -151,7 +151,7 @@ Advanced permission management interface with bulk actions and presets.
 		const role = roles.find((r: Role) => r._id === roleId);
 
 		if (role?.isAdmin) {
-			showToast('Cannot modify permissions for admin role', 'warning');
+			toast.warning('Cannot modify permissions for admin role');
 			return;
 		}
 
@@ -169,7 +169,7 @@ Advanced permission management interface with bulk actions and presets.
 		const role = roles.find((r: Role) => r._id === roleId);
 
 		if (role?.isAdmin) {
-			showToast('Cannot modify permissions for admin role', 'warning');
+			toast.warning('Cannot modify permissions for admin role');
 			return;
 		}
 
@@ -177,7 +177,7 @@ Advanced permission management interface with bulk actions and presets.
 
 		saveToHistory();
 		updateParent();
-		showToast(`All permissions ${value ? 'enabled' : 'disabled'} for ${role?.name}`, 'success');
+		toast.success(`All permissions ${value ? 'enabled' : 'disabled'} for ${role?.name}`);
 	}
 
 	function setPermissionForAllRoles(action: PermissionAction, value: boolean) {
@@ -189,7 +189,7 @@ Advanced permission management interface with bulk actions and presets.
 
 		saveToHistory();
 		updateParent();
-		showToast(`${action} ${value ? 'enabled' : 'disabled'} for all roles`, 'success');
+		toast.success(`${action} ${value ? 'enabled' : 'disabled'} for all roles`);
 	}
 
 	// Apply preset
@@ -197,7 +197,7 @@ Advanced permission management interface with bulk actions and presets.
 		const role = roles.find((r: Role) => r._id === roleId);
 
 		if (role?.isAdmin) {
-			showToast('Cannot modify permissions for admin role', 'warning');
+			toast.warning('Cannot modify permissions for admin role');
 			return;
 		}
 
@@ -206,7 +206,7 @@ Advanced permission management interface with bulk actions and presets.
 			permissionsState[roleId] = { ...preset.permissions };
 			saveToHistory();
 			updateParent();
-			showToast(`Applied "${preset.name}" preset to ${role?.name}`, 'success');
+			toast.success(`Applied "${preset.name}" preset to ${role?.name}`);
 		}
 	}
 
@@ -233,7 +233,7 @@ Advanced permission management interface with bulk actions and presets.
 		a.download = `permissions-${new Date().toISOString().split('T')[0]}.json`;
 		a.click();
 		URL.revokeObjectURL(url);
-		showToast('Permissions exported', 'success');
+		toast.success('Permissions exported');
 	}
 
 	// Import permissions
@@ -251,9 +251,9 @@ Advanced permission management interface with bulk actions and presets.
 			permissionsState = { ...permissionsState, ...imported };
 			saveToHistory();
 			updateParent();
-			showToast('Permissions imported successfully', 'success');
+			toast.success('Permissions imported successfully');
 		} catch {
-			showToast('Failed to import permissions', 'error');
+			toast.error('Failed to import permissions');
 			error = 'Invalid permissions file';
 		}
 	}

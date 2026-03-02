@@ -31,7 +31,12 @@ import { logger } from '@utils/logger';
 let argon2: typeof import('argon2') | null = null;
 let crypto: typeof import('crypto') | null = null;
 
-if (typeof window === 'undefined') {
+// Server-side environment detection
+// Note: We check for process.versions as well because some test environments (like Bun)
+// may mock the window object, which would cause typeof window === 'undefined' to be false.
+const isServer = typeof window === 'undefined' || (typeof process !== 'undefined' && process.versions != null);
+
+if (isServer) {
 	try {
 		argon2 = await import('argon2');
 		crypto = await import('node:crypto');

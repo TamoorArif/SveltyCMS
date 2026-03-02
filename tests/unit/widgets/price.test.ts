@@ -1,6 +1,12 @@
 /**
  * @file tests/unit/widgets/price.test.ts
  * @description Unit tests for the Price widget
+ *
+ * Tests:
+ * - Default configuration
+ * - Validation schema
+ * - Min value enforcement
+ * - Required field handling
  */
 
 import { describe, expect, it, mock } from 'bun:test';

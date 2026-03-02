@@ -18,7 +18,7 @@
 	import { ui } from '@src/stores/ui-store.svelte.ts';
 	// Using iconify-icon web component
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	interface RawFolder {
@@ -86,7 +86,7 @@
 		} catch (err) {
 			error = 'Failed to load folders';
 			logger.error('[MediaFolders] Load error:', err);
-			showToast('Failed to load folders', 'error');
+			toast.error('Failed to load folders');
 		} finally {
 			isLoading = false;
 		}
@@ -179,10 +179,10 @@
 			if (!res.ok) {
 				throw new Error('Failed');
 			}
-			showToast('Folder moved', 'success');
+			toast.success('Folder moved');
 			await loadFolders();
 		} catch (e) {
-			showToast('Move failed', 'error');
+			toast.error('Move failed');
 			logger.error('[MediaFolders] Reorder error:', e);
 		}
 	}

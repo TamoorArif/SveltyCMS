@@ -19,7 +19,7 @@
 import { updatePublicEnv } from '@src/stores/global-settings.svelte';
 import { dbConfigSchema, setupAdminSchema, systemSettingsSchema } from '@utils/form-schemas';
 import { logger } from '@utils/logger';
-import { showToast } from '@utils/toast';
+import { toast } from '@src/stores/toast.svelte.ts';
 import { safeParse } from 'valibot';
 import { deserialize } from '$app/forms';
 import { goto } from '$app/navigation';
@@ -462,7 +462,7 @@ function createSetupStore() {
 
 			const result = deserialize(await response.text());
 			if (result.type !== 'success') {
-				showToast(`Seeding failed: ${(result as any).data?.error}`, 'error');
+				toast.error(`Seeding failed: ${(result as any).data?.error}`);
 				return false;
 			}
 			const data = result.data as any;
@@ -481,7 +481,7 @@ function createSetupStore() {
 				return true;
 			}
 			logger.warn('⚠️  Database initialization had issues:', data.error);
-			showToast(data.error || 'Seeding failed.', 'error', 4000);
+			toast.error(data.error || 'Seeding failed.', { duration: 4000 });
 			return false;
 		} catch (error) {
 			logger.warn('⚠️  Error during database initialization server function:', error);
@@ -509,7 +509,7 @@ function createSetupStore() {
 		const step2Valid = validateStep(2, true);
 
 		if (!(step0Valid && step1Valid && step2Valid)) {
-			showToast('Please fix validation errors before completing setup.', 'error');
+			toast.error('Please fix validation errors before completing setup.');
 
 			// Navigate to first invalid step
 			if (!step0Valid) {
@@ -552,7 +552,7 @@ function createSetupStore() {
 			const result = deserialize(responseText);
 			if (result.type !== 'success') {
 				const errorMsg = (result as any).data?.error || 'Failed to finalize setup.';
-				showToast(errorMsg, 'error', 5000);
+				toast.error(errorMsg, { duration: 5000 });
 				wizard.errorMessage = errorMsg;
 				return false;
 			}
@@ -560,7 +560,7 @@ function createSetupStore() {
 
 			if (!data.success) {
 				const errorMsg = data.error || 'Failed to finalize setup.';
-				showToast(errorMsg, 'error', 5000);
+				toast.error(errorMsg, { duration: 5000 });
 				wizard.errorMessage = errorMsg;
 				return false;
 			}
@@ -577,7 +577,7 @@ function createSetupStore() {
 				email: wizard.adminUser.email
 			});
 
-			showToast('Setup complete! Redirecting...', 'success', 2000);
+			toast.success('Setup complete! Redirecting...', { duration: 2000 });
 			logger.info('Toast triggered for setup completion');
 
 			// Use flash message for seamless transition to the dashboard
@@ -608,7 +608,7 @@ function createSetupStore() {
 		} catch (e) {
 			const errorMsg = e instanceof Error ? e.message : 'An unknown error occurred.';
 			wizard.errorMessage = errorMsg;
-			showToast(errorMsg, 'error', 5000);
+			toast.error(errorMsg, { duration: 5000 });
 			return false;
 		} finally {
 			wizard.isLoading = false;

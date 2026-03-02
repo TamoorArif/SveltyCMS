@@ -1,6 +1,13 @@
 /**
  * @file tests/unit/stores/setupStore.test.ts
  * @description Tests for setup wizard store
+ *
+ * Tests:
+ * - Initialization
+ * - Step validation
+ * - Password matching
+ * - Form submission
+ * - Error handling
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';

@@ -1,6 +1,13 @@
 /**
  * @file tests/unit/widgets/relation.test.ts
  * @description Unit tests for the Relation widget validation logic
+ *
+ * Tests:
+ * - Single ID validation
+ * - Optional field handling
+ * - Multiple selection
+ * - Min/max constraints
+ * - Required with multiple
  */
 
 import { describe, expect, it } from 'bun:test';

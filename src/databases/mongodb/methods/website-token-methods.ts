@@ -59,7 +59,7 @@ export class MongoWebsiteTokenMethods {
 		};
 	}
 
-	async delete(tokenId: DatabaseId): Promise<DatabaseResult<boolean>> {
+	async delete(tokenId: DatabaseId): Promise<DatabaseResult<void>> {
 		return this.crud.delete(tokenId);
 	}
 

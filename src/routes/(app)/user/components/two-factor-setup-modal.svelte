@@ -23,7 +23,7 @@ This modal displays the QR code for setting up 2FA and handles verification.
 -->
 
 <script lang="ts">
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Utils
 	import { logger } from '@utils/logger';
 
@@ -76,13 +76,13 @@ This modal displays the QR code for setting up 2FA and handles verification.
 	async function copyToClipboard(text: string) {
 		try {
 			await navigator.clipboard.writeText(text);
-			toaster.success({
+			toast.success({
 				title: 'Success',
 				description: `${button_copy()} successful`
 			});
 		} catch (err) {
 			logger.error('Failed to copy:', err);
-			toaster.error({ title: 'Error', description: 'Failed to copy' });
+			toast.error({ title: 'Error', description: 'Failed to copy' });
 		}
 	}
 
@@ -112,13 +112,13 @@ This modal displays the QR code for setting up 2FA and handles verification.
 			}
 
 			currentStep = 'complete';
-			toaster.success({
+			toast.success({
 				title: 'Success',
 				description: twofa_setup_complete_title()
 			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : twofa_error_invalid_code();
-			toaster.error({ title: 'Error', description: error });
+			toast.error({ title: 'Error', description: error });
 		} finally {
 			isVerifying = false;
 		}

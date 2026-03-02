@@ -1,3 +1,15 @@
+/**
+ * @file tests/unit/services/token-engine.test.ts
+ * @description Tests for token engine
+ *
+ * Tests:
+ * - Simple token replacement
+ * - Context handling
+ * - Modifier application
+ * - Recursive processing
+ * - Error handling
+ */
+
 import { beforeEach, describe, expect, it } from 'bun:test';
 
 import { replaceTokens, TokenRegistry } from '@src/services/token/engine';

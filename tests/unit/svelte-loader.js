@@ -1,4 +1,13 @@
-// tests/bun/svelte-loader.js
+/**
+ * @file tests/unit/svelte-loader.js
+ * @description Svelte loader for Bun tests with TypeScript path alias support
+ *
+ * This loader handles:
+ * - Svelte file compilation
+ * - Svelte + TypeScript compilation
+ * - TypeScript path alias resolution
+ * - File URL conversion for SvelteKit compatibility
+ */
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

@@ -20,7 +20,7 @@
 	import PageTitle from '@src/components/page-title.svelte';
 	import { system_permission, system_roles } from '@src/paraglide/messages';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { page } from '$app/state';
 	import AdminRole from './admin-role.svelte';
@@ -65,26 +65,18 @@
 					});
 
 					if (response.status === 200) {
-						toaster.success({
-							description: 'Configuration updated successfully!'
-						});
+						toast.success('Configuration updated successfully!');
 						hasModifiedChanges = false;
 						modifiedCount = 0;
 					} else if (response.status === 304) {
-						toaster.info({
-							description: 'No changes detected, configuration not updated.'
-						});
+						toast.info('No changes detected, configuration not updated.');
 					} else {
 						const responseText = await response.text();
-						toaster.error({
-							description: `Error updating configuration: ${responseText}`
-						});
+						toast.error(`Error updating configuration: ${responseText}`);
 					}
 				} catch (error) {
 					logger.error('Network error during save:', error);
-					toaster.error({
-						description: 'Network error occurred while updating configuration.'
-					});
+					toast.error('Network error occurred while updating configuration.');
 				}
 			},
 			'Saving access control configuration'
@@ -98,7 +90,7 @@
 		rolesData = page.data.roles; // Reset to initial loaded state
 		hasModifiedChanges = false;
 		modifiedCount = 0;
-		toaster.info({ description: 'Changes have been reset.' });
+		toast.info('Changes have been reset.');
 	};
 </script>
 

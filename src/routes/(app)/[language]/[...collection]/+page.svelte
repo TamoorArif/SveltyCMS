@@ -30,7 +30,7 @@
 	import { app, validationStore } from '@src/stores/store.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { parseURLToMode } from '@utils/navigation-utils';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { getFieldName } from '@utils/utils';
 	import { onMount, untrack } from 'svelte';
 	import { beforeNavigate, invalidateAll, replaceState } from '$app/navigation';
@@ -505,13 +505,13 @@
 				const saved = await autoSaveDraft();
 
 				if (saved) {
-					showToast('Changes auto-saved as draft', 'success');
+					toast.success('Changes auto-saved as draft');
 					// Update initial value to prevent re-saving
 					initialCollectionValue = JSON.stringify(collections.activeValue);
 					// Allow navigation to continue
 					collections.setMode('view');
 				} else {
-					showToast('Failed to auto-save. Please save manually.', 'error');
+					toast.error('Failed to auto-save. Please save manually.');
 				}
 			}
 		}

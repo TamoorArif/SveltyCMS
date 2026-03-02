@@ -19,7 +19,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 	import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
 	// Paraglide Messages
 	import { button_cancel, button_delete, button_save, form_confirmpassword, modaleditform_newpassword } from '@src/paraglide/messages';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { editUserSchema } from '@utils/form-schemas';
 	import { modalState } from '@utils/modal-state.svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -158,7 +158,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 				throw new Error(result.message || 'Failed to update user.');
 			}
 
-			toaster.success({
+			toast.success({
 				description: '<iconify-icon icon="mdi:check-outline" width={24} ></iconify-icon> User Data Updated'
 			});
 			await invalidateAll();
@@ -166,7 +166,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 			modalState.close();
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'An unknown error occurred.';
-			toaster.error({ description: `<CircleAlert size={24}/> ${message}` });
+			toast.error(`<CircleAlert size={24}/> ${message}`);
 		} finally {
 			editForm.submitting = false;
 		}
@@ -203,7 +203,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 			if (data.valid) {
 				isCurrentPasswordValidated = true;
 				editForm.errors.currentPassword = [];
-				toaster.success({ description: 'Password verified', duration: 5000 });
+				toast.success({ description: 'Password verified', duration: 5000 });
 			} else {
 				isCurrentPasswordValidated = false;
 				editForm.errors.currentPassword = ['Incorrect password'];
@@ -235,7 +235,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 
 			// Use the success message from the API response
 			const successMessage = data.message || 'User deleted successfully.';
-			toaster.success({
+			toast.success({
 				description: `<iconify-icon icon="mdi:alert-circle" width={24}></iconify-icon> ${successMessage}`
 			});
 
@@ -244,7 +244,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 			modalState.close();
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'An unknown error occurred.';
-			toaster.error({ description: `<CircleAlert size={24}/> ${message}` });
+			toast.error(`<CircleAlert size={24}/> ${message}`);
 		}
 	}
 

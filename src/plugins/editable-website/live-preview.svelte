@@ -7,7 +7,7 @@
 	import type { User } from '@auth/types';
 	import type { CollectionEntry, Schema } from '@src/content/types';
 	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import type { CmsUpdateMessage } from './types';
 
@@ -82,7 +82,7 @@
 
 	function copyUrl() {
 		navigator.clipboard.writeText(previewUrl);
-		toaster.success({ description: 'Preview URL Copied' });
+		toast.success('Preview URL Copied');
 	}
 </script>
 

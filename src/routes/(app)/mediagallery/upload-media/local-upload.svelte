@@ -17,7 +17,7 @@
 -->
 <script lang="ts">
 	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { toaster } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Using iconify-icon web component
 	import { logger } from '@utils/logger';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -168,7 +168,7 @@
 		});
 
 		if (errors.length > 0) {
-			toaster.error({ description: errors.join('\n') });
+			toast.error({ description: errors.join('\n') });
 		}
 
 		if (validFiles.length > 0) {
@@ -235,7 +235,7 @@
 
 	async function uploadLocalFiles() {
 		if (files.length === 0) {
-			toaster.warning({ description: 'No files selected for upload' });
+			toast.warning('No files selected for upload');
 			return;
 		}
 
@@ -309,7 +309,7 @@
 			const success = Array.isArray(result) ? result[0]?.success : result?.success;
 
 			if (success) {
-				toaster.success({ description: 'Files uploaded successfully' });
+				toast.success('Files uploaded successfully');
 				handleCancel();
 				onUploadComplete();
 				if (redirectOnSuccess) {
@@ -320,7 +320,7 @@
 			}
 		} catch (error) {
 			logger.error('Error uploading files:', error);
-			toaster.error({
+			toast.error({
 				description: `Error uploading files: ${error instanceof Error ? error.message : 'Unknown error'}`
 			});
 		} finally {

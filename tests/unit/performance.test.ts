@@ -1,3 +1,12 @@
+/**
+ * @file tests/unit/performance.test.ts
+ * @description Performance tests for Batch API and Search functionality
+ *
+ * Tests:
+ * - Batch widget vs legacy widget performance
+ * - Parallel search performance
+ */
+
 import { describe, expect, test } from 'bun:test';
 
 // Mock data

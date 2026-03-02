@@ -14,7 +14,7 @@ Handles all field types and validation automatically
 <script lang="ts">
 	// Components
 	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import iso6391 from '@utils/iso639-1.json';
 	import { getLanguageName } from '@utils/language-utils';
 	import { logger } from '@utils/logger';
@@ -374,7 +374,7 @@ Handles all field types and validation automatically
 				if (group.requiresRestart) {
 					message += ' Server restart required for changes to take effect.';
 				}
-				toaster.success({ description: message });
+				toast.success({ description: message });
 				await loadSettings(true); // Bypass cache after save - this also resets originalValues
 				checkForEmptyFields(); // Update the warning status after save
 			} else {
@@ -404,18 +404,16 @@ Handles all field types and validation automatically
 					const data = await response.json();
 
 					if (data.success) {
-						toaster.success({
-							description: `${group.name} settings reset to defaults!`
-						});
+						toast.success(`${group.name} settings reset to defaults!`);
 						await loadSettings(true); // Bypass cache after reset
 						checkForEmptyFields(); // Re-check after reset
 					} else {
 						error = data.error || 'Failed to reset settings';
-						toaster.error({ description: error || 'Failed to reset settings' });
+						toast.error({ description: error || 'Failed to reset settings' });
 					}
 				} catch (err) {
 					error = err instanceof Error ? err.message : 'Failed to reset settings';
-					toaster.error({ description: error || 'Failed to reset settings' });
+					toast.error({ description: error || 'Failed to reset settings' });
 				} finally {
 					saving = false;
 				}

@@ -1,6 +1,14 @@
 /**
  * @file tests/bun/hooks/setup.test.ts
- * @description Comprehensive tests for handleSetup middleware with proper redirect validation.
+ * @description Comprehensive tests for handleSetup middleware with proper redirect validation
+ *
+ * Tests:
+ * - Setup state detection
+ * - Allowed routes during setup
+ * - Redirect to setup
+ * - API error handling
+ * - Cache invalidation
+ * - Production environment handling
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

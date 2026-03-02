@@ -1,3 +1,14 @@
+/**
+ * @file tests/unit/services/ai-service.test.ts
+ * @description Tests for AI service
+ *
+ * Tests:
+ * - Search context
+ * - Tag image
+ * - Chat
+ * - Generate layout spec
+ */
+
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { AIService } from '@src/services/ai-service';
 

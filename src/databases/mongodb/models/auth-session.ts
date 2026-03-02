@@ -158,13 +158,16 @@ export class SessionAdapter {
 	}
 
 	// Create a new session
-	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }): Promise<DatabaseResult<Session>> {
+	async createSession(
+		sessionData: { user_id: string; expires: ISODateString; tenantId?: string },
+		options?: { sudo?: boolean }
+	): Promise<DatabaseResult<Session>> {
 		try {
 			// Create the new session with UUID
 			const sessionId = generateId();
 			const session = new this.SessionModel({ ...sessionData, _id: sessionId });
 			await session.save();
-			logger.info(`Session created: ${sessionId} for user: ${sessionData.user_id}`);
+			logger.info(`Session created: ${sessionId} for user: ${sessionData.user_id}`, { sudo: options?.sudo });
 			const sessionObj = session.toObject();
 			return {
 				success: true,

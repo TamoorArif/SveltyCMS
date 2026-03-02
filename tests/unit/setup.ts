@@ -1,12 +1,40 @@
 /**
  * @file tests/unit/setup.ts
  * @description Global test setup file for Bun test runner
+ *
+ * This file sets up the global state for the test runner.
  */
 import { mock } from 'bun:test';
 
 // =============================================================================
 // 0. GLOBAL STATE FOR MOCKS
 // =============================================================================
+
+const mockSessionStorage = (() => {
+	const storage: Record<string, string> = {};
+	return {
+		getItem: (key: string) => storage[key] || null,
+		setItem: (key: string, value: string) => {
+			storage[key] = value;
+		},
+		removeItem: (key: string) => {
+			delete storage[key];
+		},
+		clear: () => {
+			for (const key in storage) delete storage[key];
+		},
+		length: 0,
+		key: (index: number) => Object.keys(storage)[index] || null
+	};
+})();
+(globalThis as any).sessionStorage = mockSessionStorage;
+(globalThis as any).window = {
+	setTimeout: setTimeout,
+	clearTimeout: clearTimeout,
+	addEventListener: () => {},
+	removeEventListener: () => {},
+	matchMedia: () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} })
+};
 
 (globalThis as any).publicEnv = {
 	DEFAULT_CONTENT_LANGUAGE: 'en',

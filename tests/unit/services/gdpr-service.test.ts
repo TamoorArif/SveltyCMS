@@ -1,6 +1,14 @@
 /**
  * @file tests/unit/services/GDPRService.test.ts
  * @description Unit tests for the GDPR Compliance Service
+ *
+ * Tests:
+ * - Export user data
+ * - Anonymize user
+ * - Error handling
+ * - User not found
+ * - Ghost identity
+ * - Audit logging
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';

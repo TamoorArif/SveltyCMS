@@ -25,7 +25,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 		WebhookOperationConfig
 	} from '@src/services/automation/types';
 	import { AUTOMATION_EVENTS, OPERATION_TYPES } from '@src/services/automation/types';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { v4 as uuidv4 } from 'uuid';
@@ -71,12 +71,12 @@ and preview/test functionality. Reuses TokenPicker patterns.
 				if (result.success) {
 					flow = result.data;
 				} else {
-					showToast('Automation not found', 'error');
+					toast.error('Automation not found');
 					goto('/config/automations');
 					return;
 				}
 			} catch (_err) {
-				showToast('Failed to load automation', 'error');
+				toast.error('Failed to load automation');
 				goto('/config/automations');
 				return;
 			}
@@ -88,7 +88,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 
 	async function save() {
 		if (!flow.name.trim()) {
-			showToast('Name is required', 'warning');
+			toast.warning('Name is required');
 			activeStep = 1;
 			return;
 		}
@@ -106,13 +106,13 @@ and preview/test functionality. Reuses TokenPicker patterns.
 			const result = await res.json();
 
 			if (result.success) {
-				showToast(`Automation ${isNew ? 'created' : 'updated'}`, 'success');
+				toast.success(`Automation ${isNew ? 'created' : 'updated'}`);
 				goto('/config/automations');
 			} else {
-				showToast(result.error || 'Save failed', 'error');
+				toast.error(result.error || 'Save failed');
 			}
 		} catch (_err) {
-			showToast('Error saving automation', 'error');
+			toast.error('Error saving automation');
 		} finally {
 			isSaving = false;
 		}
@@ -120,7 +120,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 
 	async function testFlow() {
 		if (isNew) {
-			showToast('Save the automation first to test it', 'warning');
+			toast.warning('Save the automation first to test it');
 			return;
 		}
 
@@ -133,12 +133,12 @@ and preview/test functionality. Reuses TokenPicker patterns.
 			const result = await res.json();
 			if (result.success) {
 				testResult = result.data;
-				showToast(`Test ${result.data.status} in ${result.data.duration}ms`, result.data.status === 'success' ? 'success' : 'warning');
+				toast[result.data.status === 'success' ? 'success' : 'warning'](`Test ${result.data.status} in ${result.data.duration}ms`);
 			} else {
-				showToast(result.error || 'Test failed', 'error');
+				toast.error(result.error || 'Test failed');
 			}
 		} catch (_err) {
-			showToast('Test error', 'error');
+			toast.error('Test error');
 		} finally {
 			isTesting = false;
 		}

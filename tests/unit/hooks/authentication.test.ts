@@ -6,6 +6,16 @@
  * - auth.validateSession(), auth.createSession(), auth.destroySession()
  * - cacheService (Redis)
  * - metricsService
+ *
+ * Tests:
+ * - Public route bypass
+ * - Internal route bypass
+ * - Multi-tenancy detection
+ * - Session validation
+ * - 3-layer session cache
+ * - WeakRef cache management
+ * - Session rotation
+ * - Error handling
  */
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';

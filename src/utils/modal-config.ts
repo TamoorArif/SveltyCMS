@@ -30,7 +30,7 @@ export interface ModalSettings {
 // ParaglideJS
 import * as m from '@src/paraglide/messages';
 import { button_cancel, button_confirm, scheduler_body, scheduler_title } from '@src/paraglide/messages';
-import { showToast } from '@utils/toast';
+import { toast } from '@src/stores/toast.svelte.ts';
 import { writable } from 'svelte/store';
 
 // Modal themes and configurations
@@ -276,7 +276,7 @@ export function showActionToast(action: string, itemType: string, count = 1, suc
 		message = count > 1 ? `${count} ${itemType} ${action}ed.` : `${itemType} ${action}ed.`;
 	}
 
-	showToast(message, type);
+	if(type==='success'){toast.success(message);}else if(type==='error'){toast.error(message);}else if(type==='warning'){toast.warning(message);}else{toast.info(message);}
 }
 
 // Validates if an action is available for current user permissions

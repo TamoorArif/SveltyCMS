@@ -1,6 +1,12 @@
 /**
  * @file tests/unit/widgets/richText.test.ts
  * @description Unit tests for the RichText widget validation logic
+ *
+ * Tests:
+ * - Simple HTML content validation
+ * - Empty content rejection when required
+ * - Empty content allowance when not required
+ * - Script tag sanitization
  */
 
 import { describe, expect, it } from 'bun:test';

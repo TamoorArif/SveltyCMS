@@ -1,6 +1,15 @@
 /**
- * @file tests/bun/stores/loadingStore.test.ts
+ * @file tests/unit/stores/loading-store.test.ts
  * @description Tests for global loading state management
+ *
+ * Tests:
+ * - Basic operations
+ * - Concurrent operations
+ * - Context tracking
+ * - Timeout protection
+ * - Clear operations
+ * - Operation types
+ * - Edge cases
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';

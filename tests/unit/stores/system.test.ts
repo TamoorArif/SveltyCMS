@@ -1,6 +1,13 @@
 /**
- * @file tests/bun/stores/system.test.ts
+ * @file tests/unit/stores/system.test.ts
  * @description Tests for system state management store
+ *
+ * Tests:
+ * - Service health management
+ * - Overall state management
+ * - Performance metrics
+ * - Service health checks
+ * - Error handling
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';

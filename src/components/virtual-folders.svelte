@@ -35,7 +35,7 @@
 	import { screen } from '@src/stores/screen-size-store.svelte.ts';
 	import { ui } from '@src/stores/ui-store.svelte.ts';
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -76,7 +76,7 @@
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			error = message;
-			showToast(`Error fetching folders: ${message}`, 'error');
+			toast.error(`Error fetching folders: ${message}`);
 			folders = [];
 		} finally {
 			isLoading = false;
@@ -106,7 +106,7 @@
 
 			const result = await response.json();
 			if (result.success) {
-				showToast('Folder created successfully', 'success');
+				toast.success('Folder created successfully');
 				newFolderName = '';
 				await fetchVirtualFolders();
 			} else {
@@ -115,7 +115,7 @@
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
 			error = message;
-			showToast(`Error creating folder: ${message}`, 'error');
+			toast.error(`Error creating folder: ${message}`);
 		} finally {
 			isLoading = false;
 		}
@@ -132,14 +132,14 @@
 			const result = await response.json();
 
 			if (result.success) {
-				showToast('Folder updated successfully', 'success');
+				toast.success('Folder updated successfully');
 				await fetchVirtualFolders();
 			} else {
 				throw new Error(result.error || 'Failed to update folder');
 			}
 		} catch (error) {
 			logger.error('Error updating folder:', error);
-			showToast('Error updating folder', 'error');
+			toast.error('Error updating folder');
 		}
 	}
 
@@ -154,14 +154,14 @@
 			const result = await response.json();
 
 			if (result.success) {
-				showToast('Folder deleted successfully', 'success');
+				toast.success('Folder deleted successfully');
 				await fetchVirtualFolders();
 			} else {
 				throw new Error(result.error || 'Failed to delete folder');
 			}
 		} catch (error) {
 			logger.error('Error deleting folder:', error);
-			showToast('Error deleting folder', 'error');
+			toast.error('Error deleting folder');
 		}
 	}
 

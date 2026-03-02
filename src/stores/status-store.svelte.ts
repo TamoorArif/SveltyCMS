@@ -9,7 +9,7 @@ import { StatusTypes } from '@src/content/types';
 import { collections } from '@src/stores/collection-store.svelte';
 import { updateEntryStatus } from '@src/utils/api-client';
 import { logger } from '@utils/logger';
-import { showToast } from '@utils/toast';
+import { toast } from '@src/stores/toast.svelte.ts';
 
 // Only track transient UI state
 const statusState = $state({
@@ -121,10 +121,10 @@ export const statusStore = {
 						_scheduled: undefined
 					});
 
-					showToast(newValue ? 'Entry published successfully' : 'Entry unpublished successfully', 'success');
+					toast.success(newValue ? 'Entry published successfully' : 'Entry unpublished successfully');
 					return true;
 				}
-				showToast(result.error || `Failed to ${newStatus} entry`, 'error');
+				toast.error(result.error || `Failed to ${newStatus} entry`);
 				return false;
 			}
 			// Case 2: New entry (no ID yet) - update local state only
@@ -138,7 +138,7 @@ export const statusStore = {
 			return true;
 		} catch (e) {
 			const error = e as Error;
-			showToast(`Error updating status: ${error.message}`, 'error');
+			toast.error(`Error updating status: ${error.message}`);
 			logger.error(`[StatusStore] Error in ${componentName}:`, error);
 			return false;
 		} finally {

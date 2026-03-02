@@ -39,7 +39,7 @@
 	import { logger } from '@utils/logger';
 	import { showScheduleModal } from '@utils/modal-utils';
 	import { navigationManager } from '@utils/navigation-manager';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { page } from '$app/state';
 	// Utils
 	import { cloneCurrentEntry, deleteCurrentEntry, saveEntry } from '../utils/entry-actions';
@@ -175,14 +175,14 @@
 					status: StatusTypes.schedule,
 					_scheduled: timestamp
 				};
-				showToast(`Entry scheduled for ${action}.`, 'success');
+				toast.success(`Entry scheduled for ${action}.`);
 			}
 		});
 	}
 
 	async function save() {
 		if (!isFormValid) {
-			showToast(validation_fix_before_save(), 'warning');
+			toast.warning(validation_fix_before_save());
 			return;
 		}
 

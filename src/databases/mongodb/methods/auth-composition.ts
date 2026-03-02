@@ -104,7 +104,8 @@ export function composeMongoAuthAdapter(): AuthInterface {
 		// Combined Performance-Optimized Methods
 		createUserAndSession: async (
 			userData: Partial<User>,
-			sessionData: { expires: ISODateString; tenantId?: string }
+			sessionData: { expires: ISODateString; tenantId?: string },
+			options?: { sudo?: boolean }
 		): Promise<DatabaseResult<{ user: User; session: Session }>> => {
 			try {
 				// Hash password if provided
@@ -113,7 +114,7 @@ export function composeMongoAuthAdapter(): AuthInterface {
 				}
 
 				// Create user first
-				const userResult = await userAdapter.createUser(userData);
+				const userResult = await userAdapter.createUser(userData, options);
 				if (!userResult.success) {
 					return {
 						success: false,
@@ -131,7 +132,7 @@ export function composeMongoAuthAdapter(): AuthInterface {
 
 				if (!sessionResult.success) {
 					// Rollback: delete the user we just created
-					await userAdapter.deleteUser(userResult.data._id, sessionData.tenantId);
+					await userAdapter.deleteUser(userResult.data._id, sessionData.tenantId, options);
 					return {
 						success: false,
 						message: sessionResult.message || 'Failed to create session',
@@ -162,7 +163,8 @@ export function composeMongoAuthAdapter(): AuthInterface {
 
 		deleteUserAndSessions: async (
 			userId: string,
-			tenantId?: string
+			tenantId?: string,
+			options?: { sudo?: boolean }
 		): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> => {
 			try {
 				// Step 1: Get session count before deletion (for reporting)
@@ -188,7 +190,7 @@ export function composeMongoAuthAdapter(): AuthInterface {
 				}
 
 				// Step 3: Delete the user
-				const userResult = await userAdapter.deleteUser(userId, tenantId);
+				const userResult = await userAdapter.deleteUser(userId, tenantId, options);
 
 				if (!userResult.success) {
 					return {
@@ -251,10 +253,10 @@ export function composeMongoAuthAdapter(): AuthInterface {
 		unblockTokens: tokenAdapter.unblockTokens.bind(tokenAdapter),
 
 		// Role Management Methods (normalized and de-duplicated)
-		createRole: async (role: Role): Promise<DatabaseResult<Role>> => {
+		createRole: async (role: Role, options?: { sudo?: boolean }): Promise<DatabaseResult<Role>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
-				const filter = safeQuery({ _id: role._id }, role.tenantId);
+				const filter = safeQuery({ _id: role._id }, role.tenantId, { sudo: options?.sudo });
 
 				const upsertedRole = await ROLE_MODEL.findOneAndUpdate(
 					filter,
@@ -280,10 +282,10 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		getAllRoles: async (tenantId?: string): Promise<Role[]> => {
+		getAllRoles: async (tenantId?: string, options?: { sudo?: boolean }): Promise<Role[]> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
-				const filter = safeQuery({}, tenantId);
+				const filter = safeQuery({}, tenantId, { sudo: options?.sudo });
 				return await ROLE_MODEL.find(filter).lean<Role[]>();
 			} catch (err) {
 				logger.error(`Error fetching roles: ${err instanceof Error ? err.message : String(err)}`);
@@ -291,10 +293,10 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		getRoleById: async (roleId: string, tenantId?: string): Promise<DatabaseResult<Role | null>> => {
+		getRoleById: async (roleId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<Role | null>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
-				const filter = safeQuery({ _id: roleId }, tenantId);
+				const filter = safeQuery({ _id: roleId }, tenantId, { sudo: options?.sudo });
 
 				const role = await ROLE_MODEL.findOne(filter).lean<Role>();
 
@@ -316,10 +318,10 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		updateRole: async (roleId: string, roleData: Partial<Role>, tenantId?: string): Promise<DatabaseResult<Role>> => {
+		updateRole: async (roleId: string, roleData: Partial<Role>, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<Role>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
-				const filter = safeQuery({ _id: roleId }, tenantId);
+				const filter = safeQuery({ _id: roleId }, tenantId, { sudo: options?.sudo });
 
 				const updatedRole = await ROLE_MODEL.findOneAndUpdate(filter, { $set: roleData }, { returnDocument: 'after' }).lean<Role>();
 
@@ -352,10 +354,10 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		deleteRole: async (roleId: string, tenantId?: string): Promise<DatabaseResult<void>> => {
+		deleteRole: async (roleId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<void>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
-				const filter = safeQuery({ _id: roleId }, tenantId);
+				const filter = safeQuery({ _id: roleId }, tenantId, { sudo: options?.sudo });
 
 				const result = await ROLE_MODEL.deleteOne(filter);
 

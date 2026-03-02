@@ -18,7 +18,7 @@
 
 <script lang="ts">
 	import { logger } from '@utils/logger';
-	import { showToast } from '@utils/toast';
+	import { toast } from '@src/stores/toast.svelte.ts';
 
 	let remoteUrls: string[] = $state([]);
 
@@ -38,7 +38,7 @@
 
 	async function uploadRemoteUrls() {
 		if (remoteUrls.length === 0) {
-			showToast('No URLs entered for upload', 'warning');
+			toast.warning('No URLs entered for upload');
 			return;
 		}
 
@@ -60,7 +60,7 @@
 			console.log('Remote Upload Result:', result); // Debug log
 
 			if (result.type === 'success' || result.success) {
-				showToast('URLs uploaded successfully', 'success');
+				toast.success('URLs uploaded successfully');
 				remoteUrls = []; // Clear the remote URLs array after successful upload
 				if (onUploadComplete) {
 					onUploadComplete();
@@ -70,7 +70,7 @@
 			}
 		} catch (error) {
 			logger.error('Error uploading URLs:', error);
-			showToast(`Error uploading URLs: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+			toast.error(`Error uploading URLs: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 </script>
