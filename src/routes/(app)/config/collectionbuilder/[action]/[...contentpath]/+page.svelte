@@ -16,13 +16,14 @@
 	import PageTitle from '@src/components/page-title.svelte';
 	// Types
 	import type { FieldInstance, Schema } from '@src/content/types';
+	import { hasDuplicateSiblingName } from '@src/content/utils';
 	import type { User } from '@src/databases/auth/types';
 	import { button_cancel, button_delete, button_save } from '@src/paraglide/messages';
 	import ModalSchemaWarning from '@src/routes/(app)/config/collectionbuilder/modal-schema-warning.svelte';
 	// Stores
 	import { collection, setCollection } from '@src/stores/collection-store.svelte';
-	import { validationStore } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
+	import { validationStore } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
 	import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
 	// Utils
@@ -30,7 +31,7 @@ import { toast } from '@src/stores/toast.svelte.ts';
 	import { showConfirm } from '@utils/modal-utils';
 	import { obj2formData } from '@utils/utils';
 	import { onMount } from 'svelte';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { afterNavigate, goto, invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import CollectionForm from './tabs/collection-form.svelte';
 	import CollectionWidgetOptimized from './tabs/collection-widget-optimized.svelte';
@@ -42,6 +43,8 @@ import { toast } from '@src/stores/toast.svelte.ts';
 		data: {
 			collection?: Schema;
 			contentLanguage: string;
+			/** Flat list for duplicate-name validation (same parentId, case-insensitive name). */
+			contentStructure?: Array<{ _id?: string; parentId?: string; name?: string }>;
 			user: User;
 		};
 	}
@@ -51,31 +54,58 @@ import { toast } from '@src/stores/toast.svelte.ts';
 	let isLoading = $state(false);
 	let migrationPlan = $state<any>(null);
 	let showWarningModal = $state(false);
+	let justSaved = $state(false);
+	let lastLoadedCollectionId = $state<string | null>(null);
+
+	// Sync store from load data only when we switch to a different collection (navigation/load), not on every data update (so status/name edits are not overwritten)
+	$effect(() => {
+		if (justSaved) return;
+		const action = page.params.action;
+		const c = data?.collection;
+		if (action === 'edit' && c) {
+			const id = c._id ?? c.path ?? '';
+			const idStr = String(id);
+			if (idStr !== lastLoadedCollectionId) {
+				lastLoadedCollectionId = idStr;
+				setCollection(c);
+				const pathStr = c.path != null ? String(c.path).trim() : '';
+				originalName = pathStr ? pathStr.replace(/^\//, '') : String(c.name || '');
+			}
+		} else if (action === 'new') {
+			lastLoadedCollectionId = null;
+		}
+	});
 
 	// Use afterNavigate to update collection state after SPA navigation completes.
-	// This is critical because $effect fires BEFORE SvelteKit updates data.collection
-	// during SPA navigation, causing stale data to be displayed.
-
+	// Skip re-init when we just saved so we don't overwrite the store with stale load data.
 	function initializeCollectionFromData() {
+		if (justSaved) {
+			justSaved = false;
+			return;
+		}
 		const currentAction = page.params.action;
 		const currentCollection = data.collection;
 
+		console.log('currentCollection', JSON.stringify(currentCollection));
+
 		if (currentAction === 'edit' && currentCollection) {
 			setCollection(currentCollection);
-			originalName = String(currentCollection.name || '');
+			const pathStr = currentCollection.path != null ? String(currentCollection.path).trim() : '';
+			originalName = pathStr ? pathStr.replace(/^\//, '') : String(currentCollection.name || '');
 		} else if (currentAction === 'new') {
+			const parentId = page.url.searchParams.get('parentId') ?? undefined;
 			setCollection({
 				name: 'new',
 				icon: 'bi:collection',
 				status: 'unpublished',
 				slug: '',
-				fields: []
+				fields: [],
+				...(parentId && { parentId })
 			} as any);
 			originalName = '';
 		}
 	}
 
-	// afterNavigate fires after SvelteKit has fully updated data props
 	afterNavigate(() => {
 		initializeCollectionFromData();
 	});
@@ -84,6 +114,10 @@ import { toast } from '@src/stores/toast.svelte.ts';
 		widgetStoreActions.initializeWidgets();
 		// Also initialize on mount for the initial page load
 		initializeCollectionFromData();
+
+		// Set route context after mount to avoid "updated at / await in start" (Svelte 5:
+		// updating another store's $state inside $effect during component start can trigger this)
+		setRouteContext({ isCollectionBuilder: true });
 
 		// Keyboard Shortcuts
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,7 +131,10 @@ import { toast } from '@src/stores/toast.svelte.ts';
 			}
 		};
 		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+			setRouteContext({ isCollectionBuilder: false });
+		};
 	});
 
 	const collectionValue = $derived(collection.value);
@@ -109,11 +146,40 @@ import { toast } from '@src/stores/toast.svelte.ts';
 		}
 
 		try {
+			// Use current store state (includes deletes, edits, reorder) as the single source of truth
+			const currentCollection = collectionValue ?? collections.active;
+			if (!currentCollection) {
+				toast.error('No collection to save');
+				return;
+			}
+			const snapshot = JSON.parse(JSON.stringify(currentCollection)) as typeof currentCollection;
+
+			// Frontend duplicate-name validation before submit (same category, case-insensitive)
+			const structure = data?.contentStructure ?? [];
+			if (structure.length > 0) {
+				const nameTrimmed = (snapshot?.name ?? '').trim();
+				if (nameTrimmed) {
+					const snapshotWithParent = snapshot as { parentId?: string; _id?: string };
+					const parentId =
+						snapshotWithParent?.parentId != null && snapshotWithParent.parentId !== ''
+							? String(snapshotWithParent.parentId)
+							: (page.url.searchParams.get('parentId') ?? undefined);
+					const excludeId = snapshotWithParent?._id != null ? String(snapshotWithParent._id) : undefined;
+					if (hasDuplicateSiblingName(structure, parentId ?? null, nameTrimmed, excludeId)) {
+						toast.warning('A collection with this name already exists in this category. Please choose another name.');
+						return;
+					}
+				}
+			}
+
 			isLoading = true;
-			const currentCollection = collection.value;
+
+			// Put originalName last so it is never overwritten by snapshot (enables correct rename)
+			const contentPath = Array.isArray(page.params.contentpath) ? page.params.contentpath.join('/') : (page.params.contentpath ?? '');
 			const payload: any = {
+				...snapshot,
 				originalName,
-				...currentCollection
+				contentPath: contentPath || snapshot.path || ''
 			};
 
 			if (confirmDeletions) {
@@ -125,31 +191,50 @@ import { toast } from '@src/stores/toast.svelte.ts';
 				body: obj2formData(payload)
 			});
 
+			const result = await response.json().catch(() => ({}));
 			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+				const message = result?.error ?? `Save failed (${response.status})`;
+				toast.warning(message);
+				return;
+			}
+			let responseData = result;
+			if (result.type === 'success' && result.data) {
+				responseData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
 			}
 
-			const result = await response.json();
-			let data = result;
-			if (result.type === 'success' && result.data) {
-				data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+			// Duplicate or validation failure: server may return 200 with status 400 in body — show warning only, never success
+			if ((responseData?.status === 400 || result?.status === 400) && (responseData?.error ?? result?.error)) {
+				toast.warning((responseData?.error ?? result?.error) as string);
+				return;
 			}
 
 			// Check for drift detection from server (status 202)
-			if (data?.driftDetected) {
-				migrationPlan = data.plan;
+			if (responseData?.driftDetected) {
+				migrationPlan = responseData.plan;
 				showWarningModal = true;
 				toast.info('Manual confirmation required for schema changes');
 				return;
 			}
 
-			if (response.status === 200 || (data && data.status === 200)) {
+			if (response.status === 200 || (responseData && responseData.status === 200)) {
 				toast.success('Collection Saved Successfully');
 				showWarningModal = false;
 				migrationPlan = null;
-				if (originalName !== currentCollection?.name) {
-					originalName = String(currentCollection?.name);
-					goto(`/config/collectionbuilder/edit/${originalName}`);
+				if (originalName !== snapshot?.name) {
+					originalName = String(snapshot?.name ?? '');
+				}
+				setCollection(snapshot);
+				justSaved = true;
+				// Invalidate caches so layout, list, and edit page loads get fresh data (avoids stale fields)
+				await invalidate('app:content');
+				await invalidate(page.url.pathname);
+				await invalidateAll();
+				// Create: go to edit page for the new collection; Edit: go to collection builder list
+				const editPath = responseData?.editPath;
+				if (action === 'new' && typeof editPath === 'string' && editPath) {
+					goto(`/config/collectionbuilder/edit/${editPath}`);
+				} else {
+					goto('/config/collectionbuilder');
 				}
 			}
 		} catch (error) {
@@ -180,12 +265,7 @@ import { toast } from '@src/stores/toast.svelte.ts';
 		});
 	}
 
-	$effect(() => {
-		setRouteContext({ isCollectionBuilder: true });
-		return () => setRouteContext({ isCollectionBuilder: false });
-	});
-
-	let activeSection = $state('general');
+	let activeTab = $state('general');
 </script>
 
 <PageTitle
@@ -221,62 +301,56 @@ import { toast } from '@src/stores/toast.svelte.ts';
 	<div class="flex border-b border-surface-200-800 bg-surface-50-950">
 		<button
 			class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2
-				{activeSection === 'general'
+				{activeTab === 'general'
 				? 'border-primary-500 text-primary-500'
 				: 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}"
-			onclick={() => {
-				activeSection = 'general';
-				document.getElementById('general-info')?.scrollIntoView({ behavior: 'smooth' });
-			}}
+			onclick={() => (activeTab = 'general')}
+			type="button"
 		>
 			<iconify-icon icon="mdi:information" width="18"></iconify-icon>
 			General Info
 		</button>
 		<button
 			class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2
-				{activeSection === 'fields'
+				{activeTab === 'fields'
 				? 'border-primary-500 text-primary-500'
 				: 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}"
-			onclick={() => {
-				activeSection = 'fields';
-				document.getElementById('fields-config')?.scrollIntoView({ behavior: 'smooth' });
-			}}
+			onclick={() => (activeTab = 'fields')}
+			type="button"
 		>
 			<iconify-icon icon="mdi:widgets" width="18"></iconify-icon>
 			Field Configuration
 		</button>
 	</div>
 
-	<!-- Scrollable Content (full width) -->
-	<div
-		class="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth"
-		onscroll={(e) => {
-			const target = e.currentTarget as HTMLElement;
-			const fieldsTop = document.getElementById('fields-config')?.offsetTop || 0;
-			activeSection = target.scrollTop > fieldsTop - 100 ? 'fields' : 'general';
-		}}
-	>
-		<div class="mx-auto max-w-5xl space-y-12">
-			<!-- Section 1: General Info -->
-			<section id="general-info" class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
-				<div class="mb-4 flex items-center gap-2 border-b border-surface-200-800 pb-2">
-					<iconify-icon icon="mdi:cog" width="24" class="text-primary-500"></iconify-icon>
-					<h2 class="text-xl font-bold">General Configuration</h2>
-				</div>
-				<CollectionForm data={collectionValue} handlePageTitleUpdate={(t: string) => collectionValue && (collectionValue.name = t)} />
-			</section>
-
-			<!-- Section 2: Fields -->
-			<section id="fields-config" class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
-				<div class="mb-4 flex items-center justify-between border-b border-surface-200-800 pb-2">
-					<div class="flex items-center gap-2">
-						<iconify-icon icon="mdi:widgets" width="24" class="text-primary-500"></iconify-icon>
-						<h2 class="text-xl font-bold">Field Definitions</h2>
+	<!-- Tab content: only one section visible at a time -->
+	<div class="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
+		<div class="mx-auto max-w-7xl w-full">
+			{#if activeTab === 'general'}
+				<!-- General Info: Name, Slug, Status, Icon, Description -->
+				<section class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
+					<div class="mb-4 flex items-center gap-2 border-b border-surface-200-800 pb-2">
+						<iconify-icon icon="mdi:cog" width="24" class="text-primary-500"></iconify-icon>
+						<h2 class="text-xl font-bold">General Configuration</h2>
 					</div>
-					<span class="text-xs text-surface-500"> {collectionValue?.fields?.length || 0} fields total </span>
-				</div>
-				<CollectionWidgetOptimized fields={(collectionValue?.fields as FieldInstance[]) || []} />
-			</section>
+					<CollectionForm
+						data={data?.collection ?? collectionValue ?? undefined}
+						handlePageTitleUpdate={(t: string) => collectionValue && (collectionValue.name = t)}
+					/>
+				</section>
+			{:else if activeTab === 'fields'}
+				<!-- Field Configuration: Field Definitions, Widgets, Drag & Drop builder -->
+				<section class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm sm:p-6">
+					<div class="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-surface-200-800 pb-2">
+						<div class="flex items-center gap-2">
+							<iconify-icon icon="mdi:widgets" width="24" class="shrink-0 text-primary-500"></iconify-icon>
+							<h2 class="text-lg font-bold sm:text-xl">Field Definitions</h2>
+						</div>
+						<span class="text-xs text-surface-500"> {collectionValue?.fields?.length || 0} fields total </span>
+					</div>
+					<CollectionWidgetOptimized fields={(collectionValue?.fields as FieldInstance[]) || []} roles={(data?.roles as any) ?? []} />
+				</section>
+			{/if}
 		</div>
 	</div>
 </div>

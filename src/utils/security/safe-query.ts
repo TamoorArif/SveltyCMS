@@ -12,6 +12,7 @@ import { logger } from '@utils/logger';
 
 interface SafeQueryOptions {
 	bypassTenantCheck?: boolean; // Bypass check (e.g. for System Admin queries)
+	sudo?: boolean; // Alias for bypassTenantCheck (e.g. for System Admin queries)
 }
 
 /**
@@ -32,8 +33,8 @@ export function safeQuery<T extends Record<string, any>>(query: T, tenantId?: st
 		return query;
 	}
 
-	// 3. Skip if bypassTenantCheck mode (System Admin)
-	if (options.bypassTenantCheck) {
+	// 3. Skip if bypassTenantCheck or sudo mode (System Admin)
+	if (options.bypassTenantCheck || options.sudo) {
 		return query;
 	}
 

@@ -400,19 +400,31 @@ export class MongoDBAdapter implements IDBAdapter {
 
 			this._realContent = {
 				nodes: {
-<<<<<<< HEAD
 					getStructure: (m, o) => this._wrapResult(() => contentMethods.getStructure(m, o)),
-=======
-					getStructure: (m, f, b, s) => this._wrapResult(() => contentMethods.getStructure(m, f, b, s)),
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 					upsertContentStructureNode: (n) => this._wrapResult(() => contentMethods.upsertNodeByPath(n)),
 					create: (n) => this.crud.insert('system_content_structure', n),
-					createMany: (n) => this.crud.insertMany('system_content_structure', n),
+					createMany: async (n) => {
+						const r = await this.crud.insertMany('system_content_structure', n);
+						if (r.success) {
+							const { CacheCategory, invalidateCategoryCache } = await import('./methods/mongodb-cache-utils');
+							await invalidateCategoryCache(CacheCategory.CONTENT);
+						}
+						return r;
+					},
 					update: (p, c) => this.crud.update('system_content_structure', p as DatabaseId, c),
 					bulkUpdate: (u, o) =>
 						this._wrapResult(() => contentMethods.bulkUpdateNodes(u, o)) as Promise<DatabaseResult<import('../db-interface').ContentNode[]>>,
 					fixMismatchedNodeIds: (n) => contentMethods.fixMismatchedNodeIds(n),
-					delete: (p) => this.crud.delete('system_content_structure', p as DatabaseId),
+					delete: async (path) => {
+						const r = await this.crud.deleteMany(
+							'system_content_structure',
+							{ path } as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>
+						);
+						if (!r.success) return { success: false, message: r.message, error: r.error };
+						const { CacheCategory, invalidateCategoryCache } = await import('./methods/mongodb-cache-utils');
+						await invalidateCategoryCache(CacheCategory.CONTENT);
+						return { success: true, data: undefined };
+					},
 					deleteMany: (p, o) => {
 						const query: Record<string, unknown> = { path: { $in: p } };
 						if (o?.tenantId) {
@@ -699,13 +711,7 @@ export class MongoDBAdapter implements IDBAdapter {
 
 		return {
 			findOne: (c, q, o) =>
-<<<<<<< HEAD
 				this._wrapResult(() => getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId, sudo: o?.sudo })),
-=======
-				this._wrapResult(() =>
-					getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId, bypassTenantCheck: o?.bypassTenantCheck })
-				),
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 			findMany: (c, q, o) =>
 				this._wrapResult(() => {
 					let sort: Record<string, 1 | -1> | undefined;
@@ -725,7 +731,6 @@ export class MongoDBAdapter implements IDBAdapter {
 						fields: o?.fields as (keyof BaseEntity)[],
 						sort,
 						tenantId: o?.tenantId,
-<<<<<<< HEAD
 						sudo: o?.sudo
 					});
 				}),
@@ -745,27 +750,6 @@ export class MongoDBAdapter implements IDBAdapter {
 					return res.success ? res.data > 0 : false;
 				}),
 			aggregate: (c, p, t, o) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[], t, { sudo: o?.sudo }))
-=======
-						bypassTenantCheck: o?.bypassTenantCheck
-					});
-				}),
-			insert: (c, d, t, s) => this._wrapResult(() => getRepo(c).insert(d, t, s)),
-			update: (c, id, d, t, s) => this._wrapResult(() => getRepo(c).update(id, d as any, t, s)),
-			delete: (c, id, t, s) => this._wrapResult(() => getRepo(c).delete(id, t, s)),
-			findByIds: (c, ids) => this._wrapResult(() => getRepo(c).findByIds(ids)), // findByIds doesn't take tenantId/bypassTenantCheck currently in MongoCrudMethods
-			insertMany: (c, d, t) => this._wrapResult(() => getRepo(c).insertMany(d, t)),
-			updateMany: (c, q, d, t, s) => this._wrapResult(() => getRepo(c).updateMany(q, d as any, t, s)),
-			deleteMany: (c, q, t, s) => this._wrapResult(() => getRepo(c).deleteMany(q, t, s)),
-			upsert: (c, q, d, t, s) => this._wrapResult(() => getRepo(c).upsert(q, d, t, s)),
-			upsertMany: (c, items, t, s) => this._wrapResult(() => getRepo(c).upsertMany(items, t, s)),
-			count: (c, q, t, s) => this._wrapResult(() => getRepo(c).count(q || {}, t, s)),
-			exists: (c, q, t, s) =>
-				this._wrapResult(async () => {
-					const res = await getRepo(c).count(q || {}, t, s);
-					return res.success ? res.data > 0 : false;
-				}),
-			aggregate: (c, p, t) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[], t))
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 		};
 	}
 
