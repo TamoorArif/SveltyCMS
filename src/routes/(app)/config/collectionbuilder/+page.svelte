@@ -506,7 +506,7 @@ None (TreeView has its own keyboard navigation)
 				onEditCategory={modalAddCategory}
 				onDeleteNode={handleDeleteNode}
 				onDuplicateNode={handleDuplicateNode}
-				selectedCategoryId={selectedCategoryId}
+				{selectedCategoryId}
 				onSelectCategory={handleSelectCategory}
 			/>
 

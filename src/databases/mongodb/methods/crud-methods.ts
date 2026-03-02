@@ -136,13 +136,14 @@ export class MongoCrudMethods<T extends BaseEntity> {
 			safeQuery({}, tenantId, { sudo: options.sudo });
 
 			const now = nowISODateString();
-			const docData = {
-				...(data as Record<string, unknown>),
-				_id: generateId(),
+			const secureData = safeQuery((data ?? {}) as Record<string, unknown>, tenantId, { sudo: options.sudo });
+			const id = (secureData as Record<string, unknown>)._id != null ? (secureData as Record<string, unknown>)._id : generateId();
+			const doc = new this.model({
+				...secureData,
+				_id: id,
 				createdAt: now,
 				updatedAt: now
-			};
-			const doc = new this.model(docData);
+			});
 			const result = await doc.save();
 			return { success: true, data: (result as mongoose.HydratedDocument<T>).toObject() as T };
 		} catch (error) {
@@ -172,8 +173,14 @@ export class MongoCrudMethods<T extends BaseEntity> {
 
 			const now = nowISODateString();
 			const docs = data.map((d) => {
-				const secureData = safeQuery((d ?? {}) as Record<string, unknown>, tenantId, { sudo: options.sudo });
-				return { ...secureData, _id: generateId(), createdAt: now, updatedAt: now };
+				const safe = safeQuery((d ?? {}) as Record<string, unknown>, tenantId, { sudo: options.sudo });
+				const id = (safe as Record<string, unknown>)._id != null ? (safe as Record<string, unknown>)._id : generateId();
+				return {
+					...safe,
+					_id: id,
+					createdAt: now,
+					updatedAt: now
+				};
 			});
 			const result = await this.model.insertMany(docs);
 			return { success: true, data: result.map((doc) => (doc as mongoose.HydratedDocument<T>).toObject() as T) };
