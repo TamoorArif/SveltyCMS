@@ -148,7 +148,7 @@
 		try {
 			isLoading = true;
 			// Use current store state (includes deletes, edits, reorder) as the single source of truth
-			const currentCollection = collectionValue;
+			const currentCollection = collectionValue ?? data?.collection;
 			if (!currentCollection) {
 				toast.error('No collection to save');
 				return;
@@ -184,8 +184,6 @@
 			if (confirmDeletions) {
 				payload.confirmDeletions = 'true';
 			}
-
-			console.log('payload', JSON.stringify(payload));
 
 			const response = await fetch('?/saveCollection', {
 				method: 'POST',
