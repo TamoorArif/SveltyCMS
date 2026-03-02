@@ -17,11 +17,11 @@
 	// Types
 	import type { FieldInstance, Schema } from '@src/content/types';
 	import { hasDuplicateSiblingName } from '@src/content/utils';
-	import type { User } from '@src/databases/auth/types';
+	import type { Role, User } from '@src/databases/auth/types';
 	import { button_cancel, button_delete, button_save } from '@src/paraglide/messages';
 	import ModalSchemaWarning from '@src/routes/(app)/config/collectionbuilder/modal-schema-warning.svelte';
 	// Stores
-	import { collection, setCollection } from '@src/stores/collection-store.svelte';
+	import { collection, collections, setCollection } from '@src/stores/collection-store.svelte';
 	import { validationStore } from '@src/stores/store.svelte';
 	import { toast } from '@src/stores/toast.svelte.ts';
 	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
@@ -45,6 +45,7 @@
 			contentLanguage: string;
 			/** Flat list for duplicate-name validation (same parentId, case-insensitive name). */
 			contentStructure?: Array<{ _id?: string; parentId?: string; name?: string }>;
+			roles?: Role[];
 			user: User;
 		};
 	}
@@ -146,13 +147,17 @@
 		}
 
 		try {
-			// Use current store state (includes deletes, edits, reorder) as the single source of truth
-			const currentCollection = collectionValue ?? data?.collection;
+			// Use current store state (includes deletes, edits, reorder) as the single source of truth.
+			// Read directly from store at save time so newly added widgets are never lost (avoids stale derived).
+			const currentCollection = collections.active ?? collectionValue ?? data?.collection;
 			if (!currentCollection) {
 				toast.error('No collection to save');
 				return;
 			}
 			const snapshot = JSON.parse(JSON.stringify(currentCollection)) as typeof currentCollection;
+			// Ensure fields are always sent: use store's current fields so new widgets persist
+			const fieldsToSend = Array.isArray(currentCollection.fields) ? currentCollection.fields : (snapshot?.fields ?? []);
+			snapshot.fields = fieldsToSend;
 
 			// Frontend duplicate-name validation before submit (same category, case-insensitive)
 			const structure = data?.contentStructure ?? [];
@@ -178,8 +183,12 @@
 			const payload: any = {
 				...snapshot,
 				originalName,
-				contentPath: contentPath || snapshot.path || ''
+				contentPath: contentPath || snapshot.path || '',
+				// Explicitly set fields so new widgets are never omitted (formData serialization)
+				fields: snapshot.fields
 			};
+
+			console.log('payload', JSON.stringify(payload));
 
 			if (confirmDeletions) {
 				payload.confirmDeletions = 'true';
@@ -347,7 +356,7 @@
 						</div>
 						<span class="text-xs text-surface-500"> {collectionValue?.fields?.length || 0} fields total </span>
 					</div>
-					<CollectionWidgetOptimized fields={(collectionValue?.fields as FieldInstance[]) || []} roles={(data?.roles as any) ?? []} />
+					<CollectionWidgetOptimized fields={(collectionValue?.fields as FieldInstance[]) || []} roles={data?.roles ?? []} />
 				</section>
 			{/if}
 		</div>

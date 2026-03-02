@@ -27,7 +27,7 @@
 	import type { ContentNode, DatabaseId } from '@databases/db-interface';
 	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 	import { sortContentNodes } from '@src/content/utils';
-	import { toaster } from '@src/stores/store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS } from 'svelte-dnd-action';
@@ -428,9 +428,7 @@
 			const hasDuplicate = newZoneItems.some((other: EnhancedTreeViewItem) => other.id !== movedItem.id && nameNorm(other.name) === movedName);
 			if (hasDuplicate) {
 				announce('A collection with this name already exists in the target category.');
-				toaster.warning({
-					description: 'A collection with this name already exists in the target category.'
-				});
+				toast.warning('A collection with this name already exists in the target category.');
 				if (nodeSnapshot.size > 0) {
 					treeRoots = buildTree(flattenTree(Array.from(nodeSnapshot.values()).filter((n) => !n.parent)));
 				}
@@ -857,9 +855,7 @@
 		const nameNorm = (n: string) => (n ?? '').trim().toLowerCase();
 		const itemNameNorm = nameNorm(item.name ?? '');
 		if (itemNameNorm && targetList.some((sibling) => sibling.id !== item.id && nameNorm(sibling.name ?? '') === itemNameNorm)) {
-			toaster.warning({
-				description: 'A collection with this name already exists in the target category.'
-			});
+			toast.warning('A collection with this name already exists in the target category.');
 			announce('A collection with this name already exists in the target category.');
 			return;
 		}

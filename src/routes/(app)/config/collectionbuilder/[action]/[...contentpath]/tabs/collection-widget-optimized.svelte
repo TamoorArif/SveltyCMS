@@ -118,14 +118,28 @@
 				if (!r) {
 					return;
 				}
+				// Ensure new fields have a unique db_fieldName so they persist on save
+				const existingNames = new Set((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
+				const ensureFieldName = (obj: Record<string, unknown>): string => {
+					const name = (obj.db_fieldName as string) || (obj.label as string) || (obj.widget as { Name?: string })?.Name || 'field';
+					const base = String(name).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'field';
+					let candidate = base;
+					let n = 0;
+					while (existingNames.has(candidate)) {
+						candidate = `${base}_${++n}`;
+					}
+					existingNames.add(candidate);
+					return candidate;
+				};
+				const normalized = { ...r, db_fieldName: r.db_fieldName || ensureFieldName(r) };
 				const idx = items.findIndex((i: WidgetListItem) => i.id === r.id);
 				if (idx !== -1) {
-					items = items.map((item, i) => (i === idx ? ({ ...item, ...r } as WidgetListItem) : item));
+					items = items.map((item, i) => (i === idx ? ({ ...item, ...normalized } as WidgetListItem) : item));
 				} else {
 					const newIndex = items.length;
 					const newDragId = Math.random().toString(36).substring(7);
 					dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
-					items = [...items, { id: newIndex + 1, _dragId: newDragId, ...r } as WidgetListItem];
+					items = [...items, { id: newIndex + 1, _dragId: newDragId, ...normalized } as WidgetListItem];
 				}
 				updateStore();
 				// Refresh inspector so right panel shows saved field (label, db_fieldName, required, icon) without reload

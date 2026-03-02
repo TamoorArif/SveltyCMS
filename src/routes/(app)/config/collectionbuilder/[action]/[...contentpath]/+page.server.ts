@@ -59,6 +59,22 @@ interface WidgetDefinition {
 
 type FieldsData = Record<string, FieldWithWidget>;
 
+/** Resolve widget key by Name or key (try exact, camelCase, lowercase, kebab-case) so "New Radio" etc. persist. */
+function resolveWidgetKey(widgetName: string): string | null {
+	if (!widgetName || typeof widgetName !== 'string') return null;
+	const registry = (widgets as { widgetFunctions?: Record<string, unknown> }).widgetFunctions ?? {};
+	if (registry[widgetName]) return widgetName;
+	const trimmed = widgetName.trim();
+	if (registry[trimmed]) return trimmed;
+	const camel = trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
+	if (registry[camel]) return camel;
+	const lower = trimmed.toLowerCase();
+	if (registry[lower]) return lower;
+	const kebab = trimmed.replace(/\s+/g, '-').toLowerCase();
+	if (registry[kebab]) return kebab;
+	return null;
+}
+
 // Load Prettier config
 async function getPrettierConfig() {
 	try {
@@ -332,6 +348,7 @@ export const actions: Actions = {
 			const collectionStatus = formData.get('status') as string;
 			const confirmDeletions = formData.get('confirmDeletions') === 'true';
 			let collectionId = (formData.get('_id') as string) || '';
+
 			// Normalize _id (client may send string or JSON like {"$oid":"..."})
 			if (collectionId && typeof collectionId === 'string' && collectionId.trim().startsWith('{')) {
 				try {
@@ -366,8 +383,14 @@ export const actions: Actions = {
 				}
 			}
 
-			// Widgets Fields (client sends an array; normalize defensively)
-			const parsedFieldsUnknown: unknown = typeof fieldsData === 'string' && fieldsData.trim().length > 0 ? JSON.parse(fieldsData) : [];
+			// Widgets Fields (client sends an array; normalize defensively so new widgets persist)
+			let parsedFieldsUnknown: unknown;
+			try {
+				parsedFieldsUnknown = typeof fieldsData === 'string' && fieldsData.trim().length > 0 ? JSON.parse(fieldsData) : [];
+			} catch {
+				logger.warn('[saveCollection] Failed to parse fields, using empty array');
+				parsedFieldsUnknown = [];
+			}
 			const fieldsArray = Array.isArray(parsedFieldsUnknown)
 				? (parsedFieldsUnknown as FieldWithWidget[])
 				: typeof parsedFieldsUnknown === 'object' && parsedFieldsUnknown !== null
@@ -375,6 +398,9 @@ export const actions: Actions = {
 					: [];
 			// goThrough expects an object-like structure; arrays are fine (numeric keys)
 			const fields = parsedFieldsUnknown as unknown as FieldsData;
+			// Deep copy for file generation only: goThrough mutates in place (replaces fields with widget-call strings).
+			// Keep fieldsArray unchanged so the DB gets full field objects (label, db_fieldName, required, etc.).
+			const fieldsForFile = JSON.parse(JSON.stringify(fields)) as FieldsData;
 
 			// 1. Drift Detection & Safety Check
 			// Construct a temporary schema for comparison
@@ -401,7 +427,7 @@ export const actions: Actions = {
 				};
 			}
 
-			const imports = await goThrough(fields, fieldsData);
+			const imports = await goThrough(fieldsForFile, fieldsData);
 
 			// Get tenant ID from request locals (set by hooks.server.ts)
 			const tenantId = (request as any).locals?.tenantId;
@@ -524,7 +550,7 @@ export const actions: Actions = {
 				collectionStatus,
 				collectionDescription,
 				collectionSlug,
-				fields,
+				fields: fieldsForFile,
 				imports,
 				tenantId,
 				collectionId: collectionId || undefined,
@@ -620,7 +646,9 @@ export const actions: Actions = {
 			// Compile using same tenant/path we wrote to
 			await compile({ logger, tenantId: effectiveWriteTenantId });
 
-			// Overwrite DB node with the full current schema (including fields) so deletes persist (no merge/append).
+			// Overwrite DB node with the full current schema (including full field definitions for DB).
+			// Use fieldsArray (unchanged) so DB stores label, db_fieldName, required, widget config, etc.;
+			// goThrough mutates only fieldsForFile (used for the .ts file).
 			if (collectionId && idBasedPath) {
 				try {
 					const { dbAdapter } = await import('@src/databases/db');
@@ -635,7 +663,7 @@ export const actions: Actions = {
 							status: (collectionStatus as any) ?? 'unpublished',
 							slug: collectionSlug ?? contentName,
 							description: String(collectionDescription || ''),
-							fields: fieldsArray as any[],
+							fields: fieldsArray as any[], // Full field objects for DB (label, db_fieldName, widget, etc.)
 							tenantId: tenantId ?? null
 						} as Schema;
 						const updateResult = await dbAdapter.content.nodes.bulkUpdate([
@@ -862,10 +890,15 @@ async function goThrough(object: FieldsData, fields: string): Promise<string> {
 				continue;
 			}
 
-			// Get widget definition
-			const widgetName = fieldWithWidget.widget.Name;
-			const widget = widgets.widgetFunctions[widgetName] as unknown as WidgetDefinition;
+			// Resolve widget by Name or key (supports "New Radio" etc.)
+			const widgetNameRaw =
+				(fieldWithWidget.widget as { Name?: string; key?: string }).Name ?? (fieldWithWidget.widget as { Name?: string; key?: string }).key;
+			const resolvedKey = resolveWidgetKey(String(widgetNameRaw ?? ''));
+			const widget = resolvedKey
+				? (widgets.widgetFunctions[resolvedKey] as unknown as WidgetDefinition)
+				: (widgets.widgetFunctions[widgetNameRaw as string] as unknown as WidgetDefinition);
 			if (!widget?.GuiSchema) {
+				logger.warn(`[goThrough] Widget not found for "${widgetNameRaw}" (resolved: ${resolvedKey ?? 'none'}), skipping field`);
 				continue;
 			}
 
@@ -886,8 +919,8 @@ async function goThrough(object: FieldsData, fields: string): Promise<string> {
 				}
 			}
 
-			// Convert widget to string representation
-			const widgetFnName = fieldWithWidget.widget.key || fieldWithWidget.widget.Name || fieldWithWidget.widget.widgetId;
+			// Convert widget to string representation (use resolved key for file so it loads correctly)
+			const widgetFnName = resolvedKey ?? fieldWithWidget.widget.key ?? fieldWithWidget.widget.Name ?? fieldWithWidget.widget.widgetId;
 			const widgetConfig: Record<string, unknown> = {};
 			for (const guiKey of Object.keys(widget.GuiSchema || {})) {
 				if (guiKey === 'permissions') {
