@@ -36,6 +36,7 @@ None (TreeView has its own keyboard navigation)
 <script lang="ts">
 	import type { ISODateString } from '@root/src/content/types';
 	import type { ContentNode, DatabaseId } from '@root/src/databases/db-interface';
+	import { hasDuplicateSiblingName } from '@src/content/utils';
 	import PageTitle from '@src/components/page-title.svelte';
 	import { button_save, collection_add, collection_addcategory, collection_description, collection_pagetitle } from '@src/paraglide/messages';
 	import TreeViewBoard from '@src/routes/(app)/config/collectionbuilder/nested-content/tree-view-board.svelte';
@@ -264,6 +265,10 @@ None (TreeView has its own keyboard navigation)
 		const baseName = (original.name || (original.collectionDef as { name?: string })?.name || 'copy').toString().replace(/\s+/g, '_');
 		const newName = `${baseName}_copy`;
 		const parentId = original.parentId as DatabaseId | undefined;
+		if (hasDuplicateSiblingName(currentConfig, parentId ?? undefined, newName)) {
+			toast.warning('A collection with this name already exists at this level. Please choose another name.');
+			return;
+		}
 		const idBasedPath = parentId != null ? `${String(parentId)}.${String(newId)}` : String(newId);
 
 		const newNode: ContentNode = JSON.parse(
@@ -327,7 +332,27 @@ None (TreeView has its own keyboard navigation)
 
 			if (!response.ok) {
 				logger.error('Error saving categories:', message);
-				toast.error(message);
+				const isDuplicateName =
+					typeof message === 'string' &&
+					(message.includes('already exists at this level') || message.includes('already exists in the target category'));
+				if (isDuplicateName) {
+					toast.warning(message);
+				} else {
+					toast.error(message);
+				}
+				return;
+			}
+
+			// SvelteKit fail() returns HTTP 200 with result.type === 'failure' — treat as failure; never show success
+			const isFailureOrDuplicate =
+				result.type === 'failure' ||
+				(typeof message === 'string' &&
+					(message.includes('already exists at this level') || message.includes('already exists in the target category')));
+			if (isFailureOrDuplicate) {
+				logger.error('Error saving categories:', message);
+				toast.warning(
+					message || 'A category/collection with this name already exists at this level. Please choose another name.'
+				);
 				return;
 			}
 
@@ -416,8 +441,13 @@ None (TreeView has its own keyboard navigation)
 					return;
 				}
 				const form = response as CategoryModalResponse;
+				const nameTrimmed = form.newCategoryName.trim();
 
 				if (existingCategory?._id) {
+					if (hasDuplicateSiblingName(currentConfig, existingCategory.parentId ?? undefined, nameTrimmed, existingCategory._id?.toString())) {
+						toast.warning('A category with this name already exists at this level. Please choose another name.');
+						return;
+					}
 					const updated = {
 						...existingCategory,
 						name: form.newCategoryName,
@@ -427,6 +457,10 @@ None (TreeView has its own keyboard navigation)
 					currentConfig = currentConfig.map((n) => (n._id === updated._id ? updated : n));
 					nodesToSave[updated._id.toString()] = { type: 'rename', node: updated };
 				} else {
+					if (hasDuplicateSiblingName(currentConfig, undefined, nameTrimmed)) {
+						toast.warning('A category with this name already exists at this level. Please choose another name.');
+						return;
+					}
 					const newId = Math.random().toString(36).substring(2, 15) as unknown as DatabaseId;
 					const path = uniquePathForCategory(form.newCategoryName);
 					const newCategory: ContentNode = {

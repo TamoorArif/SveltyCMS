@@ -146,7 +146,6 @@
 		}
 
 		try {
-			isLoading = true;
 			// Use current store state (includes deletes, edits, reorder) as the single source of truth
 			const currentCollection = collectionValue ?? data?.collection;
 			if (!currentCollection) {
@@ -173,6 +172,7 @@
 				}
 			}
 
+			isLoading = true;
 			// Put originalName last so it is never overwritten by snapshot (enables correct rename)
 			const contentPath = Array.isArray(page.params.contentpath) ? page.params.contentpath.join('/') : (page.params.contentpath ?? '');
 			const payload: any = {

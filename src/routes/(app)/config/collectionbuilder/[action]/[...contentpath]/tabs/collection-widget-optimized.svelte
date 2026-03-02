@@ -6,10 +6,7 @@
 <script lang="ts">
 	import type { FieldInstance } from '@src/content/types';
 	import type { Role } from '@src/databases/auth/types';
-<<<<<<< HEAD
 	import BuzzForm from '@src/routes/(app)/config/collectionbuilder/buzz-form/buzz-form.svelte';
-=======
->>>>>>> 1a77ba8f (refactor: update collection edit page)
 	import { collection, setCollection, setTargetWidget } from '@src/stores/collection-store.svelte';
 	import { toast } from '@src/stores/toast.svelte.ts';
 	import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
