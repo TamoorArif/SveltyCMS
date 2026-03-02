@@ -75,6 +75,12 @@ const mockDbAdapter = {
 		get: mock(() => Promise.resolve({ success: true, data: [] })),
 		set: mock(() => Promise.resolve({ success: true }))
 	},
+	system: {
+		preferences: {
+			get: mock(() => Promise.resolve({ success: true, data: [] })),
+			set: mock(() => Promise.resolve({ success: true }))
+		}
+	},
 	crud: {
 		update: mock(() => Promise.resolve({ success: true }))
 	},
@@ -240,6 +246,17 @@ mock.module('@src/databases/db', () => ({
 	initializeOnRequest: () => Promise.resolve()
 }));
 
+// Mock @src/databases/config-state
+mock.module('@src/databases/config-state', () => ({
+	privateEnv: (globalThis as any).privateEnv,
+	getPrivateEnv: () => (globalThis as any).privateEnv,
+	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv),
+	setPrivateEnv: (env: any) => {
+		(globalThis as any).privateEnv = env;
+	},
+	clearPrivateConfigCache: () => {}
+}));
+
 // Mock settingsService
 mock.module('@src/services/settingsService', () => ({
 	getPrivateSetting: mock(async () => true),
@@ -260,8 +277,8 @@ mock.module('@utils/setup-check', () => ({
 	invalidateSetupCache: () => {}
 }));
 
-// Mock @src/databases/CacheService
-mock.module('@src/databases/CacheService', () => ({
+// Mock @src/databases/cache-service
+mock.module('@src/databases/cache-service', () => ({
 	cacheService: {
 		get: async () => null,
 		set: async () => {},

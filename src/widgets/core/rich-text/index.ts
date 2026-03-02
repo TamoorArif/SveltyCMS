@@ -77,8 +77,8 @@ const RichTextWidget = createWidget<RichTextProps>({
 	Description: widget_richText_description(),
 
 	// Define paths to the dedicated Svelte components.
-	inputComponentPath: '/src/widgets/core/RichText/Input.svelte',
-	displayComponentPath: '/src/widgets/core/RichText/Display.svelte',
+	inputComponentPath: '/src/widgets/core/rich-text/input.svelte',
+	displayComponentPath: '/src/widgets/core/rich-text/display.svelte',
 
 	// Assign the validation schema function.
 	validationSchema,
@@ -98,3 +98,4 @@ export default RichTextWidget;
 // Export helper types.
 export type FieldType = ReturnType<typeof RichTextWidget>;
 export type RichTextWidgetData = InferInput<ReturnType<typeof validationSchema>>;
+

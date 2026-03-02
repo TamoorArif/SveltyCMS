@@ -1738,11 +1738,15 @@ class ContentManager {
 			// trusting the DB state would lead to an emptycontent-manager(0 nodes).
 			try {
 				// Check for at least one node
+<<<<<<< HEAD
 				const countResult = await dbAdapter.content.nodes.getStructure('flat', {
 					tenantId,
 					sudo: true, // Always use sudo for system-wide verification
 					bypassCache: true
 				});
+=======
+				const countResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true, true);
+>>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 				if (!(countResult.success && countResult.data) || countResult.data.length === 0) {
 					logger.warn('[ContentManager] ⚠️ Skip reconciliation requested, but DB is EMPTY! Forcing reconciliation to restore content.');
 					skipReconciliation = false;
@@ -2010,12 +2014,16 @@ class ContentManager {
 		logger.debug(`Current Ops Paths Count: ${currentPaths.size}`);
 		logger.debug(`Ops Paths: ${JSON.stringify(Array.from(currentPaths))}`);
 
+<<<<<<< HEAD
 		const { isSetupComplete: checkSetup } = await import('@utils/setup-check');
 		const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
 			tenantId,
 			sudo: !checkSetup(),
 			bypassCache: true
 		});
+=======
+		const dbResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId } as Partial<ContentNode>, true, true);
+>>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 
 		if (dbResult.success && dbResult.data) {
 			const orphanedNodes = dbResult.data.filter((node: ContentNode) => node.path && !currentPaths.has(node.path));
@@ -2086,12 +2094,16 @@ class ContentManager {
 		// CRITICAL: Fetch the final structure from database after all phases complete
 		// This ensures we have the correct parentId relationships and MongoDB-assigned _ids
 		logger.debug('[ContentManager] Final phase: Fetching complete structure from database', { tenantId });
+<<<<<<< HEAD
 		const { isSetupComplete: finalCheckSetup } = await import('@utils/setup-check');
 		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', {
 			tenantId,
 			sudo: !finalCheckSetup(),
 			bypassCache: true
 		});
+=======
+		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true, true); // bypassCache = true
+>>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 
 		if (!(finalStructureResult.success && finalStructureResult.data)) {
 			logger.error('[ContentManager] Failed to fetch final structure from database');

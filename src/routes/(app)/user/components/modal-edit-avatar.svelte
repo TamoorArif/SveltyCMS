@@ -256,7 +256,7 @@ import { toast } from '@src/stores/toast.svelte.ts';
 			formData.append('avatar', processedFile);
 
 			// Upload with fetch
-			const response = await fetch('/api/user/saveAvatar', {
+			const response = await fetch('/api/user/save-avatar', {
 				method: 'POST',
 				body: formData
 			});
@@ -309,7 +309,7 @@ import { toast } from '@src/stores/toast.svelte.ts';
 					const currentAvatar = avatarSrc.value;
 					logger.info('Attempting to delete avatar:', currentAvatar);
 
-					const response = await fetch('/api/user/deleteAvatar', {
+					const response = await fetch('/api/user/delete-avatar', {
 						method: 'DELETE',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ avatarUrl: currentAvatar })

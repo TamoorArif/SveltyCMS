@@ -38,8 +38,8 @@ const MegaMenuWidget = createWidget({
 	Description: widget_megaMenu_description(),
 
 	// Define paths to the dedicated Svelte components.
-	inputComponentPath: '/src/widgets/core/megamenu/Input.svelte',
-	displayComponentPath: '/src/widgets/core/megamenu/Display.svelte',
+	inputComponentPath: '/src/widgets/core/mega-menu/input.svelte',
+	displayComponentPath: '/src/widgets/core/mega-menu/display.svelte',
 
 	// Assign the validation schema.
 	validationSchema: MEGA_MENU_VALIDATION_SCHEMA,
@@ -129,3 +129,4 @@ export default MegaMenuWidget;
 
 // Export helper types.
 export type FieldType = ReturnType<typeof MegaMenuWidget>;
+

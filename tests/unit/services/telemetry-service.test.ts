@@ -11,7 +11,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { telemetryService } from '../../../src/services/telemetry-service';
+import { telemetryService } from '@src/services/telemetry-service';
 
 describe('TelemetryService Environment Checks', () => {
 	const originalEnv = process.env;

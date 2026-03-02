@@ -70,3 +70,4 @@ export default SelectWidget;
 // Export helper types.
 export type FieldType = ReturnType<typeof SelectWidget>;
 export type SelectWidgetData = ValibotInput<ReturnType<typeof validationSchema>>;
+

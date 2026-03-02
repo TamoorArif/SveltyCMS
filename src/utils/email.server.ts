@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer';
 import type { ComponentType } from 'svelte';
 
 // --- Dynamic Email Template Imports ---
-const svelteEmailModules = import.meta.glob('/src/components/emails/*.svelte');
+const svelteEmailModules = import.meta.glob('../components/emails/*.svelte');
 
 export interface EmailTemplateProps {
 	email?: string;
@@ -40,19 +40,24 @@ export interface SendMailOptions {
  * Gets a specific email template component dynamically
  */
 export async function getEmailTemplate(templateName: string): Promise<ComponentType | null> {
-	const path = `/src/components/emails/${templateName}.svelte`;
-	const moduleImporter = svelteEmailModules[path];
+	const normalizedSearch = `${templateName}.svelte`.toLowerCase();
+	
+	// Search through available modules for a match (case-insensitive and path-agnostic)
+	const matchKey = Object.keys(svelteEmailModules).find(key => 
+		key.toLowerCase().endsWith(normalizedSearch)
+	);
 
-	if (moduleImporter) {
+	if (matchKey) {
 		try {
+			const moduleImporter = svelteEmailModules[matchKey];
 			const module = (await moduleImporter()) as { default: ComponentType };
 			return module.default as ComponentType;
 		} catch (e) {
-			logger.error(`Failed to import email template '${templateName}' from path '${path}':`, e);
+			logger.error(`Failed to import email template '${templateName}' from key '${matchKey}':`, e);
 			return null;
 		}
 	}
-	logger.warn(`Email template '${templateName}' not found at path '${path}'. Available modules:`, Object.keys(svelteEmailModules));
+	logger.warn(`Email template '${templateName}' not found. Available modules:`, Object.keys(svelteEmailModules));
 	return null;
 }
 
@@ -114,10 +119,10 @@ export async function sendMail({ recipientEmail, subject, templateName, props = 
 	}
 
 	// Get SMTP configuration from database
-	const smtpHostResult = await dbAdapter.systemPreferences.get<string>('SMTP_HOST', 'system');
-	const smtpPortResult = await dbAdapter.systemPreferences.get<string>('SMTP_PORT', 'system');
-	const smtpUserResult = await dbAdapter.systemPreferences.get<string>('SMTP_USER', 'system');
-	const smtpPassResult = await dbAdapter.systemPreferences.get<string>('SMTP_PASS', 'system');
+	const smtpHostResult = await dbAdapter.system.preferences.get<string>('SMTP_HOST', 'system');
+	const smtpPortResult = await dbAdapter.system.preferences.get<string>('SMTP_PORT', 'system');
+	const smtpUserResult = await dbAdapter.system.preferences.get<string>('SMTP_USER', 'system');
+	const smtpPassResult = await dbAdapter.system.preferences.get<string>('SMTP_PASS', 'system');
 
 	const smtpHost = smtpHostResult?.success ? smtpHostResult.data : null;
 	const smtpPort = smtpPortResult?.success ? smtpPortResult.data : null;
@@ -175,7 +180,7 @@ export async function sendMail({ recipientEmail, subject, templateName, props = 
 	} as TransportOptions);
 
 	const fromName = props?.sitename || 'SveltyCMS';
-	const smtpMailFromResult = await dbAdapter.systemPreferences.get<string>('SMTP_MAIL_FROM', 'system');
+	const smtpMailFromResult = await dbAdapter.system.preferences.get<string>('SMTP_MAIL_FROM', 'system');
 	const mailFrom = (smtpMailFromResult?.success ? smtpMailFromResult.data : null) || smtpUser;
 
 	const mailOptions = {

@@ -5,7 +5,6 @@
  * STRICTLY GUARDED by TEST_MODE environment variable.
  */
 
-import { auth, dbAdapter, dbInitPromise } from '@src/databases/db';
 import { json, type RequestEvent } from '@sveltejs/kit';
 
 // Security Guard
@@ -21,9 +20,13 @@ export async function POST({ request }: RequestEvent) {
 
 		// In TEST_MODE, the middleware (handleSystemState) bypasses initialization.
 		// We must ensure the database is initialized before proceeding.
-		if (!(dbAdapter && auth)) {
-			// Wait for the lazy initialization promise to resolve
-			await dbInitPromise;
+		// We use reinitializeSystem(true) to force a reload of the private.test.ts file
+		// which might have just been created by the setup wizard.
+		const { dbAdapter: initialDb, auth: initialAuth, reinitializeSystem } = await import('@src/databases/db');
+		
+		if (!initialDb || !initialAuth) {
+			console.log('[API/Testing] Database not initialized. Attempting re-initialization...');
+			await reinitializeSystem(true);
 		}
 
 		// Re-import after initialization (module-level `dbAdapter` may have been reassigned)
@@ -44,17 +47,16 @@ export async function POST({ request }: RequestEvent) {
 				return json({ success: true, message: 'Database cleared' });
 
 			case 'seed': {
-				// Initialize default roles and permissions
-				if (currentDbAdapter.ensureAuth) {
-					await currentDbAdapter.ensureAuth();
-				}
-				if (currentDbAdapter.ensureSystem) {
-					await currentDbAdapter.ensureSystem();
-				}
+				// Initialize default roles, settings and themes
+				const { seedRoles, seedDefaultTheme, seedSettings } = await import('@src/routes/setup/seed');
+				
+				await seedSettings(currentDbAdapter);
+				await seedDefaultTheme(currentDbAdapter);
+				await seedRoles(currentDbAdapter);
 
 				// Seed Admin User
-				const adminEmail = body.email || 'admin@example.com';
-				const adminPassword = body.password || 'password123';
+				const adminEmail = body.email || 'admin@test.com';
+				const adminPassword = body.password || 'Test123!';
 
 				// Check if already exists
 				const existing = await currentAuth.getUserByEmail({ email: adminEmail });

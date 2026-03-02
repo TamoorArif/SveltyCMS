@@ -12,7 +12,11 @@
  */
 
 import { beforeEach, describe, expect, it } from 'bun:test';
+<<<<<<< HEAD
 import { toast } from '@stores/toast.svelte';
+=======
+import { toaster } from '@src/stores/toaster.svelte';
+>>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 
 describe('ToasterStore', () => {
 	beforeEach(() => {

@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'bun:test';
-import AddressWidget from '@src/widgets/custom/Address';
+import AddressWidget from '@widgets/custom/address';
 import { safeParse } from 'valibot';
 
 describe('Address Widget - Validation', () => {

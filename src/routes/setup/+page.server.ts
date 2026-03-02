@@ -111,12 +111,14 @@ export const actions: Actions = {
 			const { getSetupDatabaseAdapter } = await import('./utils');
 
 			try {
+				logger.info(`🔌 Attempting to connect to ${dbConfig.type} at ${dbConfig.host}...`);
 				const { dbAdapter } = await getSetupDatabaseAdapter(dbConfig, { createIfMissing });
 
 				logger.info('📡 Connection established, sending ping...');
 				const health = await dbAdapter.getConnectionHealth();
 
 				if (!health.success) {
+					logger.error('❌ Database ping failed:', health.message);
 					await dbAdapter.disconnect();
 					return {
 						success: false,
@@ -134,6 +136,7 @@ export const actions: Actions = {
 					latencyMs
 				};
 			} catch (err: any) {
+				logger.error('❌ Connection attempt failed:', err.message, err.code);
 				// Handle SQLite/SQL "database does not exist" for auto-creation
 				if (
 					err.message?.includes('does not exist') ||
@@ -143,6 +146,7 @@ export const actions: Actions = {
 				) {
 					if (createIfMissing) {
 						try {
+							logger.info('🛠 Attempting to create missing database:', dbConfig.name);
 							if (dbConfig.type === 'sqlite') {
 								const { mkdirSync } = await import('node:fs');
 								const { dirname } = await import('node:path');
@@ -184,6 +188,7 @@ export const actions: Actions = {
 								};
 							}
 						} catch (createErr: any) {
+							logger.error('❌ Database creation failed:', createErr.message);
 							return { success: false, error: 'Could not create database: ' + createErr.message };
 						}
 					}
@@ -196,7 +201,7 @@ export const actions: Actions = {
 				throw err;
 			}
 		} catch (err: any) {
-			logger.error('Database test failed:', err);
+			logger.error('❌ Database test failed critically:', err);
 			return { success: false, error: err.message || String(err) };
 		}
 	},
@@ -580,7 +585,7 @@ export const actions: Actions = {
 					];
 
 					// Cast to any to bypass strict type check for now, or define a proper interface for the array item
-					await dbAdapter.systemPreferences.setMany(settingsToPersist as any);
+					await dbAdapter.system.preferences.setMany(settingsToPersist as any);
 					logger.info('System settings persisted to database successfully');
 				} catch (dbError) {
 					logger.warn('Failed to persist some system settings to DB:', dbError);
@@ -808,12 +813,12 @@ export const actions: Actions = {
 				try {
 					const { dbAdapter } = await import('@src/databases/db');
 					if (dbAdapter) {
-						await dbAdapter.systemPreferences.set('SMTP_HOST', host, 'system');
-						await dbAdapter.systemPreferences.set('SMTP_PORT', port.toString(), 'system');
-						await dbAdapter.systemPreferences.set('SMTP_USER', user, 'system');
-						await dbAdapter.systemPreferences.set('SMTP_PASS', password, 'system');
-						await dbAdapter.systemPreferences.set('SMTP_FROM', from, 'system');
-						await dbAdapter.systemPreferences.set('SMTP_SECURE', secure ? 'true' : 'false', 'system');
+						await dbAdapter.system.preferences.set('SMTP_HOST', host, 'system');
+						await dbAdapter.system.preferences.set('SMTP_PORT', port.toString(), 'system');
+						await dbAdapter.system.preferences.set('SMTP_USER', user, 'system');
+						await dbAdapter.system.preferences.set('SMTP_PASS', password, 'system');
+						await dbAdapter.system.preferences.set('SMTP_FROM', from, 'system');
+						await dbAdapter.system.preferences.set('SMTP_SECURE', secure ? 'true' : 'false', 'system');
 						saved = true;
 					}
 				} catch (e) {

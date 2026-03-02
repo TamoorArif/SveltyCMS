@@ -42,8 +42,8 @@ const ColorPickerWidget = createWidget<ColorPickerProps>({
 	Name: 'ColorPicker',
 	Icon: 'ic:outline-colorize',
 	Description: widget_colorPicker_description(),
-	inputComponentPath: '/src/widgets/custom/ColorPicker/Input.svelte',
-	displayComponentPath: '/src/widgets/custom/ColorPicker/Display.svelte',
+	inputComponentPath: '/src/widgets/custom/color-picker/input.svelte',
+	displayComponentPath: '/src/widgets/custom/color-picker/display.svelte',
 	validationSchema,
 
 	// Set widget-specific defaults. A color is a universal value.
@@ -65,3 +65,4 @@ export default ColorPickerWidget;
 // Export helper types.
 export type FieldType = ReturnType<typeof ColorPickerWidget>;
 export type ColorPickerWidgetData = ValibotInput<ReturnType<typeof validationSchema>>;
+

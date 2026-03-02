@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'bun:test';
-import GroupWidget from '@src/widgets/core/Group';
+import GroupWidget from '@widgets/core/group';
 import { safeParse } from 'valibot';
 
 describe('Group Widget - Creation', () => {

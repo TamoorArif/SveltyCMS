@@ -11,7 +11,7 @@
  */
 
 import { describe, expect, it } from 'bun:test';
-import RelationWidget from '@src/widgets/core/Relation';
+import RelationWidget from '@widgets/core/relation';
 import { safeParse } from 'valibot';
 
 describe('Relation Widget - Validation', () => {

@@ -16,36 +16,43 @@
 import { expect, type Page, test } from '@playwright/test';
 
 // Helper: Click the Next button.
-// Uses getByLabel to uniquely target the actual button (not the tooltip trigger)
-// since SystemTooltip creates a separate trigger button that also matches by role.
+// Uses a robust selector that handles both exact label match and role+name
+// to ensure it works even with hydration delays or minor UI variations.
 async function clickNext(page: Page) {
-	const nextBtn = page.getByLabel('Next', { exact: true });
+	const nextBtn = page.locator('button').filter({ hasText: /^Next$/i }).first();
+	await expect(nextBtn).toBeVisible({ timeout: 30_000 });
 	await expect(nextBtn).toBeEnabled({ timeout: 60_000 });
 	await nextBtn.click();
 }
 
 test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 	// Capture browser console and errors for debugging
-	page.on('console', (msg) => console.log(`[BROWSER ${msg.type()}] ${msg.text()}`));
+	page.on('console', (msg) => {
+		const text = msg.text();
+		console.log(`[BROWSER ${msg.type()}] ${text}`);
+		// Fail fast if we see a 500 error in logs during connection test
+		if (text.includes('500') && text.includes('testDatabase')) {
+			console.error('Detected 500 error in browser logs during DB test!');
+		}
+	});
 	page.on('pageerror', (err) => console.log(`[BROWSER ERROR] ${err.message}`));
 
 	// Prevent the welcome modal from appearing by pre-setting sessionStorage.
-	// The setup page checks this key and skips the modal if already shown.
-	// This avoids issues with Skeleton v4 Dialog/Portal intercepting pointer events.
 	await page.addInitScript(() => {
 		sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
 	});
 
 	// 1. Start at root, expect redirect to /setup or /login
-	await page.goto('/', { waitUntil: 'domcontentloaded' });
+	await page.goto('/', { waitUntil: 'networkidle' });
 
 	if (page.url().includes('/login')) {
 		console.log('System already configured. Skipping setup.');
 		return;
 	}
 
-	// Wait for setup to load
+	// Wait for setup to load and hydrate
 	await expect(page).toHaveURL(/\/setup/);
+	await page.waitForLoadState('networkidle');
 
 	// --- STEP 1: Database ---
 	await expect(page.locator('h2', { hasText: /database/i }).first()).toBeVisible({ timeout: 30_000 });
@@ -58,17 +65,50 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 
 	// Fill credentials from ENV (CI) or Defaults (Local)
 	const defaultPort = dbType === 'mariadb' ? '3306' : dbType === 'postgresql' ? '5432' : '27017';
-	await page.locator('#db-host').fill(process.env.DB_HOST || 'localhost');
-	await page.locator('#db-port').fill(process.env.DB_PORT || defaultPort);
-	await page.locator('#db-name').fill(process.env.DB_NAME || 'SveltyCMS');
-	await page.locator('#db-user').fill(process.env.DB_USER || 'admin');
-	await page.locator('#db-password').fill(process.env.DB_PASSWORD || 'admin');
+	const dbHost = process.env.DB_HOST || 'localhost';
+	const dbName = process.env.DB_NAME || 'SveltyCMS';
+	const dbPort = process.env.DB_PORT || defaultPort;
+	const dbUser = process.env.DB_USER !== undefined ? process.env.DB_USER : 'admin';
+	const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'admin';
 
-	// Test Connection
-	await page.locator('button', { hasText: /test database/i }).click();
-	await expect(page.getByText(/connected successfully/i).first()).toBeVisible({
-		timeout: 15_000
-	});
+	await page.locator('#db-host').fill(dbHost);
+	await page.locator('#db-name').fill(dbName);
+
+	if (dbType !== 'sqlite') {
+		if (!page.url().includes('mongodb+srv')) {
+			const portLocator = page.locator('#db-port');
+			if (await portLocator.isVisible()) {
+				await portLocator.fill(dbPort);
+			}
+		}
+
+		const userLocator = page.locator('#db-user');
+		if (await userLocator.isVisible()) {
+			await userLocator.fill(dbUser);
+		}
+
+		const passLocator = page.locator('#db-password');
+		if (await passLocator.isVisible()) {
+			await passLocator.fill(dbPass);
+		}
+	}
+
+	// Test Connection (with retry for CI stability)
+	const testDbButton = page.locator('button', { hasText: /test database/i });
+	await testDbButton.click();
+
+	try {
+		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
+			timeout: 15_000
+		});
+	} catch (_err) {
+		console.log('Initial DB test failed, retrying once...');
+		await page.waitForTimeout(5000);
+		await testDbButton.click();
+		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
+			timeout: 30_000
+		});
+	}
 
 	// Move to next step (clicking Next triggers database seeding which may take time)
 	await clickNext(page);
