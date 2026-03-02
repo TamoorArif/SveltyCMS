@@ -378,6 +378,7 @@ export const actions: Actions = {
 				if (hasDuplicateSiblingName(flatForValidation, parentIdForCheck ?? null, nameTrimmed, excludeId)) {
 					return {
 						status: 400,
+						success: false,
 						error: 'A collection with this name already exists in this category. Please choose another name.'
 					};
 				}
@@ -417,11 +418,13 @@ export const actions: Actions = {
 
 			const migrationPlan = await MigrationEngine.createPlan(tempSchema, { compareByIndex: true });
 			console.log('migrationPlan', JSON.stringify(migrationPlan.requiresMigration));
+			console.log('confirmDeletions', JSON.stringify(confirmDeletions));
 
 			if (migrationPlan.requiresMigration && !confirmDeletions) {
 				logger.warn(`Drift detected for collection ${contentName}. Save blocked pending confirmation.`);
 				return {
 					status: 202,
+					success: false,
 					driftDetected: true,
 					plan: migrationPlan
 				};
@@ -700,16 +703,16 @@ export const actions: Actions = {
 
 			// Return edit path: for new collections so client can navigate; for renames so client can update URL and tree
 			if (isNewCollection && idBasedPath) {
-				return { status: 200, editPath: idBasedPath };
+				return { status: 200, success: true, editPath: idBasedPath };
 			}
 			if (isRename && targetFilePath) {
-				return { status: 200, editPath: targetFilePath };
+				return { status: 200, success: true, editPath: targetFilePath };
 			}
-			return { status: 200 };
+			return { status: 200, success: true };
 		} catch (err) {
 			const message = `Error in saveCollection action: ${err instanceof Error ? err.message : String(err)}`;
 			logger.error(message);
-			return { status: 500, error: message };
+			return { status: 500, success: false, error: message };
 		}
 	},
 
@@ -919,32 +922,28 @@ async function goThrough(object: FieldsData, fields: string): Promise<string> {
 				}
 			}
 
-			// Convert widget to string representation (use resolved key for file so it loads correctly)
+			// Convert widget to string representation (use resolved key for file so it loads correctly).
+			// Build widgetConfig from the full field so label, db_fieldName, icon, required, etc. are never dropped
+			// (GuiSchema-only keys can miss properties due to casing or Default-tab-only fields).
 			const widgetFnName = resolvedKey ?? fieldWithWidget.widget.key ?? fieldWithWidget.widget.Name ?? fieldWithWidget.widget.widgetId;
+			const internalKeys = new Set(['widget', 'permissions', '__fieldIndex', 'id', '_dragId']);
 			const widgetConfig: Record<string, unknown> = {};
-			for (const guiKey of Object.keys(widget.GuiSchema || {})) {
-				if (guiKey === 'permissions') {
-					continue;
+			for (const k of Object.keys(fieldWithWidget)) {
+				if (internalKeys.has(k)) continue;
+				if (fieldWithWidget[k] !== undefined) {
+					widgetConfig[k] = fieldWithWidget[k];
 				}
-				if (fieldWithWidget[guiKey] !== undefined) {
-					widgetConfig[guiKey] = fieldWithWidget[guiKey];
-				}
+			}
+			// Include permissions in config so we don't need brittle string-split injection (which broke after GuiFields:{}).
+			const parsedFields = JSON.parse(fields || '{}') as FieldsData;
+			if (parsedFields[key]?.permissions) {
+				widgetConfig.permissions = removeFalseValues(parsedFields[key].permissions);
 			}
 			const widgetCall = `🗑️widgets.${widgetFnName}(${JSON.stringify(widgetConfig, (_k, value) =>
 				typeof value === 'string' ? String(value.replace(/\s*🗑️\s*/g, '🗑️').trim()) : value
 			)})🗑️`;
 
 			field[key] = widgetCall as unknown as FieldWithWidget;
-
-			// Add permissions if present
-			const parsedFields = JSON.parse(fields || '{}') as FieldsData;
-			if (parsedFields[key]?.permissions) {
-				const subWidget = widgetCall.split('}');
-				const permissions = removeFalseValues(parsedFields[key].permissions);
-				const permissionStr = `,"permissions":${JSON.stringify(permissions)}}`;
-				const newWidget = subWidget[0] + permissionStr + subWidget[1];
-				field[key] = newWidget as unknown as FieldWithWidget;
-			}
 		}
 	}
 

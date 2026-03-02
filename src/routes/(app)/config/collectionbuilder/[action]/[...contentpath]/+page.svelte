@@ -30,6 +30,7 @@
 	import { logger } from '@utils/logger';
 	import { showConfirm } from '@utils/modal-utils';
 	import { obj2formData } from '@utils/utils';
+	import { deserialize } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto, invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
@@ -199,24 +200,31 @@
 				body: obj2formData(payload)
 			});
 
-			const result = await response.json().catch(() => ({}));
+			const text = await response.text();
+			let result: { type?: string; data?: unknown; error?: { message?: string }; status?: number };
+			try {
+				result = text ? (deserialize(text) as typeof result) : {};
+			} catch {
+				result = {};
+			}
+			const responseData = (result.type === 'success' || result.type === 'failure') && result.data != null
+				? (typeof result.data === 'object' ? result.data as Record<string, unknown> : {})
+				: (result as Record<string, unknown>);
+
 			if (!response.ok) {
-				const message = result?.error ?? `Save failed (${response.status})`;
+				const message = (responseData?.error as string) ?? (result?.error as { message?: string })?.message ?? `Save failed (${response.status})`;
 				toast.warning(message);
 				return;
 			}
-			let responseData = result;
-			if (result.type === 'success' && result.data) {
-				responseData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-			}
 
 			// Duplicate or validation failure: server may return 200 with status 400 in body — show warning only, never success
-			if ((responseData?.status === 400 || result?.status === 400) && (responseData?.error ?? result?.error)) {
-				toast.warning((responseData?.error ?? result?.error) as string);
+			const statusNum = responseData?.status as number | undefined;
+			if ((statusNum === 400 || (result as { status?: number })?.status === 400) && (responseData?.error ?? (result?.error as { message?: string })?.message)) {
+				toast.warning((responseData?.error ?? (result?.error as { message?: string })?.message) as string);
 				return;
 			}
 
-			// Check for drift detection from server (status 202)
+			// Check for drift detection from server (status 202) — save blocked until user confirms
 			if (responseData?.driftDetected) {
 				migrationPlan = responseData.plan;
 				showWarningModal = true;
@@ -224,7 +232,15 @@
 				return;
 			}
 
-			if (response.status === 200 || (responseData && responseData.status === 200)) {
+			// Explicit failure (e.g. 500 or success: false)
+			if (responseData?.success === false || (statusNum != null && statusNum >= 400 && responseData?.error)) {
+				toast.warning((responseData?.error as string) ?? 'Save failed');
+				return;
+			}
+
+			// Success: response ok and no error branch hit (General and Field Configuration both)
+			const isSuccess = response.ok && (statusNum === 200 || responseData?.success === true || (result.type === 'success' && !responseData?.error));
+			if (isSuccess) {
 				toast.success('Collection Saved Successfully');
 				showWarningModal = false;
 				migrationPlan = null;
@@ -237,13 +253,8 @@
 				await invalidate('app:content');
 				await invalidate(page.url.pathname);
 				await invalidateAll();
-				// Create: go to edit page for the new collection; Edit: go to collection builder list
-				const editPath = responseData?.editPath;
-				if (action === 'new' && typeof editPath === 'string' && editPath) {
-					goto(`/config/collectionbuilder/edit/${editPath}`);
-				} else {
-					goto('/config/collectionbuilder');
-				}
+				// Redirect to Collection Builder list after successful save (create or edit)
+				await goto('/config/collectionbuilder');
 			}
 		} catch (error) {
 			logger.error('Save failed', error);

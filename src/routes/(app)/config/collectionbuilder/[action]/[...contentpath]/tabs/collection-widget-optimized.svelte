@@ -122,7 +122,11 @@
 				const existingNames = new Set((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
 				const ensureFieldName = (obj: Record<string, unknown>): string => {
 					const name = (obj.db_fieldName as string) || (obj.label as string) || (obj.widget as { Name?: string })?.Name || 'field';
-					const base = String(name).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'field';
+					const base =
+						String(name)
+							.trim()
+							.replace(/\s+/g, '_')
+							.replace(/[^a-zA-Z0-9_]/g, '') || 'field';
 					let candidate = base;
 					let n = 0;
 					while (existingNames.has(candidate)) {

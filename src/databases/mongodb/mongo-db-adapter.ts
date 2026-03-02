@@ -1145,8 +1145,11 @@ export class MongoDBAdapter implements IDBAdapter {
 		},
 		getSchema: async (collectionName: string) => {
 			await this.ensureCollections();
-			// Explicitly type the expected result from _wrapResult to match IDBAdapter interface
 			return this._wrapResult<import('../../content/types').Schema | null>(() => this._realCollections!.getSchema(collectionName));
+		},
+		getSchemaById: async (collectionId: string) => {
+			await this.ensureCollections();
+			return this._wrapResult<import('../../content/types').Schema | null>(() => this._realCollections!.getSchemaById(collectionId));
 		},
 		listSchemas: async () => {
 			await this.ensureCollections();

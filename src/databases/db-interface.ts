@@ -714,6 +714,7 @@ export interface IDBAdapter {
 		updateModel(schema: Schema): Promise<void>;
 		deleteModel(id: string): Promise<void>;
 		getSchema(collectionName: string): Promise<DatabaseResult<Schema | null>>;
+		getSchemaById(collectionId: string): Promise<DatabaseResult<Schema | null>>;
 		listSchemas(): Promise<DatabaseResult<Schema[]>>;
 	};
 

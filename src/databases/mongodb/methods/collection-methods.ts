@@ -161,16 +161,10 @@ export class MongoCollectionMethods {
 	}
 
 	/**
-	 * Gets a saved schema definition by name/id
+	 * Gets a saved schema definition by collection name (display name in UI).
 	 */
 	async getSchema(collectionName: string): Promise<Schema | null> {
 		try {
-			// We need to access the collection where schemas are stored.
-			// Typically, this might be 'system_content_structure' if that's where structure is kept,
-			// or if we are just reverse-engineering from Mongoose models (which is lossy).
-			// Assuming there is a persistent store for schemas as per the Architecture Doc (ContentManager syncs to DB).
-
-			// Let's assume we query the system_content_structure collection
 			const structureCollection = mongoose.connection.collection('system_content_structure');
 			const result = await structureCollection.findOne({
 				name: collectionName
@@ -182,6 +176,29 @@ export class MongoCollectionMethods {
 			return null;
 		} catch (error) {
 			logger.error(`Failed to get schema for ${collectionName}:`, error);
+			return null;
+		}
+	}
+
+	/**
+	 * Gets a saved schema definition by collection document _id.
+	 * Use when comparing during save so renames (General Configuration) do not look up by new name and get null.
+	 */
+	async getSchemaById(collectionId: string): Promise<Schema | null> {
+		try {
+			if (!collectionId || String(collectionId).trim() === '') return null;
+			const structureCollection = mongoose.connection.collection('system_content_structure');
+			const idNorm = String(collectionId).trim().replace(/-/g, '');
+			const result = await structureCollection.findOne({
+				$or: [{ _id: collectionId }, { _id: idNorm }]
+			});
+
+			if (result?.collectionDef) {
+				return result.collectionDef as Schema;
+			}
+			return null;
+		} catch (error) {
+			logger.error(`Failed to get schema by id ${collectionId}:`, error);
 			return null;
 		}
 	}
