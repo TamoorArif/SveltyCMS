@@ -77,6 +77,8 @@ None (TreeView has its own keyboard navigation)
 	let skipNextSyncFromData = false;
 	/** Allow one sync from data when we land on the page; reset on navigate to avoid effect_update_depth_exceeded. */
 	let allowSyncFromData = $state(true);
+	/** Incremented on save success so TreeViewBoard rebuilds from server order. */
+	let contentStructureVersion = $state(0);
 
 	afterNavigate(() => {
 		if (page.url.pathname.startsWith('/config/collectionbuilder') && !page.url.pathname.includes('/edit')) {
@@ -335,6 +337,7 @@ None (TreeView has its own keyboard navigation)
 				if (payload?.contentStructure) {
 					currentConfig = payload.contentStructure as ContentNode[];
 					setContentStructure(currentConfig);
+					contentStructureVersion++;
 				}
 				skipNextSyncFromData = true;
 				nodesToSave = {};
@@ -502,6 +505,7 @@ None (TreeView has its own keyboard navigation)
 
 			<TreeViewBoard
 				contentNodes={currentConfig}
+				structureKey={contentStructureVersion}
 				onNodeUpdate={handleNodeUpdate}
 				onEditCategory={modalAddCategory}
 				onDeleteNode={handleDeleteNode}
