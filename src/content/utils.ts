@@ -281,7 +281,9 @@ export function hasDuplicateSiblingName(
 	name: string,
 	excludeId?: string
 ): boolean {
-	const nameNorm = String(name ?? '').trim().toLowerCase();
+	const nameNorm = String(name ?? '')
+		.trim()
+		.toLowerCase();
 	if (!nameNorm) return false;
 	const parentKeyNorm = normalizeIdForCompare(parentId == null || parentId === '' ? null : parentId);
 	const excludeNorm = excludeId != null && excludeId !== '' ? normalizeIdForCompare(excludeId) : null;
@@ -290,7 +292,9 @@ export function hasDuplicateSiblingName(
 		if (excludeNorm != null && nodeIdNorm === excludeNorm) continue;
 		const nodeParentNorm = node.parentId == null || node.parentId === '' ? null : normalizeIdForCompare(String(node.parentId));
 		if (nodeParentNorm !== parentKeyNorm) continue;
-		const nodeNameNorm = String(node.name ?? '').trim().toLowerCase();
+		const nodeNameNorm = String(node.name ?? '')
+			.trim()
+			.toLowerCase();
 		if (nodeNameNorm === nameNorm) return true;
 	}
 	return false;

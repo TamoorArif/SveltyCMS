@@ -927,12 +927,17 @@ async function goThrough(object: FieldsData, fields: string): Promise<string> {
 			// (GuiSchema-only keys can miss properties due to casing or Default-tab-only fields).
 			const widgetFnName = resolvedKey ?? fieldWithWidget.widget.key ?? fieldWithWidget.widget.Name ?? fieldWithWidget.widget.widgetId;
 			const internalKeys = new Set(['widget', 'permissions', '__fieldIndex', 'id', '_dragId']);
+			// Keys that must be numbers in generated schema (form/JSON often stringify them)
+			const numericKeys = new Set(['width', 'order', 'min', 'max', 'step', 'count', 'minLength', 'maxLength', 'minSize', 'maxSize']);
 			const widgetConfig: Record<string, unknown> = {};
 			for (const k of Object.keys(fieldWithWidget)) {
 				if (internalKeys.has(k)) continue;
-				if (fieldWithWidget[k] !== undefined) {
-					widgetConfig[k] = fieldWithWidget[k];
+				let val = fieldWithWidget[k];
+				if (val === undefined) continue;
+				if (numericKeys.has(k) && typeof val === 'string' && val !== '' && /^-?\d+(\.\d+)?$/.test(val)) {
+					val = Number(val);
 				}
+				widgetConfig[k] = val;
 			}
 			// Include permissions in config so we don't need brittle string-split injection (which broke after GuiFields:{}).
 			const parsedFields = JSON.parse(fields || '{}') as FieldsData;
@@ -999,27 +1004,25 @@ async function generateCollectionFileWithAST(data: CollectionData): Promise<stri
 		// Generate tenant-aware file path for header comment
 		const displayPath = getCollectionDisplayPath(data.contentName, data.tenantId);
 
-		// Create the base template with imports
+		// Create the base template with imports (standard format: proxy, Schema type, icon/description/fields only)
 		const sourceCode = `/**
  * @file ${displayPath}
  * @description Collection file for ${data.contentName}
  */
 
 ${data.imports}
-import { widgets } from '@src/stores/widget-store.svelte.ts';
 import type { Schema } from '@src/content/types';
+import { widgets } from '@src/widgets/proxy';
 
 export const schema: Schema = {
-	// Collection Name coming from filename so not needed
-	
-	// Optional & Icon, status, slug
+	// Collection Name coming from filename, so not needed
+
+	// Optional: icon, status, slug
 	// See for possible Icons https://icon-sets.iconify.design/
 	icon: '',
-	status: '',
 	description: '',
-	slug: '',
-	
-	// Defined Fields that are used in your Collection
+
+	// Defined Fields that are used in Collection
 	// Widget fields can be inspected for individual options
 	fields: []
 };`;
@@ -1069,12 +1072,11 @@ function createCollectionTransformer(data: CollectionData): ts.TransformerFactor
 					// Create the schema object with actual data
 					const schemaObject = createSchemaObjectLiteral(data);
 
-					// Create new variable declaration (TypeScript 5.9+ API)
-					// createVariableDeclaration(name, exclamationToken, type, initializer)
+					// Create new variable declaration with explicit Schema type (standard: export const schema: Schema = { ... })
 					const newDeclaration = ts.factory.createVariableDeclaration(
 						ts.factory.createIdentifier('schema'),
 						undefined, // exclamation token
-						undefined, // type  - let TypeScript infer
+						ts.factory.createTypeReferenceNode(ts.factory.createIdentifier('Schema'), undefined),
 						schemaObject // initializer
 					);
 
@@ -1093,55 +1095,36 @@ function createCollectionTransformer(data: CollectionData): ts.TransformerFactor
 	};
 }
 
-// Create TypeScript AST nodes for the schema object
+// Create TypeScript AST nodes for the schema object (standard format: icon, description, fields; _id/path only when reconciling)
 function createSchemaObjectLiteral(data: CollectionData): ts.ObjectLiteralExpression {
 	const properties: ts.ObjectLiteralElementLike[] = [];
 
-	// Preserve _id when editing so DB node is matched on refresh (id-based path duplicates)
+	// Preserve _id when editing so DB node is matched on refresh (reconciliation)
 	if (data.collectionId) {
 		const idStr = String(data.collectionId).replace(/-/g, '');
 		properties.push(ts.factory.createPropertyAssignment(ts.factory.createIdentifier('_id'), ts.factory.createStringLiteral(idStr)));
 	}
 
-	// Id-based path for new collections so DB stores path by id (reconciliation uses schema.path when id-based)
+	// Id-based path when set so DB reconciliation uses schema.path
 	if (data.collectionPath) {
 		properties.push(
 			ts.factory.createPropertyAssignment(ts.factory.createIdentifier('path'), ts.factory.createStringLiteral(String(data.collectionPath)))
 		);
 	}
 
-	// Name is required so UI and reconciliation show the collection name (not fileName/_id fallback)
-	properties.push(
-		ts.factory.createPropertyAssignment(
-			ts.factory.createIdentifier('name'),
-			ts.factory.createStringLiteral(typeof data.contentName === 'string' ? data.contentName : '')
-		)
-	);
-
-	// Add icon property (ensure string for AST)
+	// Standard: icon, description (name/status/slug come from filename or UI when needed)
 	properties.push(
 		ts.factory.createPropertyAssignment(
 			ts.factory.createIdentifier('icon'),
 			ts.factory.createStringLiteral(typeof data.collectionIcon === 'string' ? data.collectionIcon : '')
 		)
 	);
-
-	// Add status property (ensure string so we never write literal "null")
-	const statusStr = typeof data.collectionStatus === 'string' ? data.collectionStatus : 'unpublished';
-	properties.push(ts.factory.createPropertyAssignment(ts.factory.createIdentifier('status'), ts.factory.createStringLiteral(statusStr)));
-
-	// Add description property
 	const descriptionStr = data.collectionDescription != null ? String(data.collectionDescription) : '';
 	properties.push(ts.factory.createPropertyAssignment(ts.factory.createIdentifier('description'), ts.factory.createStringLiteral(descriptionStr)));
 
-	// Add slug property
-	properties.push(ts.factory.createPropertyAssignment(ts.factory.createIdentifier('slug'), ts.factory.createStringLiteral(data.collectionSlug)));
-
-	// Add fields property - this is more complex as it contains processed widget calls
+	// Fields: emit as placeholder for post-process (widget call strings from goThrough)
 	const fieldsString = JSON.stringify(data.fields);
-	// Parse the fields as a JavaScript expression (this handles the widget calls)
 	const fieldsExpression = ts.factory.createIdentifier(`🗑️${fieldsString}🗑️`);
-
 	properties.push(ts.factory.createPropertyAssignment(ts.factory.createIdentifier('fields'), fieldsExpression));
 
 	return ts.factory.createObjectLiteralExpression(properties, true);

@@ -310,8 +310,7 @@ export const actions: Actions = {
 		} catch (err) {
 			logger.error('Database config save failed:', err);
 			const message = err instanceof Error ? err.message : String(err);
-			const isSetupComplete =
-				message.includes('Cannot overwrite private.ts') || message.includes('setup already completed');
+			const isSetupComplete = message.includes('Cannot overwrite private.ts') || message.includes('setup already completed');
 			return {
 				success: false,
 				error: isSetupComplete

@@ -350,9 +350,7 @@ None (TreeView has its own keyboard navigation)
 					(message.includes('already exists at this level') || message.includes('already exists in the target category')));
 			if (isFailureOrDuplicate) {
 				logger.error('Error saving categories:', message);
-				toast.warning(
-					message || 'A category/collection with this name already exists at this level. Please choose another name.'
-				);
+				toast.warning(message || 'A category/collection with this name already exists at this level. Please choose another name.');
 				return;
 			}
 

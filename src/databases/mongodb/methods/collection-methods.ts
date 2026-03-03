@@ -146,7 +146,7 @@ export class MongoCollectionMethods {
 				return result as R | null;
 			},
 			aggregate: async <R = unknown>(pipeline: Record<string, unknown>[]) => {
-				return await (model as any).aggregate(pipeline as unknown as mongoose.PipelineStage[]).exec() as R[];
+				return (await (model as any).aggregate(pipeline as unknown as mongoose.PipelineStage[]).exec()) as R[];
 			}
 		};
 
@@ -189,9 +189,10 @@ export class MongoCollectionMethods {
 			if (!collectionId || String(collectionId).trim() === '') return null;
 			const structureCollection = mongoose.connection.collection('system_content_structure');
 			const idNorm = String(collectionId).trim().replace(/-/g, '');
+			// Content structure documents store _id as string; cast via unknown so TS accepts string _id
 			const result = await structureCollection.findOne({
 				$or: [{ _id: collectionId }, { _id: idNorm }]
-			});
+			} as unknown as mongoose.mongo.Filter<mongoose.mongo.Document>);
 
 			if (result?.collectionDef) {
 				return result.collectionDef as Schema;

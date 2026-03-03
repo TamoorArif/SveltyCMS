@@ -28,9 +28,7 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 		writeRoles: []
 	};
 
-	function isWidgetFieldPermissions(
-		p: unknown
-	): p is WidgetFieldPermissions {
+	function isWidgetFieldPermissions(p: unknown): p is WidgetFieldPermissions {
 		if (!p || typeof p !== 'object') return false;
 		const o = p as Record<string, unknown>;
 		return (
@@ -75,11 +73,7 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 		(collections.targetWidget as Record<string, unknown> | undefined) ??
 			(inModal ? (modalState.active?.props?.value as Record<string, unknown> | undefined) : undefined)
 	);
-	const roles = $derived(
-		inModal
-			? ((modalState.active?.props as { roles?: Role[] })?.roles ?? rolesProp)
-			: rolesProp
-	);
+	const roles = $derived(inModal ? ((modalState.active?.props as { roles?: Role[] })?.roles ?? rolesProp) : rolesProp);
 	const permissions = $derived(normalizePermissions(target?.permissions));
 
 	function updatePermissions(next: Partial<WidgetFieldPermissions>) {
@@ -126,11 +120,7 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 				onclick={toggleVisibility}
 			>
 				<span class="font-medium">{permissions.visibility === 'public' ? 'Public' : 'Private'}</span>
-				<iconify-icon
-					icon={permissions.visibility === 'public' ? 'mdi:eye' : 'mdi:eye-off'}
-					width="20"
-					class="text-surface-500"
-				></iconify-icon>
+				<iconify-icon icon={permissions.visibility === 'public' ? 'mdi:eye' : 'mdi:eye-off'} width="20" class="text-surface-500"></iconify-icon>
 			</button>
 			<p class="mt-1 text-xs text-surface-500">
 				{permissions.visibility === 'public' ? 'Field is visible to everyone by default.' : 'Field is restricted; only allowed roles can access.'}
@@ -159,9 +149,9 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 						{#if !role.isAdmin}
 							<button
 								type="button"
-								class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors {((permissions.readRoles ?? []).includes(role._id)
+								class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors {(permissions.readRoles ?? []).includes(role._id)
 									? 'preset-filled-primary-500'
-									: 'preset-ghost-surface-500')}"
+									: 'preset-ghost-surface-500'}"
 								onclick={() => toggleRoleRead(role._id)}
 							>
 								{role.name ?? role._id}
@@ -178,9 +168,9 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 						{#if !role.isAdmin}
 							<button
 								type="button"
-								class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors {((permissions.writeRoles ?? []).includes(role._id)
+								class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors {(permissions.writeRoles ?? []).includes(role._id)
 									? 'preset-filled-primary-500'
-									: 'preset-ghost-surface-500')}"
+									: 'preset-ghost-surface-500'}"
 								onclick={() => toggleRoleWrite(role._id)}
 							>
 								{role.name ?? role._id}

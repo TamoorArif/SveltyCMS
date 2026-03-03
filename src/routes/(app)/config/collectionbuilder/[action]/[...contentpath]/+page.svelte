@@ -207,9 +207,12 @@
 			} catch {
 				result = {};
 			}
-			const responseData = (result.type === 'success' || result.type === 'failure') && result.data != null
-				? (typeof result.data === 'object' ? result.data as Record<string, unknown> : {})
-				: (result as Record<string, unknown>);
+			const responseData =
+				(result.type === 'success' || result.type === 'failure') && result.data != null
+					? typeof result.data === 'object'
+						? (result.data as Record<string, unknown>)
+						: {}
+					: (result as Record<string, unknown>);
 
 			if (!response.ok) {
 				const message = (responseData?.error as string) ?? (result?.error as { message?: string })?.message ?? `Save failed (${response.status})`;
@@ -219,7 +222,10 @@
 
 			// Duplicate or validation failure: server may return 200 with status 400 in body — show warning only, never success
 			const statusNum = responseData?.status as number | undefined;
-			if ((statusNum === 400 || (result as { status?: number })?.status === 400) && (responseData?.error ?? (result?.error as { message?: string })?.message)) {
+			if (
+				(statusNum === 400 || (result as { status?: number })?.status === 400) &&
+				(responseData?.error ?? (result?.error as { message?: string })?.message)
+			) {
 				toast.warning((responseData?.error ?? (result?.error as { message?: string })?.message) as string);
 				return;
 			}
