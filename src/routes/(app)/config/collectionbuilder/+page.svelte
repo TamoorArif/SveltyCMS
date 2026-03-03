@@ -532,7 +532,7 @@ None (TreeView has its own keyboard navigation)
 	</div>
 
 	<div class="max-h-[calc(100vh-120px)] overflow-auto p-4">
-		<div class="mx-auto max-w-4xl">
+		<div class="mx-auto w-full max-w-7xl">
 			{#if Object.keys(nodesToSave).length > 0}
 				<div
 					class="sticky top-0 z-50 mb-4 mt-0 rounded-lg border border-warning-500/30 bg-warning-500/15 px-4 py-3 text-center text-sm font-medium text-warning-600 shadow-sm dark:text-warning-400"

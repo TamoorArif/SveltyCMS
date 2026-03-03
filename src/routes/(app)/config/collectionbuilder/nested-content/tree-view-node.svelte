@@ -155,10 +155,10 @@ Features:
 	<!-- Icon -->
 	<div class="relative"><iconify-icon {icon} width="24" class={iconClass} aria-hidden="true"></iconify-icon></div>
 
-	<!-- Name & Badge -->
-	<div class="flex flex-col gap-1 min-w-0 shrink">
+	<!-- Name & Badge: min width so category/collection names are not squeezed -->
+	<div class="flex flex-col gap-1 min-w-[300px] sm:min-w-[500px] shrink-0">
 		<div class="flex items-center gap-1 sm:gap-2 flex-wrap">
-			<span class="font-bold text-sm sm:text-base leading-none truncate">{name}</span>
+			<span class="font-bold text-sm sm:text-base leading-none truncate max-w-[280px] sm:max-w-[380px]" title={name}>{name}</span>
 			{#if isCategory}
 				<span
 					class="badge font-semibold bg-tertiary-500 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-sm uppercase shadow-sm"
@@ -175,10 +175,12 @@ Features:
 		</div>
 	</div>
 
-	<!-- Description -->
+	<!-- Description: wider max so more text is visible before truncation -->
 	{#if screen.isDesktop && item.description}
-		<div class="flex-1 px-4 min-w-0 flex justify-start">
-			<span class="italic text-sm opacity-70 truncate w-full max-w-[720px] text-left" title={item.description}> {item.description} </span>
+		<div class="flex-1 px-4 min-w-[320px] sm:min-w-[400px] flex justify-start">
+			<span class="italic text-sm opacity-70 truncate w-full max-w-[640px] sm:max-w-[800px] md:max-w-[1200px] text-left" title={item.description}>
+				{item.description}
+			</span>
 		</div>
 	{/if}
 
