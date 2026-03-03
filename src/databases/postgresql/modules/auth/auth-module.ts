@@ -102,7 +102,7 @@ export class AuthModule {
 		}, 'CREATE_USER_FAILED');
 	}
 
-	async updateUserAttributes(userId: string, userData: Partial<User>, tenantId?: string): Promise<DatabaseResult<User>> {
+	async updateUserAttributes(userId: string, userData: Partial<User>, tenantId?: string | null): Promise<DatabaseResult<User>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authUsers._id, userId)];
 			if (tenantId) {
@@ -129,7 +129,7 @@ export class AuthModule {
 		}, 'UPDATE_USER_FAILED');
 	}
 
-	async deleteUser(userId: string, tenantId?: string): Promise<DatabaseResult<void>> {
+	async deleteUser(userId: string, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authUsers._id, userId)];
 			if (tenantId) {
@@ -139,7 +139,7 @@ export class AuthModule {
 		}, 'DELETE_USER_FAILED');
 	}
 
-	async getUserById(userId: string, tenantId?: string): Promise<DatabaseResult<User | null>> {
+	async getUserById(userId: string, tenantId?: string | null): Promise<DatabaseResult<User | null>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authUsers._id, userId)];
 			if (tenantId) {
@@ -154,7 +154,7 @@ export class AuthModule {
 		}, 'GET_USER_BY_ID_FAILED');
 	}
 
-	async getUserByEmail(criteria: { email: string; tenantId?: string }): Promise<DatabaseResult<User | null>> {
+	async getUserByEmail(criteria: { email: string; tenantId?: string | null }): Promise<DatabaseResult<User | null>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authUsers.email, criteria.email)];
 			if (criteria.tenantId) {
@@ -222,7 +222,7 @@ export class AuthModule {
 		}, 'GET_USER_COUNT_FAILED');
 	}
 
-	async deleteUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		return this.core.wrap(async () => {
 			const conditions = [inArray(schema.authUsers._id, userIds)];
 			if (tenantId) {
@@ -236,7 +236,7 @@ export class AuthModule {
 		}, 'DELETE_USERS_FAILED');
 	}
 
-	async blockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async blockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.core.wrap(async () => {
 			const conditions = [inArray(schema.authUsers._id, userIds)];
 			if (tenantId) {
@@ -251,7 +251,7 @@ export class AuthModule {
 		}, 'BLOCK_USERS_FAILED');
 	}
 
-	async unblockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async unblockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.core.wrap(async () => {
 			const conditions = [inArray(schema.authUsers._id, userIds)];
 			if (tenantId) {
@@ -269,7 +269,7 @@ export class AuthModule {
 	// Combined methods
 	async createUserAndSession(
 		userData: Partial<User>,
-		sessionData: { expires: ISODateString; tenantId?: string }
+		sessionData: { expires: ISODateString; tenantId?: string | null }
 	): Promise<DatabaseResult<{ user: User; session: Session }>> {
 		return this.core.wrap(async () => {
 			const userResult = await this.createUser(userData);
@@ -291,7 +291,7 @@ export class AuthModule {
 		}, 'CREATE_USER_AND_SESSION_FAILED');
 	}
 
-	async deleteUserAndSessions(userId: string, tenantId?: string): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
+	async deleteUserAndSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
 		return this.core.wrap(async () => {
 			await this.invalidateAllUserSessions(userId, tenantId);
 			const userDeleteResult = await this.deleteUser(userId, tenantId);
@@ -304,7 +304,7 @@ export class AuthModule {
 	}
 
 	// Session methods
-	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }): Promise<DatabaseResult<Session>> {
+	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null }): Promise<DatabaseResult<Session>> {
 		return this.core.wrap(async () => {
 			const id = utils.generateId() as string;
 			const [result] = await this.db
@@ -364,7 +364,7 @@ export class AuthModule {
 		}, 'VALIDATE_SESSION_FAILED');
 	}
 
-	async invalidateAllUserSessions(userId: string, tenantId?: string): Promise<DatabaseResult<void>> {
+	async invalidateAllUserSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authSessions.user_id, userId)];
 			if (tenantId) {
@@ -374,7 +374,7 @@ export class AuthModule {
 		}, 'INVALIDATE_USER_SESSIONS_FAILED');
 	}
 
-	async getActiveSessions(userId: string, tenantId?: string): Promise<DatabaseResult<Session[]>> {
+	async getActiveSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<Session[]>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authSessions.user_id, userId), gt(schema.authSessions.expires, isoDateStringToDate(nowISODateString()))];
 			if (tenantId) {
@@ -388,7 +388,7 @@ export class AuthModule {
 		}, 'GET_ACTIVE_SESSIONS_FAILED');
 	}
 
-	async getAllActiveSessions(tenantId?: string): Promise<DatabaseResult<Session[]>> {
+	async getAllActiveSessions(tenantId?: string | null): Promise<DatabaseResult<Session[]>> {
 		return this.core.wrap(async () => {
 			const conditions = [gt(schema.authSessions.expires, isoDateStringToDate(nowISODateString()))];
 			if (tenantId) {
@@ -459,7 +459,7 @@ export class AuthModule {
 		email: string;
 		expires: ISODateString;
 		type: string;
-		tenantId?: string;
+		tenantId?: string | null;
 		role?: string;
 		username?: string;
 	}): Promise<DatabaseResult<string>> {
@@ -482,7 +482,7 @@ export class AuthModule {
 		}, 'CREATE_TOKEN_FAILED');
 	}
 
-	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string): Promise<DatabaseResult<Token>> {
+	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string | null): Promise<DatabaseResult<Token>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authTokens._id, tokenId as string)];
 			if (tenantId) {
@@ -501,7 +501,7 @@ export class AuthModule {
 		token: string,
 		userId?: string,
 		type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ success: boolean; message: string; email?: string }>> {
 		return this.core.wrap(async () => {
 			const conditions = [
@@ -536,7 +536,7 @@ export class AuthModule {
 		token: string,
 		userId?: string,
 		type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ status: boolean; message: string }>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authTokens.token, token as string)];
@@ -563,7 +563,7 @@ export class AuthModule {
 		}, 'CONSUME_TOKEN_FAILED');
 	}
 
-	async getTokenData(token: string, userId?: string, type?: string, tenantId?: string): Promise<DatabaseResult<Token | null>> {
+	async getTokenData(token: string, userId?: string, type?: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.authTokens.token, token as string)];
 			if (userId) {
@@ -585,7 +585,7 @@ export class AuthModule {
 		}, 'GET_TOKEN_DATA_FAILED');
 	}
 
-	async getTokenByValue(token: string, tenantId?: string): Promise<DatabaseResult<Token | null>> {
+	async getTokenByValue(token: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>> {
 		return this.getTokenData(token, undefined, undefined, tenantId);
 	}
 
@@ -623,7 +623,7 @@ export class AuthModule {
 		}, 'DELETE_EXPIRED_TOKENS_FAILED');
 	}
 
-	async deleteTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		return this.core.wrap(async () => {
 			// Try matching by _id first, then fall back to token value
 			// (API endpoints pass token values, not _ids)
@@ -650,7 +650,7 @@ export class AuthModule {
 		}, 'DELETE_TOKENS_FAILED');
 	}
 
-	async blockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async blockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.core.wrap(async () => {
 			const conditions = [inArray(schema.authTokens._id, tokenIds)];
 			if (tenantId) {
@@ -665,7 +665,7 @@ export class AuthModule {
 		}, 'BLOCK_TOKENS_FAILED');
 	}
 
-	async unblockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async unblockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.core.wrap(async () => {
 			const conditions = [inArray(schema.authTokens._id, tokenIds)];
 			if (tenantId) {
@@ -681,7 +681,7 @@ export class AuthModule {
 	}
 
 	// Role methods
-	async getAllRoles(tenantId?: string): Promise<Role[]> {
+	async getAllRoles(tenantId?: string | null): Promise<Role[]> {
 		if (!this.db) {
 			return [];
 		}
@@ -701,7 +701,7 @@ export class AuthModule {
 		}
 	}
 
-	async getRoleById(roleId: string, tenantId?: string): Promise<DatabaseResult<Role | null>> {
+	async getRoleById(roleId: string, tenantId?: string | null): Promise<DatabaseResult<Role | null>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.roles._id, roleId as string)];
 			if (tenantId) {
@@ -734,7 +734,7 @@ export class AuthModule {
 		}, 'CREATE_ROLE_FAILED');
 	}
 
-	async updateRole(roleId: string, roleData: Partial<Role>, tenantId?: string): Promise<DatabaseResult<Role>> {
+	async updateRole(roleId: string, roleData: Partial<Role>, tenantId?: string | null): Promise<DatabaseResult<Role>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.roles._id, roleId as string)];
 			if (tenantId) {
@@ -749,7 +749,7 @@ export class AuthModule {
 		}, 'UPDATE_ROLE_FAILED');
 	}
 
-	async deleteRole(roleId: string, tenantId?: string): Promise<DatabaseResult<void>> {
+	async deleteRole(roleId: string, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		return this.core.wrap(async () => {
 			const conditions = [eq(schema.roles._id, roleId as string)];
 			if (tenantId) {

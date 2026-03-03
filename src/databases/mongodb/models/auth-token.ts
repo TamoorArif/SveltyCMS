@@ -76,7 +76,7 @@ export class TokenAdapter {
 		type: string;
 		username?: string;
 		role?: string;
-		tenantId?: string;
+		tenantId?: string | null;
 	}): Promise<DatabaseResult<string>> {
 		try {
 			// Use uuidv4 for token generation - much simpler and safer
@@ -113,7 +113,7 @@ export class TokenAdapter {
 		token: string,
 		userId?: string,
 		type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ success: boolean; message: string; email?: string }>> {
 		try {
 			const query: Record<string, unknown> = { token };
@@ -184,7 +184,7 @@ export class TokenAdapter {
 		token: string,
 		userId?: string,
 		type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ status: boolean; message: string }>> {
 		try {
 			const query: Record<string, unknown> = { token };
@@ -286,7 +286,7 @@ export class TokenAdapter {
 		}
 	} // Delete multiple tokens by token strings
 
-	async deleteTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
 			if (tenantId) {
@@ -309,7 +309,7 @@ export class TokenAdapter {
 		}
 	} // Block multiple tokens (set them as blocked )
 
-	async blockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async blockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
 			if (tenantId) {
@@ -335,7 +335,7 @@ export class TokenAdapter {
 		}
 	} // Unblock multiple tokens
 
-	async unblockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async unblockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
 			if (tenantId) {
@@ -361,7 +361,7 @@ export class TokenAdapter {
 		}
 	} // Update a single token
 
-	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string): Promise<DatabaseResult<Token>> {
+	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string | null): Promise<DatabaseResult<Token>> {
 		try {
 			const filter: Record<string, unknown> = { token: tokenId };
 			if (tenantId) {
@@ -395,7 +395,7 @@ export class TokenAdapter {
 		}
 	} // Get token details by token value
 
-	async getTokenByValue(token: string, tenantId?: string): Promise<DatabaseResult<Token | null>> {
+	async getTokenByValue(token: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>> {
 		try {
 			const filter: Record<string, unknown> = { token };
 			if (tenantId) {

@@ -71,7 +71,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		// --- MULTI-TENANCY: Scope all filters by tenantId ---
-		const baseFilter: { status?: string; tenantId?: string } = getPrivateSettingSync('MULTI_TENANT') ? { tenantId } : {};
+		const baseFilter: { status?: string; tenantId?: string | null } = getPrivateSettingSync('MULTI_TENANT') ? { tenantId } : {};
 		if (additionalFilter) {
 			Object.assign(baseFilter, additionalFilter);
 		}

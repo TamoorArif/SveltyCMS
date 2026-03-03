@@ -24,7 +24,7 @@ Renders a list of forms, one for each item in the array. Supports Drag-and-Drop 
 	interface Props {
 		collectionName?: string;
 		field: FieldType;
-		tenantId?: string;
+		tenantId?: string | null;
 		value: Record<string, any>[] | null | undefined;
 	}
 

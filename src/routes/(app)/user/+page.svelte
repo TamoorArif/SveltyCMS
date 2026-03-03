@@ -275,6 +275,10 @@
 				</div>
 				<!-- Role -->
 				<div class="gradient-tertiary badge w-full max-w-xs text-white">{role()}:<span class="ml-2 font-bold">{user?.role || 'N/A'}</span></div>
+				<!-- Tenant ID -->
+				{#if isMultiTenant && user?.tenantId}
+					<div class="gradient-warning badge w-full max-w-xs text-white">Tenant ID:<span class="ml-2">{user?.tenantId || 'N/A'}</span></div>
+				{/if}
 				<!-- Two-Factor Authentication Status -->
 				{#if is2FAEnabledGlobal}
 					<button onclick={open2FAModal} class="btn preset-outlined-surface-500 btn-sm w-full max-w-xs">
@@ -289,11 +293,11 @@
 				{/if}
 
 				<!-- Collaboration Settings -->
-				<div class="card p-4 w-full max-w-xs space-y-4 bg-surface-200-700-token border border-surface-500/20 shadow-sm">
+				<div class="card p-4 w-full max-w-xs space-y-1 bg-surface-200-700-token border border-surface-500 shadow-sm">
 					<div class="flex items-center justify-between">
-						<div class="flex items-center gap-2">
+						<div class="flex items-center">
 							<iconify-icon icon="material-symbols:Forum-outline" class="text-primary-500" width={20}></iconify-icon>
-							<span class="text-sm font-bold">Real-time Collaboration</span>
+							<span class="text-xs">Real-time Collaboration</span>
 						</div>
 						<input
 							type="checkbox"
@@ -305,11 +309,11 @@
 							}}
 						/>
 					</div>
-					<div class="flex items-center justify-between pl-7 opacity-80">
+					<div class="flex items-center justify-between">
 						<span class="text-xs">Sound Notifications</span>
 						<input
 							type="checkbox"
-							class="checkbox checkbox-sm"
+							class="checkbox"
 							checked={serverUser?.preferences?.rtc?.sound ?? true}
 							onchange={async (e) => {
 								const sound = (e.target as HTMLInputElement).checked;
@@ -319,10 +323,6 @@
 					</div>
 				</div>
 
-				<!-- Tenant ID -->
-				{#if isMultiTenant}
-					<div class="gradient-primary badge w-full max-w-xs text-white">Tenant ID:<span class="ml-2">{user?.tenantId || 'N/A'}</span></div>
-				{/if}
 				<!-- Permissions List -->
 				{#each user.permissions as permission (permission)}
 					<div class="gradient-primary badge mt-1 w-full max-w-xs text-white">{permission}</div>
@@ -384,16 +384,18 @@
 							</button>
 						</div>
 
-						<div class="card p-4 bg-surface-50 dark:bg-surface-900/40 border border-surface-200 dark:border-surface-700">
-							<h4 class="font-bold text-sm text-error-500">Delete My Account</h4>
-							<p class="mt-1 text-xs text-surface-600 dark:text-surface-400">
-								Anonymize your personal data and permanently delete your account (Right to Erasure).
-							</p>
-							<button onclick={handleAnonymize} class="btn btn-sm preset-outlined-error-500 mt-3 w-full">
-								<iconify-icon icon="mdi:account-remove"></iconify-icon>
-								Delete Account
-							</button>
-						</div>
+						{#if (data.totalUsers ?? 1) > 1 || !data.isAdmin}
+							<div class="card p-4 bg-surface-50 dark:bg-surface-900/40 border border-surface-200 dark:border-surface-700">
+								<h4 class="font-bold text-sm text-error-500">Delete My Account</h4>
+								<p class="mt-1 text-xs text-surface-600 dark:text-surface-400">
+									Anonymize your personal data and permanently delete your account (Right to Erasure).
+								</p>
+								<button onclick={handleAnonymize} class="btn btn-sm preset-outlined-error-500 mt-3 w-full">
+									<iconify-icon icon="mdi:account-remove"></iconify-icon>
+									Delete Account
+								</button>
+							</div>
+						{/if}
 					</div>
 				</div>
 			{/if}
@@ -412,7 +414,6 @@
 		silent={true}
 	>
 		<div class="wrapper2">
-			<h2 class="h3 font-bold mb-4 px-2 dark:text-white">Admin Management</h2>
 			<AdminArea currentUser={{ ...user }} isMultiTenant={isMultiTenant!} roles={data.roles} />
 		</div>
 	</PermissionGuard>

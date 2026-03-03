@@ -172,7 +172,7 @@ export const schemaUuidTransformer =
  * @param tenantId - The tenant ID to inject (null/undefined = global resource)
  */
 export const schemaTenantIdTransformer =
-	(tenantId?: string | null): ts.TransformerFactory<ts.SourceFile> =>
+	(tenantId?: string | null | null): ts.TransformerFactory<ts.SourceFile> =>
 	(context) =>
 	(sourceFile) => {
 		// Skip transformation if tenantId is not provided

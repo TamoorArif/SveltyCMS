@@ -16,7 +16,7 @@ export { CacheCategory };
 export interface CacheWrapperOptions {
 	category: CacheCategory;
 	forceRefresh?: boolean; // Bypass cache and force DB query
-	tenantId?: string;
+	tenantId?: string | null;
 	ttl?: number; // Override default TTL (uses category-based TTL from settings if not provided)
 }
 
@@ -157,7 +157,7 @@ function hashString(str: string): string {
 /**
  * Invalidates cache for a specific collection
  */
-export async function invalidateCollectionCache(collection: string, tenantId?: string): Promise<void> {
+export async function invalidateCollectionCache(collection: string, tenantId?: string | null): Promise<void> {
 	if (cacheService.isBootstrapping()) {
 		return;
 	}
@@ -177,7 +177,7 @@ export async function invalidateCollectionCache(collection: string, tenantId?: s
 /**
  * Invalidates cache by category
  */
-export async function invalidateCategoryCache(category: CacheCategory, tenantId?: string): Promise<void> {
+export async function invalidateCategoryCache(category: CacheCategory, tenantId?: string | null): Promise<void> {
 	if (cacheService.isBootstrapping()) {
 		return;
 	}
@@ -202,7 +202,7 @@ export async function invalidateCategoryCache(category: CacheCategory, tenantId?
 /**
  * Deletes a specific cache entry
  */
-export async function deleteCache(cacheKey: string, category: CacheCategory, tenantId?: string): Promise<void> {
+export async function deleteCache(cacheKey: string, category: CacheCategory, tenantId?: string | null): Promise<void> {
 	try {
 		await cacheService.delete(cacheKey, tenantId);
 

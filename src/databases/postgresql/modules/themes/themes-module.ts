@@ -119,7 +119,7 @@ export class ThemesModule {
 		return res.data;
 	}
 
-	async getDefaultTheme(_tenantId?: string): Promise<DatabaseResult<Theme | null>> {
+	async getDefaultTheme(_tenantId?: string | null): Promise<DatabaseResult<Theme | null>> {
 		return this.core.wrap(async () => {
 			const [result] = await this.db.select().from(schema.themes).where(eq(schema.themes.isDefault, true)).limit(1);
 			return result ? (utils.convertDatesToISO(result) as unknown as Theme) : null;

@@ -361,7 +361,7 @@ export const actions: Actions = {
 					email: admin.email,
 					tenantId: undefined
 				},
-				{ sudo: true }
+				{ bypassTenantCheck: true }
 			);
 			let session: any;
 
@@ -380,7 +380,7 @@ export const actions: Actions = {
 						isRegistered: true
 					},
 					undefined,
-					{ sudo: true }
+					{ bypassTenantCheck: true }
 				);
 
 				// Create new session
@@ -390,7 +390,7 @@ export const actions: Actions = {
 						expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as ISODateString,
 						tenantId: undefined
 					},
-					{ sudo: true }
+					{ bypassTenantCheck: true }
 				);
 			} else {
 				// Create new user
@@ -405,7 +405,7 @@ export const actions: Actions = {
 					{
 						expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as ISODateString
 					},
-					{ sudo: true }
+					{ bypassTenantCheck: true }
 				);
 
 				if (!(authResult.success && authResult.data)) {

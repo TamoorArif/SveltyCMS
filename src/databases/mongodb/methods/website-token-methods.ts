@@ -60,7 +60,9 @@ export class MongoWebsiteTokenMethods {
 	}
 
 	async delete(tokenId: DatabaseId): Promise<DatabaseResult<void>> {
-		return this.crud.delete(tokenId);
+		const result = await this.crud.delete(tokenId);
+		if (!result.success) return result as DatabaseResult<void>;
+		return { success: true, data: undefined };
 	}
 
 	async getByName(name: string): Promise<DatabaseResult<WebsiteToken | null>> {

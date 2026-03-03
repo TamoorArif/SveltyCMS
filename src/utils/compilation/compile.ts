@@ -256,7 +256,7 @@ async function compileFile(
 	existingByHash: Map<string, ExistingFileData>,
 	sourceSet: Set<string>,
 	logger: Logger,
-	tenantId?: string | null
+	tenantId?: string | null | null
 ): Promise<string | null> {
 	const srcPath = path.posix.join(srcDir, file);
 	const targetRel = file.replace(/\.(ts|js)$/, '.js');
@@ -318,7 +318,7 @@ async function compileFile(
 }
 
 const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-function transformAST(code: string, uuid: string, tenantId?: string | null): string {
+function transformAST(code: string, uuid: string, tenantId?: string | null | null): string {
 	const source = ts.createSourceFile('temp.js', code, ts.ScriptTarget.ESNext, true, ts.ScriptKind.JS);
 	const res = ts.transform(source, [
 		schemaUuidTransformer(uuid),
@@ -330,7 +330,7 @@ function transformAST(code: string, uuid: string, tenantId?: string | null): str
 	return printer.printFile(res.transformed[0]);
 }
 
-function wrapOutput(code: string, hash: string, pathRel: string, tenantId?: string | null): string {
+function wrapOutput(code: string, hash: string, pathRel: string, tenantId?: string | null | null): string {
 	// Add header comments
 	let out = code.replace(/(\s*\*\s*@file\s+)(.*)/, `$1.compiledCollections/${pathRel}`);
 	out = out.replace(/^\/\/\s*(HASH|UUID|TENANT_ID):.*$/gm, '').trimStart();

@@ -34,9 +34,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			throw error(403, message);
 		}
 
-		// Check if user is admin (for UI optimization)
-		const userRole = (locals.roles || []).find((role) => role._id === user.role);
-		const isAdmin = userRole?.isAdmin === true;
+		// Use isAdmin from authorization hook (handles multi-tenant fallback correctly)
+		const isAdmin = locals.isAdmin === true;
 
 		const serializableUser = {
 			_id: user._id.toString(),

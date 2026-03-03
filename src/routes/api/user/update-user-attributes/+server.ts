@@ -96,7 +96,7 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
 		if (!tenantId) {
 			throw new AppError('Tenant could not be identified for this operation.', 500, 'TENANT_ERROR');
 		}
-		const userToUpdate = await auth.getUserById(userIdToUpdate);
+		const userToUpdate = await auth.getUserById(userIdToUpdate, tenantId);
 		if (!userToUpdate || userToUpdate.tenantId !== tenantId) {
 			logger.warn('Admin attempted to edit a user outside their tenant.', {
 				adminId: user?._id,
@@ -133,7 +133,7 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
 			throw new AppError('Current password is required to set a new password.', 400, 'MISSING_PASSWORD');
 		}
 		// Verify current password
-		const currentUserFull = await auth.getUserById(user._id);
+		const currentUserFull = await auth.getUserById(user._id, tenantId, { bypassTenantCheck: true });
 		if (!currentUserFull?.password) {
 			throw new AppError('User record invalid.', 500, 'USER_INVALID');
 		}
@@ -149,7 +149,9 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
 	const validatedData = parse(schemaToUse, newUserData);
 
 	// Update user attributes in the database.
-	const updatedUser = await auth.updateUserAttributes(userIdToUpdate, validatedData);
+	const updatedUser = await auth.updateUserAttributes(userIdToUpdate, validatedData, tenantId, {
+		bypassTenantCheck: isEditingSelf
+	});
 
 	if (!updatedUser) {
 		logger.error('updateUserAttributes returned null/undefined', {

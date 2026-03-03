@@ -69,7 +69,7 @@ export interface User {
 	resetToken?: string; // Token for resetting the user's password
 	role: string; // Role of the user (e.g., admin, developer, editor, user)
 	roleIds?: string[]; // Array of role IDs associated with the user
-	tenantId?: string; // Identifier for the tenant the user belongs to (in multi-tenant mode)
+	tenantId?: string | null; // Identifier for the tenant the user belongs to (in multi-tenant mode)
 	totpSecret?: string; // TOTP secret for 2FA (base32 encoded)
 	username?: string; // Username of the user
 }
@@ -84,7 +84,7 @@ export interface Role {
 	isAdmin?: boolean; // Indicates if the role has admin privileges
 	name: string; // Name of the role
 	permissions: string[]; // Array of permission IDs associated with the role
-	tenantId?: string; // Optional tenant identifier for multi-tenant installations
+	tenantId?: string | null; // Optional tenant identifier for multi-tenant installations
 }
 
 export interface Permission {
@@ -113,7 +113,7 @@ export interface Session {
 	expires: ISODateString; // When the session expires (ISO date string)
 	rotated?: boolean; // Flag to mark rotated sessions
 	rotatedTo?: string; // ID of the new session this was rotated to
-	tenantId?: string; // Identifier for the tenant the session belongs to (in multi-tenant mode)
+	tenantId?: string | null; // Identifier for the tenant the session belongs to (in multi-tenant mode)
 	user_id: string; // The ID of the user who owns the session
 }
 
@@ -125,7 +125,7 @@ export interface Token {
 	email: string; // Email associated with the token
 	expires: ISODateString; // When the session expires (ISO date string)
 	role?: string; // Role associated with the token
-	tenantId?: string; // Tenant ID for multi-tenancy support
+	tenantId?: string | null; // Tenant ID for multi-tenancy support
 	token: string; // The token string
 	type: string; // Type of the token (e.g., 'create', 'register', 'reset')
 	updatedAt?: ISODateString; // When the token was last updated

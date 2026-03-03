@@ -71,7 +71,7 @@ export function userTypeDefs() {
 }
 
 interface GraphQLContext {
-	tenantId?: string;
+	tenantId?: string | null;
 	user?: User;
 }
 

@@ -22,10 +22,10 @@ interface SafeQueryOptions {
  * @param tenantId - The tenantId from the context (Event/Session)
  * @param options - Options to bypass check
  */
-export function safeQuery<T extends Record<string, any>>(query: T, tenantId?: string | null, options: SafeQueryOptions = {}): T {
+export function safeQuery<T extends Record<string, any>>(query: T, tenantId?: string | null | null, options: SafeQueryOptions = {}): T {
 	// 1. Get private config
 	const privateEnv = getPrivateEnv();
-	
+
 	// 2. Skip if Multi-Tenancy is disabled
 	const isMultiTenant = (privateEnv as any)?.MULTI_TENANT === true || (privateEnv as any)?.MULTI_TENANT === 'true';
 	if (!isMultiTenant) {
@@ -39,7 +39,12 @@ export function safeQuery<T extends Record<string, any>>(query: T, tenantId?: st
 
 	// 4. Strict Check
 	if (!tenantId) {
-		logger.error(`[SafeQuery] Security Violation! Query: ${JSON.stringify(query)}, Options: ${JSON.stringify(options)}, MultiTenant: ${privateEnv?.MULTI_TENANT}`);
+		// Redact PII fields before logging
+		const PII_KEYS = new Set(['email', 'password', 'username', 'name', 'phone', 'token', 'secret']);
+		const redactedQuery = Object.fromEntries(Object.entries(query).map(([k, v]) => [k, PII_KEYS.has(k.toLowerCase()) ? '[REDACTED]' : v]));
+		logger.error(
+			`[SafeQuery] Security Violation! Query: ${JSON.stringify(redactedQuery)}, Options: ${JSON.stringify(options)}, MultiTenant: ${privateEnv?.MULTI_TENANT}`
+		);
 		throw new AppError('Security Violation: Attempted to execute query without tenant context in Multi-Tenant mode.', 500, 'TENANT_CONTEXT_MISSING');
 	}
 

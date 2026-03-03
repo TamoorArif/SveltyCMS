@@ -106,7 +106,7 @@ export class ThemeManager {
 		}
 	}
 
-	public async getTheme(tenantId?: string): Promise<Theme> {
+	public async getTheme(tenantId?: string | null): Promise<Theme> {
 		if (!(this.initialized && this.db)) {
 			throw new Error('ThemeManager is not initialized.');
 		}
@@ -134,7 +134,7 @@ export class ThemeManager {
 		return DEFAULT_THEME;
 	}
 
-	public async setTheme(theme: Theme, tenantId?: string): Promise<void> {
+	public async setTheme(theme: Theme, tenantId?: string | null): Promise<void> {
 		if (!(this.initialized && this.db)) {
 			throw new Error('ThemeManager is not initialized.');
 		}

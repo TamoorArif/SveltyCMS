@@ -52,14 +52,16 @@ export async function loadPrivateConfig(forceReload = false) {
 					logger.error(msg);
 					throw new AppError(msg, 500, 'TEST_ENV_SAFETY_VIOLATION');
 				}
-				
+
 				try {
-					// Use variable to hide from static analysis during build/check
-					const configAlias = '@config/private';
-					module = await import(/* @vite-ignore */ configAlias);
-				} catch (_importErr) {
-					// Fallback for build/check process where alias might not resolve
-					logger.debug('Could not resolve @config/private - system in setup mode');
+					const pathUtil = await import('node:path');
+					const { pathToFileURL } = await import('node:url');
+					const configPath = pathUtil.resolve(process.cwd(), 'config', 'private.ts');
+					// We must cast it to any because the dynamic import path is unknown at compile time
+					const configURL = pathToFileURL(configPath).href;
+					module = await import(/* @vite-ignore */ configURL);
+				} catch (err: unknown) {
+					logger.debug('Could not load config/private: ' + (err instanceof Error ? err.message : String(err)));
 					return null;
 				}
 			}

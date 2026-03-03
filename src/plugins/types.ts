@@ -255,14 +255,14 @@ export interface IPluginService {
 	getLifecycleHooks<K extends keyof PluginLifecycleHooks>(
 		collectionId: string,
 		hookName: K,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<Exclude<PluginLifecycleHooks[K], undefined>[]>;
 
 	/** Get SSR hooks for enabled plugins on a collection */
-	getSSRHooks(collectionId: string, tenantId?: string): Promise<PluginSSRHook[]>;
+	getSSRHooks(collectionId: string, tenantId?: string | null): Promise<PluginSSRHook[]>;
 
 	/** Check if a plugin is enabled for a collection */
-	isEnabledForCollection(pluginId: string, collectionId: string, tenantId?: string): Promise<boolean>;
+	isEnabledForCollection(pluginId: string, collectionId: string, tenantId?: string | null): Promise<boolean>;
 	/** Register a new plugin */
 	register(plugin: Plugin): Promise<DatabaseResult<void>>;
 

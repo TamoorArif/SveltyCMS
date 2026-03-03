@@ -64,7 +64,7 @@ export interface WidgetConfig<TProps extends WidgetProps = WidgetProps> {
 		field: unknown;
 		user: unknown;
 		type: string;
-		tenantId?: string;
+		tenantId?: string | null;
 	}) => Promise<Record<string, unknown>[]>;
 	Name: string;
 

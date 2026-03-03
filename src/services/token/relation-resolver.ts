@@ -13,7 +13,7 @@ import type { TokenContext } from './types';
 export async function canAccessCollection(
 	user: User | undefined,
 	collectionId: string,
-	_tenantId?: string,
+	_tenantId?: string | null,
 	roles?: import('@src/databases/auth/types').Role[]
 ): Promise<boolean> {
 	if (!user) {
@@ -31,7 +31,7 @@ export async function canAccessCollection(
 }
 
 // Middleware-aware token resolution that respects user permissions
-export async function resolveRelationToken(tokenPath: string, context: TokenContext, user: User | undefined, tenantId?: string): Promise<unknown> {
+export async function resolveRelationToken(tokenPath: string, context: TokenContext, user: User | undefined, tenantId?: string | null): Promise<unknown> {
 	// Parse relation path: entry.manufacturer.name
 	const parts = tokenPath.split('.');
 	if (parts.length < 3 || parts[0] !== 'entry') {

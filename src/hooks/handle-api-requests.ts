@@ -238,7 +238,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 // --- UTILITY EXPORTS ---
 
 /** Manually invalidates API cache for a specific endpoint and user. */
-export async function invalidateApiCache(apiEndpoint: string, userId: string, tenantId?: string): Promise<void> {
+export async function invalidateApiCache(apiEndpoint: string, userId: string, tenantId?: string | null): Promise<void> {
 	const baseKey = `api:${userId}:/api/${apiEndpoint}`;
 	logger.debug(`Manually invalidating API cache for pattern ${baseKey}* (tenant: ${tenantId || 'global'})`);
 

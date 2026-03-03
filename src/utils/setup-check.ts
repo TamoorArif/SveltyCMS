@@ -102,7 +102,7 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
 		}
 
 		// 4. Data Verification: Check if admin users exist
-		const result = await dbAdapter.auth.getAllUsers({ limit: 1 });
+		const result = await dbAdapter.auth.getAllUsers({ limit: 1 }, { bypassTenantCheck: true });
 		// console.log('[setupCheck] User check result:', JSON.stringify(result)); // Uncomment for deep debugging
 
 		const hasUsers = result.success && result.data && result.data.length > 0;

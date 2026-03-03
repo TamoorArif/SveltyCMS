@@ -6,7 +6,7 @@ order: 4
 icon: 'mdi:server-network'
 author: 'admin'
 created: '2025-10-12'
-updated: '2025-10-20'
+updated: '2026-03-03'
 tags:
   - 'architecture'
   - 'hooks'
@@ -258,6 +258,17 @@ export async function initializeWithConfig(config: PrivateEnv): Promise<{ status
 2. **No Restart**: Configuration takes effect without process restart
 3. **Cache Warming**: First page load happens during setup completion
 4. **Smooth UX**: Users redirected directly to login page
+
+### System-Level Operations
+
+While the middleware pipeline enforces strict security and tenant isolation, some internal system processes operate outside standard request flows:
+
+- **Initialization & Setup**: The system verifies config existence directly rather than bypassing DB isolation to check for admins.
+- **Background Maintenance**: Tasks like `demo-cleanup` operate by querying the isolated tenant registry and processing tenants individually, never bypassing global tenant isolation.
+- **Global Data**: Operations on truly global data (like plugins) explicitly pass `tenantId: null` to signify global scope.
+
+> [!IMPORTANT]
+> There are no `sudo` or bypass backdoor flags in the database adapters. Standard API endpoints and user-initiated actions must always respect the middleware-enforced tenant isolation (`event.locals.tenantId`).
 
 ---
 

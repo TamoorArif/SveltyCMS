@@ -81,7 +81,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		// 2. GET COLLECTION SCHEMA
 		// =================================================================
 		// Ensurecontent-manageris initialized before use
-		await contentManager.initialize(tenantId);
+		await contentManager.initialize(tenantId ?? undefined);
 
 		// Check if collection param is a UUID (32 char hex) or a path
 		const isUUID = /^[a-f0-9]{32}$/i.test(collection || '');

@@ -58,7 +58,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 		}
 
 		// --- MULTI-TENANCY: Scope checks to the current tenant ---
-		const checkCriteria: { email: string; tenantId?: string } = {
+		const checkCriteria: { email: string; tenantId?: string | null } = {
 			email: validatedData.email
 		};
 		if (getPrivateSettingSync('MULTI_TENANT')) {

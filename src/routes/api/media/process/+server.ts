@@ -133,7 +133,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						}
 						try {
 							// Pass tenantId and watermarkOptions to the media service
-							const saveResult = await mediaService.saveMedia(file, user._id.toString(), access, tenantId, watermarkOptions);
+							const saveResult = await mediaService.saveMedia(file, user._id.toString(), access, tenantId ?? undefined, watermarkOptions);
 							const savedItem = saveResult as MediaItem;
 
 							results.push({

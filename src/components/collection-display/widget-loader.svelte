@@ -33,7 +33,7 @@ rather than bundling all widgets upfront.
 		collectionName?: string;
 		field: FieldInstance;
 		loader: () => Promise<{ default: any }>;
-		tenantId?: string;
+		tenantId?: string | null;
 		value?: any;
 		WidgetData?: Record<string, any>;
 	}

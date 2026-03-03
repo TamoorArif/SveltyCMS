@@ -22,7 +22,7 @@ Renders a group of fields, allowing for nested data structures.
 	interface Props {
 		collectionName?: string;
 		field: FieldType;
-		tenantId?: string;
+		tenantId?: string | null;
 		value: Record<string, any> | null | undefined;
 	}
 

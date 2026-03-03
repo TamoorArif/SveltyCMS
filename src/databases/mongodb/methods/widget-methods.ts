@@ -291,7 +291,7 @@ export class MongoWidgetMethods {
 	 * Cached with 600s TTL since active widgets are frequently accessed on every page
 	 * @returns {Promise<DatabaseResult<Widget[]>>} An array of active widget objects.
 	 */
-	async findAllActive(tenantId?: string): Promise<DatabaseResult<Widget[]>> {
+	async findAllActive(tenantId?: string | null): Promise<DatabaseResult<Widget[]>> {
 		logger.debug('[widget-methods.findAllActive] Fetching active widgets (may be cached)', { tenantId });
 
 		return withCache(

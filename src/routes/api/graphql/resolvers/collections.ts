@@ -95,12 +95,12 @@ interface ResolverContext {
 
 // Interface compatible with CacheService wrapper
 interface CacheClient {
-	get(key: string, tenantId?: string): Promise<string | null>;
-	set(key: string, value: string, ex: string, duration: number, tenantId?: string): Promise<unknown>;
+	get(key: string, tenantId?: string | null): Promise<string | null>;
+	set(key: string, value: string, ex: string, duration: number, tenantId?: string | null): Promise<unknown>;
 }
 
 // Registers collection schemas dynamically, now tenant-aware
-export async function registerCollections(tenantId?: string) {
+export async function registerCollections(tenantId?: string | null) {
 	await contentManager.initialize(tenantId);
 	const collections: Schema[] = await contentManager.getCollections(tenantId);
 
@@ -290,7 +290,7 @@ export async function registerCollections(tenantId?: string) {
 }
 
 // Builds resolvers for querying collection data.
-export async function collectionsResolvers(dbAdapter: DatabaseAdapter, cacheClient: CacheClient | null, tenantId?: string) {
+export async function collectionsResolvers(dbAdapter: DatabaseAdapter, cacheClient: CacheClient | null, tenantId?: string | null) {
 	if (!dbAdapter) {
 		throw new Error('Database adapter is not initialized');
 	}
@@ -311,7 +311,7 @@ export async function collectionsResolvers(dbAdapter: DatabaseAdapter, cacheClie
 			// Type guard for context
 			const ctx = context as {
 				user?: User;
-				tenantId?: string;
+				tenantId?: string | null;
 				locale?: string;
 			};
 			if (!ctx.user) {

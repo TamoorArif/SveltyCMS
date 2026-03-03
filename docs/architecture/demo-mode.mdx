@@ -6,7 +6,7 @@ order: 5
 icon: 'mdi:presentation-play'
 author: 'admin'
 created: '2025-11-30'
-updated: '2025-11-30'
+updated: '2026-03-03'
 tags:
   - 'architecture'
   - 'demo-mode'
@@ -62,19 +62,19 @@ Demo mode is strictly controlled via `config/private.ts` to prevent accidental d
     - **Method A (No Token)**: User visits `/login` -> Click "Sign Up".
       - If `MULTI_TENANT=true`, they can register _without_ a token.
       - A new Tenant is created for them automatically.
-    - **Method B (With Link)**: User visits site with `demo_tenant_id` cookie.
-      - `handleAuthentication` hook detects missing `demo_tenant_id` cookie.
-      - Calls `TenantService.create({ plan: 'free', status: 'active' })` to generate a new Tenant.
-      - Sets `demo_tenant_id` cookie with the new `_id`.
-      - Calls `seedDemoTenant(tenantId)` to populate the database.
+    - **Method B (Automatic)**: `handleAuthentication` hook detects missing `demo_tenant_id` cookie.
+      - Generates a new `tenantId` using `crypto.randomUUID()`.
+      - Sets `demo_tenant_id` cookie with a 20-minute expiration.
+      - Calls `seedDemoTenant(tenantId)` to populate the database with default roles, settings, and a demo admin.
 
 2.  **Usage**:
     - User interacts with the CMS as a normal tenant.
-    - `tenantId` is preserved in the cookie.
+    - `tenantId` is preserved in the cookie and session.
 
 3.  **Expiration & Cleanup**:
-    - A background job (initialized in `src/databases/db.ts`) checks for tenants created > 60 minutes ago.
-    - It deletes all associated **physical files** (media) and database records (collections, users, settings) using the `cleanupExpiredDemoTenants` service.
+    - A background job (initialized in `src/databases/db.ts`) runs every 5 minutes.
+    - It identifies tenanted users created past the cleanup TTL (default: 60 minutes) or those with expired sessions.
+    - **Security**: The cleanup process queries the central tenant registry and then iterates through each expired tenant, using its specific `tenantId` to safely delete associated data (collections, media, settings) without violating tenant isolation.
 
 ### Seeding Strategy
 

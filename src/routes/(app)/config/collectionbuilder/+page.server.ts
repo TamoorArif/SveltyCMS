@@ -22,7 +22,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	try {
-		const { user, roles: tenantRoles, isAdmin } = locals;
+		const { user, roles: tenantRoles, isAdmin, tenantId } = locals;
 
 		// User authentication already done by handleAuthorization hook
 		if (!user) {
@@ -54,7 +54,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// - Ensure consistency when saving drag-and-drop changes back to DB
 		// - Work with the actual stored data, not cached/compiled schemas
 		// The database stores lightweight metadata without heavy collectionDef.fields arrays
-		const contentStructure = await contentManager.getContentStructureFromDatabase('flat');
+		const contentStructure = await contentManager.getContentStructureFromDatabase('flat', tenantId);
 
 		// Use isAdmin from locals (already computed by handleAuthorization hook)
 		// No need to re-calculate from roles
@@ -89,7 +89,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	deleteCollections: async ({ request }) => {
+	deleteCollections: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const ids = JSON.parse(formData.get('ids') as string);
 
@@ -99,7 +99,7 @@ export const actions: Actions = {
 
 		try {
 			// We need to find the paths for these IDs to delete from contentManager
-			const currentStructure = await contentManager.getContentStructureFromDatabase('flat');
+			const currentStructure = await contentManager.getContentStructureFromDatabase('flat', locals.tenantId);
 			const pathsToDelete = currentStructure.filter((node) => ids.includes(node._id.toString())).map((node) => node.path);
 
 			const operations = pathsToDelete.map((path) => ({
@@ -107,7 +107,7 @@ export const actions: Actions = {
 				node: { path } as any
 			}));
 
-			await contentManager.upsertContentNodes(operations);
+			await contentManager.upsertContentNodes(operations, locals.tenantId);
 			return { success: true };
 		} catch (err) {
 			logger.error('Error deleting collections:', err);
@@ -115,7 +115,7 @@ export const actions: Actions = {
 		}
 	},
 
-	saveConfig: async ({ request }) => {
+	saveConfig: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const items = JSON.parse(formData.get('items') as string);
 
@@ -124,8 +124,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			await contentManager.upsertContentNodes(items);
-			const updatedStructure = await contentManager.getContentStructureFromDatabase('flat');
+			await contentManager.upsertContentNodes(items, locals.tenantId);
+			const updatedStructure = await contentManager.getContentStructureFromDatabase('flat', locals.tenantId);
 			const serializedStructure = updatedStructure.map((node) => ({
 				...node,
 				_id: node._id.toString(),

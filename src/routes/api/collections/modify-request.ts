@@ -39,7 +39,7 @@ interface ModifyRequestParams {
 	collectionName?: string;
 	data: EntryData[];
 	fields: FieldInstance[];
-	tenantId?: string; // Add tenantId for multi-tenancy
+	tenantId?: string | null; // Add tenantId for multi-tenancy
 	type: string;
 	user: User;
 }

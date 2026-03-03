@@ -104,7 +104,7 @@ export class SessionAdapter {
 		token: string,
 		userId?: string,
 		_type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ success: boolean; message: string; email?: string }>> {
 		try {
 			const session = await this.SessionModel.findById(token).lean();
@@ -159,15 +159,15 @@ export class SessionAdapter {
 
 	// Create a new session
 	async createSession(
-		sessionData: { user_id: string; expires: ISODateString; tenantId?: string },
-		options?: { sudo?: boolean }
+		sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<Session>> {
 		try {
 			// Create the new session with UUID
 			const sessionId = generateId();
 			const session = new this.SessionModel({ ...sessionData, _id: sessionId });
 			await session.save();
-			logger.info(`Session created: ${sessionId} for user: ${sessionData.user_id}`, { sudo: options?.sudo });
+			logger.info(`Session created: ${sessionId} for user: ${sessionData.user_id}`, { bypassTenantCheck: options?.bypassTenantCheck });
 			const sessionObj = session.toObject();
 			return {
 				success: true,
@@ -196,7 +196,7 @@ export class SessionAdapter {
 
 	// Create a new session with options (optimized with atomic bulkWrite)
 	async createSessionWithOptions(
-		sessionData: { user_id: string; expires: ISODateString; tenantId?: string },
+		sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
 		options: { invalidateOthers?: boolean } = {}
 	): Promise<Session> {
 		try {
@@ -537,7 +537,7 @@ export class SessionAdapter {
 	}
 
 	// Invalidate all sessions for a user (enhanced to handle rotated sessions)
-	async invalidateAllUserSessions(userId: string, tenantId?: string): Promise<DatabaseResult<void>> {
+	async invalidateAllUserSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		try {
 			const now = new Date();
 			const filter: Record<string, unknown> = {
@@ -573,7 +573,7 @@ export class SessionAdapter {
 	}
 
 	// Get active sessions for a user (enhanced to show rotation status)
-	async getActiveSessions(userId: string, tenantId?: string): Promise<DatabaseResult<Session[]>> {
+	async getActiveSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<Session[]>> {
 		try {
 			const filter: Record<string, unknown> = {
 				user_id: userId,
@@ -605,7 +605,7 @@ export class SessionAdapter {
 	}
 
 	// Get all active sessions for all users (for online users widget)
-	async getAllActiveSessions(tenantId?: string): Promise<DatabaseResult<Session[]>> {
+	async getAllActiveSessions(tenantId?: string | null): Promise<DatabaseResult<Session[]>> {
 		try {
 			const query: Record<string, unknown> = {
 				expires: { $gt: new Date().toISOString() }

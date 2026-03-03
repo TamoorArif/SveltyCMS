@@ -26,7 +26,7 @@ interface CollectionDataParams {
 	pageSize?: number;
 	search?: string;
 	sort?: { field: string; direction: 'asc' | 'desc' };
-	tenantId?: string;
+	tenantId?: string | null;
 	user: User;
 }
 

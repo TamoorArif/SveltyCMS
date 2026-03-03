@@ -75,21 +75,24 @@ export class Auth {
 	// Combined Performance-Optimized Methods (wrapper for db.auth methods)
 	async createUserAndSession(
 		userData: Partial<User>,
-		sessionData: { expires: ISODateString; tenantId?: string },
-		options?: { sudo?: boolean }
+		sessionData: { expires: ISODateString; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<{ user: User; session: Session }>> {
 		return this.db.auth.createUserAndSession(userData, sessionData, options);
 	}
 
-	async deleteUserAndSessions(userId: string, tenantId?: string): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
+	async deleteUserAndSessions(
+		userId: string,
+		tenantId?: string | null
+	): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
 		return this.db.auth.deleteUserAndSessions(userId, tenantId);
 	}
 
-	async blockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async blockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.db.auth.blockUsers(userIds, tenantId);
 	}
 
-	async unblockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async unblockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.db.auth.unblockUsers(userIds, tenantId);
 	}
 
@@ -141,7 +144,7 @@ export class Auth {
 		}
 	}
 
-	async getUserById(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<User | null> {
+	async getUserById(userId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<User | null> {
 		// No caching - getUserById is fast enough and avoids cache invalidation complexity
 		// Session cache already stores user data for authenticated requests
 		const result = (await this.db.auth.getUserById(userId, tenantId, options)) as unknown;
@@ -154,7 +157,7 @@ export class Auth {
 		}
 		return (result as User | null) ?? null;
 	}
-	async getUserByEmail(criteria: { email: string; tenantId?: string }, options?: { sudo?: boolean }): Promise<User | null> {
+	async getUserByEmail(criteria: { email: string; tenantId?: string | null }, options?: { bypassTenantCheck?: boolean }): Promise<User | null> {
 		// No caching - getUserByEmail is only used during login/registration
 		// Caching here adds complexity without significant performance benefit
 		const result = (await this.db.auth.getUserByEmail(criteria, options)) as unknown;
@@ -171,7 +174,7 @@ export class Auth {
 		}
 		return (result as User | null) ?? null;
 	}
-	async updateUser(userId: string, updates: Partial<User>, tenantId?: string, options?: { sudo?: boolean }): Promise<void> {
+	async updateUser(userId: string, updates: Partial<User>, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<void> {
 		const result = await this.db.auth.updateUserAttributes(userId, updates, tenantId, options);
 		if (!result?.success) {
 			throw error(500, 'Failed to update user');
@@ -181,7 +184,7 @@ export class Auth {
 		// Session cache is the only cache, and it's invalidated by updateUserAttributes API
 	}
 
-	async deleteUser(userId: string, tenantId?: string): Promise<void> {
+	async deleteUser(userId: string, tenantId?: string | null): Promise<void> {
 		// Get user first to clear email cache
 		const user = await this.getUserById(userId, tenantId);
 
@@ -199,7 +202,7 @@ export class Auth {
 			await cacheService.delete(emailCacheKey, tenantId);
 		}
 	}
-	async getAllUsers(options?: { filter?: { tenantId?: string } }): Promise<User[]> {
+	async getAllUsers(options?: { filter?: { tenantId?: string | null } }): Promise<User[]> {
 		const result = await this.db.auth.getAllUsers(options);
 		if (result?.success) {
 			return result.data;
@@ -207,7 +210,7 @@ export class Auth {
 		return [];
 	}
 
-	async getUserCount(filter?: { tenantId?: string }, options?: { sudo?: boolean }): Promise<number> {
+	async getUserCount(filter?: { tenantId?: string | null }, options?: { bypassTenantCheck?: boolean }): Promise<number> {
 		const result = await this.db.auth.getUserCount(filter, options);
 		if (result?.success) {
 			return result.data;
@@ -215,8 +218,11 @@ export class Auth {
 		return 0;
 	}
 
-	async createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }, options?: { sudo?: boolean }): Promise<Session> {
-		const sr = (await this.db.auth.createSession(sessionData, options)) as unknown;
+	async createSession(
+		sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<Session> {
+		const sr = (await this.db.auth.createSession(sessionData)) as unknown;
 		let session: Session | null = null;
 		if (sr && typeof sr === 'object' && sr !== null && 'success' in (sr as Record<string, unknown>)) {
 			const sessionResult = sr as DatabaseResult<Session>;
@@ -283,11 +289,11 @@ export class Auth {
 		throw error(500, 'Token rotation failed');
 	}
 
-	async getAllRoles(tenantId?: string): Promise<Role[]> {
-		return this.db.auth.getAllRoles(tenantId);
+	async getAllRoles(tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<Role[]> {
+		return this.db.auth.getAllRoles(tenantId, options);
 	}
 
-	async getAllTokens(filter?: { tenantId?: string }): Promise<DatabaseResult<Token[]>> {
+	async getAllTokens(filter?: { tenantId?: string | null }): Promise<DatabaseResult<Token[]>> {
 		const result = await this.db.auth.getAllTokens(filter);
 		return result;
 	}
@@ -297,7 +303,7 @@ export class Auth {
 	 * @param tokenData - Token creation data including user_id, expires, type, and optional tenantId
 	 * @returns The created token string
 	 */
-	async createToken(tokenData: { user_id: string; expires: ISODateString; type: string; tenantId?: string }): Promise<string> {
+	async createToken(tokenData: { user_id: string; expires: ISODateString; type: string; tenantId?: string | null }): Promise<string> {
 		// Get user email (required for token creation)
 		const user = await this.getUserById(tokenData.user_id, tokenData.tenantId);
 		if (!user) {
@@ -325,7 +331,7 @@ export class Auth {
 	}
 
 	// Token management wrappers for interface completeness
-	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string): Promise<Token> {
+	async updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string | null): Promise<Token> {
 		const result = await this.db.auth.updateToken(tokenId, tokenData, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -333,7 +339,7 @@ export class Auth {
 		throw error(500, !result || result.success ? 'Failed to update token' : result.message || 'Failed to update token');
 	}
 
-	async deleteTokens(tokenIds: string[], tenantId?: string): Promise<{ deletedCount: number }> {
+	async deleteTokens(tokenIds: string[], tenantId?: string | null): Promise<{ deletedCount: number }> {
 		const result = await this.db.auth.deleteTokens(tokenIds, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -341,7 +347,7 @@ export class Auth {
 		throw error(500, !result || result.success ? 'Failed to delete tokens' : result.message || 'Failed to delete tokens');
 	}
 
-	async blockTokens(tokenIds: string[], tenantId?: string): Promise<{ modifiedCount: number }> {
+	async blockTokens(tokenIds: string[], tenantId?: string | null): Promise<{ modifiedCount: number }> {
 		const result = await this.db.auth.blockTokens(tokenIds, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -349,7 +355,7 @@ export class Auth {
 		throw error(500, !result || result.success ? 'Failed to block tokens' : result.message || 'Failed to block tokens');
 	}
 
-	async unblockTokens(tokenIds: string[], tenantId?: string): Promise<{ modifiedCount: number }> {
+	async unblockTokens(tokenIds: string[], tenantId?: string | null): Promise<{ modifiedCount: number }> {
 		const result = await this.db.auth.unblockTokens(tokenIds, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -357,7 +363,7 @@ export class Auth {
 		throw error(500, !result || result.success ? 'Failed to unblock tokens' : result.message || 'Failed to unblock tokens');
 	}
 
-	async getTokenByValue(token: string, tenantId?: string): Promise<Token | null> {
+	async getTokenByValue(token: string, tenantId?: string | null): Promise<Token | null> {
 		const result = await this.db.auth.getTokenByValue(token, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -365,7 +371,7 @@ export class Auth {
 		throw error(500, !result || result.success ? 'Failed to get token' : result.message || 'Failed to get token');
 	}
 
-	async validateToken(token: string, userId?: string, type = 'access', tenantId?: string): Promise<{ success: boolean; message: string }> {
+	async validateToken(token: string, userId?: string, type = 'access', tenantId?: string | null): Promise<{ success: boolean; message: string }> {
 		const result = await this.db.auth.validateToken(token, userId, type, tenantId);
 		if (result?.success && result.data) {
 			return {
@@ -379,7 +385,7 @@ export class Auth {
 		};
 	}
 
-	async validateRegistrationToken(token: string, tenantId?: string): Promise<{ isValid: boolean; message: string; details?: Token }> {
+	async validateRegistrationToken(token: string, tenantId?: string | null): Promise<{ isValid: boolean; message: string; details?: Token }> {
 		// Try both 'user-invite' (new) and 'invite' (legacy) types
 		let result = await this.db.auth.validateToken(token, undefined, 'user-invite', tenantId);
 
@@ -402,7 +408,7 @@ export class Auth {
 		};
 	}
 
-	async consumeToken(token: string, userId?: string, type = 'access', tenantId?: string): Promise<{ status: boolean; message: string }> {
+	async consumeToken(token: string, userId?: string, type = 'access', tenantId?: string | null): Promise<{ status: boolean; message: string }> {
 		const result = await this.db.auth.consumeToken(token, userId, type, tenantId);
 		if (result?.success) {
 			return result.data;
@@ -413,7 +419,7 @@ export class Auth {
 		};
 	}
 
-	async consumeRegistrationToken(token: string, tenantId?: string): Promise<{ status: boolean; message: string }> {
+	async consumeRegistrationToken(token: string, tenantId?: string | null): Promise<{ status: boolean; message: string }> {
 		// Attempt to consume as 'user-invite' first
 		let result = await this.db.auth.consumeToken(token, undefined, 'user-invite', tenantId);
 
@@ -431,9 +437,14 @@ export class Auth {
 		};
 	}
 
-	async authenticate(email: string, password: string, tenantId?: string): Promise<{ user: User; sessionId: string } | null> {
+	async authenticate(
+		email: string,
+		password: string,
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<{ user: User; sessionId: string } | null> {
 		try {
-			const user = await this.getUserByEmail({ email, tenantId });
+			const user = await this.getUserByEmail({ email, tenantId }, options);
 			if (!user) {
 				logger.debug('User not found for authentication', { email, tenantId });
 				return null;
@@ -457,11 +468,14 @@ export class Auth {
 			}
 
 			const expiresAt = dateToISODateString(new Date(Date.now() + 24 * 60 * 60 * 1000)); // 24 hours
-			const session = await this.createSession({
-				user_id: user._id,
-				expires: expiresAt,
-				tenantId
-			});
+			const session = await this.createSession(
+				{
+					user_id: user._id,
+					expires: expiresAt,
+					tenantId
+				},
+				options
+			);
 
 			await this.sessionStore.set(session._id, user, expiresAt);
 
@@ -476,19 +490,25 @@ export class Auth {
 		await this.destroySession(sessionId);
 	}
 
-	async checkUser(fields: { user_id?: string; email?: string; tenantId?: string }): Promise<User | null> {
+	async checkUser(
+		fields: { user_id?: string; email?: string; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<User | null> {
 		if (fields.email) {
-			const result = await this.db.auth.getUserByEmail({
-				email: fields.email,
-				tenantId: fields.tenantId
-			});
+			const result = await this.db.auth.getUserByEmail(
+				{
+					email: fields.email,
+					tenantId: fields.tenantId
+				},
+				options
+			);
 			if (result?.success) {
 				return result.data;
 			}
 			return null;
 		}
 		if (fields.user_id) {
-			const result = await this.db.auth.getUserById(fields.user_id, fields.tenantId);
+			const result = await this.db.auth.getUserById(fields.user_id, fields.tenantId, options);
 			if (result?.success) {
 				return result.data;
 			}
@@ -497,7 +517,12 @@ export class Auth {
 		return null;
 	}
 
-	async updateUserAttributes(userId: string, attributes: Partial<User>, tenantId?: string): Promise<User> {
+	async updateUserAttributes(
+		userId: string,
+		attributes: Partial<User>,
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<User> {
 		const isServer = typeof window === 'undefined' || (typeof process !== 'undefined' && process.versions != null);
 		if (attributes.password && isServer) {
 			attributes.password = await cryptoHashPassword(attributes.password);
@@ -505,7 +530,7 @@ export class Auth {
 		if (attributes.email === null) {
 			attributes.email = undefined;
 		}
-		const result = await this.db.auth.updateUserAttributes(userId, attributes, tenantId);
+		const result = await this.db.auth.updateUserAttributes(userId, attributes, tenantId, options);
 		if (result?.success) {
 			return result.data;
 		}
@@ -530,11 +555,11 @@ export class Auth {
 		};
 	}
 
-	async invalidateAllUserSessions(userId: string, tenantId?: string): Promise<void> {
+	async invalidateAllUserSessions(userId: string, tenantId?: string | null): Promise<void> {
 		await this.db.auth.invalidateAllUserSessions(userId, tenantId);
 	}
 
-	async getActiveSessions(userId: string, tenantId?: string): Promise<{ success: boolean; data: Session[]; message?: string }> {
+	async getActiveSessions(userId: string, tenantId?: string | null): Promise<{ success: boolean; data: Session[]; message?: string }> {
 		try {
 			const result = await this.db.auth.getActiveSessions(userId, tenantId);
 			if (result?.success) {
@@ -555,7 +580,7 @@ export class Auth {
 		}
 	}
 
-	async getAllActiveSessions(tenantId?: string): Promise<{ success: boolean; data: Session[]; message?: string }> {
+	async getAllActiveSessions(tenantId?: string | null): Promise<{ success: boolean; data: Session[]; message?: string }> {
 		try {
 			const result = await this.db.auth.getAllActiveSessions(tenantId);
 			if (result?.success) {
@@ -579,8 +604,8 @@ export class Auth {
 	async updateUserPassword(
 		email: string,
 		password: string,
-		tenantId?: string,
-		options?: { sudo?: boolean }
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<{ status: boolean; message?: string }> {
 		const user = await this.getUserByEmail({ email, tenantId }, options);
 		if (!user) {

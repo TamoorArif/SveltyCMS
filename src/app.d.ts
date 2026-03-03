@@ -52,7 +52,7 @@ declare global {
 			// Data loaded by authorization hook
 			roles: Role[]; // Using imported Role type
 			session_id?: string;
-			tenantId?: string; // Added for multi-tenancy support
+			tenantId?: string | null; // Added for multi-tenancy support
 			theme: Theme | null; // Ensure 'theme' is correctly typed
 			user: User | null;
 		}

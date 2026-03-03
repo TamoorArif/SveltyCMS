@@ -321,7 +321,7 @@ class CacheService {
 		}
 	}
 
-	private generateKey(baseKey: string, tenantId?: string): string {
+	private generateKey(baseKey: string, tenantId?: string | null): string {
 		// If the caller already supplied a fully-qualified tenant-prefixed key, respect it
 		if (baseKey.startsWith('tenant:')) {
 			return baseKey;
@@ -348,7 +348,7 @@ class CacheService {
 	}
 
 	// Check if a key should be predictively prefetched based on patterns
-	private async checkPrefetch(key: string, tenantId?: string): Promise<void> {
+	private async checkPrefetch(key: string, tenantId?: string | null): Promise<void> {
 		for (const pattern of this.prefetchPatterns) {
 			if (pattern.pattern.test(key)) {
 				const keysToFetch = pattern.prefetchKeys(key);
@@ -365,7 +365,7 @@ class CacheService {
 		keys: string[],
 		fetcher: (keys: string[]) => Promise<Record<string, unknown>>,
 		category?: CacheCategory,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<void> {
 		try {
 			// 1. Filter out keys that are already cached
@@ -402,7 +402,7 @@ class CacheService {
 		}
 	}
 
-	async get<T>(baseKey: string, tenantId?: string, _category?: CacheCategory): Promise<T | null> {
+	async get<T>(baseKey: string, tenantId?: string | null, _category?: CacheCategory): Promise<T | null> {
 		await this.ensureInitialized();
 		const key = this.generateKey(baseKey, tenantId);
 
@@ -415,7 +415,7 @@ class CacheService {
 		return (await this.store?.get<T>(key)) ?? null;
 	}
 
-	async set<T>(baseKey: string, value: T, ttlSeconds: number, tenantId?: string, category?: CacheCategory): Promise<void> {
+	async set<T>(baseKey: string, value: T, ttlSeconds: number, tenantId?: string | null, category?: CacheCategory): Promise<void> {
 		await this.ensureInitialized();
 		const key = this.generateKey(baseKey, tenantId);
 
@@ -426,20 +426,20 @@ class CacheService {
 	}
 
 	// Set with automatic category-based TTL
-	async setWithCategory<T>(baseKey: string, value: T, category: CacheCategory, tenantId?: string): Promise<void> {
+	async setWithCategory<T>(baseKey: string, value: T, category: CacheCategory, tenantId?: string | null): Promise<void> {
 		await this.ensureInitialized();
 		const key = this.generateKey(baseKey, tenantId);
 		const ttl = getCategoryTTL(category);
 		await this.store?.set<T>(key, value, ttl);
 	}
 
-	async delete(baseKey: string | string[], tenantId?: string): Promise<void> {
+	async delete(baseKey: string | string[], tenantId?: string | null): Promise<void> {
 		await this.ensureInitialized();
 		const keys = Array.isArray(baseKey) ? baseKey.map((k) => this.generateKey(k, tenantId)) : this.generateKey(baseKey, tenantId);
 		await this.store?.delete(keys);
 	}
 
-	async clearByPattern(pattern: string, tenantId?: string): Promise<void> {
+	async clearByPattern(pattern: string, tenantId?: string | null): Promise<void> {
 		await this.ensureInitialized();
 		const keyPattern = this.generateKey(pattern, tenantId);
 		await this.store?.clearByPattern(keyPattern);
@@ -670,7 +670,7 @@ interface WarmCacheConfig {
 	category?: CacheCategory;
 	fetcher: () => Promise<unknown>;
 	keys: string[];
-	tenantId?: string;
+	tenantId?: string | null;
 }
 
 // Interface for predictive prefetch configuration

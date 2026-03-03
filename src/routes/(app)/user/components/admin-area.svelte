@@ -42,7 +42,7 @@
 
 	// Components
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import PermissionGuard from '@src/components/permission-guard.svelte';
+
 	import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
 	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 	import Boolean from '@src/components/system/table/boolean.svelte';
@@ -51,7 +51,7 @@
 	import TableIcons from '@src/components/system/table/table-icons.svelte';
 	import TablePagination from '@src/components/system/table/table-pagination.svelte';
 	// Types
-	import { PermissionAction, PermissionType, type Role as RoleType, type Token, type User } from '@src/databases/auth/types';
+	import { type Role as RoleType, type Token, type User } from '@src/databases/auth/types';
 	// Types
 	import {
 		adminarea_activesession,
@@ -83,8 +83,8 @@
 		username
 	} from '@src/paraglide/messages';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-	import { avatarSrc, normalizeAvatarUrl, } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
+	import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Stores
 	import { logger } from '@utils/logger';
 	import { modalState } from '@utils/modal-state.svelte';
@@ -640,41 +640,31 @@ import { toast } from '@src/stores/toast.svelte.ts';
 			<span class="whitespace-normal wrap-break-word">{adminarea_emailtoken()}</span>
 		</button>
 
-		<PermissionGuard
-			config={{
-				contextId: 'user:manage',
-				name: 'Manage User Tokens',
-				description: 'Allows management of user tokens in the admin area.',
-				action: PermissionAction.MANAGE,
-				contextType: PermissionType.USER
-			}}
+		<button
+			onclick={toggleUserToken}
+			aria-label={showUsertoken ? adminarea_hideusertoken() : adminarea_showtoken()}
+			class="gradient-secondary btn w-full text-white sm:max-w-xs"
 		>
-			<button
-				onclick={toggleUserToken}
-				aria-label={showUsertoken ? adminarea_hideusertoken() : adminarea_showtoken()}
-				class="gradient-secondary btn w-full text-white sm:max-w-xs"
-			>
-				<iconify-icon icon="material-symbols:key-outline" width={24}></iconify-icon>
-				<span>{showUsertoken ? adminarea_hideusertoken() : adminarea_showtoken()}</span>
-			</button>
+			<iconify-icon icon="material-symbols:key-outline" width={24}></iconify-icon>
+			<span>{showUsertoken ? adminarea_hideusertoken() : adminarea_showtoken()}</span>
+		</button>
 
-			{#if showUsertoken && !showUserList && tableData}
-				{@const now = new Date()}
-				{@const expiredTokens = tableData.filter(
-					(item): item is Token => isToken(item) && item.expires != null && new Date(String(item.expires)) < now
-				)}
-				{#if expiredTokens.length > 0}
-					<button
-						onclick={() => (showExpiredTokens = !showExpiredTokens)}
-						aria-label={showExpiredTokens ? 'Hide Expired Tokens' : 'Show Expired Tokens'}
-						class="gradient-secondary btn w-full text-white sm:max-w-xs"
-					>
-						<iconify-icon icon="material-symbols:schedule" width={24}></iconify-icon>
-						<span>{showExpiredTokens ? 'Hide Expired' : 'Show Expired'}</span>
-					</button>
-				{/if}
+		{#if showUsertoken && !showUserList && tableData}
+			{@const now = new Date()}
+			{@const expiredTokens = tableData.filter(
+				(item): item is Token => isToken(item) && item.expires != null && new Date(String(item.expires)) < now
+			)}
+			{#if expiredTokens.length > 0}
+				<button
+					onclick={() => (showExpiredTokens = !showExpiredTokens)}
+					aria-label={showExpiredTokens ? 'Hide Expired Tokens' : 'Show Expired Tokens'}
+					class="gradient-secondary btn w-full text-white sm:max-w-xs"
+				>
+					<iconify-icon icon="material-symbols:schedule" width={24}></iconify-icon>
+					<span>{showExpiredTokens ? 'Hide Expired' : 'Show Expired'}</span>
+				</button>
 			{/if}
-		</PermissionGuard>
+		{/if}
 
 		<button
 			onclick={toggleUserList}

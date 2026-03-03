@@ -21,7 +21,7 @@ import { building } from '$app/environment';
 // Create a cache client adapter compatible with the expected interface in resolvers
 const cacheClient = getPrivateSettingSync('USE_REDIS')
 	? {
-			get: async (key: string, tenantId?: string) => {
+			get: async (key: string, tenantId?: string | null) => {
 				try {
 					// Namespace GraphQL caches and include tenant when provided
 					return await cacheService.get<string>(`graphql:${key}`, tenantId);
@@ -30,7 +30,7 @@ const cacheClient = getPrivateSettingSync('USE_REDIS')
 					return null;
 				}
 			},
-			set: async (key: string, value: string, _ex: string, duration: number, tenantId?: string) => {
+			set: async (key: string, value: string, _ex: string, duration: number, tenantId?: string | null) => {
 				try {
 					// Ignore 'EX' (Generic wrapper) and use duration directly
 					// Namespace GraphQL caches
@@ -87,12 +87,12 @@ if (!building) {
 // Cache client created above
 
 // Setup GraphQL schema and resolvers
-async function createGraphQLSchema(dbAdapter: DatabaseAdapter, tenantId?: string) {
+async function createGraphQLSchema(dbAdapter: DatabaseAdapter, tenantId?: string | null) {
 	// Ensure widgets are loaded before proceeding
 	if (!widgets.isLoaded) {
 		logger.debug('Widgets not loaded yet, initializing...');
 		// Pass dbAdapter to load active widgets from DB
-		await widgets.initialize(tenantId, dbAdapter);
+		await widgets.initialize(tenantId ?? undefined, dbAdapter);
 	}
 
 	const { typeDefs: collectionsTypeDefs, collections } = await registerCollections(tenantId);
@@ -230,7 +230,7 @@ async function createGraphQLSchema(dbAdapter: DatabaseAdapter, tenantId?: string
 	return { typeDefs, resolvers };
 }
 
-async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string) {
+async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string | null) {
 	try {
 		const { typeDefs, resolvers } = await createGraphQLSchema(dbAdapter, tenantId);
 
@@ -249,7 +249,7 @@ async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string) {
 				// Extract the context from the request if it was passed
 				const contextData = (
 					request as Request & {
-						contextData?: { user: unknown; tenantId?: string };
+						contextData?: { user: unknown; tenantId?: string | null };
 					}
 				).contextData;
 				return {
@@ -285,7 +285,7 @@ const globalWithWs = globalThis as typeof globalThis & {
 // NOTE: This is a workaround for SvelteKit not exposing the HTTP server instance.
 // We create a standalone WebSocket server on a different port.
 // In a production environment, you would ideally integrate this with your main HTTP server.
-async function initializeWebSocketServer(dbAdapter: DatabaseAdapter, tenantId?: string) {
+async function initializeWebSocketServer(dbAdapter: DatabaseAdapter, tenantId?: string | null) {
 	if (globalWithWs.__SVELTY_GRAPHQL_WS__ || wsServerInitialized || building) {
 		logger.debug('WebSocket server already initialized, skipping...');
 		return;
@@ -422,7 +422,7 @@ const handler = apiHandler(async (event: RequestEvent) => {
 		// Add context data to the request object for GraphQL Yoga
 		(
 			compatibleRequest as Request & {
-				contextData?: { user: unknown; tenantId?: string };
+				contextData?: { user: unknown; tenantId?: string | null };
 			}
 		).contextData = {
 			user: locals.user,

@@ -112,7 +112,7 @@ const RelationWidget = createWidget<RelationProps>({
 	// Aggregation performs a lookup to search by the related entry's displayField.
 	// SECURITY: Includes tenant isolation to prevent IDOR attacks
 	aggregations: {
-		filters: async ({ field, filter, tenantId }: { field: AggregationField; filter: string; tenantId?: string }) => [
+		filters: async ({ field, filter, tenantId }: { field: AggregationField; filter: string; tenantId?: string | null }) => [
 			{
 				$lookup: {
 					from: field.collection,

@@ -98,7 +98,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		name?: string;
 		state?: string;
 		status?: string;
-		tenantId?: string;
+		tenantId?: string | null;
 		title?: string;
 		[key: string]: unknown;
 	}

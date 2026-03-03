@@ -176,12 +176,12 @@ export const telemetryService = {
 					}
 
 					if (dbAdapter.auth) {
-						// Single Tenant / Global (or SQLite promiscuous)
-						const userCountResult = await dbAdapter.auth.getUserCount();
+						// System-level metrics: bypass tenant scoping for global counts
+						const userCountResult = await dbAdapter.auth.getUserCount(undefined, { bypassTenantCheck: true });
 						if (userCountResult.success) {
 							userCount = userCountResult.data;
 						}
-						roleCount = (await dbAdapter.auth.getAllRoles()).length;
+						roleCount = (await dbAdapter.auth.getAllRoles(undefined, { bypassTenantCheck: true })).length;
 					}
 
 					// 4. Content Dependency

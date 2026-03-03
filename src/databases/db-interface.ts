@@ -371,121 +371,110 @@ export interface DatabaseTransaction {
 // ============================================================================
 
 export interface IAuthAdapter {
-	blockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>>;
-	blockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>>;
+	blockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>>;
+	blockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>>;
 	cleanupRotatedSessions?(): Promise<DatabaseResult<number>>;
-	consumeToken(token: string, userId?: string, type?: string, tenantId?: string): Promise<DatabaseResult<{ status: boolean; message: string }>>;
-<<<<<<< HEAD
-	createRole(role: Role, options?: { sudo?: boolean }): Promise<DatabaseResult<Role>>;
-
-	// Session Management Methods
-	createSession(
-		sessionData: { user_id: string; expires: ISODateString; tenantId?: string },
-		options?: { sudo?: boolean }
-	): Promise<DatabaseResult<Session>>;
-
-	// Token Management Methods
-	createToken(data: { user_id: string; email: string; expires: ISODateString; type: string; tenantId?: string }): Promise<DatabaseResult<string>>;
-
-	// User Management Methods
-	createUser(userData: Partial<User>, options?: { sudo?: boolean }): Promise<DatabaseResult<User>>;
-
-	// Combined Performance-Optimized Methods
-=======
+	consumeToken(
+		token: string,
+		userId?: string,
+		type?: string,
+		tenantId?: string | null
+	): Promise<DatabaseResult<{ status: boolean; message: string }>>;
 	createRole(role: Role): Promise<DatabaseResult<Role>>;
-	createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string }): Promise<DatabaseResult<Session>>;
-	createToken(data: { user_id: string; email: string; expires: ISODateString; type: string; tenantId?: string }): Promise<DatabaseResult<string>>;
+	createSession(sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null }): Promise<DatabaseResult<Session>>;
+	createToken(data: {
+		user_id: string;
+		email: string;
+		expires: ISODateString;
+		type: string;
+		tenantId?: string | null;
+	}): Promise<DatabaseResult<string>>;
 	createUser(userData: Partial<User>): Promise<DatabaseResult<User>>;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	createUserAndSession(
 		userData: Partial<User>,
-		sessionData: { expires: ISODateString; tenantId?: string },
-		options?: { sudo?: boolean }
+		sessionData: { expires: ISODateString; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<{ user: User; session: Session }>>;
 	deleteExpiredSessions(): Promise<DatabaseResult<number>>;
 	deleteExpiredTokens(): Promise<DatabaseResult<number>>;
-	deleteRole(roleId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<void>>;
+	deleteRole(roleId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<void>>;
 	deleteSession(sessionId: string): Promise<DatabaseResult<void>>;
-	deleteTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>>;
-	deleteUser(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<void>>;
+	deleteTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>>;
+	deleteUser(userId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<void>>;
 	deleteUserAndSessions(
 		userId: string,
-		tenantId?: string,
-		options?: { sudo?: boolean }
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>>;
-	deleteUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>>;
-	getActiveSessions(userId: string, tenantId?: string): Promise<DatabaseResult<Session[]>>;
-	getAllActiveSessions(tenantId?: string): Promise<DatabaseResult<Session[]>>;
-<<<<<<< HEAD
-
-	// Role Management Methods
-	getAllRoles(tenantId?: string, options?: { sudo?: boolean }): Promise<Role[]>;
-=======
-	getAllRoles(tenantId?: string): Promise<Role[]>;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+	deleteUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>>;
+	getActiveSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<Session[]>>;
+	getAllActiveSessions(tenantId?: string | null): Promise<DatabaseResult<Session[]>>;
+	getAllRoles(tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<Role[]>;
 	getAllTokens(filter?: Record<string, unknown>): Promise<DatabaseResult<Token[]>>;
-	getAllUsers(options?: PaginationOption, dbOptions?: { sudo?: boolean }): Promise<DatabaseResult<User[]>>;
-	getRoleById(roleId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<Role | null>>;
+	getAllUsers(options?: PaginationOption, dbOptions?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User[]>>;
+	getRoleById(roleId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<Role | null>>;
 	getSessionTokenData(sessionId: string): Promise<DatabaseResult<{ expiresAt: ISODateString; user_id: string } | null>>;
-	getTokenByValue(token: string, tenantId?: string): Promise<DatabaseResult<Token | null>>;
-	getTokenData(token: string, userId?: string, type?: string, tenantId?: string): Promise<DatabaseResult<Token | null>>;
-	getUserByEmail(criteria: { email: string; tenantId?: string }, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>>;
-	getUserById(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>>;
-	getUserCount(filter?: Record<string, unknown>, options?: { sudo?: boolean }): Promise<DatabaseResult<number>>;
-	invalidateAllUserSessions(userId: string, tenantId?: string): Promise<DatabaseResult<void>>;
+	getTokenByValue(token: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
+	getTokenData(token: string, userId?: string, type?: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
+	getUserByEmail(
+		criteria: { email: string; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<DatabaseResult<User | null>>;
+	getUserById(userId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User | null>>;
+	getUserCount(filter?: Record<string, unknown>, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<number>>;
+	invalidateAllUserSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<void>>;
 	rotateToken(oldToken: string, expires: ISODateString): Promise<DatabaseResult<string>>;
 	setupAuthModels(): Promise<void>;
-	unblockTokens(tokenIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>>;
-	unblockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>>;
-	updateRole(roleId: string, roleData: Partial<Role>, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<Role>>;
+	unblockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>>;
+	unblockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>>;
+	updateRole(
+		roleId: string,
+		roleData: Partial<Role>,
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<DatabaseResult<Role>>;
 	updateSessionExpiry(sessionId: string, newExpiry: ISODateString): Promise<DatabaseResult<Session>>;
-	updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string): Promise<DatabaseResult<Token>>;
-	updateUserAttributes(userId: string, userData: Partial<User>, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<User>>;
+	updateToken(tokenId: string, tokenData: Partial<Token>, tenantId?: string | null): Promise<DatabaseResult<Token>>;
+	updateUserAttributes(
+		userId: string,
+		userData: Partial<User>,
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<DatabaseResult<User>>;
 	validateSession(sessionId: string): Promise<DatabaseResult<User | null>>;
 	validateToken(
 		token: string,
 		userId?: string,
 		type?: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<DatabaseResult<{ success: boolean; message: string; email?: string }>>;
 }
 
 export interface ICrudAdapter {
-<<<<<<< HEAD
-	aggregate<R>(collection: string, pipeline: unknown[], tenantId?: string | null, options?: { sudo?: boolean }): Promise<DatabaseResult<R[]>>;
-	count(collection: string, query?: QueryFilter<BaseEntity>, tenantId?: string | null, options?: { sudo?: boolean }): Promise<DatabaseResult<number>>;
-	delete(collection: string, id: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
-=======
-	aggregate<R>(collection: string, pipeline: unknown[], tenantId?: string | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<R[]>>;
-	count(collection: string, query?: QueryFilter<BaseEntity>, tenantId?: string | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<number>>;
-	delete(collection: string, id: DatabaseId, tenantId?: string | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>>;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+	aggregate<R>(collection: string, pipeline: unknown[], tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<R[]>>;
+	count(
+		collection: string,
+		query?: QueryFilter<BaseEntity>,
+		tenantId?: string | null | null,
+		bypassTenantCheck?: boolean
+	): Promise<DatabaseResult<number>>;
+	delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>>;
 	deleteMany(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null,
-<<<<<<< HEAD
-		options?: { sudo?: boolean }
+		tenantId?: string | null | null,
+		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ deletedCount: number }>>;
 	exists(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
+		tenantId?: string | null | null,
+		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<boolean>>;
 	findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; sudo?: boolean }
-=======
-		bypassTenantCheck?: boolean
-	): Promise<DatabaseResult<{ deletedCount: number }>>;
-	exists(collection: string, query: QueryFilter<BaseEntity>, tenantId?: string | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<boolean>>;
-	findByIds<T extends BaseEntity>(
-		collection: string,
-		ids: DatabaseId[],
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; bypassTenantCheck?: boolean }
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<T[]>>;
 	findMany<T extends BaseEntity>(
 		collection: string,
@@ -495,100 +484,53 @@ export interface ICrudAdapter {
 			offset?: number;
 			fields?: (keyof T)[];
 			sort?: SortOption;
-			tenantId?: string | null;
-<<<<<<< HEAD
-			sudo?: boolean;
-=======
+			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 		}
 	): Promise<DatabaseResult<T[]>>;
 	findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-<<<<<<< HEAD
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; sudo?: boolean }
-	): Promise<DatabaseResult<T | null>>;
-	insert<T extends BaseEntity>(
-		collection: string,
-		data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-	): Promise<DatabaseResult<T>>;
-	insertMany<T extends BaseEntity>(
-		collection: string,
-		data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>[],
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-=======
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; bypassTenantCheck?: boolean }
+		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<T | null>>;
 	insert<T extends BaseEntity>(
 		collection: string,
 		data: EntityCreate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>>;
 	insertMany<T extends BaseEntity>(
 		collection: string,
 		data: EntityCreate<T>[],
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	): Promise<DatabaseResult<T[]>>;
 	update<T extends BaseEntity>(
 		collection: string,
 		id: DatabaseId,
-<<<<<<< HEAD
-		data: Partial<Omit<T, 'createdAt' | 'updatedAt'>>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-=======
 		data: EntityUpdate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	): Promise<DatabaseResult<T>>;
 	updateMany<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-<<<<<<< HEAD
-		data: Partial<Omit<T, 'createdAt' | 'updatedAt'>>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-=======
 		data: EntityUpdate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	): Promise<DatabaseResult<{ modifiedCount: number }>>;
 	upsert<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-<<<<<<< HEAD
-		data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-	): Promise<DatabaseResult<T>>;
-	upsertMany<T extends BaseEntity>(
-		collection: string,
-		items: Array<{
-			query: QueryFilter<T>;
-			data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>;
-		}>,
-		tenantId?: string | null,
-		options?: { sudo?: boolean }
-=======
 		data: EntityCreate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>>;
 	upsertMany<T extends BaseEntity>(
 		collection: string,
 		items: Array<{ query: QueryFilter<T>; data: EntityCreate<T> }>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	): Promise<DatabaseResult<T[] | { upsertedCount: number; modifiedCount: number }>>;
 }
 
@@ -602,9 +544,9 @@ export interface IMediaAdapter {
 			folderId?: DatabaseId,
 			options?: PaginationOptions,
 			recursive?: boolean,
-			tenantId?: string | null
+			tenantId?: string | null | null
 		): Promise<DatabaseResult<PaginatedResult<MediaItem>>>;
-		search(query: string, options?: PaginationOptions, tenantId?: string | null): Promise<DatabaseResult<PaginatedResult<MediaItem>>>;
+		search(query: string, options?: PaginationOptions, tenantId?: string | null | null): Promise<DatabaseResult<PaginatedResult<MediaItem>>>;
 		getMetadata(fileIds: DatabaseId[]): Promise<DatabaseResult<Record<string, MediaMetadata>>>;
 		updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>): Promise<DatabaseResult<MediaItem>>;
 		move(fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<DatabaseResult<{ movedCount: number }>>;
@@ -639,33 +581,21 @@ export interface IContentAdapter {
 	nodes: {
 		getStructure(
 			mode: 'flat' | 'nested',
-<<<<<<< HEAD
-			options?: { filter?: Partial<ContentNode>; tenantId?: string | null; sudo?: boolean; bypassCache?: boolean }
-		): Promise<DatabaseResult<ContentNode[]>>;
-		upsertContentStructureNode(node: Omit<ContentNode, 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<ContentNode>>;
-		create(node: Omit<ContentNode, 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<ContentNode>>;
-		createMany(nodes: Omit<ContentNode, 'createdAt' | 'updatedAt'>[]): Promise<DatabaseResult<ContentNode[]>>;
-		update(path: string, changes: Partial<ContentNode>): Promise<DatabaseResult<ContentNode>>;
-		bulkUpdate(
-			updates: { path: string; id?: string; changes: Partial<ContentNode> }[],
-			options?: { tenantId?: string | null; sudo?: boolean; bypassCache?: boolean }
-		): Promise<DatabaseResult<ContentNode[]>>;
-=======
-			filter?: Partial<ContentNodeType> & { tenantId?: string },
-			bypassCache?: boolean,
-			bypassTenantCheck?: boolean
+			options?: { filter?: Partial<ContentNodeType>; tenantId?: string | null; bypassCache?: boolean; bypassTenantCheck?: boolean }
 		): Promise<DatabaseResult<ContentNodeType[]>>;
 		upsertContentStructureNode(node: EntityCreate<ContentNodeType>): Promise<DatabaseResult<ContentNodeType>>;
 		create(node: EntityCreate<ContentNodeType>): Promise<DatabaseResult<ContentNodeType>>;
 		createMany(nodes: EntityCreate<ContentNodeType>[]): Promise<DatabaseResult<ContentNodeType[]>>;
 		update(path: string, changes: Partial<ContentNodeType>): Promise<DatabaseResult<ContentNodeType>>;
-		bulkUpdate(updates: { path: string; id?: string; changes: Partial<ContentNodeType> }[]): Promise<DatabaseResult<ContentNodeType[]>>;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+		bulkUpdate(
+			updates: { path: string; id?: string; changes: Partial<ContentNodeType> }[],
+			options?: { tenantId?: string | null; bypassTenantCheck?: boolean; bypassCache?: boolean }
+		): Promise<DatabaseResult<ContentNodeType[]>>;
 		fixMismatchedNodeIds?(
 			nodes: { path: string; expectedId: string; changes: Partial<ContentNodeType> }[]
 		): Promise<DatabaseResult<{ fixed: number }>>;
 		delete(path: string): Promise<DatabaseResult<void>>;
-		deleteMany(paths: string[], options?: { tenantId?: string }): Promise<DatabaseResult<{ deletedCount: number }>>;
+		deleteMany(paths: string[], options?: { tenantId?: string | null }): Promise<DatabaseResult<{ deletedCount: number }>>;
 		reorder(nodeUpdates: Array<{ path: string; newOrder: number }>): Promise<DatabaseResult<ContentNodeType[]>>;
 		reorderStructure(items: Array<{ id: string; parentId: string | null; order: number; path: string }>): Promise<DatabaseResult<void>>;
 	};
@@ -721,7 +651,7 @@ export interface ISystemAdapter {
 		getAllThemes(): Promise<Theme[]>;
 		storeThemes(themes: Theme[]): Promise<void>;
 		ensure(theme: EntityCreate<Theme>): Promise<Theme>;
-		getDefaultTheme(tenantId?: string): Promise<DatabaseResult<Theme | null>>;
+		getDefaultTheme(tenantId?: string | null): Promise<DatabaseResult<Theme | null>>;
 	};
 	websiteTokens: {
 		create(token: Omit<WebsiteToken, '_id' | 'createdAt'>): Promise<DatabaseResult<WebsiteToken>>;

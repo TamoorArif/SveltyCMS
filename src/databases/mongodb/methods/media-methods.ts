@@ -148,7 +148,7 @@ export class MongoMediaMethods {
 		folderId?: DatabaseId,
 		options: PaginationOptions = {},
 		recursive = false,
-		tenantId?: string | null
+		tenantId?: string | null | null
 	): Promise<DatabaseResult<PaginatedResult<MediaItem>>> {
 		const { page = 1, pageSize = 25, sortField = 'createdAt', sortDirection = 'desc', user } = options;
 

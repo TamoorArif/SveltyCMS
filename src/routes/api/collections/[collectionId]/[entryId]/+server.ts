@@ -87,7 +87,7 @@ export const PATCH = apiHandler(async ({ locals, params, request }) => {
 
 	const collectionName = normalizeCollectionName(schema._id);
 	// First verify the entry exists and belongs to the current tenant
-	const query: { _id: DatabaseId; tenantId?: string } = {
+	const query: { _id: DatabaseId; tenantId?: string | null } = {
 		_id: entryId as DatabaseId
 	};
 	if (getPrivateSettingSync('MULTI_TENANT')) {
@@ -155,7 +155,7 @@ export const DELETE = apiHandler(async ({ locals, params }) => {
 	}
 
 	const collectionName = normalizeCollectionName(schema._id);
-	const query: { _id: DatabaseId; tenantId?: string } = {
+	const query: { _id: DatabaseId; tenantId?: string | null } = {
 		_id: entryId as DatabaseId
 	};
 	if (getPrivateSettingSync('MULTI_TENANT')) {

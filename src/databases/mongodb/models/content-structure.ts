@@ -278,7 +278,7 @@ contentStructureSchema.statics = {
 	 * Persists a full or partial content structure reorder.
 	 * This method updates parentId, order, and path atomically.
 	 */
-	async reorderStructure(items: ContentStructureReorderItem[], tenantId?: string): Promise<DatabaseResult<void>> {
+	async reorderStructure(items: ContentStructureReorderItem[], tenantId?: string | null): Promise<DatabaseResult<void>> {
 		const session = await mongoose.startSession();
 		session.startTransaction();
 

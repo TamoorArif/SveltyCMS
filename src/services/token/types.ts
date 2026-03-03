@@ -25,7 +25,7 @@ export interface TokenContext {
 	roles?: import('@src/databases/auth/types').Role[];
 	site?: Record<string, unknown>;
 	system?: { now: ISODateString; [key: string]: unknown };
-	tenantId?: string;
+	tenantId?: string | null;
 	user?: User;
 	[key: string]: unknown;
 }
@@ -69,7 +69,7 @@ export interface TokenRegistryConfig {
 	includeUser?: boolean;
 	locale?: string;
 	roles?: import('@src/databases/auth/types').Role[];
-	tenantId?: string;
+	tenantId?: string | null;
 }
 
 export interface TokenReplaceOptions {

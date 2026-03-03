@@ -16,7 +16,7 @@ import type { DatabaseId } from '@src/databases/db-interface';
 import { logger } from '@utils/logger.server';
 
 interface Tenanted {
-	tenantId?: string;
+	tenantId?: string | null;
 }
 
 /**
@@ -49,7 +49,7 @@ export async function cleanupExpiredDemoTenants() {
 		// Get all users, then filter client-side for tenanted admin users past the cutoff.
 		// MariaDB's mapQuery() only supports equality operators, so date filtering
 		// must happen in JS. Demo mode has limited users so this is acceptable.
-		const usersResult = await db.auth.getAllUsers();
+		const usersResult = await db.auth.getAllUsers(undefined, { bypassTenantCheck: true });
 		if (!(usersResult.success && usersResult.data)) {
 			logger.warn('[Demo Cleanup] Failed to fetch users');
 			return;

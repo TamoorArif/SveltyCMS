@@ -38,7 +38,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		// Initialize widgets if not already loaded
-		await widgets.initialize(tenantId);
+		await widgets.initialize(tenantId ?? undefined);
 
 		// Get active widgets from database
 		const dbAdapter = locals.dbAdapter;

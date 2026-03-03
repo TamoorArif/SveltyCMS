@@ -132,7 +132,7 @@ export class SchedulerService {
 			// and filter in memory. Assuming the number of *pending* scheduled items is small.
 			const result = await db.content.nodes.getStructure('flat', {
 				filter: { status: StatusTypes.schedule } as any,
-				sudo: true
+				bypassTenantCheck: true
 			});
 			if (!this.intervalId) {
 				return; // Check if stopped during await

@@ -456,24 +456,7 @@
 	});
 </script>
 
-<!--
-@file src/components/system/floating-nav.svelte
-@component
-**Floating Navigation with Draggable Button and Radial Menu**
-
-Creates a draggable floating navigation button that expands into a radial menu
-with quick access to main sections: Home, User, Collections, Config, etc.
-
-@example
-<FloatingNav />
-
-### Interaction Flow
-```mermaid
-graph TD
-    A[Floating Button] -->|Drag|
-B(Update Position) A -->|Click/Space/Enter| C(Toggle Menu) C -->|Open| D[Radial Menu] C -->|Close| E[Restore Focus] D --> F[Keyboard Nav/Hover] F
--->|Select| G[Navigate & Close] ``` ### Features - Draggable floating button - Radial menu for quick access to main sections - Reduced motion support
-- Full keyboard navigation and ARIA support -->
+<!-- FloatingNav: Draggable button with radial menu, keyboard nav, reduced motion, ARIA -->
 
 <SystemTooltip
 	title="Open Navigation Menu"

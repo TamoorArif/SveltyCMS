@@ -80,7 +80,7 @@ export class CrudModule {
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; bypassTenantCheck?: boolean }
+		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<T | null>> {
 		return this.core.wrap(async () => {
 			const secureQuery = safeQuery(query, options?.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
@@ -108,7 +108,7 @@ export class CrudModule {
 			limit?: number;
 			offset?: number;
 			fields?: (keyof T)[];
-			tenantId?: string | null;
+			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
 		}
 	): Promise<DatabaseResult<T[]>> {
@@ -137,7 +137,7 @@ export class CrudModule {
 	async findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options?: { fields?: (keyof T)[]; tenantId?: string | null; bypassTenantCheck?: boolean }
+		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<T[]>> {
 		return this.core.wrap(async () => {
 			const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options?.tenantId, {
@@ -158,7 +158,7 @@ export class CrudModule {
 	async insert<T extends BaseEntity>(
 		collection: string,
 		data: EntityCreate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
 		return this.core.wrap(async () => {
@@ -189,7 +189,7 @@ export class CrudModule {
 		collection: string,
 		id: DatabaseId,
 		data: EntityUpdate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
 		return this.core.wrap(async () => {
@@ -216,7 +216,7 @@ export class CrudModule {
 		}, 'CRUD_UPDATE_FAILED');
 	}
 
-	async delete(collection: string, id: DatabaseId, tenantId?: string | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
+	async delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
 		return this.core.wrap(async () => {
 			const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, {
 				bypassTenantCheck
@@ -233,7 +233,7 @@ export class CrudModule {
 		collection: string,
 		query: QueryFilter<T>,
 		data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
 		return this.core.wrap(async () => {
@@ -273,7 +273,7 @@ export class CrudModule {
 	async count<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T> = {},
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<number>> {
 		return this.core.wrap(async () => {
@@ -295,7 +295,7 @@ export class CrudModule {
 	async exists<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<boolean>> {
 		return this.core.wrap(async () => {
@@ -310,7 +310,7 @@ export class CrudModule {
 	async insertMany<T extends BaseEntity>(
 		collection: string,
 		data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>[],
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T[]>> {
 		return this.core.wrap(async () => {
@@ -345,7 +345,7 @@ export class CrudModule {
 		collection: string,
 		query: QueryFilter<T>,
 		data: EntityUpdate<T>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		return this.core.wrap(async () => {
@@ -368,7 +368,7 @@ export class CrudModule {
 	async deleteMany(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ deletedCount: number }>> {
 		return this.core.wrap(async () => {
@@ -390,7 +390,7 @@ export class CrudModule {
 			query: QueryFilter<T>;
 			data: EntityCreate<T>;
 		}>,
-		tenantId?: string | null,
+		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ upsertedCount: number; modifiedCount: number }>> {
 		return this.core.wrap(async () => {
@@ -416,7 +416,7 @@ export class CrudModule {
 	async aggregate<R = any>(
 		_collection: string,
 		_pipeline: any[],
-		_tenantId?: string | null,
+		_tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<R[]>> {
 		return this.core.notImplemented('crud.aggregate');

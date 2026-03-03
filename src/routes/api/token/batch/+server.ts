@@ -62,7 +62,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			}
 			// Use auth.getAllTokens if available to verify ownership
 			try {
-				const filter = { tenantId } as { tenantId?: string };
+				const filter = { tenantId } as { tenantId?: string | null };
 				const tokensResult = await auth.getAllTokens(filter);
 				if (!(tokensResult.success && tokensResult.data)) {
 					throw new Error('Failed to retrieve tokens');

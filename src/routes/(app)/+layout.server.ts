@@ -31,13 +31,13 @@ interface LayoutError {
 	message: string;
 }
 
-async function refreshUser(sessionUser: User | null): Promise<User | null> {
+async function refreshUser(sessionUser: User | null, tenantId?: string | null): Promise<User | null> {
 	if (!sessionUser) {
 		return null;
 	}
 
 	try {
-		const dbUser = await auth?.getUserById(sessionUser._id.toString());
+		const dbUser = await auth?.getUserById(sessionUser._id.toString(), tenantId, { bypassTenantCheck: true });
 
 		if (dbUser) {
 			logger.debug('Fresh user data loaded in layout', {
@@ -72,7 +72,7 @@ function createLayoutError(err: unknown, fallbackMessage: string): LayoutError {
 }
 
 export const load: LayoutServerLoad = async ({ locals, depends }) => {
-	const { theme, user: sessionUser, cspNonce } = locals;
+	const { theme, user: sessionUser, cspNonce, tenantId } = locals;
 
 	depends('app:content');
 
@@ -87,10 +87,10 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 
 		// User data is critical for shell, but we try to use session data if fast
 		// refreshUser is reasonably fast, so we can await it or stream it too
-		const freshUser = await refreshUser(sessionUser);
+		const freshUser = await refreshUser(sessionUser, tenantId);
 
 		// Get total user count for smart UI logic (like hiding chat for single users)
-		const totalUsersResult = await auth?.getUserCount();
+		const totalUsersResult = await auth?.getUserCount({ tenantId });
 		const totalUsers = typeof totalUsersResult === 'number' ? totalUsersResult : 1;
 
 		// Check if AI features are enabled for solo user assistant

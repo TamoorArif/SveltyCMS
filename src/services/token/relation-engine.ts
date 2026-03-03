@@ -19,7 +19,7 @@ import type { TokenContext, TokenDefinition } from './types';
 export async function getRelationTokens(
 	schema: Schema,
 	user: User | undefined,
-	tenantId?: string,
+	tenantId?: string | null,
 	roles?: import('@src/databases/auth/types').Role[]
 ): Promise<TokenDefinition[]> {
 	const tokens: TokenDefinition[] = [];

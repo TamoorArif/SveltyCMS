@@ -131,7 +131,7 @@ export class UserAdapter {
 	}
 
 	// Create a new user
-	async createUser(userData: Partial<User>, options?: { sudo?: boolean }): Promise<DatabaseResult<User>> {
+	async createUser(userData: Partial<User>, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User>> {
 		try {
 			// Normalize email to lowercase if present
 			const normalizedUserData = {
@@ -140,7 +140,7 @@ export class UserAdapter {
 			};
 
 			// Validate tenant context if multi-tenant is enabled
-			safeQuery({}, userData.tenantId, { sudo: options?.sudo });
+			safeQuery({}, userData.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
 
 			// Log exactly what we received (redacted)
 			logger.debug('UserAdapter.createUser received data:', {
@@ -196,11 +196,11 @@ export class UserAdapter {
 	async updateUserAttributes(
 		userId: string,
 		userData: Partial<User>,
-		tenantId?: string,
-		options?: { sudo?: boolean }
+		tenantId?: string | null,
+		options?: { bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<User>> {
 		try {
-			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
+			const filter = safeQuery({ _id: userId } as any, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
 
 			const user = await this.UserModel.findOneAndUpdate(filter, userData, {
 				returnDocument: 'after'
@@ -237,9 +237,9 @@ export class UserAdapter {
 	}
 
 	// Get all users with optional filtering, sorting, and pagination
-	async getAllUsers(options?: PaginationOption, dbOptions?: { sudo?: boolean }): Promise<DatabaseResult<User[]>> {
+	async getAllUsers(options?: PaginationOption, dbOptions?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User[]>> {
 		try {
-			const filter = safeQuery(options?.filter || {}, options?.filter?.tenantId as string, { sudo: dbOptions?.sudo });
+			const filter = safeQuery(options?.filter || {}, options?.filter?.tenantId as string, { bypassTenantCheck: dbOptions?.bypassTenantCheck });
 			let query = this.UserModel.find(filter).lean();
 
 			if (options?.sort) {
@@ -284,9 +284,9 @@ export class UserAdapter {
 	}
 
 	// Get the count of users
-	async getUserCount(filter?: Record<string, unknown>, options?: { sudo?: boolean }): Promise<DatabaseResult<number>> {
+	async getUserCount(filter?: Record<string, unknown>, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<number>> {
 		try {
-			const safeFilter = safeQuery(filter || {}, filter?.tenantId as string, { sudo: options?.sudo });
+			const safeFilter = safeQuery(filter || {}, filter?.tenantId as string, { bypassTenantCheck: options?.bypassTenantCheck });
 			const count = await this.UserModel.countDocuments(safeFilter);
 			logger.debug(`User count retrieved: ${count}`);
 			return {
@@ -553,7 +553,7 @@ export class UserAdapter {
 	}
 
 	// Block multiple users
-	async blockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async blockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { _id: { $in: userIds } };
 			if (tenantId) {
@@ -584,7 +584,7 @@ export class UserAdapter {
 	}
 
 	// Unblock multiple users
-	async unblockUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ modifiedCount: number }>> {
+	async unblockUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { _id: { $in: userIds } };
 			if (tenantId) {
@@ -615,9 +615,9 @@ export class UserAdapter {
 	}
 
 	// Delete a user
-	async deleteUser(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<void>> {
+	async deleteUser(userId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<void>> {
 		try {
-			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
+			const filter = safeQuery({ _id: userId } as any, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
 
 			await this.UserModel.findOneAndDelete(filter);
 			logger.info(`User deleted: ${userId}`, { tenantId });
@@ -640,7 +640,7 @@ export class UserAdapter {
 	}
 
 	// Delete multiple users
-	async deleteUsers(userIds: string[], tenantId?: string): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteUsers(userIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		try {
 			const filter: Record<string, unknown> = { _id: { $in: userIds } };
 			if (tenantId) {
@@ -668,9 +668,9 @@ export class UserAdapter {
 	}
 
 	// Get a user by ID
-	async getUserById(userId: string, tenantId?: string, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>> {
+	async getUserById(userId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User | null>> {
 		try {
-			const filter = safeQuery({ _id: userId } as any, tenantId, { sudo: options?.sudo });
+			const filter = safeQuery({ _id: userId } as any, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
 
 			const user = await this.UserModel.findOne(filter).lean();
 			if (user) {
@@ -702,7 +702,7 @@ export class UserAdapter {
 			};
 		}
 	} // Get a user by email
-	async getUserByEmail(criteria: { email: string; tenantId?: string }, options?: { sudo?: boolean }): Promise<DatabaseResult<User | null>> {
+	async getUserByEmail(criteria: { email: string; tenantId?: string | null }, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User | null>> {
 		try {
 			if (!criteria.email || typeof criteria.email !== 'string') {
 				logger.error('getUserByEmail called with invalid email:', {
@@ -715,7 +715,7 @@ export class UserAdapter {
 				};
 			}
 			const normalizedEmail = criteria.email.toLowerCase();
-			const filter = safeQuery({ email: normalizedEmail } as any, criteria.tenantId, { sudo: options?.sudo });
+			const filter = safeQuery({ email: normalizedEmail } as any, criteria.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
 
 			const user = await this.UserModel.findOne(filter).lean();
 			if (user) {

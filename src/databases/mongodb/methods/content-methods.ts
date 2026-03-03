@@ -117,30 +117,22 @@ export class MongoContentMethods {
 	 */
 	async getStructure(
 		mode: 'flat' | 'nested' = 'flat',
-<<<<<<< HEAD
-		options: { filter?: Partial<ContentNode>; tenantId?: string | null; sudo?: boolean; bypassCache?: boolean } = {}
-=======
-		filter: Partial<ContentNode> & { tenantId?: string } = {},
-		bypassCache = false,
-		bypassTenantCheck = false
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+		options: { filter?: Partial<ContentNode>; tenantId?: string | null; bypassCache?: boolean; bypassTenantCheck?: boolean } = {}
 	): Promise<DatabaseResult<ContentNode[]>> {
-		const { filter = {}, tenantId = null, sudo = false, bypassCache = false } = options;
+		const { filter = {}, tenantId = null, bypassCache = false, bypassTenantCheck = false } = options;
 
 		// Create cache key based on mode, filter, and tenantId
 		const filterKey = JSON.stringify(filter);
 		const cacheKey = `content:structure:${mode}:${tenantId}:${filterKey}`;
 
 		const fetchData = async (): Promise<DatabaseResult<ContentNode[]>> => {
-<<<<<<< HEAD
-			const result = await this.nodesRepo.findMany(filter, { tenantId, sudo });
-=======
-			const options: { tenantId?: string; bypassTenantCheck?: boolean } = { bypassTenantCheck };
-			if (filter.tenantId) {
-				options.tenantId = filter.tenantId;
+			const fetchOptions: { tenantId?: string | null; bypassTenantCheck?: boolean } = { bypassTenantCheck };
+			if (tenantId) {
+				fetchOptions.tenantId = tenantId;
+			} else if (filter.tenantId) {
+				fetchOptions.tenantId = filter.tenantId;
 			}
-			const result = await this.nodesRepo.findMany(filter, options);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+			const result = await this.nodesRepo.findMany(filter, fetchOptions);
 			if (!result.success) {
 				return result;
 			}
@@ -210,7 +202,7 @@ export class MongoContentMethods {
 			id?: string;
 			changes: Partial<ContentNode>;
 		}>,
-		options: { tenantId?: string | null; sudo?: boolean; bypassCache?: boolean } = {}
+		options: { tenantId?: string | null | null; bypassTenantCheck?: boolean; bypassCache?: boolean } = {}
 	): Promise<DatabaseResult<ContentNode[]>> {
 		if (updates.length === 0) {
 			return { success: true, data: [] };
@@ -252,8 +244,10 @@ export class MongoContentMethods {
 				// Prepare base filter: use ID if available, otherwise path
 				const baseFilter: Record<string, unknown> = targetId ? { _id: targetId } : { path };
 
-				// Wrap filter with safeQuery to enforce tenant context and handle sudo
-				const secureFilter = safeQuery(baseFilter as any, tenantId, { sudo: options.sudo }) as MongoQueryFilter<ContentNode>;
+				// Wrap filter with safeQuery to enforce tenant context
+				const secureFilter = safeQuery(baseFilter as any, tenantId, {
+					bypassTenantCheck: options?.bypassTenantCheck
+				}) as MongoQueryFilter<ContentNode>;
 
 				return {
 					updateOne: {

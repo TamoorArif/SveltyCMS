@@ -37,7 +37,7 @@ export interface CacheEvent {
 	category: string;
 	key: string;
 	responseTime?: number;
-	tenantId?: string;
+	tenantId?: string | null;
 	timestamp: ISODateString;
 	type: 'hit' | 'miss' | 'set' | 'delete' | 'clear';
 }
@@ -69,7 +69,7 @@ export class CacheMetrics {
 	private readonly MAX_EVENTS = 100;
 
 	// Records a cache hit
-	recordHit(key: string, category: string, tenantId?: string, responseTime?: number): void {
+	recordHit(key: string, category: string, tenantId?: string | null, responseTime?: number): void {
 		this.hits++;
 		this.requestCount++;
 
@@ -109,7 +109,7 @@ export class CacheMetrics {
 	}
 
 	// Records a cache miss
-	recordMiss(key: string, category: string, tenantId?: string, responseTime?: number): void {
+	recordMiss(key: string, category: string, tenantId?: string | null, responseTime?: number): void {
 		this.misses++;
 		this.requestCount++;
 
@@ -149,7 +149,7 @@ export class CacheMetrics {
 	}
 
 	// Records a cache set operation with TTL for average tracking
-	recordSet(key: string, category: string, ttl: number, tenantId?: string): void {
+	recordSet(key: string, category: string, ttl: number, tenantId?: string | null): void {
 		const catMetrics = this.categoryMetrics.get(category) || {
 			hits: 0,
 			misses: 0,
@@ -170,7 +170,7 @@ export class CacheMetrics {
 	}
 
 	// Records a cache delete operation
-	recordDelete(key: string, category: string, tenantId?: string): void {
+	recordDelete(key: string, category: string, tenantId?: string | null): void {
 		this.addEvent({
 			type: 'delete',
 			key,
@@ -181,7 +181,7 @@ export class CacheMetrics {
 	}
 
 	// Records a cache clear operation
-	recordClear(pattern: string, category: string, tenantId?: string): void {
+	recordClear(pattern: string, category: string, tenantId?: string | null): void {
 		this.addEvent({
 			type: 'clear',
 			key: pattern,

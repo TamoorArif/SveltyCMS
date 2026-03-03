@@ -60,7 +60,7 @@ function isOAuthRoute(pathname: string): boolean {
 }
 
 /** Get cached user count with fallback */
-async function getCachedUserCount(tenantId?: string, multiTenant?: boolean): Promise<number> {
+async function getCachedUserCount(tenantId?: string | null, multiTenant?: boolean): Promise<number> {
 	const now = Date.now();
 	if (userCountCache && now - userCountCache.timestamp < USER_COUNT_CACHE_TTL_MS) {
 		return userCountCache.count;
@@ -81,7 +81,8 @@ async function getCachedUserCount(tenantId?: string, multiTenant?: boolean): Pro
 			return -1;
 		}
 		const filter = multiTenant && tenantId ? { tenantId } : {};
-		const count = await auth.getUserCount(filter);
+		const bypassOpts = !tenantId ? { bypassTenantCheck: true } : undefined;
+		const count = await auth.getUserCount(filter, bypassOpts);
 		const cacheData = { count, timestamp: now };
 		userCountCache = cacheData;
 		await cacheService.set('userCount', cacheData, USER_COUNT_CACHE_TTL_S, tenantId);
@@ -96,7 +97,7 @@ async function getCachedUserCount(tenantId?: string, multiTenant?: boolean): Pro
  * Get cached roles for access checks (database-only)
  * Returns empty array if database is unavailable - caller should handle setup redirect
  */
-async function getCachedRoles(tenantId?: string): Promise<Role[]> {
+async function getCachedRoles(tenantId?: string | null): Promise<Role[]> {
 	const now = Date.now();
 	const key = tenantId || 'global';
 
@@ -111,7 +112,8 @@ async function getCachedRoles(tenantId?: string): Promise<Role[]> {
 			return [];
 		}
 
-		const data = await auth.getAllRoles(tenantId);
+		const bypassOpts = !tenantId ? { bypassTenantCheck: true } : undefined;
+		const data = await auth.getAllRoles(tenantId, bypassOpts);
 		if (!data || data.length === 0) {
 			logger.debug('No roles found in database', { tenantId });
 			return [];
@@ -248,13 +250,13 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
 
 // --- CACHE INVALIDATION UTILITIES ---
 
-export function invalidateUserCountCache(tenantId?: string): void {
+export function invalidateUserCountCache(tenantId?: string | null): void {
 	userCountCache = null;
 	cacheService.delete('userCount', tenantId).catch((err) => logger.error(`Failed to invalidate user count: ${err.message}`));
 	logger.debug('User count cache invalidated');
 }
 
-export function invalidateRolesCache(tenantId?: string): void {
+export function invalidateRolesCache(tenantId?: string | null): void {
 	const key = tenantId || 'global';
 	rolesCache.delete(key);
 	cacheService.delete(`roles:${key}`, tenantId).catch((err) => logger.error(`Failed to invalidate roles cache: ${err.message}`));

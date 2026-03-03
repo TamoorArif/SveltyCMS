@@ -59,13 +59,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				// Define mutations to intercept
 				const wrappedMethods: Partial<ICrudAdapter> = {
 					// --- Explicitly Proxy Read Methods (Fix for Proxy ambiguity) ---
-<<<<<<< HEAD
-					count: async (collection, query, tenantId, options) => {
-						return await capturedCrud.count(collection, query, tenantId, options);
-=======
 					count: async (...args) => {
 						return await capturedCrud.count(...args);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 					},
 					findOne: async (...args) => {
 						return await capturedCrud.findOne(...args);
@@ -76,18 +71,6 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 					findByIds: async (...args) => {
 						return await capturedCrud.findByIds(...args);
 					},
-<<<<<<< HEAD
-					exists: async (collection, query, tenantId, options) => {
-						return await capturedCrud.exists(collection, query, tenantId, options);
-					},
-					aggregate: async (collection, pipeline, tenantId, options) => {
-						return await capturedCrud.aggregate(collection, pipeline, tenantId, options);
-					},
-
-					// --- Wrapped Mutation Methods ---
-					insert: async (collection, data, tenantId, options) => {
-						const res = await capturedCrud.insert(collection, data, tenantId, options);
-=======
 					exists: async (...args) => {
 						return await capturedCrud.exists(...args);
 					},
@@ -99,7 +82,6 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 					insert: async (...args) => {
 						const res = await capturedCrud.insert(...args);
 						const [collection] = args;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 						if (res.success && (collection.startsWith(CONTENT_COLLECTION_PREFIX) || collection === 'MediaItem')) {
 							const event: WebhookEvent = collection === 'MediaItem' ? 'media:upload' : 'entry:create';
 							webhookService.trigger(event, {
@@ -110,14 +92,9 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						return res;
 					},
 
-<<<<<<< HEAD
-					insertMany: async (collection, data, tenantId, options) => {
-						const res = await capturedCrud.insertMany(collection, data, tenantId, options);
-=======
 					insertMany: async (...args) => {
 						const res = await capturedCrud.insertMany(...args);
 						const [collection] = args;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 						if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
 							for (const item of res.data) {
 								webhookService.trigger('entry:create', {
@@ -129,14 +106,9 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						return res;
 					},
 
-<<<<<<< HEAD
-					update: async (collection, id, data, tenantId, options) => {
-						const res = await capturedCrud.update(collection, id, data, tenantId, options);
-=======
 					update: async (...args) => {
 						const res = await capturedCrud.update(...args);
 						const [collection, id, data] = args;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 						if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
 							let event: WebhookEvent = 'entry:update';
 							if ('status' in (data as any)) {
@@ -151,16 +123,6 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						return res;
 					},
 
-<<<<<<< HEAD
-					updateMany: async (collection, query, data, tenantId, options) => {
-						const res = await capturedCrud.updateMany(collection, query, data, tenantId, options);
-						if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
-							webhookService.trigger('entry:update', {
-								collection,
-								query,
-								changes: data,
-								modifiedCount: (res.data as any).modifiedCount
-=======
 					updateMany: async (...args) => {
 						const res = await capturedCrud.updateMany(...args);
 						const [collection, query, data] = args;
@@ -170,20 +132,14 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 								query: query as any,
 								changes: data as any,
 								modifiedCount: res.data.modifiedCount
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 							});
 						}
 						return res;
 					},
 
-<<<<<<< HEAD
-					delete: async (collection, id, tenantId) => {
-						const res = await capturedCrud.delete(collection, id, tenantId);
-=======
 					delete: async (...args) => {
 						const res = await capturedCrud.delete(...args);
 						const [collection, id] = args;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 						if (res.success && (collection.startsWith(CONTENT_COLLECTION_PREFIX) || collection === 'MediaItem')) {
 							const event: WebhookEvent = collection === 'MediaItem' ? 'media:delete' : 'entry:delete';
 							webhookService.trigger(event, { collection, id: id as any });
@@ -191,15 +147,6 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						return res;
 					},
 
-<<<<<<< HEAD
-					deleteMany: async (collection, query, tenantId, options) => {
-						const res = await capturedCrud.deleteMany(collection, query, tenantId, options);
-						if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
-							webhookService.trigger('entry:delete', {
-								collection,
-								query,
-								deletedCount: (res.data as any).deletedCount
-=======
 					deleteMany: async (...args) => {
 						const res = await capturedCrud.deleteMany(...args);
 						const [collection, query] = args;
@@ -208,20 +155,14 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 								collection,
 								query: query as any,
 								deletedCount: res.data.deletedCount
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 							});
 						}
 						return res;
 					},
 
-<<<<<<< HEAD
-					upsert: async (collection, query, data, tenantId, options) => {
-						const res = await capturedCrud.upsert(collection, query, data, tenantId, options);
-=======
 					upsert: async (...args) => {
 						const res = await capturedCrud.upsert(...args);
 						const [collection, query] = args;
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 						if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
 							webhookService.trigger('entry:update', {
 								collection,

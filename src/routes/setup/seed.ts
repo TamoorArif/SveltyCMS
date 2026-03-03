@@ -68,7 +68,7 @@ const defaultTheme: Theme = {
 export const defaultRoles = importedDefaultRoles;
 
 // Seeds the default theme into the database
-export async function seedDefaultTheme(dbAdapter: DatabaseAdapter, tenantId?: string): Promise<void> {
+export async function seedDefaultTheme(dbAdapter: DatabaseAdapter, tenantId?: string | null): Promise<void> {
 	logger.info(`🎨 Checking if default theme needs seeding${tenantId ? ` for tenant ${tenantId}` : ''}...`);
 
 	if (!dbAdapter?.system.themes) {
@@ -102,7 +102,7 @@ export async function seedDefaultTheme(dbAdapter: DatabaseAdapter, tenantId?: st
  * Roles are now stored in database for dynamic management via UI
  * Admin role gets all available permissions automatically
  */
-export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string): Promise<void> {
+export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string | null): Promise<void> {
 	logger.info(`🔐 Seeding default roles${tenantId ? ` for tenant ${tenantId}` : ''}...`);
 
 	if (!dbAdapter?.auth) {
@@ -127,7 +127,7 @@ export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string): 
 					...(tenantId && { tenantId })
 				};
 
-				const result = await dbAdapter.auth.createRole(roleToCreate, { sudo: true });
+				const result = await dbAdapter.auth.createRole(roleToCreate);
 				// createRole returns DatabaseResult — check success instead of relying on exceptions
 				if (result && 'success' in result && !result.success) {
 					logger.warn(
@@ -165,7 +165,7 @@ export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string): 
  */
 export async function seedCollectionsForSetup(
 	dbAdapter: DatabaseAdapter,
-	tenantId?: string
+	tenantId?: string | null
 ): Promise<{ firstCollection: { name: string; path: string } | null }> {
 	const overallStart = performance.now();
 	logger.info(`📦 Seeding collections from filesystem${tenantId ? ` for tenant ${tenantId}` : ''}...`);
@@ -289,7 +289,7 @@ export async function seedCollectionsForSetup(
 				logger.info(`💾 Persisting ${updates.length} content nodes to database...`);
 				const structResult = await dbAdapter.content.nodes.bulkUpdate(updates, {
 					tenantId,
-					sudo: true,
+					bypassTenantCheck: true,
 					bypassCache: true
 				});
 				if (structResult.success) {
@@ -339,7 +339,7 @@ export async function seedCollectionsForSetup(
  * Seeds demo records for the standard collections (Posts, Menu, etc.)
  * This adds actual content entries so the CMS doesn't look empty after setup.
  */
-export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: Schema[], tenantId?: string): Promise<void> {
+export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: Schema[], tenantId?: string | null): Promise<void> {
 	logger.info(`📝 Seeding demo records${tenantId ? ` for tenant ${tenantId}` : ''}...`);
 
 	if (!dbAdapter?.crud) {
@@ -374,7 +374,7 @@ export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: S
 				];
 
 				// Use insertMany to trigger the new dynamic table + packData logic
-				await dbAdapter.crud.insertMany(collectionId, posts, tenantId, { sudo: true });
+				await dbAdapter.crud.insertMany(collectionId, posts, tenantId, true);
 				logger.info(`✅ Seeded ${posts.length} demo posts into ${collectionId}`);
 			}
 
@@ -395,7 +395,7 @@ export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: S
 						...(tenantId && { tenantId })
 					}
 				];
-				await dbAdapter.crud.insertMany(collectionId, menuItems, tenantId, { sudo: true });
+				await dbAdapter.crud.insertMany(collectionId, menuItems, tenantId, true);
 				logger.info(`✅ Seeded ${menuItems.length} demo menu items into ${collectionId}`);
 			}
 		}
@@ -408,7 +408,7 @@ export async function seedDemoRecords(dbAdapter: DatabaseAdapter, collections: S
 // Initialize system from setup using database-agnostic interface
 export async function initSystemFromSetup(
 	adapter: DatabaseAdapter,
-	tenantId?: string,
+	tenantId?: string | null,
 	isDemoSeed = false
 ): Promise<{ firstCollection: { name: string; path: string } | null }> {
 	logger.info(`🚀 Starting system initialization from setup${tenantId ? ` for tenant ${tenantId}` : ''}...`);
@@ -454,7 +454,7 @@ export async function initSystemFromSetup(
 // Used for instant setup completion
 export async function initSystemFast(
 	adapter: DatabaseAdapter,
-	tenantId?: string,
+	tenantId?: string | null,
 	isDemoSeed = false
 ): Promise<{
 	criticalPromise: Promise<void>;
@@ -484,7 +484,7 @@ export async function initSystemFast(
 							...(tenantId && { tenantId })
 						},
 						tenantId,
-						{ sudo: true }
+						true
 					);
 					logger.info('✅ Content structure cleared successfully');
 				}
@@ -920,7 +920,7 @@ export const defaultPrivateSettings: Array<{
  * Only seeds settings that don't already exist (smart seeding).
  * @param dbAdapter Database adapter to use for operations
  */
-export async function seedSettings(dbAdapter: DatabaseAdapter, tenantId?: string, isDemoSeed = false): Promise<void> {
+export async function seedSettings(dbAdapter: DatabaseAdapter, tenantId?: string | null, isDemoSeed = false): Promise<void> {
 	logger.info(`🌱 Checking which settings need seeding${tenantId ? ` for tenant ${tenantId}` : ''}...`);
 
 	if (!dbAdapter?.system.preferences) {
@@ -974,7 +974,7 @@ export async function seedSettings(dbAdapter: DatabaseAdapter, tenantId?: string
 		category: 'public' | 'private';
 		scope: 'user' | 'system';
 		userId?: DatabaseId;
-		tenantId?: string;
+		tenantId?: string | null;
 	}> = [];
 
 	for (const setting of settingsToSeed) {
@@ -1170,22 +1170,19 @@ export async function seedDemoTenant(dbAdapter: DatabaseAdapter, tenantId: strin
 	// 4. Create Admin User
 	// We need to import auth service or use dbAdapter.auth directly
 	if (dbAdapter.auth) {
-		const result = await dbAdapter.auth.getRoleById('admin', tenantId, { sudo: true });
+		const result = await dbAdapter.auth.getRoleById('admin', tenantId, { bypassTenantCheck: true });
 		const adminRole = result.success ? result.data : null;
 		if (adminRole) {
 			const email = `demo-${tenantId.substring(0, 8)}@sveltycms.com`;
 			const password = 'demo'; // Simple password for demo
 			try {
-				await dbAdapter.auth.createUser(
-					{
-						email,
-						password,
-						role: adminRole._id,
-						username: 'Demo Admin',
-						tenantId
-					},
-					{ sudo: true }
-				);
+				await dbAdapter.auth.createUser({
+					email,
+					password,
+					role: adminRole._id,
+					username: 'Demo Admin',
+					tenantId
+				});
 				logger.info(`✅ Demo admin user created: ${email}`);
 			} catch (e) {
 				logger.warn(`Demo user creation failed (might exist): ${e instanceof Error ? e.message : String(e)}`);

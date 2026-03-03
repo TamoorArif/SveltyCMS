@@ -56,14 +56,14 @@ interface PaginationArgs {
 }
 
 interface GraphQLContext {
-	tenantId?: string;
+	tenantId?: string | null;
 	user?: User;
 }
 
 type MediaResolverParent = unknown;
 
 interface MediaEntity extends BaseEntity {
-	tenantId?: string;
+	tenantId?: string | null;
 	url?: string;
 }
 

@@ -219,7 +219,7 @@ function getTenantIdFromHostname(hostname: string, multiTenant: boolean): string
 }
 
 /** Multi-layer user session retrieval (in-memory → distributed → DB) */
-async function getUserFromSession(sessionId: string, tenantId?: string): Promise<User | null> {
+async function getUserFromSession(sessionId: string, tenantId?: string | null): Promise<User | null> {
 	const now = Date.now();
 
 	// Layer 1: In-memory cache with WeakRef (fastest)
@@ -565,7 +565,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
  * @param sessionId - The session ID to invalidate
  * @param tenantId - Optional tenant ID for multi-tenant setups
  */
-export function invalidateSessionCache(sessionId: string, tenantId?: string): void {
+export function invalidateSessionCache(sessionId: string, tenantId?: string | null): void {
 	sessionCache.delete(sessionId);
 	strongRefs.delete(sessionId);
 	lastRefreshAttempt.delete(sessionId);

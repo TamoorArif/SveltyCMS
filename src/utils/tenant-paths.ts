@@ -20,7 +20,7 @@ import path from 'node:path';
  * getCollectionsPath(null)          // => /path/to/config/global/collections
  * getCollectionsPath(undefined)     // => /path/to/config/collections (legacy)
  */
-export function getCollectionsPath(tenantId?: string | null): string {
+export function getCollectionsPath(tenantId?: string | null | null): string {
 	const base = path.join(process.cwd(), 'config');
 
 	if (tenantId === undefined) {
@@ -44,7 +44,7 @@ export function getCollectionsPath(tenantId?: string | null): string {
  * getCompiledCollectionsPath(null)          // => /path/to/.compiledCollections/global
  * getCompiledCollectionsPath(undefined)     // => /path/to/.compiledCollections (legacy)
  */
-export function getCompiledCollectionsPath(tenantId?: string | null): string {
+export function getCompiledCollectionsPath(tenantId?: string | null | null): string {
 	const base = path.join(process.cwd(), '.compiledCollections');
 
 	if (tenantId === undefined) {
@@ -129,7 +129,7 @@ export function isValidTenantId(tenantId: string | null | undefined): boolean {
  * @param tenantId - Tenant ID
  * @returns Relative path from project root
  */
-export function getCollectionFilePath(collectionName: string, tenantId?: string | null): string {
+export function getCollectionFilePath(collectionName: string, tenantId?: string | null | null): string {
 	const collectionsPath = getCollectionsPath(tenantId);
 	return path.join(collectionsPath, `${collectionName}.ts`);
 }
@@ -141,7 +141,7 @@ export function getCollectionFilePath(collectionName: string, tenantId?: string 
  * @param tenantId - Tenant ID
  * @returns Human-readable path string
  */
-export function getCollectionDisplayPath(collectionName: string, tenantId?: string | null): string {
+export function getCollectionDisplayPath(collectionName: string, tenantId?: string | null | null): string {
 	if (tenantId === undefined) {
 		return `config/collections/${collectionName}.ts`;
 	}

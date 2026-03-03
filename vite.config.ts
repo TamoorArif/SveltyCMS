@@ -483,7 +483,9 @@ export default defineConfig((): UserConfig => {
 					'**/.compiledCollections/**',
 					'**/tests/**',
 					'**/src/content/types.ts',
-					'**/src/paraglide/**'
+					'**/src/paraglide/**',
+					'**/logs/**',
+					'**/mediaFolder/**'
 				]
 			}
 		},

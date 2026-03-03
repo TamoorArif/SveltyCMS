@@ -68,7 +68,7 @@ export interface WidgetDefinition<TProps extends Record<string, unknown> = Recor
 		collectionName?: string;
 		data: unknown;
 		field: FieldInstance;
-		tenantId?: string;
+		tenantId?: string | null;
 		type: string;
 		user: User;
 	}) => Promise<unknown> | unknown;
@@ -79,7 +79,7 @@ export interface WidgetDefinition<TProps extends Record<string, unknown> = Recor
 		collectionName?: string;
 		data: Record<string, unknown>[];
 		field: FieldInstance;
-		tenantId?: string;
+		tenantId?: string | null;
 		type: string;
 		user: User;
 	}) => Promise<Record<string, unknown>[]>;

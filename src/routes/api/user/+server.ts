@@ -137,7 +137,7 @@ export const POST = apiHandler(async ({ request, locals, url }) => {
 			throw new AppError('Invalid value for token validity', 400, 'INVALID_EXPIRATION');
 		}
 
-		const checkCriteria: { email: string; tenantId?: string } = { email };
+		const checkCriteria: { email: string; tenantId?: string | null } = { email };
 		if (getPrivateSettingSync('MULTI_TENANT')) {
 			checkCriteria.tenantId = tenantId;
 		}

@@ -400,11 +400,7 @@ export class MongoDBAdapter implements IDBAdapter {
 
 			this._realContent = {
 				nodes: {
-<<<<<<< HEAD
 					getStructure: (m, o) => this._wrapResult(() => contentMethods.getStructure(m, o)),
-=======
-					getStructure: (m, f, b, s) => this._wrapResult(() => contentMethods.getStructure(m, f, b, s)),
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 					upsertContentStructureNode: (n) => this._wrapResult(() => contentMethods.upsertNodeByPath(n)),
 					create: (n) => this.crud.insert('system_content_structure', n),
 					createMany: (n) => this.crud.insertMany('system_content_structure', n),
@@ -699,13 +695,9 @@ export class MongoDBAdapter implements IDBAdapter {
 
 		return {
 			findOne: (c, q, o) =>
-<<<<<<< HEAD
-				this._wrapResult(() => getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId, sudo: o?.sudo })),
-=======
 				this._wrapResult(() =>
 					getRepo(c).findOne(q, { fields: o?.fields as (keyof BaseEntity)[], tenantId: o?.tenantId, bypassTenantCheck: o?.bypassTenantCheck })
 				),
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 			findMany: (c, q, o) =>
 				this._wrapResult(() => {
 					let sort: Record<string, 1 | -1> | undefined;
@@ -725,27 +717,6 @@ export class MongoDBAdapter implements IDBAdapter {
 						fields: o?.fields as (keyof BaseEntity)[],
 						sort,
 						tenantId: o?.tenantId,
-<<<<<<< HEAD
-						sudo: o?.sudo
-					});
-				}),
-			insert: (c, d, t, o) => this._wrapResult(() => getRepo(c).insert(d, t, { sudo: o?.sudo })),
-			update: (c, id, d, t, o) => this._wrapResult(() => getRepo(c).update(id, d, t, { sudo: o?.sudo })),
-			delete: (c, id, t) => this._wrapResult(() => getRepo(c).delete(id, t)),
-			findByIds: (c, ids, o) => this._wrapResult(() => getRepo(c).findByIds(ids, o as any)),
-			insertMany: (c, d, t, o) => this._wrapResult(() => getRepo(c).insertMany(d as any, t, { sudo: o?.sudo })),
-			updateMany: (c, q, d, t, o) => this._wrapResult(() => getRepo(c).updateMany(q as any, d as any, t, { sudo: o?.sudo })),
-			deleteMany: (c, q, t, o) => this._wrapResult(() => getRepo(c).deleteMany(q as any, t, { sudo: o?.sudo })),
-			upsert: (c, q, d, t, o) => this._wrapResult(() => getRepo(c).upsert(q as any, d as any, t, { sudo: o?.sudo })),
-			upsertMany: (c, items, t, o) => this._wrapResult(() => getRepo(c).upsertMany(items as any, t, { sudo: o?.sudo })),
-			count: (c, q, t, o) => this._wrapResult(() => getRepo(c).count(q as any, t, { sudo: o?.sudo })),
-			exists: (c, q, t, o) =>
-				this._wrapResult(async () => {
-					const res = await getRepo(c).count(q as any, t, { sudo: o?.sudo });
-					return res.success ? res.data > 0 : false;
-				}),
-			aggregate: (c, p, t, o) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[], t, { sudo: o?.sudo }))
-=======
 						bypassTenantCheck: o?.bypassTenantCheck
 					});
 				}),
@@ -765,7 +736,6 @@ export class MongoDBAdapter implements IDBAdapter {
 					return res.success ? res.data > 0 : false;
 				}),
 			aggregate: (c, p, t) => this._wrapResult(() => getRepo(c).aggregate(p as mongoose.PipelineStage[], t))
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 		};
 	}
 

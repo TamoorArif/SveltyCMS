@@ -56,15 +56,14 @@ export const load: PageServerLoad = async (event) => {
 			};
 		}
 
-		// Determine admin status properly by checking role
-		const userRole = roles.find((role) => role._id === user?.role);
-		const isAdmin = Boolean(userRole?.isAdmin);
+		// Use isAdmin from authorization hook (handles multi-tenant fallback correctly)
+		const isAdmin = event.locals.isAdmin === true;
 
 		// Always fetch fresh user data from database to ensure we have the latest changes
 		// This is especially important after profile updates
 		let freshUser: User | null = null;
 		if (user?._id && auth) {
-			freshUser = await auth.getUserById(user._id.toString());
+			freshUser = await auth.getUserById(user._id.toString(), event.locals.tenantId, { bypassTenantCheck: true });
 			if (freshUser) {
 				logger.debug('Fresh user data fetched for user page', {
 					userId: freshUser._id,

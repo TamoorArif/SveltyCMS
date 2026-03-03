@@ -95,7 +95,7 @@ export const POST: RequestHandler = apiHandler(async ({ request, locals }) => {
 		tenantId
 	});
 	// Check if a user with this email already exists within the same tenant to prevent duplicates.
-	const userCheckCriteria: { email: string; tenantId?: string } = {
+	const userCheckCriteria: { email: string; tenantId?: string | null } = {
 		email: userData.email
 	};
 	if (getPrivateSettingSync('MULTI_TENANT')) {

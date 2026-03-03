@@ -49,7 +49,7 @@ export class TwoFactorAuthService {
 	 * Initialize 2FA setup for a user
 	 * This generates a new secret and backup codes but doesn't enable 2FA yet
 	 */
-	async initiate2FASetup(userId: string, userEmail: string, tenantId?: string): Promise<TwoFactorSetupResponse> {
+	async initiate2FASetup(userId: string, userEmail: string, tenantId?: string | null): Promise<TwoFactorSetupResponse> {
 		try {
 			logger.info('Initiating 2FA setup', { userId, tenantId });
 
@@ -86,7 +86,7 @@ export class TwoFactorAuthService {
 	 * Complete 2FA setup by verifying the first TOTP code
 	 * This enables 2FA for the user and saves the secret and backup codes
 	 */
-	async complete2FASetup(userId: string, secret: string, verificationCode: string, backupCodes: string[], tenantId?: string): Promise<boolean> {
+	async complete2FASetup(userId: string, secret: string, verificationCode: string, backupCodes: string[], tenantId?: string | null): Promise<boolean> {
 		try {
 			logger.info('Completing 2FA setup', { userId, tenantId });
 
@@ -133,7 +133,7 @@ export class TwoFactorAuthService {
 	 * Verify 2FA code during authentication
 	 * Supports both TOTP codes and backup codes
 	 */
-	async verify2FA(userId: string, code: string, tenantId?: string): Promise<TwoFactorVerificationResult> {
+	async verify2FA(userId: string, code: string, tenantId?: string | null): Promise<TwoFactorVerificationResult> {
 		try {
 			logger.debug('Verifying 2FA code', { userId, tenantId });
 
@@ -229,7 +229,7 @@ export class TwoFactorAuthService {
 	}
 
 	// Disable 2FA for a user (requires current password or admin permission)
-	async disable2FA(userId: string, tenantId?: string): Promise<boolean> {
+	async disable2FA(userId: string, tenantId?: string | null): Promise<boolean> {
 		try {
 			logger.info('Disabling 2FA', { userId, tenantId });
 
@@ -257,7 +257,7 @@ export class TwoFactorAuthService {
 	}
 
 	// Generate new backup codes for a user (invalidates old ones)
-	async regenerateBackupCodes(userId: string, tenantId?: string): Promise<string[]> {
+	async regenerateBackupCodes(userId: string, tenantId?: string | null): Promise<string[]> {
 		try {
 			logger.info('Regenerating backup codes', { userId, tenantId });
 
@@ -299,7 +299,7 @@ export class TwoFactorAuthService {
 	//Get 2FA status for a user
 	async get2FAStatus(
 		userId: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<{
 		enabled: boolean;
 		hasBackupCodes: boolean;

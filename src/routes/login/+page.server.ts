@@ -120,7 +120,7 @@ async function checkDatabaseHealth(): Promise<{
 
 		// Lightweight check: verify database has roles (indicates setup was completed)
 		try {
-			const roles = await auth.getAllRoles();
+			const roles = await auth.getAllRoles(undefined, { bypassTenantCheck: true });
 			if (!roles || roles.length === 0) {
 				return {
 					healthy: false,
@@ -627,7 +627,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 		try {
 			if (auth) {
 				// Optimization: Use count instead of fetching all users
-				const count = await auth.getUserCount();
+				const count = await auth.getUserCount(undefined, { bypassTenantCheck: true });
 				hasExistingOAuthUsers = count > 0;
 			}
 		} catch (error) {
@@ -767,7 +767,7 @@ export const actions: Actions = {
 			// Use the role from the token
 			role = tokenData.details.role || 'user';
 			// Use the tenantId from the token (if any)
-			tenantId = tokenData.details.tenantId;
+			tenantId = tokenData.details.tenantId ?? undefined;
 			isInvited = true;
 
 			// Debug: Log the token details
@@ -1516,7 +1516,7 @@ async function signInUser(
 
 		if (isToken) {
 			const tokenValue = password;
-			const tempUser = await auth.checkUser({ email });
+			const tempUser = await auth.checkUser({ email }, { bypassTenantCheck: true });
 			if (!tempUser) {
 				logger.warn('Token login attempt for non-existent user', { email });
 				return { status: false, message: 'User does not exist.' };
@@ -1536,7 +1536,7 @@ async function signInUser(
 				};
 			}
 		} else {
-			const authResult = await auth.authenticate(email, password);
+			const authResult = await auth.authenticate(email, password, undefined, { bypassTenantCheck: true });
 			if (authResult?.user) {
 				user = authResult.user;
 
@@ -1580,10 +1580,15 @@ async function signInUser(
 		}
 
 		// Parallelize user attribute update for better performance
-		const updatePromise = auth.updateUserAttributes(user._id, {
-			lastAuthMethod: isToken ? 'token' : 'password',
-			lastActiveAt: new Date().toISOString() as ISODateString
-		}); // Don't wait for attribute update to complete - fire and forget for better UX
+		const updatePromise = auth.updateUserAttributes(
+			user._id,
+			{
+				lastAuthMethod: isToken ? 'token' : 'password',
+				lastActiveAt: new Date().toISOString() as ISODateString
+			},
+			undefined,
+			{ bypassTenantCheck: true }
+		); // Don't wait for attribute update to complete - fire and forget for better UX
 		updatePromise.catch((err) => {
 			logger.error(`Failed to update user attributes for ${user._id}:`, err);
 		});

@@ -119,7 +119,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 		// 6. Handle 'edit' action (default)
 		await contentManager.refresh(); // Force a refresh to bypass any stale cache
-		const collectionIdentifier = params.contentPath;
+		const collectionIdentifier = params.contentpath;
 
 		// Try resolving exactly as passed (UUID or relative path)
 		let currentCollection = await contentManager.getCollection(collectionIdentifier);
@@ -439,7 +439,7 @@ interface CollectionData {
 	contentName: string;
 	fields: FieldsData;
 	imports: string;
-	tenantId?: string | null;
+	tenantId?: string | null | null;
 }
 
 async function generateCollectionFileWithAST(data: CollectionData): Promise<string> {

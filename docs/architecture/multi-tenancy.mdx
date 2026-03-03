@@ -6,7 +6,7 @@ order: 6
 icon: 'mdi:domain'
 author: 'admin'
 created: '2025-11-30'
-updated: '2026-02-05'
+updated: '2026-03-03'
 tags:
   - 'architecture'
   - 'multi-tenancy'
@@ -230,6 +230,24 @@ Data isolation is enforced strictly via the `safeQuery` utility and Database Ada
    const secureFilter = safeQuery({ status: 'active' }, currentTenantId);
    // Result: { status: 'active', tenantId: 'tenant-123' }
    ```
+
+   #### **Explicit Global Scope (System Services)**
+
+   In specific cases where the system needs to perform operations on global resources (e.g., plugins, system settings), you must explicitly use `tenantId: null`. This signifies an intentional global operation:
+
+   ```typescript
+   // Internal system maintenance operating on global data
+   const plugins = await dbAdapter.crud.findMany(
+   	'plugins',
+   	{},
+   	{
+   		tenantId: null // Explicit global scope
+   	}
+   );
+   ```
+
+   > [!CAUTION]
+   > There is no longer a `sudo: true` backdoor to bypass tenant isolation. Every query must either be explicitly scoped to a `tenantId` or intentionally declared global with `null`. Attempting to omit the tenant context will result in a hard Security Violation.
 
    ```mermaid
    sequenceDiagram

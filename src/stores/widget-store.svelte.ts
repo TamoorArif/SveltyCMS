@@ -195,7 +195,7 @@ class WidgetState {
 		}
 	}
 
-	async updateStatus(name: string, status: WidgetStatus, tenantId?: string) {
+	async updateStatus(name: string, status: WidgetStatus, tenantId?: string | null) {
 		const targetTenant = tenantId || this.tenantId;
 		const active = status === 'active';
 
@@ -247,7 +247,7 @@ class WidgetState {
 		this.widgets[name] = (updatedFn as any)({ label: name });
 	}
 
-	async reload(tenantId?: string) {
+	async reload(tenantId?: string | null) {
 		this.isLoaded = false;
 		await this.initialize(tenantId || this.tenantId);
 	}

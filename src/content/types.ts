@@ -32,7 +32,7 @@ export interface BaseEntity {
 	deletedAt?: ISODateString; // Timestamp of deletion
 	deletedBy?: string; // User who performed deletion
 	isDeleted?: boolean; // Soft delete flag
-	tenantId?: string; // For multi-tenant support
+	tenantId?: string | null; // For multi-tenant support
 	updatedAt: ISODateString;
 }
 
@@ -42,7 +42,7 @@ export interface CollectionEntry extends Record<string, unknown> {
 	createdAt?: string;
 	createdBy?: string;
 	status?: StatusType;
-	tenantId?: string;
+	tenantId?: string | null;
 	updatedAt?: string;
 	updatedBy?: string;
 }
@@ -54,7 +54,7 @@ export interface RevisionData {
 	data: Record<string, unknown>;
 	entryId: string;
 	operation?: 'create' | 'update' | 'delete' | 'status_change';
-	tenantId?: string;
+	tenantId?: string | null;
 	timestamp: ISODateString;
 	userId?: string;
 	[key: string]: unknown;
@@ -83,7 +83,7 @@ export interface ContentNode {
 	parentId?: DatabaseId;
 	path?: string;
 	slug?: string;
-	tenantId?: string; // For multi-tenant support
+	tenantId?: string | null; // For multi-tenant support
 	translations: Translation[];
 	updatedAt: ISODateString;
 }
@@ -115,7 +115,7 @@ export interface FieldsProps {
 export interface WidgetLoaderProps {
 	field: FieldInstance;
 	loader: () => Promise<{ default: unknown }>;
-	tenantId?: string;
+	tenantId?: string | null;
 	value?: unknown;
 	WidgetData?: Record<string, unknown>;
 }
@@ -160,7 +160,7 @@ export interface FieldInstance {
 		field: unknown;
 		user: unknown;
 		type: string;
-		tenantId?: string;
+		tenantId?: string | null;
 	}) => Promise<Record<string, unknown>[]>;
 
 	// Permissions
@@ -205,7 +205,7 @@ export interface Schema {
 	slug?: string;
 	status?: StatusType;
 	strict?: boolean;
-	tenantId?: string; // For multi-tenant support
+	tenantId?: string | null; // For multi-tenant support
 	translations?: Translation[]; // Optional translations with enhanced metadata
 	displaySpec?: Record<string, unknown>; // json-render-svelte display specification
 }

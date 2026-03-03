@@ -139,7 +139,7 @@ class PluginRegistry implements IPluginService {
 	}
 
 	// Get SSR hooks for plugins enabled on a collection
-	async getSSRHooks(collectionId: string, tenantId?: string, schema?: any): Promise<PluginSSRHook[]> {
+	async getSSRHooks(collectionId: string, tenantId?: string | null, schema?: any): Promise<PluginSSRHook[]> {
 		const hooks: PluginSSRHook[] = [];
 		const activeTenantId = tenantId || 'default';
 
@@ -165,7 +165,7 @@ class PluginRegistry implements IPluginService {
 	async getLifecycleHooks<K extends keyof import('./types').PluginLifecycleHooks>(
 		collectionId: string,
 		hookName: K,
-		tenantId?: string,
+		tenantId?: string | null,
 		schema?: any
 	): Promise<Exclude<import('./types').PluginLifecycleHooks[K], undefined>[]> {
 		const hooks: Exclude<import('./types').PluginLifecycleHooks[K], undefined>[] = [];
@@ -188,7 +188,7 @@ class PluginRegistry implements IPluginService {
 	}
 
 	// Check if a plugin is enabled for a specific collection and tenant
-	async isEnabledForCollection(pluginId: string, collectionId: string, tenantId?: string, schema?: any): Promise<boolean> {
+	async isEnabledForCollection(pluginId: string, collectionId: string, tenantId?: string | null, schema?: any): Promise<boolean> {
 		const plugin = this.get(pluginId);
 		if (!plugin) {
 			return false;
@@ -254,11 +254,7 @@ class PluginRegistry implements IPluginService {
 	private async ensureMigrationTable(dbAdapter: IDBAdapter): Promise<void> {
 		const table = 'pluginMigrations';
 		try {
-<<<<<<< HEAD
-			const count = await dbAdapter.crud.count(table, {}, null, { sudo: true });
-=======
 			const count = await dbAdapter.crud.count(table, undefined, undefined, true);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 			if (count.success) {
 				return;
 			}
@@ -276,17 +272,10 @@ class PluginRegistry implements IPluginService {
 				appliedAt: new Date(),
 				tenantId: 'system'
 			} as any,
-<<<<<<< HEAD
-			null,
-			{ sudo: true }
-		);
-		await dbAdapter.crud.deleteMany(table, {}, null, { sudo: true });
-=======
 			undefined,
 			true
 		);
 		await dbAdapter.crud.deleteMany(table, { pluginId: '__INIT__' } as any, undefined, true);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 	}
 
 	// Get applied migrations from database
@@ -298,11 +287,7 @@ class PluginRegistry implements IPluginService {
 					pluginId,
 					tenantId
 				} as any,
-<<<<<<< HEAD
-				{ sudo: true }
-=======
 				{ bypassTenantCheck: true }
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 			);
 			return result as DatabaseResult<PluginMigrationRecord[]>;
 		} catch (error) {
@@ -328,13 +313,8 @@ class PluginRegistry implements IPluginService {
 				tenantId,
 				appliedAt: new Date()
 			} as any,
-<<<<<<< HEAD
-			null,
-			{ sudo: true }
-=======
 			undefined,
 			true
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
 		);
 	}
 }

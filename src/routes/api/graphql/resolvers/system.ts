@@ -9,7 +9,7 @@ import { logger } from '@utils/logger.server';
 
 interface GraphQLContext {
 	locale?: string;
-	tenantId?: string;
+	tenantId?: string | null;
 	user?: User;
 }
 

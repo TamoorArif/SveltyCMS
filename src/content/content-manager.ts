@@ -86,7 +86,7 @@ class ContentManager {
 	private firstCollectionCache: {
 		collection: Schema | null;
 		timestamp: number;
-		tenantId?: string;
+		tenantId?: string | null;
 	} | null = null;
 	private readonly FIRST_COLLECTION_CACHE_TTL = 60 * 1000; // 60 seconds
 	private readonly collectionCache = new Map<string, { schema: Schema | null; timestamp: number }>();
@@ -161,7 +161,7 @@ class ContentManager {
 		cache: {
 			hasFirstCollection: boolean;
 			cacheAge: number | null;
-			tenantId?: string;
+			tenantId?: string | null;
 		};
 		state: string;
 		version: number;
@@ -223,7 +223,7 @@ class ContentManager {
 	}
 
 	// Initializes the ContentManager, handling race conditions and loading data
-	public async initialize(tenantId?: string, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
+	public async initialize(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
 		// Already initialized for this tenant?
 		if (this.initState === 'initialized') {
 			// If tenantId is provided, ensure it has been initialized.
@@ -267,7 +267,7 @@ class ContentManager {
 	}
 
 	// Core initialization logic
-	private async _doInitialize(tenantId?: string, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
+	private async _doInitialize(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
 		const { isSetupComplete } = await import('@utils/setup-check');
 		const setupComplete = isSetupComplete();
 
@@ -331,7 +331,7 @@ class ContentManager {
 	 *
 	 * @param tenantId - Optional tenant ID for multi-tenant environments.
 	 */
-	public async refresh(tenantId?: string, skipReconciliation = false): Promise<void> {
+	public async refresh(tenantId?: string | null, skipReconciliation = false): Promise<void> {
 		logger.info(`Refreshing ContentManager state${skipReconciliation ? ' (fast/skip-reconcile)' : ''}...`);
 		this.initState = 'initializing';
 		this.clearFirstCollectionCache(); // Clear cache on refresh
@@ -343,7 +343,7 @@ class ContentManager {
 	}
 
 	// Returns all loaded collection schemas
-	public async getCollections(tenantId?: string): Promise<Schema[]> {
+	public async getCollections(tenantId?: string | null): Promise<Schema[]> {
 		return this.withPerfTracking('getCollections', async () => {
 			// Auto-initialize on first access (lazy loading)
 			if (this.initState !== 'initialized') {
@@ -391,7 +391,7 @@ class ContentManager {
 	 * @param tenantId - Optional tenant ID for multi-tenant filtering
 	 * @param forceRefresh - Force cache bypass and refresh
 	 */
-	public async getFirstCollection(tenantId?: string, forceRefresh = false): Promise<Schema | null> {
+	public async getFirstCollection(tenantId?: string | null, forceRefresh = false): Promise<Schema | null> {
 		// Check cache first
 		const now = Date.now();
 		if (
@@ -434,7 +434,7 @@ class ContentManager {
 	 * @param tenantId - Optional tenant ID
 	 * @returns Redirect URL or null if no collections exist
 	 */
-	public async getFirstCollectionRedirectUrl(language = 'en', tenantId?: string): Promise<string | null> {
+	public async getFirstCollectionRedirectUrl(language = 'en', tenantId?: string | null): Promise<string | null> {
 		const collection = await this.getSmartFirstCollection(tenantId);
 
 		// [FIX] Explicitly check for valid ID to avoid /en/undefined redirects
@@ -454,7 +454,7 @@ class ContentManager {
 	 * Smartly retrieves the first collection for redirection.
 	 * Prioritizes actual content collections over system/utility collections (like Menu, Form).
 	 */
-	public async getSmartFirstCollection(tenantId?: string): Promise<Schema | null> {
+	public async getSmartFirstCollection(tenantId?: string | null): Promise<Schema | null> {
 		const collections = await this.getCollections(tenantId);
 		if (collections.length === 0) {
 			return null;
@@ -516,7 +516,7 @@ class ContentManager {
 	public async getNavigationStructureProgressive(options?: {
 		maxDepth?: number;
 		expandedIds?: Set<string>;
-		tenantId?: string;
+		tenantId?: string | null;
 	}): Promise<NavigationNode[]> {
 		if (this.initState !== 'initialized') {
 			await this.initialize(options?.tenantId);
@@ -559,7 +559,7 @@ class ContentManager {
 	/**
 	 * Get children of a specific node (for lazy loading in TreeView)
 	 */
-	public getNodeChildren(nodeId: string, tenantId?: string): ContentNode[] {
+	public getNodeChildren(nodeId: string, tenantId?: string | null): ContentNode[] {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -666,7 +666,7 @@ class ContentManager {
 	 * @param format 'flat' or 'nested' - default 'nested'
 	 * @returns ContentNode[] from database (with minimal collectionDef, no fields)
 	 */
-	public async getContentStructureFromDatabase(format: 'flat' | 'nested' = 'nested'): Promise<ContentNode[]> {
+	public async getContentStructureFromDatabase(format: 'flat' | 'nested' = 'nested', tenantId?: string | null): Promise<ContentNode[]> {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -678,7 +678,8 @@ class ContentManager {
 
 		const { isSetupComplete } = await import('@utils/setup-check');
 		const result = await dbAdapter.content.nodes.getStructure(format, {
-			sudo: !isSetupComplete()
+			tenantId,
+			bypassTenantCheck: !tenantId || !isSetupComplete()
 		});
 
 		if (!result.success) {
@@ -698,7 +699,7 @@ class ContentManager {
 	 * @param tenantId - Optional tenant ID for filtering
 	 * @returns Schema or null if not found
 	 */
-	public getCollection(identifier: string, tenantId?: string): Schema | null {
+	public getCollection(identifier: string, tenantId?: string | null): Schema | null {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -758,7 +759,7 @@ class ContentManager {
 	/**
 	 * Alias for getCollection for backward compatibility
 	 */
-	public getCollectionById(collectionId: string, tenantId?: string): Schema | null {
+	public getCollectionById(collectionId: string, tenantId?: string | null): Schema | null {
 		return this.getCollection(collectionId, tenantId);
 	}
 
@@ -770,7 +771,7 @@ class ContentManager {
 	 * @returns Paginated collections with metadata
 	 */
 	public async getCollectionsPaginated(
-		tenantId?: string,
+		tenantId?: string | null,
 		page = 1,
 		pageSize = 20
 	): Promise<{
@@ -812,7 +813,7 @@ class ContentManager {
 	 * @param tenantId - Optional tenant ID
 	 * @returns Map of identifier to Schema
 	 */
-	public getCollectionsBulk(identifiers: string[], tenantId?: string): Map<string, Schema> {
+	public getCollectionsBulk(identifiers: string[], tenantId?: string | null): Map<string, Schema> {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -838,7 +839,7 @@ class ContentManager {
 	public async searchCollections(
 		query: string,
 		filters?: {
-			tenantId?: string;
+			tenantId?: string | null;
 			status?: string;
 			nodeType?: 'category' | 'collection';
 			hasIcon?: boolean;
@@ -923,7 +924,7 @@ class ContentManager {
 	 * Pre-warm cache for visible entries in EntryList
 	 * Called by EntryList's batch preload during idle time
 	 */
-	public async warmEntriesCache(collectionId: string, entryIds: string[], tenantId?: string): Promise<void> {
+	public async warmEntriesCache(collectionId: string, entryIds: string[], tenantId?: string | null): Promise<void> {
 		const collection = this.getCollection(collectionId, tenantId);
 		if (!collection) {
 			return;
@@ -1004,7 +1005,7 @@ class ContentManager {
 	 */
 	public getCollectionStats(
 		identifier: string,
-		tenantId?: string
+		tenantId?: string | null
 	): {
 		_id: string;
 		name: string;
@@ -1082,7 +1083,7 @@ class ContentManager {
 	public async updateCollectionMetadata(
 		collectionId: string,
 		metadata: { name?: string; icon?: string; description?: string },
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<void> {
 		const collection = await this.getCollectionById(collectionId, tenantId);
 		if (!collection) {
@@ -1115,14 +1116,14 @@ class ContentManager {
 
 	public async getCollectionMetadata(
 		identifier: string,
-		tenantId?: string
+		tenantId?: string | null
 	): Promise<{
 		_id: string;
 		name: string;
 		path?: string;
 		icon?: string;
 		status?: string;
-		tenantId?: string;
+		tenantId?: string | null;
 		fieldCount: number;
 	} | null> {
 		if (this.initState !== 'initialized') {
@@ -1174,7 +1175,7 @@ class ContentManager {
 	public getFieldMetadataWithTranslations(
 		collectionId: string,
 		availableLanguages: string[],
-		tenantId?: string
+		tenantId?: string | null
 	): Array<{
 		db_fieldName: string;
 		label: string;
@@ -1468,7 +1469,7 @@ class ContentManager {
 	 * @param operations Array of content node operations to perform
 	 * @returns Updated content structure as flat array
 	 */
-	public async upsertContentNodes(operations: ContentNodeOperation[]): Promise<ContentNode[]> {
+	public async upsertContentNodes(operations: ContentNodeOperation[], tenantId?: string | null): Promise<ContentNode[]> {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -1559,14 +1560,14 @@ class ContentManager {
 			logger.info('[ContentManager] Bulk updated nodes:', bulkUpdates.length);
 		}
 
-		return await this.getContentStructureFromDatabase('flat');
+		return await this.getContentStructureFromDatabase('flat', tenantId);
 	}
 
 	/**
 	 * Optimized method for reordering content nodes using transactional logic.
 	 * This replaces the generic upsertContentNodes for drag-and-drop operations.
 	 */
-	public async reorderContentNodes(operations: ContentNodeOperation[]): Promise<ContentNode[]> {
+	public async reorderContentNodes(operations: ContentNodeOperation[], tenantId?: string | null): Promise<ContentNode[]> {
 		if (this.initState !== 'initialized') {
 			throw new Error('ContentManager is not initialized.');
 		}
@@ -1608,14 +1609,14 @@ class ContentManager {
 		}
 
 		logger.info('[ContentManager] Reordered nodes:', reorderItems.length);
-		return await this.getContentStructureFromDatabase('flat');
+		return await this.getContentStructureFromDatabase('flat', tenantId);
 	}
 
 	// ===================================================================================
 	// PRIVATE METHODS (Core Logic)
 	// ===================================================================================
 
-	private async _fullReload(tenantId?: string, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
+	private async _fullReload(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
 		const schemas = await this._scanAndProcessFiles();
 		await this._reconcileAndBuildStructure(schemas, tenantId, skipReconciliation, adapter);
 		await this._populateCache(tenantId);
@@ -1686,14 +1687,11 @@ class ContentManager {
 	// Synchronizes schemas from files with the database and builds the in-memory maps
 	private async _reconcileAndBuildStructure(
 		allSchemas: Schema[],
-		tenantId?: string,
+		tenantId?: string | null,
 		skipReconciliation = false,
 		adapter?: IDBAdapter
 	): Promise<void> {
 		const dbAdapter = adapter || ((await getDbAdapter()) as IDBAdapter);
-		const { isSetupComplete } = await import('@utils/setup-check');
-		const setupComplete = isSetupComplete();
-
 		// [NEW] Filter schemas relevant to the current tenant context
 		// - If tenantId is provided: Include global schemas (no tenantId) AND schemas for this tenant. Exclude other tenants.
 		// - If tenantId is missing (System Admin): Include ALL schemas.
@@ -1738,15 +1736,7 @@ class ContentManager {
 			// trusting the DB state would lead to an emptycontent-manager(0 nodes).
 			try {
 				// Check for at least one node
-<<<<<<< HEAD
-				const countResult = await dbAdapter.content.nodes.getStructure('flat', {
-					tenantId,
-					sudo: true, // Always use sudo for system-wide verification
-					bypassCache: true
-				});
-=======
-				const countResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true, true);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+				const countResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
 				if (!(countResult.success && countResult.data) || countResult.data.length === 0) {
 					logger.warn('[ContentManager] ⚠️ Skip reconciliation requested, but DB is EMPTY! Forcing reconciliation to restore content.');
 					skipReconciliation = false;
@@ -1788,7 +1778,7 @@ class ContentManager {
 
 			const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
 				tenantId,
-				sudo: !setupComplete,
+				bypassTenantCheck: true,
 				bypassCache: true
 			});
 
@@ -1978,7 +1968,7 @@ class ContentManager {
 		return operations;
 	}
 
-	private async _bulkUpsertWithParentIds(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string): Promise<void> {
+	private async _bulkUpsertWithParentIds(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null): Promise<void> {
 		const upsertOps = operations.map((op) => ({
 			path: op.path as string,
 			id: op._id.toString(),
@@ -2014,16 +2004,7 @@ class ContentManager {
 		logger.debug(`Current Ops Paths Count: ${currentPaths.size}`);
 		logger.debug(`Ops Paths: ${JSON.stringify(Array.from(currentPaths))}`);
 
-<<<<<<< HEAD
-		const { isSetupComplete: checkSetup } = await import('@utils/setup-check');
-		const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
-			tenantId,
-			sudo: !checkSetup(),
-			bypassCache: true
-		});
-=======
-		const dbResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId } as Partial<ContentNode>, true, true);
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+		const dbResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
 
 		if (dbResult.success && dbResult.data) {
 			const orphanedNodes = dbResult.data.filter((node: ContentNode) => node.path && !currentPaths.has(node.path));
@@ -2090,20 +2071,11 @@ class ContentManager {
 		logger.debug('[ContentManager] Single-pass bulk upsert and cleanup completed');
 	}
 
-	private async _loadFinalStructure(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string): Promise<void> {
+	private async _loadFinalStructure(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null): Promise<void> {
 		// CRITICAL: Fetch the final structure from database after all phases complete
 		// This ensures we have the correct parentId relationships and MongoDB-assigned _ids
 		logger.debug('[ContentManager] Final phase: Fetching complete structure from database', { tenantId });
-<<<<<<< HEAD
-		const { isSetupComplete: finalCheckSetup } = await import('@utils/setup-check');
-		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', {
-			tenantId,
-			sudo: !finalCheckSetup(),
-			bypassCache: true
-		});
-=======
-		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId }, true, true); // bypassCache = true
->>>>>>> 8c9d82013cc49cb63620e263d9825a2b9d36719b
+		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true }); // bypassCache = true
 
 		if (!(finalStructureResult.success && finalStructureResult.data)) {
 			logger.error('[ContentManager] Failed to fetch final structure from database');
@@ -2234,7 +2206,7 @@ class ContentManager {
 	}
 
 	// Populates the distributed cache (e.g., Redis) with the current state
-	private async _populateCache(tenantId?: string): Promise<void> {
+	private async _populateCache(tenantId?: string | null): Promise<void> {
 		try {
 			const state = {
 				nodes: Array.from(this.contentNodeMap.values()),
@@ -2257,7 +2229,7 @@ class ContentManager {
 	}
 
 	// 2. Fix _warmFrequentPaths - build tree directly without calling methods
-	private async _warmFrequentPaths(cacheService: Awaited<ReturnType<typeof getCacheService>>, ttl: number, tenantId?: string): Promise<void> {
+	private async _warmFrequentPaths(cacheService: Awaited<ReturnType<typeof getCacheService>>, ttl: number, tenantId?: string | null): Promise<void> {
 		// Cache first collection for instant access
 		const collections = Array.from(this.contentNodeMap.values()).filter((node) => node.nodeType === 'collection' && node.collectionDef);
 
@@ -2294,7 +2266,7 @@ class ContentManager {
 	}
 
 	// Tries to load the state from the distributed cache
-	private async _loadStateFromCache(tenantId?: string): Promise<boolean> {
+	private async _loadStateFromCache(tenantId?: string | null): Promise<boolean> {
 		try {
 			const cacheService = await getCacheService();
 			await cacheService.initialize();
