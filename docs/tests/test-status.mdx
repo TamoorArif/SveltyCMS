@@ -6,7 +6,7 @@ order: 2
 icon: 'mdi:chart-box'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-03-03'
+updated: '2026-03-04'
 tags:
   - 'testing'
   - 'status'
@@ -18,51 +18,51 @@ tags:
 # SveltyCMS Test Suite Status
 
 > **Last Updated:** March 4, 2026
-> **Total Tests:** ~660+
+> **Total Tests:** ~900+ (Unit + Integration + E2E)
 > **Overall Pass Rate:** 100% (All verified suites passing)
 
 ## Executive Summary
 
 The testing suite has been optimized for **parallel execution** and **enterprise-grade reliability**. Recent efforts have focused on exhaustive unit testing for core business logic, AST transformations, and advanced widget validation.
 
-- **Unit Tests:** 325 tests (Passing - 100%)
+- **Unit Tests:** 608 tests (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
 - **E2E Tests:** Critical flows fully automated and verified across **MongoDB (Local/SRV), SQLite, MariaDB, and PostgreSQL**.
 
 ### Test Coverage by Category
 
-| Category                | Status       | Pass Rate | Tests |
-| ----------------------- | ------------ | --------- | ----- |
-| **Server Hooks**        | ✅ Excellent | 100%      | 53/53 |
-| **API - User**          | ✅ Complete  | 100%      | 47/47 |
-| **API - GraphQL**       | ✅ Complete  | 100%      | 21/21 |
-| **API - Token**         | ✅ Complete  | 100%      | 12/12 |
-| **Setup Actions**       | ✅ Complete  | 100%      | 20/20 |
-| **API - Collections**   | ✅ Complete  | 100%      | 19/19 |
-| **API - Dashboard**     | ✅ Complete  | 100%      | 48/48 |
-| **API - 2FA**           | ✅ Complete  | 100%      | 28/28 |
-| **API - Security**      | ✅ Complete  | 100%      | 33/33 |
-| **API - Widgets**       | ✅ Complete  | 100%      | 30/30 |
-| **API - Settings**      | ✅ Complete  | 100%      | 31/31 |
-| **API - Theme**         | ✅ Complete  | 100%      | 24/24 |
-| **API - Miscellaneous** | ✅ Complete  | 100%      | 36/36 |
-| **Media & DAM**         | ✅ Excellent | 100%      | 34/34 |
-| **GDPR Service**        | ✅ Excellent | 100%      | 4/4   |
-| **AI Service**          | ✅ Excellent | 100%      | 3/3   |
-| **Automation Service**  | ✅ Excellent | 100%      | 6/6   |
-| **Security Utils**      | ✅ Excellent | 100%      | 14/14 |
-| **Widget Validation**   | ✅ Excellent | 100%      | 34/34 |
-| **AST Transformers**    | ✅ Excellent | 100%      | 10/10 |
-| **Database Resilience** | ✅ Excellent | 100%      | 4/4   |
-| **Cache System**        | ✅ Excellent | 100%      | 17/17 |
-| **UI Store & Logic**    | ✅ Excellent | 100%      | 5/5   |
-| **Content Utils**       | ✅ Excellent | 100%      | 6/6   |
-| **Setup Utils**         | ✅ Excellent | 100%      | 25/25 |
-| **Collection Builder**  | ✅ Excellent | 100%      | 7/7   |
-| **Live Preview Utils**  | ✅ Excellent | 100%      | 3/3   |
-| **Token System**        | ✅ Excellent | 100%      | 11/11 |
-| **Repeater Widget**     | ✅ Excellent | 100%      | 5/5   |
-| **Price Widget**        | ✅ Excellent | 100%      | 5/5   |
+| Category                | Status       | Pass Rate | Tests   |
+| ----------------------- | ------------ | --------- | ------- |
+| **Server Hooks**        | ✅ Excellent | 100%      | 287/287 |
+| **API - User**          | ✅ Complete  | 100%      | 47/47   |
+| **API - GraphQL**       | ✅ Complete  | 100%      | 21/21   |
+| **API - Token**         | ✅ Complete  | 100%      | 12/12   |
+| **Setup Actions**       | ✅ Complete  | 100%      | 20/20   |
+| **API - Collections**   | ✅ Complete  | 100%      | 19/19   |
+| **API - Dashboard**     | ✅ Complete  | 100%      | 48/48   |
+| **API - 2FA**           | ✅ Complete  | 100%      | 28/28   |
+| **API - Security**      | ✅ Complete  | 100%      | 33/33   |
+| **API - Widgets**       | ✅ Complete  | 100%      | 30/30   |
+| **API - Settings**      | ✅ Complete  | 100%      | 31/31   |
+| **API - Theme**         | ✅ Complete  | 100%      | 24/24   |
+| **API - Miscellaneous** | ✅ Complete  | 100%      | 36/36   |
+| **Media & DAM**         | ✅ Excellent | 100%      | 34/34   |
+| **GDPR Service**        | ✅ Excellent | 100%      | 4/4     |
+| **AI Service**          | ✅ Excellent | 100%      | 3/3     |
+| **Automation Service**  | ✅ Excellent | 100%      | 6/6     |
+| **Security Utils**      | ✅ Excellent | 100%      | 14/14   |
+| **Widget Validation**   | ✅ Excellent | 100%      | 34/34   |
+| **AST Transformers**    | ✅ Excellent | 100%      | 10/10   |
+| **Database Resilience** | ✅ Excellent | 100%      | 4/4     |
+| **Cache System**        | ✅ Excellent | 100%      | 17/17   |
+| **UI Store & Logic**    | ✅ Excellent | 100%      | 5/5     |
+| **Content Utils**       | ✅ Excellent | 100%      | 6/6     |
+| **Setup Utils**         | ✅ Excellent | 100%      | 25/25   |
+| **Collection Builder**  | ✅ Excellent | 100%      | 7/7     |
+| **Live Preview Utils**  | ✅ Excellent | 100%      | 3/3     |
+| **Token System**        | ✅ Excellent | 100%      | 11/11   |
+| **Repeater Widget**     | ✅ Excellent | 100%      | 5/5     |
+| **Price Widget**        | ✅ Excellent | 100%      | 5/5     |
 
 ---
 
@@ -81,8 +81,8 @@ All core features are verified to work seamlessly across our supported database 
 
 **Files:**
 
-- `tests/unit/hooks/system-state.test.ts` (26 tests)
-- `tests/unit/hooks/firewall.test.ts` (27 tests)
+- `tests/unit/hooks/*.test.ts` (12 files, 287 tests)
+- `tests/unit/databases/database-resilience.test.ts` (4 tests)
 
 **System State Hook Tests:**
 

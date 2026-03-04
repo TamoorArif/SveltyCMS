@@ -102,14 +102,10 @@ git clone https://github.com/YOUR-USERNAME/SveltyCMS.git
 cd SveltyCMS
 
 # Install dependencies
-npm install
+bun install
 
-# Copy environment file
-cp .env.example .env
-
-# Configure your database in .env
-# Then run the development server
-npm run dev
+# Run the development server
+bun run dev
 ```
 
 See the [Installation Guide](docs/installation.mdx) for detailed setup instructions.
@@ -147,26 +143,34 @@ git checkout -b fix/issue-123
 **Code Style:**
 
 - Use TypeScript for all `.ts` files
-- Follow Hybrid rules: `npm run lint` (Biome + ESLint)
-- Fast Format code: `npm run format` (Biome)
+- Follow Hybrid rules: `bun run lint` (ESLint)
+- Format code: `bun run format` (Prettier)
 - Use meaningful variable names
 - Add JSDoc comments for complex functions
 - Ensure database-agnostic patterns (see [API Documentation](docs/api/Database_Agnostic_Verification.mdx))
 
-#### 4. Test Your Changes
+#### 4. Test Your Changes (CI Parity)
+
+Before pushing, always run the combined check to ensure your changes pass CI:
+
+```bash
+bun run lint && bun run check && bun run test
+```
+
+Individual commands:
 
 ```bash
 # Run linter
-npm run lint
+bun run lint
 
 # Run type checker
-npm run check
+bun run check
 
-# Run tests
-npm test
+# Run unit tests
+bun run test
 
-# Run specific tests
-npm test -- path/to/test.spec.ts
+# Run a specific test
+bun test tests/unit/path/to/test.test.ts
 ```
 
 See our [Testing Guide](docs/TESTING_GUIDE.md) for more details.
@@ -338,17 +342,13 @@ Improving documentation? See:
 ### Writing Tests
 
 ```typescript
-// Example test structure
-import { describe, it, expect } from 'vitest';
+// Example test structure (Bun Test)
+import { describe, it, expect } from 'bun:test';
 
 describe('Collection API', () => {
 	it('should create a new collection', async () => {
-		const response = await fetch('/api/collections', {
-			method: 'POST',
-			body: JSON.stringify({ name: 'test' })
-		});
-
-		expect(response.ok).toBe(true);
+		// Test logic here
+		expect(true).toBe(true);
 	});
 });
 ```
@@ -356,17 +356,14 @@ describe('Collection API', () => {
 ### Running Tests
 
 ```bash
-# All tests
-npm test
+# All unit tests
+bun run test
 
-# Watch mode
-npm test -- --watch
+# Run specific file
+bun test path/to/test.test.ts
 
-# Specific file
-npm test -- path/to/test.spec.ts
-
-# Coverage report
-npm test -- --coverage
+# Integration tests
+bun run test:integration
 ```
 
 See [Testing Guide](docs/TESTING_GUIDE.md) for comprehensive testing documentation.

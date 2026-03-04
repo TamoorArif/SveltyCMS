@@ -56,7 +56,7 @@ To stay ahead: Implement cleaner features (e.g., isomorphic plugins > Payload's 
 ## Technical Standards
 
 - **Modern Stack**: Latest TypeScript (^5.9.3), Node.js (>=24), Svelte 5 (^5.46.4), Vite 7 (^7.3.1), Bun (3-4x faster runtime)
-- **Code Quality**: Verify with `bun run lint && bun run check` before commits. Use the hybrid Biome/ESLint setup (orchestrated by Ultracite) for sub-second formatting and comprehensive linting.
+- **Code Quality**: Ensure 100% CI parity by running `bun run lint && bun run check && bun run test` before every push. This performs comprehensive linting (ESLint/Biome), type checking (svelte-check), and executes all 600+ unit tests.
 
 | Category          | Convention           | Examples                                                 |
 | :---------------- | :------------------- | :------------------------------------------------------- |
@@ -246,20 +246,21 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 
 ## Development Commands
 
-| Category      | Command                    | Description                    |
-| ------------- | -------------------------- | ------------------------------ |
-| Daily Dev     | `bun run dev`              | Dev server (auto-setup wizard) |
-|               | `bun run build`            | Production build               |
-|               | `bun run preview`          | Preview on localhost:4173      |
-| Code Quality  | `bun run check`            | Type checking                  |
-|               | `bun run lint`             | Hybrid Lint (Biome + ESLint)   |
-|               | `bun run format`           | Fast Format (Biome)            |
-| Testing       | `bun run test:unit`        | Unit tests                     |
-|               | `bun run test:integration` | Integration (DB required)      |
-|               | `bun run test:e2e`         | E2E (Playwright)               |
-| DB Operations | `bun run db:push`          | Push schema changes (Drizzle)  |
-| i18n          | `bun run paraglide`        | Compile messages               |
-| Diagnostics   | `bun run check:mongodb`    | Test MongoDB connection        |
+| Category      | Command                                         | Description                                                |
+| ------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| Daily Dev     | `bun run dev`                                   | Dev server (auto-setup wizard)                             |
+|               | `bun run build`                                 | Production build                                           |
+|               | `bun run preview`                               | Preview on localhost:4173                                  |
+| Code Quality  | `bun run check`                                 | Type checking                                              |
+|               | `bun run lint`                                  | Hybrid Lint (Biome + ESLint)                               |
+|               | `bun run format`                                | Fast Format (Biome)                                        |
+| Testing       | `bun run test:unit`                             | Unit tests                                                 |
+|               | `bun run test:integration`                      | Integration (DB required)                                  |
+|               | `bun run test:e2e`                              | E2E (Playwright)                                           |
+| DB Operations | `bun run db:push`                               | Push schema changes (Drizzle)                              |
+| i18n          | `bun run paraglide`                             | Compile messages                                           |
+| Diagnostics   | `bun run check:mongodb`                         | Test MongoDB connection                                    |
+| **CI Parity** | `bun run lint && bun run check && bun run test` | **Recommended before push** (performs full local CI check) |
 
 ## Architecture Overview
 
@@ -368,8 +369,8 @@ Svelte 5 runes: `$state()` for state, `$derived()` for computations, `$effect()`
 
 - Branches: `next` (dev), `main` (stable).
 - Commits: Conventional (`feat:`, `fix:`, `docs:`); include `Co-Authored-By: <agent>`.
-- Pre-commit: `bun run lint && bun run check`.
+- Pre-commit: `bun run lint && bun run check && bun run test` (100% CI parity).
 
 ---
 
-_Last Updated: 2026-02-24_
+_Last Updated: 2026-03-04_

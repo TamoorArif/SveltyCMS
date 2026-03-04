@@ -47,9 +47,10 @@ const mockReadFileSync = mock(() => 'JWT_SECRET_KEY: "secret", DB_HOST: "localho
 mock.module('node:fs', () => ({
 	readFileSync: mockReadFileSync
 }));
-mock.module('node:path', () => ({
-	join: (...args: string[]) => args.join('/')
-}));
+mock.module('node:path', () => {
+	const pathMock = { join: (...args: string[]) => args.join('/') };
+	return { ...pathMock, default: pathMock };
+});
 
 // --- Test Utilities ---
 function createMockEvent(pathname: string): RequestEvent {

@@ -58,6 +58,20 @@ const mockSessionStorage = (() => {
 	ENCRYPTION_KEY: 'test-encryption-key-32-bytes!!'
 };
 
+// --- AUTH SERVICE MOCK ---
+const mockAuth = {
+	getUserCount: mock(() => Promise.resolve(globalThis.__mockUserCount ?? 1)),
+	getAllRoles: mock(() => Promise.resolve(globalThis.__mockRoles ?? [{ _id: 'admin', name: 'Administrator', isAdmin: true, permissions: [] }])),
+	validateSession: mock((sessionId: string) =>
+		Promise.resolve(sessionId === 'valid-session' ? { _id: '123', email: 'test@example.com', role: 'admin' } : null)
+	),
+	createSession: mock(() => Promise.resolve({ _id: 'new-session', user_id: '123' })),
+	destroySession: mock(() => Promise.resolve()),
+	getUserById: mock(() => Promise.resolve({ _id: '123', email: 'test@example.com', username: 'tester' })),
+	updateUserAttributes: mock(() => Promise.resolve())
+};
+(globalThis as any).mockAuth = mockAuth;
+
 // --- DB ADAPTER MOCK ---
 const mockDbAdapter = {
 	auth: {
@@ -225,7 +239,7 @@ mock.module('@utils/logger.server', () => ({
 
 // Mock @src/databases/db
 mock.module('@src/databases/db', () => ({
-	auth: mockDbAdapter.auth,
+	auth: (globalThis as any).mockAuth,
 	dbAdapter: mockDbAdapter,
 	getPrivateEnv: () => (globalThis as any).privateEnv,
 	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv),
@@ -280,13 +294,21 @@ mock.module('@utils/setup-check', () => ({
 // Mock @src/databases/cache-service
 mock.module('@src/databases/cache-service', () => ({
 	cacheService: {
-		get: async () => null,
-		set: async () => {},
-		delete: async () => {},
-		clearByPattern: async () => {},
-		setBootstrapping: () => {}
+		get: mock(async () => null),
+		set: mock(async () => {}),
+		delete: mock(async () => {}),
+		clearByPattern: mock(async () => {}),
+		setBootstrapping: mock(() => {})
 	},
-	API_CACHE_TTL_MS: 300_000
+	SESSION_CACHE_TTL_MS: 86_400_000, // 24 hours
+	SESSION_CACHE_TTL_S: 86_400,
+	USER_PERM_CACHE_TTL_MS: 60_000, // 1 minute
+	USER_PERM_CACHE_TTL_S: 60,
+	USER_COUNT_CACHE_TTL_MS: 300_000, // 5 minutes
+	USER_COUNT_CACHE_TTL_S: 300,
+	API_CACHE_TTL_MS: 300_000, // 5 minutes
+	API_CACHE_TTL_S: 300,
+	REDIS_TTL_S: 300
 }));
 
 // Mock EventBus
@@ -404,3 +426,66 @@ mock.module('@src/paraglide/runtime', () => ({
 }));
 
 console.log('✅ Global test environment setup complete');
+
+// Mock sveltekit-rate-limiter/server
+mock.module('sveltekit-rate-limiter/server', () => ({
+	RateLimiter: class MockRateLimiter {
+		async isLimited() {
+			return false; // Not limited
+		}
+		cookieLimiter() {
+			return this;
+		}
+	},
+	RetryAfterRateLimiter: class MockRetryAfterRateLimiter {
+		async isLimited() {
+			return false; // Not limited
+		}
+	}
+}));
+
+// Mock MetricsService
+const mockMetricsReport = {
+	api: { requests: 0, errors: 0, cacheHits: 0, cacheMisses: 0, cacheHitRate: 0 },
+	authentication: { validations: 0, failures: 0, successRate: 0, cacheHits: 0, cacheMisses: 0, cacheHitRate: 0 },
+	performance: { slowRequests: 0, avgHookExecutionTime: 0, bottlenecks: [] },
+	requests: { total: 0, errors: 0, errorRate: 0, avgResponseTime: 0 },
+	security: { rateLimitViolations: 0, cspViolations: 0, authFailures: 0 },
+	timestamp: Date.now(),
+	uptime: 0
+};
+
+export const mockMetricsService = {
+	incrementRequests: mock(() => {}),
+	incrementErrors: mock(() => {}),
+	recordResponseTime: mock(() => {}),
+	incrementAuthValidations: mock(() => {}),
+	incrementAuthFailures: mock(() => {}),
+	recordAuthCacheHit: mock(() => {}),
+	recordAuthCacheMiss: mock(() => {}),
+	incrementApiRequests: mock(() => {}),
+	incrementApiErrors: mock(() => {}),
+	recordApiCacheHit: mock(() => {}),
+	recordApiCacheMiss: mock(() => {}),
+	incrementRateLimitViolations: mock(() => {}),
+	incrementCSPViolations: mock(() => {}),
+	incrementSecurityViolations: mock(() => {}),
+	recordHookExecutionTime: mock(() => {}),
+	getReport: mock(() => mockMetricsReport),
+	reset: mock(() => {}),
+	exportPrometheus: mock(() => ''),
+	destroy: mock(() => {})
+};
+
+mock.module('@src/services/metrics-service', () => ({
+	metricsService: mockMetricsService,
+	cleanupMetrics: mock(() => {})
+}));
+
+// Mock Widget Scanner (import.meta.glob is not available in Bun)
+mock.module('@src/widgets/scanner', () => ({
+	coreModules: {},
+	customModules: {},
+	allWidgetModules: {},
+	getWidgetNameFromPath: (path: string) => path.split('/').at(-2) || null
+}));

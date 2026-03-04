@@ -4,7 +4,7 @@ title: Hook Test Coverage
 description: Comprehensive testing documentation for all SveltyCMS middleware hooks
 author: 'SveltyCMS Team'
 created: '2025-12-16'
-updated: '2025-12-16'
+updated: '2026-03-04'
 tags:
   - 'testing'
   - 'hooks'
@@ -17,20 +17,21 @@ Complete test coverage for all 11 SvelteKit middleware hooks in the SveltyCMS sy
 
 ## Test Suite Overview
 
-| Hook                     | Tests    | Coverage    | File                                           |
-| ------------------------ | -------- | ----------- | ---------------------------------------------- |
-| handleStaticAssetCaching | 45+      | ✅ Complete | `tests/bun/hooks/static-asset-caching.test.ts` |
-| handleSystemState        | 30+      | ✅ Complete | `tests/bun/hooks/system-state.test.ts`         |
-| handleRateLimit          | 60+      | ✅ Complete | `tests/bun/hooks/rate-limit.test.ts`           |
-| handleFirewall           | 40+      | ✅ Complete | `tests/bun/hooks/firewall.test.ts`             |
-| handleSetup              | 50+      | ✅ Complete | `tests/bun/hooks/setup.test.ts`                |
-| handleLocale             | 40+      | ✅ Complete | `tests/bun/hooks/locale.test.ts`               |
-| handleTheme              | 45+      | ✅ Complete | `tests/bun/hooks/theme.test.ts`                |
-| handleAuthentication     | 50+      | ✅ Complete | `tests/bun/hooks/authentication.test.ts`       |
-| handleAuthorization      | 40+      | ✅ Complete | `tests/bun/hooks/authorization.test.ts`        |
-| handleApiRequests        | 45+      | ✅ Complete | `tests/bun/hooks/api-requests.test.ts`         |
-| addSecurityHeaders       | 40+      | ✅ Complete | `tests/bun/hooks/security-headers.test.ts`     |
-| **Total**                | **485+** | **100%**    | 11 files                                       |
+| Hook                     | Tests   | Coverage    | File                                            |
+| ------------------------ | ------- | ----------- | ----------------------------------------------- |
+| handleStaticAssetCaching | 6       | ✅ Complete | `tests/unit/hooks/static-asset-caching.test.ts` |
+| handleSystemState        | 26      | ✅ Complete | `tests/unit/hooks/system-state.test.ts`         |
+| handleRateLimit          | 35      | ✅ Complete | `tests/unit/hooks/rate-limit.test.ts`           |
+| handleFirewall           | 27      | ✅ Complete | `tests/unit/hooks/firewall.test.ts`             |
+| handleSetup              | 16      | ✅ Complete | `tests/unit/hooks/setup.test.ts`                |
+| handleLocale             | 34      | ✅ Complete | `tests/unit/hooks/locale.test.ts`               |
+| handleTheme              | 16      | ✅ Complete | `tests/unit/hooks/theme.test.ts`                |
+| handleAuthentication     | 33      | ✅ Complete | `tests/unit/hooks/authentication.test.ts`       |
+| handleAuthorization      | 23      | ✅ Complete | `tests/unit/hooks/authorization.test.ts`        |
+| handleApiRequests        | 28      | ✅ Complete | `tests/unit/hooks/api-requests.test.ts`         |
+| handleTokenResolution    | 5       | ✅ Complete | `tests/unit/hooks/token-resolution.test.ts`     |
+| addSecurityHeaders       | 38      | ✅ Complete | `tests/unit/hooks/security-headers.test.ts`     |
+| **Total**                | **287** | **100%**    | 12 files                                        |
 
 ## Middleware Sequence
 
@@ -480,54 +481,55 @@ it('should add HSTS header for HTTPS in production', async () => {
 ### Run All Hook Tests
 
 ```bash
-bun test tests/bun/hooks/
+bun test tests/unit/hooks/
 ```
 
 ### Run Individual Hook Test
 
 ```bash
-bun test tests/bun/hooks/static-asset-caching.test.ts
-bun test tests/bun/hooks/authentication.test.ts
-bun test tests/bun/hooks/security-headers.test.ts
+bun test tests/unit/hooks/static-asset-caching.test.ts
+bun test tests/unit/hooks/authentication.test.ts
+bun test tests/unit/hooks/security-headers.test.ts
 ```
 
 ### Run with Coverage
 
 ```bash
-bun test --coverage tests/bun/hooks/
+bun test --coverage tests/unit/hooks/
 ```
 
 ### Watch Mode
 
 ```bash
-bun test --watch tests/bun/hooks/
+bun test --watch tests/unit/hooks/
 ```
 
 ## Test Metrics
 
 ### Current Status
 
-- **Total Hook Tests**: 485+
-- **Coverage**: 100% (11/11 hooks)
-- **Test Files**: 11
-- **Average Tests per Hook**: 44
-- **Test Framework**: Bun Test v1.3.1
+- **Total Hook Tests**: 287
+- **Coverage**: 100% (12/12 hooks)
+- **Test Files**: 12
+- **Average Tests per Hook**: 24
+- **Test Framework**: Bun Test v1.3.10
 
 ### Coverage by Category
 
 | Category                | Tests | Status      |
 | ----------------------- | ----- | ----------- |
-| Static Asset Caching    | 45+   | ✅ Complete |
-| System State Management | 30+   | ✅ Complete |
-| Rate Limiting           | 60+   | ✅ Complete |
-| Firewall & Security     | 40+   | ✅ Complete |
-| Setup Wizard            | 50+   | ✅ Complete |
-| Internationalization    | 40+   | ✅ Complete |
-| Theme Management        | 45+   | ✅ Complete |
-| Authentication          | 50+   | ✅ Complete |
-| Authorization           | 40+   | ✅ Complete |
-| API Request Handling    | 45+   | ✅ Complete |
-| Security Headers        | 40+   | ✅ Complete |
+| Static Asset Caching    | 6     | ✅ Complete |
+| System State Management | 26    | ✅ Complete |
+| Rate Limiting           | 35    | ✅ Complete |
+| Firewall & Security     | 27    | ✅ Complete |
+| Setup Wizard            | 16    | ✅ Complete |
+| Internationalization    | 34    | ✅ Complete |
+| Theme Management        | 16    | ✅ Complete |
+| Authentication          | 33    | ✅ Complete |
+| Authorization           | 23    | ✅ Complete |
+| API Request Handling    | 28    | ✅ Complete |
+| Token Resolution        | 5     | ✅ Complete |
+| Security Headers        | 38    | ✅ Complete |
 
 ## Common Test Patterns
 
@@ -594,14 +596,14 @@ All hook tests run automatically on:
 ```yaml
 # .github/workflows/test.yml
 - name: Run Hook Tests
-  run: bun test tests/bun/hooks/
+  run: bun test tests/unit/hooks/
 ```
 
 ## Contributing
 
 When adding new middleware hooks:
 
-1. Create test file: `tests/bun/hooks/new-hook.test.ts`
+1. Create test file: `tests/unit/hooks/new-hook.test.ts`
 2. Follow the standard test structure
 3. Cover all code paths and edge cases
 4. Include performance tests where applicable

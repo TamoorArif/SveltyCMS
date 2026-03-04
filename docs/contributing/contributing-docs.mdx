@@ -6,7 +6,7 @@ order: 2
 icon: 'mdi:file-document-plus-outline'
 author: 'admin'
 created: '2025-09-28'
-updated: '2025-11-14'
+updated: '2026-03-04'
 tags:
   - 'documentation'
   - 'contributing'
@@ -203,10 +203,11 @@ Always use absolute paths from the root:
 
 1. **Create Branch**: Make documentation changes in a feature branch
 2. **Run Linter**: Execute `bun ./docs/lint-docs.ts` and fix any errors
-3. **Submit PR**: Create pull request with descriptive title
-4. **Review**: Reviewers check for accuracy, clarity, and adherence to guidelines
-5. **Update `updated` field**: Change the date in frontmatter
-6. **Merge**: Once approved, changes are merged
+3. **Verify CI Parity**: If code changes were made, run `bun run lint && bun run check && bun run test`
+4. **Submit PR**: Create pull request with descriptive title
+5. **Review**: Reviewers check for accuracy, clarity, and adherence to guidelines
+6. **Update `updated` field**: Change the date in frontmatter
+7. **Merge**: Once approved, changes are merged
 
 ### Updating Existing Docs
 

@@ -18,6 +18,8 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { User } from '@src/databases/auth/types';
 import { handleApiRequests } from '@src/hooks/handle-api-requests';
+import { metricsService } from '@src/services/metrics-service';
+import { cacheService } from '@src/databases/cache-service';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // --- Test Utilities ---
@@ -170,12 +172,12 @@ describe('handleApiRequests Middleware', () => {
 			const user1 = { ...mockUser, _id: 'user1' };
 			const user2 = { ...mockUser, _id: 'user2' };
 
-			const event1 = createMockEvent('/api/data', 'GET', user1);
+			const event1 = createMockEvent('/api/collections/data', 'GET', user1);
 			await handleApiRequests({ event: event1, resolve: mockResolve });
 
 			mockResolve.mockClear();
 
-			const event2 = createMockEvent('/api/data', 'GET', user2);
+			const event2 = createMockEvent('/api/collections/data', 'GET', user2);
 			await handleApiRequests({ event: event2, resolve: mockResolve });
 
 			// Different users = different cache keys
@@ -274,27 +276,43 @@ describe('handleApiRequests Middleware', () => {
 	});
 
 	describe('Metrics Tracking', () => {
+		beforeEach(() => {
+			mock.restore(); // Ensure mocks are reset
+		});
+
 		it('should increment API request counter', async () => {
-			const event = createMockEvent('/api/test', 'GET', mockUser);
+			const event = createMockEvent('/api/collections/test', 'GET', mockUser);
 			await handleApiRequests({ event, resolve: mockResolve });
 
-			// metricsService.incrementApiRequests() called
+			expect(metricsService.incrementApiRequests).toHaveBeenCalled();
 			expect(mockResolve).toHaveBeenCalled();
 		});
 
 		it('should track cache hits', async () => {
-			const event = createMockEvent('/api/cached', 'GET', mockUser);
-			await handleApiRequests({ event, resolve: mockResolve });
+			// Mock cache hit locally
+			(cacheService.get as any).mockReturnValueOnce(
+				Promise.resolve({
+					data: { cached: true },
+					headers: {}
+				})
+			);
 
-			// metricsService.recordApiCacheHit() on cache hit
-			expect(mockResolve).toHaveBeenCalled();
+			const event = createMockEvent('/api/collections/cached', 'GET', mockUser);
+			const response = await handleApiRequests({ event, resolve: mockResolve });
+
+			expect(metricsService.recordApiCacheHit).toHaveBeenCalled();
+			expect(mockResolve).not.toHaveBeenCalled();
+			expect(response.headers.get('X-Cache')).toBe('HIT');
 		});
 
 		it('should track cache misses', async () => {
-			const event = createMockEvent('/api/uncached', 'GET', mockUser);
+			// Mock cache miss
+			(cacheService.get as any).mockReturnValueOnce(Promise.resolve(null));
+
+			const event = createMockEvent('/api/collections/uncached', 'GET', mockUser);
 			await handleApiRequests({ event, resolve: mockResolve });
 
-			// metricsService.recordApiCacheMiss() on miss
+			expect(metricsService.recordApiCacheMiss).toHaveBeenCalled();
 			expect(mockResolve).toHaveBeenCalled();
 		});
 

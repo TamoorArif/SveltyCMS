@@ -4,6 +4,7 @@
 **This component displays a modal for editing a category**
 -->
 <script lang="ts">
+	import { SvelteSet } from 'svelte/reactivity';
 	import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
 	import { button_cancel, button_delete, button_save, modalcategory_categoryname, modalcategory_placeholder } from '@src/paraglide/messages';
 
@@ -55,7 +56,7 @@
 
 	/** Collect category id and all descendant node ids (for cascade delete; server deletes attached collections and their .ts files). */
 	function getDescendantIds(categoryId: string, flat: ContentNode[]): string[] {
-		const idSet = new Set<string>();
+		const idSet = new SvelteSet<string>();
 		const add = (id: string) => {
 			if (idSet.has(id)) return;
 			idSet.add(id);
@@ -174,7 +175,7 @@
 				const newStructure =
 					payload?.contentStructure && Array.isArray(payload.contentStructure)
 						? payload.contentStructure
-						: flat.filter((n) => !new Set(idsToDelete).has(n._id?.toString() ?? ''));
+						: flat.filter((n) => !new SvelteSet(idsToDelete).has(n._id?.toString() ?? ''));
 				setContentStructure(newStructure);
 				await invalidate('app:content');
 				close?.({ __categoryDeleted: true, contentStructure: newStructure });

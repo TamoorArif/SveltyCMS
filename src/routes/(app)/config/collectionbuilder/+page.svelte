@@ -34,6 +34,7 @@ None (TreeView has its own keyboard navigation)
 <CollectionBuilder data={{ contentStructure, user, isAdmin }} />
 -->
 <script lang="ts">
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { ISODateString } from '@root/src/content/types';
 	import type { ContentNode, DatabaseId } from '@root/src/databases/db-interface';
 	import { hasDuplicateSiblingName } from '@src/content/utils';
@@ -121,7 +122,7 @@ None (TreeView has its own keyboard navigation)
 
 	/** Collect category id and all descendant node ids from flat list (for category delete). */
 	function getDescendantIds(categoryId: string, flat: ContentNode[]): string[] {
-		const idSet = new Set<string>();
+		const idSet = new SvelteSet<string>();
 		const add = (id: string) => {
 			if (idSet.has(id)) return;
 			idSet.add(id);
@@ -163,7 +164,7 @@ None (TreeView has its own keyboard navigation)
 				currentConfig = payload.contentStructure;
 				setContentStructure(payload.contentStructure);
 			} else {
-				const idSet = new Set(idsToDelete);
+				const idSet = new SvelteSet(idsToDelete);
 				currentConfig = currentConfig.filter((n) => !idSet.has(n._id?.toString() ?? ''));
 				setContentStructure(currentConfig);
 			}
@@ -412,7 +413,7 @@ None (TreeView has its own keyboard navigation)
 				.toLowerCase()
 				.replace(/\s+/g, '-')
 				.replace(/[^a-z0-9-]/g, '') || 'category';
-		const existingPaths = new Set(currentConfig.map((n) => (n.path ?? '').toLowerCase()).filter(Boolean));
+		const existingPaths = new SvelteSet(currentConfig.map((n) => (n.path ?? '').toLowerCase()).filter(Boolean));
 		let path = `/${slug}`;
 		let n = 1;
 		while (existingPaths.has(path.toLowerCase())) {

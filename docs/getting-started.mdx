@@ -6,7 +6,7 @@ order: 0
 icon: 'mdi:rocket-launch'
 author: 'SveltyCMS Team'
 created: '2025-10-05'
-updated: '2026-02-22'
+updated: '2026-03-04'
 tags:
   - 'getting-started'
   - 'quickstart'
@@ -439,8 +439,11 @@ bun run preview      # Preview production build
 bun run seed         # Seed initial data
 bun run migrate      # Run migrations
 
-# Testing
-bun run test         # Run tests
+# Testing & Quality (CI Parity)
+bun run lint && bun run check && bun run test
+
+# Individual Commands
+bun run test         # Run unit tests
 bun run test:e2e     # End-to-end tests
 
 # Maintenance

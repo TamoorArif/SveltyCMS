@@ -9,6 +9,7 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 -->
 
 <script lang="ts">
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { Role } from '@src/databases/auth/types';
 	import type { WidgetFieldPermissions } from '@src/content/types';
 	import { collections } from '@src/stores/collection-store.svelte';
@@ -94,14 +95,14 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 	}
 
 	function toggleRoleRead(roleId: string) {
-		const set = new Set(permissions.readRoles ?? []);
+		const set = new SvelteSet(permissions.readRoles ?? []);
 		if (set.has(roleId)) set.delete(roleId);
 		else set.add(roleId);
 		updatePermissions({ readRoles: [...set] });
 	}
 
 	function toggleRoleWrite(roleId: string) {
-		const set = new Set(permissions.writeRoles ?? []);
+		const set = new SvelteSet(permissions.writeRoles ?? []);
 		if (set.has(roleId)) set.delete(roleId);
 		else set.add(roleId);
 		updatePermissions({ writeRoles: [...set] });

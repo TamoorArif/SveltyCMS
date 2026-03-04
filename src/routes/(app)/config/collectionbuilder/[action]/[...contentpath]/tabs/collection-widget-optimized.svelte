@@ -4,6 +4,7 @@
 **This Component handles the optimized collection widget**
 -->
 <script lang="ts">
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { FieldInstance } from '@src/content/types';
 	import type { Role } from '@src/databases/auth/types';
 	import BuzzForm from '@src/routes/(app)/config/collectionbuilder/buzz-form/buzz-form.svelte';
@@ -119,7 +120,7 @@
 					return;
 				}
 				// Ensure new fields have a unique db_fieldName so they persist on save
-				const existingNames = new Set((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
+				const existingNames = new SvelteSet((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
 				const ensureFieldName = (obj: Record<string, unknown>): string => {
 					const name = (obj.db_fieldName as string) || (obj.label as string) || (obj.widget as { Name?: string })?.Name || 'field';
 					const base =

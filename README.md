@@ -352,7 +352,15 @@ Please also read our [Code of Conduct](https://github.com/SveltyCMS/SveltyCMS/bl
 
 If your PR makes a change that should be noted in one or more packages' changelogs, generate a changeset by running `pnpm changeset` and following the prompts. Changesets that add features should be `minor` and those that fix bugs should be `patch`.
 
-Run the tests with `pnpm test` and lint the project with `pnpm lint` (Hybrid Biome/ESLint) and `pnpm check`.
+### 🧪 Verified CI Parity
+
+Before submitting Pull Requests, ensure your changes pass all checks by running:
+
+```bash
+bun run lint && bun run check && bun run test
+```
+
+This runs the linter (ESLint), type checker (Svelte-Check), and the full unit test suite (Bun Test) exactly as the GitHub Actions CI pipeline does.
 
 Please prefix changeset messages with `feat:`, `fix:`, or `chore:`.
 

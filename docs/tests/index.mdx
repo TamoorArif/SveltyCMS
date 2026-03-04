@@ -6,7 +6,7 @@ order: 1
 icon: 'mdi:test-tube'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-02-15'
+updated: '2026-03-04'
 tags:
   - 'testing'
   - 'documentation'
@@ -19,8 +19,8 @@ tags:
 # SveltyCMS Testing Documentation
 
 **Last Updated:** March 4, 2026
-**Total Tests:** ~660 tests
-**Pass Rate:** 100% (325 unit tests passing, 0 failing)
+**Total Tests:** ~900+ (608 unit + ~300 integration/E2E)
+**Pass Rate:** 100% (All 608 unit tests passing, 0 failing)
 
 ## Quick Links
 
@@ -109,8 +109,8 @@ SveltyCMS uses two complementary test frameworks to ensure comprehensive quality
 
 - **Purpose**: Fast, lightweight testing for business logic, services, and API endpoints
 - **Location**: `tests/unit/`
-- **Test Count**: ~650 tests
-- **Execution Time**: ~2-15 seconds
+- **Test Count**: ~ 608 tests
+- **Execution Time**: ~3 seconds
 
 **What It Tests**:
 
@@ -164,8 +164,8 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - Run Bun unit tests (~308 tests)
-      - Execution time: ~2 seconds
+      - Run Bun unit tests (~608 tests)
+      - Execution time: ~3 seconds
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -316,14 +316,14 @@ This script:
 
 ## Test Status & Coverage
 
-**Current Status (February 15, 2026)**
+**Current Status (March 4, 2026)**
 
 | Category          | Passing  | Failing | Skipped | Total    |
 | ----------------- | -------- | ------- | ------- | -------- |
-| Unit Tests        | 308      | 0       | 0       | 308      |
+| Unit Tests        | 608      | 0       | 0       | 608      |
 | Integration Tests | ~300     | 0       | 0       | ~300     |
 | E2E Tests         | ~40      | 0       | 0       | ~40      |
-| **TOTAL**         | **~648** | **0**   | **0**   | **~648** |
+| **TOTAL**         | **~948** | **0**   | **0**   | **~948** |
 
 > **Note**: Integration and E2E tests require a running preview server. Run `bun run test:integration` or `bun run test:e2e` for full test coverage.
 
