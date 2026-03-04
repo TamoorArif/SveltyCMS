@@ -47,7 +47,7 @@ jobs:
       - name: Run Linter
         run: bun run lint
       - name: Run Unit Tests
-        run: bun test --preload ./tests/unit/setup.ts --max-concurrency 1 tests/unit/
+        run: bun run test:unit
 
   build:
     name: 🏗️ Production Build

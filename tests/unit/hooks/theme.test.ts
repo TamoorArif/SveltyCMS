@@ -20,7 +20,7 @@ import type { RequestEvent, ResolveOptions } from '@sveltejs/kit';
 const mockGetTheme = mock(() => Promise.resolve(null));
 const mockIsInitialized = mock(() => true);
 
-mock.module('@src/databases/themeManager', () => ({
+mock.module('@src/databases/theme-manager', () => ({
 	ThemeManager: {
 		getInstance: () => ({
 			getTheme: mockGetTheme,

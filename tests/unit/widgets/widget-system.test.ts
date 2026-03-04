@@ -670,9 +670,9 @@ describe('Widget System - Advanced Features', () => {
 				}
 			});
 			expect(field.permissions).toBeDefined();
-			expect(field.permissions?.read.admin).toBe(true);
-			expect(field.permissions?.write.viewer).toBe(false);
-			expect(field.permissions?.delete.editor).toBe(false);
+			expect((field.permissions as any)?.read.admin).toBe(true);
+			expect((field.permissions as any)?.write.viewer).toBe(false);
+			expect((field.permissions as any)?.delete.editor).toBe(false);
 		});
 	});
 
