@@ -4,7 +4,7 @@ title: 'Testing Strategy for SveltyCMS'
 description: 'Comprehensive testing strategy including unit tests, integration tests, E2E tests, and role-based access control testing.'
 author: 'SveltyCMS Team'
 created: '2025-12-16'
-updated: '2026-02-22'
+updated: '2026-03-04'
 tags:
   - 'testing'
   - 'quality-assurance'
@@ -30,16 +30,16 @@ See [Testing Strategy (White-Box vs Black-Box)](./testing-strategy.mdx) for a de
 
 ### Current Test Count
 
-| Test Type            | Count    | Status     | Coverage                             |
-| -------------------- | -------- | ---------- | ------------------------------------ |
-| Unit Tests           | 308      | ✅ Passing | Services, utilities, stores, widgets |
-| Integration Tests    | ~300     | ✅ Passing | API endpoints, database ops, hooks   |
-| E2E: Setup Wizard    | 1        | ✅ Passing | Fresh installation flow              |
-| E2E: Authentication  | 4        | ✅ Passing | Login, logout, OAuth                 |
-| E2E: User Management | 3        | ✅ Passing | CRUD operations                      |
-| E2E: Collections     | 2        | ✅ Passing | Collection builder, content          |
-| E2E: RBAC            | 4        | ✅ **NEW** | Admin, developer, editor roles       |
-| **Total**            | **~622** | ✅         | **Hybrid Coverage Strategy**         |
+| Test Type            | Count    | Status     | Coverage                                          |
+| -------------------- | -------- | ---------- | ------------------------------------------------- |
+| Unit Tests           | 680      | ✅ Passing | Services, utilities, stores, widgets, auth, hooks |
+| Integration Tests    | ~300     | ✅ Passing | API endpoints, database ops, hooks                |
+| E2E: Setup Wizard    | 1        | ✅ Passing | Fresh installation flow                           |
+| E2E: Authentication  | 4        | ✅ Passing | Login, logout, OAuth                              |
+| E2E: User Management | 3        | ✅ Passing | CRUD operations                                   |
+| E2E: Collections     | 2        | ✅ Passing | Collection builder, content                       |
+| E2E: RBAC            | 4        | ✅ Passing | Admin, developer, editor roles                    |
+| **Total**            | **~980** | ✅         | **Hybrid Coverage Strategy**                      |
 
 > **Note on Coverage**:
 >
@@ -81,7 +81,7 @@ bun run test:unit
 
 Tests individual services, utilities, stores, and widgets in isolation.
 
-**Location**: `tests/unit/services`, `tests/unit/utils`, `tests/unit/stores`, `tests/unit/widgets`
+**Location**: `tests/unit/services`, `tests/unit/utils`, `tests/unit/stores`, `tests/unit/widgets`, `tests/unit/hooks`, `tests/unit/auth`
 
 ### Integration Tests
 
@@ -165,15 +165,15 @@ Generates detailed reports including:
 
 Automated validation of API responses against the OpenAPI/Swagger schema. This pairs perfectly with our black-box strategy to ensure strict API compliance.
 
-### 2. Multi-Database Matrix (CI Implementation)
+### 2. Multi-Database Matrix (Implemented ✅)
 
 The architecture fully supports database agnosticism via the Black-Box strategy.
-**Planned for Q2 2026**: Implementing the GitHub Actions workflow to run the suite in parallel against:
+**Status**: Implemented in GitHub Actions `ci.yml`. The suite runs against:
 
-- MongoDB (current default)
-- PostgreSQL (implemented)
-- MariaDB (implemented)
-- SQLite (implemented)
+- ✅ MongoDB (default)
+- ✅ PostgreSQL (implemented)
+- ✅ MariaDB (implemented)
+- ✅ SQLite (implemented)
 
 ### 3. Enhanced Test Coverage
 
@@ -252,7 +252,7 @@ SveltyCMS uses a comprehensive multi-stage testing pipeline:
 ```
 
 **Duration**: ~5 seconds
-**Coverage**: 222 tests
+**Coverage**: 611 tests
 **No dependencies**: Tests run without database or server
 
 #### Stage 2: Integration Tests
@@ -358,12 +358,12 @@ Tests run automatically on:
 - Pull requests to `main`
 - Manual workflow dispatch
 
-**Matrix Testing** (future):
+**Matrix Testing** (✅ Implemented):
 
-- MongoDB (current)
-- PostgreSQL (planned)
-- MariaDB (planned)
-- MySQL (planned)
+- ✅ MongoDB
+- ✅ PostgreSQL
+- ✅ MariaDB
+- ✅ SQLite
 
 ---
 

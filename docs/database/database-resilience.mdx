@@ -44,6 +44,7 @@ It is integrated in:
 | Admin email notification on persistent failure    | ✅ Implemented | `database-failure.svelte`; notification logic in `DatabaseResilience.ts`          |
 | Connection pool diagnostics                       | ✅ Implemented | API: `/api/database/pool-diagnostics`; Widget: `database-pool-diagnostics.svelte` |
 | Self-healing Reconnection                         | ✅ Implemented | MongoDB/SQL event handlers + `attemptReconnection()`                              |
+| Circuit Breaker Pattern                           | ✅ Implemented | `DatabaseResilience.executeWithRetry()`; states: CLOSED, OPEN, HALF_OPEN          |
 | Automatic Driver Installation & Fallback          | ✅ Implemented | `install-driver/+server.ts`; manual command on failure                            |
 | SQL Migration Strategy                            | ✅ Implemented | `runMigrations(db)` for Drizzle adapters                                          |
 | Detailed error logs download                      | ✅ Implemented | API: `/api/logs/download` (admin-only)                                            |
@@ -125,9 +126,6 @@ Use custom configs for time-sensitive operations only; otherwise prefer the defa
 
 ---
 
-## Planned Features
-
-- Circuit breaker pattern for known-down states
 - Adaptive backoff based on historical success rate
 - Distributed coordination of health status across instances
 - Advanced metrics (percentile latency, error categorization, trends)
@@ -162,6 +160,22 @@ await resilience.executeWithRetry(async () => {
 	await mongoose.connect(connectionString, options);
 }, 'MongoDB connection');
 ```
+
+### Circuit Breaker Pattern
+
+The resilience system now includes a robust **Circuit Breaker** to prevent cascading failures during database outages.
+
+- **States**:
+  - `CLOSED`: Normal operation. Requests flow through.
+  - `OPEN`: Failures exceeded threshold. Requests fail-fast immediately without hitting the DB.
+  - `HALF_OPEN`: Cooldown elapsed. Testing one request to see if the service recovered.
+- **Recovery Policy**:
+  - After **30 seconds** in `OPEN` state, the breaker automatically moves to `HALF_OPEN`.
+  - It allows **one** probe request: if successful, it moves to `CLOSED`; if it fails, it returns to `OPEN` for another 30s.
+- **Config**:
+  - `failureThreshold`: 5 consecutive errors.
+  - `cooldownMs`: 60,000 (1 minute) cooldown.
+- **Monitoring**: States are tracked in `SystemState` and surfaced on the dashboard.
 
 Applied in:
 

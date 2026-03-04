@@ -36,6 +36,8 @@ export interface ConnectionPoolDiagnostics {
 
 export interface ResilienceMetrics {
 	averageRecoveryTime: number;
+	circuitBreakerTransitions: number;
+	circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 	connectionUptime: number;
 	failedRetries: number;
 	failureHistory: Array<{
@@ -61,6 +63,18 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 	jitterMs: 500
 };
 
+export interface CircuitBreakerConfig {
+	cooldownMs: number;
+	failureThreshold: number;
+	halfOpenMaxRequests: number;
+}
+
+const DEFAULT_CIRCUIT_CONFIG: CircuitBreakerConfig = {
+	failureThreshold: 5,
+	cooldownMs: 60_000, // 1 minute
+	halfOpenMaxRequests: 1
+};
+
 /**
  * Database Resilience Manager
  * Handles automatic retries, reconnection, and health monitoring
@@ -74,26 +88,55 @@ export class DatabaseResilience {
 		successfulReconnections: 0,
 		averageRecoveryTime: 0,
 		connectionUptime: 0,
-		failureHistory: []
+		failureHistory: [],
+		circuitState: 'CLOSED',
+		circuitBreakerTransitions: 0
 	};
 
 	private readonly retryConfig: RetryConfig;
+	private readonly circuitConfig: CircuitBreakerConfig;
+	private consecutiveFailures = 0;
+	private lastFailureTimestamp = 0;
+	private halfOpenRequests = 0;
+
 	private isReconnecting = false;
 	private connectionEstablishedAt?: number;
 	private monitoringInterval?: NodeJS.Timeout;
 
-	constructor(config?: Partial<RetryConfig>) {
+	constructor(config?: Partial<RetryConfig & CircuitBreakerConfig>) {
 		this.retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
+		this.circuitConfig = { ...DEFAULT_CIRCUIT_CONFIG, ...config };
 		this.startHealthMonitoring();
 	}
 
-	// Execute operation with automatic retry and exponential backoff
+	// Execute operation with automatic retry, exponential backoff, and circuit breaker
 	async executeWithRetry<T>(operation: () => Promise<T>, operationName: string, onRetry?: (attempt: number, error: Error) => void): Promise<T> {
+		// 1. Check Circuit Breaker State
+		if (this.metrics.circuitState === 'OPEN') {
+			const timeSinceFailure = Date.now() - this.lastFailureTimestamp;
+			if (timeSinceFailure < this.circuitConfig.cooldownMs) {
+				logger.debug(`Circuit breaker is OPEN for ${operationName} - failing fast`);
+				throw new Error(`Circuit breaker is OPEN for '${operationName}' due to consecutive failures`);
+			}
+			// Attempt recovery
+			this.transitionTo('HALF_OPEN');
+		}
+
+		if (this.metrics.circuitState === 'HALF_OPEN') {
+			if (this.halfOpenRequests >= this.circuitConfig.halfOpenMaxRequests) {
+				throw new Error(`Circuit breaker is HALF_OPEN for '${operationName}' - too many test requests`);
+			}
+			this.halfOpenRequests++;
+		}
+
 		let lastError: Error | undefined;
 
 		for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
 			try {
 				const result = await operation();
+
+				// Success: Reset Circuit Breaker
+				this.onSuccess();
 
 				if (attempt > 1) {
 					// Operation succeeded after retry
@@ -120,13 +163,56 @@ export class DatabaseResilience {
 
 					await this.sleep(delay);
 				} else {
+					// Final failure: Track for Circuit Breaker
+					this.onFailure(lastError);
 					this.metrics.failedRetries++;
-					logger.error(`Operation '${operationName}' failed after ${this.retryConfig.maxAttempts} attempts`, { error: lastError.message });
+					logger.error(`Operation '${operationName}' failed after ${this.retryConfig.maxAttempts} attempts`, {
+						error: lastError.message
+					});
 				}
 			}
 		}
 
 		throw lastError || new Error(`Operation '${operationName}' failed after all retry attempts`);
+	}
+
+	private onSuccess() {
+		this.consecutiveFailures = 0;
+		if (this.metrics.circuitState !== 'CLOSED') {
+			this.transitionTo('CLOSED');
+		}
+		this.halfOpenRequests = 0;
+	}
+
+	private onFailure(_error: Error) {
+		this.consecutiveFailures++;
+		this.lastFailureTimestamp = Date.now();
+		this.metrics.lastFailureTime = this.lastFailureTimestamp;
+
+		if (this.metrics.circuitState === 'HALF_OPEN') {
+			this.transitionTo('OPEN');
+		} else if (this.metrics.circuitState === 'CLOSED' && this.consecutiveFailures >= this.circuitConfig.failureThreshold) {
+			this.transitionTo('OPEN');
+		}
+	}
+
+	private transitionTo(state: 'CLOSED' | 'OPEN' | 'HALF_OPEN') {
+		const oldState = this.metrics.circuitState;
+		if (oldState === state) return;
+
+		this.metrics.circuitState = state;
+		this.metrics.circuitBreakerTransitions++;
+		this.halfOpenRequests = 0;
+
+		logger.warn(`Circuit breaker state transition: ${oldState} -> ${state}`, {
+			consecutiveFailures: this.consecutiveFailures
+		});
+
+		if (state === 'OPEN') {
+			updateServiceHealth('database', 'unhealthy', `Circuit breaker tripped after ${this.consecutiveFailures} failures`);
+		} else if (state === 'CLOSED') {
+			updateServiceHealth('database', 'healthy', 'Circuit breaker reset - database recovered');
+		}
 	}
 
 	// Attempt to reconnect to database with self-healing
@@ -167,10 +253,10 @@ export class DatabaseResilience {
 			logger.info(`✓ Database reconnected successfully in ${recoveryTime}ms`);
 
 			return true;
-		} catch (error) {
+		} catch (reconnectError) {
 			const dbError: DatabaseError = {
 				code: 'RECONNECTION_FAILED',
-				message: error instanceof Error ? error.message : 'Unknown error',
+				message: reconnectError instanceof Error ? reconnectError.message : 'Unknown error',
 				details: { attempts: this.retryConfig.maxAttempts }
 			};
 
@@ -457,7 +543,7 @@ export async function notifyAdminsOfDatabaseFailure(error: DatabaseError, metric
 // Global resilience instance (singleton)
 let resilienceInstance: DatabaseResilience | null = null;
 
-export function getDatabaseResilience(config?: Partial<RetryConfig>): DatabaseResilience {
+export function getDatabaseResilience(config?: Partial<RetryConfig & CircuitBreakerConfig>): DatabaseResilience {
 	if (!resilienceInstance) {
 		resilienceInstance = new DatabaseResilience(config);
 	}

@@ -192,10 +192,13 @@ graph TD
 
 - ✅ Multi-factor authentication (2FA/TOTP)
 - ✅ OAuth integration (Google)
-- ✅ Role-based access control (RBAC)
+- ✅ **Advanced RBAC (Role-Based Access Control)**: Deep authorization system with isolated `tenantId` enforcement, natively preventing cross-tenant and cross-collection data leakage.
 - ✅ Granular permissions
 - ✅ Session management with automatic cleanup
 - ✅ API endpoint protection
+- ✅ **Native Database Protection (Out-of-the-box)**:
+  - **UUIDv4 Primary Keys**: Prevents serial-based IDOR (Insecure Direct Object Reference) access attacks commonly found in multi-auth systems.
+  - **Safe Query Mapping**: Strict mapping and Drizzle ORM parameterization intrinsically protect all JSON and RichText property requests against SQL Injection.
 
 ### Developer Experience
 

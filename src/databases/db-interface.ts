@@ -452,22 +452,22 @@ export interface IAuthAdapter {
 
 export interface ICrudAdapter {
 	aggregate<R>(collection: string, pipeline: unknown[], tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<R[]>>;
-	count(
+	count<T extends BaseEntity>(
 		collection: string,
-		query?: QueryFilter<BaseEntity>,
+		query?: QueryFilter<T>,
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<number>>;
 	delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>>;
-	deleteMany(
+	deleteMany<T extends BaseEntity>(
 		collection: string,
-		query: QueryFilter<BaseEntity>,
+		query: QueryFilter<T>,
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ deletedCount: number }>>;
-	exists(
+	exists<T extends BaseEntity>(
 		collection: string,
-		query: QueryFilter<BaseEntity>,
+		query: QueryFilter<T>,
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<boolean>>;

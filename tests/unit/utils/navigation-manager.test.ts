@@ -8,11 +8,48 @@
  * - Concurrency prevention
  * - Loading state management
  */
-import { beforeEach, describe, expect, it } from 'bun:test';
-import { navigationManager } from '@src/utils/navigation-manager';
-import { mode } from '@src/stores/collection-store.svelte';
-import { globalLoadingStore } from '@src/stores/loading-store.svelte';
-import { dataChangeStore } from '@src/stores/store.svelte';
+import { beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test';
+
+// Shim Svelte 5 Runes for Bun environment
+(globalThis as any).$state = (v: any) => v;
+(globalThis as any).$state.snapshot = (v: any) => v;
+(globalThis as any).$derived = (v: any) => v;
+(globalThis as any).$effect = (_v: any) => {};
+
+// Mock SvelteKit modules
+mock.module('$app/environment', () => ({
+	dev: true,
+	browser: false,
+	building: false,
+	version: 'test'
+}));
+
+mock.module('$app/navigation', () => ({
+	goto: mock(() => Promise.resolve())
+}));
+
+mock.module('$app/state', () => ({
+	page: {
+		url: new URL('http://localhost/test')
+	}
+}));
+
+let navigationManager: any;
+let mode: any;
+let globalLoadingStore: any;
+let dataChangeStore: any;
+
+beforeAll(async () => {
+	const NavMod = await import('@src/utils/navigation-manager');
+	const ColStore = await import('@src/stores/collection-store.svelte');
+	const LoadStore = await import('@src/stores/loading-store.svelte');
+	const Store = await import('@src/stores/store.svelte');
+
+	navigationManager = NavMod.navigationManager;
+	mode = ColStore.mode;
+	globalLoadingStore = LoadStore.globalLoadingStore;
+	dataChangeStore = Store.dataChangeStore;
+});
 
 // We need to spy on 'goto'.
 // We can re-mock the module for this test content if really needed,
@@ -21,7 +58,7 @@ import { dataChangeStore } from '@src/stores/store.svelte';
 
 describe('NavigationManager', () => {
 	beforeEach(() => {
-		dataChangeStore.reset();
+		if (dataChangeStore) dataChangeStore.reset();
 	});
 
 	it('should navigate to list view and clear state', async () => {

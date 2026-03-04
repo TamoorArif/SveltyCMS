@@ -87,15 +87,23 @@ const testAdminUser = {
 // For simple tests, we check if the response is OK and parse the JSON result.
 // SvelteKit actions return { type: 'success' | 'failure', status, data: ... }
 async function postAction(actionName: string, formData: FormData) {
-	const res = await fetch(`${API_BASE_URL}/setup?/${actionName}`, {
-		method: 'POST',
-		body: formData,
-		headers: {
-			'x-sveltekit-action': 'true',
-			Origin: API_BASE_URL
+	try {
+		const res = await fetch(`${API_BASE_URL}/setup?/${actionName}`, {
+			method: 'POST',
+			body: formData,
+			headers: {
+				'x-sveltekit-action': 'true',
+				Origin: API_BASE_URL
+			}
+		});
+		if (!res) {
+			throw new Error(`Server returned undefined response for action: ${actionName}`);
 		}
-	});
-	return res;
+		return res;
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to execute setup action '${actionName}'. Is the preview server running at ${API_BASE_URL}? Error: ${message}`);
+	}
 }
 
 describe('Setup Actions - Database Connection', () => {

@@ -19,8 +19,35 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { User } from '@src/databases/auth/types';
 import { handleApiRequests } from '@src/hooks/handle-api-requests';
 import { metricsService } from '@src/services/metrics-service';
-import { cacheService } from '@src/databases/cache-service';
 import type { RequestEvent } from '@sveltejs/kit';
+import { cacheService } from '@src/databases/cache-service';
+
+// Mock cache-service for this test
+mock.module('@src/databases/cache-service', () => ({
+	cacheService: {
+		get: mock(async () => null),
+		set: mock(async () => {}),
+		delete: mock(async () => {}),
+		clearByPattern: mock(async () => {}),
+		clearByTags: mock(async () => {}),
+		initialize: mock(async () => {}),
+		reconfigure: mock(async () => {}),
+		setBootstrapping: mock(() => {})
+	},
+	CacheCategory: {
+		SCHEMA: 'schema',
+		WIDGET: 'widget',
+		THEME: 'theme',
+		CONTENT: 'content',
+		MEDIA: 'media',
+		SESSION: 'session',
+		USER: 'user',
+		API: 'api',
+		COLLECTION: 'collection',
+		ENTRY: 'entry',
+		SETTING: 'setting'
+	}
+}));
 
 // --- Test Utilities ---
 

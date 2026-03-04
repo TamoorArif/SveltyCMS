@@ -54,11 +54,35 @@ export const testFixtures = {
 };
 
 /**
+ * Safely performs a fetch, returning null instead of crashing when the server is unreachable.
+ */
+async function safeFetch(url: string, init?: RequestInit): Promise<Response> {
+	try {
+		const resp = await fetch(url, init);
+		if (!resp) {
+			throw new Error(`Server at ${url} returned an undefined response. Is the preview server running?`);
+		}
+		// Hardening: Verify that the response has a headers property (Mock detection)
+		if (!resp.headers) {
+			throw new Error(
+				`Server at ${url} returned a response without headers. This usually indicates a global fetch mock has leaked from a unit test (e.g., ai-service.test.ts).`
+			);
+		}
+		return resp;
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to reach server at ${url}. Integration tests require a running preview server (bun run test:integration). Error: ${message}`
+		);
+	}
+}
+
+/**
  * Resets the database to a clean state and seeds default fixtures.
  */
 export async function cleanupTestDatabase(): Promise<void> {
 	console.log('🧹 Cleaning up test database...');
-	const response = await fetch(`${API_BASE_URL}/api/testing`, {
+	const response = await safeFetch(`${API_BASE_URL}/api/testing`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ action: 'reset' })
@@ -79,7 +103,7 @@ export async function prepareAuthenticatedContext(): Promise<string> {
 
 	// 2. Seed database
 	console.log('🌱 Seeding test database...');
-	const seedResp = await fetch(`${API_BASE_URL}/api/testing`, {
+	const seedResp = await safeFetch(`${API_BASE_URL}/api/testing`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
@@ -95,7 +119,7 @@ export async function prepareAuthenticatedContext(): Promise<string> {
 
 	// 3. Login as admin
 	console.log('🔑 Logging in as admin...');
-	const loginResp = await fetch(`${API_BASE_URL}/api/user/login`, {
+	const loginResp = await safeFetch(`${API_BASE_URL}/api/user/login`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({

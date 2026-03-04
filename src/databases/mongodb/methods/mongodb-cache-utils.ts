@@ -4,7 +4,7 @@
  * Separated from mongodb-utils.ts to avoid circular dependencies with CacheService.
  */
 
-import { CacheCategory } from '@src/databases/cache-category';
+import { CacheCategory } from '@src/databases/cache/types';
 import { cacheMetrics } from '@src/databases/cache-metrics';
 import { cacheService } from '@src/databases/cache-service';
 import { logger } from '@src/utils/logger.server';

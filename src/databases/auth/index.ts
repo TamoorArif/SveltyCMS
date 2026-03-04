@@ -113,10 +113,10 @@ export class Auth {
 
 	async createUser(userData: Partial<User>, oauth = false): Promise<User> {
 		try {
-			const { email, password, tenantId } = userData;
+			const { email, password, tenantId, samlId } = userData;
 
-			if (!(email && (oauth || password))) {
-				throw error(400, 'Email and password are required');
+			if (!(email && (oauth || password || samlId))) {
+				throw error(400, 'Email and password (or OAuth/SAML provider context) are required');
 			}
 
 			if (getPrivateSettingSync('MULTI_TENANT') && !tenantId && userData.role !== 'admin') {
@@ -125,7 +125,7 @@ export class Auth {
 
 			const normalizedEmail = email.toLowerCase();
 			let hashedPassword: string | undefined;
-			if (!oauth && password) {
+			if (!oauth && !samlId && password) {
 				hashedPassword = await cryptoHashPassword(password);
 			}
 
@@ -157,6 +157,12 @@ export class Auth {
 		}
 		return (result as User | null) ?? null;
 	}
+
+	async getUserBySamlId(samlId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<User | null> {
+		// Uses generic checkUser structure mapping to adapter lookup
+		return this.checkUser({ user_id: undefined, email: undefined, samlId, tenantId }, options);
+	}
+
 	async getUserByEmail(criteria: { email: string; tenantId?: string | null }, options?: { bypassTenantCheck?: boolean }): Promise<User | null> {
 		// No caching - getUserByEmail is only used during login/registration
 		// Caching here adds complexity without significant performance benefit
@@ -491,9 +497,17 @@ export class Auth {
 	}
 
 	async checkUser(
-		fields: { user_id?: string; email?: string; tenantId?: string | null },
+		fields: { user_id?: string; email?: string; samlId?: string; tenantId?: string | null },
 		options?: { bypassTenantCheck?: boolean }
 	): Promise<User | null> {
+		if (fields.samlId) {
+			// Workaround for DB adapter missing native getBySamlId - search all users
+			const result = await this.db.auth.getAllUsers({ filter: { tenantId: fields.tenantId } });
+			if (result?.success) {
+				return result.data.find((u) => u.samlId === fields.samlId) || null;
+			}
+			return null;
+		}
 		if (fields.email) {
 			const result = await this.db.auth.getUserByEmail(
 				{

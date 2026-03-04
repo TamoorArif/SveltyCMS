@@ -39,8 +39,8 @@ export const GET = apiHandler(async ({ url }) => {
 			location: `${url.origin}/api/scim/v2/ServiceProviderConfig`,
 			resourceType: 'ServiceProviderConfig',
 			created: '2026-01-21T00:00:00Z',
-			lastModified: '2026-01-21T00:00:00Z',
-			version: 'v1'
+			lastModified: '2026-03-04T00:00:00Z',
+			version: 'v2'
 		}
 	});
 });

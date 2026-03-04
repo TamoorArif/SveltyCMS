@@ -275,7 +275,7 @@ In February 2026, SveltyCMS underwent a critical security remediation (GHSA-9hmx
 | **TW Email**         | **✅ Native**     | ❌ MJML/Ext   | ❌ No       | ⚠️ Component | ❌ No     | ❌ PHP-HTML | ⚠️ Limited    |
 | **DAM Engine**       | **✅ AI-Native**  | ⚠️ Basic      | ✅ Native   | ⚠️ Basic     | ✅ Native | ❌ Plugin   | ✅ Enterprise |
 | **Real-time Collab** | **✅ SSE Stream** | ❌ No         | ✅ Co-Edit  | ❌ No        | ✅ Native | ⚠️ Plugins  | ✅ Enterprise |
-| **MCP Server**       | **✅ Native**     | ❌ No         | ✅ Native   | ❌ No        | ❌ No     | ❌ No       | ❌ No         |
+| **MCP Server**       | **✅ Native**     | ❌ No         | ✅ Native   | ✅ Native    | ❌ No     | ❌ No       | ❌ No         |
 | **Generative UI**    | **✅ Native**     | ⚠️ Plugins    | ⚠️ Integr.  | ⚠️ Addons    | ❌ No     | ⚠️ Plugins  | 💲 Enterprise |
 
 ### 4.2 Vs. Strapi & Directus (The Ecosystem Leaders)
@@ -287,7 +287,7 @@ Strapi and Directus remain the most widely adopted open-source CMS solutions, bu
 
 ### 4.3 Vs. PayloadCMS (The Modern Rival)
 
-Payload is the closest rival (Code-First). The difference is **React vs. Svelte**. Payload aligns with Next.js; SveltyCMS aligns with SvelteKit. Payload v3 has introduced **Drizzle-based SQLite support**, a mature **plugin ecosystem**, and a dedicated **multi-tenant plugin** (Jan 2025). SveltyCMS's differentiators are **Zero-Runtime i18n** (Paraglide), **Valibot** validation (vs. Payload's Zod), **bidirectional schema sync** (vs. Payload's code-only), and **first-class MariaDB/MySQL support** (which Payload lacks). For teams in the Svelte ecosystem, SveltyCMS offers a significantly lighter and more cohesive experience.
+Payload is the closest rival (Code-First). The difference is **React vs. Svelte**. Payload aligns with Next.js; SveltyCMS aligns with SvelteKit. Payload v3 has introduced **Drizzle-based SQLite support**, a mature **plugin ecosystem**, a dedicated **multi-tenant plugin** (Jan 2025), and recently added **MCP Server** capabilities, solidifying its place as an AI-ready CMS. SveltyCMS's differentiators are **Zero-Runtime i18n** (Paraglide), **Valibot** validation (vs. Payload's Zod), **bidirectional schema sync** (vs. Payload's code-only), and **first-class MariaDB/MySQL support** (which Payload lacks). For teams in the Svelte ecosystem, SveltyCMS offers a significantly lighter and more cohesive experience.
 
 ### 4.4 Vs. NodeHive (The Headless Drupal Challenger)
 
@@ -349,11 +349,12 @@ Based on the [Official SveltyCMS Comparison](https://sveltycms.com/compare):
 
 ### 4.10 The Agentic Advantage: MCP Server & Generative UI
 
-As AI coding assistants and agentic workflows become standard, CMS architectures must evolve beyond simple REST/GraphQL APIs. SveltyCMS and Directus are currently the only open-source CMSs to provide **native Model Context Protocol (MCP) Servers**.
+As AI coding assistants and agentic workflows become standard, CMS architectures must evolve beyond simple REST/GraphQL APIs. SveltyCMS, Directus, and Payload are currently leading the open-source CMS space with **native Model Context Protocol (MCP) Servers**.
 
 - **Directus** (v11.12+): MCP focuses on content management operations — creating collections, managing content, and building automations via AI assistants.
+- **Payload** (v3+): Recently introduced an MCP server to expose its code-first Next.js infrastructure and database to AI agents.
 - **SveltyCMS**: MCP exposes the entire knowledge core (schemas, widgets, APIs, and docs) for deep agentic development and codebase understanding. Furthermore, with **Generative UI** via `json-render-svelte`, SveltyCMS allows AI agents to dynamically construct functional, rich layouts in real-time using the project's own widgets.
-- **Others**: Strapi, Payload, and WordPress rely on traditional APIs or third-party wrappers, requiring complex integration to expose their schemas to AI agents.
+- **Others**: Strapi and WordPress rely on traditional APIs or third-party wrappers, requiring complex integration to expose their schemas to AI agents.
 
 ## 5. Strategic Recommendations & Promotion
 

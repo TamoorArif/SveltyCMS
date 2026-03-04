@@ -111,7 +111,7 @@ export async function loadSettingsCache(): Promise<typeof cache> {
 			try {
 				// Fall back to filesystem import (normal startup or first load)
 				const { privateEnv } = await import('@config/private');
-				privateConfig = privateEnv;
+				privateConfig = privateEnv as unknown as PrivateEnv;
 			} catch (error) {
 				// Private config doesn't exist during setup - this is expected
 				logger.trace('Private config not found during setup - this is expected during initial setup', {

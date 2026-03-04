@@ -3,7 +3,7 @@
  * @description API endpoint for getting active widgets with 3-pillar architecture metadata
  */
 
-import { CacheCategory } from '@src/databases/cache-category';
+import { CacheCategory } from '@src/databases/cache/types';
 import { cacheService } from '@src/databases/cache-service';
 import { getWidgetFunction, isWidgetCore, widgets } from '@src/stores/widget-store.svelte.ts';
 import { json } from '@sveltejs/kit';

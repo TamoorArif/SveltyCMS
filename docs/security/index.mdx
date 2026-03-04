@@ -141,7 +141,7 @@ SveltyCMS security architecture includes:
 - ✅ HTML sanitization (DOMPurify)
 - ✅ File upload validation (type, size, extension)
 - ✅ Path traversal prevention
-- ✅ SQL injection prevention (parameterized queries)
+- ✅ **Safe Query Mapping & Parameterization**: All JSON/RichText queries are strictly mapped to whitelisted database columns and natively parameterized (via Drizzle ORM) protecting against SQL Injection and blind SQL attacks out-of-the-box.
 - ✅ ReDoS prevention (input length limits)
 
 **Implementation:**
@@ -169,7 +169,8 @@ SveltyCMS security architecture includes:
 
 **Features:**
 
-- ✅ Role-based access control (RBAC)
+- ✅ **Advanced Role-Based Access Control (RBAC)**: Comprehensive access evaluation with isolated `tenantId` enforcement, natively preventing cross-tenant and cross-collection data exploits.
+- ✅ **UUIDv4 Primary Keys Out-of-the-box**: Protects against Cross-Collection IDOR (Insecure Direct Object Reference) vulnerability collision chains common in serial/auto-increment multi-auth environments.
 - ✅ Permission-based authorization
 - ✅ Multi-tenant isolation
 - ✅ Resource-level permissions

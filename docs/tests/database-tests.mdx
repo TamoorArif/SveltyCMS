@@ -6,7 +6,7 @@ order: 4
 icon: 'mdi:database-check'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-02-22'
+updated: '2026-03-04'
 tags:
   - 'testing'
   - 'database'
@@ -32,47 +32,105 @@ This guide covers testing for:
 
 ### Database Layers
 
-```
-┌─────────────────────────────────────┐
-│    Application Code (Services)      │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│    Database Interface (IDBAdapter)   │ ← Contract Tests
-│  - CRUD Operations                   │
-│  - Auth Methods                      │
-│  - Query Builder                     │
-│  - Batch Operations                  │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│   MongoDB Adapter Implementation     │ ← Adapter Tests
-│  - MongoDBAdapter class              │
-│  - Mongoose Models                   │
-│  - MongoDB-specific features         │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│      MongoDB Database                │
-└─────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph App["Application Layer"]
+        S["Services & API Routes"]
+    end
+
+    subgraph Interface["Database Interface Layer"]
+        I["IDBAdapter Contract"]
+        I1["CRUD Operations"]
+        I2["Auth Methods"]
+        I3["Query Builder"]
+        I4["Batch Operations"]
+    end
+
+    subgraph Adapters["Adapter Implementations"]
+        MA["MongoDB Adapter"]
+        PA["PostgreSQL Adapter"]
+        MRA["MariaDB Adapter"]
+        SA["SQLite Adapter"]
+    end
+
+    subgraph DB["Database Engines"]
+        MONGO[("MongoDB")]
+        PG[("PostgreSQL")]
+        MARIA[("MariaDB")]
+        SQLITE[("SQLite")]
+    end
+
+    S --> I
+    I --> I1 & I2 & I3 & I4
+    I --> MA & PA & MRA & SA
+    MA --> MONGO
+    PA --> PG
+    MRA --> MARIA
+    SA --> SQLITE
+
+    style App fill:#4CAF50,color:#fff
+    style Interface fill:#2196F3,color:#fff
+    style Adapters fill:#FF9800,color:#fff
+    style DB fill:#9C27B0,color:#fff
 ```
 
 ### Authentication System
 
+```mermaid
+graph TD
+    subgraph AuthLayer["Auth Class"]
+        UM["User Management"]
+        SM["Session Management"]
+        TM["Token Management"]
+        RP["Role & Permission System"]
+        TF["2FA / TOTP"]
+        QR["Quantum-Resistant Hashing"]
+        SAML["SAML 2.0 SSO"]
+        OAUTH["Google OAuth"]
+    end
+
+    subgraph DBLayer["Database Adapter"]
+        DBA["IDBAdapter"]
+    end
+
+    subgraph Cache["Cache Layer"]
+        CS["CacheService"]
+    end
+
+    UM & SM & TM & RP --> DBA
+    SM & UM --> CS
+    TF --> UM
+    SAML --> UM
+    OAUTH --> UM
+    QR --> UM
+
+    style AuthLayer fill:#E91E63,color:#fff
+    style DBLayer fill:#2196F3,color:#fff
+    style Cache fill:#FF9800,color:#fff
 ```
-┌─────────────────────────────────────┐
-│        Auth Class                    │ ← Auth System Tests
-│  - User Management                   │
-│  - Session Management                │
-│  - Token Management                  │
-│  - Role & Permission System          │
-│  - 2FA/TOTP                          │
-│  - Quantum-Resistant (Argon2id)      │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│    Database Adapter (IDBAdapter)     │
-└─────────────────────────────────────┘
+
+### Database Test & Isolation Flow
+
+```mermaid
+sequenceDiagram
+    participant CI as GitHub Actions (CI)
+    participant Runner as Bun Test Runner
+    participant Server as Preview Server (Port 4173)
+    participant DB as Test Database (Mongo/SQL)
+
+    CI->>CI: svelte-kit sync
+    CI->>CI: bun run build
+    CI->>Server: Start (TEST_MODE=true)
+    Runner->>Server: GET /api/testing/reset
+    Server->>DB: Drop Collections/Tables
+    Runner->>Server: POST /api/testing/seed
+    Server->>DB: Insert Fixtures (Admin, Roles, Config)
+    Note over Runner,DB: Execute 680+ Unit & ~300 Integration Tests
+    Runner->>Server: API Request (e.g. POST /api/collections)
+    Server->>DB: DB Operation (CRUD/Auth)
+    DB-->>Server: Result
+    Server-->>Runner: JSON Response + Status
+    Runner->>Runner: expect(status).toBe(200)
 ```
 
 ## Test Files
@@ -402,6 +460,48 @@ bun test tests/bun/databases/mongodb-adapter.test.ts
 
 ```bash
 bun test tests/bun/databases/auth-system.test.ts
+```
+
+---
+
+### 4. SAML 2.0 / Enterprise SSO Tests
+
+**File:** `tests/unit/auth/saml.test.ts`
+
+**Purpose:** Test SAML 2.0 integration via BoxyHQ Jackson for enterprise SSO.
+
+**Coverage:** 3 test cases
+
+**Key Test Areas:**
+
+#### Jackson Initialization (1 test)
+
+- ✅ Initializes Jackson with correct database connection string derived from private config
+- Verifies DB type mapping (PostgreSQL → `sql`, MongoDB → `mongo`)
+- Tests connection string construction with auth credentials
+
+#### SAML Authentication Flow (1 test)
+
+- ✅ Generates correct SAML redirect URL for IdP
+- Verifies tenant/product parameters are passed to `oauthController.authorize()`
+- Tests the `client_id` format (`tenant=X&product=Y`)
+
+#### Connection Management (1 test)
+
+- ✅ Creates SAML connections via admin controller
+- Verifies `connectionAPIController.createSAMLConnection()` is called with correct payload
+
+**Supported IdPs:**
+
+- Okta
+- Azure AD (Entra ID)
+- Auth0
+- Any SAML 2.0 compliant IdP
+
+**Running:**
+
+```bash
+bun test tests/unit/auth/saml.test.ts
 ```
 
 ---

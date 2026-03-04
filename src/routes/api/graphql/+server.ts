@@ -11,7 +11,7 @@
  * - Optimized Cache Client wrapping CacheService
  */
 
-import { CacheCategory } from '@src/databases/cache-category';
+import { CacheCategory } from '@src/databases/cache/types';
 // GraphQL Yoga
 import type { DatabaseAdapter, DatabaseId } from '@src/databases/db-interface';
 import { getPrivateSettingSync } from '@src/services/settings-service';

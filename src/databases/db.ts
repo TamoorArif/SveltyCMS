@@ -25,6 +25,7 @@ import { cacheService } from './cache-service';
 // Handle private config that might not exist during setup
 import {
 	clearPrivateConfigCache as clearPrivateConfigCacheFromState,
+	getDatabaseConnectionString,
 	getPrivateEnv as getPrivateEnvFromState,
 	loadPrivateConfig as loadPrivateConfigFromState,
 	privateEnv,
@@ -425,37 +426,8 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 			throw new Error('Database adapter failed to load.');
 		}
 
-		let connectionString: string;
-		if (privateConfig.DB_TYPE === 'mongodb') {
-			const hasAuth = privateConfig.DB_USER && privateConfig.DB_PASSWORD;
-			const authPart = hasAuth ? `${encodeURIComponent(privateConfig.DB_USER!)}:${encodeURIComponent(privateConfig.DB_PASSWORD!)}@` : '';
-			connectionString = `mongodb://${authPart}${privateConfig.DB_HOST}:${privateConfig.DB_PORT}/${privateConfig.DB_NAME}${hasAuth ? '?authSource=admin' : ''}`;
-			logger.debug('Connecting to MongoDB...');
-		} else if (privateConfig.DB_TYPE === 'mongodb+srv') {
-			// MongoDB Atlas connection string
-			const hasAuth = privateConfig.DB_USER && privateConfig.DB_PASSWORD;
-			const authPart = hasAuth ? `${encodeURIComponent(privateConfig.DB_USER!)}:${encodeURIComponent(privateConfig.DB_PASSWORD!)}@` : '';
-			connectionString = `mongodb+srv://${authPart}${privateConfig.DB_HOST}/${privateConfig.DB_NAME}?retryWrites=true&w=majority`;
-			logger.debug('Connecting to MongoDB Atlas (SRV)...');
-		} else if (privateConfig.DB_TYPE === 'mariadb') {
-			// MariaDB connection string
-			const hasAuth = privateConfig.DB_USER && privateConfig.DB_PASSWORD;
-			const authPart = hasAuth ? `${encodeURIComponent(privateConfig.DB_USER!)}:${encodeURIComponent(privateConfig.DB_PASSWORD!)}@` : '';
-			connectionString = `mysql://${authPart}${privateConfig.DB_HOST}:${privateConfig.DB_PORT}/${privateConfig.DB_NAME}`;
-			logger.debug('Connecting to MariaDB...');
-		} else if (privateConfig.DB_TYPE === 'sqlite') {
-			// SQLite connection string is just the file path
-			const path = privateConfig.DB_HOST.endsWith('/') ? privateConfig.DB_HOST : `${privateConfig.DB_HOST}/`;
-			connectionString = `${path}${privateConfig.DB_NAME}`;
-			logger.debug('Connecting to SQLite...');
-		} else if (privateConfig.DB_TYPE === 'postgresql') {
-			const hasAuth = privateConfig.DB_USER && privateConfig.DB_PASSWORD;
-			const authPart = hasAuth ? `${encodeURIComponent(privateConfig.DB_USER!)}:${encodeURIComponent(privateConfig.DB_PASSWORD!)}@` : '';
-			connectionString = `postgresql://${authPart}${privateConfig.DB_HOST}:${privateConfig.DB_PORT}/${privateConfig.DB_NAME}`;
-			logger.debug('Connecting to PostgreSQL...');
-		} else {
-			connectionString = '';
-		}
+		const connectionString = getDatabaseConnectionString();
+		logger.debug(`[db] Connection string check: ${connectionString.replace(/:([^@]+)@/, ':***@')}`); // Shield password in logs
 
 		//  Run connection + simple model setup
 		const step2And3StartTime = performance.now();
@@ -483,7 +455,6 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 		}
 
 		const step2And3Time = performance.now() - step2And3StartTime;
-		logger.info(`Steps 1-2: DB connected & adapters loaded in ${step2And3Time.toFixed(2)}ms`);
 		logger.info(`Step 3: Database models setup in ${step2And3Time.toFixed(2)}ms (⚡ parallelized with connection)`);
 
 		// Step 4: Pre-load Server-Side Services
@@ -491,25 +462,34 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 		logger.info('Step 4: Skipping eagercontent-managerinit (moved to Step 6)');
 
 		// Step 5: Initialize Critical Components (optimized for speed)
-		logger.debug('Starting Step 5: Critical components initialization...');
+		logger.debug('Starting Step 5: Critical components initialization (parallel)...');
 		const step5StartTime = performance.now();
 
-		// Auth (fast, required immediately)
-		updateServiceHealth('auth', 'initializing', 'Initializing authentication service...');
-		if (dbAdapter?.ensureAuth) {
-			await dbAdapter.ensureAuth();
-		}
-		auth = new Auth(dbAdapter!, getDefaultSessionStore());
-		updateServiceHealth('auth', 'healthy', 'Authentication service ready');
+		// Auth and Settings can be loaded in parallel once DB is connected
+		const [settingsLoaded] = await Promise.all([
+			loadSettingsFromDB(),
+			(async () => {
+				updateServiceHealth('auth', 'initializing', 'Initializing authentication service...');
+				if (dbAdapter?.ensureAuth) {
+					await dbAdapter.ensureAuth();
+				}
+				auth = new Auth(dbAdapter!, getDefaultSessionStore());
+				updateServiceHealth('auth', 'healthy', 'Authentication service ready');
+			})(),
+			(async () => {
+				// Load historical performance metrics (Self-Learning) - parallelized
+				try {
+					const { systemStateStore } = await import('@src/stores/system/state');
+					const { loadHistoricalMetrics } = await import('@src/stores/system/metrics');
+					await loadHistoricalMetrics(systemStateStore);
+				} catch (metricsError) {
+					logger.warn('[db] Failed to load historical metrics (non-critical):', metricsError);
+				}
+			})()
+		]);
 
-		// Settings (required for app configuration)
-		logger.debug('Loading settings from database...');
-		const settingsStartTime = performance.now();
-		const settingsLoaded = await loadSettingsFromDB();
-		const settingsTime = performance.now() - settingsStartTime;
-		logger.debug(`Settings loaded in ${settingsTime.toFixed(2)}ms`);
-
-		const authTime = performance.now() - step5StartTime;
+		const step5Duration = performance.now() - step5StartTime;
+		logger.info(`Step 5: Critical services (DB, Auth, Settings) initialized in ${step5Duration.toFixed(2)}ms`);
 
 		// Set critical system state to READY
 		setSystemState('READY', 'Critical services (DB, Auth, Settings) are ready');
@@ -575,12 +555,12 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 
 				const bgTime = performance.now() - backgroundStartTime;
 				logger.info(`ℹ️ Background warm-up completed in ${bgTime.toFixed(2)}ms`);
-			} catch (error) {
-				const message = error instanceof Error ? error.message : String(error);
+			} catch (backgroundError) {
+				const message = backgroundError instanceof Error ? backgroundError.message : String(backgroundError);
 				if (message.includes('Vite module runner has been closed')) {
 					logger.debug('Background task cancelled: Vite module runner closed during initialization.');
 				} else {
-					logger.warn('Background task failed:', error);
+					logger.warn('Background task failed:', backgroundError);
 				}
 			}
 		};
@@ -589,33 +569,6 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 			await backgroundTask();
 		} else {
 			setTimeout(backgroundTask, 0);
-		}
-
-		const step5Time = performance.now() - step5StartTime;
-		logger.info(
-			`Step 5: Critical components initialized in ${step5Time.toFixed(2)}ms (Auth: ${authTime.toFixed(2)}ms, Settings: ${settingsTime.toFixed(2)}ms)`
-		);
-
-		// Step 6: Initializecontent-manager(Deferred)
-		logger.debug('Step 6:ContentManager will initialize lazily on first request.');
-
-		// --- Demo Mode Cleanup Service ---
-		// Initialize if DEMO is true OR if MULTI_TENANT is true (to allow runtime DEMO toggling)
-		if (privateConfig?.DEMO || privateConfig?.MULTI_TENANT) {
-			import('@src/utils/demo-cleanup').then(({ cleanupExpiredDemoTenants }) => {
-				logger.info('Demo Cleanup Service initialized (Interval: 5m, Session: 20m, Cleanup TTL: 60m)');
-				// Delay initial run to allow background services to finish initializing
-				setTimeout(() => {
-					cleanupExpiredDemoTenants().catch((err) => logger.warn('[Demo Cleanup] Initial run failed:', err));
-				}, 10_000);
-				// Run every 5 minutes
-				setInterval(
-					() => {
-						cleanupExpiredDemoTenants().catch((err) => logger.warn('[Demo Cleanup] Periodic run failed:', err));
-					},
-					5 * 60 * 1000
-				);
-			});
 		}
 
 		isInitialized = true;
@@ -664,31 +617,8 @@ export async function initializeForSetup(dbConfig: {
 		}
 
 		// Build connection string
-		let connectionString: string;
-		if (dbConfig.type === 'mongodb') {
-			const hasAuth = dbConfig.user && dbConfig.password;
-			const authPart = hasAuth ? `${encodeURIComponent(dbConfig.user!)}:${encodeURIComponent(dbConfig.password!)}@` : '';
-			connectionString = `mongodb://${authPart}${dbConfig.host}:${dbConfig.port}/${dbConfig.name}${hasAuth ? '?authSource=admin' : ''}`;
-		} else if (dbConfig.type === 'mongodb+srv') {
-			const hasAuth = dbConfig.user && dbConfig.password;
-			const authPart = hasAuth ? `${encodeURIComponent(dbConfig.user!)}:${encodeURIComponent(dbConfig.password!)}@` : '';
-			connectionString = `mongodb+srv://${authPart}${dbConfig.host}/${dbConfig.name}?retryWrites=true&w=majority`;
-		} else if (dbConfig.type === 'mariadb') {
-			const hasAuth = dbConfig.user && dbConfig.password;
-			const authPart = hasAuth ? `${encodeURIComponent(dbConfig.user!)}:${encodeURIComponent(dbConfig.password!)}@` : '';
-			connectionString = `mysql://${authPart}${dbConfig.host}:${dbConfig.port}/${dbConfig.name}`;
-		} else if (dbConfig.type === 'postgresql') {
-			const hasAuth = dbConfig.user && dbConfig.password;
-			const authPart = hasAuth ? `${encodeURIComponent(dbConfig.user!)}:${encodeURIComponent(dbConfig.password!)}@` : '';
-			connectionString = `postgresql://${authPart}${dbConfig.host}:${dbConfig.port}/${dbConfig.name}`;
-		} else if (dbConfig.type === 'sqlite') {
-			const path = dbConfig.host.endsWith('/') ? dbConfig.host : `${dbConfig.host}/`;
-			connectionString = `${path}${dbConfig.name}`;
-			if (!dbAdapter) {
-				const { SQLiteAdapter } = await import('./sqlite/adapter');
-				dbAdapter = new SQLiteAdapter() as unknown as DatabaseAdapter;
-			}
-		} else {
+		const connectionString = getDatabaseConnectionString();
+		if (!connectionString) {
 			return {
 				success: false,
 				error: `Database type '${dbConfig.type}' not supported yet`

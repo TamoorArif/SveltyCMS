@@ -298,17 +298,34 @@ mock.module('@src/databases/cache-service', () => ({
 		set: mock(async () => {}),
 		delete: mock(async () => {}),
 		clearByPattern: mock(async () => {}),
-		setBootstrapping: mock(() => {})
+		clearByTags: mock(async () => {}),
+		initialize: mock(async () => {}),
+		reconfigure: mock(async () => {}),
+		setBootstrapping: mock(() => {}),
+		disconnect: mock(async () => {})
 	},
-	SESSION_CACHE_TTL_MS: 86_400_000, // 24 hours
+	SESSION_CACHE_TTL_MS: 86_400_000,
 	SESSION_CACHE_TTL_S: 86_400,
-	USER_PERM_CACHE_TTL_MS: 60_000, // 1 minute
+	USER_PERM_CACHE_TTL_MS: 60_000,
 	USER_PERM_CACHE_TTL_S: 60,
-	USER_COUNT_CACHE_TTL_MS: 300_000, // 5 minutes
+	USER_COUNT_CACHE_TTL_MS: 300_000,
 	USER_COUNT_CACHE_TTL_S: 300,
-	API_CACHE_TTL_MS: 300_000, // 5 minutes
+	API_CACHE_TTL_MS: 300_000,
 	API_CACHE_TTL_S: 300,
-	REDIS_TTL_S: 300
+	REDIS_TTL_S: 300,
+	CacheCategory: {
+		SCHEMA: 'schema',
+		WIDGET: 'widget',
+		THEME: 'theme',
+		CONTENT: 'content',
+		MEDIA: 'media',
+		SESSION: 'session',
+		USER: 'user',
+		API: 'api',
+		COLLECTION: 'collection',
+		ENTRY: 'entry',
+		SETTING: 'setting'
+	}
 }));
 
 // Mock EventBus
@@ -489,3 +506,34 @@ mock.module('@src/widgets/scanner', () => ({
 	allWidgetModules: {},
 	getWidgetNameFromPath: (path: string) => path.split('/').at(-2) || null
 }));
+
+// Mock settings-service (sync getters used by SAML and other services)
+mock.module('@src/services/settings-service', () => ({
+	getPrivateSettingSync: mock((key: string) => (globalThis as any).privateEnv?.[key] ?? null),
+	getPublicSettingSync: mock((key: string) => (globalThis as any).publicEnv?.[key] ?? null),
+	getPrivateSetting: mock(async (key: string) => (globalThis as any).privateEnv?.[key] ?? null),
+	getPublicSetting: mock(async (key: string) => (globalThis as any).publicEnv?.[key] ?? null),
+	getUntypedSetting: mock(async () => undefined),
+	loadSettingsCache: mock(async () => ({ loaded: true, loadedAt: Date.now(), private: {}, public: {}, TTL: 300000 })),
+	invalidateSettingsCache: mock(async () => {}),
+	setSettingsCache: mock(async () => {}),
+	isCacheLoaded: mock(() => true),
+	getAllSettings: mock(async () => ({})),
+	updateSettingsFromSnapshot: mock(async () => ({ updated: 0 }))
+}));
+
+// Mock @boxyhq/saml-jackson (SAML SSO engine)
+const mockJacksonInstance = {
+	oauthController: {
+		authorize: mock(async () => ({ redirect_url: 'https://idp.example.com/sso' })),
+		samlResponse: mock(async () => ({ profile: { email: 'test@test.com', id: 'saml-123' } }))
+	},
+	connectionAPIController: {
+		createSAMLConnection: mock(async () => ({ id: 'conn_123' }))
+	}
+};
+
+mock.module('@boxyhq/saml-jackson', () => ({
+	default: mock(async () => mockJacksonInstance)
+}));
+(globalThis as any).mockJacksonInstance = mockJacksonInstance;

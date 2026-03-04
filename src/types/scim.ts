@@ -57,10 +57,24 @@ export interface ScimError {
 	status: string;
 }
 
+export interface ScimPatchOp {
+	op: 'add' | 'remove' | 'replace';
+	path?: string;
+	value?: unknown;
+}
+
+export interface ScimPatchRequest {
+	schemas: string[];
+	Operations: ScimPatchOp[];
+}
+
 export const SCIM_SCHEMAS = {
 	USER: 'urn:ietf:params:scim:schemas:core:2.0:User',
 	GROUP: 'urn:ietf:params:scim:schemas:core:2.0:Group',
 	LIST_RESPONSE: 'urn:ietf:params:scim:api:messages:2.0:ListResponse',
 	SERVICE_PROVIDER_CONFIG: 'urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig',
-	ERROR: 'urn:ietf:params:scim:api:messages:2.0:Error'
+	ERROR: 'urn:ietf:params:scim:api:messages:2.0:Error',
+	PATCH_OP: 'urn:ietf:params:scim:api:messages:2.0:PatchOp',
+	SCHEMA: 'urn:ietf:params:scim:schemas:core:2.0:Schema',
+	RESOURCE_TYPE: 'urn:ietf:params:scim:schemas:core:2.0:ResourceType'
 };

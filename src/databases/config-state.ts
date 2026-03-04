@@ -113,6 +113,102 @@ export function getPrivateEnv(): InferOutput<typeof privateConfigSchema> | null 
 	return privateEnv;
 }
 
+/**
+ * Get the structured database configuration
+ */
+export function getDatabaseConfig() {
+	const env = getPrivateEnv();
+	if (!env) return null;
+
+	const dbType = env.DB_TYPE || 'mongodb';
+	const host = env.DB_HOST || 'localhost';
+	const port = env.DB_PORT || (dbType === 'mongodb' ? 27017 : dbType === 'postgresql' ? 5432 : 3306);
+	const name = env.DB_NAME || 'sveltycms';
+	const user = env.DB_USER;
+	const password = env.DB_PASSWORD;
+
+	return {
+		type: dbType,
+		host,
+		port,
+		name,
+		user,
+		password,
+		authSource: env.DB_AUTH_SOURCE || 'admin',
+		poolSize: env.DB_POOL_SIZE || 10,
+		retryAttempts: env.DB_RETRY_ATTEMPTS || 5,
+		retryDelay: env.DB_RETRY_DELAY || 2000
+	};
+}
+
+/**
+ * Get the structured Redis configuration
+ */
+export function getRedisConfig() {
+	const env = getPrivateEnv();
+	const useRedis = env?.USE_REDIS === true;
+	const host = env?.REDIS_HOST || 'localhost';
+	const port = env?.REDIS_PORT || 6379;
+	const password = env?.REDIS_PASSWORD;
+
+	return {
+		useRedis,
+		host,
+		port,
+		password,
+		url: `redis://${host}:${port}`,
+		retryAttempts: 3,
+		retryDelay: 2000
+	};
+}
+
+/**
+ * Construct the database connection string based on config
+ */
+export function getDatabaseConnectionString(): string {
+	const config = getDatabaseConfig();
+	if (!config) return '';
+
+	const { type, host, port, name, user, password } = config;
+
+	// If host is already a full connection string, use it
+	if (host.includes('://')) {
+		// If it's a full URI, we check if it already has a database name
+		// If not, we append the name from config
+		const hasDatabase = host.split('?')[0].split('/').length > 3;
+		if (!hasDatabase && name) {
+			const separator = host.includes('?') ? '?' : '/';
+			if (separator === '?') {
+				const [base, query] = host.split('?');
+				return `${base}/${name}?${query}`;
+			}
+			return `${host}/${name}`;
+		}
+		return host;
+	}
+
+	const authPart = user && password ? `${encodeURIComponent(user)}:${encodeURIComponent(password)}@` : '';
+
+	switch (type) {
+		case 'mongodb': {
+			const authSource = user ? `?authSource=${encodeURIComponent(config.authSource || 'admin')}` : '';
+			return `mongodb://${authPart}${host}:${port}/${name}${authSource}`;
+		}
+		case 'mongodb+srv':
+			return `mongodb+srv://${authPart}${host}/${name}?retryWrites=true&w=majority`;
+		case 'mariadb':
+			return `mysql://${authPart}${host}:${port}/${name}`;
+		case 'postgresql':
+			return `postgresql://${authPart}${host}:${port}/${name}`;
+		case 'sqlite': {
+			const path = host.endsWith('/') ? host : `${host}/`;
+			return `${path}${name}`;
+		}
+		default:
+			return '';
+	}
+}
+
 // Function to clear private config cache (used after setup completion)
 export function clearPrivateConfigCache(keepPrivateEnv = false) {
 	logger.debug('Clearing private config cache', {

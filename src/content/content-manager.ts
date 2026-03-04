@@ -18,7 +18,7 @@
 
 import type { ContentNode, ContentNodeOperation, DatabaseId, FieldInstance, Schema } from '@src/content/types';
 // Removed static import to prevent circular dependency withwidget-registry-service// import { generateCategoryNodesFromPaths, processModule } from './utils';
-import { CacheCategory } from '@src/databases/cache-category'; // ✅ Safe for client - no Redis imports
+import { CacheCategory } from '@src/databases/cache/types'; // ✅ Safe for client - no Redis imports
 import { logger } from '@src/utils/logger.server'; // Server-only file
 import { dateToISODateString } from '@utils/date-utils';
 import { v4 as uuidv4 } from 'uuid';

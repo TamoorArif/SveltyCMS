@@ -10,8 +10,30 @@
  * - Integration
  */
 
-import { describe, expect, it } from 'bun:test';
-import { AppError, getErrorMessage, isAppError, isHttpError, wrapError } from '@src/utils/error-handling';
+import { beforeAll, describe, expect, it, mock } from 'bun:test';
+
+// Mock SvelteKit environment
+mock.module('$app/environment', () => ({
+	dev: true,
+	browser: false,
+	building: false,
+	version: 'test'
+}));
+
+let AppError: any;
+let getErrorMessage: any;
+let isAppError: any;
+let isHttpError: any;
+let wrapError: any;
+
+beforeAll(async () => {
+	const mod = await import('@src/utils/error-handling');
+	AppError = mod.AppError;
+	getErrorMessage = mod.getErrorMessage;
+	isAppError = mod.isAppError;
+	isHttpError = mod.isHttpError;
+	wrapError = mod.wrapError;
+});
 
 describe('Error Handling - AppError Class', () => {
 	it('should create AppError with message and status', () => {

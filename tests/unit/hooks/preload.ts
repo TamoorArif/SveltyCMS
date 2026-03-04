@@ -166,15 +166,15 @@ mock.module('@src/databases/cache-service', () => ({
 
 mock.module('@src/services/metrics-service', () => ({
 	metricsService: {
-		incrementApiRequests: () => {},
-		incrementApiErrors: () => {},
-		recordApiCacheHit: () => {},
-		recordApiCacheMiss: () => {},
-		incrementRateLimitViolations: () => {},
-		incrementAuthValidations: () => {},
-		incrementAuthFailures: () => {},
-		incrementFirewallBlocks: () => {},
-		recordLatency: () => {},
+		incrementApiRequests: mock(() => {}),
+		incrementApiErrors: mock(() => {}),
+		recordApiCacheHit: mock(() => {}),
+		recordApiCacheMiss: mock(() => {}),
+		incrementRateLimitViolations: mock(() => {}),
+		incrementAuthValidations: mock(() => {}),
+		incrementAuthFailures: mock(() => {}),
+		incrementFirewallBlocks: mock(() => {}),
+		recordLatency: mock(() => {}),
 		getReport: () => ({
 			api: {
 				cacheHits: 0,

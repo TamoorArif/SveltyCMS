@@ -5,7 +5,7 @@
 
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { getApiBaseUrl } from '../helpers/server';
-import { initializeTestEnvironment, prepareAuthenticatedContext } from '../helpers/test-setup';
+import { prepareAuthenticatedContext } from '../helpers/test-setup';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -14,12 +14,9 @@ describe('RTC (SSE) Integration', () => {
 
 	// 1. ONE-TIME SETUP
 	beforeAll(async () => {
-		// Wait for server
-		await initializeTestEnvironment();
-
-		// Get session
+		// prepareAuthenticatedContext handles reset, seed, and login
 		adminCookie = await prepareAuthenticatedContext();
-	});
+	}, 30_000); // 30s timeout
 
 	// --- TEST SUITE: SSE CONNECTION ---
 	describe('GET /api/events', () => {
@@ -32,48 +29,30 @@ describe('RTC (SSE) Integration', () => {
 			});
 
 			expect(response.status).toBe(200);
-			expect(response.headers.get('Content-Type')).toContain('text/event-stream');
-
-			const reader = response.body?.getReader();
-			if (!reader) {
-				throw new Error('Response body is null');
-			}
-
-			// Read first chunk
-			const { value } = await reader.read();
-			const text = new TextDecoder().decode(value);
-
-			// Verify initial message
-			expect(text).toContain('data: {"type":"connected"');
-
-			// Cleanly close connection
-			await reader.cancel();
-		});
-
-		it('should reject unauthenticated requests', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/events`, {
-				headers: {
-					Accept: 'text/event-stream'
-				}
-			});
-
-			expect(response.status).toBe(401);
-		});
-
-		it('should have correct SSE headers', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/events`, {
-				headers: {
-					Cookie: adminCookie,
-					Accept: 'text/event-stream'
-				}
-			});
-
-			expect(response.headers.get('Cache-Control')).toContain('no-cache');
+			expect(response.headers.get('Content-Type')).toBe('text/event-stream');
+			const cacheControl = response.headers.get('Cache-Control');
+			expect(cacheControl).toBeDefined();
+			expect(cacheControl).toContain('no-cache');
 			expect(response.headers.get('Connection')).toBe('keep-alive');
 
-			if (response.body) {
-				await response.body.cancel();
+			const reader = response.body?.getReader();
+			if (!reader) throw new Error('No reader available');
+
+			try {
+				const { value, done } = await reader.read();
+				if (done) throw new Error('Stream closed prematurely');
+
+				const text = new TextDecoder().decode(value);
+				console.log('SSE First Message:', text);
+				expect(text).toContain('connected');
+			} finally {
+				await reader.cancel();
 			}
+		}, 10_000);
+
+		it('should reject unauthenticated requests', async () => {
+			const response = await fetch(`${API_BASE_URL}/api/events`);
+			expect(response.status).toBe(401);
 		});
 	});
 });

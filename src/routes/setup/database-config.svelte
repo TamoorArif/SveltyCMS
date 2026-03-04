@@ -118,34 +118,25 @@ Provides DB type, host, port, name, user, password inputs, validation display, t
 		touchedFields.add(fieldName);
 		touchedFields = touchedFields; // Trigger reactivity
 	} // Parse MongoDB connection string (Atlas or standard)
-	function parseMongoConnectionString(connStr: string): { host: string; user: string; password: string; database?: string } | null {
+	function parseMongoConnectionString(
+		connStr: string
+	): { host: string; user: string; password: string; database?: string; authSource?: string } | null {
 		try {
-			// MongoDB connection string patterns:
-			// mongodb://[username:password@]host[:port][/database]
-			// mongodb+srv://[username:password@]host[/database]
+			// Built-in URL parser is more robust for MongoDB URIs
+			const url = new URL(connStr.replace('mongodb+srv://', 'http://').replace('mongodb://', 'http://'));
 
-			const stdPattern = /^mongodb:\/\/(?:([^:]+):([^@]+)@)?([^/?]+)(?:\/([^?]+))?/;
-			const srvPattern = /^mongodb\+srv:\/\/(?:([^:]+):([^@]+)@)?([^/?]+)(?:\/([^?]+))?/;
-
-			let match = connStr.match(srvPattern);
-			let isSrv = true;
-
-			if (!match) {
-				match = connStr.match(stdPattern);
-				isSrv = false;
-			}
-
-			if (!match) {
-				return null;
-			}
-
-			const [, user, password, host, database] = match;
+			const user = url.username ? decodeURIComponent(url.username) : '';
+			const password = url.password ? decodeURIComponent(url.password) : '';
+			const host = url.host;
+			const database = url.pathname.slice(1);
+			const authSource = url.searchParams.get('authSource') || (connStr.startsWith('mongodb+srv') ? undefined : 'admin');
 
 			return {
-				host: isSrv ? host : host.includes(':') ? host.split(':')[0] : host,
-				user: user || '',
-				password: password === '<db_password>' || password === '<password>' ? '' : password || '',
-				database: database || ''
+				host,
+				user,
+				password: password === '<db_password>' || password === '<password>' ? '' : password,
+				database: database || '',
+				authSource
 			};
 		} catch (error) {
 			logger.error('Error parsing connection string:', error);
@@ -170,6 +161,10 @@ Provides DB type, host, port, name, user, password inputs, validation display, t
 
 				if (parsed.database) {
 					dbConfig.name = parsed.database;
+				}
+
+				if (parsed.authSource) {
+					dbConfig.authSource = parsed.authSource;
 				}
 
 				// Show helper message
@@ -666,6 +661,35 @@ Provides DB type, host, port, name, user, password inputs, validation display, t
 						<div id="db-password-error" class="mt-1 text-xs text-error-500" role="alert">{displayErrors.password}</div>
 					{/if}
 				</div>
+
+				{#if dbConfig.type.startsWith('mongodb')}
+					<div>
+						<label for="db-auth-source" class="mb-1 flex items-center gap-1 text-sm font-medium">
+							<iconify-icon icon="mdi:shield-account-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"
+							></iconify-icon>
+							<span class="text-black dark:text-white">Auth Database</span>
+							<SystemTooltip title="The database where user credentials are stored (default: admin)">
+								<button
+									type="button"
+									tabindex="-1"
+									aria-label="Help: Auth Database"
+									class="ml-1 text-slate-400 hover:text-tertiary-500 hover:dark:text-primary-500"
+								>
+									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
+								</button>
+							</SystemTooltip>
+						</label>
+
+						<input
+							id="db-auth-source"
+							bind:value={dbConfig.authSource}
+							type="text"
+							onchange={clearDbTestError}
+							placeholder="admin"
+							class="input rounded border-slate-200"
+						/>
+					</div>
+				{/if}
 			{/if}
 		</div>
 		{#if !unsupportedDbSelected}

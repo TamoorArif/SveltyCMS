@@ -39,6 +39,7 @@ export const API_PERMISSIONS: Record<string, string[]> = {
 
 	// Authentication & Security - All authenticated users can manage their own auth/2FA
 	'api:auth': ['*'], // Authentication endpoints (2FA setup, disable, backup codes, etc.)
+	'api:events': ['*'], // Real-time collaboration stream
 
 	// User Management - Admin and Editor
 	'api:user': ['admin', 'editor'], // User management (includes profile updates)

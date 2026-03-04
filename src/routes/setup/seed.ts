@@ -425,7 +425,6 @@ export async function initSystemFromSetup(
 			await contentManager.initialize(tenantId, false, adapter);
 
 			if (isDemoSeed) {
-				const { scanCompiledCollections } = await import('@src/content/collection-scanner');
 				const collections = await scanCompiledCollections();
 				await seedDemoRecords(adapter, collections, tenantId);
 			}

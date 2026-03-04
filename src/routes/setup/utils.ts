@@ -150,6 +150,20 @@ export async function getSetupDatabaseAdapter(
 					logger.error(`MongoDB connection failed: ${connectResult.error.message}`, { correlationId });
 					throw new Error(`Database connection failed: ${connectResult.error.message}`);
 				}
+
+				// VERIFICATION PROBE: MongoDB connection might succeed but fail on first CRUD if auth is wrong
+				logger.info('Running authentication verification probe...', { correlationId });
+				try {
+					// We try to list collections - this requires 'admin' or specific DB permissions
+					// If this fails with "Command find requires authentication", we know auth is wrong
+					await dbAdapter.crud.count('system_content_structure', {});
+					logger.info('✅ Authentication verification probe successful', { correlationId });
+				} catch (probeErr: any) {
+					logger.warn(`⚠️ Auth probe warning (non-fatal if DB is empty): ${probeErr.message}`, { correlationId });
+					if (probeErr.message.toLowerCase().includes('authentication') || probeErr.message.toLowerCase().includes('unauthorized')) {
+						throw new Error(`Authentication failed: ${probeErr.message}`);
+					}
+				}
 			} catch (err: any) {
 				logger.error(`MongoDB adapter connect threw: ${err.message}`, {
 					correlationId

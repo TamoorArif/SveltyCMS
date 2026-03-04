@@ -9,7 +9,7 @@
  * - Generate layout spec
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { AIService } from '@src/services/ai-service';
 
 // Mock settings-service
@@ -52,9 +52,11 @@ mock.module('$app/environment', () => ({
 }));
 
 // Mock fetch globally
+const originalFetch = global.fetch;
 (global as any).fetch = mock(() =>
 	Promise.resolve({
 		ok: true,
+		headers: new Headers(),
 		json: () =>
 			Promise.resolve({
 				results: [{ source: 'docs', text: 'relevant context' }]
@@ -64,6 +66,10 @@ mock.module('$app/environment', () => ({
 
 describe('AIService', () => {
 	let aiService: AIService;
+
+	afterAll(() => {
+		global.fetch = originalFetch;
+	});
 
 	beforeEach(() => {
 		(global.fetch as any).mockClear();

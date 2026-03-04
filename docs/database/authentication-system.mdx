@@ -6,7 +6,7 @@ order: 3
 icon: 'mdi:shield-account'
 author: 'admin'
 created: 2024-01-15
-updated: '2026-02-09'
+updated: '2026-03-04'
 tags:
   - database
   - authentication
@@ -34,20 +34,21 @@ The auth system is built on several core principles:
 3. **Flexible RBAC**: Role-based access control with granular permissions
 4. **Session Management**: Secure session storage with automatic cleanup
 5. **OAuth Integration**: Google OAuth with extensible provider support
-6. **2FA Security**: TOTP-based two-factor authentication
-7. **Cache-Optimized**: Leverages CacheService for high-performance lookups
+6. **Enterprise SSO**: SAML 2.0 integration via BoxyHQ Jackson (Okta, Azure AD) with JIT provisioning
+7. **2FA Security**: TOTP-based two-factor authentication
+8. **Cache-Optimized**: Leverages CacheService for high-performance lookups
 
 ### Security Layers
 
 ```mermaid
 graph TD
     subgraph Request["Request Layer"]
-        A[HTTP Request with credentials/token/session]
+        A[HTTP Request with credentials/token/session/SAML]
     end
 
     subgraph Auth["Layer 1: Authentication"]
-        B["AuthService (login, OAuth, 2FA)"]
-        B1["Files: index.ts, googleauth.ts, two-factor-auth.ts, totp.ts"]
+        B["AuthService (login, OAuth, SAML, 2FA)"]
+        B1["Files: index.ts, googleauth.ts, saml-auth.ts, two-factor-auth.ts"]
     end
 
     subgraph Session["Layer 2: Session Management"]
@@ -81,7 +82,7 @@ graph TD
 1. **User Authentication**: Login, logout, password verification
 2. **User Registration**: Account creation with validation
 3. **Password Management**: Hashing, verification, reset tokens
-4. **OAuth Integration**: Google OAuth flow management
+4. **OAuth & Enterprise SSO**: Google OAuth flow and SAML 2.0 IdP federation
 5. **2FA Coordination**: Two-factor authentication enforcement
 6. **Session Lifecycle**: Session creation and invalidation
 7. **Token Management**: API tokens, reset tokens, verification tokens
@@ -258,6 +259,7 @@ export class Auth {
 - **Permissions**: Retrieved via `permissions.ts`
 - **2FA**: Coordinated via `two-factor-auth.ts`
 - **OAuth**: Google OAuth via `googleauth.ts`
+- **Enterprise SSO**: SAML 2.0 via `saml-auth.ts` (BoxyHQ Jackson)
 
 ---
 
@@ -289,6 +291,10 @@ export interface User {
 	// OAuth
 	oauthProvider?: 'google' | 'github' | 'microsoft';
 	oauthId?: string;
+
+	// Enterprise SSO (SAML 2.0)
+	samlId?: string;
+	samlProvider?: string;
 
 	// Metadata
 	createdAt: Date;
@@ -1563,15 +1569,22 @@ export async function changePassword(userId: string, newPassword: string) {
 
 ## Security Considerations
 
-1. **Password Hashing**: Uses bcrypt with configurable salt rounds
-2. **Session Tokens**: Cryptographically secure random tokens, hashed before storage
-3. **Token Expiry**: All tokens have expiration (sessions: 24h, reset: 1h)
-4. **Rate Limiting**: Login attempts limited to prevent brute force
-5. **Session Invalidation**: Automatic cleanup of expired sessions
-6. **2FA**: TOTP-based with backup codes for recovery
-7. **OAuth**: Secure token exchange, no password storage for OAuth users
-8. **Permission Caching**: 1-minute TTL to ensure fresh permissions
-9. **Audit Logging**: All auth operations logged for security review
+All of the following security measures are **fully implemented** in SveltyCMS:
+
+1. ✅ **Password Hashing**: Uses bcrypt with configurable salt rounds
+2. ✅ **Session Tokens**: Cryptographically secure random tokens, hashed before storage
+3. ✅ **Token Expiry**: All tokens have expiration (sessions: 24h, reset: 1h)
+4. ✅ **Rate Limiting**: Login attempts limited to prevent brute force
+5. ✅ **Session Invalidation**: Automatic cleanup of expired sessions
+6. ✅ **2FA**: TOTP-based with backup codes for recovery
+7. ✅ **OAuth**: Secure token exchange, no password storage for OAuth users
+8. ✅ **Enterprise SSO (SAML 2.0)**: Integrated via BoxyHQ Jackson with JIT provisioning, supporting Okta, Azure AD, and Auth0
+9. ✅ **Permission Caching**: 1-minute TTL to ensure fresh permissions
+10. ✅ **Audit Logging**: All auth operations logged via crypto-chained (SHA-256) tamper-evident audit logs
+11. ✅ **UUIDv4 Identifiers**: All resource IDs use UUIDv4, preventing sequential enumeration attacks
+12. ✅ **Safe Query Mapping**: Database-agnostic query builder prevents injection attacks
+13. ✅ **ASR Threat Detection**: Enterprise-grade real-time WAF-like analysis for SQLi, XSS, and command injection
+14. ✅ **Plugin Sandbox**: Strict security boundaries for plugins with scoped DB access and resource limits
 
 ---
 
@@ -1687,13 +1700,13 @@ export const actions = {
 
 The Authentication & Authorization system provides:
 
-- **Comprehensive Security**: Multi-layer authentication with 2FA support
+- **Comprehensive Security**: Multi-layer authentication with 2FA and SAML SSO support
 - **Flexible RBAC**: Role-based access control with granular permissions
 - **Database-Agnostic**: Works with any database adapter via `db.ts`
-- **Session Management**: Secure session storage with automatic cleanup
-- **OAuth Integration**: Google OAuth with extensible provider support
+- **Session Management**: Secure session storage with automatic cleanup and rotation
+- **OAuth & Enterprise SSO**: Google OAuth + SAML 2.0 (Okta, Azure AD, Auth0) with JIT provisioning
 - **High Performance**: Leverages cache for fast lookups (98% hit rate)
 - **API Protection**: Endpoint permission mapping for secure APIs
-- **Audit Ready**: All operations logged for security review
+- **Audit Ready**: Crypto-chained (SHA-256) tamper-evident audit logs for compliance
 
-**Total Authentication System**: 2,592 lines across 12 files, providing enterprise-grade security for SveltyCMS.
+**Total Authentication System**: ~3,000 lines across 13 files (including `saml-auth.ts`), providing enterprise-grade security for SveltyCMS.

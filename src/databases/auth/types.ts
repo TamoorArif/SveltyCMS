@@ -69,6 +69,8 @@ export interface User {
 	resetToken?: string; // Token for resetting the user's password
 	role: string; // Role of the user (e.g., admin, developer, editor, user)
 	roleIds?: string[]; // Array of role IDs associated with the user
+	samlId?: string; // Unique identifier from SAML Identity Provider (IdP)
+	samlProvider?: string; // Identifier for the SAML Identity Provider (IdP)
 	tenantId?: string | null; // Identifier for the tenant the user belongs to (in multi-tenant mode)
 	totpSecret?: string; // TOTP secret for 2FA (base32 encoded)
 	username?: string; // Username of the user

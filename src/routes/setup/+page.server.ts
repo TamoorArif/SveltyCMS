@@ -5,8 +5,8 @@
  */
 
 import { exec } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { SESSION_COOKIE_NAME } from '@src/databases/auth/constants';
 import type { ISODateString } from '@src/databases/db-interface';
@@ -148,8 +148,6 @@ export const actions: Actions = {
 						try {
 							logger.info('🛠 Attempting to create missing database:', dbConfig.name);
 							if (dbConfig.type === 'sqlite') {
-								const { mkdirSync } = await import('node:fs');
-								const { dirname } = await import('node:path');
 								const { buildDatabaseConnectionString } = await import('./utils');
 								const dbPath = buildDatabaseConnectionString(dbConfig);
 								mkdirSync(dirname(dbPath), { recursive: true });
@@ -242,13 +240,22 @@ export const actions: Actions = {
 			};
 		}
 
+		logger.info('DEBUG: [seedDatabase] dbConfig details:', {
+			type: dbConfig.type,
+			host: dbConfig.host,
+			port: dbConfig.port,
+			name: dbConfig.name,
+			hasUser: !!dbConfig.user,
+			hasPassword: !!dbConfig.password,
+			userLength: dbConfig.user?.length,
+			passLength: dbConfig.password?.length
+		});
+
 		try {
 			// 0. Copy Preset Files Before Anything compile triggers
 			if (systemData.preset && systemData.preset !== 'blank') {
 				logger.info(`✨ Copying preset files for: ${systemData.preset}`);
 				try {
-					const { resolve } = await import('node:path');
-					const { cpSync, existsSync } = await import('node:fs');
 					const { compile } = await import('@utils/compilation/compile');
 
 					const sourceDir = resolve(process.cwd(), 'src', 'presets', systemData.preset);
@@ -344,7 +351,18 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const { database, admin, system = {} } = JSON.parse(formData.get('data') as string);
+		const dataRaw = formData.get('data') as string;
+		logger.info('DEBUG: [completeSetup] data raw length:', dataRaw?.length);
+
+		const { database, admin, system = {} } = JSON.parse(dataRaw);
+
+		logger.info('DEBUG: [completeSetup] database details:', {
+			type: database?.type,
+			host: database?.host,
+			hasUser: !!database?.user,
+			hasPassword: !!database?.password,
+			userLength: database?.user?.length
+		});
 		logger.info('DEBUG: extracted system data:', JSON.stringify(system, null, 2));
 
 		try {
@@ -613,6 +631,7 @@ export const actions: Actions = {
 					DB_NAME: database.name,
 					DB_USER: database.user || '',
 					DB_PASSWORD: database.password || '',
+					DB_AUTH_SOURCE: database.authSource || 'admin',
 					JWT_SECRET_KEY: 'temp_secret',
 					ENCRYPTION_KEY: 'temp_key',
 					USE_REDIS: system.useRedis,
@@ -648,43 +667,30 @@ export const actions: Actions = {
 			if (system.preset && system.preset !== 'blank') {
 				logger.info(`📦 Installing preset: ${system.preset}`);
 				try {
-					const fs = await import('node:fs/promises');
-					const path = await import('node:path');
 					const { compile } = await import('@utils/compilation/compile');
 
 					// Source: src/presets/[preset]
-					const presetDir = path.join(process.cwd(), 'src', 'presets', system.preset);
+					const presetDir = resolve(process.cwd(), 'src', 'presets', system.preset);
 
 					// Target: config/collections
-					const targetDir = path.join(process.cwd(), 'config', 'collections');
+					const targetDir = resolve(process.cwd(), 'config', 'collections');
 
 					// Ensure target exists
-					await fs.mkdir(targetDir, { recursive: true });
+					mkdirSync(targetDir, { recursive: true });
 
-					// Rewriting the block:
 					try {
-						await fs.access(presetDir);
+						if (existsSync(presetDir)) {
+							// Use cpSync with recursive option for simplified and efficient copying
+							cpSync(presetDir, targetDir, { recursive: true, force: true });
+							logger.info(`✅ Copied preset ${system.preset} to config/collections`);
 
-						const copyRecursive = async (src: string, dest: string) => {
-							const stats = await fs.stat(src);
-							if (stats.isDirectory()) {
-								await fs.mkdir(dest, { recursive: true });
-								const entries = await fs.readdir(src);
-								for (const entry of entries) {
-									await copyRecursive(path.join(src, entry), path.join(dest, entry));
-								}
-							} else if (src.endsWith('.ts')) {
-								await fs.copyFile(src, dest);
-								logger.info(`   - Copied ${path.basename(src)}`);
-							}
-						};
-
-						await copyRecursive(presetDir, targetDir);
-
-						// Trigger compilation to register new collections
-						logger.info('🔄 Compiling new collections...');
-						await compile();
-						logger.info('✅ Preset installation complete.');
+							// Trigger compilation to register new collections
+							logger.info('🔄 Compiling new collections...');
+							await compile();
+							logger.info('✅ Preset installation complete.');
+						} else {
+							logger.warn(`⚠️ Preset directory not found: ${presetDir}`);
+						}
 					} catch (presetError) {
 						logger.warn(`⚠️ Preset directory not found or empty: ${presetDir}`, presetError);
 					}

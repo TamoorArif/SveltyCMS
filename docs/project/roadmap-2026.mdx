@@ -58,8 +58,11 @@ _Focus: Becoming the source of truth for AI agents._
 
 ### ✅ Recently Accomplished (Q1 2026)
 
-- [x] **CI Pipeline Restoration** - Playwright E2E suite stabilized across all 3 primary databases (MongoDB, MariaDB, PostgreSQL).
-- [x] **SCIM 2.0 Provisioning** - Native endpoints implemented and production-ready.
+- [x] **CI Pipeline Restoration** - Playwright E2E suite stabilized across all primary databases.
+- [x] **SCIM 2.0 Provisioning** - Native endpoints implemented and production-ready (hardened).
+- [x] **SAML 2.0 & Enterprise SSO** - Native `@boxyhq/saml-jackson` integration with JIT provisioning.
+- [x] **Enterprise ASR (Attack Surface Reduction)** - Real-time WAF-like threat detection and rate limiting.
+- [x] **Plugin Sandbox Hardening** - Secure, isolated plugin execution with scoped DB access.
 - [x] **Audit Logging Dashboard** - Real-time security monitoring with cryptographic chaining.
 - [x] **WebMCP Integration** - Agentic AI tool exposure (v1.0).
 - [x] **Real-time Collaboration** - SSE-based activity stream and AI assistant (v1.0).
@@ -90,17 +93,12 @@ The MCP Server is our most defensible feature, positioning SveltyCMS as the firs
 
 ## 🚨 Critical Gaps for 100/100 Score (Enterprise Requirements)
 
-### 1. SAML 2.0 & Enterprise SSO ⭐⭐⭐ **CRITICAL**
-
-**Goal:** Native support for SAML assertions (Okta, Azure AD).
-**Plan:** Integrate `@boxyhq/saml-jackson` or native `@node-saml/node-saml` to provide enterprise-grade identity federation.
-
-### 2. Edge Computing ⭐⭐
+### 1. Edge Computing ⭐⭐
 
 **Goal:** Multi-region deployment and global content delivery.
 **Plan:** Implement multi-region replication and edge-optimized data fetching patterns.
 
-### 3. Widget-Based Dashboard ⭐⭐⭐
+### 2. Widget-Based Dashboard ⭐⭐⭐
 
 **Goal:** Customizable, Linear-style dashboard widgets per tenant.
 **Plan:** Store-based layout configuration saved per user/tenant.
@@ -109,13 +107,13 @@ The MCP Server is our most defensible feature, positioning SveltyCMS as the firs
 
 ## 📊 Competitor Comparison (2026)
 
-| Feature              | SveltyCMS           | Strapi 5   | Payload 3.0 | Sanity   |
-| :------------------- | :------------------ | :--------- | :---------- | :------- |
-| **Framework**        | **Svelte 5** ✅     | React 18   | React 19    | React 18 |
-| **AI Architecture**  | **✅ MCP Native**   | ⚠️ Partial | ❌          | ✅       |
-| **Vector Storage**   | **✅ LanceDB**      | ❌         | ❌          | ✅       |
-| **Real-time Collab** | **✅ Native (SSE)** | ❌         | ❌          | ✅       |
-| **Build Speed**      | **✅ Fastest**      | Medium     | Medium      | N/A      |
+| Feature              | SveltyCMS           | Strapi 5   | Payload 3.0   | Sanity   |
+| :------------------- | :------------------ | :--------- | :------------ | :------- |
+| **Framework**        | **Svelte 5** ✅     | React 18   | React 19      | React 18 |
+| **AI Architecture**  | **✅ MCP Native**   | ⚠️ Partial | ✅ MCP Native | ✅       |
+| **Vector Storage**   | **✅ LanceDB**      | ❌         | ❌            | ✅       |
+| **Real-time Collab** | **✅ Native (SSE)** | ❌         | ❌            | ✅       |
+| **Build Speed**      | **✅ Fastest**      | Medium     | Medium        | N/A      |
 
 ---
 
@@ -123,9 +121,8 @@ The MCP Server is our most defensible feature, positioning SveltyCMS as the firs
 
 ### P0 - Critical for 2026 Leadership
 
-1. **SAML 2.0 Integration** - Final blocker for Fortune 500 adoption.
-2. **MCP Server Evolution** - Core AI defensibility.
-3. **CLI/NPX Onboarding** - DX focus.
+1. **MCP Server Evolution** - Core AI defensibility.
+2. **CLI/NPX Onboarding** - DX focus.
 
 ### P1 - Important for Competitiveness
 
