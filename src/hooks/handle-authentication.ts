@@ -466,7 +466,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
 						httpOnly: true,
 						secure: url.protocol === 'https:' || (url.hostname !== 'localhost' && !dev && process.env.TEST_MODE !== 'true'),
 						sameSite: 'lax',
-						maxAge: 60 * 20 // 20 minutes for a demo session
+						maxAge: 60 * 60 // 60 minutes for a demo session to match cleanup TTL
 					});
 				}
 			} else {

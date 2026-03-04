@@ -27,6 +27,7 @@
 
 <script lang="ts">
 	import FloatingChat from '@src/components/collaboration/floating-chat.svelte';
+	import FloatingNav from '@src/components/system/floating-nav.svelte';
 	import HeaderEdit from '@src/components/header-edit.svelte';
 	import LeftSidebar from '@src/components/left-sidebar.svelte';
 	import PageFooter from '@src/components/page-footer.svelte';
@@ -293,6 +294,12 @@
 				<footer class="bg-blue-500"></footer>
 			{/if}
 		</div>
+
+		{#if screen.isMobile}
+			<Portal>
+				<FloatingNav />
+			</Portal>
+		{/if}
 
 		{#if data.user}
 			<Portal>

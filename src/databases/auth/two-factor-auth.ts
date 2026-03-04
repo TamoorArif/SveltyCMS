@@ -86,7 +86,13 @@ export class TwoFactorAuthService {
 	 * Complete 2FA setup by verifying the first TOTP code
 	 * This enables 2FA for the user and saves the secret and backup codes
 	 */
-	async complete2FASetup(userId: string, secret: string, verificationCode: string, backupCodes: string[], tenantId?: string | null): Promise<boolean> {
+	async complete2FASetup(
+		userId: string,
+		secret: string,
+		verificationCode: string,
+		backupCodes: string[],
+		tenantId?: string | null
+	): Promise<boolean> {
 		try {
 			logger.info('Completing 2FA setup', { userId, tenantId });
 

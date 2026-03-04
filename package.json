@@ -202,7 +202,7 @@
 	},
 	"optionalDependencies": {
 		"mariadb": "^3.5.1",
-		"mongoose": "^9.2.3",
+		"mongoose": "^9.2.4",
 		"mysql2": "^3.18.2",
 		"postgres": "^3.4.8"
 	}

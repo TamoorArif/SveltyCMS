@@ -702,7 +702,10 @@ export class UserAdapter {
 			};
 		}
 	} // Get a user by email
-	async getUserByEmail(criteria: { email: string; tenantId?: string | null }, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<User | null>> {
+	async getUserByEmail(
+		criteria: { email: string; tenantId?: string | null },
+		options?: { bypassTenantCheck?: boolean }
+	): Promise<DatabaseResult<User | null>> {
 		try {
 			if (!criteria.email || typeof criteria.email !== 'string') {
 				logger.error('getUserByEmail called with invalid email:', {

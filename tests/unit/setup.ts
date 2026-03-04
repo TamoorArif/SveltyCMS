@@ -388,9 +388,7 @@ const paraglidePaths = [
 	'@src/paraglide/messages.js',
 	'./src/paraglide/messages.js',
 	'../src/paraglide/messages.js',
-	'../../src/paraglide/messages.js',
-	'/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/src/paraglide/messages.js',
-	'/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/src/paraglide/messages/_index.js'
+	'../../src/paraglide/messages.js'
 ];
 
 for (const p of paraglidePaths) {

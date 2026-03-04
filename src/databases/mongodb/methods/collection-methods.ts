@@ -146,7 +146,7 @@ export class MongoCollectionMethods {
 				return result as R | null;
 			},
 			aggregate: async <R = unknown>(pipeline: Record<string, unknown>[]) => {
-				return await (model as any).aggregate(pipeline as unknown as mongoose.PipelineStage[]).exec() as R[];
+				return (await (model as any).aggregate(pipeline as unknown as mongoose.PipelineStage[]).exec()) as R[];
 			}
 		};
 

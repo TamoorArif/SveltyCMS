@@ -1,12 +1,12 @@
 <!--
-@file src/routes/login/+page.svelte 
+@file src/routes/login/+page.svelte
 @component
 **Authentication Form Component handles both SignIn and SignUp functionality for the SveltyCMS**
 
 ### Props:
  - `data`: { firstUserExists: boolean, demoMode: boolean, showDatabaseError: boolean }
  - `dev`: boolean
- 
+
 ### Features:
  - Dual SignIn and SignUp functionality with dynamic form switching
  - Dynamic language selection with a debounced input field or dropdown for multiple languages
@@ -162,8 +162,9 @@
 		const now = new Date();
 		const minutes = now.getMinutes();
 		const seconds = now.getSeconds();
-		const timePassed = (minutes % 20) * 60 + seconds;
-		const timeRemainingInSeconds = 1200 - timePassed;
+		const ttlMinutes = publicEnv.DEMO_TTL || 60;
+		const timePassed = (minutes % ttlMinutes) * 60 + seconds;
+		const timeRemainingInSeconds = ttlMinutes * 60 - timePassed;
 		return {
 			minutes: Math.floor(timeRemainingInSeconds / 60),
 			seconds: timeRemainingInSeconds % 60
@@ -356,7 +357,7 @@
 		{#if data.demoMode}
 			<!-- DEMO MODE -->
 			<div
-				class="absolute bottom-2 left-1/2 flex min-w-[350px] -translate-x-1/2 -translate-y-1/2 transform flex-col items-center justify-center rounded-xl bg-error-500 p-3 text-center text-white transition-opacity duration-300 sm:bottom-12"
+				class="absolute bottom-2.5 left-1/2 flex min-w-87.5 -translate-x-1/2 -translate-y-1/2 transform flex-col items-center justify-center rounded-xl bg-error-500 p-3 text-center text-white transition-opacity duration-300 sm:bottom-12"
 				class:opacity-50={isTransitioning}
 				aria-live="polite"
 				aria-atomic="true"

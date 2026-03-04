@@ -52,7 +52,7 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 
 	// --- Constants ---
 	const BUTTON_RADIUS = 28;
-	const EDGE_MARGIN = 20;
+	const EDGE_MARGIN = 12; // Aligned with FloatingNav
 	const DRAG_THRESHOLD = 5;
 
 	// --- State ---
@@ -69,9 +69,9 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 			if (saved) {
 				pos = JSON.parse(saved);
 			} else {
-				// Default position: bottom-right
+				// Default position: bottom-right, aligned with FloatingNav
 				const initialX = window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
-				const initialY = window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN + 100);
+				const initialY = window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
 				pos = { x: initialX, y: initialY };
 			}
 		} catch {
@@ -223,7 +223,7 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 
 				<!-- Connected Status Pulse -->
 				<span
-					class="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white {collaboration.isConnected
+					class="absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white {collaboration.isConnected
 						? 'bg-primary-500 shadow-[0_0_5px_rgba(var(--color-primary-500),0.8)]'
 						: 'bg-error-500'}"
 					title={collaboration.isConnected ? 'SveltyCMS Knowledge Core: Connected' : 'AI Assistant Offline'}

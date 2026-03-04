@@ -27,7 +27,6 @@
 
 	// Components
 	import DialogManager from '@src/components/system/dialog-manager.svelte';
-	import FloatingNav from '@src/components/system/floating-nav.svelte';
 	import ToastContainer from '@src/components/toast-container.svelte';
 	// Paraglide locale bridge
 	import { locales as availableLocales, getLocale, setLocale } from '@src/paraglide/runtime';
@@ -35,12 +34,9 @@
 	import { initWebMCP } from '@src/plugins/webmcp/index';
 	// Global Settings
 	import { initPublicEnv, publicEnv } from '@src/stores/global-settings.svelte';
-	// Stores
-	import { screen as screenSize } from '@src/stores/screen-size-store.svelte.ts';
 	// Skeleton v4
 	import { app } from '@src/stores/store.svelte.ts';
 	import { toast } from '@src/stores/toast.svelte.ts';
-	import { Portal } from '@skeletonlabs/skeleton-svelte';
 	// Theme management
 	import { initializeDarkMode, initializeThemeStore, themeStore } from '@src/stores/theme-store.svelte';
 
@@ -239,10 +235,6 @@
 <ToastContainer position="responsive" />
 
 {#key currentLocale}
-	{#if screenSize.isMobile && !page.url.pathname.includes('/setup')}
-		<Portal><FloatingNav /></Portal>
-	{/if}
-
 	{@render children?.()}
 {/key}
 

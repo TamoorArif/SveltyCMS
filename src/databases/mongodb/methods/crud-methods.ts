@@ -190,7 +190,12 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		}
 	}
 
-	async update(id: DatabaseId, data: UpdateQuery<T>, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<T | null>> {
+	async update(
+		id: DatabaseId,
+		data: UpdateQuery<T>,
+		tenantId?: string | null | null,
+		bypassTenantCheck?: boolean
+	): Promise<DatabaseResult<T | null>> {
 		try {
 			const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, { bypassTenantCheck });
 			const updateData = {
@@ -290,7 +295,11 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		}
 	}
 
-	async deleteMany(query: QueryFilter<T>, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteMany(
+		query: QueryFilter<T>,
+		tenantId?: string | null | null,
+		bypassTenantCheck?: boolean
+	): Promise<DatabaseResult<{ deletedCount: number }>> {
 		try {
 			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
 			const result = await this.model.deleteMany(secureQuery);

@@ -293,7 +293,11 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		getRoleById: async (roleId: string, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<Role | null>> => {
+		getRoleById: async (
+			roleId: string,
+			tenantId?: string | null,
+			options?: { bypassTenantCheck?: boolean }
+		): Promise<DatabaseResult<Role | null>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
 				const filter = safeQuery({ _id: roleId }, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
@@ -318,7 +322,12 @@ export function composeMongoAuthAdapter(): AuthInterface {
 			}
 		},
 
-		updateRole: async (roleId: string, roleData: Partial<Role>, tenantId?: string | null, options?: { bypassTenantCheck?: boolean }): Promise<DatabaseResult<Role>> => {
+		updateRole: async (
+			roleId: string,
+			roleData: Partial<Role>,
+			tenantId?: string | null,
+			options?: { bypassTenantCheck?: boolean }
+		): Promise<DatabaseResult<Role>> => {
 			try {
 				const ROLE_MODEL = getRoleModel();
 				const filter = safeQuery({ _id: roleId }, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });

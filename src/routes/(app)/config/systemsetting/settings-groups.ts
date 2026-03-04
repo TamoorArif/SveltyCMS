@@ -431,6 +431,17 @@ export const settingsGroups: SettingGroup[] = [
 				category: 'public'
 			},
 			{
+				key: 'DEMO_TTL',
+				label: 'Demo Session TTL',
+				description: 'Time in minutes before a demo tenant and session expire (default: 60)',
+				type: 'number',
+				category: 'public',
+				min: 1,
+				max: 1440,
+				unit: 'minutes',
+				placeholder: '60'
+			},
+			{
 				key: 'GOOGLE_CLIENT_ID',
 				label: 'Google Client ID',
 				description: 'OAuth 2.0 client ID from Google Cloud Console (optional - no default)',

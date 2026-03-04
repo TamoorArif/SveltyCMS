@@ -725,12 +725,13 @@ export const actions: Actions = {
 		const { email, username, password, token } = result.output;
 
 		const multiTenant = getPrivateSettingSync('MULTI_TENANT');
+		const demoMode = getPrivateSettingSync('DEMO');
 		let role = 'user';
 		let isInvited = false;
 		let tenantId: string | undefined;
 
 		// --- Scenario 1: Multi-Tenant Demo Mode (Open Signup) ---
-		if (multiTenant && !token) {
+		if (multiTenant && demoMode && !token) {
 			// In demo mode, users can sign up without a token to create their own isolated tenant.
 			// They become the 'admin' of that tenant.
 			role = 'admin';

@@ -16,6 +16,7 @@ This component acts as an intercept layer. It either renders a fully dynamic JSO
 	import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
 	import { sveltyRegistry } from '@src/services/json-render/catalog';
 	import type { Snippet } from 'svelte';
+	import { logger } from '@utils/logger';
 
 	interface Props {
 		spec?: Spec | null;
@@ -24,20 +25,86 @@ This component acts as an intercept layer. It either renders a fully dynamic JSO
 	}
 
 	let { spec = null, context = {}, children }: Props = $props();
+
+	let prompt = $state('');
+	let isRegenerating = $state(false);
+	let currentSpec = $state<Spec | null>(null);
+
+	// Sync with incoming spec prop
+	$effect(() => {
+		if (spec) currentSpec = spec;
+	});
+
+	async function handleRegenerate() {
+		if (!prompt.trim()) return;
+		isRegenerating = true;
+		try {
+			const response = await fetch('/api/ai/generate-layout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					prompt: prompt,
+					contextRules: 'Connect to mcp.sveltycms.com for live context. Return only valid JSON.'
+				})
+			});
+			const result = await response.json();
+			if (result.spec) {
+				currentSpec = result.spec;
+				logger.info('AI Dashboard updated via Knowledge Core.');
+			}
+		} catch (error) {
+			logger.error('Regeneration failed:', error);
+		} finally {
+			isRegenerating = false;
+		}
+	}
 </script>
 
 <div class="generative-dashboard-container w-full h-full animate-fade-in relative">
-	{#if spec}
-		<!-- AI Driven Layout -->
-		<div
-			class="ai-mode-badge absolute top-0 left-1/2 -translate-x-1/2 z-10 preset-filled-primary-500 badge rounded-b text-xs font-semibold py-1 px-3 shadow"
-		>
-			<iconify-icon icon="mdi:robot-outline" class="mr-1"></iconify-icon>
-			AI Dashboard Mode
+	{#if currentSpec}
+		<!-- AI Driven Layout Header -->
+		<div class="flex flex-col gap-4 mb-6">
+			<div class="flex items-center justify-between gap-4 p-4 rounded-xl bg-surface-100-900 border border-surface-200-800 shadow-sm">
+				<div class="flex items-center gap-3">
+					<div class="preset-filled-primary-500 p-2 rounded-lg shadow-inner">
+						<iconify-icon icon="mdi:robot-outline" width="24" class="text-white"></iconify-icon>
+					</div>
+					<div>
+						<h3 class="font-bold text-lg leading-tight">AI Generative Dashboard</h3>
+						<p class="text-xs text-surface-500 flex items-center gap-1">
+							<span class="inline-block w-2 h-2 rounded-full bg-success-500 animate-pulse"></span>
+							Connected to mcp.sveltycms.com
+						</p>
+					</div>
+				</div>
+
+				<div class="flex-1 max-w-xl relative">
+					<input
+						type="text"
+						bind:value={prompt}
+						placeholder="Prompt AI to change this layout..."
+						class="input w-full pr-24 rounded-full"
+						onkeydown={(e) => e.key === 'Enter' && handleRegenerate()}
+					/>
+					<button
+						onclick={handleRegenerate}
+						disabled={isRegenerating}
+						class="absolute right-1 top-1 bottom-1 px-4 btn btn-sm rounded-full preset-filled-primary-500 font-bold"
+					>
+						{#if isRegenerating}
+							<iconify-icon icon="mdi:loading" class="animate-spin" width="18"></iconify-icon>
+						{:else}
+							Update
+						{/if}
+					</button>
+				</div>
+			</div>
 		</div>
-		<div class="p-4 pt-8">
+
+		<!-- AI Content -->
+		<div class="p-4 rounded-2xl bg-white/50 dark:bg-black/20 backdrop-blur-sm border border-white/20 shadow-xl min-h-[400px]">
 			<JSONUIProvider initialState={context}>
-				<Renderer registry={sveltyRegistry} {spec} />
+				<Renderer registry={sveltyRegistry} spec={currentSpec} />
 			</JSONUIProvider>
 		</div>
 	{:else if children}

@@ -22,7 +22,7 @@ Demo Mode is a specialized configuration of the Multi-Tenancy system designed to
 
 - **Instant Provisioning**: Users are assigned a unique tenant ID upon their first visit.
 - **Automatic Seeding**: The system automatically seeds the new tenant with default settings, themes, roles, and a demo admin user.
-- **Ephemeral Sessions**: Tenants and their data are automatically deleted after a configured expiration time (default: 60 minutes).
+- **Ephemeral Sessions**: Tenants and their data are automatically deleted after a configurable expiration time (default: 60 minutes).
 - **Isolation**: Each demo user sees only their own data.
 
 ## Implementation
@@ -60,11 +60,12 @@ Demo mode is strictly controlled via `config/private.ts` to prevent accidental d
 
 1.  **Creation**:
     - **Method A (No Token)**: User visits `/login` -> Click "Sign Up".
-      - If `MULTI_TENANT=true`, they can register _without_ a token.
+      - If `MULTI_TENANT=true` AND `DEMO=true`, they can register _without_ a token.
+      - The registration UI automatically hides the "Registration Token" field in Demo Mode to simplify the experience.
       - A new Tenant is created for them automatically.
     - **Method B (Automatic)**: `handleAuthentication` hook detects missing `demo_tenant_id` cookie.
       - Generates a new `tenantId` using `crypto.randomUUID()`.
-      - Sets `demo_tenant_id` cookie with a 20-minute expiration.
+      - Sets `demo_tenant_id` cookie with a **60-minute** expiration (Session TTL), matching the cleanup cycle.
       - Calls `seedDemoTenant(tenantId)` to populate the database with default roles, settings, and a demo admin.
 
 2.  **Usage**:
@@ -73,7 +74,8 @@ Demo mode is strictly controlled via `config/private.ts` to prevent accidental d
 
 3.  **Expiration & Cleanup**:
     - A background job (initialized in `src/databases/db.ts`) runs every 5 minutes.
-    - It identifies tenanted users created past the cleanup TTL (default: 60 minutes) or those with expired sessions.
+    - It identifies tenanted users created past the cleanup TTL (**60 minutes**) or those with expired sessions.
+    - **Global Administrator Protection**: The primary administrator (created during setup with `tenantId: null`) is explicitly excluded from cleanup to ensure the system remains manageable.
     - **Security**: The cleanup process queries the central tenant registry and then iterates through each expired tenant, using its specific `tenantId` to safely delete associated data (collections, media, settings) without violating tenant isolation.
 
 ### Seeding Strategy

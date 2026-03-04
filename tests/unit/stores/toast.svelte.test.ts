@@ -3,7 +3,7 @@
  * @description Unit tests for the ToastStore.
  */
 import { describe, expect, it, beforeEach, spyOn, afterEach } from 'bun:test';
-import { toast } from '@src/stores/toast.svelte.ts';
+import { toast } from '@stores/toast.svelte';
 
 describe('ToastStore', () => {
 	beforeEach(() => {
@@ -94,5 +94,24 @@ describe('ToastStore', () => {
 		toast.success({ description: 'Legacy API' });
 		expect(toast.toasts.length).toBe(1);
 		expect(toast.toasts[0].message).toBe('Legacy API');
+	});
+
+	it('should auto-remove toast after duration', async () => {
+		toast.show({ type: 'info', message: 'Auto-remove', duration: 100 });
+		expect(toast.toasts).toHaveLength(1);
+
+		// Wait for duration + small margin
+		await new Promise((resolve) => setTimeout(resolve, 150));
+
+		expect(toast.toasts).toHaveLength(0);
+	});
+
+	it('should not auto-remove if duration is Infinity', async () => {
+		toast.show({ type: 'info', message: 'Persistent', duration: Infinity });
+		expect(toast.toasts).toHaveLength(1);
+
+		await new Promise((resolve) => setTimeout(resolve, 200));
+
+		expect(toast.toasts).toHaveLength(1);
 	});
 });

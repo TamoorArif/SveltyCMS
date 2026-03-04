@@ -459,8 +459,7 @@ await cacheService.set('query:posts:published', data, null, 'query');
 - **Files:**
   - `/src/components/permissions-setting.svelte` - Permission UI component
   - `/src/components/collectionDisplay/fields.svelte` - Field filtering by role (lines 176-178)
-  - `/src/routes/(app)/config/collectionbuilder/[action]/[...contentPath]/tabs/CollectionWidget/tabsfields/Permission.svelte` - Permission configuration
-  - Permission system integrated into field definitions
+  - `/src/routes/(app)/config/collectionbuilder/[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte` - Permission configuration - Permission system integrated into field definitions
 - **Features:**
   - Per-field permission configuration: `{ [role]: { read: boolean, write: boolean } }`
   - Automatic field filtering based on user role

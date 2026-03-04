@@ -161,6 +161,7 @@ export const publicConfigSchema = object({
 
 	// --- Demo Mode ---
 	USE_GOOGLE_OAUTH: optional(boolean()),
+	DEMO_TTL: optional(pipe(number(), minValue(1))),
 
 	// --- AI ---
 	USE_AI_TAGGING: optional(boolean()),

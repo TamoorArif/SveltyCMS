@@ -291,7 +291,10 @@ export class AuthModule {
 		}, 'CREATE_USER_AND_SESSION_FAILED');
 	}
 
-	async deleteUserAndSessions(userId: string, tenantId?: string | null): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
+	async deleteUserAndSessions(
+		userId: string,
+		tenantId?: string | null
+	): Promise<DatabaseResult<{ deletedUser: boolean; deletedSessionCount: number }>> {
 		return this.core.wrap(async () => {
 			await this.invalidateAllUserSessions(userId, tenantId);
 			const userDeleteResult = await this.deleteUser(userId, tenantId);

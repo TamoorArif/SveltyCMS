@@ -22,7 +22,7 @@
 	// Stores
 	import { collection, setCollection } from '@src/stores/collection-store.svelte';
 	import { validationStore } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
+	import { toast } from '@src/stores/toast.svelte.ts';
 	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
 	import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
 	// Utils

@@ -412,7 +412,7 @@
 					<!-- Password Strength Indicator -->
 					<PasswordStrength password={signUpForm.data.password} confirmPassword={signUpForm.data.confirm_password} />
 
-					{#if !isInviteFlow}
+					{#if !isInviteFlow && !pageData.demoMode}
 						<!-- Registration Token (hidden when using invite flow, always required now since first user uses /setup) -->
 						<!-- Registration Token (Optional for new users, required for invites) -->
 						<FloatingInput

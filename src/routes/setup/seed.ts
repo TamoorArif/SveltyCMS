@@ -682,6 +682,13 @@ export const defaultPublicSettings: Array<{
 		key: 'LOG_ROTATION_SIZE',
 		value: 10_485_760,
 		description: 'Maximum size of a log file in bytes before rotation (10MB)'
+	},
+
+	// Demo Mode
+	{
+		key: 'DEMO_TTL',
+		value: 60,
+		description: 'Time in minutes before a demo tenant and session expire'
 	}
 
 	// NOTE: DEMO mode is controlled exclusively via config/private.ts (INFRASTRUCTURE_KEYS).

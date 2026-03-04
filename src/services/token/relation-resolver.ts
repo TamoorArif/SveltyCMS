@@ -31,7 +31,12 @@ export async function canAccessCollection(
 }
 
 // Middleware-aware token resolution that respects user permissions
-export async function resolveRelationToken(tokenPath: string, context: TokenContext, user: User | undefined, tenantId?: string | null): Promise<unknown> {
+export async function resolveRelationToken(
+	tokenPath: string,
+	context: TokenContext,
+	user: User | undefined,
+	tenantId?: string | null
+): Promise<unknown> {
 	// Parse relation path: entry.manufacturer.name
 	const parts = tokenPath.split('.');
 	if (parts.length < 3 || parts[0] !== 'entry') {

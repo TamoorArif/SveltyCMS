@@ -63,7 +63,10 @@ export function normalizePath(path: string): string {
 }
 
 // Apply tenant filter to WHERE conditions
-export function applyTenantFilter<T extends Record<string, unknown>>(conditions: T, tenantId?: string | null): T & { tenantId?: string | null | null } {
+export function applyTenantFilter<T extends Record<string, unknown>>(
+	conditions: T,
+	tenantId?: string | null
+): T & { tenantId?: string | null | null } {
 	if (tenantId) {
 		return { ...conditions, tenantId };
 	}

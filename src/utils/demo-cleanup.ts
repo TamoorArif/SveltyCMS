@@ -40,8 +40,10 @@ export async function cleanupExpiredDemoTenants() {
 		return;
 	}
 
-	// Cleanup TTL: 60 minutes (3x the 20-minute session/cookie TTL as a grace period)
-	const EXPIRATION_MS = 60 * 60 * 1000;
+	// Dynamic TTL from settings
+	const { getPublicSettingSync } = await import('@src/services/settings-service');
+	const demoTTL = Number(getPublicSettingSync('DEMO_TTL')) || 60;
+	const EXPIRATION_MS = demoTTL * 60 * 1000;
 	const cutoffDate = new Date(Date.now() - EXPIRATION_MS);
 
 	try {
@@ -59,9 +61,16 @@ export async function cleanupExpiredDemoTenants() {
 		// Both adapters store createdAt (MongoDB via timestamps:true, MariaDB via schema).
 		// The User type doesn't formally declare createdAt, but it exists on returned objects.
 		const expiredTenantUsers = usersResult.data.filter((u: User & { createdAt?: string }) => {
-			if (!u.tenantId || u.role !== 'admin') {
+			// CRITICAL: Never delete the global superuser (no tenantId)
+			if (!u.tenantId) {
 				return false;
 			}
+
+			// Only delete admin users of separated demo tenants
+			if (u.role !== 'admin') {
+				return false;
+			}
+
 			const createdAt = u.createdAt ? new Date(u.createdAt) : null;
 			return createdAt && createdAt < cutoffDate;
 		});

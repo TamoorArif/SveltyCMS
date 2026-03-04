@@ -725,10 +725,12 @@ export const handleTheme: Handle = async ({ event, resolve }) => {
 
 - **Multi-Tenancy**:
   - **Standard Mode**: Resolves `tenantId` from the hostname (subdomain).
-  - **Demo Mode**: Checks for `SVELTYCMS_DEMO` environment variable. If active, it looks for a `demo_tenant_id` cookie.
-    - If missing, it generates a new UUID `tenantId`, sets the cookie (20 min TTL), and **automatically seeds** the new tenant with default data.
+  - **Demo Mode**: Checks for `SVELTYCMS_DEMO` environment variable or `DEMO` private setting. If active, it looks for a `demo_tenant_id` cookie.
+    - If missing, it generates a new UUID `tenantId`, sets the cookie (**60 min** TTL), and **automatically seeds** the new tenant with default data (roles, settings, admin user).
+    - In this mode, users can register without a token, and the registration UI is optimized to hide the token field.
 - **Session Validation**: Verifies the `session_id` cookie against the database/cache.
 - **Tenant Isolation**: Ensures the authenticated user belongs to the resolved `tenantId`.
+- **Global Administrator**: Recognizes and preserves the global administrator (`tenantId: null`), who is exempted from automated cleanup processes (like Demo Mode cleanup after **60 min**).
 - **Session Rotation**: Rotates session tokens every 15 minutes for security.
 - **WeakRef Caching**: Uses a memory-efficient cache to reduce database lookups for active sessions.
 

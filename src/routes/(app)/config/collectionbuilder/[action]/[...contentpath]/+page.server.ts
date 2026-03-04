@@ -119,7 +119,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 		// 6. Handle 'edit' action (default)
 		await contentManager.refresh(); // Force a refresh to bypass any stale cache
-		const collectionIdentifier = params.contentpath;
+		const collectionIdentifier = params.contentPath;
 
 		// Try resolving exactly as passed (UUID or relative path)
 		let currentCollection = await contentManager.getCollection(collectionIdentifier);
