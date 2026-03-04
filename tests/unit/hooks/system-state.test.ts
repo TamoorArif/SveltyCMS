@@ -18,7 +18,11 @@ import type { RequestEvent } from '@sveltejs/kit';
 const originalTestMode = process.env.TEST_MODE;
 process.env.TEST_MODE = undefined;
 
-// Import the hook - mocks are already set up by preload.ts
+mock.module('@src/stores/system/state', () => ({
+	getSystemState: () => globalThis.__mockSystemState,
+	isSystemReady: () => globalThis.__mockIsSystemReady
+}));
+
 import { handleSystemState } from '@src/hooks/handle-system-state';
 
 /**

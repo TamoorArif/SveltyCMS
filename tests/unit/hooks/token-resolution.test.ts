@@ -27,7 +27,8 @@ describe('Token Resolution Middleware', () => {
 				user: {
 					_id: 'user-123',
 					role: 'admin',
-					email: 'admin@example.com'
+					email: 'admin@example.com',
+					name: 'Admin User'
 				},
 				contentLanguage: 'en',
 				tenantId: 'default',
@@ -60,7 +61,7 @@ describe('Token Resolution Middleware', () => {
 		});
 		const body = await response.json();
 
-		expect(body.title).toBe('Hello '); // Name is undefined in mock user
+		expect(body.title).toBe('Hello Admin User');
 		expect(body.content).toBe(`Created at ${new Date().getFullYear()}`);
 		expect(body.nested.value).toBe('admin@example.com');
 		expect(body.list[0]).toBe(`Item ${new Date().getFullYear()}`);
