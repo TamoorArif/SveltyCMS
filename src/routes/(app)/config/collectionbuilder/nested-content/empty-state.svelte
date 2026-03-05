@@ -12,9 +12,10 @@
 	interface Props {
 		onAddCollection: () => void;
 		onAddCategory: () => void;
+		onLoadPreset?: () => void;
 	}
 
-	let { onAddCollection, onAddCategory }: Props = $props();
+	let { onAddCollection, onAddCategory, onLoadPreset }: Props = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center p-8 py-16 text-center" in:fade={{ duration: 400 }}>
@@ -75,6 +76,17 @@
 				<!-- Subtle Shine Effect -->
 				<div class="absolute inset-x-0 top-0 h-1/2 bg-white/20 blur-sm group-hover:bg-white/30"></div>
 			</button>
+
+			{#if onLoadPreset}
+				<button
+					type="button"
+					onclick={onLoadPreset}
+					class="group flex items-center justify-center gap-2 rounded-full border-2 border-secondary-500/20 bg-transparent px-6 py-4 text-lg font-semibold text-secondary-600 transition-all hover:bg-secondary-50 dark:border-secondary-400/30 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
+				>
+					<iconify-icon icon="mdi:magic-staff" width="24" class="transition-transform group-hover:rotate-12"></iconify-icon>
+					<span>Load Preset</span>
+				</button>
+			{/if}
 		</div>
 
 		<p class="mt-6 text-sm italic text-surface-400 dark:text-surface-50">

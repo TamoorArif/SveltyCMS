@@ -29,6 +29,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 	import { onMount } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { v4 as uuidv4 } from 'uuid';
+	import { dndzone } from 'svelte-dnd-action';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 
@@ -144,6 +145,40 @@ and preview/test functionality. Reuses TokenPicker patterns.
 		}
 	}
 
+	function handleDnd(e: CustomEvent<{ items: AutomationOperation[] }>) {
+		flow.operations = e.detail.items;
+	}
+
+	function insertToken(opIndex: number, field: string, token: string) {
+		const op = flow.operations[opIndex] as any;
+		if (op && op.config) {
+			const currentVal = op.config[field] || '';
+			op.config[field] = currentVal + token;
+			toast.info(`Inserted ${token}`);
+		}
+	}
+
+	const availableTokens = [
+		{ value: '{{ entry.title }}', label: 'Entry Title' },
+		{ value: '{{ entry.status }}', label: 'Entry Status' },
+		{ value: '{{ entry.slug }}', label: 'Entry Slug' },
+		{ value: '{{ trigger.event }}', label: 'Trigger Event' },
+		{ value: '{{ trigger.collection }}', label: 'Collection Name' },
+		{ value: '{{ user.email }}', label: 'Actor Email' },
+		{ value: '{{ system.now }}', label: 'Current Timestamp' }
+	];
+
+	function handleKeydown(e: KeyboardEvent) {
+		if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+			e.preventDefault();
+			save();
+		}
+		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && activeStep === 3) {
+			e.preventDefault();
+			testFlow();
+		}
+	}
+
 	// ── Trigger Helpers ──
 
 	function toggleEvent(event: AutomationEvent) {
@@ -247,6 +282,8 @@ and preview/test functionality. Reuses TokenPicker patterns.
 	];
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <PageTitle name={isNew ? 'New Automation' : `Edit: ${flow.name}`} icon="mdi:robot-outline" showBackButton={true} backUrl="/config/automations" />
 
 {#if isLoading}
@@ -254,26 +291,29 @@ and preview/test functionality. Reuses TokenPicker patterns.
 {:else}
 	<div class="wrapper p-4">
 		<!-- Stepper Header -->
-		<div class="flex items-center justify-center gap-2 mb-8">
+		<div class="flex flex-col sm:flex-row items-center justify-center gap-2 mb-8">
 			{#each steps as step (step.number)}
-				<button
-					class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-					class:bg-primary-500={activeStep === step.number}
-					class:text-white={activeStep === step.number}
-					class:preset-tonal-surface={activeStep !== step.number}
-					class:opacity-50={step.number > activeStep + 1}
-					onclick={() => {
-						if (step.number <= activeStep + 1) activeStep = step.number;
-					}}
-					disabled={step.number > activeStep + 1}
-				>
-					<iconify-icon icon={step.icon}></iconify-icon>
-					<span class="hidden sm:inline">{step.label}</span>
-					<span class="sm:hidden">{step.number}</span>
-				</button>
-				{#if step.number < steps.length}
-					<iconify-icon icon="mdi:chevron-right" class="text-lg opacity-30"></iconify-icon>
-				{/if}
+				<div class="flex items-center gap-2">
+					<button
+						class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 w-full sm:w-auto justify-center"
+						class:bg-primary-500={activeStep === step.number}
+						class:text-white={activeStep === step.number}
+						class:preset-tonal-surface={activeStep !== step.number}
+						class:opacity-50={step.number > activeStep + 1}
+						onclick={() => {
+							if (step.number <= activeStep + 1) activeStep = step.number;
+						}}
+						disabled={step.number > activeStep + 1}
+						aria-current={activeStep === step.number ? 'step' : undefined}
+					>
+						<iconify-icon icon={step.icon}></iconify-icon>
+						<span>{step.label}</span>
+					</button>
+					{#if step.number < steps.length}
+						<iconify-icon icon="mdi:chevron-right" class="text-lg opacity-30 hidden sm:block"></iconify-icon>
+						<iconify-icon icon="mdi:chevron-down" class="text-lg opacity-30 sm:hidden"></iconify-icon>
+					{/if}
+				</div>
 			{/each}
 		</div>
 
@@ -413,12 +453,25 @@ and preview/test functionality. Reuses TokenPicker patterns.
 
 					<!-- Operation List -->
 					{#if flow.operations.length > 0}
-						<div class="space-y-3">
+						<div
+							class="space-y-3"
+							use:dndzone={{ items: flow.operations, flipDurationMs: 200, dragDisabled: activeStep !== 2 }}
+							onconsider={handleDnd}
+							onfinalize={handleDnd}
+						>
 							{#each flow.operations as op, i (op.id)}
 								{@const meta = getOperationMeta(op.type)}
-								<div class="card p-4 border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-50 dark:bg-surface-900" transition:slide>
+								<div
+									class="card p-4 border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-50 dark:bg-surface-900 relative"
+									transition:slide
+								>
+									<!-- Drag Handle -->
+									<div class="absolute left-1 top-1/2 -translate-y-1/2 opacity-20 hover:opacity-100 cursor-grab active:cursor-grabbing">
+										<iconify-icon icon="mdi:drag-vertical" class="text-xl"></iconify-icon>
+									</div>
+
 									<!-- Operation Header -->
-									<div class="flex items-center justify-between mb-3">
+									<div class="flex items-center justify-between mb-3 ml-4">
 										<div class="flex items-center gap-2">
 											<span class="badge preset-tonal-primary text-xs">{i + 1}</span>
 											<iconify-icon icon={meta?.icon || 'mdi:cog'} class="text-lg"></iconify-icon>
@@ -460,15 +513,41 @@ and preview/test functionality. Reuses TokenPicker patterns.
 													</select>
 												</label>
 											</div>
-											<label class="label">
-												<span class="text-sm">Body Template <span class="text-xs opacity-50">(supports tokens)</span></span>
-												<textarea class="textarea font-mono text-xs" rows="3" placeholder={'{{ JSON.stringify(entry) }}'} bind:value={cfg.body}
-												></textarea>
-											</label>
-											<label class="label">
-												<span class="text-sm">Secret (HMAC-SHA256)</span>
-												<input type="text" class="input font-mono text-xs" placeholder="Optional signing secret" bind:value={cfg.secret} />
-											</label>
+											<div class="relative">
+												<label class="label">
+													<span class="text-sm">Body Template <span class="text-xs opacity-50">(supports tokens)</span></span>
+													<textarea
+														class="textarea font-mono text-xs pr-10"
+														rows="3"
+														placeholder={'{{ JSON.stringify(entry) }}'}
+														bind:value={cfg.body}
+													></textarea>
+												</label>
+												<div class="absolute right-2 bottom-2 flex gap-1">
+													<div class="dropdown">
+														<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+															<iconify-icon icon="mdi:code-braces"></iconify-icon>
+														</button>
+														<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+															{#each availableTokens as token}
+																<button
+																	type="button"
+																	class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																	onclick={() => insertToken(i, 'body', token.value)}
+																>
+																	{token.label}
+																</button>
+															{/each}
+														</div>
+													</div>
+												</div>
+											</div>
+											{#if cfg.url?.startsWith('https')}
+												<label class="label" transition:slide>
+													<span class="text-sm">Secret (HMAC-SHA256)</span>
+													<input type="password" class="input font-mono text-xs" placeholder="Optional signing secret" bind:value={cfg.secret} />
+												</label>
+											{/if}
 										</div>
 									{/if}
 
@@ -476,23 +555,83 @@ and preview/test functionality. Reuses TokenPicker patterns.
 									{#if op.type === 'email'}
 										{@const cfg = op.config as EmailOperationConfig}
 										<div class="space-y-3">
-											<label class="label">
-												<span class="text-sm">To <span class="text-xs opacity-50">(supports tokens)</span></span>
-												<input type="text" class="input" placeholder={'editor@example.com or {{ entry.author_email }}'} bind:value={cfg.to} />
-											</label>
-											<label class="label">
-												<span class="text-sm">Subject <span class="text-xs opacity-50">(supports tokens)</span></span>
-												<input type="text" class="input" placeholder={'New article published: {{ entry.title }}'} bind:value={cfg.subject} />
-											</label>
-											<label class="label">
-												<span class="text-sm">Body (HTML) <span class="text-xs opacity-50">(supports tokens)</span></span>
-												<textarea
-													class="textarea text-xs"
-													rows="4"
-													placeholder={'<p>Entry <strong>{{ entry.title }}</strong> was {{ trigger.event }}.</p>'}
-													bind:value={cfg.body}
-												></textarea>
-											</label>
+											<div class="relative">
+												<label class="label">
+													<span class="text-sm">To <span class="text-xs opacity-50">(supports tokens)</span></span>
+													<input type="text" class="input pr-10" placeholder={'editor@example.com or {{ entry.author_email }}'} bind:value={cfg.to} />
+												</label>
+												<div class="absolute right-2 bottom-1.5 flex gap-1">
+													<div class="dropdown">
+														<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+															<iconify-icon icon="mdi:code-braces"></iconify-icon>
+														</button>
+														<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+															{#each availableTokens as token}
+																<button
+																	type="button"
+																	class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																	onclick={() => insertToken(i, 'to', token.value)}
+																>
+																	{token.label}
+																</button>
+															{/each}
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="relative">
+												<label class="label">
+													<span class="text-sm">Subject <span class="text-xs opacity-50">(supports tokens)</span></span>
+													<input type="text" class="input pr-10" placeholder={'New article published: {{ entry.title }}'} bind:value={cfg.subject} />
+												</label>
+												<div class="absolute right-2 bottom-1.5 flex gap-1">
+													<div class="dropdown">
+														<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+															<iconify-icon icon="mdi:code-braces"></iconify-icon>
+														</button>
+														<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+															{#each availableTokens as token}
+																<button
+																	type="button"
+																	class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																	onclick={() => insertToken(i, 'subject', token.value)}
+																>
+																	{token.label}
+																</button>
+															{/each}
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="relative">
+												<label class="label">
+													<span class="text-sm">Body (HTML) <span class="text-xs opacity-50">(supports tokens)</span></span>
+													<textarea
+														class="textarea text-xs pr-10"
+														rows="4"
+														placeholder={'<p>Entry <strong>{{ entry.title }}</strong> was {{ trigger.event }}.</p>'}
+														bind:value={cfg.body}
+													></textarea>
+												</label>
+												<div class="absolute right-2 bottom-2 flex gap-1">
+													<div class="dropdown">
+														<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+															<iconify-icon icon="mdi:code-braces"></iconify-icon>
+														</button>
+														<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+															{#each availableTokens as token}
+																<button
+																	type="button"
+																	class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																	onclick={() => insertToken(i, 'body', token.value)}
+																>
+																	{token.label}
+																</button>
+															{/each}
+														</div>
+													</div>
+												</div>
+											</div>
 										</div>
 									{/if}
 
@@ -501,10 +640,30 @@ and preview/test functionality. Reuses TokenPicker patterns.
 										{@const cfg = op.config as LogOperationConfig}
 										<div class="space-y-3">
 											<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-												<label class="label md:col-span-2">
-													<span class="text-sm">Message <span class="text-xs opacity-50">(supports tokens)</span></span>
-													<input type="text" class="input" placeholder={'{{ trigger.event }}: {{ entry.title }}'} bind:value={cfg.message} />
-												</label>
+												<div class="relative md:col-span-2">
+													<label class="label">
+														<span class="text-sm">Message <span class="text-xs opacity-50">(supports tokens)</span></span>
+														<input type="text" class="input pr-10" placeholder={'{{ trigger.event }}: {{ entry.title }}'} bind:value={cfg.message} />
+													</label>
+													<div class="absolute right-2 bottom-1.5 flex gap-1">
+														<div class="dropdown">
+															<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+																<iconify-icon icon="mdi:code-braces"></iconify-icon>
+															</button>
+															<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+																{#each availableTokens as token}
+																	<button
+																		type="button"
+																		class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																		onclick={() => insertToken(i, 'message', token.value)}
+																	>
+																		{token.label}
+																	</button>
+																{/each}
+															</div>
+														</div>
+													</div>
+												</div>
 												<label class="label">
 													<span class="text-sm">Level</span>
 													<select class="select" bind:value={cfg.level}>
@@ -525,10 +684,30 @@ and preview/test functionality. Reuses TokenPicker patterns.
 												<span class="text-sm">Field Name</span>
 												<input type="text" class="input" placeholder="status" bind:value={cfg.field} />
 											</label>
-											<label class="label">
-												<span class="text-sm">Value <span class="text-xs opacity-50">(supports tokens)</span></span>
-												<input type="text" class="input" placeholder="reviewed" bind:value={cfg.value} />
-											</label>
+											<div class="relative">
+												<label class="label">
+													<span class="text-sm">Value <span class="text-xs opacity-50">(supports tokens)</span></span>
+													<input type="text" class="input pr-10" placeholder="reviewed" bind:value={cfg.value} />
+												</label>
+												<div class="absolute right-2 bottom-1.5 flex gap-1">
+													<div class="dropdown">
+														<button type="button" class="btn btn-sm p-1 opacity-40 hover:opacity-100" title="Insert Token">
+															<iconify-icon icon="mdi:code-braces"></iconify-icon>
+														</button>
+														<div class="dropdown-content card p-2 shadow-xl bg-surface-200 dark:bg-surface-700 z-50 text-[10px] min-w-[150px]">
+															{#each availableTokens as token}
+																<button
+																	type="button"
+																	class="block w-full text-left p-1 hover:bg-primary-500 hover:text-white rounded"
+																	onclick={() => insertToken(i, 'value', token.value)}
+																>
+																	{token.label}
+																</button>
+															{/each}
+														</div>
+													</div>
+												</div>
+											</div>
 										</div>
 									{/if}
 
@@ -653,6 +832,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 								{:else}
 									<iconify-icon icon="mdi:play-outline"></iconify-icon>
 									<span>Run Test</span>
+									<span class="text-[10px] opacity-60 ml-1 hidden sm:inline">(Ctrl+Enter)</span>
 								{/if}
 							</button>
 							{#if isNew}
@@ -693,29 +873,49 @@ and preview/test functionality. Reuses TokenPicker patterns.
 
 								{#each testResult.operationResults as opResult, i (i)}
 									{@const opMeta = OPERATION_TYPES.find((t) => t.type === opResult.type)}
-									<div
-										class="flex items-center gap-2 text-sm py-1.5"
-										class:border-t={i > 0}
-										class:border-surface-200={i > 0}
-										class:dark:border-surface-700={i > 0}
-									>
-										<iconify-icon
-											icon={opResult.status === 'success' ? 'mdi:check' : opResult.status === 'failure' ? 'mdi:close' : 'mdi:skip-next'}
-											class:text-success-600={opResult.status === 'success'}
-											class:text-error-600={opResult.status === 'failure'}
-											class:text-warning-600={opResult.status === 'skipped'}
-										></iconify-icon>
-										<iconify-icon icon={opMeta?.icon || 'mdi:cog'} class="opacity-60"></iconify-icon>
-										<span>{opMeta?.label || opResult.type}</span>
-										<span class="text-xs opacity-50">({opResult.duration}ms)</span>
+									<div class="py-2 border-t border-surface-200 dark:border-surface-700">
+										<div class="flex items-center gap-2 text-sm mb-1">
+											<iconify-icon
+												icon={opResult.status === 'success' ? 'mdi:check' : opResult.status === 'failure' ? 'mdi:close' : 'mdi:skip-next'}
+												class:text-success-600={opResult.status === 'success'}
+												class:text-error-600={opResult.status === 'failure'}
+												class:text-warning-600={opResult.status === 'skipped'}
+											></iconify-icon>
+											<iconify-icon icon={opMeta?.icon || 'mdi:cog'} class="opacity-60"></iconify-icon>
+											<span class="font-medium">{opMeta?.label || opResult.type}</span>
+											<span class="text-xs opacity-50 ml-auto">{opResult.duration}ms</span>
+										</div>
 										{#if opResult.error}
-											<span class="text-xs text-error-600">{opResult.error}</span>
+											<div class="text-xs text-error-600 mb-1">{opResult.error}</div>
 										{/if}
+
+										<details class="text-[10px] opacity-60">
+											<summary class="cursor-pointer hover:opacity-100">Show Details</summary>
+											<pre class="bg-surface-900 text-surface-100 p-2 rounded mt-1 overflow-auto max-h-32">{JSON.stringify(opResult, null, 2)}</pre>
+										</details>
 									</div>
 								{/each}
 							</div>
 						{/if}
 					</div>
+
+					<style>
+						.dropdown {
+							position: relative;
+							display: inline-block;
+						}
+						.dropdown-content {
+							display: none;
+							position: absolute;
+							right: 0;
+							bottom: 100%;
+							min-width: 160px;
+							z-index: 100;
+						}
+						.dropdown:hover .dropdown-content {
+							display: block;
+						}
+					</style>
 
 					<!-- Token Reference -->
 					<details class="preset-tonal-surface rounded-lg">
@@ -780,6 +980,7 @@ and preview/test functionality. Reuses TokenPicker patterns.
 						{:else}
 							<iconify-icon icon="mdi:content-save"></iconify-icon>
 							{isNew ? 'Create Automation' : 'Save Changes'}
+							<span class="text-[10px] opacity-60 ml-1 hidden sm:inline">(Ctrl+S)</span>
 						{/if}
 					</button>
 				{/if}

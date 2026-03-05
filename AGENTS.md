@@ -25,7 +25,7 @@ This file provides comprehensive guidance to **AI Coding Assistants (Agents)** (
 
 ## Project Overview
 
-SveltyCMS is a powerful headless CMS built with SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS v4, and Skeleton.dev v4. It features a database-agnostic architecture (MongoDB, MariaDB/MySQL, PostgreSQL, SQLite — all production-ready), GraphQL/REST APIs, multi-language support via Paraglide JS (compile-time, zero-runtime), and a modular widget-based content modeling system. Designed for edge compatibility, zero-runtime overhead, and enterprise readiness.
+SveltyCMS is a powerful headless CMS built with SvelteKit 2, Svelte 5, TypeScript, Tailwind CSS v4, and Skeleton.dev v4. It features a database-agnostic architecture (MongoDB, MariaDB/MySQL, PostgreSQL, and SQLite — all production-ready), GraphQL/REST APIs, multi-language support via Paraglide JS (compile-time, zero-runtime), and a modular widget-based content modeling system. Designed for edge compatibility, zero-runtime overhead, and enterprise readiness.
 
 ## Core Philosophy & Focus
 
@@ -206,16 +206,12 @@ When generating/modifying code:
 
 From the 2026 roadmap (v0.0.6, target A+ grade), prioritize these for parity/leadership (some beta/implemented; harden for production):
 
-- [x] **MCP AI Knowledgebase Server (v1.0 Plan)**: Native Model Context Protocol server exposing CMS docs, schemas, and APIs. Uses LanceDB for vector storage and FastEmbed for in-process embeddings. Enables agentic workflows.
-- [ ] **n8n Automation Integration**: Native and secure integration with n8n for low-code workflows and competitive automation features.
-- [ ] **SAML 2.0 / Enterprise SSO**: Add via BoxyHQ or native @node-saml; support IdPs (Okta, Azure); timeline: Q1-Q2 (4-6 weeks).
-- [x] **Crypto-Chained Audit Logs (v1.1)**: SHA-256 tamper-evident logs with real-time security dashboard.
-- [x] **Self-Healing State Machines**: Custom Svelte store-based state machine with auto-recovery lifecycle (IDLE → READY <1s).
-- [x] **Live Preview (v2.0)**: Enterprise handshake protocol with secure tokens; iframe + editable.website integration.
-- [x] **Automation System (v1.0)**: GUI-based workflow engine for event-triggered actions.
-- [ ] **Edge Computing & Multi-Region**: Multi-region deployment guides and edge-optimized data fetching.
-- [x] **Real-Time Collaboration (SSE v1.0)**: Lightweight activity stream, AI assistant, and peer collaboration.
-- [ ] **BuzzForm Visual Builder (v1.5)**: Visual drag-and-drop form/collection builder with real-time preview hardening.
+- [x] **PostgreSQL Support**: Full adapter implementation with Drizzle ORM migrations and native tenant management.
+- [x] **SQLite Support**: Lightweight adapter via Bun native driver for edge and local deployments.
+- [x] **SCIM 2.0 (v1.1)**: Native endpoints (/scim/v2/Users, Groups, Bulk); support filters (eq, co), PATCH ops; integration ready for Okta/Azure.
+- [x] **SAML 2.0 / Enterprise SSO**: Full integration via BoxyHQ (@boxyhq/saml-jackson) for enterprise identity providers (Okta, Azure).
+- [x] **Edge Computing & Multi-Region**: Native support for edge-optimized data fetching and multi-region replication.
+- [x] **BuzzForm Visual Builder (v1.5)**: Production-ready drag-and-drop form/collection builder with real-time preview.
 - [/] **Image Editor Enhancement**: Current implementation stabilized; adding cropping, filters, and focal point management.
 - [/] **Collection Builder Enhancement**: UX improvements and ergonomic field management in progress.
 - [x] **CI Pipeline Restoration**: Playwright E2E suite stabilized across MongoDB, MariaDB, and PostgreSQL.

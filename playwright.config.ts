@@ -26,8 +26,7 @@ export default defineConfig({
 		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || (process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173'),
 
 		launchOptions: {
-			slowMo: Number.parseInt(process.env.SLOW_MO || '0', 10),
-			devtools: !process.env.CI // Enable devtools when not in CI
+			slowMo: Number.parseInt(process.env.SLOW_MO || '0', 10)
 		},
 		// Explicitly set PWDEBUG for local runs
 		// Set environment variables in your test runner or webServer configuration if needed

@@ -47,7 +47,7 @@ async function main() {
 		// 1.5. Run Setup Wizard via Playwright to generate config naturally (Black-Box)
 		console.log('⚙️ Running Playwright Setup Wizard to configure system...');
 		const setupResult = await new Promise<number>((resolve) => {
-			const pwProcess = spawn('bun', ['x', 'playwright', 'test', 'tests/e2e/setup-wizard.spec.ts'], {
+			const pwProcess = spawn('bun', ['x', 'playwright', 'test', 'tests/e2e/setup-wizard.spec.ts', '--project=chromium'], {
 				cwd: rootDir,
 				stdio: 'inherit',
 				shell: true,

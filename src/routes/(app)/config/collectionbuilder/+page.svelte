@@ -55,6 +55,7 @@ None (TreeView has its own keyboard navigation)
 	import { page } from '$app/state';
 
 	import ModalCategory from './nested-content/modal-category.svelte';
+	import ModalPreset from './nested-content/modal-preset.svelte';
 	import EmptyState from './nested-content/empty-state.svelte';
 	import { fade } from 'svelte/transition';
 
@@ -80,7 +81,7 @@ None (TreeView has its own keyboard navigation)
 	/** Allow one sync from data when we land on the page; reset on navigate to avoid effect_update_depth_exceeded. */
 	let allowSyncFromData = $state(true);
 	/** Incremented on save success so TreeViewBoard rebuilds from server order. */
-	let contentStructureVersion = $state(0);
+	let treeVersion = $state(0);
 
 	afterNavigate(() => {
 		if (page.url.pathname.startsWith('/config/collectionbuilder') && !page.url.pathname.includes('/edit')) {
@@ -241,12 +242,12 @@ None (TreeView has its own keyboard navigation)
 		if (isCategory) {
 			// Duplicate only the category (no attached collections)
 			const now = new Date().toISOString() as ISODateString;
-			const newId = (Math.random().toString(36).substring(2, 15) + Date.now().toString(36)) as unknown as DatabaseId;
+			const newId = crypto.randomUUID() as unknown as DatabaseId;
 			const baseName = (original.name || 'category').toString().replace(/\s+/g, '_');
 			const newName = `${baseName}_copy`;
 			const rootCount = currentConfig.filter((n) => !n.parentId).length;
 			const newNode: ContentNode = {
-				...JSON.parse(JSON.stringify(original)),
+				...structuredClone(original),
 				_id: newId,
 				name: newName,
 				parentId: undefined,
@@ -262,7 +263,7 @@ None (TreeView has its own keyboard navigation)
 		}
 
 		// Single collection duplicate — use id-based path so DB and refresh keep stable path (not name-based)
-		const newId = (Math.random().toString(36).substring(2, 15) + Date.now().toString(36)) as unknown as DatabaseId;
+		const newId = crypto.randomUUID() as unknown as DatabaseId;
 		const baseName = (original.name || (original.collectionDef as { name?: string })?.name || 'copy').toString().replace(/\s+/g, '_');
 		const newName = `${baseName}_copy`;
 		const parentId = original.parentId as DatabaseId | undefined;
@@ -272,18 +273,16 @@ None (TreeView has its own keyboard navigation)
 		}
 		const idBasedPath = parentId != null ? `${String(parentId)}.${String(newId)}` : String(newId);
 
-		const newNode: ContentNode = JSON.parse(
-			JSON.stringify({
-				...original,
-				_id: newId,
-				name: newName,
-				parentId: parentId ?? undefined,
-				path: idBasedPath,
-				slug: undefined,
-				updatedAt: new Date().toISOString() as ISODateString,
-				createdAt: new Date().toISOString() as ISODateString
-			})
-		);
+		const newNode: ContentNode = structuredClone({
+			...original,
+			_id: newId,
+			name: newName,
+			parentId: parentId ?? undefined,
+			path: idBasedPath,
+			slug: undefined,
+			updatedAt: new Date().toISOString() as ISODateString,
+			createdAt: new Date().toISOString() as ISODateString
+		});
 
 		if (newNode.collectionDef) {
 			(newNode.collectionDef as { name?: string; path?: string }).name = newName;
@@ -315,7 +314,7 @@ None (TreeView has its own keyboard navigation)
 			const text = await response.text();
 			let result: {
 				type?: string;
-				data?: { success?: boolean; contentStructure?: unknown; message?: string };
+				data?: { success?: boolean; contentStructure?: unknown; message?: string; idMapping?: Record<string, string> };
 				error?: { message?: string };
 			};
 			try {
@@ -326,7 +325,7 @@ None (TreeView has its own keyboard navigation)
 				return;
 			}
 
-			const payload: { success?: boolean; contentStructure?: unknown; message?: string } =
+			const payload: { success?: boolean; contentStructure?: unknown; message?: string; idMapping?: Record<string, string> } =
 				result.type === 'success' || result.type === 'failure' ? ((result.data as typeof payload) ?? {}) : ((result as typeof payload) ?? {});
 
 			const message = result.type === 'error' ? (result.error?.message ?? 'Server error') : (payload?.message ?? 'Failed to save');
@@ -359,9 +358,18 @@ None (TreeView has its own keyboard navigation)
 			if (isSuccess) {
 				toast.success('Organization updated successfully');
 				if (payload?.contentStructure) {
-					currentConfig = payload.contentStructure as ContentNode[];
+					const idMap = payload.idMapping ?? {};
+					currentConfig = (payload.contentStructure as ContentNode[]).map((node) => {
+						const oldId = node._id.toString();
+						const realId = idMap[oldId];
+						if (realId) {
+							node._id = realId as DatabaseId;
+							node.path = node.path?.replace(oldId, realId) ?? node.path;
+						}
+						return node;
+					});
 					setContentStructure(currentConfig);
-					contentStructureVersion++;
+					treeVersion++;
 				}
 				skipNextSyncFromData = true;
 				nodesToSave = {};
@@ -460,7 +468,7 @@ None (TreeView has its own keyboard navigation)
 						toast.warning('A category with this name already exists at this level. Please choose another name.');
 						return;
 					}
-					const newId = Math.random().toString(36).substring(2, 15) as unknown as DatabaseId;
+					const newId = crypto.randomUUID() as unknown as DatabaseId;
 					const path = uniquePathForCategory(form.newCategoryName);
 					const newCategory: ContentNode = {
 						_id: newId,
@@ -476,6 +484,52 @@ None (TreeView has its own keyboard navigation)
 					};
 					currentConfig = [...currentConfig, newCategory];
 					nodesToSave[newId.toString()] = { type: 'create', node: newCategory };
+				}
+			}
+		);
+	}
+
+	function modalLoadPreset(): void {
+		modalState.trigger(
+			ModalPreset as any,
+			{
+				title: 'Load Starter Preset',
+				body: 'Select a preset to load into your project. This will copy preset collections and build the project.'
+			},
+			async (response: { presetId: string } | null) => {
+				if (!response || !response.presetId) return;
+
+				try {
+					isLoading = true;
+					const formData = new FormData();
+					formData.append('presetId', response.presetId);
+
+					const res = await fetch('?/loadPreset', {
+						method: 'POST',
+						body: formData
+					});
+
+					const text = await res.text();
+					const result = text ? (deserialize(text) as any) : {};
+
+					const payload = result.type === 'success' ? result.data : result;
+
+					if (!res.ok || result.type === 'failure' || result.type === 'error') {
+						const message = payload?.message || result.error?.message || 'Failed to load preset';
+						toast.error(message);
+						return;
+					}
+
+					toast.success(`Preset ${response.presetId} loaded successfully`);
+
+					// Force a full page reload to reflect the new collections
+					// which are now compiled into the system
+					window.location.reload();
+				} catch (err) {
+					logger.error('Error loading preset:', err);
+					toast.error(err instanceof Error ? err.message : 'An error occurred while loading preset');
+				} finally {
+					isLoading = false;
 				}
 			}
 		);
@@ -547,7 +601,7 @@ None (TreeView has its own keyboard navigation)
 
 			<TreeViewBoard
 				contentNodes={currentConfig}
-				structureKey={contentStructureVersion}
+				structureKey={treeVersion}
 				onNodeUpdate={handleNodeUpdate}
 				onEditCategory={modalAddCategory}
 				onDeleteNode={handleDeleteNode}
@@ -558,5 +612,5 @@ None (TreeView has its own keyboard navigation)
 		</div>
 	</div>
 {:else}
-	<EmptyState onAddCollection={handleAddCollectionClick} onAddCategory={() => modalAddCategory()} />
+	<EmptyState onAddCollection={handleAddCollectionClick} onAddCategory={() => modalAddCategory()} onLoadPreset={modalLoadPreset} />
 {/if}

@@ -83,7 +83,7 @@
 						{#each catItems as item (item.id)}
 							<button
 								onclick={() => onAddWidget(item.key)}
-								class="group flex min-h-[4rem] flex-col items-center justify-center rounded-xl border border-surface-200-800 bg-surface-100-900 p-3 transition-all hover:border-primary-500 hover:bg-surface-200-800 touch-manipulation"
+								class="group flex min-h-16 flex-col items-center justify-center rounded-xl border border-surface-200-800 bg-surface-100-900 p-3 transition-all hover:border-primary-500 hover:bg-surface-200-800 touch-manipulation"
 							>
 								<div
 									class="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-surface-200-800 text-surface-500 group-hover:bg-primary-500 group-hover:text-white"

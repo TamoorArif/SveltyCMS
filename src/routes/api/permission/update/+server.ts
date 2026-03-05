@@ -18,6 +18,10 @@ const ROLE_NAME_PATTERN = /^[a-zA-Z0-9-_\s]+$/;
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
+import { withTenant } from '@src/databases/db-adapter-wrapper';
+import { auditLogService, AuditEventType } from '@src/services/audit-log-service';
+
+import type { DatabaseId } from '@src/databases/db-interface';
 
 export const POST = apiHandler(async ({ request, locals }) => {
 	const user = locals.user;
@@ -61,26 +65,49 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			tenantId
 		});
 
-		const existingRoles = await dbAdapter.auth.getAllRoles(tenantId);
+		const existingRoles = await withTenant(
+			tenantId,
+			async () => {
+				return await dbAdapter!.auth.getAllRoles(tenantId);
+			},
+			{ collection: 'roles' }
+		);
 		const existingRoleIds = new Set(existingRoles.map((r) => r._id));
 		const incomingRoleIds = new Set(roles.map((r: Role) => r._id));
 
-		for (const existingRole of existingRoles) {
-			if (!incomingRoleIds.has(existingRole._id)) {
-				await dbAdapter.auth.deleteRole(existingRole._id, tenantId);
-			}
-		}
+		await withTenant(
+			tenantId,
+			async () => {
+				for (const existingRole of existingRoles) {
+					if (!incomingRoleIds.has(existingRole._id)) {
+						await dbAdapter!.auth.deleteRole(existingRole._id, tenantId);
+					}
+				}
 
-		for (const role of roles) {
-			const roleData: Role = { ...role, tenantId: tenantId || undefined };
-			if (existingRoleIds.has(role._id)) {
-				await dbAdapter.auth.updateRole(role._id, roleData, tenantId);
-			} else {
-				await dbAdapter.auth.createRole(roleData);
-			}
-		}
+				for (const role of roles) {
+					const roleData: Role = { ...role, tenantId: tenantId || undefined };
+					if (existingRoleIds.has(role._id)) {
+						await dbAdapter!.auth.updateRole(role._id, roleData, tenantId);
+					} else {
+						await dbAdapter!.auth.createRole(roleData);
+					}
+				}
+			},
+			{ collection: 'roles' }
+		);
 
 		invalidateRolesCache(tenantId);
+
+		await auditLogService.logEvent({
+			action: 'Updated system roles and permissions',
+			actorId: user._id as DatabaseId,
+			actorEmail: user.email,
+			eventType: AuditEventType.USER_ROLE_CHANGED,
+			result: 'success',
+			severity: 'high',
+			details: { roleCount: roles.length }
+		});
+
 		logger.info('Roles updated successfully', { userId: user._id, tenantId });
 
 		return json({ success: true });

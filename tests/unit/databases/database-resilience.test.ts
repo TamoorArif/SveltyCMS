@@ -64,13 +64,13 @@ describe('DatabaseResilience', () => {
 			// 1st executeWithRetry will try 3 times and fail -> consecutiveFailures = 1
 			try {
 				await resilience.executeWithRetry(operation, 'Trip Test 1');
-			} catch (e) {}
+			} catch (_e) {}
 			expect(resilience.getMetrics().circuitState).toBe('CLOSED');
 
 			// 2nd executeWithRetry will try 3 times and fail -> consecutiveFailures = 2 -> OPEN
 			try {
 				await resilience.executeWithRetry(operation, 'Trip Test 2');
-			} catch (e) {}
+			} catch (_e) {}
 			expect(resilience.getMetrics().circuitState).toBe('OPEN');
 
 			// Next call should fail-fast immediately without calling operation
@@ -88,10 +88,10 @@ describe('DatabaseResilience', () => {
 			const operation = mock(() => Promise.reject(new Error('Error')));
 			try {
 				await resilience.executeWithRetry(operation, 'Trip 1');
-			} catch (e) {}
+			} catch (_e) {}
 			try {
 				await resilience.executeWithRetry(operation, 'Trip 2');
-			} catch (e) {}
+			} catch (_e) {}
 			expect(resilience.getMetrics().circuitState).toBe('OPEN');
 
 			// Wait for reset timeout (50ms)
@@ -110,10 +110,10 @@ describe('DatabaseResilience', () => {
 			const operation = mock(() => Promise.reject(new Error('Error')));
 			try {
 				await resilience.executeWithRetry(operation, 'Trip 1');
-			} catch (e) {}
+			} catch (_e) {}
 			try {
 				await resilience.executeWithRetry(operation, 'Trip 2');
-			} catch (e) {}
+			} catch (_e) {}
 			expect(resilience.getMetrics().circuitState).toBe('OPEN');
 
 			// Wait for reset
@@ -123,7 +123,7 @@ describe('DatabaseResilience', () => {
 			const failProbe = mock(() => Promise.reject(new Error('Still down')));
 			try {
 				await resilience.executeWithRetry(failProbe, 'Probe Fail');
-			} catch (e) {}
+			} catch (_e) {}
 
 			expect(resilience.getMetrics().circuitState).toBe('OPEN');
 		});

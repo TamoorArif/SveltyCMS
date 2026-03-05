@@ -15,7 +15,7 @@
  * - multi-tenant navigation support
  * - reactive content versioning
  */
-
+import path from 'node:path';
 import type { ContentNode, ContentNodeOperation, DatabaseId, FieldInstance, Schema } from '@src/content/types';
 // Removed static import to prevent circular dependency withwidget-registry-service// import { generateCategoryNodesFromPaths, processModule } from './utils';
 import { CacheCategory } from '@src/databases/cache/types'; // ✅ Safe for client - no Redis imports
@@ -66,7 +66,7 @@ class ContentManager {
 
 	// State for robust initialization, preventing race conditions
 	private initState: 'uninitialized' | 'initializing' | 'initialized' | 'error' = 'uninitialized';
-	private initPromise: Promise<void> | null = null;
+	private initPromises = new Map<string | null, Promise<void>>();
 	private initializedInSetupMode = false;
 	private readonly initializedTenants = new Set<string>(); // [NEW] Track initialized tenants
 
@@ -223,45 +223,47 @@ class ContentManager {
 	}
 
 	// Initializes the ContentManager, handling race conditions and loading data
-	public async initialize(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
-		// Already initialized for this tenant?
-		if (this.initState === 'initialized') {
-			// If tenantId is provided, ensure it has been initialized.
-			// If no tenantId is provided (e.g. system usage), we assume initialized state is enough OR we might miss data if partial init happened.
-			// Ideally, system usage should ensure global init, but here we just check if the requested tenant is ready.
-			if (!tenantId || this.initializedTenants.has(tenantId)) {
-				const { isSetupComplete } = await import('@utils/setup-check');
-				if (this.initializedInSetupMode && isSetupComplete()) {
-					logger.info('[ContentManager] Setup completed after previous initialization. Forcing re-initialization...');
-					this.initState = 'uninitialized';
-					this.initPromise = null;
-					this.initializedInSetupMode = false;
-					this.initializedTenants.clear();
-					skipReconciliation = true;
-				} else {
-					return;
-				}
+	public async initialize(tenantId: string | null = null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
+		// 1. Check if already initialized for this specific tenant
+		if (this.initializedTenants.has(tenantId || '')) {
+			const { isSetupComplete } = await import('@utils/setup-check');
+			if (this.initializedInSetupMode && isSetupComplete()) {
+				logger.info('[ContentManager] Setup completed after previous initialization. Forcing re-initialization...', { tenantId });
+				this.initializedInSetupMode = false;
+				this.initializedTenants.delete(tenantId || '');
+				this.initPromises.delete(tenantId);
+				skipReconciliation = true;
+			} else {
+				return;
 			}
 		}
 
-		// Already initializing - wait for existing initialization
-		if (this.initPromise) {
-			logger.debug('[ContentManager] Waiting for existing initialization to complete');
-			return this.initPromise;
+		// 2. Already initializing this specific tenant? Wait for it.
+		const existingPromise = this.initPromises.get(tenantId);
+		if (existingPromise) {
+			logger.debug('[ContentManager] Waiting for existing initialization to complete', { tenantId });
+			return existingPromise;
 		}
 
-		// Start new initialization
+		// 3. Start new initialization for this tenant
 		logger.info('[ContentManager] Starting initialization', {
 			tenantId,
 			skipReconciliation
 		});
-		this.initPromise = this._doInitialize(tenantId, skipReconciliation, adapter);
+
+		const initPromise = this._doInitialize(tenantId, skipReconciliation, adapter);
+		this.initPromises.set(tenantId, initPromise);
 
 		try {
-			await this.initPromise;
+			await initPromise;
+			if (tenantId) {
+				this.initializedTenants.add(tenantId);
+			} else {
+				this.initializedTenants.add(''); // Global/System
+			}
 		} catch (error) {
-			// Reset promise to allow retry
-			this.initPromise = null;
+			// Reset promise to allow retry on failure
+			this.initPromises.delete(tenantId);
 			throw error;
 		}
 	}
@@ -331,15 +333,19 @@ class ContentManager {
 	 *
 	 * @param tenantId - Optional tenant ID for multi-tenant environments.
 	 */
-	public async refresh(tenantId?: string | null, skipReconciliation = false): Promise<void> {
-		logger.info(`Refreshing ContentManager state${skipReconciliation ? ' (fast/skip-reconcile)' : ''}...`);
+	public async refresh(tenantId: string | null = null, skipReconciliation = false): Promise<void> {
+		logger.info(`Refreshing ContentManager state${skipReconciliation ? ' (fast/skip-reconcile)' : ''}...`, { tenantId });
 		this.initState = 'initializing';
 		this.clearFirstCollectionCache(); // Clear cache on refresh
-		this.initPromise = this._fullReload(tenantId, skipReconciliation).then(() => {
+
+		const refreshPromise = this._fullReload(tenantId, skipReconciliation).then(() => {
 			this.initState = 'initialized';
 			this.contentVersion = Date.now(); // Update version to notify clients
+			this.initPromises.delete(tenantId);
 		});
-		await this.initPromise;
+
+		this.initPromises.set(tenantId, refreshPromise);
+		await refreshPromise;
 	}
 
 	// Returns all loaded collection schemas
@@ -591,15 +597,16 @@ class ContentManager {
 	 * This is suitable for serialization to the client (e.g., for navigation menus and TreeView).
 	 * Includes only essential metadata needed for display and ordering.
 	 */
-	public async getNavigationStructure(): Promise<NavigationNode[]> {
-		// If initialization is in progress, wait for it
-		if (this.initPromise) {
-			await this.initPromise;
+	public async getNavigationStructure(tenantId: string | null = null): Promise<NavigationNode[]> {
+		// If initialization is in progress for this tenant, wait for it
+		const existingPromise = this.initPromises.get(tenantId);
+		if (existingPromise) {
+			await existingPromise;
 		}
 
 		// Auto-initialize on first access (lazy loading)
-		if (this.initState !== 'initialized') {
-			await this.initialize();
+		if (!this.initializedTenants.has(tenantId || '')) {
+			await this.initialize(tenantId);
 		}
 
 		const fullStructure = await this.getContentStructure();
@@ -2023,9 +2030,15 @@ class ContentManager {
 					_id: { $in: orphanedIds },
 					...(tenantId ? { tenantId } : {})
 				} as import('../databases/db-interface').QueryFilter<import('../databases/db-interface').BaseEntity>);
-				logger.info(`DELETION RESULT: ${JSON.stringify(deleteResult)}`);
+
+				if (deleteResult.success) {
+					logger.info(`[ContentManager] Successfully deleted ${orphanedNodes.length} orphaned nodes.`);
+				} else {
+					logger.warn(`[ContentManager] Failed to delete orphaned nodes:`, deleteResult.error);
+				}
 
 				// CRITICAL: Invalidate cache after deletion so the UI doesn't see stale data
+				const { invalidateCategoryCache } = await import('@src/databases/mongodb/methods/mongodb-cache-utils');
 				if (typeof invalidateCategoryCache === 'function') {
 					await invalidateCategoryCache(CacheCategory.CONTENT);
 					logger.info('CACHE INVALIDATED');
@@ -2217,8 +2230,8 @@ class ContentManager {
 			const cacheService = await getCacheService();
 			const REDIS_TTL = await getRedisTTL();
 
-			// Store complete structure
-			await cacheService.set('cms:content_structure', state, REDIS_TTL, tenantId);
+			// Store complete structure with tags for bulk invalidation
+			await cacheService.set('cms:content_structure', state, REDIS_TTL, tenantId, CacheCategory.CONTENT, ['cms:content']);
 
 			// Pre-warm frequently accessed paths
 			await this._warmFrequentPaths(cacheService, REDIS_TTL, tenantId);
@@ -2228,13 +2241,15 @@ class ContentManager {
 		}
 	}
 
-	// 2. Fix _warmFrequentPaths - build tree directly without calling methods
 	private async _warmFrequentPaths(cacheService: Awaited<ReturnType<typeof getCacheService>>, ttl: number, tenantId?: string | null): Promise<void> {
 		// Cache first collection for instant access
 		const collections = Array.from(this.contentNodeMap.values()).filter((node) => node.nodeType === 'collection' && node.collectionDef);
 
 		if (collections.length > 0) {
-			await cacheService.set('cms:first_collection', collections[0].collectionDef, ttl, tenantId);
+			await cacheService.set('cms:first_collection', collections[0].collectionDef, ttl, tenantId, CacheCategory.COLLECTION, [
+				'cms:content',
+				'cms:collections'
+			]);
 			logger.debug('[ContentManager] Warmed first collection cache');
 		}
 
@@ -2261,7 +2276,7 @@ class ContentManager {
 		};
 
 		const navStructure = buildNavTree(undefined);
-		await cacheService.set('cms:navigation_structure', navStructure, ttl, tenantId);
+		await cacheService.set('cms:navigation_structure', navStructure, ttl, tenantId, CacheCategory.CONTENT, ['cms:content', 'cms:nav']);
 		logger.debug('[ContentManager] Warmed navigation structure cache');
 	}
 
@@ -2313,15 +2328,9 @@ class ContentManager {
 		logger.trace(`[_extractPathFromFilePath] Original filePath: ${filePath}`);
 		logger.trace(`[_extractPathFromFilePath] After removing compiledDir: ${relativePath}`);
 
-		// Handle tenant-based structure: .compiledCollections/{tenantId}/path/to/file.js
-		// DISABLED: This logic was incorrectly treating folder names like "Collections", "Menu", "Posts"
-		// as tenant IDs and stripping them, breaking the folder hierarchy.
-		// TODO: Implement proper multi-tenant detection when multi-tenancy is fully implemented
-		// const tenantMatch = relativePath.match(/^\/([^/]+)\/(.*)/);
-		// if (tenantMatch && (tenantMatch[1] === 'global' || !tenantMatch[1].includes('.'))) {
-		// 	relativePath = '/' + tenantMatch[2];
-		// 	logger.debug(`[_extractPathFromFilePath] Tenant structure detected, path after tenant: ${relativePath}`);
-		// }
+		// Normalize path and remove .js extension
+		relativePath = relativePath.split(path.sep).join('/');
+		relativePath = relativePath.replace(/\.js$/, '');
 
 		relativePath = relativePath.replace(/\.js$/, '');
 		const finalPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;

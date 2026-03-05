@@ -6,7 +6,7 @@ order: 99
 icon: 'mdi:map-clock-outline'
 author: 'admin'
 created: '2026-01-18'
-updated: '2026-02-24'
+updated: '2026-03-05'
 tags:
   - 'roadmap'
   - 'planning'
@@ -17,7 +17,7 @@ tags:
 
 # SveltyCMS: 2026 State-of-the-Art Assessment
 
-**Assessment Date:** February 2026
+**Assessment Date:** March 2026
 **Target Score:** 100/100 (Enterprise-Ready)
 
 ## Strategic Vision: The Intelligent Content Platform
@@ -30,78 +30,25 @@ SveltyCMS is evolving from a modern CMS into the first **Intelligent Content Pla
 
 _Focus: Zero-friction onboarding and developer ergonomics._
 
-- [x] **Zero-Restart Setup** - In-memory environment hydration.
-- [x] **Database Agnostic Pre-seeding** - Fast-track initialization for SQLite, MariaDB, PostgreSQL, and MongoDB.
-- 🔜 **CLI & npx Support** - `npx create-sveltycms` for instant project scaffolding.
-- 🔜 **AI Command Bar (v1.0)** - A "Linear-style" command palette for system-wide navigation and content actions.
+- ✅ **CLI & npx Support** - `npx create-sveltycms` for instant project scaffolding.
+- 🔜 **AI Command Bar (v1.1)** - A "Linear-style" command palette for system-wide navigation and content actions.
+- [/] **Collection Builder Experience** - Significant UX enhancements to field management and ergonomic layouts.
+- 🔜 **Media System Improvements** - Improve `mediagallery` and `mediaUpload` with the image editor.
+- [x] **Access Management v2.0 Enhancements** - Complete overhaul of Roles, Permissions, and Website Tokens with Svelte 5 runes.
 
 #### **Phase 2: AI-Powered Operations (Q2 2026)**
 
 _Focus: Augmenting the editor and developer experience with intelligent tools._
 
-- [x] **Widget Assistance** - AI-generated field suggestions and auto-configuration.
-- [/] **AI-Native Generative Layouts** - Direct implementation using `json-render-svelte` for streaming interactive UIs.
-- 🔧 **Automated Workflows** - Native n8n integration for secure, low-code automation and issue tracking.
-- 🔧 **Smart Content Translation** - Context-aware i18n via LLMs beyond simple string replacement.
+- [x] **AI-Native Generative Layouts** - Direct implementation using `json-render-svelte` for streaming interactive UIs.
+- [x] **Automated Workflows** - Native n8n integration for secure, low-code automation and issue tracking.
+- [x] **Smart Content Translation** - Context-aware i18n via LLMs beyond simple string replacement.
 
 #### **Phase 3: The Broader Platform Layer (Q3 2026)**
 
 _Focus: Becoming the source of truth for AI agents._
 
-- [x] **MCP Server (mcp.sveltycms.com)** - A native Model Context Protocol bridge (Hosted).
-- [x] **Semantic Search** - Vector-based content retrieval using local LanceDB and ONNX-powered embeddings.
 - 🚀 **Conversational UI** - Full "Agent Mode" for the CMS dashboard.
-
----
-
-## 🏗️ Active Development & Recently Accomplished
-
-### ✅ Recently Accomplished (Q1 2026)
-
-- [x] **CI Pipeline Restoration** - Playwright E2E suite stabilized across all primary databases.
-- [x] **SCIM 2.0 Provisioning** - Native endpoints implemented and production-ready (hardened).
-- [x] **SAML 2.0 & Enterprise SSO** - Native `@boxyhq/saml-jackson` integration with JIT provisioning.
-- [x] **Enterprise ASR (Attack Surface Reduction)** - Real-time WAF-like threat detection and rate limiting.
-- [x] **Plugin Sandbox Hardening** - Secure, isolated plugin execution with scoped DB access.
-- [x] **Audit Logging Dashboard** - Real-time security monitoring with cryptographic chaining.
-- [x] **WebMCP Integration** - Agentic AI tool exposure (v1.0).
-- [x] **Real-time Collaboration** - SSE-based activity stream and AI assistant (v1.0).
-- [x] **Performance Optimization** - Sub-10ms init times for ContentManager across all adapters.
-
----
-
-## 🤖 Detailed Plan: SveltyCMS MCP Server
-
-The MCP Server is our most defensible feature, positioning SveltyCMS as the first CMS AI agents can operate natively.
-
-**Core Stack:**
-
-- **Storage:** `@lancedb/lancedb` (Native C++ bindings for blazing-fast, zero-copy vector access).
-- **Embeddings:** `fastembed` (ONNX Runtime-based, in-process embeddings - no external API needed).
-- **Validation:** `valibot` (The fastest, smallest TypeScript validator).
-- **Runtime:** Node.js with Singleton pattern for persistent DB connections.
-
-**Capabilities:**
-
-1. **Resources:** Exposes local documentation (`AGENTS.md`, Roadmap) and Svelte 5/Skeleton v4 best practices.
-2. **Prompts:** Standardized templates for generating widgets following the "Three Pillars Architecture".
-3. **Tools:**
-   - `add_roadmap_item`: Appends user/agent suggestions to the roadmap.
-   - `search_knowledge_base`: Queries the local LanceDB vector database for project context.
-
----
-
-## 🚨 Critical Gaps for 100/100 Score (Enterprise Requirements)
-
-### 1. Edge Computing ⭐⭐
-
-**Goal:** Multi-region deployment and global content delivery.
-**Plan:** Implement multi-region replication and edge-optimized data fetching patterns.
-
-### 2. Widget-Based Dashboard ⭐⭐⭐
-
-**Goal:** Customizable, Linear-style dashboard widgets per tenant.
-**Plan:** Store-based layout configuration saved per user/tenant.
 
 ---
 
@@ -126,7 +73,7 @@ The MCP Server is our most defensible feature, positioning SveltyCMS as the firs
 
 ### P1 - Important for Competitiveness
 
-- **Edge Computing** - Global scale.
+- [x] **Edge Computing** - Global scale with multi-region replication.
 - **Visual Workflow Builder** - building on the Hook-Based Event System.
 - **n8n Integration** - Automation parity.
 
@@ -135,3 +82,5 @@ The MCP Server is our most defensible feature, positioning SveltyCMS as the firs
 ## 🎓 Conclusion
 
 SveltyCMS is transitioning to an **Intelligent Content Platform**. By combining a world-class developer experience with a native AI interface (MCP), we are building the first CMS that isn't just a tool for humans, but a platform for the future of agentic workflows.
+
+## We need your help for testing and freelance support to make this the fastest and best Headless CMS ever.

@@ -23,6 +23,9 @@
 	import { toast } from '@src/stores/toast.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { page } from '$app/state';
+	import { beforeNavigate } from '$app/navigation';
+	import { showConfirm } from '@utils/modal-utils';
+	import { modalState } from '@utils/modal-state.svelte';
 	import AdminRole from './admin-role.svelte';
 	import Permissions from './permissions.svelte';
 	import Roles from './roles.svelte';
@@ -84,14 +87,32 @@
 	};
 
 	const resetChanges = async () => {
-		// A more robust reset would re-fetch the initial data from the server or
-		// store a deep copy of the original data. For simplicity here, we assume
-		// `page.data.roles` holds the original state if we just reset `rolesData`.
-		rolesData = page.data.roles; // Reset to initial loaded state
+		rolesData = page.data.roles;
 		hasModifiedChanges = false;
 		modifiedCount = 0;
 		toast.info('Changes have been reset.');
 	};
+
+	// Accessibility: Unsaved changes warning
+	beforeNavigate(({ cancel }) => {
+		if (hasModifiedChanges || modalState.isOpen) {
+			cancel();
+			if (modalState.isOpen) {
+				toast.warning('Please close the edit modal before navigating away.');
+				return;
+			}
+			showConfirm({
+				title: 'Unsaved Changes',
+				body: 'You have unsaved changes in the Access Management configuration. Are you sure you want to leave this page?',
+				onConfirm: () => {
+					hasModifiedChanges = false; // Bypass next check
+					// We can't easily "resume" navigation in SvelteKit without re-triggering or manual URL change
+					// but setting flag and letting user click again is a safe standard pattern
+					toast.info('Changes discarded. You can now navigate away.');
+				}
+			});
+		}
+	});
 </script>
 
 <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -132,25 +153,25 @@
 <div class="flex flex-col">
 	<Tabs value={currentTab} onValueChange={(e) => (currentTab = e.value)} class="grow">
 		<Tabs.List class="flex justify-around text-tertiary-500 dark:text-primary-500 border-b border-surface-200-800">
-			<Tabs.Trigger value="0" class="flex-1">
+			<Tabs.Trigger value="0" class="flex-1" aria-current={currentTab === '0' ? 'page' : undefined}>
 				<div class="flex items-center justify-center gap-1 py-4">
 					<iconify-icon icon="mdi:shield-lock-outline" width={24}></iconify-icon>
 					<span class={currentTab === '0' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>{system_permission()}</span>
 				</div>
 			</Tabs.Trigger>
-			<Tabs.Trigger value="1" class="flex-1">
+			<Tabs.Trigger value="1" class="flex-1" aria-current={currentTab === '1' ? 'page' : undefined}>
 				<div class="flex items-center justify-center gap-1 py-4">
 					<iconify-icon icon="mdi:account-group" width={24}></iconify-icon>
 					<span class={currentTab === '1' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>{system_roles()}</span>
 				</div>
 			</Tabs.Trigger>
-			<Tabs.Trigger value="2" class="flex-1">
+			<Tabs.Trigger value="2" class="flex-1" aria-current={currentTab === '2' ? 'page' : undefined}>
 				<div class="flex items-center justify-center gap-1 py-4">
 					<iconify-icon icon="mdi:account-cog" width={24}></iconify-icon>
 					<span class={currentTab === '2' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>Admin</span>
 				</div>
 			</Tabs.Trigger>
-			<Tabs.Trigger value="3" class="flex-1">
+			<Tabs.Trigger value="3" class="flex-1" aria-current={currentTab === '3' ? 'page' : undefined}>
 				<div class="flex items-center justify-center gap-1 py-4">
 					<iconify-icon icon="mdi:web" width={24}></iconify-icon>
 					<span class={currentTab === '3' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>Website Tokens</span>
@@ -159,7 +180,9 @@
 		</Tabs.List>
 
 		<Tabs.Content value="0"><div class="p-4"><Permissions roleData={rolesData} {setRoleData} {updateModifiedCount} /></div></Tabs.Content>
-		<Tabs.Content value="1"><div class="p-4"><Roles roleData={rolesData} {setRoleData} {updateModifiedCount} /></div></Tabs.Content>
+		<Tabs.Content value="1"
+			><div class="p-4"><Roles roleData={rolesData} {setRoleData} {updateModifiedCount} permissions={page.data.permissions} /></div></Tabs.Content
+		>
 		<Tabs.Content value="2"><div class="p-4"><AdminRole roleData={rolesData} {setRoleData} /></div></Tabs.Content>
 		<Tabs.Content value="3"><div class="p-4"><WebsiteTokens permissions={page.data.permissions} /></div></Tabs.Content>
 	</Tabs>

@@ -1,10 +1,18 @@
+/**
+ * @file src/routes/api/website-tokens/+server.ts
+ * @description Handles GET (list) and POST (create) requests for website tokens.
+ */
+
 import crypto from 'node:crypto';
 import { dbAdapter } from '@src/databases/db';
+import type { DatabaseId } from '@src/databases/db-interface';
 import { json } from '@sveltejs/kit';
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { withTenant } from '@src/databases/db-adapter-wrapper';
+import { auditLogService, AuditEventType } from '@src/services/audit-log-service';
 
 export const GET = apiHandler(async ({ locals, url }) => {
 	if (!locals.user) {
@@ -24,12 +32,18 @@ export const GET = apiHandler(async ({ locals, url }) => {
 	// Search/filter functionality would need to be added to the database adapter
 	// For now, we fetch all and can filter client-side if needed
 
-	const result = await dbAdapter.system.websiteTokens.getAll({
-		limit,
-		skip: (page - 1) * limit,
-		sort,
-		order
-	});
+	const result = await withTenant(
+		locals.tenantId,
+		async () => {
+			return await dbAdapter!.system.websiteTokens.getAll({
+				limit,
+				skip: (page - 1) * limit,
+				sort,
+				order
+			});
+		},
+		{ collection: 'websiteTokens' }
+	);
 
 	if (!result.success) {
 		logger.error('Failed to fetch website tokens:', result.error);
@@ -59,26 +73,50 @@ export const POST = apiHandler(async ({ locals, request }) => {
 		throw new AppError('Token name is required', 400, 'MISSING_NAME');
 	}
 
-	const existingToken = await dbAdapter.system.websiteTokens.getByName(name);
+	const existingToken = await withTenant(
+		locals.tenantId,
+		async () => {
+			return await dbAdapter!.system.websiteTokens.getByName(name);
+		},
+		{ collection: 'websiteTokens' }
+	);
 	if (existingToken.success && existingToken.data) {
 		throw new AppError('A token with this name already exists', 409, 'TOKEN_EXISTS');
 	}
 
 	const token = `sv_${crypto.randomBytes(24).toString('hex')}`;
 
-	const result = await dbAdapter.system.websiteTokens.create({
-		name,
-		token,
-		updatedAt: new Date().toISOString() as import('@databases/db-interface').ISODateString,
-		createdBy: locals.user._id,
-		permissions: permissions || [],
-		expiresAt: expiresAt || undefined
-	});
+	const result = await withTenant(
+		locals.tenantId,
+		async () => {
+			return await dbAdapter!.system.websiteTokens.create({
+				name,
+				token,
+				updatedAt: new Date().toISOString() as import('@databases/db-interface').ISODateString,
+				createdBy: locals.user!._id,
+				permissions: permissions || [],
+				expiresAt: expiresAt || undefined
+			});
+		},
+		{ collection: 'websiteTokens' }
+	);
 
 	if (!result.success) {
 		logger.error('Failed to create website token:', result.error);
 		throw new AppError('Failed to create website token', 500, 'CREATE_TOKEN_FAILED');
 	}
+
+	await auditLogService.logEvent({
+		action: 'Created website token',
+		actorId: locals.user._id as DatabaseId,
+		actorEmail: locals.user.email,
+		eventType: AuditEventType.TOKEN_CREATED,
+		result: 'success',
+		severity: 'medium',
+		targetId: result.data._id as DatabaseId,
+		targetType: 'token',
+		details: { tokenName: name, permissionsCount: permissions?.length || 0 }
+	});
 
 	return json(result.data, { status: 201 });
 });

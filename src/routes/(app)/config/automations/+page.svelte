@@ -23,6 +23,15 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 
 	let flows: AutomationFlow[] = $state([]);
 	let isLoading = $state(true);
+	let searchQuery = $state('');
+	let selectedIds = $state<string[]>([]);
+
+	let filteredFlows = $derived(
+		flows.filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()) || f.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+	);
+
+	let allSelected = $derived(filteredFlows.length > 0 && selectedIds.length === filteredFlows.length);
+	let someSelected = $derived(selectedIds.length > 0 && !allSelected);
 
 	async function loadFlows() {
 		isLoading = true;
@@ -97,6 +106,66 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 			}
 		} catch (_err) {
 			toast.error('Failed to duplicate');
+		}
+	}
+
+	async function bulkToggle(active: boolean) {
+		if (selectedIds.length === 0) return;
+		const count = selectedIds.length;
+		toast.info(`Updating ${count} automations...`);
+
+		try {
+			await Promise.all(
+				selectedIds.map((id) =>
+					fetch(`/api/automations/${id}`, {
+						method: 'PATCH',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ active })
+					})
+				)
+			);
+			flows = flows.map((f) => (selectedIds.includes(f.id) ? { ...f, active } : f));
+			toast.success(`${count} automations ${active ? 'activated' : 'paused'}`);
+			selectedIds = [];
+		} catch (_err) {
+			toast.error('Failed to update some automations');
+		}
+	}
+
+	async function bulkDelete() {
+		if (selectedIds.length === 0) return;
+		if (!confirm(`Delete ${selectedIds.length} automations? This cannot be undone.`)) return;
+
+		const count = selectedIds.length;
+		try {
+			await Promise.all(
+				selectedIds.map((id) =>
+					fetch(`/api/automations/${id}`, {
+						method: 'DELETE'
+					})
+				)
+			);
+			flows = flows.filter((f) => !selectedIds.includes(f.id));
+			toast.success(`${count} automations deleted`);
+			selectedIds = [];
+		} catch (_err) {
+			toast.error('Failed to delete some automations');
+		}
+	}
+
+	function toggleSelectAll() {
+		if (allSelected) {
+			selectedIds = [];
+		} else {
+			selectedIds = filteredFlows.map((f) => f.id);
+		}
+	}
+
+	function toggleSelect(id: string) {
+		if (selectedIds.includes(id)) {
+			selectedIds = selectedIds.filter((i) => i !== id);
+		} else {
+			selectedIds = [...selectedIds, id];
 		}
 	}
 
@@ -194,15 +263,53 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 <PageTitle name="Automations" icon="mdi:robot-outline" showBackButton={true} backUrl="/config" />
 
 <div class="wrapper p-4">
-	<div class="flex items-center justify-between mb-6">
-		<div>
+	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+		<div class="flex-1 min-w-0">
 			<h2 class="h2 font-bold">Workflow Automations</h2>
-			<p class="text-surface-600 dark:text-surface-200">Automate actions when content changes — send emails, call webhooks, update fields.</p>
+			<p class="text-surface-600 dark:text-surface-200 truncate">
+				Automate actions when content changes — send emails, call webhooks, update fields.
+			</p>
 		</div>
-		<button class="preset-filled-primary-500 btn" onclick={createNew}>
-			<iconify-icon icon="mdi:plus"></iconify-icon>
-			<span>New Automation</span>
-		</button>
+		<div class="flex items-center gap-2">
+			<button class="preset-filled-primary-500 btn" onclick={createNew}>
+				<iconify-icon icon="mdi:plus"></iconify-icon>
+				<span>New Automation</span>
+			</button>
+		</div>
+	</div>
+
+	<!-- Search & Bulk Actions -->
+	<div
+		class="flex flex-col md:flex-row items-center gap-4 mb-6 bg-surface-100 dark:bg-surface-800 p-3 rounded-lg border border-surface-200 dark:border-surface-700"
+	>
+		<div class="relative flex-1 w-full">
+			<iconify-icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 opacity-40"></iconify-icon>
+			<input type="text" class="input pl-10 w-full" placeholder="Search automations..." bind:value={searchQuery} />
+		</div>
+
+		<div class="flex items-center gap-2 w-full md:w-auto">
+			<label
+				class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-surface-200 dark:hover:bg-surface-700 rounded transition-colors mr-auto"
+			>
+				<input type="checkbox" class="checkbox" checked={allSelected} indeterminate={someSelected} onchange={toggleSelectAll} />
+				<span class="text-xs font-medium uppercase opacity-60">Select All</span>
+			</label>
+
+			{#if selectedIds.length > 0}
+				<div class="flex items-center gap-1" transition:slide={{ axis: 'x' }}>
+					<span class="text-xs font-bold mr-2">{selectedIds.length} Selected</span>
+					<button class="btn btn-sm preset-tonal-surface" onclick={() => bulkToggle(true)} title="Activate Selected">
+						<iconify-icon icon="mdi:play" class="text-success-600"></iconify-icon>
+					</button>
+					<button class="btn btn-sm preset-tonal-surface" onclick={() => bulkToggle(false)} title="Pause Selected">
+						<iconify-icon icon="mdi:pause" class="text-warning-600"></iconify-icon>
+					</button>
+					<button class="btn btn-sm preset-tonal-error" onclick={bulkDelete} title="Delete Selected">
+						<iconify-icon icon="mdi:trash-can-outline"></iconify-icon>
+					</button>
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	{#if isLoading}
@@ -223,13 +330,18 @@ and CRUD actions. Enterprise-grade workflow management GUI.
 		</div>
 	{:else}
 		<div class="grid gap-4">
-			{#each flows as flow (flow.id)}
+			{#each filteredFlows as flow (flow.id)}
 				<div
-					class="card p-4 bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-500 transition-all duration-200 rounded-lg"
+					class="card p-4 bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:border-primary-500 transition-all duration-200 rounded-lg flex items-center gap-4"
 					class:opacity-50={!flow.active}
 					transition:slide
 				>
-					<div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+					<!-- Checkbox -->
+					<div class="shrink-0">
+						<input type="checkbox" class="checkbox" checked={selectedIds.includes(flow.id)} onchange={() => toggleSelect(flow.id)} />
+					</div>
+
+					<div class="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 min-w-0">
 						<!-- Icon & Status -->
 						<div class="flex items-center gap-3 flex-1 min-w-0">
 							<div

@@ -34,18 +34,25 @@
 		visible: boolean;
 	}
 
-	let tokens: WebsiteToken[] = $state([]);
-	let users: User[] = $state([]);
-	const userMap = $derived(new Map(users.map((u) => [u._id, u.username || u.email])));
-	let newTokenName = $state('');
-
-	// Permissions & Expiration State
 	let { permissions = [] }: { permissions: Permission[] } = $props();
 
-	let availablePermissions: Permission[] = $state([]);
+	// Website Access Tokens Data
+	let tokens: WebsiteToken[] = $state([]);
+	let users: User[] = $state([]);
+
+	// User Map for display
+	const userMap = $derived(new Map(users.map((u) => [u._id, u.username || u.email])));
+
+	// Token Generation State
+	let newTokenName = $state('');
 	let selectedPermissions: string[] = $state([]);
 	let expirationOption = $state('90d');
 	let customExpirationDate = $state('');
+	let permissionSearchTerm = $state('');
+
+	// Visibility / Display State
+	let showSecretMap: Record<string, boolean> = $state({});
+	let selectedTokens = $state(new Set<string>());
 
 	// Filter state
 	let globalSearchValue = $state('');
@@ -82,6 +89,12 @@
 		displayTableHeaders = event.detail.items;
 	}
 
+	const filteredAvailablePermissions = $derived(
+		permissions.filter(
+			(p) => p.name.toLowerCase().includes(permissionSearchTerm.toLowerCase()) || p.action.toLowerCase().includes(permissionSearchTerm.toLowerCase())
+		)
+	);
+
 	function handleCheckboxChange() {
 		const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
 		displayTableHeaders = displayTableHeaders.map((header) => ({
@@ -101,9 +114,16 @@
 		}
 	}
 
+	function toggleSelectAllPermissions() {
+		if (selectedPermissions.length === permissions.length) {
+			selectedPermissions = [];
+		} else {
+			selectedPermissions = permissions.map((p) => p._id);
+		}
+	}
+
 	onMount(async () => {
 		await Promise.all([fetchTokens(), fetchUsers()]);
-		availablePermissions = permissions;
 	});
 
 	async function fetchUsers() {
@@ -259,6 +279,54 @@
 		});
 	}
 
+	async function bulkDeleteTokens() {
+		if (selectedTokens.size === 0) return;
+
+		showConfirm({
+			title: 'Bulk Delete Tokens',
+			body: `Are you sure you want to delete ${selectedTokens.size} selected tokens? This action cannot be undone.`,
+			onConfirm: async () => {
+				await globalLoadingStore.withLoading(
+					loadingOperations.tokenGeneration,
+					async () => {
+						try {
+							const deletePromises = Array.from(selectedTokens).map((id) => fetch(`/api/website-tokens/${id}`, { method: 'DELETE' }));
+							const results = await Promise.all(deletePromises);
+
+							const successCount = results.filter((r) => r.ok).length;
+							if (successCount > 0) {
+								toast.success(`${successCount} tokens deleted.`);
+								selectedTokens.clear();
+								await fetchTokens();
+							} else {
+								toast.error('Failed to delete selected tokens');
+							}
+						} catch {
+							toast.error('An error occurred during bulk deletion');
+						}
+					},
+					'Deleting multiple tokens'
+				);
+			}
+		});
+	}
+
+	function toggleTokenSelection(id: string) {
+		if (selectedTokens.has(id)) {
+			selectedTokens.delete(id);
+		} else {
+			selectedTokens.add(id);
+		}
+	}
+
+	function toggleAllTokens() {
+		if (selectedTokens.size === tokens.length) {
+			selectedTokens.clear();
+		} else {
+			tokens.forEach((t) => selectedTokens.add(t._id));
+		}
+	}
+
 	$effect(() => {
 		if (totalItems <= 1) {
 			return;
@@ -309,16 +377,30 @@
 			</div>
 
 			<div class="mt-4">
-				<h5 class="h5 mb-2 font-bold">Permissions</h5>
-				<div class="card max-h-60 overflow-y-auto p-4 bg-surface-100 dark:bg-surface-800">
-					<p class="text-sm text-gray-500 mb-2">
+				<div class="mb-2 flex items-center justify-between">
+					<h5 class="h5 font-bold">Permissions</h5>
+					<div class="flex items-center gap-4">
+						<input
+							type="text"
+							placeholder="Search permissions..."
+							class="input input-sm max-w-xs"
+							bind:value={permissionSearchTerm}
+							aria-label="Search available permissions"
+						/>
+						<button class="btn btn-sm variant-soft" onclick={toggleSelectAllPermissions}>
+							{selectedPermissions.length === permissions.length ? 'Deselect All' : 'Select All'}
+						</button>
+					</div>
+				</div>
+				<div class="card max-h-60 overflow-y-auto p-4 bg-surface-100 dark:bg-surface-800" role="group" aria-labelledby="permissions-title">
+					<p id="permissions-title" class="text-sm text-gray-500 mb-2">
 						Select permissions to grant to this token. If none selected, the token will have <strong>Read Only</strong> access.
 					</p>
 
-					{#if availablePermissions.length > 0}
+					{#if filteredAvailablePermissions.length > 0}
 						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-							{#each availablePermissions as permission (permission._id)}
-								<label class="flex items-center space-x-2 p-2 rounded hover:bg-surface-200 dark:hover:bg-surface-700">
+							{#each filteredAvailablePermissions as permission (permission._id)}
+								<label class="flex items-center space-x-2 p-2 rounded hover:bg-surface-200 dark:hover:bg-surface-700 cursor-pointer">
 									<input
 										type="checkbox"
 										class="checkbox"
@@ -333,7 +415,7 @@
 							{/each}
 						</div>
 					{:else}
-						<div class="text-xs text-center p-4">Loading permissions...</div>
+						<div class="text-xs text-center p-4 italic opacity-50">No permissions match your search.</div>
 					{/if}
 				</div>
 			</div>
@@ -350,7 +432,14 @@
 	<div class="card">
 		<div class="p-4">
 			<div class="my-4 flex flex-wrap items-center justify-between gap-1">
-				<h4 class="h4 font-bold text-tertiary-500 dark:text-primary-500">Existing Tokens</h4>
+				<div class="flex items-center gap-4">
+					<h4 class="h4 font-bold text-tertiary-500 dark:text-primary-500">Existing Tokens</h4>
+					{#if selectedTokens.size > 0}
+						<button class="btn btn-sm variant-filled-error" onclick={bulkDeleteTokens}>
+							Delete Selected ({selectedTokens.size})
+						</button>
+					{/if}
+				</div>
 				<div class="order-3 sm:order-2"><TableFilter {globalSearchValue} {searchShow} {filterShow} {columnShow} {density} /></div>
 			</div>
 
@@ -410,6 +499,15 @@
 							</tr>
 						{/if}
 						<tr class="divide-x divide-preset-400 border-b border-black dark:border-white">
+							<th class="w-10 text-center">
+								<input
+									type="checkbox"
+									class="checkbox"
+									checked={selectedTokens.size === tokens.length && tokens.length > 0}
+									onchange={toggleAllTokens}
+									aria-label="Select all tokens"
+								/>
+							</th>
 							{#each displayTableHeaders.filter((h: TableHeader) => h.visible) as header (header.id)}
 								<th aria-sort={sorting.sortedBy === header.key ? (sorting.isSorted === 1 ? 'ascending' : 'descending') : 'none'}>
 									<button
@@ -439,22 +537,42 @@
 					</thead>
 					<tbody>
 						{#each tokens as token (token._id)}
-							<tr>
+							<tr class={selectedTokens.has(token._id) ? 'bg-surface-hover' : ''}>
+								<td class="text-center">
+									<input
+										type="checkbox"
+										class="checkbox"
+										checked={selectedTokens.has(token._id)}
+										onchange={() => toggleTokenSelection(token._id)}
+										aria-label={`Select token ${token.name}`}
+									/>
+								</td>
 								{#each displayTableHeaders.filter((h: TableHeader) => h.visible) as header (header.id)}
 									<td>
 										{#if header.key === 'token'}
 											<div class="flex items-center gap-2">
-												<code>{token.token}</code>
-												<button
-													onclick={async () => {
-														await navigator.clipboard.writeText(token.token);
-														toast.success('Token copied to clipboard');
-													}}
-													class="preset-outline-surface-500 btn-icon btn-icon-sm"
-													aria-label="Copy token to clipboard"
-												>
-													<iconify-icon icon="mdi:clipboard-outline" width={24}></iconify-icon>
-												</button>
+												<code class="bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded">
+													{showSecretMap[token._id] ? token.token : `${token.token.slice(0, 4)}••••••••${token.token.slice(-4)}`}
+												</code>
+												<div class="flex gap-1" aria-live="polite">
+													<button
+														onclick={() => (showSecretMap[token._id] = !showSecretMap[token._id])}
+														class="btn-icon btn-icon-sm variant-soft"
+														aria-label={showSecretMap[token._id] ? 'Hide token' : 'Show token'}
+													>
+														<iconify-icon icon={showSecretMap[token._id] ? 'mdi:eye-off-outline' : 'mdi:eye-outline'} width={20}></iconify-icon>
+													</button>
+													<button
+														onclick={async () => {
+															await navigator.clipboard.writeText(token.token);
+															toast.success('Token copied to clipboard');
+														}}
+														class="btn-icon btn-icon-sm variant-soft"
+														aria-label="Copy token to clipboard"
+													>
+														<iconify-icon icon="mdi:clipboard-outline" width={20}></iconify-icon>
+													</button>
+												</div>
 											</div>
 										{:else if header.key === 'createdAt'}
 											{new Date(token.createdAt).toLocaleDateString()}

@@ -5,7 +5,6 @@
  * Features:
  * - Chat with AI Assistant
  * - History of messages
- *
  */
 
 import { aiService } from '@services/ai-service';

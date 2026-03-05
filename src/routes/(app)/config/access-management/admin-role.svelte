@@ -22,6 +22,7 @@ It provides functionality to:
 	import type { Role } from '@src/databases/auth/types';
 	// Components
 	import { toast } from '@src/stores/toast.svelte.ts';
+	import { showConfirm } from '@utils/modal-utils';
 	import { tick } from 'svelte';
 
 	const { roleData, setRoleData } = $props();
@@ -59,35 +60,45 @@ It provides functionality to:
 
 	// Function to save the new admin role
 	const saveAdminRole = async () => {
-		try {
-			isSaving = true;
-			notification = null;
+		const newRole = roleData.find((r: Role) => r._id === selectedAdminRole);
+		const newRoleName = newRole?.name || selectedAdminRole;
 
-			// Ensure DOM updates before save process begins
-			await tick();
+		showConfirm({
+			title: 'Change Administrator Role',
+			body: `Are you sure you want to change the Administrator Role to "${newRoleName}"? This is a critical security action that will change who has full system access.`,
+			onConfirm: async () => {
+				try {
+					isSaving = true;
+					notification = null;
 
-			currentAdminRole = selectedAdminRole;
-			try {
-				const result = roleData.map((cur: Role) => {
-					if (cur._id === selectedAdminRole) {
-						currentAdminName = cur.name;
-						return { ...cur, isAdmin: true };
+					// Ensure DOM updates before save process begins
+					await tick();
+
+					currentAdminRole = selectedAdminRole;
+					try {
+						const result = roleData.map((cur: Role) => {
+							if (cur._id === selectedAdminRole) {
+								currentAdminName = cur.name;
+								return { ...cur, isAdmin: true };
+							}
+							if (cur.isAdmin === true) {
+								return { ...cur, isAdmin: false };
+							}
+							return cur;
+						});
+						setRoleData(result);
+					} catch (_error) {
+						toast.error('Network error occurred while updating config file');
 					}
-					if (cur.isAdmin === true) {
-						return { ...cur, isAdmin: false };
-					}
-					return cur;
-				});
-				setRoleData(result);
-			} catch (_error) {
-				toast.error('Network error occurred while updating config file');
+					notification = 'Admin role changed. Click "Save" at the top to apply changes.';
+					toast.success('Admin role updated locally.');
+				} catch (err) {
+					notification = `Failed to save admin role: ${err instanceof Error ? err.message : String(err)}`;
+				} finally {
+					isSaving = false;
+				}
 			}
-			notification = 'Admin role changed. Click "Save" at the top to apply changes.';
-		} catch (err) {
-			notification = `Failed to save admin role: ${err instanceof Error ? err.message : String(err)}`;
-		} finally {
-			isSaving = false;
-		}
+		});
 	};
 
 	// Function to cancel changes and reset the selected role to the current admin role

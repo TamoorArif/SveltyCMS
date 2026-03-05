@@ -1,4 +1,14 @@
-/** @file src/content/types.ts @description Application-level TypeScript interfaces for content modeling and runtime data features: [Schema/Field/Widget definitions, base entity metadata, revision tracking, unified content node, dashboard configurations] */
+/**
+ * @file src/content/types.ts
+ * @description Application-level TypeScript interfaces for content modeling and runtime data
+ *
+ * Features:
+ * - Schema/Field/Widget definitions
+ * - base entity metadata
+ * - revision tracking
+ * - unified content node
+ * - dashboard configurations
+ */
 
 import type { WidgetRegistry as widgets } from '@src/stores/widget-store.svelte.ts';
 // Note: collectionSchemas may be used in the future for runtime validation

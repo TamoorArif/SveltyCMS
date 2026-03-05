@@ -31,7 +31,7 @@ async function getDbAdapter(): Promise<IDBAdapter> {
 type AuditDetails = Record<string, string | number | boolean | null | undefined>;
 
 // Audit log entry interface extending BaseEntity
-export interface AuditLogEntry extends Omit<BaseEntity, 'id' | 'created_at'> {
+export interface AuditLogEntry extends BaseEntity {
 	action: string; // Human-readable action description
 	actorEmail?: string; // For easier querying
 	actorId: DatabaseId | null; // User who performed the action
@@ -40,7 +40,6 @@ export interface AuditLogEntry extends Omit<BaseEntity, 'id' | 'created_at'> {
 	details: AuditDetails; // Additional context data
 	errorDetails?: string; // If result is failure
 	eventType: AuditEventType;
-	id?: DatabaseId;
 	ipAddress?: string;
 	result: 'success' | 'failure' | 'partial';
 	sessionId?: string;
@@ -128,17 +127,14 @@ export class AuditLogService {
 	/**
 	 * Log a security-critical event
 	 */
-	async logEvent(entry: Omit<AuditLogEntry, 'timestamp' | 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+	async logEvent(entry: Omit<AuditLogEntry, '_id' | 'createdAt' | 'updatedAt' | 'timestamp'>): Promise<void> {
 		try {
 			const db = await getDbAdapter();
-			const auditEntry: Omit<AuditLogEntry, 'id'> & {
-				created_at?: string;
-				updated_at?: string;
-			} = {
+			const auditEntry: Omit<AuditLogEntry, '_id'> = {
 				...entry,
 				timestamp: new Date().toISOString(),
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
+				createdAt: new Date().toISOString() as import('@databases/db-interface').ISODateString,
+				updatedAt: new Date().toISOString() as import('@databases/db-interface').ISODateString
 			};
 
 			const result = await db.crud.insert<AuditLogEntry>(this.collectionName, auditEntry);

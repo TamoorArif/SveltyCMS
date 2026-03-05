@@ -6,18 +6,18 @@ order: 5
 icon: 'mdi:database-sync'
 author: 'admin'
 created: '2025-12-02'
-updated: '2025-12-02'
+updated: '2026-03-05'
 tags:
   - 'architecture'
   - 'content-system'
   - 'reactivity'
-  - 'polling'
-  - 'caching'
+  - 'svelte5'
+  - 'multi-tenancy'
 ---
 
 # Content System Architecture
 
-The Content System is the core of SveltyCMS, responsible for managing, indexing, and serving content and collections. It is designed to be performant, reactive, and type-safe.
+The Content System is the core of SveltyCMS, responsible for managing, indexing, and serving content and collections. It leverages Svelte 5 runes for fine-grained reactivity and supports multi-tenant isolation at the filesystem level.
 
 ## Core Components
 
@@ -25,65 +25,62 @@ The Content System is the core of SveltyCMS, responsible for managing, indexing,
 
 The `ContentManager` is a singleton class that orchestrates the entire content lifecycle. It serves as the central point of access for:
 
-- **Initialization**: Bootstrapping the content system on server start.
-- **Structure Management**: Maintaining the hierarchy of categories and collections.
-- **Reactivity**: Tracking content versions and notifying clients of updates.
-- **Access Control**: (Planned) Managing permissions for content access.
+- **Initialization**: Bootstrapping the content management system on server start.
+- **Multi-Tenant Isolation**: Manages collection structures per tenant using `.compiledCollections/{tenantId}/`.
+- **Reactivity (Svelte 5)**: Uses `$state()` to track `contentVersion` and navigation structures.
+- **Access Control**: Dynamic filtering of collections based on user permissions and roles.
 
 **Key Features:**
 
-- **Singleton Pattern**: Ensures a single source of truth for content state.
-- **Versioning**: Maintains a `contentVersion` number that increments on every content update. This allows clients to poll for changes and update their UI efficiently without full reloads.
-- **Navigation Structure**: Generates a simplified navigation tree for the sidebar, optimized for payload size.
-- **Progressive Loading**: Supports fetching navigation nodes incrementally (e.g. only root level first, then children on expansion) to handle large sites with thousands of categories.
-- **Diagnostics**: Built-in health checks (`getHealthStatus`, `getDiagnostics`) to monitor cache performance, node counts, and initialization state.
-- **Sorting Logic**: Collections are sorted first by **Order** (defined in DB/Schema), then by **Path** (folder structure), and finally by **Name**. This ensures consistency between the Sidebar and the `getFirstCollection` redirect logic.
-- **Optimizations**: implements internal LRU caching for collection schemas and uses batched initialization to prevent event loop blocking.
+- **Singleton Pattern**: Ensures a single source of truth for content state across the server.
+- **Svelte 5 Runes**: Uses `$state()` for deep reactivity and `$derived()` for computed navigation trees.
+- **Multi-Tenant Folders**: Compiled collection JS files are stored in `.compiledCollections/{tenantId}/` to ensure strict isolation.
+- **Progressive Loading**: Navigation nodes are fetched incrementally to support massive sites (>10k categories).
+- **Diagnostics**: Built-in health checks (`getHealthStatus`) monitor cache performance and system health.
+- **Stable ID Generation**: Deterministic hashing prevents hydration mismatches between SSR and client.
 
 ### 2. Content Index (`src/content/index.ts`)
 
 This module handles the low-level details of content loading and processing.
 
-- **Dynamic Imports**: Uses `import.meta.glob` (in dev) and filesystem scanning (in prod) to load collection definitions.
-- **Batch Processing**: Processes collections in concurrent batches to improve startup time.
-- **Stable ID Generation**: Uses deterministic hashing to generate stable numeric IDs for categories, preventing hydration mismatches.
-- **Polling**: Implements a client-side polling mechanism to check for content updates via `api/content/version`.
+- **Dynamic Imports**: Uses `import.meta.glob` (dev) and filesystem scanning (prod) to load collections.
+- **Batch Processing**: Processes collections in concurrent batches to maximize startup speed.
+- **Polling**: Lightweight client-side polling checks for `contentVersion` updates.
 
 ### 3. Collection Scanner (`src/content/collectionScanner.ts`)
 
-A utility specifically for production environments to scan the filesystem for compiled collection definitions. This bypasses the need for dynamic imports in the built application, ensuring robust loading in various deployment environments (Node.js, Bun, Docker).
+A utility for production that scans `.compiledCollections/` for tenant-specific definitions. This bypasses dynamic imports in the built application.
 
 ### 4. Migration Engine (`src/services/MigrationEngine.ts`)
 
-A safety-critical service that handles the synchronization gap between Code Definitions and Database Schema in a **database-agnostic** manner.
+A database-agnostic service that synchronizes Code Definitions with the Database Schema.
 
-- **Agnostic Schema Retrieval**: Uses `dbAdapter.collection.getSchema()` to fetch the current database state, regardless of the underlying database (MongoDB, MariaDB, etc.).
-- **Drift Detection**: Uses `src/utils/schema/comparison.ts` to identify changes (field removal, type changes).
-- **Safe Mode**: Prevents destructive updates without explicit confirmation if data loss is detected.
+- **Drift Detection**: Identifies changes between TypeScript schemas and DB collections.
+- **Safe Mode**: Prevents accidental data loss during schema migrations.
 
-SveltyCMS uses a **Pull-based Reactivity Model** for content updates:
+---
 
-1.  **Server Update**: When content is modified (e.g., via the CMS interface), the `ContentManager` increments its `contentVersion`.
-2.  **Client Polling**: The client (`src/content/index.ts`) polls the `/api/content/version` endpoint at regular intervals (default: 10s).
-3.  **Version Check**: The client compares the server's version with its local version.
-4.  **Update Trigger**: If the server version is newer, the client triggers `updateCollections(true)`, which re-fetches the latest content structure and updates the Svelte stores.
-5.  **UI Update**: Svelte stores (`collections`, `contentStructure`) are updated, automatically triggering UI re-renders.
+## Reactivity Model (Svelte 5)
 
-## Caching Strategy
+SveltyCMS uses a **Signal-based Reactivity Model**:
 
-- **Imports Cache**: `src/content/index.ts` caches imported collection definitions to avoid re-processing unchanged files.
-- **Browser Cache**: API responses can be cached by the browser. The polling mechanism ensures that we only bust this cache when necessary.
-- **Hydration**: Initial content state is passed from the server to the client during SSR (via `+layout.server.ts`), avoiding an immediate initial fetch.
+1.  **State Tracking**: The `ContentManager` exposes reactive state via Svelte 5 runes.
+2.  **Version Propagation**: When content is modified, `contentVersion` ($state) increments.
+3.  **Fine-Grained Updates**: Components using `collections` or `contentStructure` re-render only for the specific pieces of data that changed.
+4.  **Client Polling**: The client polls `/api/content/version` every 10s. If it detects a mismatch, it triggers a reactive update of the local state.
 
-## Data Flow
+---
 
-1.  **Server Start**: `ContentManager` initializes -> `getImports` loads collections -> `createCategories` builds structure.
-2.  **Client Load**: `+layout.server.ts` fetches `navigationStructure` and `contentVersion` -> Passes to client.
-3.  **Hydration**: `initializeContent` uses server data to populate stores.
-4.  **Runtime**: Client polls version -> Updates on change.
+## Caching & Performance
+
+- **Layered Caching**: Combines Redis (L1) and Database (L2) for sub-ms schema lookups.
+- **Prefetching**: Automatically warms collection caches on system start.
+- **Hydration**: SSR transfers the initial state to the client, preventing initial layout shifts.
+
+---
 
 ## Future Improvements
 
-- **WebSocket Integration**: Replace polling with WebSockets for true real-time updates.
-- **Granular Updates**: Fetch only changed collections instead of reloading the entire structure.
-- **Permission Integration**: Deeply integrate access control into the `ContentManager` to filter content based on user roles.
+- **WebSocket Real-time**: Moving from polling to push-based updates.
+- **Granular Permissions**: Per-field access control within the `ContentManager`.
+- **Edge-Compiled Schemas**: Pre-compiling schemas to WASM for even faster execution.

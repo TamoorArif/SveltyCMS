@@ -137,5 +137,44 @@ export const actions: Actions = {
 			logger.error('Error saving config:', err);
 			return fail(500, { message: 'Failed to save configuration' });
 		}
+	},
+
+	loadPreset: async ({ request }) => {
+		const formData = await request.formData();
+		const presetId = formData.get('presetId') as string;
+
+		if (!presetId || presetId === 'blank') {
+			return fail(400, { message: 'Invalid preset ID parameter' });
+		}
+
+		try {
+			const { resolve } = await import('node:path');
+			const { cpSync, existsSync, mkdirSync } = await import('node:fs');
+			const { compile } = await import('@utils/compilation/compile');
+
+			const presetDir = resolve(process.cwd(), 'src', 'presets', presetId);
+			const targetDir = resolve(process.cwd(), 'config', 'collections');
+
+			if (!existsSync(presetDir)) {
+				return fail(404, { message: 'Preset directory not found' });
+			}
+
+			// Ensure target exists
+			mkdirSync(targetDir, { recursive: true });
+
+			// Copy files
+			cpSync(presetDir, targetDir, { recursive: true, force: true });
+			logger.info(`✅ Copied preset ${presetId} to config/collections`);
+
+			// Trigger compilation to register new collections
+			logger.info('🔄 Compiling new collections...');
+			await compile();
+			logger.info('✅ Preset installation complete via Collection Builder.');
+
+			return { success: true, message: `Preset ${presetId} installed successfully` };
+		} catch (err) {
+			logger.error('❌ Failed to install preset:', err);
+			return fail(500, { message: 'Failed to install preset' });
+		}
 	}
 };

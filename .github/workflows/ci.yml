@@ -152,7 +152,7 @@ jobs:
 
           # 2. Run Setup Wizard via Playwright to generate config/private.test.ts naturally
           bun x playwright install --with-deps chromium
-          bun x playwright test tests/e2e/setup-wizard.spec.ts
+          bun x playwright test tests/e2e/setup-wizard.spec.ts --project=chromium
 
           # 3. Now run the integration tests against the configured system
           bun run scripts/run-integration-tests.ts
@@ -233,8 +233,8 @@ jobs:
         run: |
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-          bun x playwright test tests/e2e/setup-wizard.spec.ts
-          bun x playwright test tests/e2e/role-based-access.spec.ts
+          bun x playwright test tests/e2e/setup-wizard.spec.ts --project=chromium
+          bun x playwright test tests/e2e/role-based-access.spec.ts --project=chromium
         timeout-minutes: 20
 
       - name: Upload Playwright Report

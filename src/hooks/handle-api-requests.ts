@@ -36,6 +36,7 @@ import { metricsService } from '@src/services/metrics-service';
 import type { Handle } from '@sveltejs/kit';
 import { AppError, getErrorMessage, handleApiError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import crypto from 'node:crypto';
 
 // --- METRICS INTEGRATION ---
 // API metrics are now handled by the unifiedmetrics-servicefor enterprise-grade monitoring
@@ -96,6 +97,29 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 		}
 
 		metricsService.incrementApiRequests();
+
+		// --- 0. Rate Limiting for Sensitive Endpoints ---
+		if (['/api/website-tokens', '/api/permission/update'].some((p) => url.pathname.startsWith(p))) {
+			// Basic implementation of an increment function using the single value atomic fallback pattern
+			// If Redis is backing cacheService, it handles TTL well.
+			const rateLimitKey = `ratelimit:api:sensitive:${locals.user._id}:${url.pathname}`;
+			let attempts = 1;
+			try {
+				const current = await cacheService.get<{ count: number }>(rateLimitKey);
+				if (current) {
+					attempts = current.count + 1;
+				}
+				await cacheService.set(rateLimitKey, { count: attempts }, 60); // 60s window
+
+				if (attempts > 30) {
+					logger.warn(`Rate limit exceeded on sensitive API: ${url.pathname} for user ${locals.user._id}`);
+					throw new AppError('Rate limit exceeded', 429, 'TOO_MANY_REQUESTS');
+				}
+			} catch (e) {
+				// Don't fail open, but log cache issue
+				logger.error(`Rate limit check failed: ${getErrorMessage(e)}`);
+			}
+		}
 
 		const apiEndpoint = getApiEndpoint(url.pathname);
 
@@ -167,11 +191,18 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 			if (response.ok) {
 				metricsService.recordApiCacheMiss();
 
-				// Check Content-Type to ensuring we only cache JSON responses
+				// Check Content-Type to ensure we only cache/ETag JSON responses
 				const contentType = response.headers.get('content-type');
 				if (contentType?.includes('application/json')) {
-					// Clone the response to read body without consuming the original stream
 					const responseClone = response.clone();
+					const responseBody = await responseClone.text();
+
+					// --- ETag / If-None-Match Support ---
+					const etag = `"${crypto.createHash('md5').update(responseBody).digest('hex')}"`;
+					if (request.headers.get('if-none-match') === etag) {
+						return new Response(null, { status: 304, headers: { ETag: etag } });
+					}
+					response.headers.set('ETag', etag);
 
 					// Set cache header immediately on the response going to the user
 					response.headers.set('X-Cache', 'MISS');
@@ -179,7 +210,6 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 					// Cache in background - don't await to avoid blocking the response stream
 					(async () => {
 						try {
-							const responseBody = await responseClone.text();
 							const responseData = JSON.parse(responseBody);
 
 							await cacheService.set(

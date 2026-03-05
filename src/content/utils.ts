@@ -1,4 +1,14 @@
-/** @file src/content/utils.ts @description Content management helper functions features: [nested structure construction, content path mapping, category node generation, dynamic module parsing, recursive sorting] */
+/**
+ * @file src/content/utils.ts
+ * @description Content management helper functions
+ *
+ * Features:
+ * - nested structure construction
+ * - content path mapping
+ * - category node generation
+ * - dynamic module parsing
+ * - recursive sorting
+ */
 import { widgetRegistryService } from '@src/services/widget-registry-service';
 import { logger } from '@utils/logger';
 import type { ContentNode, MinimalContentNode, Schema } from './types';

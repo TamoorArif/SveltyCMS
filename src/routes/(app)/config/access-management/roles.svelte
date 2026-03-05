@@ -18,33 +18,42 @@ It provides the following functionality:
 
 <script lang="ts">
 	// Store
-
+	import { toast } from '@src/stores/toast.svelte.ts';
 	// Auth
 	import type { Role } from '@src/databases/auth/types';
-	import { toast } from '@src/stores/toast.svelte.ts';
 	// Skeleton
 	import { modalState } from '@utils/modal-state.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { dndzone } from 'svelte-dnd-action';
-	import { v4 as uuidv4 } from 'uuid';
 	// Components
 	import RoleModal from './role-modal.svelte';
 
 	const flipDurationMs = 100;
 
-	const { roleData, setRoleData, updateModifiedCount } = $props();
+	interface Props {
+		roleData: any;
+		setRoleData: (data: any) => void;
+		updateModifiedCount?: (count: number) => void;
+		permissions?: import('@src/databases/auth/types').Permission[];
+	}
 
-	// Reactive state
-	let roles: Role[] = $state([]);
-	let selectedPermissions: string[] = $state([]);
-	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
-	let selectedRoles = $state(new SvelteSet<any>());
-	const error = $state<string | null>(null);
-	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
-	const modifiedRoles = $state(new SvelteSet<any>());
-	// Define DndItem type for dndzone compatibility
-	type DndItem = Role & { id: string };
-	let items: DndItem[] = $state([]);
+	let { roleData, setRoleData, updateModifiedCount, permissions = [] }: Props = $props();
+
+	// Roles State
+	let roles: (Role & { id: string })[] = $state([]);
+	let roleSearchTerm = $state('');
+	let error = $state<string | null>(null);
+
+	// Derived items for display (filtering)
+	const filteredRoles = $derived(
+		roles.filter(
+			(r) => r.name.toLowerCase().includes(roleSearchTerm.toLowerCase()) || r.description?.toLowerCase().includes(roleSearchTerm.toLowerCase())
+		)
+	);
+
+	// Tracking changes
+	const modifiedRoles = new SvelteSet<string>();
+	let selectedRoles = new SvelteSet<string>();
 
 	// Modal state
 	let isEditMode = $state(false);
@@ -60,7 +69,6 @@ It provides the following functionality:
 				id: role._id
 			}));
 			roles = rolesWithId;
-			items = rolesWithId;
 		}
 	});
 
@@ -68,7 +76,6 @@ It provides the following functionality:
 		isEditMode = !!role;
 		currentRoleId = role ? role._id : null;
 		currentGroupName = groupName || '';
-		selectedPermissions = role?.permissions || [];
 
 		modalState.trigger(RoleModal as any, {
 			isEditMode,
@@ -76,7 +83,9 @@ It provides the following functionality:
 			roleName: role?.name || '',
 			roleDescription: role?.description || '',
 			currentGroupName,
-			selectedPermissions,
+			selectedPermissions: role?.permissions || [],
+			permissions, // Pass available permissions to the modal
+			roles, // Pass available roles to copy from
 			response: (formData: any) => {
 				if (formData) {
 					saveRole(formData);
@@ -98,10 +107,10 @@ It provides the following functionality:
 			return;
 		}
 
-		const roleId = currentRoleId ?? uuidv4().replace(/-/g, '');
+		const roleId = currentRoleId ?? crypto.randomUUID().replace(/-/g, '');
 		const newRole = {
 			_id: roleId,
-			id: roleId, // Add id for dndzone
+			id: roleId,
 			name: roleName,
 			description: roleDescription,
 			groupName: currentGroupName,
@@ -109,25 +118,20 @@ It provides the following functionality:
 		};
 
 		if (!isEditMode) {
-			items = [...items, newRole];
+			roles = [...roles, newRole];
 			modifiedRoles.add(roleId);
-			toast.info({
-				description: 'Role added. Click "Save" at the top to apply changes.'
-			});
+			toast.info('Role added. Save to apply.');
 		} else if (currentRoleId) {
-			const index = items.findIndex((cur: { _id: string }) => cur._id === currentRoleId);
-			items[index] = newRole;
-			items = [...items];
+			const index = roles.findIndex((r) => r._id === currentRoleId);
+			roles[index] = newRole;
+			roles = [...roles];
 			modifiedRoles.add(currentRoleId);
-			toast.info({
-				description: 'Role updated. Click "Save" at the top to apply changes.'
-			});
+			toast.info('Role updated. Save to apply.');
 		}
 
-		roles = items;
-		// Remove id property when sending data to parent
-		const cleanedItems = items.map(({ id: _id_unused, ...item }: { id: string; [key: string]: any }) => item);
-		setRoleData(cleanedItems);
+		// Sync to parent
+		const cleanedRoles = roles.map(({ id, ...rest }) => rest);
+		setRoleData(cleanedRoles);
 
 		if (updateModifiedCount) {
 			updateModifiedCount(modifiedRoles.size);
@@ -136,20 +140,19 @@ It provides the following functionality:
 
 	const deleteSelectedRoles = async () => {
 		for (const roleId of selectedRoles) {
-			const index = items.findIndex((cur: { _id: string }) => cur._id === roleId);
-			items.splice(index, 1);
-			modifiedRoles.add(roleId);
+			const index = roles.findIndex((cur: { _id: string }) => cur._id === roleId);
+			if (index !== -1) {
+				roles.splice(index, 1);
+				modifiedRoles.add(roleId);
+			}
 		}
-		items = [...items];
-		roles = items;
+		roles = [...roles];
 		selectedRoles.clear();
-		toast.info({
-			description: 'Roles deleted. Click "Save" at the top to apply changes.'
-		});
+		toast.info('Roles deleted. Save to apply.');
 
-		// Remove id property when sending data to parent
-		const cleanedItems = items.map(({ id: _id_unused, ...item }: { id: string; [key: string]: any }) => item);
-		setRoleData(cleanedItems);
+		// Sync to parent
+		const cleanedRoles = roles.map(({ id, ...rest }) => rest);
+		setRoleData(cleanedRoles);
 
 		// Notify the parent about the number of changes
 		if (updateModifiedCount) {
@@ -168,41 +171,23 @@ It provides the following functionality:
 	// DndItem type already defined above
 
 	function handleSort(e: CustomEvent) {
-		items = [...e.detail.items];
-		roles = items;
-		// Find the item that was moved by id
-		const movedItem = e.detail.items.find((item: DndItem) => item.id === e.detail.info.id);
-		if (movedItem) {
-			modifiedRoles.add(movedItem._id);
-		}
+		roles = [...e.detail.items];
+		const movedItem = e.detail.items.find((item: any) => item.id === e.detail.info.id);
+		if (movedItem) modifiedRoles.add(movedItem._id);
 
-		// Remove id property when sending data to parent
-		const cleanedItems = items.map(({ id: _id_unused, ...item }: { id: string; [key: string]: any }) => item);
-		setRoleData(cleanedItems);
-
-		// Notify the parent about the number of changes
-		if (updateModifiedCount) {
-			updateModifiedCount(modifiedRoles.size);
-		}
+		const cleanedRoles = roles.map(({ id, ...rest }) => rest);
+		setRoleData(cleanedRoles);
+		if (updateModifiedCount) updateModifiedCount(modifiedRoles.size);
 	}
 
 	function handleFinalize(e: CustomEvent) {
-		items = [...e.detail.items];
-		roles = items;
-		// Find the item that was moved by id
-		const movedItem = e.detail.items.find((item: DndItem) => item.id === e.detail.info.id);
-		if (movedItem) {
-			modifiedRoles.add(movedItem._id);
-		}
+		roles = [...e.detail.items];
+		const movedItem = e.detail.items.find((item: any) => item.id === e.detail.info.id);
+		if (movedItem) modifiedRoles.add(movedItem._id);
 
-		// Remove id property when sending data to parent
-		const cleanedItems = items.map(({ id: _id_unused, ...item }: { id: string; [key: string]: any }) => item);
-		setRoleData(cleanedItems);
-
-		// Notify the parent about the number of changes
-		if (updateModifiedCount) {
-			updateModifiedCount(modifiedRoles.size);
-		}
+		const cleanedRoles = roles.map(({ id, ...rest }) => rest);
+		setRoleData(cleanedRoles);
+		if (updateModifiedCount) updateModifiedCount(modifiedRoles.size);
 	}
 </script>
 
@@ -216,13 +201,21 @@ It provides the following functionality:
 	</p>
 
 	<div class="wrapper my-4">
-		<div class="mb-4 flex items-center justify-between">
-			<!-- Create -->
-			<button onclick={() => openModal(null, '')} class="preset-filled-primary-500 btn">Create Role</button>
-			<!-- Delete -->
-			<button onclick={deleteSelectedRoles} class="preset-filled-error-500 btn" disabled={selectedRoles.size === 0}>
-				Delete Roles ({selectedRoles.size})
-			</button>
+		<div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+			<div class="flex items-center gap-2">
+				<button onclick={() => openModal(null, '')} class="preset-filled-primary-500 btn">
+					<iconify-icon icon="mdi:plus-circle-outline" class="mr-2"></iconify-icon>
+					Create Role
+				</button>
+				<button onclick={deleteSelectedRoles} class="preset-filled-error-500 btn" disabled={selectedRoles.size === 0}>
+					Delete Selected ({selectedRoles.size})
+				</button>
+			</div>
+
+			<div class="relative w-full max-w-sm">
+				<iconify-icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 opacity-50"></iconify-icon>
+				<input type="text" placeholder="Search roles..." class="input pl-10" bind:value={roleSearchTerm} aria-label="Search roles" />
+			</div>
 		</div>
 
 		<div class="role mt-4 flex-1 overflow-auto">
@@ -236,24 +229,24 @@ It provides the following functionality:
 					</p>
 					<ul
 						class="list-none space-y-2"
-						use:dndzone={{ items: items, flipDurationMs, type: 'column' }}
+						use:dndzone={{ items: filteredRoles, flipDurationMs, type: 'column' }}
 						onconsider={handleSort}
 						onfinalize={handleFinalize}
 						aria-describedby="roles-dnd-instructions"
 						role="list"
 					>
-						{#each items as role (role.id)}
-							<li class="animate-flip flex items-center justify-between rounded border p-2 hover:bg-surface-500 md:flex-row" role="listitem">
+						{#each filteredRoles as role (role.id)}
+							<li
+								class="animate-flip flex items-center justify-between rounded border p-2 hover:bg-surface-200 dark:hover:bg-surface-700 md:flex-row transition-colors"
+								role="listitem"
+							>
 								<div class="flex items-center gap-2">
 									<!-- Drag Icon -->
 									<div
-										class="cursor-grab active:cursor-grabbing"
+										class="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-surface-300 dark:hover:bg-surface-600"
 										role="button"
 										tabindex="0"
 										aria-label="Drag to reorder {role.name}"
-										onkeydown={() => {
-											/* Logic for keyboard reordering could be added here if not handled by library */
-										}}
 									>
 										<iconify-icon icon="mdi:drag" width={24}></iconify-icon>
 									</div>
@@ -263,31 +256,33 @@ It provides the following functionality:
 											type="checkbox"
 											checked={selectedRoles.has(role._id)}
 											onchange={() => toggleRoleSelection(role._id)}
-											class="mr-2"
-											aria-label="Select {role.name} for deletion"
+											class="checkbox"
+											aria-label={`Select ${role.name} for deletion`}
 										/>
 									{/if}
 
-									<!-- Role Name with Tooltip -->
-									<span class="flex items-center text-xl font-semibold text-tertiary-500 dark:text-primary-500">
-										{role.name}
-
-										{#if role.description}
-											<div class="inline-block ml-1" role="tooltip" aria-hidden="false" aria-label={role.description}>
-												<iconify-icon icon="material-symbols:info" width={18} class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-											</div>
-										{/if}
-									</span>
+									<!-- Role Name with Description hidden on small screens -->
+									<div class="flex flex-col">
+										<span class="flex items-center text-lg font-bold text-tertiary-500 dark:text-primary-500">
+											{role.name}
+											{#if role.isAdmin}
+												<span class="ml-2 badge variant-filled-secondary text-xs">Admin</span>
+											{/if}
+										</span>
+										<span class="text-xs opacity-60 md:hidden">{role.description || 'No description'}</span>
+									</div>
 								</div>
 
 								<!-- Description for larger screens -->
-								<p class="mt-2 hidden text-sm text-gray-600 dark:text-gray-400 md:ml-4 md:mt-0 md:block">{role.description}</p>
+								<p class="mt-2 hidden text-sm opacity-70 md:ml-4 md:mt-0 md:block flex-1">{role.description}</p>
 
-								<!-- Edit Button: changes layout depending on screen size -->
-								<button onclick={() => openModal(role)} aria-label="Edit role {role.name}" class="preset-filled-secondary-500 btn">
-									<iconify-icon icon="mdi:pencil" class="text-white" width={18}></iconify-icon>
-									<span class="hidden md:block">Edit</span>
-								</button>
+								<!-- Actions -->
+								<div class="flex gap-2">
+									<button onclick={() => openModal(role)} aria-label={`Edit role ${role.name}`} class="btn btn-sm variant-soft-secondary">
+										<iconify-icon icon="mdi:pencil" width={18} class="mr-1"></iconify-icon>
+										Edit
+									</button>
+								</div>
 							</li>
 						{/each}
 					</ul>
@@ -300,5 +295,10 @@ It provides the following functionality:
 <style>
 	.role {
 		height: calc(100vh - 350px);
+	}
+	:global([data-is-dnd-shadow-item='true']) {
+		opacity: 0.75 !important;
+		background: var(--color-surface-400) !important;
+		border: 2px dashed var(--color-primary-500) !important;
 	}
 </style>

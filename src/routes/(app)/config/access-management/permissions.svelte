@@ -190,10 +190,30 @@ It provides the following functionality:
 			return role;
 		});
 
-		// Track modified permissions
 		modifiedPermissions.add(permission);
+		roles = updatedRoles;
+		setRoleData(updatedRoles);
+		updateModifiedCount(modifiedPermissions.size);
+	};
 
-		// Update role data and notify parent component
+	// Bulk toggle for a role
+	const toggleAllForRole = (roleId: string, checked: boolean) => {
+		const updatedRoles = roles.map((role) => {
+			if (role._id === roleId) {
+				if (checked) {
+					// Add all filtered permissions
+					const newPerms = new Set([...role.permissions, ...filteredPermissions.map((p) => p._id)]);
+					return { ...role, permissions: Array.from(newPerms) };
+				} else {
+					// Remove all filtered permissions
+					const filteredIds = new Set(filteredPermissions.map((p) => p._id));
+					return { ...role, permissions: role.permissions.filter((p) => !filteredIds.has(p)) };
+				}
+			}
+			return role;
+		});
+
+		filteredPermissions.forEach((p) => modifiedPermissions.add(p._id));
 		roles = updatedRoles;
 		setRoleData(updatedRoles);
 		updateModifiedCount(modifiedPermissions.size);
@@ -274,7 +294,32 @@ It provides the following functionality:
 						<!-- List only non-admin roles -->
 						{#each roles as role (role._id)}
 							{#if !role.isAdmin}
-								<th class="py-2 dark:text-surface-50" scope="col">{role.name}</th>
+								<th class="py-2 dark:text-surface-50 text-center" scope="col">
+									<div class="flex flex-col items-center gap-1">
+										<span class="text-xs font-bold">{role.name}</span>
+										<div class="flex gap-1 mt-1">
+											<input
+												type="checkbox"
+												class="checkbox checkbox-sm"
+												checked={filteredPermissions.length > 0 && filteredPermissions.every((p) => role.permissions.includes(p._id))}
+												indeterminate={filteredPermissions.length > 0 &&
+													filteredPermissions.some((p) => role.permissions.includes(p._id)) &&
+													!filteredPermissions.every((p) => role.permissions.includes(p._id))}
+												onchange={(e) => toggleAllForRole(role._id, e.currentTarget.checked)}
+												title={`Select/Deselect all filtered permissions for ${role.name}`}
+												aria-label={`Select all for ${role.name}`}
+											/>
+											<button
+												class="btn btn-xs variant-ghost-surface p-0.5"
+												onclick={() => toggleAllForRole(role._id, true)}
+												title="Assign role to all filtered permissions"
+												aria-label={`Assign ${role.name} to all filtered permissions`}
+											>
+												<iconify-icon icon="mdi:check-all" width="14"></iconify-icon>
+											</button>
+										</div>
+									</div>
+								</th>
 							{/if}
 						{/each}
 					</tr>

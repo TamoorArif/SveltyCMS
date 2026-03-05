@@ -74,9 +74,10 @@ export interface PaginationOption {
 }
 
 export interface PaginationOptions {
-	cursor?: string; // For cursor-based pagination
-	includeTotalCount?: boolean; // Option to skip expensive total count calculation
-	page?: number;
+	cursor?: string; // For cursor-based pagination (base64-encoded last item ID + sort value)
+	cursorDirection?: 'after' | 'before';
+	includeTotalCount?: boolean; // Option to skip expensive total count calculation (default: false)
+	page?: number; // fallback to offset-based
 	pageSize?: number;
 	sortDirection?: 'asc' | 'desc';
 	sortField?: string;
@@ -169,7 +170,7 @@ export interface QueryMeta {
 
 export type DatabaseResult<T> = { success: true; data: T; meta?: QueryMeta } | { success: false; message: string; error: DatabaseError };
 
-export type NonNullObject = Record<string, unknown>;
+export type RecordObject = Record<string, unknown>;
 
 export type QueryOperator<T> =
 	| T
@@ -339,6 +340,7 @@ export interface QueryBuilder<T = unknown> {
 	exclude<K extends keyof T>(fields: K[]): this;
 	execute(): Promise<DatabaseResult<T[]>>;
 	exists(): Promise<DatabaseResult<boolean>>;
+	explain?(): Promise<DatabaseResult<unknown>>;
 	findOne(): Promise<DatabaseResult<T | null>>;
 	findOneOrFail(): Promise<DatabaseResult<T>>;
 	groupBy<K extends keyof T>(field: K): this;

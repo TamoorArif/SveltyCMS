@@ -1,4 +1,13 @@
-/** @file src/content/collection-scanner.ts @description Standalone collection scanner for setup and production optimization features: [recursive filesystem scanning, cross-platform path normalization, parallel module processing, widget registry pre-initialization] */
+/**
+ * @file src/content/collection-scanner.ts
+ * @description Standalone collection scanner for setup and production optimization
+ *
+ * Features:
+ * - recursive filesystem scanning
+ * - cross-platform path normalization
+ * - parallel module processing
+ * - widget registry pre-initialization
+ */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -12,22 +21,21 @@ import { processModule } from './utils';
  */
 async function recursivelyGetFiles(dir: string): Promise<string[]> {
 	const entries = await fs.readdir(dir, { withFileTypes: true });
+	const files: string[] = [];
 
-	const files = await Promise.all(
+	await Promise.all(
 		entries.map(async (entry) => {
 			const fullPath = path.join(dir, entry.name);
-
 			if (entry.isDirectory()) {
-				return recursivelyGetFiles(fullPath);
+				const nestedFiles = await recursivelyGetFiles(fullPath);
+				files.push(...nestedFiles);
+			} else if (entry.isFile() && entry.name.endsWith('.js')) {
+				files.push(fullPath);
 			}
-			if (entry.isFile() && entry.name.endsWith('.js')) {
-				return [fullPath];
-			}
-			return [];
 		})
 	);
 
-	return files.flat();
+	return files;
 }
 
 /**

@@ -33,6 +33,7 @@
 		"test:e2e": "concurrently -k -s last \"bun run dev\" \"bun run test:e2e:run\"",
 		"test:e2e:run": "wait-on http://localhost:5173 && bun x playwright test tests/e2e",
 		"test:all": "bun run test:unit && bun run test:integration && bun run test:e2e",
+		"test:a11y": "npx axe src/routes/(app)/config/**/*.svelte --exit",
 		"-- LINT & FORMAT -------------------------------------": "",
 		"lint": "eslint .",
 		"format": "prettier --write .",
@@ -84,7 +85,7 @@
 		"mcp-server"
 	],
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.5",
+		"@biomejs/biome": "^2.4.6",
 		"@iconify/svelte": "^5.2.1",
 		"@playwright/test": "^1.58.2",
 		"@semantic-release/changelog": "^6.0.3",
@@ -139,12 +140,12 @@
 		"wait-on": "^9.0.4"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1001.0",
+		"@aws-sdk/client-s3": "^3.1002.0",
 		"@boxyhq/saml-jackson": "^1.52.2",
 		"@floating-ui/dom": "^1.7.6",
 		"@googlemaps/js-api-loader": "^2.0.2",
-		"@inlang/paraglide-js": "^2.13.1",
-		"@mcp-b/webmcp-polyfill": "^2.0.11",
+		"@inlang/paraglide-js": "^2.13.2",
+		"@mcp-b/webmcp-polyfill": "^2.0.13",
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.19",
 		"@testing-library/jest-dom": "^6.9.1",
@@ -204,7 +205,7 @@
 	"optionalDependencies": {
 		"mariadb": "^3.5.1",
 		"mongoose": "^9.2.4",
-		"mysql2": "^3.18.2",
+		"mysql2": "^3.19.0",
 		"postgres": "^3.4.8"
 	}
 }
