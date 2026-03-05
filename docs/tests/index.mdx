@@ -18,9 +18,9 @@ tags:
 
 # SveltyCMS Testing Documentation
 
-**Last Updated:** March 4, 2026
-**Total Tests:** ~900+ (608 unit + ~300 integration/E2E)
-**Pass Rate:** 100% (All 608 unit tests passing, 0 failing)
+**Last Updated:** March 5, 2026
+**Total Tests:** ~960+ (663 unit + ~300 integration/E2E)
+**Pass Rate:** 100% (All 663 unit tests passing, 0 failing)
 
 ## Quick Links
 
@@ -67,7 +67,7 @@ graph TD
         PT["config/private.test.ts<br/>(Test/Isolated)"]
     end
 
-    Unit -.-> |Preload Mocks| PT
+    Unit -.-> |Global Setup| PT
     Int -.-> |TEST_MODE=true| PT
     E2E -.-> |TEST_MODE=true| PT
 
@@ -109,8 +109,8 @@ SveltyCMS uses two complementary test frameworks to ensure comprehensive quality
 
 - **Purpose**: Fast, lightweight testing for business logic, services, and API endpoints
 - **Location**: `tests/unit/`
-- **Test Count**: ~ 608 tests
-- **Execution Time**: ~3 seconds
+- **Test Count**: 663 tests
+- **Execution Time**: ~4 seconds
 
 **What It Tests**:
 
@@ -316,23 +316,23 @@ This script:
 
 ## Test Status & Coverage
 
-**Current Status (March 4, 2026)**
+**Current Status (March 5, 2026)**
 
-| Category          | Passing  | Failing | Skipped | Total    |
-| ----------------- | -------- | ------- | ------- | -------- |
-| Unit Tests        | 608      | 0       | 0       | 608      |
-| Integration Tests | ~300     | 0       | 0       | ~300     |
-| E2E Tests         | ~40      | 0       | 0       | ~40      |
-| **TOTAL**         | **~948** | **0**   | **0**   | **~948** |
+| Category          | Passing   | Failing | Skipped | Total     |
+| ----------------- | --------- | ------- | ------- | --------- |
+| Unit Tests        | 663       | 0       | 0       | 663       |
+| Integration Tests | ~300      | 0       | 0       | ~300      |
+| E2E Tests         | ~40       | 0       | 0       | ~40       |
+| **TOTAL**         | **~1003** | **0**   | **0**   | **~1003** |
 
 > **Note**: Integration and E2E tests require a running preview server. Run `bun run test:integration` or `bun run test:e2e` for full test coverage.
 
 **Recently Fixed ✅**
 
-- `tests/unit/hooks/authorization.test.ts` (22 tests) - Fixed mock database adapter
-- `tests/unit/hooks/theme.test.ts` (40 tests) - Fixed mockResolve signature
-- `tests/unit/hooks/firewall.test.ts` (27 tests) - Fixed logger import
-- All unit tests now passing (308/308) - February 2026
+- `tests/unit/setup.ts` - Centralized all mocks and preloads into a single source of truth.
+- `tests/unit/hooks/` - Unified middleware tests with standardized directory structure.
+- `tests/unit/stores/system.test.ts` - Refined conditional mocking to prevent self-interference.
+- All 663 unit tests now passing (100% Green) - March 2026
 
 **Known Issues ⚠️**
 
@@ -354,8 +354,8 @@ This script:
 
 ### Coverage Reports
 
-- [API Test Coverage](/docs/tests/api-coverage) - REST API endpoint testing (460+ tests)
-- [Hook Test Coverage](/docs/tests/hook-coverage) - Middleware hooks (11 hooks, 485+ tests)
+- [API Test Coverage](/docs/tests/api-coverage) - REST API endpoint testing
+- [Hook Test Coverage](/docs/tests/hook-coverage) - Middleware hooks (11 hooks)
 - [Store Test Coverage](/docs/tests/store-coverage) - Svelte stores (system, UI, loading)
 - [Widget Test Coverage](/docs/tests/widget-coverage) - Widget validation and security
 - [Utility Test Coverage](/docs/tests/utility-coverage) - Helper functions and utilities
@@ -378,7 +378,7 @@ SveltyCMS is an agnostic headless SvelteKit CMS - it works with multiple databas
 
 - Up to 100x faster than Jest/Mocha
 - Our 76-test utility suite completes in ~1.5 seconds
-- Full API test suite (460+ tests) completes in ~15-20 seconds
+- Full unit test suite (663 tests) completes in ~4-5 seconds
 - Instant feedback during development
 
 **Why Speed Matters for a Headless CMS:**
@@ -436,10 +436,9 @@ it('should handle async operations', async () => {
 
 ```
 tests/
-├── bun/                    # Bun unit & integration tests
-│   ├── setup.ts           # Global test setup
-│   ├── mocks/             # Mock implementations
-│   ├── api/               # API integration tests
+├── unit/                    # Bun unit tests (Centralized)
+│   ├── setup.ts           # Global test setup (unified)
+│   ├── api/               # API endpoint tests
 │   ├── databases/         # Database adapter tests
 │   ├── hooks/             # Middleware hook tests
 │   ├── services/          # Service layer tests

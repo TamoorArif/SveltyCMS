@@ -17,17 +17,17 @@ tags:
 
 # SveltyCMS Test Suite Status
 
-> **Last Updated:** March 4, 2026
-> **Total Tests:** ~985+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (All verified suites passing)
+> **Last Updated:** March 5, 2026
+> **Total Tests:** ~1003+ (Unit + Integration + E2E)
+> **Overall Pass Rate:** 100% (663 unit tests verified)
 
 ## Executive Summary
 
 The testing suite has been optimized for **parallel execution** and **enterprise-grade reliability**. Recent efforts have focused on exhaustive unit testing for core business logic, AST transformations, and advanced widget validation.
 
-- **Unit Tests:** 685 tests across 49 files (Passing - 100%)
+- **Unit Tests:** 663 tests across 44 files (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
-- **E2E Tests:** Critical flows fully automated and verified across **MongoDB (Local/SRV), SQLite, MariaDB, and PostgreSQL**.
+- **E2E Tests:** Critical flows fully automated and verified.
 
 ### Test Coverage by Category
 
@@ -85,7 +85,7 @@ All core features are verified to work seamlessly across our supported database 
 
 **Files:**
 
-- `tests/unit/hooks/*.test.ts` (12 files, 287 tests)
+- `tests/unit/hooks/` (Passing - 100%)
 - `tests/unit/databases/database-resilience.test.ts` (7 tests)
 - `tests/unit/databases/cache-service.test.ts` (9 tests)
 
@@ -125,9 +125,9 @@ Our GitHub Actions pipeline (`ci.yml`) has been hardened to ensure 100% reliabil
 
 ### Recent Improvements
 
-- ✅ **Consolidated Mocking**: Unit test mocks are centralized in `setup.ts` to prevent race conditions.
+- ✅ **Consolidated Mocking**: Unit test mocks are centralized in `tests/unit/setup.ts` to ensure consistency.
 - ✅ **Reactivity Mocks**: Enhanced Svelte 5 rune mocks for reliable reactive state testing.
-- ✅ **Path Normalization**: Fixed Windows/Linux pathing issues for dynamic configuration imports.
+- ✅ **Path Normalization**: Optimized module resolution for Linux/GitHub Actions environments.
 
 ---
 

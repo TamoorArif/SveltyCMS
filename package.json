@@ -1,7 +1,7 @@
 {
 	"name": "sveltycms",
 	"description": "A powerful Headless CMS with sveltekit power",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"type": "module",
 	"sideEffects": [
 		"*.css",
@@ -26,10 +26,10 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": " svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "bun run test:unit",
-		"test:unit": "svelte-kit sync && bun test --preload ./tests/unit/setup.ts tests/unit/services tests/unit/utils tests/unit/stores tests/unit/widgets tests/unit/hooks tests/unit/databases tests/unit/auth tests/unit/*.test.ts",
+		"test:unit": "svelte-kit sync && bun test --preload ./tests/unit/setup.ts tests/unit/**/*.test.ts",
 		"test:integration": "bun run scripts/run-integration-tests.ts",
 		"test:integration:run": "bun run scripts/run-integration-tests.ts",
-		"test:hooks": "for test in authorization security-headers theme authentication firewall static-asset-caching system-state api-requests rate-limit locale setup token-resolution; do bun test --preload ./tests/unit/hooks/preload.ts ./tests/unit/hooks/${test}.test.ts || exit 1; done",
+		"test:hooks": "for test in authorization security-headers theme authentication firewall static-asset-caching system-state api-requests rate-limit locale setup token-resolution; do bun test --preload ./tests/unit/setup.ts ./tests/unit/hooks/${test}.test.ts || exit 1; done",
 		"test:e2e": "concurrently -k -s last \"bun run dev\" \"bun run test:e2e:run\"",
 		"test:e2e:run": "wait-on http://localhost:5173 && bun x playwright test tests/e2e",
 		"test:all": "bun run test:unit && bun run test:integration && bun run test:e2e",

@@ -19,8 +19,8 @@ const originalTestMode = process.env.TEST_MODE;
 process.env.TEST_MODE = undefined;
 
 mock.module('@src/stores/system/state', () => ({
-	getSystemState: () => globalThis.__mockSystemState,
-	isSystemReady: () => globalThis.__mockIsSystemReady
+	getSystemState: () => (globalThis as any).__mockSystemState,
+	isSystemReady: () => (globalThis as any).__mockIsSystemReady
 }));
 
 import { handleSystemState } from '@src/hooks/handle-system-state';
@@ -62,7 +62,7 @@ const mockResolve = mock(() => {
  * Helper to set mock system state
  */
 function setMockState(state: { overallState: string; services?: Record<string, any>; performanceMetrics?: { stateTransitions: any[] } }) {
-	globalThis.__mockSystemState = {
+	(globalThis as any).__mockSystemState = {
 		overallState: state.overallState,
 		services: state.services || {},
 		performanceMetrics: state.performanceMetrics || { stateTransitions: [] }
@@ -73,8 +73,8 @@ describe('handleSystemState - State Machine Logic', () => {
 	beforeEach(() => {
 		// Reset mock state between tests
 		mockResolve.mockClear();
-		globalThis.__mockIsSystemReady = true;
-		globalThis.__mockIsSetupComplete = true;
+		(globalThis as any).__mockIsSystemReady = true;
+		(globalThis as any).__mockIsSetupComplete = true;
 		// Ensure TEST_MODE is disabled so state machine runs
 		process.env.TEST_MODE = undefined;
 		setMockState({ overallState: 'READY' });
@@ -90,7 +90,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('READY state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'READY' });
-			globalThis.__mockIsSystemReady = true;
+			(globalThis as any).__mockIsSystemReady = true;
 		});
 
 		it('should allow all routes when system is READY', async () => {
@@ -127,7 +127,7 @@ describe('handleSystemState - State Machine Logic', () => {
 					database: { status: 'healthy', lastCheck: new Date() }
 				}
 			});
-			globalThis.__mockIsSystemReady = true;
+			(globalThis as any).__mockIsSystemReady = true;
 		});
 
 		it('should allow requests when system is DEGRADED', async () => {
@@ -158,8 +158,8 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('IDLE state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'IDLE' });
-			globalThis.__mockIsSystemReady = false;
-			globalThis.__mockIsSetupComplete = false;
+			(globalThis as any).__mockIsSystemReady = false;
+			(globalThis as any).__mockIsSetupComplete = false;
 		});
 
 		it('should allow /setup routes during IDLE state', async () => {
@@ -224,7 +224,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('INITIALIZING state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'INITIALIZING' });
-			globalThis.__mockIsSystemReady = false;
+			(globalThis as any).__mockIsSystemReady = false;
 		});
 
 		it('should allow setup routes during INITIALIZING', async () => {
@@ -278,7 +278,7 @@ describe('handleSystemState - State Machine Logic', () => {
 					]
 				}
 			});
-			globalThis.__mockIsSystemReady = false;
+			(globalThis as any).__mockIsSystemReady = false;
 		});
 
 		it('should allow health checks even when FAILED', async () => {
@@ -351,8 +351,8 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('Route pattern matching', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'IDLE' });
-			globalThis.__mockIsSystemReady = false;
-			globalThis.__mockIsSetupComplete = false;
+			(globalThis as any).__mockIsSystemReady = false;
+			(globalThis as any).__mockIsSetupComplete = false;
 		});
 
 		it('should allow /login during IDLE state', async () => {

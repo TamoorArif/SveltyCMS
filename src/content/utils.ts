@@ -166,7 +166,7 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 		// In our compiled files, it's usually 'const Clients = { ... }; export default Clients;'
 		if (/^[a-zA-Z0-9_]+$/.test(schemaContent)) {
 			const varName = schemaContent;
-			const varMatch = content.match(new RegExp(`(?:const|let|var)\\s+${varName}\\s*=\s*`));
+			const varMatch = content.match(new RegExp(`(?:const|let|var)\\s+${varName}\\s*=\\s*`));
 			if (varMatch) {
 				const varStartIdx = varMatch.index! + varMatch[0].length;
 				let braceCount = 0;

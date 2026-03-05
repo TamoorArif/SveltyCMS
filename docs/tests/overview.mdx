@@ -30,16 +30,16 @@ See [Testing Strategy (White-Box vs Black-Box)](./testing-strategy.mdx) for a de
 
 ### Current Test Count
 
-| Test Type            | Count    | Status     | Coverage                                          |
-| -------------------- | -------- | ---------- | ------------------------------------------------- |
-| Unit Tests           | 680      | ✅ Passing | Services, utilities, stores, widgets, auth, hooks |
-| Integration Tests    | ~300     | ✅ Passing | API endpoints, database ops, hooks                |
-| E2E: Setup Wizard    | 1        | ✅ Passing | Fresh installation flow                           |
-| E2E: Authentication  | 4        | ✅ Passing | Login, logout, OAuth                              |
-| E2E: User Management | 3        | ✅ Passing | CRUD operations                                   |
-| E2E: Collections     | 2        | ✅ Passing | Collection builder, content                       |
-| E2E: RBAC            | 4        | ✅ Passing | Admin, developer, editor roles                    |
-| **Total**            | **~980** | ✅         | **Hybrid Coverage Strategy**                      |
+| Test Type            | Count     | Status     | Coverage                                          |
+| -------------------- | --------- | ---------- | ------------------------------------------------- |
+| Unit Tests           | 663       | ✅ Passing | Services, utilities, stores, widgets, auth, hooks |
+| Integration Tests    | ~300      | ✅ Passing | API endpoints, database ops, hooks                |
+| E2E: Setup Wizard    | 1         | ✅ Passing | Fresh installation flow                           |
+| E2E: Authentication  | 4         | ✅ Passing | Login, logout, OAuth                              |
+| E2E: User Management | 3         | ✅ Passing | CRUD operations                                   |
+| E2E: Collections     | 2         | ✅ Passing | Collection builder, content                       |
+| E2E: RBAC            | 4         | ✅ Passing | Admin, developer, editor roles                    |
+| **Total**            | **~1003** | ✅         | **Hybrid Coverage Strategy**                      |
 
 > **Note on Coverage**:
 >
@@ -81,7 +81,7 @@ bun run test:unit
 
 Tests individual services, utilities, stores, and widgets in isolation.
 
-**Location**: `tests/unit/services`, `tests/unit/utils`, `tests/unit/stores`, `tests/unit/widgets`, `tests/unit/hooks`, `tests/unit/auth`
+**Location**: `tests/unit/`
 
 ### Integration Tests
 
@@ -98,7 +98,7 @@ Tests API endpoints via HTTP against a production build running in `preview` mod
 2. **Zero Isolation Leaks**: Tests have NO access to `@src/*` or `dbAdapter`. They must use the public API.
 3. **State Management**: Uses the secured `/api/testing` endpoint (guarded by `TEST_MODE`) to reset and seed data.
 
-**Location**: `tests/integration/api`, `tests/integration/databases`, `tests/integration/hooks`
+**Location**: `tests/unit/api`, `tests/unit/databases`
 
 ### E2E Tests
 

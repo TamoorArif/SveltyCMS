@@ -36,6 +36,14 @@ const mockSessionStorage = (() => {
 	matchMedia: () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} })
 };
 
+(globalThis as any).__mockSystemState = {
+	overallState: 'READY',
+	services: {},
+	performanceMetrics: { stateTransitions: [] }
+};
+(globalThis as any).__mockIsSystemReady = true;
+(globalThis as any).__mockIsSetupComplete = true;
+
 (globalThis as any).publicEnv = {
 	DEFAULT_CONTENT_LANGUAGE: 'en',
 	AVAILABLE_CONTENT_LANGUAGES: ['en', 'de', 'fr'],
@@ -50,18 +58,22 @@ const mockSessionStorage = (() => {
 (globalThis as any).privateEnv = {
 	DB_TYPE: 'mongodb',
 	DB_HOST: 'localhost',
-	DB_PORT: 27_017,
+	DB_PORT: 27017,
 	DB_NAME: 'sveltycms_test',
 	DB_USER: 'test',
 	DB_PASSWORD: 'test',
 	JWT_SECRET_KEY: 'test-secret-key-for-testing-only',
-	ENCRYPTION_KEY: 'test-encryption-key-32-bytes!!'
+	ENCRYPTION_KEY: 'test-encryption-key-32-bytes!!',
+	MULTI_TENANT: false,
+	DEMO: false
 };
 
 // --- AUTH SERVICE MOCK ---
 const mockAuth = {
-	getUserCount: mock(() => Promise.resolve(globalThis.__mockUserCount ?? 1)),
-	getAllRoles: mock(() => Promise.resolve(globalThis.__mockRoles ?? [{ _id: 'admin', name: 'Administrator', isAdmin: true, permissions: [] }])),
+	getUserCount: mock(() => Promise.resolve((globalThis as any).__mockUserCount ?? 1)),
+	getAllRoles: mock(() =>
+		Promise.resolve((globalThis as any).__mockRoles ?? [{ _id: 'admin', name: 'Administrator', isAdmin: true, permissions: [] }])
+	),
 	validateSession: mock((sessionId: string) =>
 		Promise.resolve(sessionId === 'valid-session' ? { _id: '123', email: 'test@example.com', role: 'admin' } : null)
 	),
@@ -117,7 +129,14 @@ const mockAuditLog = {
 };
 (globalThis as any).mockAuditLog = mockAuditLog;
 
-// --- SYSTEM STATE ---
+// --- Setup Utils ---
+const isTestingFile = (pattern: string) => {
+	const match = process.argv.some((arg) => arg.toLowerCase().includes(pattern.toLowerCase()));
+	if (match) console.log(`[setup.ts] Detected ${pattern} in process.argv, skipping mock.`);
+	return match;
+};
+
+// --- GLOBAL MOCKS FOR CI STABILITY ---
 const createInitialServiceMetrics = () => ({
 	healthCheckCount: 0,
 	failureCount: 0,
@@ -185,8 +204,8 @@ const createInitialState = () => ({
 	initializationStartedAt: Date.now()
 });
 
-globalThis.__mockSystemState = createInitialState();
-globalThis.__mockIsSystemReady = true;
+(globalThis as any).__mockSystemState = createInitialState();
+(globalThis as any).__mockIsSystemReady = true;
 
 // Shared Mock State for dynamic updates in tests
 (globalThis as any).__mockUserCount = 1;
@@ -238,7 +257,7 @@ mock.module('@utils/logger.server', () => ({
 }));
 
 // Mock @src/databases/db
-mock.module('@src/databases/db', () => ({
+const dbMock = {
 	auth: (globalThis as any).mockAuth,
 	dbAdapter: mockDbAdapter,
 	getPrivateEnv: () => (globalThis as any).privateEnv,
@@ -250,7 +269,7 @@ mock.module('@src/databases/db', () => ({
 	isConnected: true,
 	loadSettingsFromDB: () => Promise.resolve(true),
 	getSystemStatus: () => Promise.resolve({ initialized: true, connected: true }),
-	getAuth: () => null,
+	getAuth: () => (globalThis as any).mockAuth,
 	reinitializeSystem: () => Promise.resolve({ status: 'initialized' }),
 	initializeWithConfig: () => Promise.resolve({ status: 'success' }),
 	initializeWithFreshConfig: () => Promise.resolve({ status: 'initialized' }),
@@ -258,7 +277,42 @@ mock.module('@src/databases/db', () => ({
 	initConnection: () => Promise.resolve(),
 	initializeForSetup: () => Promise.resolve({ success: true }),
 	initializeOnRequest: () => Promise.resolve()
-}));
+};
+mock.module('@src/databases/db', () => dbMock);
+mock.module('@databases/db', () => dbMock);
+
+// Mock @src/databases/auth/permissions
+if (!isTestingFile('role-permission-access.test.ts')) {
+	const permissionsMock = {
+		hasPermissionByAction: () => true,
+		getAllPermissions: () => (globalThis as any).mockPermissions ?? [],
+		getPermissionById: () => undefined,
+		hasPermissionWithRoles: () => true,
+		getRolePermissionsWithRoles: () => [],
+		isAdminRoleWithRoles: () => false,
+		getPermissionConfig: () => null,
+		registerPermission: () => {},
+		validateUserPermission: () => true,
+		permissionConfigs: {},
+		permissions: [],
+		checkPermissions: () => true,
+		getUserRole: () => undefined,
+		getUserRoles: () => []
+	};
+	mock.module('@src/databases/auth/permissions', () => permissionsMock);
+	mock.module('@databases/auth/permissions', () => permissionsMock);
+}
+
+// Mock @src/databases/auth/defaultRoles
+const defaultRolesMock = {
+	getDefaultRoles: () => []
+};
+mock.module('@src/databases/auth/defaultRoles', () => defaultRolesMock);
+mock.module('@databases/auth/defaultRoles', () => defaultRolesMock);
+
+// --- SYSTEM STATE MOCKS ---
+// Note: We avoid globally mocking system state as it interferes with system.test.ts.
+// Individual tests that need to mock this should do so within their own files.
 
 // Mock @src/databases/config-state
 mock.module('@src/databases/config-state', () => ({
@@ -271,11 +325,23 @@ mock.module('@src/databases/config-state', () => ({
 	clearPrivateConfigCache: () => {}
 }));
 
-// Mock settingsService
-mock.module('@src/services/settingsService', () => ({
-	getPrivateSetting: mock(async () => true),
-	getPublicSetting: mock(async () => '')
-}));
+// Mock settings-service
+const settingsServiceMock = {
+	getPrivateSettingSync: mock((key: string) => (globalThis as any).privateEnv?.[key] ?? null),
+	getPublicSettingSync: mock((key: string) => (globalThis as any).publicEnv?.[key] ?? null),
+	getPrivateSetting: mock(async (key: string) => (globalThis as any).privateEnv?.[key] ?? null),
+	getPublicSetting: mock(async (key: string) => (globalThis as any).publicEnv?.[key] ?? null),
+	getUntypedSetting: mock(async () => undefined),
+	loadSettingsCache: mock(async () => ({ loaded: true, loadedAt: Date.now(), private: {}, public: {}, TTL: 300000 })),
+	invalidateSettingsCache: mock(async () => {}),
+	setSettingsCache: mock(async () => {}),
+	isCacheLoaded: mock(() => true),
+	getAllSettings: mock(async () => ({})),
+	updateSettingsFromSnapshot: mock(async () => ({ updated: 0 }))
+};
+mock.module('@src/services/settings-service', () => settingsServiceMock);
+mock.module('@services/settings-service', () => settingsServiceMock);
+mock.module('@services/settingsService', () => settingsServiceMock);
 
 // Mock @src/widgets/proxy to avoid import.meta.glob scanner issues
 mock.module('@src/widgets/proxy', () => ({
@@ -389,15 +455,20 @@ const createReactiveMock = (fn: any) => {
 	return new Proxy(
 		{},
 		{
-			get: (_, prop) => {
+			get: (_target, property) => {
+				if (property === 'private') return (globalThis as any).privateEnv;
+				if (property === 'public') return (globalThis as any).publicEnv;
+				if (property === 'getPrivate' || property === 'getPublic') {
+					return (key: string) => ((globalThis as any)[property === 'getPrivate' ? 'privateEnv' : 'publicEnv'] as any)?.[key];
+				}
 				const val = fn();
-				if (prop === Symbol.toPrimitive) {
+				if (property === Symbol.toPrimitive) {
 					return () => val;
 				}
 				if (val === null || val === undefined) {
 					return undefined;
 				}
-				return val[prop];
+				return val[property];
 			}
 		}
 	);
@@ -410,6 +481,47 @@ const createReactiveMock = (fn: any) => {
 (globalThis as any).$effect = (fn: any) => fn();
 (globalThis as any).$effect.root = (fn: any) => fn();
 (globalThis as any).$props = () => ({});
+
+// Mock @stores/store.svelte - provides app object for locale handling
+const storeSvelteMock = {
+	app: {
+		systemLanguage: 'en',
+		contentLanguage: 'en',
+		translationProgress: { show: false },
+		validationErrorsMap: new Map(),
+		tabSetState: 0,
+		drawerExpandedState: true,
+		listboxValueState: 'create',
+		avatarSrc: '/Default_User.svg'
+	},
+	dataChangeStore: {
+		hasChanges: false,
+		initialDataSnapshot: '',
+		setHasChanges: () => {},
+		setInitialSnapshot: () => {},
+		compareWithCurrent: () => false,
+		reset: () => {}
+	},
+	validationStore: {
+		errors: {},
+		isValid: true,
+		setError: () => {},
+		clearError: () => {},
+		clearAllErrors: () => {},
+		getError: () => null,
+		hasError: () => false
+	},
+	systemLanguage: { value: 'en', set: () => {}, update: () => {} },
+	contentLanguage: { value: 'en', set: () => {}, update: () => {} },
+	translationProgress: { value: { show: false }, subscribe: () => () => {} },
+	avatarSrc: { value: '/Default_User.svg', set: () => {} },
+	storeListboxValue: { value: 'create', set: () => {}, subscribe: () => () => {} },
+	tabSet: { value: 0, set: () => {}, subscribe: () => () => {}, update: () => {} },
+	tableHeaders: ['id', 'email', 'username', 'role', 'createdAt'],
+	indexer: undefined
+};
+mock.module('@src/stores/store.svelte', () => storeSvelteMock);
+mock.module('@stores/store.svelte', () => storeSvelteMock);
 
 // Comprehensive Paraglide mock
 const mockMsgs = {
@@ -438,8 +550,34 @@ for (const p of paraglidePaths) {
 mock.module('@src/paraglide/runtime', () => ({
 	getLocale: () => 'en',
 	setLocale: () => {},
-	locales: ['en'],
-	experimentalStaticLocale: 'en'
+	locales: ['en', 'de', 'fr', 'es', 'it', 'pt', 'nl', 'pl', 'ru', 'ja', 'zh', 'ko'],
+	experimentalStaticLocale: 'en',
+	sourceLanguageTag: 'en',
+	languageTag: () => 'en',
+	setLanguageTag: () => {},
+	onSetLanguageTag: () => {},
+	isAvailableLanguageTag: (tag: string) => ['en', 'de', 'fr', 'es', 'it', 'pt', 'nl', 'pl', 'ru', 'ja', 'zh', 'ko'].includes(tag)
+}));
+
+// Mock @stores/global-settings.svelte - prevents Svelte 5 $state error
+mock.module('@src/stores/global-settings.svelte', () => ({
+	publicEnv: {
+		SITE_NAME: 'Test CMS',
+		DEFAULT_LANGUAGE: 'en',
+		AVAILABLE_LANGUAGES: ['en', 'de', 'fr'],
+		MEDIA_UPLOAD_MAX_SIZE: 10485760,
+		MEDIA_ALLOWED_TYPES: ['image/*', 'video/*', 'application/pdf'],
+		BASE_LOCALE: 'en',
+		LOCALES: ['en', 'de', 'fr'],
+		AVAILABLE_CONTENT_LANGUAGES: ['en', 'de', 'fr'],
+		DEFAULT_CONTENT_LANGUAGE: 'en'
+	},
+	initPublicEnv: () => {},
+	getPublicEnv: () => ({
+		SITE_NAME: 'Test CMS',
+		DEFAULT_LANGUAGE: 'en'
+	}),
+	updatePublicEnv: () => {}
 }));
 
 console.log('✅ Global test environment setup complete');
