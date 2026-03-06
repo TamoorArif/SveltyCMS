@@ -38,7 +38,7 @@
 	import { publicEnv } from '@src/stores/global-settings.svelte';
 	import { contentLanguage, dataChangeStore, translationProgress, validationStore } from '@src/stores/store.svelte.ts';
 	import { toast } from '@src/stores/toast.svelte.ts';
-	import { widgetFunctions as widgetFunctionsStore } from '@src/stores/widget-store.svelte';
+	import { widgetFunctions as widgetFunctionsStore, widgets } from '@src/stores/widget-store.svelte';
 	import { showConfirm } from '@utils/modal-utils';
 	import WidgetLoader from './widget-loader.svelte';
 
@@ -341,267 +341,274 @@
 
 <h1 class="sr-only">{collection.value?.name ? `Edit ${collection.value.name} Entry` : 'Edit Entry'}</h1>
 
-<Tabs value={localTabSet} onValueChange={(e) => (localTabSet = e.value)} class="flex flex-1 flex-col items-center">
-	<Tabs.List
-		class="flex justify-between md:justify-around rounded-tl-container rounded-tr-container border-b border-tertiary-500 dark:border-primary-500 w-full"
-	>
-		<Tabs.Trigger value="0" class="flex-1">
-			<div class="flex items-center justify-center gap-2 py-2">
-				<iconify-icon icon="mdi:pen" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-				{button_edit()}
-			</div>
-		</Tabs.Trigger>
-
-		{#if collection.value?.revision}
-			<Tabs.Trigger value="1" class="flex-1">
+{#if !widgets.isLoaded}
+	<div class="flex h-64 flex-col items-center justify-center gap-4">
+		<div class="h-12 w-12 animate-spin rounded-full border-4 border-surface-200 border-t-primary-500"></div>
+		<p class="text-surface-500 animate-pulse">Initializing widgets...</p>
+	</div>
+{:else}
+	<Tabs value={localTabSet} onValueChange={(e) => (localTabSet = e.value)} class="flex flex-1 flex-col items-center">
+		<Tabs.List
+			class="flex justify-between md:justify-around rounded-tl-container rounded-tr-container border-b border-tertiary-500 dark:border-primary-500 w-full"
+		>
+			<Tabs.Trigger value="0" class="flex-1">
 				<div class="flex items-center justify-center gap-2 py-2">
-					<iconify-icon icon="mdi:history" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-					{applayout_version()} <span class="preset-filled-secondary-500 badge">{revisions.length}</span>
+					<iconify-icon icon="mdi:pen" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+					{button_edit()}
 				</div>
 			</Tabs.Trigger>
-		{/if}
 
-		{#if user?.isAdmin}
-			<Tabs.Trigger value="3" class="flex-1">
-				<div class="flex items-center justify-center gap-2 py-2">
-					<iconify-icon icon="mdi:api" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-					API
-				</div>
-			</Tabs.Trigger>
-		{/if}
-
-		<!-- Plugin Slots Triggers -->
-		{#each entryEditSlots as slot (slot.id)}
-			{#if slot.id !== 'live_preview' || collection.value?.livePreview}
-				<Tabs.Trigger value={slot.id} class="flex-1">
+			{#if collection.value?.revision}
+				<Tabs.Trigger value="1" class="flex-1">
 					<div class="flex items-center justify-center gap-2 py-2">
-						{#if slot.props?.icon}
-							<iconify-icon icon={slot.props.icon} width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-						{:else}
-							<iconify-icon icon="mdi:puzzle-outline" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-						{/if}
-						{slot.props?.label || slot.id}
+						<iconify-icon icon="mdi:history" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+						{applayout_version()} <span class="preset-filled-secondary-500 badge">{revisions.length}</span>
 					</div>
 				</Tabs.Trigger>
 			{/if}
-		{/each}
 
-		<Tabs.Indicator />
-	</Tabs.List>
+			{#if user?.isAdmin}
+				<Tabs.Trigger value="3" class="flex-1">
+					<div class="flex items-center justify-center gap-2 py-2">
+						<iconify-icon icon="mdi:api" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+						API
+					</div>
+				</Tabs.Trigger>
+			{/if}
 
-	<Tabs.Content value="0" class="w-full">
-		<div class="mb-2 text-center text-xs text-error-500">{form_required()}</div>
-		<div class="rounded-md border bg-white px-4 py-6 drop-shadow-2xl dark:border-surface-500 dark:bg-surface-900">
-			<div class="flex flex-wrap items-center justify-center gap-1 overflow-auto">
-				{#each filteredFields as rawField (rawField.db_fieldName || rawField.id || rawField.label || rawField.name)}
-					{#if rawField.widget}
-						{@const field = ensureFieldProperties(rawField)}
-						<div
-							class="mx-auto text-center {!field?.width ? 'w-full ' : 'max-md:w-full!'}"
-							style={'min-width:min(300px,100%);' + (field.width ? `width:calc(${Math.floor(100 / field?.width)}% - 0.5rem)` : '')}
-						>
-							<div class="flex items-center justify-between gap-2 px-[5px] text-start field-label">
-								<!-- Field label -->
-								<div class="flex items-center gap-2">
-									<p class="inline-block font-semibold capitalize">
-										{field.label || field.db_fieldName}
-										{#if field.required}
-											<span class="text-error-500">*</span>
-										{/if}
-									</p>
-									{#if field.helper}
-										<SystemTooltip title={field.helper} positioning={{ placement: 'top' }}>
-											<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
-										</SystemTooltip>
-									{/if}
-								</div>
-								<div class="flex items-center gap-2">
-									<SystemTooltip title="Insert Token">
-										<button type="button" onclick={(e) => openTokenPicker(field, e)} class="" aria-label="Insert token into {field.label}">
-											<iconify-icon icon="mdi:code-braces" width="16" class="font-bold text-tertiary-500 dark:text-primary-500"></iconify-icon>
-										</button>
-									</SystemTooltip>
-									<!-- Translation status -->
-									{#if field.translated}
-										{@const percentage = getFieldTranslationPercentage(field)}
-										{@const textColor = getTranslationTextColor(percentage)}
-										<div class="flex items-center gap-1 text-xs">
-											<iconify-icon icon="bi:translate" width="16"></iconify-icon>
-											<span class="font-medium text-tertiary-500 dark:text-primary-500">{currentContentLanguage.toUpperCase()}</span>
-											<span class="font-medium {textColor}">({percentage}%)</span>
-										</div>
-									{/if}
-									<!-- Icon for field type -->
-									{#if field.icon}
-										<iconify-icon icon={field.icon} width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
-									{/if}
-								</div>
-							</div>
-
-							{#if field.widget}
-								{@const widgetName = field.widget.Name}
-
-								<!-- --- PERFORMANCE FIX: ROBUST WIDGET FINDER --- -->
-								{@const loadedWidget = (() => {
-									// 1. Try exact path from widget store (fastest)
-									const storePath = widgetFunctions[widgetName]?.componentPath;
-									if (storePath && storePath in modules) return modules[storePath];
-
-									// 2. Try casing variations from store
-									const camelPath = widgetFunctions[widgetName.charAt(0).toLowerCase() + widgetName.slice(1)]?.componentPath;
-									if (camelPath && camelPath in modules) return modules[camelPath];
-
-									const lowerPath = widgetFunctions[widgetName.toLowerCase()]?.componentPath;
-									if (lowerPath && lowerPath in modules) return modules[lowerPath];
-
-									// 3. Robust Search in modules (fallback)
-									const normalized = widgetName.toLowerCase();
-									for (const path in modules) {
-										const lowerPath = path.toLowerCase();
-										const parts = lowerPath.split('/');
-										const fileName = parts.pop();
-										const folderName = parts.pop();
-
-										// A. Match 3-Pillar Structure: /WidgetName/Input.svelte
-										// IMPORTANT: Enforce folder name matches widget name to avoid matching other widgets' Input.svelte
-										if (folderName === normalized && fileName === 'input.svelte') return modules[path];
-
-										// B. Match 3-Pillar Index: /WidgetName/index.svelte
-										if (folderName === normalized && fileName === 'index.svelte') return modules[path];
-
-										// C. Match Single File: /WidgetName.svelte
-										// EXCEPTION: Do not loosely match "Input.svelte" as it causes collisions with standard 3-pillar components
-										if (fileName === `${normalized}.svelte` && normalized !== 'input') return modules[path];
-									}
-									return null;
-								})()}
-
-								{#if loadedWidget}
-									{@const fieldName = getFieldName(field, false)}
-									{#key currentContentLanguage}
-										<!-- Widget remounts when currentContentLanguage changes -->
-										<WidgetLoader
-											loader={loadedWidget}
-											{field}
-											WidgetData={{}}
-											bind:value={currentCollectionValue[fieldName]}
-											{tenantId}
-											collectionName={collection.value?.name}
-										/>
-									{/key}
-								{:else}
-									<p class="text-error-500">{Fields_no_widgets_found({ name: widgetName })}</p>
-								{/if}
-								<!-- --- END PERFORMANCE FIX --- -->
+			<!-- Plugin Slots Triggers -->
+			{#each entryEditSlots as slot (slot.id)}
+				{#if slot.id !== 'live_preview' || collection.value?.livePreview}
+					<Tabs.Trigger value={slot.id} class="flex-1">
+						<div class="flex items-center justify-center gap-2 py-2">
+							{#if slot.props?.icon}
+								<iconify-icon icon={slot.props.icon} width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+							{:else}
+								<iconify-icon icon="mdi:puzzle-outline" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 							{/if}
+							{slot.props?.label || slot.id}
 						</div>
-					{/if}
-				{/each}
-			</div>
-		</div>
-	</Tabs.Content>
-	<Tabs.Content value="1" class="w-full">
-		<div class="p-4">
-			{#if revisions.length === 0}
-				<p class="p-4 text-center text-surface-500">No revision history found for this entry.</p>
-			{:else}
-				<div class="mb-4 flex items-center justify-between gap-4">
-					<select class="select grow" bind:value={selectedRevisionId}>
-						<option value="" disabled>-- Select a revision to compare --</option>
-						{#each revisions as revision (revision._id)}
-							<option value={revision._id}>{new Date(revision.revision_at).toLocaleString()} by {revision.revision_by.substring(0, 8)}...</option>
-						{/each}
-					</select>
-					<button class="preset-filled-primary-500 btn" onclick={handleRevert} disabled={!selectedRevision?.data}>
-						<iconify-icon icon="mdi:restore" class="mr-1"></iconify-icon>
-						Revert
-					</button>
-				</div>
+					</Tabs.Trigger>
+				{/if}
+			{/each}
 
-				<div class="rounded-lg border p-4 dark:text-surface-50">
-					<h3 class="mb-3 text-lg font-bold">Changes from Selected Revision</h3>
-					{#if selectedRevision}
-						{@const diffObject = selectedRevision?.diff || null}
-						{#if diffObject && Object.keys(diffObject).length > 0}
-							<div class="space-y-3 font-mono text-sm">
-								{#each Object.entries(diffObject) as [key, change] (key)}
-									{@const ch = change as any}
-									<div>
-										<strong class="font-bold text-surface-600 dark:text-surface-300">{key}:</strong>
-										{#if ch.status === 'modified'}
-											<div class="mt-1 rounded border border-error-500/30 bg-error-500/10 p-2">
-												<span class="text-error-700 dark:text-error-300">- {JSON.stringify(ch.old)}</span>
-											</div>
-											<div class="mt-1 rounded border border-success-500/30 bg-primary-500/10 p-2">
-												<span class="text-success-700 dark:text-success-300">+ {JSON.stringify(ch.new)}</span>
-											</div>
-										{:else if ch.status === 'added'}
-											<div class="mt-1 rounded border border-success-500/30 bg-primary-500/10 p-2">
-												<span class="text-success-700 dark:text-success-300">+ {JSON.stringify(ch.value)}</span>
-											</div>
-										{:else if ch.status === 'deleted'}
-											<div class="mt-1 rounded border border-error-500/30 bg-error-500/10 p-2">
-												<span class="text-error-700 dark:text-error-300">- {JSON.stringify(ch.value)}</span>
-											</div>
+			<Tabs.Indicator />
+		</Tabs.List>
+
+		<Tabs.Content value="0" class="w-full">
+			<div class="mb-2 text-center text-xs text-error-500">{form_required()}</div>
+			<div class="rounded-md border bg-white px-4 py-6 drop-shadow-2xl dark:border-surface-500 dark:bg-surface-900">
+				<div class="flex flex-wrap items-center justify-center gap-1 overflow-auto">
+					{#each filteredFields as rawField (rawField.db_fieldName || rawField.id || rawField.label || rawField.name)}
+						{#if rawField.widget}
+							{@const field = ensureFieldProperties(rawField)}
+							<div
+								class="mx-auto text-center {!field?.width ? 'w-full ' : 'max-md:w-full!'}"
+								style={'min-width:min(300px,100%);' + (field.width ? `width:calc(${Math.floor(100 / field?.width)}% - 0.5rem)` : '')}
+							>
+								<div class="flex items-center justify-between gap-2 px-[5px] text-start field-label">
+									<!-- Field label -->
+									<div class="flex items-center gap-2">
+										<p class="inline-block font-semibold capitalize">
+											{field.label || field.db_fieldName}
+											{#if field.required}
+												<span class="text-error-500">*</span>
+											{/if}
+										</p>
+										{#if field.helper}
+											<SystemTooltip title={field.helper} positioning={{ placement: 'top' }}>
+												<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
+											</SystemTooltip>
 										{/if}
 									</div>
-								{/each}
+									<div class="flex items-center gap-2">
+										<SystemTooltip title="Insert Token">
+											<button type="button" onclick={(e) => openTokenPicker(field, e)} class="" aria-label="Insert token into {field.label}">
+												<iconify-icon icon="mdi:code-braces" width="16" class="font-bold text-tertiary-500 dark:text-primary-500"></iconify-icon>
+											</button>
+										</SystemTooltip>
+										<!-- Translation status -->
+										{#if field.translated}
+											{@const percentage = getFieldTranslationPercentage(field)}
+											{@const textColor = getTranslationTextColor(percentage)}
+											<div class="flex items-center gap-1 text-xs">
+												<iconify-icon icon="bi:translate" width="16"></iconify-icon>
+												<span class="font-medium text-tertiary-500 dark:text-primary-500">{currentContentLanguage.toUpperCase()}</span>
+												<span class="font-medium {textColor}">({percentage}%)</span>
+											</div>
+										{/if}
+										<!-- Icon for field type -->
+										{#if field.icon}
+											<iconify-icon icon={field.icon} width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+										{/if}
+									</div>
+								</div>
+
+								{#if field.widget}
+									{@const widgetName = field.widget.Name}
+
+									<!-- --- PERFORMANCE FIX: ROBUST WIDGET FINDER --- -->
+									{@const loadedWidget = (() => {
+										// 1. Try exact path from widget store (fastest)
+										const storePath = widgetFunctions[widgetName]?.componentPath;
+										if (storePath && storePath in modules) return modules[storePath];
+
+										// 2. Try casing variations from store
+										const camelPath = widgetFunctions[widgetName.charAt(0).toLowerCase() + widgetName.slice(1)]?.componentPath;
+										if (camelPath && camelPath in modules) return modules[camelPath];
+
+										const lowerPath = widgetFunctions[widgetName.toLowerCase()]?.componentPath;
+										if (lowerPath && lowerPath in modules) return modules[lowerPath];
+
+										// 3. Robust Search in modules (fallback)
+										const normalized = widgetName.toLowerCase();
+										for (const path in modules) {
+											const lowerPath = path.toLowerCase();
+											const parts = lowerPath.split('/');
+											const fileName = parts.pop();
+											const folderName = parts.pop();
+
+											// A. Match 3-Pillar Structure: /WidgetName/Input.svelte
+											// IMPORTANT: Enforce folder name matches widget name to avoid matching other widgets' Input.svelte
+											if (folderName === normalized && fileName === 'input.svelte') return modules[path];
+
+											// B. Match 3-Pillar Index: /WidgetName/index.svelte
+											if (folderName === normalized && fileName === 'index.svelte') return modules[path];
+
+											// C. Match Single File: /WidgetName.svelte
+											// EXCEPTION: Do not loosely match "Input.svelte" as it causes collisions with standard 3-pillar components
+											if (fileName === `${normalized}.svelte` && normalized !== 'input') return modules[path];
+										}
+										return null;
+									})()}
+
+									{#if loadedWidget}
+										{@const fieldName = getFieldName(field, false)}
+										{#key currentContentLanguage}
+											<!-- Widget remounts when currentContentLanguage changes -->
+											<WidgetLoader
+												loader={loadedWidget}
+												{field}
+												WidgetData={{}}
+												bind:value={currentCollectionValue[fieldName]}
+												{tenantId}
+												collectionName={collection.value?.name}
+											/>
+										{/key}
+									{:else}
+										<p class="text-error-500">{Fields_no_widgets_found({ name: widgetName })}</p>
+									{/if}
+									<!-- --- END PERFORMANCE FIX --- -->
+								{/if}
 							</div>
-						{:else if selectedRevisionId}
-							<p class="text-center text-surface-500">No differences found.</p>
+						{/if}
+					{/each}
+				</div>
+			</div>
+		</Tabs.Content>
+		<Tabs.Content value="1" class="w-full">
+			<div class="p-4">
+				{#if revisions.length === 0}
+					<p class="p-4 text-center text-surface-500">No revision history found for this entry.</p>
+				{:else}
+					<div class="mb-4 flex items-center justify-between gap-4">
+						<select class="select grow" bind:value={selectedRevisionId}>
+							<option value="" disabled>-- Select a revision to compare --</option>
+							{#each revisions as revision (revision._id)}
+								<option value={revision._id}>{new Date(revision.revision_at).toLocaleString()} by {revision.revision_by.substring(0, 8)}...</option>
+							{/each}
+						</select>
+						<button class="preset-filled-primary-500 btn" onclick={handleRevert} disabled={!selectedRevision?.data}>
+							<iconify-icon icon="mdi:restore" class="mr-1"></iconify-icon>
+							Revert
+						</button>
+					</div>
+
+					<div class="rounded-lg border p-4 dark:text-surface-50">
+						<h3 class="mb-3 text-lg font-bold">Changes from Selected Revision</h3>
+						{#if selectedRevision}
+							{@const diffObject = selectedRevision?.diff || null}
+							{#if diffObject && Object.keys(diffObject).length > 0}
+								<div class="space-y-3 font-mono text-sm">
+									{#each Object.entries(diffObject) as [key, change] (key)}
+										{@const ch = change as any}
+										<div>
+											<strong class="font-bold text-surface-600 dark:text-surface-300">{key}:</strong>
+											{#if ch.status === 'modified'}
+												<div class="mt-1 rounded border border-error-500/30 bg-error-500/10 p-2">
+													<span class="text-error-700 dark:text-error-300">- {JSON.stringify(ch.old)}</span>
+												</div>
+												<div class="mt-1 rounded border border-success-500/30 bg-primary-500/10 p-2">
+													<span class="text-success-700 dark:text-success-300">+ {JSON.stringify(ch.new)}</span>
+												</div>
+											{:else if ch.status === 'added'}
+												<div class="mt-1 rounded border border-success-500/30 bg-primary-500/10 p-2">
+													<span class="text-success-700 dark:text-success-300">+ {JSON.stringify(ch.value)}</span>
+												</div>
+											{:else if ch.status === 'deleted'}
+												<div class="mt-1 rounded border border-error-500/30 bg-error-500/10 p-2">
+													<span class="text-error-700 dark:text-error-300">- {JSON.stringify(ch.value)}</span>
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							{:else if selectedRevisionId}
+								<p class="text-center text-surface-500">No differences found.</p>
+							{:else}
+								<p class="text-center text-surface-500">Select a revision to see what's changed.</p>
+							{/if}
 						{:else}
 							<p class="text-center text-surface-500">Select a revision to see what's changed.</p>
 						{/if}
-					{:else}
-						<p class="text-center text-surface-500">Select a revision to see what's changed.</p>
-					{/if}
+					</div>
+				{/if}
+			</div>
+		</Tabs.Content>
+		<Tabs.Content value="3" class="w-full">
+			<div class="space-y-4 p-4">
+				<div class="flex items-center gap-2">
+					<input type="text" class="input grow" readonly value={apiUrl} />
+					<button
+						class="preset-outline-surface-500 btn"
+						onclick={() => {
+							navigator.clipboard.writeText(apiUrl);
+							toast.success('API URL Copied');
+						}}
+					>
+						Copy
+					</button>
 				</div>
-			{/if}
-		</div>
-	</Tabs.Content>
-	<Tabs.Content value="3" class="w-full">
-		<div class="space-y-4 p-4">
-			<div class="flex items-center gap-2">
-				<input type="text" class="input grow" readonly value={apiUrl} />
-				<button
-					class="preset-outline-surface-500 btn"
-					onclick={() => {
-						navigator.clipboard.writeText(apiUrl);
-						toast.success('API URL Copied');
-					}}
-				>
-					Copy
-				</button>
+				<div class="card p-4 overflow-x-auto bg-surface-800 text-white font-mono text-sm max-h-[500px]">
+					<pre>{JSON.stringify((collectionValue as any).value, null, 2)}</pre>
+				</div>
 			</div>
-			<div class="card p-4 overflow-x-auto bg-surface-800 text-white font-mono text-sm max-h-[500px]">
-				<pre>{JSON.stringify((collectionValue as any).value, null, 2)}</pre>
-			</div>
-		</div>
-	</Tabs.Content>
+		</Tabs.Content>
 
-	<!-- Plugin Slots Content -->
-	{#each entryEditSlots as slot (slot.id)}
-		{#if slot.id !== 'live_preview' || collection.value?.livePreview}
-			<Tabs.Content value={slot.id} class="w-full">
-				{#await slot.component()}
-					<div class="flex h-40 items-center justify-center">
-						<div class="h-10 w-10 animate-spin rounded-full border-4 border-surface-200 border-t-primary-500"></div>
-					</div>
-				{:then Component}
-					{#if Component.default}
-						<Component.default {collection} {currentCollectionValue} {user} {tenantId} contentLanguage={currentContentLanguage} {...slot.props} />
-					{:else}
-						<Component {collection} {currentCollectionValue} {user} {tenantId} contentLanguage={currentContentLanguage} {...slot.props} />
-					{/if}
-				{:catch error}
-					<div class="p-4">
-						<div class="rounded border border-error-500/50 bg-error-50 p-4 text-error-600 dark:bg-error-900/10 dark:text-error-400">
-							<h3 class="mb-2 font-bold">Plugin Error ({slot.id})</h3>
-							<p>{error.message}</p>
+		<!-- Plugin Slots Content -->
+		{#each entryEditSlots as slot (slot.id)}
+			{#if slot.id !== 'live_preview' || collection.value?.livePreview}
+				<Tabs.Content value={slot.id} class="w-full">
+					{#await slot.component()}
+						<div class="flex h-40 items-center justify-center">
+							<div class="h-10 w-10 animate-spin rounded-full border-4 border-surface-200 border-t-primary-500"></div>
 						</div>
-					</div>
-				{/await}
-			</Tabs.Content>
-		{/if}
-	{/each}
-</Tabs>
+					{:then Component}
+						{#if Component.default}
+							<Component.default {collection} {currentCollectionValue} {user} {tenantId} contentLanguage={currentContentLanguage} {...slot.props} />
+						{:else}
+							<Component {collection} {currentCollectionValue} {user} {tenantId} contentLanguage={currentContentLanguage} {...slot.props} />
+						{/if}
+					{:catch error}
+						<div class="p-4">
+							<div class="rounded border border-error-500/50 bg-error-50 p-4 text-error-600 dark:bg-error-900/10 dark:text-error-400">
+								<h3 class="mb-2 font-bold">Plugin Error ({slot.id})</h3>
+								<p>{error.message}</p>
+							</div>
+						</div>
+					{/await}
+				</Tabs.Content>
+			{/if}
+		{/each}
+	</Tabs>
+{/if}

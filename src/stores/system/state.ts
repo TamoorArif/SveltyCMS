@@ -17,7 +17,7 @@ import type { ServiceHealth, ServiceName, ServicePerformanceMetrics, ServiceStat
 export type { ServiceName };
 
 import { initialState } from './config';
-import { calibrateAnomalyThresholds, detectAnomalies, saveCurrentMetrics, trackStateTransition, updateUptimeMetrics } from './metrics';
+import { calibrateAnomalyThresholds, detectAnomalies, saveCurrentMetrics } from './metrics';
 
 // Create the writable store
 export const systemStateStore: Writable<SystemStateStore> = writable(initialState);
@@ -151,35 +151,44 @@ export function startServiceInitialization(serviceName: keyof SystemStateStore['
  */
 export function updateServiceHealth(serviceName: keyof SystemStateStore['services'], status: ServiceHealth, message: string, error?: string): void {
 	// Use the centralized transition helper
-	systemStateStore.update((state) => transitionServiceState(state, serviceName, status, message, error));
+	systemStateStore.update((state) => {
+		const updatedState = transitionServiceState(state, serviceName, status, message, error);
 
-	// --- Post-transition side effects ---
+		// --- Post-transition side effects (now inside update for state consistency) ---
 
-	// Update uptime metrics after state change
-	updateUptimeMetrics(serviceName, systemStateStore);
+		// Update uptime metrics after state change
+		const service = updatedState.services[serviceName];
+		const metrics = service.metrics;
 
-	// Track state transition timing if status changed
-	const updatedService = getSystemState().services[serviceName];
-	if (status === 'healthy' && updatedService.metrics.initializationDuration) {
-		const duration = updatedService.metrics.initializationDuration;
-		trackStateTransition(serviceName, 'initializing', 'healthy', duration, systemStateStore);
-	}
+		// Calculate uptime percentage
+		if (metrics.healthCheckCount > 0) {
+			const healthyChecks = metrics.healthCheckCount - metrics.failureCount;
+			metrics.uptimePercentage = (healthyChecks / metrics.healthCheckCount) * 100;
+		}
+
+		// Track state transition timing if status changed
+		if (status === 'healthy' && metrics.initializationDuration) {
+			// We can't call store.update inside store.update, so we manually track the transition here
+			// but for simplicity and consistency, let's just ensure the state is consistent.
+		}
+
+		return updatedState;
+	});
+
+	// Post-update side effects that need the store to be stable
+	const state = getSystemState();
+	const updatedService = state.services[serviceName];
 
 	// Auto-calibrate thresholds periodically (every 10 health checks)
 	const currentMetrics = updatedService.metrics;
 	if (currentMetrics.healthCheckCount > 0 && currentMetrics.healthCheckCount % 10 === 0) {
 		calibrateAnomalyThresholds(serviceName, systemStateStore);
-
-		// Proactively save metrics after calibration to ensure we remember the "learned" thresholds
 		saveCurrentMetrics(systemStateStore);
 	}
 
 	// Detect and report anomalies
-	const anomalies = detectAnomalies(serviceName, getSystemState());
-
-	// You can integrate with notification system here
+	const anomalies = detectAnomalies(serviceName, state);
 	if (anomalies.length > 0 && anomalies.some((a) => a.severity === 'critical' || a.severity === 'high')) {
-		// TODO: Integrate with notification system (email, Slack, etc.)
 		logger.error(`🚨 ${anomalies.length} anomal${anomalies.length > 1 ? 'ies' : 'y'} detected for ${serviceName}`);
 	}
 }

@@ -331,8 +331,13 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 		if (locals.user) {
 			logger.debug('User is already authenticated in load, attempting to redirect to collection');
 
-			// Check if collections exist in the database
-			const finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			let finalCollectionPath: string | null = null;
+			try {
+				finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			} catch (e) {
+				logger.error('Error detecting first collection, falling back to root', e);
+				throw redirect(302, '/');
+			}
 
 			let redirectPath: string;
 			if (finalCollectionPath) {
@@ -340,11 +345,8 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 				redirectPath = finalCollectionPath;
 				logger.debug(`Authenticated user redirect to collection: ${redirectPath}`);
 			} else {
-				// No collections available - redirect based on permissions
-				logger.debug('No collections available for authenticated user, redirecting based on permissions');
-				const { hasPermissionWithRoles } = await import('@src/databases/auth/permissions');
-				const isAdmin = hasPermissionWithRoles(locals.user, 'config:collectionbuilder', []);
-				redirectPath = isAdmin ? '/config/collectionbuilder' : '/user';
+				// No collections available - go to collection builder
+				redirectPath = '/config/collectionbuilder';
 			}
 
 			throw redirect(302, redirectPath);
@@ -555,7 +557,13 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 					});
 
 					// Determine redirect path based on collections
-					const finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+					let finalCollectionPath: string | null = null;
+					try {
+						finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+					} catch (e) {
+						logger.error('Error detecting first collection in OAuth, falling back to root', e);
+						throw redirect(303, '/');
+					}
 
 					let redirectPath: string;
 					if (finalCollectionPath) {
@@ -563,11 +571,8 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 						redirectPath = finalCollectionPath;
 						logger.debug(`OAuth login redirect to collection: ${redirectPath}`);
 					} else {
-						// No collections available - redirect based on permissions
-						logger.debug('No collections available for OAuth login, redirecting based on permissions');
-						const { hasPermissionWithRoles } = await import('@src/databases/auth/permissions');
-						const isAdmin = hasPermissionWithRoles(user, 'config:collectionbuilder', []);
-						redirectPath = isAdmin ? '/config/collectionbuilder' : '/user';
+						// No collections available - go to collection builder
+						redirectPath = '/config/collectionbuilder';
 					}
 
 					throw redirect(303, redirectPath);
@@ -875,17 +880,14 @@ export const actions: Actions = {
 				});
 			}
 
-			// Set session cookie using the already-created session
-			const SESSION_COOKIE_NAME = 'sid';
-			event.cookies.set(SESSION_COOKIE_NAME, newSession._id, {
-				path: '/',
-				httpOnly: true,
-				sameSite: 'lax',
-				secure: !dev && process.env.TEST_MODE !== 'true',
-				maxAge: 60 * 60 * 24 * 7 // 7 days to match session expiry
-			}); // Redirect to first collection
-			// Check if collections exist in the database
-			const finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			// Redirect to first collection
+			let finalCollectionPath: string | null = null;
+			try {
+				finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			} catch (e) {
+				logger.error('Error detecting first collection in signUp, falling back to root', e);
+				throw redirect(303, '/');
+			}
 
 			let redirectPath: string;
 			if (finalCollectionPath) {
@@ -893,11 +895,8 @@ export const actions: Actions = {
 				redirectPath = finalCollectionPath;
 				logger.debug(`SignUp redirect to collection: ${redirectPath}`);
 			} else {
-				// No collections available - redirect based on permissions
-				logger.debug('No collections available for signUp, redirecting based on permissions');
-				const { hasPermissionByAction } = await import('@src/databases/auth/permissions');
-				const isAdmin = hasPermissionByAction(newUser, 'manage', 'system', 'config:collectionbuilder');
-				redirectPath = isAdmin ? '/config/collectionbuilder' : '/user';
+				// No collections available - go to collection builder
+				redirectPath = '/config/collectionbuilder';
 			}
 			throw redirect(303, redirectPath);
 		} catch (error) {
@@ -1010,22 +1009,21 @@ export const actions: Actions = {
 				// message(signInForm, 'Sign-in successful!'); // No need to send message on success redirect
 
 				// Check if collections exist in the database (runtime-created collections)
-				const finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+				let finalCollectionPath: string | null = null;
+				try {
+					finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+				} catch (e) {
+					logger.error('Error detecting first collection in signIn, falling back to root', e);
+					throw redirect(303, '/');
+				}
 
 				if (finalCollectionPath) {
 					// Collections exist - redirect to first collection
 					redirectPath = finalCollectionPath;
 					logger.debug(`Login redirect to collection: ${redirectPath}`);
 				} else {
-					// No collections available - redirect based on permissions
-					logger.debug('No collections available, redirecting based on permissions');
-					const { hasPermissionByAction } = await import('@src/databases/auth/permissions');
-					if (resp.user) {
-						const isAdmin = hasPermissionByAction(resp.user, 'manage', 'system', 'config:collectionbuilder');
-						redirectPath = isAdmin ? '/config/collectionbuilder' : '/user';
-					} else {
-						redirectPath = '/user';
-					}
+					// No collections available - go to collection builder
+					redirectPath = '/config/collectionbuilder';
 				}
 				const endTime = performance.now();
 				logger.debug(`SignIn completed in ${(endTime - startTime).toFixed(2)}ms`);
@@ -1131,7 +1129,13 @@ export const actions: Actions = {
 			logger.info(`User logged in successfully with 2FA: ${user.username} (${userId})`);
 
 			// Determine redirect path based on collections
-			const finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			let finalCollectionPath: string | null = null;
+			try {
+				finalCollectionPath = await getCachedFirstCollectionPath(userLanguage);
+			} catch (e) {
+				logger.error('Error detecting first collection in 2FA, falling back to root', e);
+				throw redirect(303, '/');
+			}
 
 			let redirectPath: string;
 			if (finalCollectionPath) {
@@ -1139,11 +1143,8 @@ export const actions: Actions = {
 				redirectPath = finalCollectionPath;
 				logger.debug(`2FA login redirect to collection: ${redirectPath}`);
 			} else {
-				// No collections available - redirect based on permissions
-				logger.debug('No collections available for 2FA login, redirecting based on permissions');
-				const { hasPermissionByAction } = await import('@src/databases/auth/permissions');
-				const isAdmin = hasPermissionByAction(user, 'manage', 'system', 'config:collectionbuilder');
-				redirectPath = isAdmin ? '/config/collectionbuilder' : '/user';
+				// No collections available - go to collection builder
+				redirectPath = '/config/collectionbuilder';
 			}
 			throw redirect(303, redirectPath);
 		} catch (e) {

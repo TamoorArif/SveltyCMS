@@ -290,7 +290,7 @@ Provides an organized interface for navigating hierarchical content structures.
 
 <div class="mt-2 space-y-2" role="navigation" aria-label="Collections">
 	<!-- Search -->
-	<div class="relative {isFullSidebar ? 'w-full' : 'max-w-[135px]'}">
+	<div class="relative {isFullSidebar ? 'w-full' : 'max-w--33.7'}">
 		<input
 			type="text"
 			bind:value={search}
@@ -330,7 +330,11 @@ Provides an organized interface for navigating hierarchical content structures.
 
 	<!-- Tree -->
 	<div class="collections-list" role="tree" aria-label="Collection tree">
-		{#if treeNodes.length === 0}
+		{#if !widgets.isLoaded}
+			<div class="flex h-24 items-center justify-center">
+				<div class="h-6 w-6 animate-spin rounded-full border-2 border-surface-300 border-t-tertiary-500"></div>
+			</div>
+		{:else if treeNodes.length === 0}
 			<div class="flex flex-col items-center justify-center gap-2 p-6 text-center">
 				<iconify-icon icon="bi:collection" width={24}></iconify-icon>
 				<p class="text-sm text-surface-500 dark:text-surface-50">{collection_no_collections_found()}</p>

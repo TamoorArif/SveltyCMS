@@ -74,17 +74,18 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			throw redirect(302, redirectUrl);
 		}
 
-		// If no collections are found, do not redirect.
-		// The page can render a message like "No collections configured."
-		logger.warn('No collections found for user. Staying on root page.', {
+		// If no collections are found, redirect based on permissions.
+		logger.warn('No collections found for user. Redirecting to fallback.', {
 			tenantId
 		});
 		const userRole = tenantRoles.find((role) => role._id === user?.role);
 		const isAdmin = Boolean(userRole?.isAdmin);
-		return {
-			user: { ...user, isAdmin },
-			permissions: locals.permissions
-		};
+
+		if (isAdmin) {
+			throw redirect(302, '/config/collectionbuilder');
+		} else {
+			throw redirect(302, '/dashboard');
+		}
 	} catch (err) {
 		// Re-throw redirects and known errors
 		if (typeof err === 'object' && err !== null && 'status' in err) {

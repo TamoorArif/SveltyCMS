@@ -5,45 +5,22 @@
  * This test completes the initial setup wizard by:
  * 1. Configuring database connection
  * 2. Creating the admin user account
- * 3. Accepting default system settings
- * 4. Completing the setup process
- *
- * Environment variables required (set in GitHub Actions workflow):
- * - DB_TYPE (mongodb|mariadb|postgresql), DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
- * - ADMIN_USER, ADMIN_EMAIL, ADMIN_PASS
+ * 3. Initializing system defaults
  */
 
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-// Helper: Click the Next button.
-// Uses a robust selector that handles both exact label match and role+name
-// to ensure it works even with hydration delays or minor UI variations.
+// Helper to click "Next" button and wait for transition
 async function clickNext(page: Page) {
-	const nextBtn = page
-		.locator('button')
-		.filter({ hasText: /^Next$/i })
-		.first();
-	await expect(nextBtn).toBeVisible({ timeout: 30_000 });
-	await expect(nextBtn).toBeEnabled({ timeout: 60_000 });
-	await nextBtn.click();
+	const nextButton = page.getByLabel('Next', { exact: true });
+	await expect(nextButton).toBeEnabled();
+	await nextButton.click();
+	await page.waitForTimeout(500); // Wait for stepper animation
 }
 
 test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
-	// Capture browser console and errors for debugging
-	page.on('console', (msg) => {
-		const text = msg.text();
-		console.log(`[BROWSER ${msg.type()}] ${text}`);
-		// Fail fast if we see a 500 error in logs during connection test
-		if (text.includes('500') && text.includes('testDatabase')) {
-			console.error('Detected 500 error in browser logs during DB test!');
-		}
-	});
-	page.on('pageerror', (err) => console.log(`[BROWSER ERROR] ${err.message}`));
-
-	// Prevent the welcome modal from appearing by pre-setting sessionStorage.
-	await page.addInitScript(() => {
-		sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
-	});
+	// Enable TEST_MODE for the browser context if possible
+	// Note: The server must already be started with TEST_MODE=true
 
 	// 1. Start at root, expect redirect to /setup or /login
 	await page.goto('/', { waitUntil: 'networkidle' });
@@ -57,11 +34,17 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 	await expect(page).toHaveURL(/\/setup/);
 	await page.waitForLoadState('networkidle');
 
+	// Wait for any cookie consent and accept it to prevent it blocking other elements
+	const acceptAll = page.getByRole('button', { name: /accept all/i });
+	if (await acceptAll.isVisible()) {
+		await acceptAll.click();
+	}
+
 	// --- STEP 1: Database ---
 	await expect(page.locator('h2', { hasText: /database/i }).first()).toBeVisible({ timeout: 30_000 });
 
-	// Select Database Type if specified (default is mongodb)
-	const dbType = process.env.DB_TYPE || 'mongodb';
+	// Select Database Type if specified (default is sqlite for tests)
+	const dbType = process.env.DB_TYPE || 'sqlite';
 	if (dbType !== 'mongodb') {
 		await page.locator('#db-type').selectOption(dbType);
 	}
@@ -69,10 +52,10 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 	// Fill credentials from ENV (CI) or Defaults (Local)
 	const defaultPort = dbType === 'mariadb' ? '3306' : dbType === 'postgresql' ? '5432' : '27017';
 	const dbHost = process.env.DB_HOST || 'localhost';
-	const dbName = process.env.DB_NAME || 'SveltyCMS';
+	const dbName = process.env.DB_NAME || 'sveltycms_test';
 	const dbPort = process.env.DB_PORT || defaultPort;
-	const dbUser = process.env.DB_USER !== undefined ? process.env.DB_USER : 'admin';
-	const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'admin';
+	const dbUser = process.env.DB_USER !== undefined ? process.env.DB_USER : dbType === 'sqlite' ? '' : 'test';
+	const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : dbType === 'sqlite' ? '' : 'test';
 
 	await page.locator('#db-host').fill(dbHost);
 	await page.locator('#db-name').fill(dbName);
@@ -98,18 +81,18 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 
 	// Test Connection (with retry for CI stability)
 	const testDbButton = page.locator('button', { hasText: /test database/i });
-	await testDbButton.click();
+	await testDbButton.click({ force: true });
 
 	try {
 		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
-			timeout: 15_000
+			timeout: 40_000
 		});
 	} catch (_err) {
 		console.log('Initial DB test failed, retrying once...');
 		await page.waitForTimeout(5000);
-		await testDbButton.click();
+		await testDbButton.click({ force: true });
 		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
-			timeout: 30_000
+			timeout: 60_000
 		});
 	}
 

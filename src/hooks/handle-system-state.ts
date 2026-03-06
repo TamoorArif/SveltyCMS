@@ -27,6 +27,15 @@ let initStartTime = 0;
 // Timeout protection (30 seconds max for initialization)
 const INIT_TIMEOUT_MS = 30_000;
 
+/**
+ * RESET initialization state for testing
+ */
+export const resetInitializationState = () => {
+	initializationState = 'pending';
+	initError = null;
+	initStartTime = 0;
+};
+
 export const handleSystemState: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 	const setupComplete = isSetupComplete();

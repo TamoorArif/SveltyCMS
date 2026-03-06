@@ -27,6 +27,7 @@
 	import Fields from '@src/components/collection-display/fields.svelte';
 	import type { Schema } from '@src/content/types';
 	import { collections } from '@src/stores/collection-store.svelte';
+	import { widgets } from '@src/stores/widget-store.svelte';
 	import { app, validationStore } from '@src/stores/store.svelte.ts';
 	import { logger } from '@utils/logger';
 	import { parseURLToMode } from '@utils/navigation-utils';
@@ -158,6 +159,11 @@
 
 	onMount(() => {
 		isMounted = true;
+		// Ensure widgets are initialized if layout mount was skipped or delayed
+		if (!widgets.isLoaded) {
+			logger.debug('[+page.svelte] Initializing widgets on mount');
+			widgets.initialize();
+		}
 	});
 
 	$effect(() => {

@@ -1,5 +1,5 @@
 <!--
-@file src/routes/(app)/config/collectionbuilder/[action]/[...contentpath]/tabs/collection-widget/tabs-fields/permission.svelte
+@file src/routes/(app)/config/collectionbuilder/[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte
 @component
 **AUTH tab: permission and access control for the selected widget/field**
 

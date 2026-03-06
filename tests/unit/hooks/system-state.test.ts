@@ -13,15 +13,11 @@
  */
 import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
+import { resetSystemState, setSystemState, updateServiceHealth, type ServiceName } from '@src/stores/system/state';
 
 // Disable TEST_MODE so the state machine logic actually runs (CI sets TEST_MODE=true)
 const originalTestMode = process.env.TEST_MODE;
 process.env.TEST_MODE = undefined;
-
-mock.module('@src/stores/system/state', () => ({
-	getSystemState: () => (globalThis as any).__mockSystemState,
-	isSystemReady: () => (globalThis as any).__mockIsSystemReady
-}));
 
 import { handleSystemState } from '@src/hooks/handle-system-state';
 
@@ -62,18 +58,32 @@ const mockResolve = mock(() => {
  * Helper to set mock system state
  */
 function setMockState(state: { overallState: string; services?: Record<string, any>; performanceMetrics?: { stateTransitions: any[] } }) {
-	(globalThis as any).__mockSystemState = {
-		overallState: state.overallState,
-		services: state.services || {},
-		performanceMetrics: state.performanceMetrics || { stateTransitions: [] }
-	};
+	resetSystemState();
+
+	// First make all services healthy so we don't get stuck in INITIALIZING
+	const allServices: ServiceName[] = ['database', 'auth', 'cache', 'contentManager', 'themeManager', 'widgets'];
+	for (const service of allServices) {
+		updateServiceHealth(service, 'healthy', 'Mocked');
+	}
+
+	// Then apply overrides
+	if (state.services) {
+		for (const [service, config] of Object.entries(state.services)) {
+			updateServiceHealth(service as any, config.status, 'Mocked', config.error);
+		}
+	}
+
+	// Finally force the overall state
+	if (state.overallState) {
+		setSystemState(state.overallState as any);
+	}
 }
 
 describe('handleSystemState - State Machine Logic', () => {
 	beforeEach(() => {
 		// Reset mock state between tests
 		mockResolve.mockClear();
-		(globalThis as any).__mockIsSystemReady = true;
+		// Handled by setMockState now
 		(globalThis as any).__mockIsSetupComplete = true;
 		// Ensure TEST_MODE is disabled so state machine runs
 		process.env.TEST_MODE = undefined;
@@ -90,7 +100,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('READY state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'READY' });
-			(globalThis as any).__mockIsSystemReady = true;
+			// Handled by setMockState now
 		});
 
 		it('should allow all routes when system is READY', async () => {
@@ -127,7 +137,7 @@ describe('handleSystemState - State Machine Logic', () => {
 					database: { status: 'healthy', lastCheck: new Date() }
 				}
 			});
-			(globalThis as any).__mockIsSystemReady = true;
+			// Handled by setMockState now
 		});
 
 		it('should allow requests when system is DEGRADED', async () => {
@@ -158,7 +168,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('IDLE state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'IDLE' });
-			(globalThis as any).__mockIsSystemReady = false;
+			// Handled by setMockState now
 			(globalThis as any).__mockIsSetupComplete = false;
 		});
 
@@ -224,7 +234,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('INITIALIZING state', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'INITIALIZING' });
-			(globalThis as any).__mockIsSystemReady = false;
+			// Handled by setMockState now
 		});
 
 		it('should allow setup routes during INITIALIZING', async () => {
@@ -278,7 +288,7 @@ describe('handleSystemState - State Machine Logic', () => {
 					]
 				}
 			});
-			(globalThis as any).__mockIsSystemReady = false;
+			// Handled by setMockState now
 		});
 
 		it('should allow health checks even when FAILED', async () => {
@@ -351,7 +361,7 @@ describe('handleSystemState - State Machine Logic', () => {
 	describe('Route pattern matching', () => {
 		beforeEach(() => {
 			setMockState({ overallState: 'IDLE' });
-			(globalThis as any).__mockIsSystemReady = false;
+			// Handled by setMockState now
 			(globalThis as any).__mockIsSetupComplete = false;
 		});
 

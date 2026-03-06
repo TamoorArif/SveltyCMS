@@ -36,7 +36,7 @@
 	// Type Imports
 	import type { User } from '@src/databases/auth/types';
 	// Stores
-	import { setCollection, setContentStructure } from '@src/stores/collection-store.svelte.ts';
+	import { setCollection, setContentStructure, setMode } from '@src/stores/collection-store.svelte.ts';
 	import { publicEnv } from '@src/stores/global-settings.svelte.ts';
 	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
 	import { screen } from '@src/stores/screen-size-store.svelte';
@@ -85,7 +85,7 @@
 	// DERIVED STATE
 	// =============================================
 
-	// SEO meta content
+	// seoDescription logic
 	const siteName = publicEnv?.SITE_NAME || 'SveltyCMS';
 	const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`;
 
@@ -93,7 +93,19 @@
 	// REACTIVE EFFECTS
 	// =============================================
 
-	// Initialization loader is now managed in the data sync effect below
+	// Sync mode from URL (helps UI store show/hide sidebars even on error pages)
+	$effect(() => {
+		const isCreate = page.url.searchParams.get('create') === 'true';
+		const isEdit = page.url.searchParams.get('edit') === 'true';
+
+		if (isCreate) {
+			setMode('create');
+		} else if (isEdit) {
+			setMode('edit');
+		} else if (page.url.pathname.includes('/mediagallery')) {
+			setMode('media');
+		}
+	});
 
 	// Effect: Synchronize content structure with store (sidebar reads from this on all pages, including edit/create collection)
 	$effect(() => {

@@ -13,14 +13,10 @@
 
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
+import { invalidateSetupCache } from '@utils/setup-check';
 
-// --- Mock the setup check module ---
-let mockConfigExists = true; // controls isSetupComplete() and isSetupCompleteAsync()
-mock.module('@utils/setup-check', () => ({
-	isSetupComplete: () => mockConfigExists,
-	isSetupCompleteAsync: async () => mockConfigExists,
-	invalidateSetupCache: () => {}
-}));
+// Use global mockSetupCheck from tests/unit/setup.ts
+const mockSetupCheck = (globalThis as any).mockSetupCheck;
 
 // --- Mock SvelteKit (must include all exports used by transitive deps like handleApiError) ---
 mock.module('@sveltejs/kit', () => ({
@@ -40,17 +36,6 @@ mock.module('@sveltejs/kit', () => ({
 		}),
 	text: (data: string, init?: ResponseInit) => new Response(data, init)
 }));
-
-// --- Mock node:fs and node:path ---
-// We need to mock these BEFORE importing handleSetup
-const mockReadFileSync = mock(() => 'JWT_SECRET_KEY: "secret", DB_HOST: "localhost", DB_NAME: "test"');
-mock.module('node:fs', () => ({
-	readFileSync: mockReadFileSync
-}));
-mock.module('node:path', () => {
-	const pathMock = { join: (...args: string[]) => args.join('/') };
-	return { ...pathMock, default: pathMock };
-});
 
 // --- Test Utilities ---
 function createMockEvent(pathname: string): RequestEvent {
@@ -87,22 +72,17 @@ function expectRedirect(err: unknown, expectedStatus: number, expectedLocation: 
 	expect(e.location).toBe(expectedLocation);
 }
 
+import { handleSetup } from '@src/hooks/handle-setup';
+
 describe('handleSetup Middleware', () => {
 	let mockResolve: ReturnType<typeof mock>;
 	let mockResponse: Response;
-	let handleSetup: any;
 
 	beforeEach(async () => {
 		mockResponse = createMockResponse();
 		mockResolve = mock(() => Promise.resolve(mockResponse));
-		mockConfigExists = true;
-		mockReadFileSync.mockClear();
-
-		// Dynamic import to ensure mocks are applied
-		// We use a query param to force re-evaluation if possible, but Bun might not support it for local files easily.
-		// However, mock.module updates should be reflected in subsequent imports if the module wasn't fully cached or if Bun's test runner
-		const mod = await import('@src/hooks/handle-setup');
-		handleSetup = mod.handleSetup;
+		mockSetupCheck.setSetupComplete(true);
+		invalidateSetupCache();
 	});
 
 	// ---------------------------------------------------------------------
@@ -110,7 +90,7 @@ describe('handleSetup Middleware', () => {
 	// ---------------------------------------------------------------------
 	describe('Setup State Detection', () => {
 		it('detects when config file is missing', async () => {
-			mockConfigExists = false;
+			mockSetupCheck.setSetupComplete(false);
 			const event = createMockEvent('/dashboard');
 			try {
 				await handleSetup({ event, resolve: mockResolve });
@@ -122,7 +102,7 @@ describe('handleSetup Middleware', () => {
 
 		it('detects when config values are empty', async () => {
 			// Set mockConfigExists to false to simulate incomplete setup
-			mockConfigExists = false;
+			mockSetupCheck.setSetupComplete(false);
 
 			const event = createMockEvent('/dashboard');
 			try {
@@ -134,8 +114,7 @@ describe('handleSetup Middleware', () => {
 		});
 
 		it('allows access when setup is complete', async () => {
-			// Ensure mock returns valid config
-			mockReadFileSync.mockReturnValue('JWT_SECRET_KEY: "secret", DB_HOST: "localhost", DB_NAME: "test"');
+			mockSetupCheck.setSetupComplete(true);
 
 			const event = createMockEvent('/dashboard');
 			const response = await handleSetup({ event, resolve: mockResolve });
@@ -152,7 +131,7 @@ describe('handleSetup Middleware', () => {
 		// - ASSET_REGEX: /_app/*, /static/*, /favicon.ico, *.js, *.css, etc.
 		const allowed = ['/setup', '/setup/database', '/_app/immutable/chunks/index.js', '/static/logo.png', '/api/system/version', '/favicon.ico'];
 		beforeEach(() => {
-			mockConfigExists = false;
+			mockSetupCheck.setSetupComplete(false);
 		});
 		for (const path of allowed) {
 			it(`allows ${path}`, async () => {
@@ -182,7 +161,7 @@ describe('handleSetup Middleware', () => {
 	// ---------------------------------------------------------------------
 	describe('Redirect to Setup', () => {
 		beforeEach(() => {
-			mockConfigExists = false;
+			mockSetupCheck.setSetupComplete(false);
 		});
 
 		// Non-API routes redirect to /setup
@@ -212,11 +191,13 @@ describe('handleSetup Middleware', () => {
 	// ---------------------------------------------------------------------
 	describe('Block Setup After Completion', () => {
 		beforeEach(() => {
-			mockConfigExists = true;
+			mockSetupCheck.setSetupComplete(true);
 		});
 
 		it('redirects /setup to / when setup complete', async () => {
 			const event = createMockEvent('/setup');
+			// Force the cached value in event.locals to avoid test pollution across the suite
+			event.locals.__setupConfigExists = true;
 			try {
 				await handleSetup({ event, resolve: mockResolve });
 				// If we get here, it means no redirect was thrown

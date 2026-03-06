@@ -47,7 +47,7 @@
 		<h2 class="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-4xl">
 			Your {publicEnv.SITE_NAME} Blueprint is Empty
 		</h2>
-		<p class="text-lg leading-relaxed text-surface-600 dark:text-surface-300">
+		<p class="text-lg leading-relaxed text-surface-600 dark:text-surface-50">
 			Create your first collection or category to start structuring your content. A collection defines the fields and rules for your data, while
 			categories help you group them.
 		</p>
@@ -55,41 +55,26 @@
 
 	<!-- Call to Action -->
 	<div class="mt-10 flex flex-col items-center" in:fade={{ duration: 400, delay: 600 }}>
-		<div class="flex flex-wrap items-center justify-center gap-4">
-			<button
-				type="button"
-				onclick={onAddCategory}
-				class="group flex items-center justify-center gap-2 rounded-full border-2 border-primary-500/20 bg-transparent px-6 py-4 text-lg font-semibold text-primary-600 transition-all hover:bg-primary-50 dark:border-primary-400/30 dark:text-primary-400 dark:hover:bg-primary-900/20"
-			>
+		<div class="flex gap-4">
+			<button type="button" onclick={onAddCategory} class="group btn-lg rounded-full preset-filled-tertiary-500">
 				<iconify-icon icon="mdi:folder-plus" width="24" class="transition-transform group-hover:scale-110"></iconify-icon>
 				<span>{collection_addcategory()}</span>
 			</button>
 
-			<button
-				type="button"
-				onclick={onAddCollection}
-				class="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full preset-filled-tertiary-500 px-8 py-4 text-lg font-bold text-white shadow-xl transition-all hover:scale-105 hover:bg-primary-600 active:scale-95"
-			>
-				<iconify-icon icon="ic:round-plus" width="28" class="transition-transform group-hover:rotate-90"></iconify-icon>
+			<button type="button" onclick={onAddCollection} class="group btn-lg rounded-full preset-filled-primary-500">
+				<iconify-icon icon="ic:round-plus" width="24" class="transition-transform group-hover:rotate-90"></iconify-icon>
 				<span>{collection_add()}</span>
-
-				<!-- Subtle Shine Effect -->
-				<div class="absolute inset-x-0 top-0 h-1/2 bg-white/20 blur-sm group-hover:bg-white/30"></div>
 			</button>
 
 			{#if onLoadPreset}
-				<button
-					type="button"
-					onclick={onLoadPreset}
-					class="group flex items-center justify-center gap-2 rounded-full border-2 border-secondary-500/20 bg-transparent px-6 py-4 text-lg font-semibold text-secondary-600 transition-all hover:bg-secondary-50 dark:border-secondary-400/30 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
-				>
-					<iconify-icon icon="mdi:magic-staff" width="24" class="transition-transform group-hover:rotate-12"></iconify-icon>
-					<span>Load Preset</span>
+				<button type="button" onclick={onLoadPreset} class="group btn-lg rounded-full preset-filled-warning-500">
+					<iconify-icon icon="mdi:magic-staff" width="24" class="text-white transition-transform group-hover:rotate-12"></iconify-icon>
+					<span class="text-white">Load Preset</span>
 				</button>
 			{/if}
 		</div>
 
-		<p class="mt-6 text-sm italic text-surface-400 dark:text-surface-50">
+		<p class="mt-6 text-sm italic">
 			At least one collection is required to use the {publicEnv.SITE_NAME} features.
 		</p>
 	</div>

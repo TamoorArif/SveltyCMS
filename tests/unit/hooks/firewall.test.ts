@@ -15,22 +15,8 @@
 import { beforeEach, describe, expect, it, mock, test } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// Mock dependencies
-const mockMetricsIncrementSecurityViolations = mock(() => {});
-
-mock.module('@src/services/metrics-service', () => ({
-	metricsService: {
-		incrementSecurityViolations: mockMetricsIncrementSecurityViolations
-	}
-}));
-
-mock.module('@utils/logger.server', () => ({
-	logger: {
-		warn: mock(() => {}),
-		debug: mock(() => {}),
-		info: mock(() => {})
-	}
-}));
+// Use global metricsService from setup.ts
+const metricsService = (globalThis as any).metricsService;
 
 import { handleFirewall } from '@src/hooks/handle-firewall';
 
@@ -69,7 +55,7 @@ const mockResolve = mock(() => Promise.resolve(new Response('OK', { status: 200 
 describe('handleFirewall - Threat Pattern Detection', () => {
 	beforeEach(() => {
 		mockResolve.mockClear();
-		mockMetricsIncrementSecurityViolations.mockClear();
+		metricsService.incrementSecurityViolations.mockClear();
 	});
 
 	describe('Suspicious Parameter Detection (Application Threats)', () => {

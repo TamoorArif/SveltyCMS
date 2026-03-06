@@ -44,6 +44,9 @@ export async function POST({ request }: RequestEvent) {
 		switch (action) {
 			case 'reset':
 				await currentDbAdapter.clearDatabase();
+				// Invalidate setup cache so the server realizes the DB is now empty
+				const { invalidateSetupCache } = await import('@src/utils/setup-check');
+				invalidateSetupCache(true);
 				return json({ success: true, message: 'Database cleared' });
 
 			case 'seed': {
@@ -68,6 +71,10 @@ export async function POST({ request }: RequestEvent) {
 						role: 'admin'
 					});
 				}
+
+				// Invalidate setup cache so the server recognizes the system is now setup
+				const { invalidateSetupCache: invalidateAfterSeed } = await import('@src/utils/setup-check');
+				invalidateAfterSeed(true);
 
 				return json({ success: true, message: 'Database seeded' });
 			}

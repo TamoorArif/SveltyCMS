@@ -28,16 +28,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			throw redirect(302, redirectUrl);
 		}
 
-		// Fallback to dashboard if no collections found
-		logger.warn('[Language Redirect] No collections found for redirection, using dashboard fallback');
-		throw redirect(302, '/dashboard');
+		// Fallback if no collections found - go to collection builder
+		logger.warn('[Language Redirect] No collections found for redirection, using builder fallback');
+		throw redirect(302, '/config/collectionbuilder');
 	} catch (error) {
 		// Respect SvelteKit's redirect behavior
 		if (error && typeof error === 'object' && 'status' in error && (error as { status: number }).status === 302) {
 			throw error;
 		}
 
-		logger.error('Error in language redirect', { error, language, tenantId });
-		throw redirect(302, '/dashboard');
+		logger.error('Error in language redirect, falling back to root', { error, language, tenantId });
+		throw redirect(302, '/');
 	}
 };

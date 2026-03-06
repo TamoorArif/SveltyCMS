@@ -32,8 +32,8 @@
 
 	const props = $props();
 
-	// Extract the collection path from the URL (param name matches folder [...contentpath])
-	const contentPath = Array.isArray(page.params.contentpath) ? page.params.contentpath.join('/') : (page.params.contentpath ?? '');
+	// Extract the collection path from the URL (param name matches folder [...contentPath])
+	const contentPath = Array.isArray(page.params.contentPath) ? page.params.contentPath.join('/') : (page.params.contentPath ?? '');
 
 	// Helper function to map fields
 	function mapFieldsWithWidgets(fields: any[]) {

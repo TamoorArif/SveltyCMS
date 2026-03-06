@@ -169,6 +169,11 @@ export const actions: Actions = {
 			// Trigger compilation to register new collections
 			logger.info('🔄 Compiling new collections...');
 			await compile();
+
+			// Refresh content manager to recognize new collections
+			logger.info('🔄 Refreshing content manager...');
+			await contentManager.refresh();
+
 			logger.info('✅ Preset installation complete via Collection Builder.');
 
 			return { success: true, message: `Preset ${presetId} installed successfully` };

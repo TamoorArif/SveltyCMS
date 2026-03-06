@@ -27,5 +27,5 @@ jobs:
       - name: Install deps # Install dependencies with Bun
         run: bun install --frozen-lockfile
 
-      - name: Lint docs # Run doc linter using tsx
-        run: bun x tsx tests/lint-docs.ts
+      - name: Lint docs # Run doc linter using bun directly
+        run: bun tests/lint-docs.ts

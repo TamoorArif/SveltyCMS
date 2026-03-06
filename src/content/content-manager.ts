@@ -337,6 +337,7 @@ class ContentManager {
 		logger.info(`Refreshing ContentManager state${skipReconciliation ? ' (fast/skip-reconcile)' : ''}...`, { tenantId });
 		this.initState = 'initializing';
 		this.clearFirstCollectionCache(); // Clear cache on refresh
+		this.collectionCache.clear(); // Clear all collection caches too
 
 		const refreshPromise = this._fullReload(tenantId, skipReconciliation).then(() => {
 			this.initState = 'initialized';
@@ -724,11 +725,20 @@ class ContentManager {
 
 		// Try 1: Look up by path first
 		let nodeId = this.pathLookupMap.get(identifier);
+
+		// Fallback: Try with leading slash if missing
+		if (!nodeId && !identifier.startsWith('/')) {
+			nodeId = this.pathLookupMap.get(`/${identifier}`);
+		}
+
 		// Fallback for case-insensitive URL paths (e.g. /collections matching /Collections)
 		if (!nodeId) {
 			const lowerId = identifier.toLowerCase();
+			const lowerWithSlash = lowerId.startsWith('/') ? lowerId : `/${lowerId}`;
+
 			for (const [pathKey, idValue] of this.pathLookupMap.entries()) {
-				if (pathKey.toLowerCase() === lowerId) {
+				const lowerKey = pathKey.toLowerCase();
+				if (lowerKey === lowerId || lowerKey === lowerWithSlash) {
 					nodeId = idValue;
 					break;
 				}

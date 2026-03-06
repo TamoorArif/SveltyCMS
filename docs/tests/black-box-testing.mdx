@@ -4,7 +4,7 @@ title: 'Black-Box Testing Architecture'
 description: 'SveltyCMS strategic shift to 100% black-box integration testing for maximum security and database agnosticism.'
 author: 'SveltyCMS Team'
 created: '2026-02-15'
-updated: '2026-02-15'
+updated: '2026-03-06'
 tags:
   - 'testing'
   - 'architecture'
@@ -75,6 +75,13 @@ Every core endpoint is now triply-verified:
 - **Admin**: Verifies functionality.
 - **Restricted Role**: Verifies `403 Forbidden` (RBAC enforcement).
 - **Public**: Verifies `401 Unauthorized` (Auth enforcement).
+
+### 🔄 2026 Redirection Logic
+
+Black-box tests now explicitly verify the "Smart Onboarding" redirection flow:
+
+- **Empty CMS**: Verifies that Admins are redirected to `/config/collectionbuilder` immediately after login.
+- **Error Recovery**: Verifies that any failure during collection detection falls back to the root path `/` for a safe user experience.
 
 ---
 

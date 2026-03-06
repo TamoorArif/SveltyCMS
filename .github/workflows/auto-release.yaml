@@ -50,41 +50,26 @@ jobs:
       - name: Install Playwright Browsers
         run: bun x playwright install --with-deps chromium
 
-      # Create placeholder config/private.test.ts to ensure runtime config works
-      # Create placeholder config/private.ts to ensure runtime config works
-      - name: Create placeholder config/private.ts
-        run: |
-          echo "📝 Creating placeholder config/private.ts..."
-          cat > config/private.ts <<EOF
-          export const privateEnv = {
-            DB_TYPE: '${{ env.DB_TYPE }}',
-            DB_HOST: '${{ env.DB_HOST }}',
-            DB_PORT: ${{ env.DB_PORT }},
-            DB_NAME: '${{ env.DB_NAME }}',
-            DB_USER: '${{ env.DB_USER }}',
-            DB_PASSWORD: '${{ env.DB_PASSWORD }}',
-            JWT_SECRET_KEY: 'test_jwt_secret',
-            ENCRYPTION_KEY: 'test_encryption_key',
-            MULTI_TENANT: false
-          } as const;
-          EOF
-          echo "✅ Created config/private.ts"
-
-      # Build production version for faster, optimized testing
-      - name: Build Production
-        run: bun run build
-
-      # Start preview server for tests
-      - name: Start Preview Server
-        run: |
-          echo "🚀 Starting preview server on port 4173..."
-          bun run preview &
-          echo "⏳ Waiting for server to be ready..."
-          bun x wait-on http://localhost:4173 -t 60000
-          echo "✅ Preview server is ready!"
-
       - name: Run Playwright tests
-        run: bunx playwright test
+        env:
+          DB_TYPE: ${{ env.DB_TYPE }}
+          DB_HOST: 127.0.0.1
+          DB_NAME: sveltycms_test
+          DB_USER: admin
+          DB_PASSWORD: admin
+          TEST_MODE: true
+        run: |
+          # 1. Start preview server in background
+          bun run preview > preview.log 2>&1 &
+          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
+
+          # 2. Run Setup Wizard via Playwright to generate config/private.test.ts naturally
+          bun x playwright install --with-deps chromium
+          bun x playwright test tests/e2e/setup-wizard.spec.ts
+
+          # 3. Run remaining Playwright tests
+          bun x playwright test
+        timeout-minutes: 15
 
   release:
     name: Release with Semantic Release # Auto version + changelog

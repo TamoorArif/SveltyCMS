@@ -73,7 +73,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	}
 
 	if (typedUser.lastAuthMethod === 'token') {
-		throw redirect(302, '/user');
+		// Token users go to root on error, or builder if no collections (though they likely shouldn't be in the builder)
+		throw redirect(302, '/');
 	}
 
 	try {

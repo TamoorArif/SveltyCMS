@@ -45,7 +45,7 @@ Our API tests operate at the **Integration** level. Unlike unit tests, these int
 ### Key Components
 
 1.  **God-Mode API (`/api/testing`)**: Allows tests to programmatically reset the database and seed specific fixtures without direct DB access.
-2.  **Mock Isolation**: Integration tests use real databases (isolated per run) while Unit tests use `tests/unit/hooks/preload.ts` for deep internal mocking.
+2.  **Mock Isolation**: Integration tests use real databases (isolated per run) while Unit tests use `tests/unit/setup.ts` for deep internal mocking.
 3.  **Authentication Helpers**: Programmatic login and session management via `tests/integration/helpers/auth.ts`.
 
 ---
