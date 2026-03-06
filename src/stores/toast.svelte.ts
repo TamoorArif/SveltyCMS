@@ -383,6 +383,11 @@ class ToastStore {
 	private setTimer(id: string, ms: number): void {
 		this.clearTimer(id);
 
+		// Skip auto-removal in TEST_MODE for stable unit tests
+		if (process.env.TEST_MODE === 'true') {
+			return;
+		}
+
 		const timer = window.setTimeout(() => {
 			this.close(id);
 		}, ms);

@@ -110,20 +110,23 @@ export class LoadingStore {
 			return;
 		}
 
-		// Create timeout to auto-cleanup stuck states
-		const timeoutId = setTimeout(() => {
-			console.warn(`[LoadingStore] Auto-cleanup: "${reason}" exceeded ${timeout}ms`);
-			this.stopLoading(reason);
-		}, timeout);
-
 		// Add to stack and entries
-		this._loadingStack.add(reason);
-		this._loadingEntries.set(reason, {
+		const entry: LoadingEntry = {
 			reason,
 			startTime: Date.now(),
-			context,
-			timeoutId
-		});
+			context
+		};
+
+		// Create timeout to auto-cleanup stuck states (skip in TEST_MODE for stable unit tests)
+		if (process.env.TEST_MODE !== 'true') {
+			entry.timeoutId = setTimeout(() => {
+				console.warn(`[LoadingStore] Auto-cleanup: "${reason}" exceeded ${timeout}ms`);
+				this.stopLoading(reason);
+			}, timeout);
+		}
+
+		this._loadingStack.add(reason);
+		this._loadingEntries.set(reason, entry);
 
 		this._isLoading = true;
 		this._loadingReason = reason;

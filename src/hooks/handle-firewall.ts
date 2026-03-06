@@ -192,8 +192,8 @@ export const handleFirewall: Handle = async ({ event, resolve }) => {
 	const search = url.search.toLowerCase();
 
 	try {
-		// Bypass firewall in TEST_MODE
-		if (process.env.TEST_MODE === 'true') {
+		// Bypass firewall in TEST_MODE except for unit tests
+		if (process.env.TEST_MODE === 'true' && !request.headers.get('x-test-request')) {
 			return await resolve(event);
 		}
 

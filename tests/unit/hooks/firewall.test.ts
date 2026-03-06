@@ -24,8 +24,13 @@ import { handleFirewall } from '@src/hooks/handle-firewall';
  * Helper to create a RequestEvent with custom URL and User-Agent
  */
 function createMockEvent(url: string, userAgent?: string): RequestEvent {
+	const headers: Record<string, string> = { 'x-test-request': 'true' };
+	if (userAgent) {
+		headers['User-Agent'] = userAgent;
+	}
+
 	const request = new Request(url, {
-		headers: userAgent ? { 'User-Agent': userAgent } : {}
+		headers
 	});
 
 	return {
