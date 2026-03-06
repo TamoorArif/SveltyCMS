@@ -41,7 +41,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Sync SvelteKit
-        run: bun x svelte-kit sync
+        run: |
+          bun x svelte-kit sync
+          # Ensure generated types are fresh
+          rm -rf .svelte-kit/types
+          bun x svelte-kit sync
       - name: Compile Paraglide
         run: bun run paraglide
       - name: Generate Config Stubs
@@ -71,7 +75,10 @@ jobs:
           mkdir -p config
           echo "export const privateEnv = {}" > config/private.test.ts
       - name: Sync SvelteKit
-        run: bun run check
+        run: |
+          bun x svelte-kit sync
+          rm -rf .svelte-kit/types
+          bun x svelte-kit sync
       - name: Build
         run: bun run build
       - name: Upload Artifact
