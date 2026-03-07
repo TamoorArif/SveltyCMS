@@ -21,7 +21,7 @@ async function clickNext(page: Page) {
 test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 	// Setup wizard can take time due to DB initialization/seeding
 	test.setTimeout(120_000);
-	
+
 	// Enable TEST_MODE for the browser context if possible
 	// Note: The server must already be started with TEST_MODE=true
 
