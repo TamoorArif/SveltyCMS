@@ -13,6 +13,12 @@ mock.module('$app/environment', () => ({
 	version: '1.0.0'
 }));
 
+// Mock svelte/reactivity for Svelte 5 classes
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: class extends Map {},
+	SvelteSet: class extends Set {}
+}));
+
 // =============================================================================
 // 1. RUNES & BROWSER EMULATION
 // =============================================================================
