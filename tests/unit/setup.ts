@@ -6,6 +6,13 @@
  */
 import { mock } from 'bun:test';
 
+mock.module('$app/environment', () => ({
+	browser: true,
+	dev: true,
+	building: false,
+	version: '1.0.0'
+}));
+
 // =============================================================================
 // 1. RUNES & BROWSER EMULATION
 // =============================================================================
