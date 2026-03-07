@@ -6,6 +6,9 @@
  */
 import { mock } from 'bun:test';
 
+// =============================================================================
+// 0. MODULE MOCKS (Must be at the absolute top)
+// =============================================================================
 mock.module('$app/environment', () => ({
 	browser: true,
 	dev: true,
