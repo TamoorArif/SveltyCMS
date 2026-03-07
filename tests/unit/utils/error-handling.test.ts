@@ -20,7 +20,7 @@ mock.module('$app/environment', () => ({
 	version: 'test'
 }));
 
-let AppError: any;
+let APP_ERROR: any;
 let getErrorMessage: any;
 let isAppError: any;
 let isHttpError: any;
@@ -28,7 +28,7 @@ let wrapError: any;
 
 beforeAll(async () => {
 	const mod = await import('@src/utils/error-handling');
-	AppError = mod.AppError;
+	APP_ERROR = mod.AppError;
 	getErrorMessage = mod.getErrorMessage;
 	isAppError = mod.isAppError;
 	isHttpError = mod.isHttpError;
@@ -37,17 +37,17 @@ beforeAll(async () => {
 
 describe('Error Handling - AppError Class', () => {
 	it('should create AppError with message and status', () => {
-		const error = new AppError('Test error', 404);
+		const error = new APP_ERROR('Test error', 404);
 
 		expect(error.message).toBe('Test error');
 		expect(error.status).toBe(404);
 		expect(error instanceof Error).toBe(true);
-		expect(error instanceof AppError).toBe(true);
+		expect(error instanceof APP_ERROR).toBe(true);
 	});
 
 	it('should create AppError with original error', () => {
 		const originalError = new Error('Original error');
-		const appError = new AppError('Wrapped error', 500, originalError);
+		const appError = new APP_ERROR('Wrapped error', 500, originalError);
 
 		expect(appError.message).toBe('Wrapped error');
 		expect(appError.status).toBe(500);
@@ -55,7 +55,7 @@ describe('Error Handling - AppError Class', () => {
 	});
 
 	it('should create AppError with details', () => {
-		const error = new AppError('Error with details', 400, undefined, {
+		const error = new APP_ERROR('Error with details', 400, undefined, {
 			field: 'email',
 			reason: 'invalid format'
 		});
@@ -66,14 +66,14 @@ describe('Error Handling - AppError Class', () => {
 	});
 
 	it('should have proper error name', () => {
-		const error = new AppError('Test', 500);
+		const error = new APP_ERROR('Test', 500);
 		expect(error.name).toBe('AppError');
 	});
 });
 
 describe('Error Handling - Type Guards', () => {
 	it('should identify AppError instances', () => {
-		const appError = new AppError('Test', 500);
+		const appError = new APP_ERROR('Test', 500);
 		const regularError = new Error('Test');
 
 		expect(isAppError(appError)).toBe(true);
@@ -103,7 +103,7 @@ describe('Error Handling - Error Messages', () => {
 	});
 
 	it('should extract message from AppError', () => {
-		const error = new AppError('App error', 500);
+		const error = new APP_ERROR('App error', 500);
 		expect(getErrorMessage(error)).toBe('App error');
 	});
 
@@ -151,7 +151,7 @@ describe('Error Handling - Wrap Error', () => {
 	});
 
 	it('should preserve AppError', () => {
-		const appError = new AppError('App error', 400);
+		const appError = new APP_ERROR('App error', 400);
 		const wrapped = wrapError(appError);
 
 		expect(wrapped).toBe(appError);
@@ -216,7 +216,7 @@ describe('Error Handling - Integration', () => {
 
 	it('should extract messages from error chain', () => {
 		const rootError = new Error('Root');
-		const wrapped = new AppError('Wrapped', 500, rootError);
+		const wrapped = new APP_ERROR('Wrapped', 500, rootError);
 
 		expect(getErrorMessage(wrapped)).toBe('Wrapped');
 		expect(getErrorMessage(wrapped.originalError)).toBe('Root');

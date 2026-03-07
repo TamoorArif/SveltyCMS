@@ -39,7 +39,7 @@ export class BatchModule {
 
 			for (const op of operations) {
 				try {
-					let res: DatabaseResult<T | void>;
+					let res: DatabaseResult<T | undefined>;
 					switch (op.operation) {
 						case 'insert':
 							res = await this.crud.insert<T & BaseEntity>(op.collection, op.data as Omit<T & BaseEntity, '_id' | 'createdAt' | 'updatedAt'>);
@@ -58,7 +58,7 @@ export class BatchModule {
 							if (!op.id) {
 								throw new Error('ID required for delete operation');
 							}
-							res = await this.crud.delete(op.collection, op.id);
+							res = (await this.crud.delete(op.collection, op.id)) as unknown as DatabaseResult<undefined>;
 							break;
 						case 'upsert':
 							if (!(op.query && op.data)) {

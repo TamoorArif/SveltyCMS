@@ -4,21 +4,21 @@
 Shows horizontal stepper on mobile, vertical stepper on desktop with legend.
 -->
 <script lang="ts">
-	import VersionCheck from '@src/components/version-check.svelte';
+import VersionCheck from '@src/components/version-check.svelte';
 
-	const { steps, currentStep, stepCompleted, stepClickable, legendItems, onselectStep = () => {} } = $props();
+const { steps, currentStep, stepCompleted, stepClickable, legendItems, onselectStep = () => {} } = $props();
 
-	function handleStepClick(stepIndex: number) {
-		if (stepClickable[stepIndex] || stepIndex === currentStep) {
-			onselectStep(stepIndex);
-		}
+function handleStepClick(stepIndex: number) {
+	if (stepClickable[stepIndex] || stepIndex === currentStep) {
+		onselectStep(stepIndex);
 	}
+}
 
-	// Hover handler for prefetching - parent can handle this if needed
+// Hover handler for prefetching - parent can handle this if needed
 
-	function handleStepHover(_stepIndex: number) {
-		// Intentionally empty - reserved for future hover prefetch optimization
-	}
+function handleStepHover(_stepIndex: number) {
+	// Intentionally empty - reserved for future hover prefetch optimization
+}
 </script>
 
 <div class="w-full shrink-0 lg:w-80 xl:w-96">

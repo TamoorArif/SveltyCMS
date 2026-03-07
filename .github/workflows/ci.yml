@@ -54,6 +54,8 @@ jobs:
           echo "export const privateEnv = {}" > config/private.test.ts
       - name: Run Linter
         run: bun run lint
+      - name: Run Type Check
+        run: bun run check
       - name: Run Unit Tests
         env:
           TEST_MODE: true

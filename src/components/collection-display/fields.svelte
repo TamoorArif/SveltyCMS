@@ -19,324 +19,324 @@
 - `Alt + S`: Save currently edited entry (if focused)
 -->
 <script lang="ts">
-	import { logger } from '@utils/logger';
-	import { getFieldName } from '@utils/utils';
-	import { untrack } from 'svelte';
+import { logger } from '@utils/logger';
+import { getFieldName } from '@utils/utils';
+import { untrack } from 'svelte';
 
-	// Auth & Page data
-	import { page } from '$app/state';
+// Auth & Page data
+import { page } from '$app/state';
 
-	const user = $derived(page.data?.user);
-	const tenantId = $derived(page.data?.tenantId);
+const user = $derived(page.data?.user);
+const tenantId = $derived(page.data?.tenantId);
 
-	import { Tabs } from '@skeletonlabs/skeleton-svelte';
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { applayout_version, button_edit, Fields_no_widgets_found, form_required } from '@src/paraglide/messages';
-	import type { Locale } from '@src/paraglide/runtime';
-	// Stores
-	import { collection, collectionValue, setCollectionValue } from '@src/stores/collection-store.svelte';
-	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { contentLanguage, dataChangeStore, translationProgress, validationStore } from '@src/stores/store.svelte.ts';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { widgetFunctions as widgetFunctionsStore, widgets } from '@src/stores/widget-store.svelte';
-	import { showConfirm } from '@utils/modal-utils';
-	import WidgetLoader from './widget-loader.svelte';
+import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import { applayout_version, button_edit, Fields_no_widgets_found, form_required } from '@src/paraglide/messages';
+import type { Locale } from '@src/paraglide/runtime';
+// Stores
+import { collection, collectionValue, setCollectionValue } from '@src/stores/collection-store.svelte';
+import { publicEnv } from '@src/stores/global-settings.svelte';
+import { contentLanguage, dataChangeStore, translationProgress, validationStore } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { widgetFunctions as widgetFunctionsStore, widgets } from '@src/stores/widget-store.svelte';
+import { showConfirm } from '@utils/modal-utils';
+import WidgetLoader from './widget-loader.svelte';
 
-	// --- PERFORMANCE FIX: DYNAMIC WIDGET IMPORTS ---
-	// Lazy-load widgets for code-splitting (eager: false is default)
-	// Returns loader functions instead of eager-loaded components
-	const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../widgets/**/*.svelte') as Record<
-		string,
-		() => Promise<{ default: any }>
-	>;
+// --- PERFORMANCE FIX: DYNAMIC WIDGET IMPORTS ---
+// Lazy-load widgets for code-splitting (eager: false is default)
+// Returns loader functions instead of eager-loaded components
+const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../widgets/**/*.svelte') as Record<
+	string,
+	() => Promise<{ default: any }>
+>;
 
-	// Plugin Slot System
-	import { slotRegistry } from '@src/plugins/slot-registry';
-	import { activeInputStore } from '@src/stores/active-input-store.svelte';
+// Plugin Slot System
+import { slotRegistry } from '@src/plugins/slot-registry';
+import { activeInputStore } from '@src/stores/active-input-store.svelte';
 
-	// Token Picker
-	// Token Picker
+// Token Picker
+// Token Picker
 
-	function openTokenPicker(field: any, e: MouseEvent) {
-		e.preventDefault();
-		e.stopPropagation();
+function openTokenPicker(field: any, e: MouseEvent) {
+	e.preventDefault();
+	e.stopPropagation();
 
-		// Fallback: Try to find the input by ID (using db_fieldName as ID)
-		const id = field.db_fieldName;
-		const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
-		if (el) {
-			el.focus();
-			activeInputStore.set({ element: el, field }); // Explicitly open picker on button click
-		} else {
-			console.warn('Could not find input for field', field);
+	// Fallback: Try to find the input by ID (using db_fieldName as ID)
+	const id = field.db_fieldName;
+	const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+	if (el) {
+		el.focus();
+		activeInputStore.set({ element: el, field }); // Explicitly open picker on button click
+	} else {
+		console.warn('Could not find input for field', field);
+	}
+}
+// --- END PERFORMANCE FIX ---
+
+let widgetFunctions = $state<Record<string, any>>({});
+$effect(() => {
+	const unsubscribe = widgetFunctionsStore.subscribe((value) => {
+		widgetFunctions = value;
+	});
+	return unsubscribe;
+});
+
+// --- 1. RECEIVE DATA AS PROPS ---
+let {
+	fields,
+	revisions = []
+	// contentLanguage prop received but not directly used - widgets access contentLanguage store
+} = $props<{
+	fields?: NonNullable<(typeof collection)['value']>['fields'];
+	revisions?: any[];
+	contentLanguage?: string; // Passed for documentation, widgets use store directly
+}>();
+
+// --- 2. SIMPLIFIED STATE ---
+let localTabSet = $state('0');
+let apiUrl = $state('');
+
+// This is form state, not fetched data, so it remains.
+let currentCollectionValue = $state<Record<string, any>>({});
+
+// Revisions State (now simpler)
+let selectedRevisionId = $state('');
+
+// Track the last entry ID to detect when switching entries
+let lastEntryId = $state<string | undefined>(undefined);
+
+// Track current content language for reactivity
+let currentContentLanguage = $state<Locale>(contentLanguage.value as Locale);
+
+// React to contentLanguage store changes and update local state
+// This ensures widgets remount with the correct language
+$effect(() => {
+	const newLang = contentLanguage.value as Locale;
+	if (currentContentLanguage !== newLang) {
+		logger.debug('Language changed:', currentContentLanguage, '→', newLang);
+		logger.debug('Current collectionValue keys:', Object.keys(currentCollectionValue));
+		// Update immediately to trigger {#key} block
+		currentContentLanguage = newLang;
+		logger.debug('Updated currentContentLanguage to:', currentContentLanguage);
+	}
+});
+
+// --- 3. DERIVED STATE FROM PROPS ---
+let selectedRevision = $derived(Array.isArray(revisions) ? revisions.find((r: any) => r._id === selectedRevisionId) || null : null);
+
+// --- 4. SIMPLIFIED LOGIC ---
+let derivedFields = $derived(fields || []);
+
+// Get translation progress
+let currentTranslationProgress = $derived(translationProgress.value);
+
+// Track changes to translation progress for debugging
+$effect(() => {
+	logger.debug('Translation progress updated:', {
+		showProgress: translationProgress.value?.show,
+		languages: Object.keys(translationProgress.value || {}).filter((k) => k !== 'show')
+	});
+});
+
+// Get available languages
+let availableLanguages = $derived.by<Locale[]>(() => {
+	// Wait for publicEnv to be initialized
+	const languages = publicEnv?.AVAILABLE_CONTENT_LANGUAGES;
+	if (!(languages && Array.isArray(languages))) {
+		return ['en'] as Locale[];
+	}
+	return languages as Locale[];
+});
+
+// Helper to get field translation percentage across all languages
+function getFieldTranslationPercentage(field: any): number {
+	if (!field.translated) {
+		return 100; // Not a translatable field
+	}
+
+	const fieldName = `${collection.value?.name}.${getFieldName(field)}`;
+	const allLangs = availableLanguages; // Use the new derived state
+
+	// Avoid division by zero if no languages are configured
+	if (allLangs.length === 0) {
+		return 100;
+	}
+
+	let translatedCount = 0;
+
+	// Count how many languages have this field translated
+	for (const lang of allLangs) {
+		const langProgress = currentTranslationProgress?.[lang as Locale];
+		if (langProgress?.translated.has(fieldName)) {
+			translatedCount++;
 		}
 	}
-	// --- END PERFORMANCE FIX ---
 
-	let widgetFunctions = $state<Record<string, any>>({});
-	$effect(() => {
-		const unsubscribe = widgetFunctionsStore.subscribe((value) => {
-			widgetFunctions = value;
-		});
-		return unsubscribe;
-	});
+	// Calculate the overall percentage for this field
+	return Math.round((translatedCount / allLangs.length) * 100);
+}
 
-	// --- 1. RECEIVE DATA AS PROPS ---
-	let {
-		fields,
-		revisions = []
-		// contentLanguage prop received but not directly used - widgets access contentLanguage store
-	} = $props<{
-		fields?: NonNullable<(typeof collection)['value']>['fields'];
-		revisions?: any[];
-		contentLanguage?: string; // Passed for documentation, widgets use store directly
-	}>();
+// Helper to get text color based on translation status
+function getTranslationTextColor(percentage: number): string {
+	if (percentage === 100) {
+		return 'text-tertiary-500 dark:text-primary-500';
+	}
+	return 'text-error-500';
+}
 
-	// --- 2. SIMPLIFIED STATE ---
-	let localTabSet = $state('0');
-	let apiUrl = $state('');
+function ensureFieldProperties(field: any) {
+	if (!field) {
+		return null;
+	}
+	return {
+		...field,
+		db_fieldName: field.db_fieldName || getFieldName(field, true),
+		widget: field.widget || { Name: field.type || 'Input' },
+		permissions: field.permissions || {}
+	};
+}
 
-	// This is form state, not fetched data, so it remains.
-	let currentCollectionValue = $state<Record<string, any>>({});
-
-	// Revisions State (now simpler)
-	let selectedRevisionId = $state('');
-
-	// Track the last entry ID to detect when switching entries
-	let lastEntryId = $state<string | undefined>(undefined);
-
-	// Track current content language for reactivity
-	let currentContentLanguage = $state<Locale>(contentLanguage.value as Locale);
-
-	// React to contentLanguage store changes and update local state
-	// This ensures widgets remount with the correct language
-	$effect(() => {
-		const newLang = contentLanguage.value as Locale;
-		if (currentContentLanguage !== newLang) {
-			logger.debug('Language changed:', currentContentLanguage, '→', newLang);
-			logger.debug('Current collectionValue keys:', Object.keys(currentCollectionValue));
-			// Update immediately to trigger {#key} block
-			currentContentLanguage = newLang;
-			logger.debug('Updated currentContentLanguage to:', currentContentLanguage);
-		}
-	});
-
-	// --- 3. DERIVED STATE FROM PROPS ---
-	let selectedRevision = $derived(Array.isArray(revisions) ? revisions.find((r: any) => r._id === selectedRevisionId) || null : null);
-
-	// --- 4. SIMPLIFIED LOGIC ---
-	let derivedFields = $derived(fields || []);
-
-	// Get translation progress
-	let currentTranslationProgress = $derived(translationProgress.value);
-
-	// Track changes to translation progress for debugging
-	$effect(() => {
-		logger.debug('Translation progress updated:', {
-			showProgress: translationProgress.value?.show,
-			languages: Object.keys(translationProgress.value || {}).filter((k) => k !== 'show')
-		});
-	});
-
-	// Get available languages
-	let availableLanguages = $derived.by<Locale[]>(() => {
-		// Wait for publicEnv to be initialized
-		const languages = publicEnv?.AVAILABLE_CONTENT_LANGUAGES;
-		if (!(languages && Array.isArray(languages))) {
-			return ['en'] as Locale[];
-		}
-		return languages as Locale[];
-	});
-
-	// Helper to get field translation percentage across all languages
-	function getFieldTranslationPercentage(field: any): number {
-		if (!field.translated) {
-			return 100; // Not a translatable field
-		}
-
-		const fieldName = `${collection.value?.name}.${getFieldName(field)}`;
-		const allLangs = availableLanguages; // Use the new derived state
-
-		// Avoid division by zero if no languages are configured
-		if (allLangs.length === 0) {
-			return 100;
-		}
-
-		let translatedCount = 0;
-
-		// Count how many languages have this field translated
-		for (const lang of allLangs) {
-			const langProgress = currentTranslationProgress?.[lang as Locale];
-			if (langProgress?.translated.has(fieldName)) {
-				translatedCount++;
+let filteredFields = $derived(
+	derivedFields
+		.map(ensureFieldProperties)
+		.filter(Boolean)
+		.filter((field: any) => {
+			if (!field.permissions || page.data?.isAdmin || !user?.role) {
+				return true;
 			}
-		}
+			const rolePermissions = field.permissions[user.role];
+			return !rolePermissions || rolePermissions.read !== false;
+		})
+);
 
-		// Calculate the overall percentage for this field
-		return Math.round((translatedCount / allLangs.length) * 100);
+// Sync local form state with global store
+// When collectionValue changes (new entry loaded), update local state
+// When local state changes (user editing), update global state
+$effect(() => {
+	const global = collectionValue.value as Record<string, unknown> | undefined;
+	const globalId = (global as any)?._id;
+
+	// When a new entry is loaded (different ID), pull from global -> local
+	if (globalId && globalId !== lastEntryId) {
+		logger.debug('Loading entry data:', globalId);
+		currentCollectionValue = { ...global } as any;
+		lastEntryId = globalId;
+		// Set initial snapshot for change tracking
+		dataChangeStore.setInitialSnapshot(global as Record<string, any>);
+		return;
 	}
 
-	// Helper to get text color based on translation status
-	function getTranslationTextColor(percentage: number): string {
-		if (percentage === 100) {
-			return 'text-tertiary-500 dark:text-primary-500';
-		}
-		return 'text-error-500';
+	// If creating new entry (no ID), initialize with global state
+	if (!(globalId || lastEntryId) && global && Object.keys(global).length > 0) {
+		logger.debug('Initializing new entry');
+		currentCollectionValue = { ...global } as any;
+		// Set initial snapshot for change tracking
+		dataChangeStore.setInitialSnapshot(global as Record<string, any>);
+		return;
 	}
 
-	function ensureFieldProperties(field: any) {
-		if (!field) {
-			return null;
+	// Otherwise, push local changes to global (user is editing)
+	// Use untrack to read currentCollectionValue without creating a dependency loop
+	const local = untrack(() => currentCollectionValue) as Record<string, unknown> | undefined;
+	if (local && Object.keys(local).length > 0) {
+		const currentDataStr = JSON.stringify(local);
+		const globalDataStr = JSON.stringify(global ?? {});
+		if (currentDataStr !== globalDataStr) {
+			logger.debug('Pushing local changes to global store');
+			untrack(() => setCollectionValue({ ...local }));
+			// Track changes for save button state
+			dataChangeStore.compareWithCurrent(local as Record<string, any>);
 		}
-		return {
-			...field,
-			db_fieldName: field.db_fieldName || getFieldName(field, true),
-			widget: field.widget || { Name: field.type || 'Input' },
-			permissions: field.permissions || {}
-		};
+	}
+});
+
+// Separate effect to detect changes in currentCollectionValue and sync to store
+// This is needed because the widget bind:value updates currentCollectionValue
+let lastLocalValueStr = $state<string>('');
+$effect(() => {
+	// React to currentCollectionValue changes (from widget inputs)
+	const localStr = JSON.stringify(currentCollectionValue);
+
+	// Skip if this is the initial load or empty
+	if (!currentCollectionValue || Object.keys(currentCollectionValue).length === 0) {
+		return;
 	}
 
-	let filteredFields = $derived(
-		derivedFields
-			.map(ensureFieldProperties)
-			.filter(Boolean)
-			.filter((field: any) => {
-				if (!field.permissions || page.data?.isAdmin || !user?.role) {
-					return true;
+	// Only update if value actually changed
+	if (localStr !== lastLocalValueStr) {
+		logger.debug('currentCollectionValue changed, syncing to store');
+		lastLocalValueStr = localStr;
+
+		// Update the global store (using untrack to avoid creating dependency)
+		const global = untrack(() => collectionValue.value);
+		const globalStr = JSON.stringify(global ?? {});
+
+		if (localStr !== globalStr) {
+			untrack(() => setCollectionValue({ ...currentCollectionValue }));
+			// Track changes for save button state
+			dataChangeStore.compareWithCurrent(currentCollectionValue as Record<string, any>);
+		}
+	}
+});
+
+// --- 5. REFACTORED REVISION LOGIC ---
+function handleRevert() {
+	if (!selectedRevision?.data) {
+		return;
+	}
+	showConfirm({
+		title: 'Confirm Revert',
+		body: 'Are you sure you want to revert to this version? Any unsaved changes will be lost.',
+		confirmText: 'Revert',
+		onConfirm: () => {
+			const revertData = {
+				...selectedRevision.data,
+				_id: (collectionValue as any).value?._id
+			};
+			setCollectionValue(revertData);
+			currentCollectionValue = revertData; // also update local state
+			toast.info('Content reverted. Please save your changes.');
+			localTabSet = '0';
+		}
+	});
+}
+
+// --- 6. VALIDATION LOGIC ---
+// Reactively validate fields whenever values change
+$effect(() => {
+	const values = currentCollectionValue; // React to value changes
+
+	// Iterate over fields to validate them
+	filteredFields.forEach((field: any) => {
+		if (field.required) {
+			const fieldName = getFieldName(field, false);
+			const value = values[fieldName];
+
+			// Check for empty values
+			// Handle various types: string, array, null, undefined
+			const isEmpty =
+				value === null || value === undefined || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0);
+
+			if (isEmpty) {
+				// Only set error if it's not already set to avoid loop (though store handles this)
+				if (!validationStore.hasError(fieldName)) {
+					validationStore.setError(fieldName, `${field.label || fieldName} is required`);
 				}
-				const rolePermissions = field.permissions[user.role];
-				return !rolePermissions || rolePermissions.read !== false;
-			})
-	);
-
-	// Sync local form state with global store
-	// When collectionValue changes (new entry loaded), update local state
-	// When local state changes (user editing), update global state
-	$effect(() => {
-		const global = collectionValue.value as Record<string, unknown> | undefined;
-		const globalId = (global as any)?._id;
-
-		// When a new entry is loaded (different ID), pull from global -> local
-		if (globalId && globalId !== lastEntryId) {
-			logger.debug('Loading entry data:', globalId);
-			currentCollectionValue = { ...global } as any;
-			lastEntryId = globalId;
-			// Set initial snapshot for change tracking
-			dataChangeStore.setInitialSnapshot(global as Record<string, any>);
-			return;
-		}
-
-		// If creating new entry (no ID), initialize with global state
-		if (!(globalId || lastEntryId) && global && Object.keys(global).length > 0) {
-			logger.debug('Initializing new entry');
-			currentCollectionValue = { ...global } as any;
-			// Set initial snapshot for change tracking
-			dataChangeStore.setInitialSnapshot(global as Record<string, any>);
-			return;
-		}
-
-		// Otherwise, push local changes to global (user is editing)
-		// Use untrack to read currentCollectionValue without creating a dependency loop
-		const local = untrack(() => currentCollectionValue) as Record<string, unknown> | undefined;
-		if (local && Object.keys(local).length > 0) {
-			const currentDataStr = JSON.stringify(local);
-			const globalDataStr = JSON.stringify(global ?? {});
-			if (currentDataStr !== globalDataStr) {
-				logger.debug('Pushing local changes to global store');
-				untrack(() => setCollectionValue({ ...local }));
-				// Track changes for save button state
-				dataChangeStore.compareWithCurrent(local as Record<string, any>);
+			} else if (validationStore.hasError(fieldName)) {
+				validationStore.clearError(fieldName);
 			}
 		}
 	});
+});
 
-	// Separate effect to detect changes in currentCollectionValue and sync to store
-	// This is needed because the widget bind:value updates currentCollectionValue
-	let lastLocalValueStr = $state<string>('');
-	$effect(() => {
-		// React to currentCollectionValue changes (from widget inputs)
-		const localStr = JSON.stringify(currentCollectionValue);
-
-		// Skip if this is the initial load or empty
-		if (!currentCollectionValue || Object.keys(currentCollectionValue).length === 0) {
-			return;
-		}
-
-		// Only update if value actually changed
-		if (localStr !== lastLocalValueStr) {
-			logger.debug('currentCollectionValue changed, syncing to store');
-			lastLocalValueStr = localStr;
-
-			// Update the global store (using untrack to avoid creating dependency)
-			const global = untrack(() => collectionValue.value);
-			const globalStr = JSON.stringify(global ?? {});
-
-			if (localStr !== globalStr) {
-				untrack(() => setCollectionValue({ ...currentCollectionValue }));
-				// Track changes for save button state
-				dataChangeStore.compareWithCurrent(currentCollectionValue as Record<string, any>);
-			}
-		}
-	});
-
-	// --- 5. REFACTORED REVISION LOGIC ---
-	function handleRevert() {
-		if (!selectedRevision?.data) {
-			return;
-		}
-		showConfirm({
-			title: 'Confirm Revert',
-			body: 'Are you sure you want to revert to this version? Any unsaved changes will be lost.',
-			confirmText: 'Revert',
-			onConfirm: () => {
-				const revertData = {
-					...selectedRevision.data,
-					_id: (collectionValue as any).value?._id
-				};
-				setCollectionValue(revertData);
-				currentCollectionValue = revertData; // also update local state
-				toast.info('Content reverted. Please save your changes.');
-				localTabSet = '0';
-			}
-		});
+$effect(() => {
+	if ((collectionValue as any).value?._id) {
+		apiUrl = `${location.origin}/api/collection/${collection.value?._id}/${(collectionValue as any).value._id}`;
 	}
+});
 
-	// --- 6. VALIDATION LOGIC ---
-	// Reactively validate fields whenever values change
-	$effect(() => {
-		const values = currentCollectionValue; // React to value changes
-
-		// Iterate over fields to validate them
-		filteredFields.forEach((field: any) => {
-			if (field.required) {
-				const fieldName = getFieldName(field, false);
-				const value = values[fieldName];
-
-				// Check for empty values
-				// Handle various types: string, array, null, undefined
-				const isEmpty =
-					value === null || value === undefined || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0);
-
-				if (isEmpty) {
-					// Only set error if it's not already set to avoid loop (though store handles this)
-					if (!validationStore.hasError(fieldName)) {
-						validationStore.setError(fieldName, `${field.label || fieldName} is required`);
-					}
-				} else if (validationStore.hasError(fieldName)) {
-					validationStore.clearError(fieldName);
-				}
-			}
-		});
-	});
-
-	$effect(() => {
-		if ((collectionValue as any).value?._id) {
-			apiUrl = `${location.origin}/api/collection/${collection.value?._id}/${(collectionValue as any).value._id}`;
-		}
-	});
-
-	// --- 7. PLUGIN SLOTS ---
-	const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
+// --- 7. PLUGIN SLOTS ---
+const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 </script>
 
 <h1 class="sr-only">{collection.value?.name ? `Edit ${collection.value.name} Entry` : 'Edit Entry'}</h1>

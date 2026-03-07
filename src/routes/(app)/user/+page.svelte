@@ -15,234 +15,234 @@
 -->
 
 <script lang="ts">
-	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import PageTitle from '@src/components/page-title.svelte';
-	import PermissionGuard from '@src/components/permission-guard.svelte';
-	// ParaglideJS
-	import {
-		button_delete,
-		email,
-		form_password,
-		role,
-		usermodalconfirmbody,
-		usermodalconfirmtitle,
-		usermodaluser_edittitle,
-		usermodaluser_settingbody,
-		usermodaluser_settingtitle,
-		username,
-		userpage_edit_usersetting,
-		userpage_editavatar,
-		userpage_title,
-		userpage_user_id
-	} from '@src/paraglide/messages';
-	// Stores
-	import { collaboration } from '@src/stores/collaboration-store.svelte';
-	import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
-	import { onMount } from 'svelte';
-	import { invalidateAll } from '$app/navigation';
-	import AdminArea from './components/admin-area.svelte';
-	// Auth
-	import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
-	import '@src/stores/store.svelte.ts';
-	import { setCollection } from '@src/stores/collection-store.svelte';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { triggerActionStore } from '@utils/global-search-index';
-	import { modalState } from '@utils/modal-state.svelte';
-	import { showConfirm } from '@utils/modal-utils';
-	import ModalEditAvatar from './components/modal-edit-avatar.svelte';
-	import ModalEditForm from './components/modal-edit-form.svelte';
+import { Avatar } from '@skeletonlabs/skeleton-svelte';
+import PageTitle from '@src/components/page-title.svelte';
+import PermissionGuard from '@src/components/permission-guard.svelte';
+// ParaglideJS
+import {
+	button_delete,
+	email,
+	form_password,
+	role,
+	usermodalconfirmbody,
+	usermodalconfirmtitle,
+	usermodaluser_edittitle,
+	usermodaluser_settingbody,
+	usermodaluser_settingtitle,
+	username,
+	userpage_edit_usersetting,
+	userpage_editavatar,
+	userpage_title,
+	userpage_user_id
+} from '@src/paraglide/messages';
+// Stores
+import { collaboration } from '@src/stores/collaboration-store.svelte';
+import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
+import { onMount } from 'svelte';
+import { invalidateAll } from '$app/navigation';
+import AdminArea from './components/admin-area.svelte';
+// Auth
+import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
+import '@src/stores/store.svelte.ts';
+import { setCollection } from '@src/stores/collection-store.svelte';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { triggerActionStore } from '@utils/global-search-index';
+import { modalState } from '@utils/modal-state.svelte';
+import { showConfirm } from '@utils/modal-utils';
+import ModalEditAvatar from './components/modal-edit-avatar.svelte';
+import ModalEditForm from './components/modal-edit-form.svelte';
 
-	// Props
-	const { data } = $props();
-	const { user: serverUser, isFirstUser, isMultiTenant, is2FAEnabledGlobal } = $derived(data);
+// Props
+const { data } = $props();
+const { user: serverUser, isFirstUser, isMultiTenant, is2FAEnabledGlobal } = $derived(data);
 
-	// Make user data reactive
-	const user = $derived({
-		_id: serverUser?._id ?? '',
-		email: serverUser?.email ?? '',
-		username: serverUser?.username ?? '',
-		role: serverUser?.role ?? '',
-		avatar: serverUser?.avatar ?? '/Default_User.svg',
-		tenantId: serverUser?.tenantId ?? '', // Add tenantId
-		is2FAEnabled: serverUser?.is2FAEnabled ?? false,
-		permissions: []
-	});
+// Make user data reactive
+const user = $derived({
+	_id: serverUser?._id ?? '',
+	email: serverUser?.email ?? '',
+	username: serverUser?.username ?? '',
+	role: serverUser?.role ?? '',
+	avatar: serverUser?.avatar ?? '/Default_User.svg',
+	tenantId: serverUser?.tenantId ?? '', // Add tenantId
+	is2FAEnabled: serverUser?.is2FAEnabled ?? false,
+	permissions: []
+});
 
-	// Define password as state
-	let password = $state('hash-password');
+// Define password as state
+let password = $state('hash-password');
 
-	// Function to open 2FA modal
-	function open2FAModal(): void {
-		modalState.trigger(ModalTwoFactorAuth, { user }, async (r: any) => {
-			if (r) {
-				// Refresh user data after 2FA changes
-				await invalidateAll();
-			}
-		});
-	}
-
-	// Function to update RTC preferences
-	async function updateRtcPreference(key: 'enabled' | 'sound', value: boolean) {
-		const newUserData = {
-			preferences: {
-				rtc: {
-					...serverUser?.preferences?.rtc,
-					[key]: value
-				}
-			}
-		};
-
-		try {
-			const res = await fetch('/api/user/update-user-attributes', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ user_id: 'self', newUserData })
-			});
-
-			if (res.ok) {
-				toast.success('Preferences updated');
-				await invalidateAll();
-				// If RTC was disabled, close connection
-				if (key === 'enabled' && !value) {
-					collaboration.close();
-				} else if (key === 'enabled' && value) {
-					collaboration.connect();
-				}
-			} else {
-				toast.error('Failed to update preferences');
-			}
-		} catch {
-			toast.error('Error updating preferences');
+// Function to open 2FA modal
+function open2FAModal(): void {
+	modalState.trigger(ModalTwoFactorAuth, { user }, async (r: any) => {
+		if (r) {
+			// Refresh user data after 2FA changes
+			await invalidateAll();
 		}
-	}
+	});
+}
 
-	// Function to execute actions
-	function executeActions() {
-		const actions = $triggerActionStore;
-		if (actions.length === 1) {
-			actions[0]();
+// Function to update RTC preferences
+async function updateRtcPreference(key: 'enabled' | 'sound', value: boolean) {
+	const newUserData = {
+		preferences: {
+			rtc: {
+				...serverUser?.preferences?.rtc,
+				[key]: value
+			}
+		}
+	};
+
+	try {
+		const res = await fetch('/api/user/update-user-attributes', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ user_id: 'self', newUserData })
+		});
+
+		if (res.ok) {
+			toast.success('Preferences updated');
+			await invalidateAll();
+			// If RTC was disabled, close connection
+			if (key === 'enabled' && !value) {
+				collaboration.close();
+			} else if (key === 'enabled' && value) {
+				collaboration.connect();
+			}
 		} else {
-			for (const action of actions) {
-				action();
-			}
+			toast.error('Failed to update preferences');
 		}
-		triggerActionStore.set([]);
+	} catch {
+		toast.error('Error updating preferences');
 	}
+}
 
-	// Execute actions on mount if triggerActionStore has data
-	onMount(() => {
-		if ($triggerActionStore.length > 0) {
-			executeActions();
+// Function to execute actions
+function executeActions() {
+	const actions = $triggerActionStore;
+	if (actions.length === 1) {
+		actions[0]();
+	} else {
+		for (const action of actions) {
+			action();
 		}
-		setCollection(null);
+	}
+	triggerActionStore.set([]);
+}
 
-		// Note: Avatar initialization is handled by the layout component
-		// to ensure consistent avatar state across the application
+// Execute actions on mount if triggerActionStore has data
+onMount(() => {
+	if ($triggerActionStore.length > 0) {
+		executeActions();
+	}
+	setCollection(null);
+
+	// Note: Avatar initialization is handled by the layout component
+	// to ensure consistent avatar state across the application
+});
+
+// Modal Trigger - User Form
+function modalUserForm(): void {
+	modalState.trigger(ModalEditForm, {
+		title: usermodaluser_edittitle(),
+		body: usermodaluser_settingbody() || 'Update your user details below.'
 	});
+}
 
-	// Modal Trigger - User Form
-	function modalUserForm(): void {
-		modalState.trigger(ModalEditForm, {
-			title: usermodaluser_edittitle(),
-			body: usermodaluser_settingbody() || 'Update your user details below.'
-		});
-	}
-
-	// Modal Trigger - Edit Avatar
-	function modalEditAvatar(): void {
-		modalState.trigger(
-			ModalEditAvatar,
-			{
-				title: usermodaluser_settingtitle(),
-				body: usermodaluser_settingbody()
-			},
-			async (r: any) => {
-				if (r) {
-					toast.success({
-						description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
-					});
-				}
-			}
-		);
-	}
-
-	// Modal Confirm
-	function modalConfirm(): void {
-		showConfirm({
-			title: usermodalconfirmtitle(),
-			body: usermodalconfirmbody(),
-			// confirmText: usermodalconfirmdeleteuser(),
-			onConfirm: async () => {
-				const res = await fetch('/api/user/deleteUsers', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify([user])
+// Modal Trigger - Edit Avatar
+function modalEditAvatar(): void {
+	modalState.trigger(
+		ModalEditAvatar,
+		{
+			title: usermodaluser_settingtitle(),
+			body: usermodaluser_settingbody()
+		},
+		async (r: any) => {
+			if (r) {
+				toast.success({
+					description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
 				});
-				if (res.status === 200) {
-					await invalidateAll();
-				}
 			}
-		});
-	}
+		}
+	);
+}
 
-	// GDPR: Data Portability
-	async function handleExportData() {
-		try {
-			const res = await fetch('/api/gdpr', {
+// Modal Confirm
+function modalConfirm(): void {
+	showConfirm({
+		title: usermodalconfirmtitle(),
+		body: usermodalconfirmbody(),
+		// confirmText: usermodalconfirmdeleteuser(),
+		onConfirm: async () => {
+			const res = await fetch('/api/user/deleteUsers', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'export', userId: user._id })
+				body: JSON.stringify([user])
 			});
-			const result = await res.json();
-			if (result.success) {
-				const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-					type: 'application/json'
-				});
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `sveltycms-data-export-${user.username}-${new Date().toISOString().split('T')[0]}.json`;
-				a.click();
-				URL.revokeObjectURL(url);
-				toast.success('Data export started');
-			} else {
-				toast.error(result.error || 'Export failed');
+			if (res.status === 200) {
+				await invalidateAll();
 			}
-		} catch (_err) {
-			toast.error('Failed to export data');
 		}
-	}
+	});
+}
 
-	// GDPR: Right to Erasure
-	function handleAnonymize() {
-		showConfirm({
-			title: 'Delete & Anonymize Account',
-			body: 'This will permanently anonymize your account. This action cannot be undone. Are you sure?',
-			onConfirm: async () => {
-				try {
-					const res = await fetch('/api/gdpr', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							action: 'anonymize',
-							userId: user._id,
-							reason: 'User self-request (Right to Erasure)'
-						})
-					});
-					const result = await res.json();
-					if (result.success) {
-						toast.success('Account anonymized successfully');
-						// Force logout by redirecting to logout
-						window.location.href = '/api/user/logout';
-					} else {
-						toast.error(result.error || 'Anonymization failed');
-					}
-				} catch (_err) {
-					toast.error('Failed to anonymize account');
-				}
-			}
+// GDPR: Data Portability
+async function handleExportData() {
+	try {
+		const res = await fetch('/api/gdpr', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ action: 'export', userId: user._id })
 		});
+		const result = await res.json();
+		if (result.success) {
+			const blob = new Blob([JSON.stringify(result.data, null, 2)], {
+				type: 'application/json'
+			});
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `sveltycms-data-export-${user.username}-${new Date().toISOString().split('T')[0]}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
+			toast.success('Data export started');
+		} else {
+			toast.error(result.error || 'Export failed');
+		}
+	} catch (_err) {
+		toast.error('Failed to export data');
 	}
+}
+
+// GDPR: Right to Erasure
+function handleAnonymize() {
+	showConfirm({
+		title: 'Delete & Anonymize Account',
+		body: 'This will permanently anonymize your account. This action cannot be undone. Are you sure?',
+		onConfirm: async () => {
+			try {
+				const res = await fetch('/api/gdpr', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						action: 'anonymize',
+						userId: user._id,
+						reason: 'User self-request (Right to Erasure)'
+					})
+				});
+				const result = await res.json();
+				if (result.success) {
+					toast.success('Account anonymized successfully');
+					// Force logout by redirecting to logout
+					window.location.href = '/api/user/logout';
+				} else {
+					toast.error(result.error || 'Anonymization failed');
+				}
+			} catch (_err) {
+				toast.error('Failed to anonymize account');
+			}
+		}
+	});
+}
 </script>
 
 <!-- Page Title with Back Button -->

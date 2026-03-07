@@ -7,9 +7,9 @@ import { schema, defineRegistry } from 'json-render-svelte';
 import type { WidgetDefinition } from '@widgets/types';
 
 // Import basic components
-import VerticalLayout from './components/VerticalLayout.svelte';
-import HorizontalLayout from './components/HorizontalLayout.svelte';
-import Text from './components/Text.svelte';
+import VerticalLayout from './components/vertical-layout.svelte';
+import HorizontalLayout from './components/horizontal-layout.svelte';
+import Text from './components/text.svelte';
 
 // The unified catalog containing all AI-generatable components.
 export const sveltyCatalog = schema.createCatalog({

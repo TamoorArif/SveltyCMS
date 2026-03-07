@@ -18,7 +18,8 @@
 import type { ContentNode, DatabaseId, ISODateString } from '@src/content/types';
 import { logger } from '@utils/logger';
 import { safeQuery } from '@src/utils/security/safe-query';
-import mongoose, { type Model, type QueryFilter as MongoQueryFilter } from 'mongoose';
+import type { Model, QueryFilter as MongoQueryFilter } from 'mongoose';
+import type mongoose from 'mongoose';
 import type {
 	BaseEntity,
 	DatabaseResult,

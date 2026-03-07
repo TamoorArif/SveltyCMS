@@ -25,126 +25,126 @@ Key features:
 -->
 
 <script lang="ts">
-	// Utils
+// Utils
 
-	import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	// Components
-	import TableFilter from '@src/components/system/table/table-filter.svelte';
-	import TableIcons from '@src/components/system/table/table-icons.svelte';
-	import TablePagination from '@src/components/system/table/table-pagination.svelte';
-	import { logger } from '@utils/logger';
-	import type { MediaBase, MediaImage, MediaTypeEnum } from '@utils/media/media-models';
-	import { formatBytes } from '@utils/utils';
+import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+// Components
+import TableFilter from '@src/components/system/table/table-filter.svelte';
+import TableIcons from '@src/components/system/table/table-icons.svelte';
+import TablePagination from '@src/components/system/table/table-pagination.svelte';
+import { logger } from '@utils/logger';
+import type { MediaBase, MediaImage, MediaTypeEnum } from '@utils/media/media-models';
+import { formatBytes } from '@utils/utils';
 
-	interface Props {
-		filteredFiles?: (MediaBase | MediaImage)[];
-		isSelectionMode?: boolean;
-		onBulkDelete?: () => void;
-		onDeleteFiles?: (files: (MediaBase | MediaImage)[]) => void;
-		ondeleteImage?: (file: MediaBase | MediaImage) => void;
-		onEditImage?: (file: MediaImage) => void;
-		onSelectionChange?: (selectedFiles: (MediaBase | MediaImage)[]) => void;
-		onUpdateImage?: (file: MediaImage) => void;
-		tableSize?: 'tiny' | 'small' | 'medium' | 'large';
+interface Props {
+	filteredFiles?: (MediaBase | MediaImage)[];
+	isSelectionMode?: boolean;
+	onBulkDelete?: () => void;
+	onDeleteFiles?: (files: (MediaBase | MediaImage)[]) => void;
+	ondeleteImage?: (file: MediaBase | MediaImage) => void;
+	onEditImage?: (file: MediaImage) => void;
+	onSelectionChange?: (selectedFiles: (MediaBase | MediaImage)[]) => void;
+	onUpdateImage?: (file: MediaImage) => void;
+	tableSize?: 'tiny' | 'small' | 'medium' | 'large';
+}
+
+interface SortableMedia extends MediaBase {
+	filename: string;
+	size: number;
+	type: MediaTypeEnum;
+}
+
+let {
+	filteredFiles = $bindable([]),
+	tableSize = 'medium',
+	ondeleteImage = () => {},
+	onSelectionChange = () => {},
+	// onBulkDelete = () => {},
+	onUpdateImage = () => {},
+	onEditImage = () => {},
+	onDeleteFiles = () => {},
+	isSelectionMode = $bindable(false)
+}: Props = $props();
+
+// Filter state
+let globalSearchValue = $state('');
+let filterShow = $state(false);
+let columnShow = $state(false);
+let density = $state('normal');
+
+// Selection state
+const selectedFiles = $state<Set<string>>(new Set());
+
+// Tag Modal State
+let showTagModal = $state(false);
+let taggingFile = $state<MediaImage | null>(null);
+
+function openTagEditor(file: MediaImage) {
+	taggingFile = file;
+	showTagModal = true;
+}
+
+function handleSelection(file: MediaBase | MediaImage, checked: boolean) {
+	if (checked) {
+		selectedFiles.add(file.filename);
+	} else {
+		selectedFiles.delete(file.filename);
+	}
+	onSelectionChange(filteredFiles.filter((f) => selectedFiles.has(f.filename)));
+}
+
+// Pagination state
+let currentPage = $state(1);
+let rowsPerPage = $state(10);
+const pagesCount = $derived(Math.ceil(filteredFiles.length / rowsPerPage));
+const paginatedFiles = $derived(filteredFiles.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage));
+
+function handleDelete(file: MediaBase | MediaImage) {
+	ondeleteImage(file);
+}
+
+// Sorting functionality
+let sortColumn = $state('name');
+let sortOrder = $state(1); // 1 for ascending, -1 for descending
+
+function sort(column: keyof Pick<SortableMedia, 'filename' | 'size' | 'type'>) {
+	if (sortColumn === column) {
+		sortOrder *= -1;
+	} else {
+		sortColumn = column;
+		sortOrder = 1;
 	}
 
-	interface SortableMedia extends MediaBase {
-		filename: string;
-		size: number;
-		type: MediaTypeEnum;
-	}
-
-	let {
-		filteredFiles = $bindable([]),
-		tableSize = 'medium',
-		ondeleteImage = () => {},
-		onSelectionChange = () => {},
-		// onBulkDelete = () => {},
-		onUpdateImage = () => {},
-		onEditImage = () => {},
-		onDeleteFiles = () => {},
-		isSelectionMode = $bindable(false)
-	}: Props = $props();
-
-	// Filter state
-	let globalSearchValue = $state('');
-	let filterShow = $state(false);
-	let columnShow = $state(false);
-	let density = $state('normal');
-
-	// Selection state
-	const selectedFiles = $state<Set<string>>(new Set());
-
-	// Tag Modal State
-	let showTagModal = $state(false);
-	let taggingFile = $state<MediaImage | null>(null);
-
-	function openTagEditor(file: MediaImage) {
-		taggingFile = file;
-		showTagModal = true;
-	}
-
-	function handleSelection(file: MediaBase | MediaImage, checked: boolean) {
-		if (checked) {
-			selectedFiles.add(file.filename);
-		} else {
-			selectedFiles.delete(file.filename);
+	filteredFiles = filteredFiles.sort((a, b) => {
+		if (column === 'size') {
+			return ((a[column] ?? 0) - (b[column] ?? 0)) * sortOrder;
 		}
-		onSelectionChange(filteredFiles.filter((f) => selectedFiles.has(f.filename)));
-	}
+		return String(a[column as keyof SortableMedia]).localeCompare(String(b[column as keyof SortableMedia])) * sortOrder;
+	});
+}
 
-	// Pagination state
-	let currentPage = $state(1);
-	let rowsPerPage = $state(10);
-	const pagesCount = $derived(Math.ceil(filteredFiles.length / rowsPerPage));
-	const paginatedFiles = $derived(filteredFiles.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage));
+function getThumbnails(file: MediaBase | MediaImage) {
+	return 'thumbnails' in file ? file.thumbnails || {} : {};
+}
 
-	function handleDelete(file: MediaBase | MediaImage) {
-		ondeleteImage(file);
-	}
+function getThumbnail(file: MediaBase | MediaImage, size: string) {
+	const thumbnails = getThumbnails(file);
+	// Map UI table sizes to DB keys
+	const sizeMap: Record<string, string> = {
+		tiny: 'thumbnail', // or 'xs'
+		small: 'sm',
+		medium: 'md',
+		large: 'lg'
+	};
+	const key = sizeMap[size] || size;
+	return thumbnails ? thumbnails[key as keyof typeof thumbnails] : undefined;
+}
 
-	// Sorting functionality
-	let sortColumn = $state('name');
-	let sortOrder = $state(1); // 1 for ascending, -1 for descending
-
-	function sort(column: keyof Pick<SortableMedia, 'filename' | 'size' | 'type'>) {
-		if (sortColumn === column) {
-			sortOrder *= -1;
-		} else {
-			sortColumn = column;
-			sortOrder = 1;
-		}
-
-		filteredFiles = filteredFiles.sort((a, b) => {
-			if (column === 'size') {
-				return ((a[column] ?? 0) - (b[column] ?? 0)) * sortOrder;
-			}
-			return String(a[column as keyof SortableMedia]).localeCompare(String(b[column as keyof SortableMedia])) * sortOrder;
-		});
-	}
-
-	function getThumbnails(file: MediaBase | MediaImage) {
-		return 'thumbnails' in file ? file.thumbnails || {} : {};
-	}
-
-	function getThumbnail(file: MediaBase | MediaImage, size: string) {
-		const thumbnails = getThumbnails(file);
-		// Map UI table sizes to DB keys
-		const sizeMap: Record<string, string> = {
-			tiny: 'thumbnail', // or 'xs'
-			small: 'sm',
-			medium: 'md',
-			large: 'lg'
-		};
-		const key = sizeMap[size] || size;
-		return thumbnails ? thumbnails[key as keyof typeof thumbnails] : undefined;
-	}
-
-	function getImageUrl(file: MediaBase | MediaImage, size: string) {
-		const thumbnail = getThumbnail(file, size);
-		return thumbnail?.url || (file as any).url;
-	}
+function getImageUrl(file: MediaBase | MediaImage, size: string) {
+	const thumbnail = getThumbnail(file, size);
+	return thumbnail?.url || (file as any).url;
+}
 </script>
 
 <div class="block w-full overflow-hidden">

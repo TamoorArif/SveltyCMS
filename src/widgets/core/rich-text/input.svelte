@@ -4,488 +4,488 @@
 -->
 
 <script lang="ts">
-	import { quintOut } from 'svelte/easing';
-	import { slide } from 'svelte/transition';
+import { quintOut } from 'svelte/easing';
+import { slide } from 'svelte/transition';
 
-	// Components
-	// Using iconify-icon web component
+// Components
+// Using iconify-icon web component
 
-	// Data
+// Data
 
-	// Components
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { tokenTarget } from '@src/services/token/token-target';
-	// Stores
-	import { app } from '@src/stores/store.svelte';
-	import type { Editor } from '@tiptap/core';
-	import { showModal } from '@utils/modal-utils';
-	// Svelte
-	import { onMount } from 'svelte';
-	// Removed static createEditor import for lazy-loading
+// Components
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import { tokenTarget } from '@src/services/token/token-target';
+// Stores
+import { app } from '@src/stores/store.svelte';
+import type { Editor } from '@tiptap/core';
+import { showModal } from '@utils/modal-utils';
+// Svelte
+import { onMount } from 'svelte';
+// Removed static createEditor import for lazy-loading
 
-	import type { MediaFile } from '../media-upload/types';
-	import type { FieldType } from './';
-	import type { RichTextData } from './types';
+import type { MediaFile } from '../media-upload/types';
+import type { FieldType } from './';
+import type { RichTextData } from './types';
 
-	let {
-		field,
-		value = $bindable(),
-		error
-	}: {
-		field: FieldType;
-		value: Record<string, RichTextData> | RichTextData | null | undefined;
-		error?: string | null;
-	} = $props();
+let {
+	field,
+	value = $bindable(),
+	error
+}: {
+	field: FieldType;
+	value: Record<string, RichTextData> | RichTextData | null | undefined;
+	error?: string | null;
+} = $props();
 
-	const lang = $derived(field.translated ? app.contentLanguage : 'default');
+const lang = $derived(field.translated ? app.contentLanguage : 'default');
 
-	$effect(() => {
-		if (!value) {
-			if (field.translated) {
-				value = { [lang]: { title: '', content: '' } };
-			} else {
-				value = { title: '', content: '' };
-			}
-		} else if (field.translated && !(value as Record<string, RichTextData>)[lang]) {
-			value = {
-				...(value as Record<string, RichTextData>),
-				[lang]: { title: '', content: '' }
-			};
+$effect(() => {
+	if (!value) {
+		if (field.translated) {
+			value = { [lang]: { title: '', content: '' } };
+		} else {
+			value = { title: '', content: '' };
 		}
-	});
-
-	let editor: Editor | null = $state(null);
-	let element: HTMLDivElement;
-	let createEditor: any = $state(null);
-
-	let isScrolled = $state(false);
-	let showSlashMenu = $state(false);
-	let showSource = $state(false); // Source View Toggle
-	let activeDropdown = $state<string | null>(null);
-	let colorInput: HTMLInputElement;
-
-	// Table Picker State
-	let hoverRows = $state(0);
-	let hoverCols = $state(0);
-
-	function toggleDropdown(label: string, event: MouseEvent) {
-		event.stopPropagation();
-		activeDropdown = activeDropdown === label ? null : label;
-		// Reset popover states when switching
-		if (activeDropdown !== 'Link' && activeDropdown !== 'Video') {
-			linkUrl = '';
-			videoUrl = '';
-		}
+	} else if (field.translated && !(value as Record<string, RichTextData>)[lang]) {
+		value = {
+			...(value as Record<string, RichTextData>),
+			[lang]: { title: '', content: '' }
+		};
 	}
+});
 
-	function closeDropdowns() {
-		activeDropdown = null;
+let editor: Editor | null = $state(null);
+let element: HTMLDivElement;
+let createEditor: any = $state(null);
+
+let isScrolled = $state(false);
+let showSlashMenu = $state(false);
+let showSource = $state(false); // Source View Toggle
+let activeDropdown = $state<string | null>(null);
+let colorInput: HTMLInputElement;
+
+// Table Picker State
+let hoverRows = $state(0);
+let hoverCols = $state(0);
+
+function toggleDropdown(label: string, event: MouseEvent) {
+	event.stopPropagation();
+	activeDropdown = activeDropdown === label ? null : label;
+	// Reset popover states when switching
+	if (activeDropdown !== 'Link' && activeDropdown !== 'Video') {
 		linkUrl = '';
 		videoUrl = '';
 	}
+}
 
-	function handleColorChange(e: Event) {
-		const color = (e.target as HTMLInputElement).value;
-		editor?.chain().focus().setColor(color).run();
+function closeDropdowns() {
+	activeDropdown = null;
+	linkUrl = '';
+	videoUrl = '';
+}
+
+function handleColorChange(e: Event) {
+	const color = (e.target as HTMLInputElement).value;
+	editor?.chain().focus().setColor(color).run();
+}
+
+// Popover States
+let linkUrl = $state('');
+let videoUrl = $state('');
+
+function setLink() {
+	if (linkUrl) {
+		editor?.chain().focus().setLink({ href: linkUrl }).run();
+		closeDropdowns();
 	}
+}
 
-	// Popover States
-	let linkUrl = $state('');
-	let videoUrl = $state('');
-
-	function setLink() {
-		if (linkUrl) {
-			editor?.chain().focus().setLink({ href: linkUrl }).run();
-			closeDropdowns();
-		}
+function setVideo() {
+	if (videoUrl) {
+		editor?.chain().focus().setYoutubeVideo({ src: videoUrl }).run();
+		closeDropdowns();
 	}
+}
 
-	function setVideo() {
-		if (videoUrl) {
-			editor?.chain().focus().setYoutubeVideo({ src: videoUrl }).run();
-			closeDropdowns();
-		}
-	}
-
-	// New Feature Functions
-	function openMediaLibrary() {
-		showModal({
-			component: 'mediaLibraryModal',
-			response: (files: MediaFile[] | undefined) => {
-				if (files && files.length > 0) {
-					// Insert the first selected image
-					const file = files[0];
-					editor?.chain().focus().setImage({ src: file.url, alt: file.name }).run();
-				}
+// New Feature Functions
+function openMediaLibrary() {
+	showModal({
+		component: 'mediaLibraryModal',
+		response: (files: MediaFile[] | undefined) => {
+			if (files && files.length > 0) {
+				// Insert the first selected image
+				const file = files[0];
+				editor?.chain().focus().setImage({ src: file.url, alt: file.name }).run();
 			}
-		});
-	}
-
-	async function pasteUnformatted() {
-		try {
-			const text = await navigator.clipboard.readText();
-			editor?.chain().focus().insertContent(text).run();
-		} catch (err) {
-			console.error('Failed to read clipboard:', err);
-			alert('Could not access clipboard. Please check permissions.');
 		}
+	});
+}
+
+async function pasteUnformatted() {
+	try {
+		const text = await navigator.clipboard.readText();
+		editor?.chain().focus().insertContent(text).run();
+	} catch (err) {
+		console.error('Failed to read clipboard:', err);
+		alert('Could not access clipboard. Please check permissions.');
 	}
+}
 
-	// Toolbar types
-	interface ToolbarButton {
-		active?: () => boolean;
-		cmd: () => void;
-		icon: string;
-		label: string;
-		shortcut?: string;
-		type?: 'button';
-	}
+// Toolbar types
+interface ToolbarButton {
+	active?: () => boolean;
+	cmd: () => void;
+	icon: string;
+	label: string;
+	shortcut?: string;
+	type?: 'button';
+}
 
-	interface ToolbarDropdown {
-		icon?: string;
-		items?: { label: string; cmd: () => void; active: () => boolean }[];
-		label: string;
-		type: 'dropdown';
-	}
+interface ToolbarDropdown {
+	icon?: string;
+	items?: { label: string; cmd: () => void; active: () => boolean }[];
+	label: string;
+	type: 'dropdown';
+}
 
-	type ToolbarItem = ToolbarButton | ToolbarDropdown;
+type ToolbarItem = ToolbarButton | ToolbarDropdown;
 
-	interface ToolbarGroup {
-		buttons: ToolbarItem[];
-		condition?: () => boolean;
-	}
+interface ToolbarGroup {
+	buttons: ToolbarItem[];
+	condition?: () => boolean;
+}
 
-	// Toolbar config – using official Material Design Icons (mdi)
-	const toolbarGroups: ToolbarGroup[] = [
-		{
-			buttons: [
-				{
-					type: 'button',
-					icon: 'arrow-u-left-top',
-					label: 'Undo',
-					shortcut: 'Ctrl+Z',
-					cmd: () => editor?.chain().focus().undo().run(),
-					active: () => false
-				},
-				{
-					type: 'button',
-					icon: 'arrow-u-right-top',
-					label: 'Redo',
-					shortcut: 'Ctrl+Shift+Z',
-					cmd: () => editor?.chain().focus().redo().run(),
-					active: () => false
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'button',
-					icon: 'format-bold',
-					label: 'Bold',
-					shortcut: 'Ctrl+B',
-					cmd: () => editor?.chain().focus().toggleBold().run(),
-					active: () => editor?.isActive('bold') ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-italic',
-					label: 'Italic',
-					shortcut: 'Ctrl+I',
-					cmd: () => editor?.chain().focus().toggleItalic().run(),
-					active: () => editor?.isActive('italic') ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-underlined',
-					label: 'Underline',
-					shortcut: 'Ctrl+U',
-					cmd: () => editor?.chain().focus().toggleUnderline().run(),
-					active: () => editor?.isActive('underline') ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-strikethrough-variant',
-					label: 'Strikethrough',
-					cmd: () => editor?.chain().focus().toggleStrike().run(),
-					active: () => editor?.isActive('strike') ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-clear',
-					label: 'Clear Formatting',
-					cmd: () => editor?.chain().focus().unsetAllMarks().run(),
-					active: () => false
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'dropdown',
-					label: 'Color',
-					icon: 'palette',
-					items: [
-						{
-							label: 'Default',
-							cmd: () => editor?.chain().focus().unsetColor().run(),
-							active: () => !editor?.getAttributes('textStyle').color
-						},
-						{
-							label: 'Custom...',
-							cmd: () => colorInput?.click(),
-							active: () => editor?.isActive('textStyle', { color: /.*/ }) ?? false
-						}
-					]
-				},
-				{
-					type: 'dropdown',
-					label: 'Font',
-					items: [
-						{
-							label: 'Default',
-							cmd: () => editor?.chain().focus().unsetFontFamily().run(),
-							active: () => !editor?.getAttributes('textStyle').fontFamily
-						},
-						{
-							label: 'Inter',
-							cmd: () => editor?.chain().focus().setFontFamily('Inter').run(),
-							active: () => editor?.isActive('textStyle', { fontFamily: 'Inter' }) ?? false
-						},
-						{
-							label: 'Comic Sans',
-							cmd: () => editor?.chain().focus().setFontFamily('Comic Sans MS, Comic Sans').run(),
-							active: () =>
-								editor?.isActive('textStyle', {
-									fontFamily: 'Comic Sans MS, Comic Sans'
-								}) ?? false
-						},
-						{
-							label: 'Serif',
-							cmd: () => editor?.chain().focus().setFontFamily('serif').run(),
-							active: () => editor?.isActive('textStyle', { fontFamily: 'serif' }) ?? false
-						},
-						{
-							label: 'Monospace',
-							cmd: () => editor?.chain().focus().setFontFamily('monospace').run(),
-							active: () => editor?.isActive('textStyle', { fontFamily: 'monospace' }) ?? false
-						},
-						{
-							label: 'Cursive',
-							cmd: () => editor?.chain().focus().setFontFamily('cursive').run(),
-							active: () => editor?.isActive('textStyle', { fontFamily: 'cursive' }) ?? false
-						}
-					]
-				},
-				{
-					type: 'dropdown',
-					label: 'Text',
-					items: [
-						{
-							label: 'Paragraph',
-							cmd: () => editor?.chain().focus().setParagraph().run(),
-							active: () => editor?.isActive('paragraph') ?? false
-						},
-						{
-							label: 'Heading 1',
-							cmd: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
-							active: () => editor?.isActive('heading', { level: 1 }) ?? false
-						},
-						{
-							label: 'Heading 2',
-							cmd: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
-							active: () => editor?.isActive('heading', { level: 2 }) ?? false
-						},
-						{
-							label: 'Heading 3',
-							cmd: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
-							active: () => editor?.isActive('heading', { level: 3 }) ?? false
-						}
-					]
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'button',
-					icon: 'format-list-bulleted',
-					label: 'Bullet List',
-					cmd: () => editor?.chain().focus().toggleBulletList().run(),
-					active: () => editor?.isActive('bulletList') ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-list-numbered',
-					label: 'Numbered List',
-					cmd: () => editor?.chain().focus().toggleOrderedList().run(),
-					active: () => editor?.isActive('orderedList') ?? false
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'dropdown', // Changed to dropdown for popover
-					icon: 'link',
-					label: 'Link'
-				},
-				{
-					type: 'button',
-					icon: 'image',
-					label: 'Image',
-					cmd: openMediaLibrary
-				},
-				{
-					type: 'dropdown', // Changed to dropdown for popover
-					icon: 'youtube',
-					label: 'Video'
-				},
-				{
-					type: 'dropdown',
-					icon: 'table',
-					label: 'Table'
-				},
-				{
-					type: 'button',
-					icon: 'code-tags',
-					label: 'Code Block',
-					cmd: () => editor?.chain().focus().toggleCodeBlock().run(),
-					active: () => editor?.isActive('codeBlock') ?? false
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'button',
-					icon: 'format-align-left',
-					label: 'Align Left',
-					cmd: () => editor?.chain().focus().setTextAlign('left').run(),
-					active: () => editor?.isActive({ textAlign: 'left' }) ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-align-center',
-					label: 'Align Center',
-					cmd: () => editor?.chain().focus().setTextAlign('center').run(),
-					active: () => editor?.isActive({ textAlign: 'center' }) ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-align-right',
-					label: 'Align Right',
-					cmd: () => editor?.chain().focus().setTextAlign('right').run(),
-					active: () => editor?.isActive({ textAlign: 'right' }) ?? false
-				},
-				{
-					type: 'button',
-					icon: 'format-quote-close',
-					label: 'Blockquote',
-					cmd: () => editor?.chain().focus().toggleBlockquote().run(),
-					active: () => editor?.isActive('blockquote') ?? false
-				}
-			]
-		},
-		{
-			condition: () => !!field.aiEnabled,
-			buttons: [
-				{
-					type: 'button',
-					icon: 'sparkles',
-					label: 'AI Command',
-					shortcut: '/',
-					cmd: () => {
-						showSlashMenu = true;
+// Toolbar config – using official Material Design Icons (mdi)
+const toolbarGroups: ToolbarGroup[] = [
+	{
+		buttons: [
+			{
+				type: 'button',
+				icon: 'arrow-u-left-top',
+				label: 'Undo',
+				shortcut: 'Ctrl+Z',
+				cmd: () => editor?.chain().focus().undo().run(),
+				active: () => false
+			},
+			{
+				type: 'button',
+				icon: 'arrow-u-right-top',
+				label: 'Redo',
+				shortcut: 'Ctrl+Shift+Z',
+				cmd: () => editor?.chain().focus().redo().run(),
+				active: () => false
+			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'button',
+				icon: 'format-bold',
+				label: 'Bold',
+				shortcut: 'Ctrl+B',
+				cmd: () => editor?.chain().focus().toggleBold().run(),
+				active: () => editor?.isActive('bold') ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-italic',
+				label: 'Italic',
+				shortcut: 'Ctrl+I',
+				cmd: () => editor?.chain().focus().toggleItalic().run(),
+				active: () => editor?.isActive('italic') ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-underlined',
+				label: 'Underline',
+				shortcut: 'Ctrl+U',
+				cmd: () => editor?.chain().focus().toggleUnderline().run(),
+				active: () => editor?.isActive('underline') ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-strikethrough-variant',
+				label: 'Strikethrough',
+				cmd: () => editor?.chain().focus().toggleStrike().run(),
+				active: () => editor?.isActive('strike') ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-clear',
+				label: 'Clear Formatting',
+				cmd: () => editor?.chain().focus().unsetAllMarks().run(),
+				active: () => false
+			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'dropdown',
+				label: 'Color',
+				icon: 'palette',
+				items: [
+					{
+						label: 'Default',
+						cmd: () => editor?.chain().focus().unsetColor().run(),
+						active: () => !editor?.getAttributes('textStyle').color
+					},
+					{
+						label: 'Custom...',
+						cmd: () => colorInput?.click(),
+						active: () => editor?.isActive('textStyle', { color: /.*/ }) ?? false
 					}
-				}
-			]
-		},
-		{
-			buttons: [
-				{
-					type: 'button',
-					icon: 'content-paste',
-					label: 'Paste Plain Text',
-					cmd: pasteUnformatted
-				},
-				{
-					type: 'button',
-					icon: 'xml',
-					label: 'Source View',
-					cmd: () => (showSource = !showSource),
-					active: () => showSource
-				}
-			]
-		}
-	];
-
-	function handleScroll() {
-		isScrolled = window.scrollY > 120;
-	}
-
-	onMount(() => {
-		(async () => {
-			const module = await import('./tiptap');
-			createEditor = module.createEditor;
-
-			let initialContent = '';
-			if (field.translated) {
-				initialContent = (value as Record<string, RichTextData>)?.[lang]?.content || '';
-			} else {
-				initialContent = (value as RichTextData)?.content || '';
+				]
+			},
+			{
+				type: 'dropdown',
+				label: 'Font',
+				items: [
+					{
+						label: 'Default',
+						cmd: () => editor?.chain().focus().unsetFontFamily().run(),
+						active: () => !editor?.getAttributes('textStyle').fontFamily
+					},
+					{
+						label: 'Inter',
+						cmd: () => editor?.chain().focus().setFontFamily('Inter').run(),
+						active: () => editor?.isActive('textStyle', { fontFamily: 'Inter' }) ?? false
+					},
+					{
+						label: 'Comic Sans',
+						cmd: () => editor?.chain().focus().setFontFamily('Comic Sans MS, Comic Sans').run(),
+						active: () =>
+							editor?.isActive('textStyle', {
+								fontFamily: 'Comic Sans MS, Comic Sans'
+							}) ?? false
+					},
+					{
+						label: 'Serif',
+						cmd: () => editor?.chain().focus().setFontFamily('serif').run(),
+						active: () => editor?.isActive('textStyle', { fontFamily: 'serif' }) ?? false
+					},
+					{
+						label: 'Monospace',
+						cmd: () => editor?.chain().focus().setFontFamily('monospace').run(),
+						active: () => editor?.isActive('textStyle', { fontFamily: 'monospace' }) ?? false
+					},
+					{
+						label: 'Cursive',
+						cmd: () => editor?.chain().focus().setFontFamily('cursive').run(),
+						active: () => editor?.isActive('textStyle', { fontFamily: 'cursive' }) ?? false
+					}
+				]
+			},
+			{
+				type: 'dropdown',
+				label: 'Text',
+				items: [
+					{
+						label: 'Paragraph',
+						cmd: () => editor?.chain().focus().setParagraph().run(),
+						active: () => editor?.isActive('paragraph') ?? false
+					},
+					{
+						label: 'Heading 1',
+						cmd: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
+						active: () => editor?.isActive('heading', { level: 1 }) ?? false
+					},
+					{
+						label: 'Heading 2',
+						cmd: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
+						active: () => editor?.isActive('heading', { level: 2 }) ?? false
+					},
+					{
+						label: 'Heading 3',
+						cmd: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+						active: () => editor?.isActive('heading', { level: 3 }) ?? false
+					}
+				]
 			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'button',
+				icon: 'format-list-bulleted',
+				label: 'Bullet List',
+				cmd: () => editor?.chain().focus().toggleBulletList().run(),
+				active: () => editor?.isActive('bulletList') ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-list-numbered',
+				label: 'Numbered List',
+				cmd: () => editor?.chain().focus().toggleOrderedList().run(),
+				active: () => editor?.isActive('orderedList') ?? false
+			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'dropdown', // Changed to dropdown for popover
+				icon: 'link',
+				label: 'Link'
+			},
+			{
+				type: 'button',
+				icon: 'image',
+				label: 'Image',
+				cmd: openMediaLibrary
+			},
+			{
+				type: 'dropdown', // Changed to dropdown for popover
+				icon: 'youtube',
+				label: 'Video'
+			},
+			{
+				type: 'dropdown',
+				icon: 'table',
+				label: 'Table'
+			},
+			{
+				type: 'button',
+				icon: 'code-tags',
+				label: 'Code Block',
+				cmd: () => editor?.chain().focus().toggleCodeBlock().run(),
+				active: () => editor?.isActive('codeBlock') ?? false
+			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'button',
+				icon: 'format-align-left',
+				label: 'Align Left',
+				cmd: () => editor?.chain().focus().setTextAlign('left').run(),
+				active: () => editor?.isActive({ textAlign: 'left' }) ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-align-center',
+				label: 'Align Center',
+				cmd: () => editor?.chain().focus().setTextAlign('center').run(),
+				active: () => editor?.isActive({ textAlign: 'center' }) ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-align-right',
+				label: 'Align Right',
+				cmd: () => editor?.chain().focus().setTextAlign('right').run(),
+				active: () => editor?.isActive({ textAlign: 'right' }) ?? false
+			},
+			{
+				type: 'button',
+				icon: 'format-quote-close',
+				label: 'Blockquote',
+				cmd: () => editor?.chain().focus().toggleBlockquote().run(),
+				active: () => editor?.isActive('blockquote') ?? false
+			}
+		]
+	},
+	{
+		condition: () => !!field.aiEnabled,
+		buttons: [
+			{
+				type: 'button',
+				icon: 'sparkles',
+				label: 'AI Command',
+				shortcut: '/',
+				cmd: () => {
+					showSlashMenu = true;
+				}
+			}
+		]
+	},
+	{
+		buttons: [
+			{
+				type: 'button',
+				icon: 'content-paste',
+				label: 'Paste Plain Text',
+				cmd: pasteUnformatted
+			},
+			{
+				type: 'button',
+				icon: 'xml',
+				label: 'Source View',
+				cmd: () => (showSource = !showSource),
+				active: () => showSource
+			}
+		]
+	}
+];
 
-			editor = createEditor(element, initialContent, lang, {
-				aiEnabled: !!field.aiEnabled
-			});
+function handleScroll() {
+	isScrolled = window.scrollY > 120;
+}
 
+onMount(() => {
+	(async () => {
+		const module = await import('./tiptap');
+		createEditor = module.createEditor;
+
+		let initialContent = '';
+		if (field.translated) {
+			initialContent = (value as Record<string, RichTextData>)?.[lang]?.content || '';
+		} else {
+			initialContent = (value as RichTextData)?.content || '';
+		}
+
+		editor = createEditor(element, initialContent, lang, {
+			aiEnabled: !!field.aiEnabled
+		});
+
+		if (!editor) {
+			return;
+		}
+
+		editor.on('update', () => {
 			if (!editor) {
 				return;
 			}
+			const newContent = {
+				title: (field.translated ? (value as Record<string, RichTextData>)?.[lang]?.title : (value as RichTextData)?.title) || '',
+				content: editor.isEmpty ? '' : editor.getHTML()
+			};
 
-			editor.on('update', () => {
-				if (!editor) {
-					return;
-				}
-				const newContent = {
-					title: (field.translated ? (value as Record<string, RichTextData>)?.[lang]?.title : (value as RichTextData)?.title) || '',
-					content: editor.isEmpty ? '' : editor.getHTML()
+			if (field.translated) {
+				value = {
+					...(value as Record<string, RichTextData>),
+					[lang]: newContent
 				};
+			} else {
+				value = newContent;
+			}
+		});
+	})();
 
-				if (field.translated) {
-					value = {
-						...(value as Record<string, RichTextData>),
-						[lang]: newContent
-					};
-				} else {
-					value = newContent;
-				}
-			});
-		})();
+	window.addEventListener('scroll', handleScroll);
+	window.addEventListener('click', closeDropdowns);
 
-		window.addEventListener('scroll', handleScroll);
-		window.addEventListener('click', closeDropdowns);
+	return () => {
+		editor?.destroy();
+		window.removeEventListener('scroll', handleScroll);
+		window.removeEventListener('click', closeDropdowns);
+	};
+});
 
-		return () => {
-			editor?.destroy();
-			window.removeEventListener('scroll', handleScroll);
-			window.removeEventListener('click', closeDropdowns);
-		};
-	});
+$effect(() => {
+	let content = '';
+	if (field.translated) {
+		content = (value as Record<string, RichTextData>)?.[lang]?.content || '';
+	} else {
+		content = (value as RichTextData)?.content || '';
+	}
 
-	$effect(() => {
-		let content = '';
-		if (field.translated) {
-			content = (value as Record<string, RichTextData>)?.[lang]?.content || '';
-		} else {
-			content = (value as RichTextData)?.content || '';
-		}
-
-		if (editor && editor.getHTML() !== content) {
-			editor.commands.setContent(content, { emitUpdate: false });
-		}
-	});
+	if (editor && editor.getHTML() !== content) {
+		editor.commands.setContent(content, { emitUpdate: false });
+	}
+});
 </script>
 
 <div

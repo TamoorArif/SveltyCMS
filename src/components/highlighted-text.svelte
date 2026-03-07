@@ -31,138 +31,138 @@ Intelligent text highlighting with character limits and expand/collapse function
 -->
 
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
+import { onMount } from 'svelte';
+import { fade } from 'svelte/transition';
 
-	interface Props {
-		caseSensitive?: boolean;
-		charLimit?: number;
-		highlightClass?: string;
-		term?: string;
-		text?: string;
+interface Props {
+	caseSensitive?: boolean;
+	charLimit?: number;
+	highlightClass?: string;
+	term?: string;
+	text?: string;
+}
+
+const {
+	text = '',
+	term = '',
+	charLimit = 200,
+	highlightClass = 'bg-warning-500 text-warning-900 dark:bg-warning-600 dark:text-warning-100',
+	caseSensitive = false
+}: Props = $props();
+
+// State
+let isExpanded = $state(false);
+let prefersReducedMotion = $state(false);
+
+// Escape regex special characters
+function escapeRegex(str: string): string {
+	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Build regex from multiple terms
+const highlightingRegex = $derived.by(() => {
+	if (!term?.trim()) {
+		return null;
 	}
 
-	const {
-		text = '',
-		term = '',
-		charLimit = 200,
-		highlightClass = 'bg-warning-500 text-warning-900 dark:bg-warning-600 dark:text-warning-100',
-		caseSensitive = false
-	}: Props = $props();
+	// Split by whitespace and escape each term
+	const terms = term.trim().split(/\s+/).filter(Boolean).map(escapeRegex);
 
-	// State
-	let isExpanded = $state(false);
-	let prefersReducedMotion = $state(false);
-
-	// Escape regex special characters
-	function escapeRegex(str: string): string {
-		return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	if (terms.length === 0) {
+		return null;
 	}
 
-	// Build regex from multiple terms
-	const highlightingRegex = $derived.by(() => {
-		if (!term?.trim()) {
-			return null;
-		}
+	// Create regex with all terms
+	const pattern = terms.join('|');
+	return new RegExp(`(${pattern})`, caseSensitive ? 'g' : 'gi');
+});
 
-		// Split by whitespace and escape each term
-		const terms = term.trim().split(/\s+/).filter(Boolean).map(escapeRegex);
+// Determine display text (truncated or full)
+const displayText = $derived.by(() => {
+	if (!text) {
+		return '';
+	}
 
-		if (terms.length === 0) {
-			return null;
-		}
+	const shouldLimit = !isExpanded && charLimit > 0 && text.length > charLimit;
+	return shouldLimit ? `${text.slice(0, charLimit)}...` : text;
+});
 
-		// Create regex with all terms
-		const pattern = terms.join('|');
-		return new RegExp(`(${pattern})`, caseSensitive ? 'g' : 'gi');
-	});
+// Split text into segments (highlighted and normal)
+const textSegments = $derived.by(() => {
+	const currentText = displayText;
+	const regex = highlightingRegex;
 
-	// Determine display text (truncated or full)
-	const displayText = $derived.by(() => {
-		if (!text) {
-			return '';
-		}
+	if (!(regex && currentText)) {
+		return [{ text: currentText, isHighlighted: false }];
+	}
 
-		const shouldLimit = !isExpanded && charLimit > 0 && text.length > charLimit;
-		return shouldLimit ? `${text.slice(0, charLimit)}...` : text;
-	});
+	const segments: Array<{ text: string; isHighlighted: boolean }> = [];
+	let lastIndex = 0;
 
-	// Split text into segments (highlighted and normal)
-	const textSegments = $derived.by(() => {
-		const currentText = displayText;
-		const regex = highlightingRegex;
+	// Use replace to find all matches
+	currentText.replace(regex, (match, ...args) => {
+		const index = args.at(-2); // Second-to-last arg is the index
 
-		if (!(regex && currentText)) {
-			return [{ text: currentText, isHighlighted: false }];
-		}
-
-		const segments: Array<{ text: string; isHighlighted: boolean }> = [];
-		let lastIndex = 0;
-
-		// Use replace to find all matches
-		currentText.replace(regex, (match, ...args) => {
-			const index = args.at(-2); // Second-to-last arg is the index
-
-			// Add non-highlighted text before match
-			if (index > lastIndex) {
-				segments.push({
-					text: currentText.slice(lastIndex, index),
-					isHighlighted: false
-				});
-			}
-
-			// Add highlighted match
+		// Add non-highlighted text before match
+		if (index > lastIndex) {
 			segments.push({
-				text: match,
-				isHighlighted: true
-			});
-
-			lastIndex = index + match.length;
-			return match;
-		});
-
-		// Add remaining text after last match
-		if (lastIndex < currentText.length) {
-			segments.push({
-				text: currentText.slice(lastIndex),
+				text: currentText.slice(lastIndex, index),
 				isHighlighted: false
 			});
 		}
 
-		return segments;
+		// Add highlighted match
+		segments.push({
+			text: match,
+			isHighlighted: true
+		});
+
+		lastIndex = index + match.length;
+		return match;
 	});
 
-	// Check if text needs truncation
-	const needsTruncation = $derived(charLimit > 0 && text.length > charLimit);
-
-	// Count highlighted matches
-	const matchCount = $derived.by(() => {
-		const regex = highlightingRegex;
-		if (!(regex && text)) {
-			return 0;
-		}
-
-		const matches = text.match(regex);
-		return matches ? matches.length : 0;
-	});
-
-	// Toggle expand/collapse
-	function toggleText(): void {
-		isExpanded = !isExpanded;
+	// Add remaining text after last match
+	if (lastIndex < currentText.length) {
+		segments.push({
+			text: currentText.slice(lastIndex),
+			isHighlighted: false
+		});
 	}
 
-	// Lifecycle
-	onMount(() => {
-		const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-		prefersReducedMotion = mediaQuery.matches;
+	return segments;
+});
 
-		const handleChange = (e: MediaQueryListEvent) => {
-			prefersReducedMotion = e.matches;
-		};
+// Check if text needs truncation
+const needsTruncation = $derived(charLimit > 0 && text.length > charLimit);
 
-		mediaQuery.addEventListener('change', handleChange);
-		return () => mediaQuery.removeEventListener('change', handleChange);
-	});
+// Count highlighted matches
+const matchCount = $derived.by(() => {
+	const regex = highlightingRegex;
+	if (!(regex && text)) {
+		return 0;
+	}
+
+	const matches = text.match(regex);
+	return matches ? matches.length : 0;
+});
+
+// Toggle expand/collapse
+function toggleText(): void {
+	isExpanded = !isExpanded;
+}
+
+// Lifecycle
+onMount(() => {
+	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	prefersReducedMotion = mediaQuery.matches;
+
+	const handleChange = (e: MediaQueryListEvent) => {
+		prefersReducedMotion = e.matches;
+	};
+
+	mediaQuery.addEventListener('change', handleChange);
+	return () => mediaQuery.removeEventListener('change', handleChange);
+});
 </script>
 
 <div role="region" aria-live="polite" aria-label="Text with highlights" class="inline">

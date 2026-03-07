@@ -314,8 +314,8 @@ export class MediaService {
 			if (isImage && !mimeType.includes('svg')) {
 				try {
 					advancedMetadata = await mediaProcessingService.getMetadata(buffer);
-					width = advancedMetadata['width'] as number | undefined;
-					height = advancedMetadata['height'] as number | undefined;
+					width = advancedMetadata.width as number | undefined;
+					height = advancedMetadata.height as number | undefined;
 				} catch (sharpError) {
 					logger.error('Failed to extract deep metadata', {
 						fileName: file.name,

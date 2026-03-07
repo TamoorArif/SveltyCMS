@@ -23,75 +23,75 @@ Implements custom virtual scrolling without external dependencies.
 -->
 
 <script lang="ts">
-	// Using iconify-icon web component
+// Using iconify-icon web component
 
-	import type { MediaBase, MediaImage } from '@utils/media/media-models';
-	import { formatBytes } from '@utils/utils';
-	// import { popup } from '@skeletonlabs/skeleton-svelte';
-	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+import type { MediaBase, MediaImage } from '@utils/media/media-models';
+import { formatBytes } from '@utils/utils';
+// import { popup } from '@skeletonlabs/skeleton-svelte';
+import { onMount } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
 
-	interface Props {
-		filteredFiles?: (MediaBase | MediaImage)[];
-		gridSize?: 'tiny' | 'small' | 'medium' | 'large';
-		onBulkDelete?: (files: (MediaBase | MediaImage)[]) => void;
-		onBulkDownload?: (files: (MediaBase | MediaImage)[]) => void;
-		onBulkEdit?: (files: (MediaBase | MediaImage)[], action: string, value: any) => void;
-		ondeleteImage?: (file: MediaBase | MediaImage) => void;
-		onEditImage?: (file: MediaImage) => void;
-	}
+interface Props {
+	filteredFiles?: (MediaBase | MediaImage)[];
+	gridSize?: 'tiny' | 'small' | 'medium' | 'large';
+	onBulkDelete?: (files: (MediaBase | MediaImage)[]) => void;
+	onBulkDownload?: (files: (MediaBase | MediaImage)[]) => void;
+	onBulkEdit?: (files: (MediaBase | MediaImage)[], action: string, value: any) => void;
+	ondeleteImage?: (file: MediaBase | MediaImage) => void;
+	onEditImage?: (file: MediaImage) => void;
+}
 
-	const {
-		filteredFiles = [],
-		gridSize,
-		ondeleteImage = () => {},
-		onBulkDelete = () => {},
-		onBulkDownload = () => {},
-		onBulkEdit = () => {},
-		onEditImage = () => {}
-	}: Props = $props();
+const {
+	filteredFiles = [],
+	gridSize,
+	ondeleteImage = () => {},
+	onBulkDelete = () => {},
+	onBulkDownload = () => {},
+	onBulkEdit = () => {},
+	onEditImage = () => {}
+}: Props = $props();
 
-	// Virtual scrolling state
-	let containerHeight = $state(600);
-	let scrollTop = $state(0);
-	const itemHeight = $derived(gridSize === 'tiny' ? 120 : gridSize === 'small' ? 160 : gridSize === 'medium' ? 280 : 400);
-	let itemsPerRow = $state(5);
-	const visibleRows = $derived(Math.ceil(containerHeight / itemHeight) + 2); // +2 for buffer
-	const totalRows = $derived(Math.ceil(filteredFiles.length / itemsPerRow));
-	const startRow = $derived(Math.max(0, Math.floor(scrollTop / itemHeight) - 1));
-	const endRow = $derived(Math.min(totalRows, startRow + visibleRows));
-	const visibleItems = $derived(filteredFiles.slice(startRow * itemsPerRow, endRow * itemsPerRow));
-	const paddingTop = $derived(startRow * itemHeight);
-	const paddingBottom = $derived((totalRows - endRow) * itemHeight);
+// Virtual scrolling state
+let containerHeight = $state(600);
+let scrollTop = $state(0);
+const itemHeight = $derived(gridSize === 'tiny' ? 120 : gridSize === 'small' ? 160 : gridSize === 'medium' ? 280 : 400);
+let itemsPerRow = $state(5);
+const visibleRows = $derived(Math.ceil(containerHeight / itemHeight) + 2); // +2 for buffer
+const totalRows = $derived(Math.ceil(filteredFiles.length / itemsPerRow));
+const startRow = $derived(Math.max(0, Math.floor(scrollTop / itemHeight) - 1));
+const endRow = $derived(Math.min(totalRows, startRow + visibleRows));
+const visibleItems = $derived(filteredFiles.slice(startRow * itemsPerRow, endRow * itemsPerRow));
+const paddingTop = $derived(startRow * itemHeight);
+const paddingBottom = $derived((totalRows - endRow) * itemHeight);
 
-	// Selection and operations state
-	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
-	let selectedFiles = $state(new SvelteSet<string>());
-	let isSelectionMode = $state(false);
-	let activePopup = $state<string | null>(null);
-	let showBulkEditModal = $state(false);
-	let bulkEditAction = $state<'rename' | 'move' | 'tag'>('tag');
-	let bulkEditValue = $state('');
+// Selection and operations state
+// eslint-disable-next-line svelte/no-unnecessary-state-wrap
+let selectedFiles = $state(new SvelteSet<string>());
+let isSelectionMode = $state(false);
+let activePopup = $state<string | null>(null);
+let showBulkEditModal = $state(false);
+let bulkEditAction = $state<'rename' | 'move' | 'tag'>('tag');
+let bulkEditValue = $state('');
 
-	// Container ref
-	let container: HTMLDivElement;
+// Container ref
+let container: HTMLDivElement;
 
-	// Keyboard navigation state
-	// let focusedIndex = $state(-1);
+// Keyboard navigation state
+// let focusedIndex = $state(-1);
 
-	// Drag-to-select state (Unused/Incomplete)
-	// let isDragging = $state(false);
-	// let selectionStart = $state<{x: number, y: number} | null>(null);
-	// let selectionRect = $state<{left: number, top: number, width: number, height: number} | null>(null);
+// Drag-to-select state (Unused/Incomplete)
+// let isDragging = $state(false);
+// let selectionStart = $state<{x: number, y: number} | null>(null);
+// let selectionRect = $state<{left: number, top: number, width: number, height: number} | null>(null);
 
-	// Context menu state (Unused/Incomplete)
-	// let contextMenu = $state<{x: number, y: number, file: MediaBase | MediaImage | null} | null>(null);
+// Context menu state (Unused/Incomplete)
+// let contextMenu = $state<{x: number, y: number, file: MediaBase | MediaImage | null} | null>(null);
 
-	// Computed item width for selection math
-	// const itemWidth = $derived(gridSize === 'tiny' ? 100 : gridSize === 'small' ? 140 : gridSize === 'medium' ? 260 : 380);
+// Computed item width for selection math
+// const itemWidth = $derived(gridSize === 'tiny' ? 100 : gridSize === 'small' ? 140 : gridSize === 'medium' ? 260 : 380);
 
-	// Handle keyboard navigation (Unused - connect to window or container if needed)
-	/*
+// Handle keyboard navigation (Unused - connect to window or container if needed)
+/*
     function handleKeyDown(e: KeyboardEvent) {
         if (!container) return;
 
@@ -137,7 +137,7 @@ Implements custom virtual scrolling without external dependencies.
     }
     */
 
-	/*
+/*
 	function scrollToIndex(index: number) {
 		if (index < 0) return;
 		const row = Math.floor(index / itemsPerRow);
@@ -259,87 +259,87 @@ Implements custom virtual scrolling without external dependencies.
     }
     */
 
-	// Calculate items per row based on container width
-	function updateItemsPerRow() {
-		if (!container) {
-			return;
-		}
-		const width = container.clientWidth;
-		const itemWidth = gridSize === 'tiny' ? 100 : gridSize === 'small' ? 140 : gridSize === 'medium' ? 260 : 380;
-		itemsPerRow = Math.max(1, Math.floor(width / itemWidth));
+// Calculate items per row based on container width
+function updateItemsPerRow() {
+	if (!container) {
+		return;
 	}
+	const width = container.clientWidth;
+	const itemWidth = gridSize === 'tiny' ? 100 : gridSize === 'small' ? 140 : gridSize === 'medium' ? 260 : 380;
+	itemsPerRow = Math.max(1, Math.floor(width / itemWidth));
+}
 
-	// Handle scroll
-	function handleScroll(e: Event) {
-		const target = e.target as HTMLDivElement;
-		scrollTop = target.scrollTop;
+// Handle scroll
+function handleScroll(e: Event) {
+	const target = e.target as HTMLDivElement;
+	scrollTop = target.scrollTop;
+}
+
+// Batch operations
+function toggleSelection(file: MediaBase | MediaImage) {
+	const fileId = file._id?.toString() || file.filename;
+	if (selectedFiles.has(fileId)) {
+		selectedFiles.delete(fileId);
+	} else {
+		selectedFiles.add(fileId);
 	}
+}
 
-	// Batch operations
-	function toggleSelection(file: MediaBase | MediaImage) {
-		const fileId = file._id?.toString() || file.filename;
-		if (selectedFiles.has(fileId)) {
-			selectedFiles.delete(fileId);
-		} else {
-			selectedFiles.add(fileId);
-		}
-	}
+function selectAll() {
+	selectedFiles.clear();
+	filteredFiles.forEach((f) => selectedFiles.add(f._id?.toString() || f.filename));
+}
 
-	function selectAll() {
+function deselectAll() {
+	selectedFiles.clear();
+}
+
+function handleDelete(file: MediaBase | MediaImage) {
+	ondeleteImage(file);
+}
+
+function handleBulkDelete() {
+	const filesToDelete = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
+	if (filesToDelete.length > 0) {
+		onBulkDelete(filesToDelete);
 		selectedFiles.clear();
-		filteredFiles.forEach((f) => selectedFiles.add(f._id?.toString() || f.filename));
+		isSelectionMode = false;
 	}
+}
 
-	function deselectAll() {
+function handleBulkDownload() {
+	const filesToDownload = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
+	if (filesToDownload.length > 0) {
+		onBulkDownload(filesToDownload);
+	}
+}
+
+function openBulkEditModal(action: 'rename' | 'move' | 'tag') {
+	bulkEditAction = action;
+	showBulkEditModal = true;
+}
+
+function applyBulkEdit() {
+	const filesToEdit = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
+	if (filesToEdit.length > 0 && bulkEditValue.trim()) {
+		onBulkEdit(filesToEdit, bulkEditAction, bulkEditValue);
+		showBulkEditModal = false;
+		bulkEditValue = '';
 		selectedFiles.clear();
+		isSelectionMode = false;
 	}
+}
 
-	function handleDelete(file: MediaBase | MediaImage) {
-		ondeleteImage(file);
-	}
-
-	function handleBulkDelete() {
-		const filesToDelete = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
-		if (filesToDelete.length > 0) {
-			onBulkDelete(filesToDelete);
-			selectedFiles.clear();
-			isSelectionMode = false;
-		}
-	}
-
-	function handleBulkDownload() {
-		const filesToDownload = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
-		if (filesToDownload.length > 0) {
-			onBulkDownload(filesToDownload);
-		}
-	}
-
-	function openBulkEditModal(action: 'rename' | 'move' | 'tag') {
-		bulkEditAction = action;
-		showBulkEditModal = true;
-	}
-
-	function applyBulkEdit() {
-		const filesToEdit = filteredFiles.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
-		if (filesToEdit.length > 0 && bulkEditValue.trim()) {
-			onBulkEdit(filesToEdit, bulkEditAction, bulkEditValue);
-			showBulkEditModal = false;
-			bulkEditValue = '';
-			selectedFiles.clear();
-			isSelectionMode = false;
-		}
-	}
-
-	// Lifecycle
-	onMount(() => {
+// Lifecycle
+onMount(() => {
+	updateItemsPerRow();
+	const resizeObserver = new ResizeObserver(() => {
 		updateItemsPerRow();
-		const resizeObserver = new ResizeObserver(() => {
-			updateItemsPerRow();
-			containerHeight = container.clientHeight;
-		});
-		resizeObserver.observe(container);
-		return () => resizeObserver.disconnect();
+		containerHeight = container.clientHeight;
 	});
+	resizeObserver.observe(container);
+	return () => resizeObserver.disconnect();
+});
 </script>
 
 <div class="flex h-full flex-col">

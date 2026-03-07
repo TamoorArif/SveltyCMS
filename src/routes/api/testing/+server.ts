@@ -42,12 +42,13 @@ export async function POST({ request }: RequestEvent) {
 		const action = body.action;
 
 		switch (action) {
-			case 'reset':
+			case 'reset': {
 				await currentDbAdapter.clearDatabase();
 				// Invalidate setup cache so the server realizes the DB is now empty
 				const { invalidateSetupCache } = await import('@src/utils/setup-check');
 				invalidateSetupCache(true);
 				return json({ success: true, message: 'Database cleared' });
+			}
 
 			case 'seed': {
 				// Initialize default roles, settings and themes

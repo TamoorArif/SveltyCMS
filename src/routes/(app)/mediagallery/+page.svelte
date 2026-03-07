@@ -22,698 +22,698 @@ Displays a collection of media files (images, documents, audio, video) with:
 -->
 
 <script lang="ts">
-	import ModalPrompt from '@components/modal-prompt.svelte';
-	import Breadcrumb from '@src/components/breadcrumb.svelte';
-	import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
-	import PageTitle from '@src/components/page-title.svelte';
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	// Import types
-	import type { SystemVirtualFolder } from '@src/databases/db-interface';
-	// Utils & Media
-	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-	// Skeleton
-	import { toast } from '@src/stores/toast.svelte.ts';
-	// Removed axios import
-	// Stores
-	import { toggleUIElement } from '@src/stores/ui-store.svelte.ts';
-	// Logger
-	import { logger } from '@utils/logger';
-	import type { SearchCriteria } from '@utils/media/advanced-search';
-	import { type MediaBase, type MediaImage, MediaTypeEnum } from '@utils/media/media-models';
-	// Initialize modal store
-	// const modalStore = getModalStore();
-	import { modalState } from '@utils/modal-state.svelte';
-	import { showConfirm } from '@utils/modal-utils';
-	import { SvelteSet } from 'svelte/reactivity';
-	import { goto } from '$app/navigation';
-	import type { PageData } from './$types';
-	import AdvancedSearchModal from './advanced-search-modal.svelte';
-	import MediaGrid from './media-grid.svelte';
-	import MediaTable from './media-table.svelte';
-	import VirtualMediaGrid from './virtual-media-grid.svelte';
+import ModalPrompt from '@components/modal-prompt.svelte';
+import Breadcrumb from '@src/components/breadcrumb.svelte';
+import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
+import PageTitle from '@src/components/page-title.svelte';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+// Import types
+import type { SystemVirtualFolder } from '@src/databases/db-interface';
+// Utils & Media
+import { publicEnv } from '@src/stores/global-settings.svelte';
+import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
+// Skeleton
+import { toast } from '@src/stores/toast.svelte.ts';
+// Removed axios import
+// Stores
+import { toggleUIElement } from '@src/stores/ui-store.svelte.ts';
+// Logger
+import { logger } from '@utils/logger';
+import type { SearchCriteria } from '@utils/media/advanced-search';
+import { type MediaBase, type MediaImage, MediaTypeEnum } from '@utils/media/media-models';
+// Initialize modal store
+// const modalStore = getModalStore();
+import { modalState } from '@utils/modal-state.svelte';
+import { showConfirm } from '@utils/modal-utils';
+import { SvelteSet } from 'svelte/reactivity';
+import { goto } from '$app/navigation';
+import type { PageData } from './$types';
+import AdvancedSearchModal from './advanced-search-modal.svelte';
+import MediaGrid from './media-grid.svelte';
+import MediaTable from './media-table.svelte';
+import VirtualMediaGrid from './virtual-media-grid.svelte';
 
-	// Props using runes
-	let { data }: { data: PageData } = $props();
+// Props using runes
+let { data }: { data: PageData } = $props();
 
-	// State using runes
-	let files: (MediaBase | MediaImage)[] = $state([]);
-	let allSystemVirtualFolders: any[] = $state([]);
-	let currentSystemVirtualFolder: SystemVirtualFolder | null = $state(null);
-	let breadcrumb: string[] = $state([]);
+// State using runes
+let files: (MediaBase | MediaImage)[] = $state([]);
+let allSystemVirtualFolders: any[] = $state([]);
+let currentSystemVirtualFolder: SystemVirtualFolder | null = $state(null);
+let breadcrumb: string[] = $state([]);
 
-	let globalSearchValue = $state('');
-	let selectedMediaType: 'All' | MediaTypeEnum = $state('All');
-	let view: 'grid' | 'table' = $state('grid');
-	let gridSize: 'tiny' | 'small' | 'medium' | 'large' = $state('small');
-	let tableSize: 'tiny' | 'small' | 'medium' | 'large' = $state('small');
-	let isLoading = $state(false);
+let globalSearchValue = $state('');
+let selectedMediaType: 'All' | MediaTypeEnum = $state('All');
+let view: 'grid' | 'table' = $state('grid');
+let gridSize: 'tiny' | 'small' | 'medium' | 'large' = $state('small');
+let tableSize: 'tiny' | 'small' | 'medium' | 'large' = $state('small');
+let isLoading = $state(false);
 
-	// Enterprise features state
-	let advancedSearchCriteria: SearchCriteria | null = $state(null);
+// Enterprise features state
+let advancedSearchCriteria: SearchCriteria | null = $state(null);
 
-	// Performance optimization: Use virtual scrolling for large collections
-	const USE_VIRTUAL_THRESHOLD = 100;
+// Performance optimization: Use virtual scrolling for large collections
+const USE_VIRTUAL_THRESHOLD = 100;
 
-	interface MediaTypeOption {
-		label: string;
-		value: 'All' | MediaTypeEnum;
-	}
+interface MediaTypeOption {
+	label: string;
+	value: 'All' | MediaTypeEnum;
+}
 
-	// Media types with proper typing
-	const mediaTypes: MediaTypeOption[] = [
-		{ value: 'All', label: 'ALL' },
-		{ value: MediaTypeEnum.Image, label: 'IMAGE' },
-		{ value: MediaTypeEnum.Document, label: 'DOCUMENT' },
-		{ value: MediaTypeEnum.Audio, label: 'AUDIO' },
-		{ value: MediaTypeEnum.Video, label: 'VIDEO' },
-		{ value: MediaTypeEnum.RemoteVideo, label: 'REMOTE VIDEO' }
-	];
+// Media types with proper typing
+const mediaTypes: MediaTypeOption[] = [
+	{ value: 'All', label: 'ALL' },
+	{ value: MediaTypeEnum.Image, label: 'IMAGE' },
+	{ value: MediaTypeEnum.Document, label: 'DOCUMENT' },
+	{ value: MediaTypeEnum.Audio, label: 'AUDIO' },
+	{ value: MediaTypeEnum.Video, label: 'VIDEO' },
+	{ value: MediaTypeEnum.RemoteVideo, label: 'REMOTE VIDEO' }
+];
 
-	// Computed value for filtered files based on search and type
-	const filteredFiles = $derived.by(() => {
-		const results = files.filter((file) => {
-			const matchesSearch = (file.filename || '').toLowerCase().includes(globalSearchValue.toLowerCase());
-			const matchesType = selectedMediaType === 'All' || file.type === selectedMediaType;
-			return matchesSearch && matchesType;
-		});
-
-		// Apply advanced search criteria if set
-		if (advancedSearchCriteria) {
-			// Import the advancedSearch function if criteria is active
-			// This will be handled by the modal's onSearch callback
-			return results;
-		}
-
-		return results;
+// Computed value for filtered files based on search and type
+const filteredFiles = $derived.by(() => {
+	const results = files.filter((file) => {
+		const matchesSearch = (file.filename || '').toLowerCase().includes(globalSearchValue.toLowerCase());
+		const matchesType = selectedMediaType === 'All' || file.type === selectedMediaType;
+		return matchesSearch && matchesType;
 	});
 
-	// Performance optimization: Use virtual scrolling for large collections
-	const useVirtualScrolling = $derived(filteredFiles.length > USE_VIRTUAL_THRESHOLD);
+	// Apply advanced search criteria if set
+	if (advancedSearchCriteria) {
+		// Import the advancedSearch function if criteria is active
+		// This will be handled by the modal's onSearch callback
+		return results;
+	}
 
-	// Computed folders for breadcrumb - create a mapping of breadcrumb paths to folder IDs
-	const breadcrumbFolders = $derived.by(() => {
-		const folders: { _id: string; name: string; path: string[] }[] = [];
+	return results;
+});
 
-		// Always add root as first folder
-		folders.push({
-			_id: 'root',
-			name: 'Media Root',
-			path: []
+// Performance optimization: Use virtual scrolling for large collections
+const useVirtualScrolling = $derived(filteredFiles.length > USE_VIRTUAL_THRESHOLD);
+
+// Computed folders for breadcrumb - create a mapping of breadcrumb paths to folder IDs
+const breadcrumbFolders = $derived.by(() => {
+	const folders: { _id: string; name: string; path: string[] }[] = [];
+
+	// Always add root as first folder
+	folders.push({
+		_id: 'root',
+		name: 'Media Root',
+		path: []
+	});
+
+	if (!currentSystemVirtualFolder) {
+		return folders;
+	}
+
+	let current: SystemVirtualFolder | null = currentSystemVirtualFolder;
+	const pathSegments: string[] = [];
+
+	const tempFolders: { _id: string; name: string; path: string[] }[] = [];
+	while (current) {
+		pathSegments.unshift(current.name);
+		tempFolders.unshift({
+			_id: current._id,
+			name: current.name,
+			path: [...pathSegments] // Copy the current path
 		});
+		// Find the parent folder
+		current = allSystemVirtualFolders.find((f) => f._id === current?.parentId) || null;
+	}
 
-		if (!currentSystemVirtualFolder) {
-			return folders;
-		}
+	return [...folders, ...tempFolders];
+});
 
-		let current: SystemVirtualFolder | null = currentSystemVirtualFolder;
-		const pathSegments: string[] = [];
+// Handle user preferences
+function storeUserPreference(
+	view: 'grid' | 'table',
+	gridSize: 'tiny' | 'small' | 'medium' | 'large',
+	tableSize: 'tiny' | 'small' | 'medium' | 'large'
+) {
+	localStorage.setItem('GalleryUserPreference', `${view}/${gridSize}/${tableSize}`);
+}
 
-		const tempFolders: { _id: string; name: string; path: string[] }[] = [];
+function getUserPreferenceFromLocalStorageOrCookie(): string | null {
+	return localStorage.getItem('GalleryUserPreference');
+}
+
+// Mobile navigation helper - hides sidebar on mobile before navigation
+function handleMobileNavigation(path: string) {
+	if (typeof window !== 'undefined' && window.innerWidth < 768) {
+		toggleUIElement('leftSidebar', 'hidden');
+	}
+	goto(path);
+}
+
+// Computed safe table size (MediaTable doesn't support 'tiny')
+const safeTableSize = $derived(tableSize);
+
+// Initialize component with runes
+// Run once on mount to set up initial data
+$effect(() => {
+	// Load initial data from server
+	if (data?.systemVirtualFolders) {
+		allSystemVirtualFolders = data.systemVirtualFolders.map((folder: SystemVirtualFolder) => ({
+			...folder,
+			path: Array.isArray(folder.path) ? folder.path : folder.path?.split('/')
+		}));
+	}
+
+	if (data?.currentFolder) {
+		currentSystemVirtualFolder = data.currentFolder;
+	}
+
+	if (data?.media) {
+		files = data.media.map((m: any) => ({
+			...m,
+			user: typeof m.user === 'object' && m.user ? m.user._id : m.user
+		})) as (MediaBase | MediaImage)[];
+	}
+
+	// Load user preferences
+	const userPreference = getUserPreferenceFromLocalStorageOrCookie();
+	if (userPreference) {
+		const [preferredView, preferredGridSize, preferredTableSize] = userPreference.split('/');
+		view = preferredView as 'grid' | 'table';
+		gridSize = preferredGridSize as 'tiny' | 'small' | 'medium' | 'large';
+		tableSize = preferredTableSize as 'tiny' | 'small' | 'medium' | 'large';
+	}
+
+	// Listen for folder selection events
+	const handleSystemVirtualFolderSelected = (event: Event) => {
+		const customEvent = event as CustomEvent;
+		const { folderId } = customEvent.detail;
+		openSystemVirtualFolder(folderId && folderId !== 'root' ? folderId : null);
+	};
+
+	document.addEventListener('systemVirtualFolderSelected', handleSystemVirtualFolderSelected);
+
+	return () => {
+		document.removeEventListener('systemVirtualFolderSelected', handleSystemVirtualFolderSelected);
+	};
+});
+
+// Update breadcrumb when current folder changes
+$effect(() => {
+	// This effect only runs when currentSystemVirtualFolder or allSystemVirtualFolders changes
+	updateBreadcrumb();
+});
+// Function to update breadcrumb based on current folder
+function updateBreadcrumb() {
+	if (!currentSystemVirtualFolder) {
+		// At root level - show Media Root
+		breadcrumb = ['Media Root'];
+		return;
+	}
+
+	// Build breadcrumb by traversing up the parent hierarchy
+	const buildBreadcrumb = (folder: SystemVirtualFolder): string[] => {
+		const path: string[] = ['Media Root']; // Always start with root
+		let current: SystemVirtualFolder | null = folder;
+
+		const folderPath: string[] = [];
 		while (current) {
-			pathSegments.unshift(current.name);
-			tempFolders.unshift({
-				_id: current._id,
-				name: current.name,
-				path: [...pathSegments] // Copy the current path
-			});
+			folderPath.unshift(current.name); // Add folder name to the beginning
 			// Find the parent folder
 			current = allSystemVirtualFolders.find((f) => f._id === current?.parentId) || null;
 		}
 
-		return [...folders, ...tempFolders];
-	});
+		return [...path, ...folderPath];
+	};
 
-	// Handle user preferences
-	function storeUserPreference(
-		view: 'grid' | 'table',
-		gridSize: 'tiny' | 'small' | 'medium' | 'large',
-		tableSize: 'tiny' | 'small' | 'medium' | 'large'
-	) {
-		localStorage.setItem('GalleryUserPreference', `${view}/${gridSize}/${tableSize}`);
+	breadcrumb = buildBreadcrumb(currentSystemVirtualFolder);
+}
+
+// Create a new virtual folder with validation
+async function createSystemVirtualFolder(folderName: string) {
+	// Validate folder name
+	const trimmedName = folderName.trim();
+	if (!trimmedName) {
+		toast.error('Folder name cannot be empty');
+		return;
 	}
 
-	function getUserPreferenceFromLocalStorageOrCookie(): string | null {
-		return localStorage.getItem('GalleryUserPreference');
+	if (/[\\/:"*?<>|]/.test(trimmedName)) {
+		toast.error({
+			description: 'Folder name contains invalid characters (\\ / : * ? " < > |)'
+		});
+		return;
 	}
 
-	// Mobile navigation helper - hides sidebar on mobile before navigation
-	function handleMobileNavigation(path: string) {
-		if (typeof window !== 'undefined' && window.innerWidth < 768) {
-			toggleUIElement('leftSidebar', 'hidden');
+	if (trimmedName.length > 50) {
+		toast.error('Folder name must be 50 characters or less');
+		return;
+	}
+
+	isLoading = true;
+	globalLoadingStore.startLoading(loadingOperations.dataFetch);
+
+	try {
+		const parentId = currentSystemVirtualFolder?._id ?? null;
+		const response = await fetch('/api/systemVirtualFolder', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ name: trimmedName, parentId })
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
 		}
-		goto(path);
+
+		const result = await response.json();
+
+		if (result.success) {
+			// Refetch all folders and update current view
+			allSystemVirtualFolders = await fetchUpdatedSystemVirtualFolders();
+
+			// Notify Collections component
+			document.dispatchEvent(
+				new CustomEvent('folderCreated', {
+					detail: { folder: result.folder, parentId }
+				})
+			);
+
+			toast.success('Folder created successfully');
+		} else {
+			throw new Error(result.error || 'Failed to create folder');
+		}
+	} catch (error) {
+		logger.error('Error creating folder:', error);
+		const errorMessage =
+			error instanceof Error && error.message.includes('duplicate')
+				? error.message
+				: error instanceof Error && error.message.includes('invalid')
+					? 'Invalid folder name'
+					: 'Failed to create folder';
+		toast.error({ description: errorMessage });
+	} finally {
+		isLoading = false;
+		globalLoadingStore.stopLoading(loadingOperations.dataFetch);
 	}
+}
 
-	// Computed safe table size (MediaTable doesn't support 'tiny')
-	const safeTableSize = $derived(tableSize);
+// Fetch updated folders
+async function fetchUpdatedSystemVirtualFolders() {
+	try {
+		const response = await fetch('/api/systemVirtualFolder');
+		const result = await response.json();
 
-	// Initialize component with runes
-	// Run once on mount to set up initial data
-	$effect(() => {
-		// Load initial data from server
-		if (data?.systemVirtualFolders) {
-			allSystemVirtualFolders = data.systemVirtualFolders.map((folder: SystemVirtualFolder) => ({
+		if (result.success) {
+			return result.data.map((folder: SystemVirtualFolder) => ({
 				...folder,
 				path: Array.isArray(folder.path) ? folder.path : folder.path?.split('/')
 			}));
 		}
+		throw new Error(result.error || 'Failed to fetch folders');
+	} catch (error) {
+		logger.error('Error fetching updated folders:', error);
+		toast.error('Failed to fetch folders');
+		return [];
+	}
+}
 
-		if (data?.currentFolder) {
-			currentSystemVirtualFolder = data.currentFolder;
-		}
+// Memoized fetch for media files
+let lastSystemFolderId = $state<string | null>(null);
+async function fetchMediaFiles(forceRefresh = false) {
+	const folderId = currentSystemVirtualFolder ? currentSystemVirtualFolder._id : 'root';
 
-		if (data?.media) {
-			files = data.media.map((m: any) => ({
-				...m,
-				user: typeof m.user === 'object' && m.user ? m.user._id : m.user
-			})) as (MediaBase | MediaImage)[];
-		}
-
-		// Load user preferences
-		const userPreference = getUserPreferenceFromLocalStorageOrCookie();
-		if (userPreference) {
-			const [preferredView, preferredGridSize, preferredTableSize] = userPreference.split('/');
-			view = preferredView as 'grid' | 'table';
-			gridSize = preferredGridSize as 'tiny' | 'small' | 'medium' | 'large';
-			tableSize = preferredTableSize as 'tiny' | 'small' | 'medium' | 'large';
-		}
-
-		// Listen for folder selection events
-		const handleSystemVirtualFolderSelected = (event: Event) => {
-			const customEvent = event as CustomEvent;
-			const { folderId } = customEvent.detail;
-			openSystemVirtualFolder(folderId && folderId !== 'root' ? folderId : null);
-		};
-
-		document.addEventListener('systemVirtualFolderSelected', handleSystemVirtualFolderSelected);
-
-		return () => {
-			document.removeEventListener('systemVirtualFolderSelected', handleSystemVirtualFolderSelected);
-		};
-	});
-
-	// Update breadcrumb when current folder changes
-	$effect(() => {
-		// This effect only runs when currentSystemVirtualFolder or allSystemVirtualFolders changes
-		updateBreadcrumb();
-	});
-	// Function to update breadcrumb based on current folder
-	function updateBreadcrumb() {
-		if (!currentSystemVirtualFolder) {
-			// At root level - show Media Root
-			breadcrumb = ['Media Root'];
-			return;
-		}
-
-		// Build breadcrumb by traversing up the parent hierarchy
-		const buildBreadcrumb = (folder: SystemVirtualFolder): string[] => {
-			const path: string[] = ['Media Root']; // Always start with root
-			let current: SystemVirtualFolder | null = folder;
-
-			const folderPath: string[] = [];
-			while (current) {
-				folderPath.unshift(current.name); // Add folder name to the beginning
-				// Find the parent folder
-				current = allSystemVirtualFolders.find((f) => f._id === current?.parentId) || null;
-			}
-
-			return [...path, ...folderPath];
-		};
-
-		breadcrumb = buildBreadcrumb(currentSystemVirtualFolder);
+	// Skip if already loading or same folder (unless force refresh)
+	if (!forceRefresh && (isLoading || folderId === lastSystemFolderId)) {
+		return;
 	}
 
-	// Create a new virtual folder with validation
-	async function createSystemVirtualFolder(folderName: string) {
-		// Validate folder name
-		const trimmedName = folderName.trim();
-		if (!trimmedName) {
-			toast.error('Folder name cannot be empty');
-			return;
-		}
+	isLoading = true;
+	globalLoadingStore.startLoading(loadingOperations.dataFetch);
+	lastSystemFolderId = folderId;
 
-		if (/[\\/:"*?<>|]/.test(trimmedName)) {
-			toast.error({
-				description: 'Folder name contains invalid characters (\\ / : * ? " < > |)'
-			});
-			return;
-		}
-
-		if (trimmedName.length > 50) {
-			toast.error('Folder name must be 50 characters or less');
-			return;
-		}
-
-		isLoading = true;
-		globalLoadingStore.startLoading(loadingOperations.dataFetch);
-
-		try {
-			const parentId = currentSystemVirtualFolder?._id ?? null;
-			const response = await fetch('/api/systemVirtualFolder', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: trimmedName, parentId })
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-			}
-
-			const result = await response.json();
-
-			if (result.success) {
-				// Refetch all folders and update current view
-				allSystemVirtualFolders = await fetchUpdatedSystemVirtualFolders();
-
-				// Notify Collections component
-				document.dispatchEvent(
-					new CustomEvent('folderCreated', {
-						detail: { folder: result.folder, parentId }
-					})
-				);
-
-				toast.success('Folder created successfully');
-			} else {
-				throw new Error(result.error || 'Failed to create folder');
-			}
-		} catch (error) {
-			logger.error('Error creating folder:', error);
-			const errorMessage =
-				error instanceof Error && error.message.includes('duplicate')
-					? error.message
-					: error instanceof Error && error.message.includes('invalid')
-						? 'Invalid folder name'
-						: 'Failed to create folder';
-			toast.error({ description: errorMessage });
-		} finally {
-			isLoading = false;
-			globalLoadingStore.stopLoading(loadingOperations.dataFetch);
-		}
-	}
-
-	// Fetch updated folders
-	async function fetchUpdatedSystemVirtualFolders() {
-		try {
-			const response = await fetch('/api/systemVirtualFolder');
-			const result = await response.json();
-
-			if (result.success) {
-				return result.data.map((folder: SystemVirtualFolder) => ({
-					...folder,
-					path: Array.isArray(folder.path) ? folder.path : folder.path?.split('/')
-				}));
-			}
-			throw new Error(result.error || 'Failed to fetch folders');
-		} catch (error) {
-			logger.error('Error fetching updated folders:', error);
-			toast.error('Failed to fetch folders');
-			return [];
-		}
-	}
-
-	// Memoized fetch for media files
-	let lastSystemFolderId = $state<string | null>(null);
-	async function fetchMediaFiles(forceRefresh = false) {
-		const folderId = currentSystemVirtualFolder ? currentSystemVirtualFolder._id : 'root';
-
-		// Skip if already loading or same folder (unless force refresh)
-		if (!forceRefresh && (isLoading || folderId === lastSystemFolderId)) {
-			return;
-		}
-
-		isLoading = true;
-		globalLoadingStore.startLoading(loadingOperations.dataFetch);
-		lastSystemFolderId = folderId;
-
-		try {
-			const response = await fetch(`/api/systemVirtualFolder/${folderId}`, {
-				signal: AbortSignal.timeout(10_000) // 10 second timeout
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const data = await response.json();
-
-			if (data.success) {
-				files = Array.isArray(data.data.contents?.files) ? data.data.contents.files : [];
-				logger.info(`Fetched ${files.length} files for folder: ${folderId}`);
-				// Folders are handled by allSystemVirtualFolders
-			} else {
-				throw new Error(data.error || 'Unknown error');
-			}
-		} catch (error: unknown) {
-			logger.error('Error fetching media files:', error);
-			let errorMessage = 'Failed to load media';
-			if (error instanceof Error) {
-				if (error.message.includes('timeout')) {
-					errorMessage = 'Request timed out - please try again';
-				} else if (error.message.includes('network')) {
-					errorMessage = 'Network error - please check your connection';
-				}
-			}
-			toast.error({ description: errorMessage });
-			files = [];
-		} finally {
-			isLoading = false;
-			globalLoadingStore.stopLoading(loadingOperations.dataFetch);
-		}
-	}
-
-	// Open virtual folder
-	async function openSystemVirtualFolder(folderId: string | null) {
-		try {
-			if (folderId === null) {
-				currentSystemVirtualFolder = null;
-			} else {
-				// Set current folder to the selected one from allFolders
-				currentSystemVirtualFolder = allSystemVirtualFolders.find((f) => f._id === folderId) || null;
-			}
-
-			// Update breadcrumb based on the current folder
-			updateBreadcrumb();
-
-			// Fetch media files for the current folder
-			await fetchMediaFiles();
-		} catch (error) {
-			logger.error('Error opening folder:', error);
-			toast.error('Failed to open folder');
-		}
-	}
-
-	function handleViewChange(newView: 'grid' | 'table') {
-		view = newView;
-		storeUserPreference(view, gridSize, tableSize);
-	}
-
-	// Clear search
-	function clearSearch() {
-		globalSearchValue = '';
-	}
-
-	// Open add virtual folder modal
-	function openAddFolderModal() {
-		const currentFolderPath = currentSystemVirtualFolder
-			? Array.isArray(currentSystemVirtualFolder.path)
-				? currentSystemVirtualFolder.path.join('/')
-				: currentSystemVirtualFolder.path
-			: publicEnv?.MEDIA_FOLDER || 'mediaFolder';
-		modalState.trigger(
-			ModalPrompt as any,
-			{
-				title: 'Add Folder',
-				body: `Creating subfolder in: <span class="text-tertiary-500 dark:text-primary-500">${currentFolderPath}</span>`
-			},
-			(r: string) => {
-				if (r) {
-					createSystemVirtualFolder(r);
-				}
-			}
-		);
-	}
-
-	// Handle delete image
-	async function handleDeleteImage(file: MediaBase) {
-		// Show confirmation modal
-		showConfirm({
-			title: `Delete ${file.filename}`,
-			body: `Are you sure you want to delete <span class="text-tertiary-500 dark:text-primary-500 font-bold">"${file.filename}"</span>? This action cannot be undone.`,
-			onConfirm: async () => {
-				try {
-					logger.info('Delete image request:', {
-						_id: file._id,
-						filename: file.filename
-					});
-
-					const formData = new FormData();
-					formData.append('imageData', JSON.stringify(file));
-
-					const response = await fetch('?/deleteMedia', {
-						method: 'POST',
-						body: formData
-					});
-
-					logger.info('Delete response status:', response.status);
-
-					if (!response.ok) {
-						const errorText = await response.text();
-						logger.error('Delete failed with status:', response.status, errorText);
-						throw new Error(`Server error: ${response.status} - ${errorText}`);
-					}
-
-					const result = await response.json();
-					logger.debug('Delete response:', result);
-
-					// Handle SvelteKit's wrapped response format
-					let data = result;
-					if (result.type === 'success' && result.data) {
-						// Parse if data is a string
-						data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-					}
-
-					// Check if it's an array response (like upload)
-					const success = Array.isArray(data) ? data[0]?.success : data?.success;
-
-					if (success) {
-						toast.success('Media deleted successfully.');
-
-						// Reactively remove the deleted file from the files array
-						// Svelte 5 runes will automatically update all derived state
-						files = files.filter((f) => f._id !== file._id);
-
-						logger.info(`Removed file ${file.filename} from UI. Remaining: ${files.length} files`);
-					} else {
-						throw new Error(data?.error || 'Failed to delete media');
-					}
-				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : String(error);
-					logger.error('Error deleting media:', errorMessage);
-					toast.error(`Error deleting media: ${errorMessage}`);
-				}
-			}
+	try {
+		const response = await fetch(`/api/systemVirtualFolder/${folderId}`, {
+			signal: AbortSignal.timeout(10_000) // 10 second timeout
 		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const data = await response.json();
+
+		if (data.success) {
+			files = Array.isArray(data.data.contents?.files) ? data.data.contents.files : [];
+			logger.info(`Fetched ${files.length} files for folder: ${folderId}`);
+			// Folders are handled by allSystemVirtualFolders
+		} else {
+			throw new Error(data.error || 'Unknown error');
+		}
+	} catch (error: unknown) {
+		logger.error('Error fetching media files:', error);
+		let errorMessage = 'Failed to load media';
+		if (error instanceof Error) {
+			if (error.message.includes('timeout')) {
+				errorMessage = 'Request timed out - please try again';
+			} else if (error.message.includes('network')) {
+				errorMessage = 'Network error - please check your connection';
+			}
+		}
+		toast.error({ description: errorMessage });
+		files = [];
+	} finally {
+		isLoading = false;
+		globalLoadingStore.stopLoading(loadingOperations.dataFetch);
 	}
+}
 
-	// Handle bulk delete
-	async function handleBulkDelete(filesToDelete: MediaBase[]) {
-		// Show confirmation modal
-		showConfirm({
-			title: 'Delete Multiple Media',
-			body: `Are you sure you want to delete ${filesToDelete.length} file${filesToDelete.length > 1 ? 's' : ''}? This action cannot be undone.`,
-			onConfirm: async () => {
-				try {
-					logger.info('Bulk delete request:', { count: filesToDelete.length });
+// Open virtual folder
+async function openSystemVirtualFolder(folderId: string | null) {
+	try {
+		if (folderId === null) {
+			currentSystemVirtualFolder = null;
+		} else {
+			// Set current folder to the selected one from allFolders
+			currentSystemVirtualFolder = allSystemVirtualFolders.find((f) => f._id === folderId) || null;
+		}
 
-					// Track successfully deleted files
-					const successfullyDeletedIds = new SvelteSet();
-					let successCount = 0;
-					let failCount = 0;
+		// Update breadcrumb based on the current folder
+		updateBreadcrumb();
 
-					for (const file of filesToDelete) {
-						try {
-							const formData = new FormData();
-							formData.append('imageData', JSON.stringify(file));
+		// Fetch media files for the current folder
+		await fetchMediaFiles();
+	} catch (error) {
+		logger.error('Error opening folder:', error);
+		toast.error('Failed to open folder');
+	}
+}
 
-							const response = await fetch('?/deleteMedia', {
-								method: 'POST',
-								body: formData
-							});
+function handleViewChange(newView: 'grid' | 'table') {
+	view = newView;
+	storeUserPreference(view, gridSize, tableSize);
+}
 
-							if (response.ok) {
-								const result = await response.json();
-								let data = result;
-								if (result.type === 'success' && result.data) {
-									data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-								}
-								const success = Array.isArray(data) ? data[0]?.success : data?.success;
-								if (success) {
-									successCount++;
-									successfullyDeletedIds.add(file._id as string);
-								} else {
-									failCount++;
-								}
+// Clear search
+function clearSearch() {
+	globalSearchValue = '';
+}
+
+// Open add virtual folder modal
+function openAddFolderModal() {
+	const currentFolderPath = currentSystemVirtualFolder
+		? Array.isArray(currentSystemVirtualFolder.path)
+			? currentSystemVirtualFolder.path.join('/')
+			: currentSystemVirtualFolder.path
+		: publicEnv?.MEDIA_FOLDER || 'mediaFolder';
+	modalState.trigger(
+		ModalPrompt as any,
+		{
+			title: 'Add Folder',
+			body: `Creating subfolder in: <span class="text-tertiary-500 dark:text-primary-500">${currentFolderPath}</span>`
+		},
+		(r: string) => {
+			if (r) {
+				createSystemVirtualFolder(r);
+			}
+		}
+	);
+}
+
+// Handle delete image
+async function handleDeleteImage(file: MediaBase) {
+	// Show confirmation modal
+	showConfirm({
+		title: `Delete ${file.filename}`,
+		body: `Are you sure you want to delete <span class="text-tertiary-500 dark:text-primary-500 font-bold">"${file.filename}"</span>? This action cannot be undone.`,
+		onConfirm: async () => {
+			try {
+				logger.info('Delete image request:', {
+					_id: file._id,
+					filename: file.filename
+				});
+
+				const formData = new FormData();
+				formData.append('imageData', JSON.stringify(file));
+
+				const response = await fetch('?/deleteMedia', {
+					method: 'POST',
+					body: formData
+				});
+
+				logger.info('Delete response status:', response.status);
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					logger.error('Delete failed with status:', response.status, errorText);
+					throw new Error(`Server error: ${response.status} - ${errorText}`);
+				}
+
+				const result = await response.json();
+				logger.debug('Delete response:', result);
+
+				// Handle SvelteKit's wrapped response format
+				let data = result;
+				if (result.type === 'success' && result.data) {
+					// Parse if data is a string
+					data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+				}
+
+				// Check if it's an array response (like upload)
+				const success = Array.isArray(data) ? data[0]?.success : data?.success;
+
+				if (success) {
+					toast.success('Media deleted successfully.');
+
+					// Reactively remove the deleted file from the files array
+					// Svelte 5 runes will automatically update all derived state
+					files = files.filter((f) => f._id !== file._id);
+
+					logger.info(`Removed file ${file.filename} from UI. Remaining: ${files.length} files`);
+				} else {
+					throw new Error(data?.error || 'Failed to delete media');
+				}
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				logger.error('Error deleting media:', errorMessage);
+				toast.error(`Error deleting media: ${errorMessage}`);
+			}
+		}
+	});
+}
+
+// Handle bulk delete
+async function handleBulkDelete(filesToDelete: MediaBase[]) {
+	// Show confirmation modal
+	showConfirm({
+		title: 'Delete Multiple Media',
+		body: `Are you sure you want to delete ${filesToDelete.length} file${filesToDelete.length > 1 ? 's' : ''}? This action cannot be undone.`,
+		onConfirm: async () => {
+			try {
+				logger.info('Bulk delete request:', { count: filesToDelete.length });
+
+				// Track successfully deleted files
+				const successfullyDeletedIds = new SvelteSet();
+				let successCount = 0;
+				let failCount = 0;
+
+				for (const file of filesToDelete) {
+					try {
+						const formData = new FormData();
+						formData.append('imageData', JSON.stringify(file));
+
+						const response = await fetch('?/deleteMedia', {
+							method: 'POST',
+							body: formData
+						});
+
+						if (response.ok) {
+							const result = await response.json();
+							let data = result;
+							if (result.type === 'success' && result.data) {
+								data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+							}
+							const success = Array.isArray(data) ? data[0]?.success : data?.success;
+							if (success) {
+								successCount++;
+								successfullyDeletedIds.add(file._id as string);
 							} else {
 								failCount++;
 							}
-						} catch (error) {
-							logger.error('Error deleting file:', file.filename, error);
+						} else {
 							failCount++;
 						}
+					} catch (error) {
+						logger.error('Error deleting file:', file.filename, error);
+						failCount++;
 					}
-
-					// Show result
-					if (failCount === 0) {
-						toast.success({
-							description: `Successfully deleted ${successCount} file${successCount > 1 ? 's' : ''}`
-						});
-					} else if (successCount === 0) {
-						toast.error({
-							description: `Failed to delete ${failCount} file${failCount > 1 ? 's' : ''}`
-						});
-					} else {
-						toast.warning({
-							description: `Deleted ${successCount} file${successCount > 1 ? 's' : ''}, ${failCount} failed`
-						});
-					}
-
-					// Reactively remove only successfully deleted files
-					// Svelte 5 runes will automatically update filteredFiles derived state
-					files = files.filter((f) => !successfullyDeletedIds.has(f._id as string));
-
-					logger.info(`Removed ${successCount} files from UI. Remaining: ${files.length} files`);
-				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : String(error);
-					logger.error('Error in bulk delete:', errorMessage);
-					toast.error(`Error deleting media: ${errorMessage}`);
 				}
+
+				// Show result
+				if (failCount === 0) {
+					toast.success({
+						description: `Successfully deleted ${successCount} file${successCount > 1 ? 's' : ''}`
+					});
+				} else if (successCount === 0) {
+					toast.error({
+						description: `Failed to delete ${failCount} file${failCount > 1 ? 's' : ''}`
+					});
+				} else {
+					toast.warning({
+						description: `Deleted ${successCount} file${successCount > 1 ? 's' : ''}, ${failCount} failed`
+					});
+				}
+
+				// Reactively remove only successfully deleted files
+				// Svelte 5 runes will automatically update filteredFiles derived state
+				files = files.filter((f) => !successfullyDeletedIds.has(f._id as string));
+
+				logger.info(`Removed ${successCount} files from UI. Remaining: ${files.length} files`);
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				logger.error('Error in bulk delete:', errorMessage);
+				toast.error(`Error deleting media: ${errorMessage}`);
 			}
-		});
-	}
-
-	// Handle advanced search
-	async function handleAdvancedSearch(criteria: SearchCriteria) {
-		try {
-			const response = await fetch('/api/media/search', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ criteria })
-			});
-
-			if (!response.ok) {
-				throw new Error('Search failed');
-			}
-
-			const result = await response.json();
-
-			// Update files with search results
-			files = result.files;
-			advancedSearchCriteria = criteria;
-			modalState.close(); // Close the modal
-
-			toast.success({
-				description: `Found ${result.totalCount} file${result.totalCount === 1 ? '' : 's'} matching ${result.matchedCriteria.length} criteria`
-			});
-		} catch (error) {
-			logger.error('Advanced search error:', error);
-			toast.error('Search failed. Please try again.');
 		}
-	}
+	});
+}
 
-	// Clear advanced search
-	function clearAdvancedSearch() {
-		advancedSearchCriteria = null;
-		fetchMediaFiles(); // Reload all files
-	}
-
-	function openAdvancedSearch() {
-		modalState.trigger(AdvancedSearchModal as any, {
-			files,
-			onSearch: handleAdvancedSearch,
-			modalClasses: 'max-w-4xl max-h-[95vh]' // Override default width
+// Handle advanced search
+async function handleAdvancedSearch(criteria: SearchCriteria) {
+	try {
+		const response = await fetch('/api/media/search', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ criteria })
 		});
-	}
 
-	/*
+		if (!response.ok) {
+			throw new Error('Search failed');
+		}
+
+		const result = await response.json();
+
+		// Update files with search results
+		files = result.files;
+		advancedSearchCriteria = criteria;
+		modalState.close(); // Close the modal
+
+		toast.success({
+			description: `Found ${result.totalCount} file${result.totalCount === 1 ? '' : 's'} matching ${result.matchedCriteria.length} criteria`
+		});
+	} catch (error) {
+		logger.error('Advanced search error:', error);
+		toast.error('Search failed. Please try again.');
+	}
+}
+
+// Clear advanced search
+function clearAdvancedSearch() {
+	advancedSearchCriteria = null;
+	fetchMediaFiles(); // Reload all files
+}
+
+function openAdvancedSearch() {
+	modalState.trigger(AdvancedSearchModal as any, {
+		files,
+		onSearch: handleAdvancedSearch,
+		modalClasses: 'max-w-4xl max-h-[95vh]' // Override default width
+	});
+}
+
+/*
 	-------------------------------------------------------------------------
 	IMAGE EDITOR HANDLERS (Via Modal)
 	-------------------------------------------------------------------------
 	*/
 
-	// Define state for Image Editor
-	// let imageToEdit: any = $state(null); // No longer needed
-	// let showEditor = $state(false);      // No longer needed
+// Define state for Image Editor
+// let imageToEdit: any = $state(null); // No longer needed
+// let showEditor = $state(false);      // No longer needed
 
-	import { mediaUrl } from '@utils/media/media-utils';
+import { mediaUrl } from '@utils/media/media-utils';
 
-	// ... (existing imports)
+// ... (existing imports)
 
-	async function handleEditImage(file: any) {
-		console.log('handleEditImage called with:', file);
-		if (!file) {
-			console.warn('handleEditImage: File is null/undefined');
-			return;
-		}
+async function handleEditImage(file: any) {
+	console.log('handleEditImage called with:', file);
+	if (!file) {
+		console.warn('handleEditImage: File is null/undefined');
+		return;
+	}
 
-		// IMPORTANT: Always use mediaUrl() to construct the proper URL
-		// The file.url property contains a relative path (e.g., "images/xxx.jpg")
-		// but the image editor needs the full path (e.g., "/files/images/xxx.jpg")
-		const fullUrl = mediaUrl(file);
-		console.log('Image URL for editor:', { originalUrl: file.url, fullUrl });
+	// IMPORTANT: Always use mediaUrl() to construct the proper URL
+	// The file.url property contains a relative path (e.g., "images/xxx.jpg")
+	// but the image editor needs the full path (e.g., "/files/images/xxx.jpg")
+	const fullUrl = mediaUrl(file);
+	console.log('Image URL for editor:', { originalUrl: file.url, fullUrl });
 
-		if (!fullUrl) {
-			console.error('Failed to construct URL for image:', file);
-			toast.error('Cannot edit image: Invalid URL');
-			return;
-		}
+	if (!fullUrl) {
+		console.error('Failed to construct URL for image:', file);
+		toast.error('Cannot edit image: Invalid URL');
+		return;
+	}
 
-		const imageWithUrl = { ...file, url: fullUrl };
+	const imageWithUrl = { ...file, url: fullUrl };
 
-		// Trigger the modal via modalState
-		// Always use fullscreen for image editor - provides best editing experience
-		// and ensures proper height propagation for the canvas
-		modalState.trigger(ImageEditorModal as any, {
-			image: imageWithUrl,
-			onsave: handleEditorSave,
-			modalClasses: 'w-full h-full max-w-none max-h-none',
-			size: 'fullscreen'
+	// Trigger the modal via modalState
+	// Always use fullscreen for image editor - provides best editing experience
+	// and ensures proper height propagation for the canvas
+	modalState.trigger(ImageEditorModal as any, {
+		image: imageWithUrl,
+		onsave: handleEditorSave,
+		modalClasses: 'w-full h-full max-w-none max-h-none',
+		size: 'fullscreen'
+	});
+}
+
+async function handleEditorSave(detail: {
+	dataURL: string;
+	file: File;
+	operations?: any;
+	focalPoint?: any;
+	mediaId?: string;
+	saveBehavior?: 'new' | 'overwrite';
+}) {
+	const { file, operations, focalPoint, mediaId, saveBehavior } = detail;
+
+	const formData = new FormData();
+	formData.append('file', file);
+	if (mediaId) {
+		formData.append('mediaId', mediaId);
+	}
+	if (operations) {
+		formData.append('operations', JSON.stringify(operations));
+	}
+	if (focalPoint) {
+		formData.append('focalPoint', JSON.stringify(focalPoint));
+	}
+	if (saveBehavior) {
+		formData.append('saveBehavior', saveBehavior);
+	}
+
+	try {
+		const response = await fetch('/api/media/edit', {
+			method: 'POST',
+			body: formData
 		});
+
+		if (response.ok) {
+			toast.success('Image saved successfully!');
+			// Full page reload to ensure all state is refreshed
+			window.location.href = '/mediagallery';
+		} else {
+			const errorData = await response.json();
+			throw new Error(errorData.error || 'Failed to save edited image');
+		}
+	} catch (err) {
+		toast.error({
+			description: err instanceof Error ? err.message : 'Error saving image'
+		});
+		logger.error('Error saving edited image', err);
 	}
-
-	async function handleEditorSave(detail: {
-		dataURL: string;
-		file: File;
-		operations?: any;
-		focalPoint?: any;
-		mediaId?: string;
-		saveBehavior?: 'new' | 'overwrite';
-	}) {
-		const { file, operations, focalPoint, mediaId, saveBehavior } = detail;
-
-		const formData = new FormData();
-		formData.append('file', file);
-		if (mediaId) {
-			formData.append('mediaId', mediaId);
-		}
-		if (operations) {
-			formData.append('operations', JSON.stringify(operations));
-		}
-		if (focalPoint) {
-			formData.append('focalPoint', JSON.stringify(focalPoint));
-		}
-		if (saveBehavior) {
-			formData.append('saveBehavior', saveBehavior);
-		}
-
-		try {
-			const response = await fetch('/api/media/edit', {
-				method: 'POST',
-				body: formData
-			});
-
-			if (response.ok) {
-				toast.success('Image saved successfully!');
-				// Full page reload to ensure all state is refreshed
-				window.location.href = '/mediagallery';
-			} else {
-				const errorData = await response.json();
-				throw new Error(errorData.error || 'Failed to save edited image');
-			}
-		} catch (err) {
-			toast.error({
-				description: err instanceof Error ? err.message : 'Error saving image'
-			});
-			logger.error('Error saving edited image', err);
-		}
+}
+function handleUpdateImage(updatedFile: MediaImage) {
+	const index = files.findIndex((f) => f._id === updatedFile._id);
+	if (index !== -1) {
+		files[index] = updatedFile;
 	}
-	function handleUpdateImage(updatedFile: MediaImage) {
-		const index = files.findIndex((f) => f._id === updatedFile._id);
-		if (index !== -1) {
-			files[index] = updatedFile;
-		}
-	}
+}
 </script>
 
 <!-- Page Title and Actions -->

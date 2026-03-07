@@ -12,23 +12,23 @@ Features:
 
 -->
 <script lang="ts">
-	// Components
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+// Components
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 
-	// Paraglide Messages
-	import { button_complete, button_next, button_previous, setup_progress_step_of } from '@src/paraglide/messages';
+// Paraglide Messages
+import { button_complete, button_next, button_previous, setup_progress_step_of } from '@src/paraglide/messages';
 
-	const {
-		currentStep,
-		totalSteps,
-		canProceed,
-		isLoading,
-		isSeeding = false,
-		seedingProgress = 0,
-		onprev = () => {},
-		onnext = () => {},
-		oncomplete = () => {}
-	} = $props();
+const {
+	currentStep,
+	totalSteps,
+	canProceed,
+	isLoading,
+	isSeeding = false,
+	seedingProgress = 0,
+	onprev = () => {},
+	onnext = () => {},
+	oncomplete = () => {}
+} = $props();
 </script>
 
 <div class="flex flex-col border-t border-slate-200 dark:text-white">

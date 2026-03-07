@@ -22,7 +22,7 @@ export class BatchModule {
 		return this.core.wrap(async () => {
 			const results: DatabaseResult<T>[] = [];
 			for (const op of operations) {
-				let res: DatabaseResult<T | void>;
+				let res: DatabaseResult<T | undefined>;
 				switch (op.operation) {
 					case 'insert':
 						res = await this.core.crud.insert(op.collection, op.data as Omit<T & BaseEntity, '_id' | 'createdAt' | 'updatedAt'>);
@@ -35,7 +35,7 @@ export class BatchModule {
 						);
 						break;
 					case 'delete':
-						res = (await this.core.crud.delete(op.collection, op.id as DatabaseId)) as unknown as DatabaseResult<void>;
+						res = (await this.core.crud.delete(op.collection, op.id as DatabaseId)) as unknown as DatabaseResult<undefined>;
 						break;
 					case 'upsert':
 						res = (await this.core.crud.upsert(

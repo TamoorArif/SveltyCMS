@@ -50,7 +50,6 @@ describe('MariaDB Adapter Functional Tests', () => {
 		adapterClass = adapterModule.MariaDBAdapter;
 
 		try {
-			// @ts-expect-error - Ignore missing file during static analysis
 			const configModule = await import('../../../config/private.test');
 			privateEnv = configModule.privateEnv;
 		} catch {

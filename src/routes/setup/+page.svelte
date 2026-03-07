@@ -4,192 +4,192 @@
 **Professional multi-step setup wizard for SveltyCMS**
 -->
 <script lang="ts">
-	// Stores
+// Stores
 
-	// Skeleton v4
-	import DialogManager from '@src/components/system/dialog-manager.svelte';
-	// ParaglideJS
-	import {
-		label_database,
-		label_host,
-		label_port,
-		label_user,
-		setup_db_test_details_hide,
-		setup_db_test_details_show,
-		setup_db_test_engine,
-		setup_db_test_latency,
-		setup_db_test_user,
-		setup_legend_completed,
-		setup_legend_current,
-		setup_legend_pending,
-		setup_step_admin,
-		setup_step_admin_desc,
-		setup_step_complete,
-		setup_step_complete_desc,
-		setup_step_database,
-		setup_step_database_desc,
-		setup_step_email,
-		setup_step_email_desc,
-		setup_step_system,
-		setup_step_system_desc
-	} from '@src/paraglide/messages';
-	import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
-	import { setupStore } from '@src/stores/setup-store.svelte.ts';
-	import { app } from '@src/stores/store.svelte';
-	// Utils
-	import { getLanguageName } from '@utils/language-utils';
-	import { modalState } from '@utils/modal-state.svelte';
-	// Utils
-	import { showConfirm } from '@utils/modal-utils';
-	// Using iconify-icon web component
-	import { onMount, tick } from 'svelte';
-	import { goto } from '$app/navigation';
-	import AdminConfig from './admin-config.svelte';
-	import DatabaseConfig from './database-config.svelte';
-	import EmailConfig from './email-config.svelte';
-	import ReviewConfig from './review-config.svelte';
-	import SetupCardHeader from './setup-card-header.svelte';
-	import SetupHeader from './setup-header.svelte';
-	import SetupNavigation from './setup-navigation.svelte';
-	import SetupStepper from './setup-stepper.svelte';
-	import SystemConfig from './system-config.svelte';
-	// Step Content Components
-	import WelcomeModal from './welcome-modal.svelte';
+// Skeleton v4
+import DialogManager from '@src/components/system/dialog-manager.svelte';
+// ParaglideJS
+import {
+	label_database,
+	label_host,
+	label_port,
+	label_user,
+	setup_db_test_details_hide,
+	setup_db_test_details_show,
+	setup_db_test_engine,
+	setup_db_test_latency,
+	setup_db_test_user,
+	setup_legend_completed,
+	setup_legend_current,
+	setup_legend_pending,
+	setup_step_admin,
+	setup_step_admin_desc,
+	setup_step_complete,
+	setup_step_complete_desc,
+	setup_step_database,
+	setup_step_database_desc,
+	setup_step_email,
+	setup_step_email_desc,
+	setup_step_system,
+	setup_step_system_desc
+} from '@src/paraglide/messages';
+import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
+import { setupStore } from '@src/stores/setup-store.svelte.ts';
+import { app } from '@src/stores/store.svelte';
+// Utils
+import { getLanguageName } from '@utils/language-utils';
+import { modalState } from '@utils/modal-state.svelte';
+// Utils
+import { showConfirm } from '@utils/modal-utils';
+// Using iconify-icon web component
+import { onMount, tick } from 'svelte';
+import { goto } from '$app/navigation';
+import AdminConfig from './admin-config.svelte';
+import DatabaseConfig from './database-config.svelte';
+import EmailConfig from './email-config.svelte';
+import ReviewConfig from './review-config.svelte';
+import SetupCardHeader from './setup-card-header.svelte';
+import SetupHeader from './setup-header.svelte';
+import SetupNavigation from './setup-navigation.svelte';
+import SetupStepper from './setup-stepper.svelte';
+import SystemConfig from './system-config.svelte';
+// Step Content Components
+import WelcomeModal from './welcome-modal.svelte';
 
-	// --- 1. STATE MANAGEMENT (Wired to Store) ---
-	let { data } = $props();
-	const wizard = setupStore.wizard;
-	const { load: loadStore, clear: clearStore, setupPersistence: setupPersistenceFn, validateStep, seedDatabase, completeSetup } = setupStore;
+// --- 1. STATE MANAGEMENT (Wired to Store) ---
+let { data } = $props();
+const wizard = setupStore.wizard;
+const { load: loadStore, clear: clearStore, setupPersistence: setupPersistenceFn, validateStep, seedDatabase, completeSetup } = setupStore;
 
-	// --- 1. COMPONENT IMPORTS ---
-	let showDbPassword = $state(false);
-	let showAdminPassword = $state(false);
-	let showConfirmPassword = $state(false);
-	let initialDataSnapshot = $state('');
-	let currentLanguageTag = $state(getLocale());
+// --- 1. COMPONENT IMPORTS ---
+let showDbPassword = $state(false);
+let showAdminPassword = $state(false);
+let showConfirmPassword = $state(false);
+let initialDataSnapshot = $state('');
+let currentLanguageTag = $state(getLocale());
 
-	// --- 4. LIFECYCLE HOOKS ---
-	onMount(() => {
-		loadStore();
-		initialDataSnapshot = JSON.stringify(wizard);
-		setupPersistenceFn();
+// --- 4. LIFECYCLE HOOKS ---
+onMount(() => {
+	loadStore();
+	initialDataSnapshot = JSON.stringify(wizard);
+	setupPersistenceFn();
 
-		const welcomeShown = sessionStorage.getItem('sveltycms_welcome_modal_shown');
-		if (!welcomeShown) {
-			requestAnimationFrame(() => {
-				setTimeout(() => {
-					showWelcomeModal();
-					sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
-				}, 100);
-			});
-		}
-
-		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			if (hasUnsavedChanges() && !wizard.isSubmitting) {
-				e.preventDefault();
-			}
-		};
-		window.addEventListener('beforeunload', handleBeforeUnload);
-
-		return () => {
-			window.removeEventListener('beforeunload', handleBeforeUnload);
-		};
-	});
-
-	function showWelcomeModal() {
-		modalState.trigger(WelcomeModal);
-	}
-
-	// --- 5. DERIVED STATE (Page-Specific) ---
-	const hasUnsavedChanges = $derived(() => {
-		if (!initialDataSnapshot) {
-			return false;
-		}
-		return JSON.stringify(wizard) !== initialDataSnapshot;
-	});
-	const systemLanguages = $derived.by(() => {
-		return [...availableLocales].sort((a: string, b: string) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en')));
-	});
-	const isFullUri = $derived(() => {
-		return wizard.dbConfig.host.includes('mongodb://') || wizard.dbConfig.host.includes('mongodb+srv://');
-	});
-
-	// STEPPER CONFIG
-	const steps = $derived([
-		{ label: setup_step_database(), shortDesc: setup_step_database_desc() },
-		{ label: setup_step_admin(), shortDesc: setup_step_admin_desc() },
-		{ label: setup_step_system(), shortDesc: setup_step_system_desc() },
-		{ label: setup_step_email(), shortDesc: setup_step_email_desc() },
-		{ label: setup_step_complete(), shortDesc: setup_step_complete_desc() }
-	]);
-	const totalSteps = $derived(steps.length);
-	const legendItems = [
-		{ key: 'completed', label: setup_legend_completed(), content: '✓' },
-		{ key: 'current', label: setup_legend_current(), content: '●' },
-		{ key: 'pending', label: setup_legend_pending(), content: '•' }
-	];
-
-	// --- 6. CORE LOGIC & API CALLS (Now delegated to store) ---
-	let dbConfigComponent: {
-		installDatabaseDriver: (type: string) => Promise<void>;
-	} | null = $state(null);
-
-	async function focusStepContent() {
-		await tick();
-		const stepContent = document.getElementById('step-content');
-		if (stepContent) {
-			stepContent.focus();
-		}
-	}
-
-	async function nextStep() {
-		if (!setupStore.canProceed) {
-			return;
-		}
-		if (wizard.currentStep === 0) {
-			if (dbConfigComponent && typeof dbConfigComponent.installDatabaseDriver === 'function') {
-				await dbConfigComponent.installDatabaseDriver(wizard.dbConfig.type);
-			}
-			await seedDatabase();
-		}
-		if ((wizard.currentStep === 1 || wizard.currentStep === 2) && !validateStep(wizard.currentStep, true)) {
-			return;
-		}
-		if (wizard.currentStep < totalSteps - 1) {
-			wizard.currentStep++;
-			if (wizard.currentStep > wizard.highestStepReached) {
-				wizard.highestStepReached = wizard.currentStep;
-			}
-			await focusStepContent();
-		}
-		setupStore.clearDbTestError();
-	}
-
-	async function prevStep() {
-		if (wizard.currentStep > 0) {
-			wizard.currentStep--;
-			wizard.errorMessage = '';
-			await focusStepContent();
-		}
-	}
-
-	async function handleCompleteSetup() {
-		console.log('[SetupPage] Complete Setup button clicked');
-		const success = await completeSetup((redirectPath: string) => {
-			console.log('[SetupPage] Setup successful, redirecting to:', redirectPath);
-			initialDataSnapshot = JSON.stringify(wizard);
-			goto(redirectPath);
+	const welcomeShown = sessionStorage.getItem('sveltycms_welcome_modal_shown');
+	if (!welcomeShown) {
+		requestAnimationFrame(() => {
+			setTimeout(() => {
+				showWelcomeModal();
+				sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
+			}, 100);
 		});
-		if (success) {
-			initialDataSnapshot = JSON.stringify(wizard);
-		}
 	}
 
-	// --- 7. UI HANDLERS ---
-	function selectLanguage(lang: string) {
-		app.systemLanguage = lang as import('@src/paraglide/runtime').Locale;
-		currentLanguageTag = lang as typeof currentLanguageTag;
+	const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+		if (hasUnsavedChanges() && !wizard.isSubmitting) {
+			e.preventDefault();
+		}
+	};
+	window.addEventListener('beforeunload', handleBeforeUnload);
+
+	return () => {
+		window.removeEventListener('beforeunload', handleBeforeUnload);
+	};
+});
+
+function showWelcomeModal() {
+	modalState.trigger(WelcomeModal);
+}
+
+// --- 5. DERIVED STATE (Page-Specific) ---
+const hasUnsavedChanges = $derived(() => {
+	if (!initialDataSnapshot) {
+		return false;
 	}
+	return JSON.stringify(wizard) !== initialDataSnapshot;
+});
+const systemLanguages = $derived.by(() => {
+	return [...availableLocales].sort((a: string, b: string) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en')));
+});
+const isFullUri = $derived(() => {
+	return wizard.dbConfig.host.includes('mongodb://') || wizard.dbConfig.host.includes('mongodb+srv://');
+});
+
+// STEPPER CONFIG
+const steps = $derived([
+	{ label: setup_step_database(), shortDesc: setup_step_database_desc() },
+	{ label: setup_step_admin(), shortDesc: setup_step_admin_desc() },
+	{ label: setup_step_system(), shortDesc: setup_step_system_desc() },
+	{ label: setup_step_email(), shortDesc: setup_step_email_desc() },
+	{ label: setup_step_complete(), shortDesc: setup_step_complete_desc() }
+]);
+const totalSteps = $derived(steps.length);
+const legendItems = [
+	{ key: 'completed', label: setup_legend_completed(), content: '✓' },
+	{ key: 'current', label: setup_legend_current(), content: '●' },
+	{ key: 'pending', label: setup_legend_pending(), content: '•' }
+];
+
+// --- 6. CORE LOGIC & API CALLS (Now delegated to store) ---
+let dbConfigComponent: {
+	installDatabaseDriver: (type: string) => Promise<void>;
+} | null = $state(null);
+
+async function focusStepContent() {
+	await tick();
+	const stepContent = document.getElementById('step-content');
+	if (stepContent) {
+		stepContent.focus();
+	}
+}
+
+async function nextStep() {
+	if (!setupStore.canProceed) {
+		return;
+	}
+	if (wizard.currentStep === 0) {
+		if (dbConfigComponent && typeof dbConfigComponent.installDatabaseDriver === 'function') {
+			await dbConfigComponent.installDatabaseDriver(wizard.dbConfig.type);
+		}
+		await seedDatabase();
+	}
+	if ((wizard.currentStep === 1 || wizard.currentStep === 2) && !validateStep(wizard.currentStep, true)) {
+		return;
+	}
+	if (wizard.currentStep < totalSteps - 1) {
+		wizard.currentStep++;
+		if (wizard.currentStep > wizard.highestStepReached) {
+			wizard.highestStepReached = wizard.currentStep;
+		}
+		await focusStepContent();
+	}
+	setupStore.clearDbTestError();
+}
+
+async function prevStep() {
+	if (wizard.currentStep > 0) {
+		wizard.currentStep--;
+		wizard.errorMessage = '';
+		await focusStepContent();
+	}
+}
+
+async function handleCompleteSetup() {
+	console.log('[SetupPage] Complete Setup button clicked');
+	const success = await completeSetup((redirectPath: string) => {
+		console.log('[SetupPage] Setup successful, redirecting to:', redirectPath);
+		initialDataSnapshot = JSON.stringify(wizard);
+		goto(redirectPath);
+	});
+	if (success) {
+		initialDataSnapshot = JSON.stringify(wizard);
+	}
+}
+
+// --- 7. UI HANDLERS ---
+function selectLanguage(lang: string) {
+	app.systemLanguage = lang as import('@src/paraglide/runtime').Locale;
+	currentLanguageTag = lang as typeof currentLanguageTag;
+}
 </script>
 
 <svelte:head><title>SveltyCMS Setup</title></svelte:head>

@@ -22,440 +22,440 @@
 -->
 
 <script lang="ts">
-	// Components
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import { StatusTypes } from '@src/content/types';
-	import {
-		button_delete,
-		button_loading,
-		entrylist_multibutton_available_actions,
-		entrylist_multibutton_clone,
-		entrylist_multibutton_create,
-		entrylist_multibutton_limit_warning,
-		entrylist_multibutton_publish,
-		entrylist_multibutton_schedule,
-		entrylist_multibutton_show_active,
-		entrylist_multibutton_show_archived,
-		entrylist_multibutton_toggle_menu,
-		entrylist_multibutton_unpublish,
-		entrylist_multibutton_viewing_active,
-		entrylist_multibutton_viewing_archived
-	} from '@src/paraglide/messages';
-	import { storeListboxValue } from '@src/stores/store.svelte';
-	import { logger } from '@utils/logger';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { onDestroy, onMount } from 'svelte';
-	import { quintOut } from 'svelte/easing';
-	import { scale } from 'svelte/transition';
+// Components
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import { StatusTypes } from '@src/content/types';
+import {
+	button_delete,
+	button_loading,
+	entrylist_multibutton_available_actions,
+	entrylist_multibutton_clone,
+	entrylist_multibutton_create,
+	entrylist_multibutton_limit_warning,
+	entrylist_multibutton_publish,
+	entrylist_multibutton_schedule,
+	entrylist_multibutton_show_active,
+	entrylist_multibutton_show_archived,
+	entrylist_multibutton_toggle_menu,
+	entrylist_multibutton_unpublish,
+	entrylist_multibutton_viewing_active,
+	entrylist_multibutton_viewing_archived
+} from '@src/paraglide/messages';
+import { storeListboxValue } from '@src/stores/store.svelte';
+import { logger } from '@utils/logger';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { onDestroy, onMount } from 'svelte';
+import { quintOut } from 'svelte/easing';
+import { scale } from 'svelte/transition';
 
-	// --- Types ---
-	type ActionType = 'create' | 'publish' | 'unpublish' | 'draft' | 'schedule' | 'clone' | 'delete';
-	type DangerLevel = 'low' | 'medium' | 'high';
+// --- Types ---
+type ActionType = 'create' | 'publish' | 'unpublish' | 'draft' | 'schedule' | 'clone' | 'delete';
+type DangerLevel = 'low' | 'medium' | 'high';
 
-	interface ActionConfig {
-		dangerLevel: DangerLevel;
-		gradient: string;
-		icon: string;
-		label: string;
-		requiresSelection: boolean;
-		shortcut?: string;
-		shortcutKey?: string;
-		textColor: string;
-		type: ActionType;
+interface ActionConfig {
+	dangerLevel: DangerLevel;
+	gradient: string;
+	icon: string;
+	label: string;
+	requiresSelection: boolean;
+	shortcut?: string;
+	shortcutKey?: string;
+	textColor: string;
+	type: ActionType;
+}
+
+// --- Props ---
+interface Props {
+	clone: () => Promise<void> | void;
+	create: () => void;
+	delete: (permanent: boolean) => Promise<void> | void;
+	draft: () => Promise<void> | void;
+	hasSelections?: boolean;
+	isCollectionEmpty?: boolean;
+	publish: () => Promise<void> | void;
+	schedule: (date: string, action: string) => void;
+	selectedCount?: number;
+	selectedItems?: any[];
+	showDeleted?: boolean;
+	unpublish: () => Promise<void> | void;
+}
+
+let {
+	isCollectionEmpty = false,
+	hasSelections = false,
+	selectedCount = 0,
+	selectedItems = [],
+	showDeleted = $bindable(false),
+	publish,
+	unpublish,
+	draft,
+	schedule,
+	delete: deleteAction,
+	clone,
+	create
+}: Props = $props();
+
+// --- Action Configurations ---
+const ACTION_CONFIGS: ActionConfig[] = [
+	{
+		type: 'create',
+		label: entrylist_multibutton_create(),
+		gradient: 'gradient-tertiary',
+		icon: 'ic:round-plus',
+		textColor: 'text-white',
+		shortcut: 'Alt+N',
+		shortcutKey: 'n',
+		requiresSelection: false,
+		dangerLevel: 'low'
+	},
+	{
+		type: 'publish',
+		label: entrylist_multibutton_publish(),
+		gradient: 'gradient-primary',
+		icon: 'bi:hand-thumbs-up-fill',
+		textColor: 'text-white',
+		shortcut: 'Alt+P',
+		shortcutKey: 'p',
+		requiresSelection: true,
+		dangerLevel: 'medium'
+	},
+	{
+		type: 'unpublish',
+		label: entrylist_multibutton_unpublish(),
+		gradient: 'gradient-warning',
+		icon: 'bi:pause-circle',
+		textColor: 'text-black',
+		shortcut: 'Alt+U',
+		shortcutKey: 'u',
+		requiresSelection: true,
+		dangerLevel: 'medium'
+	},
+	{
+		type: 'draft',
+		label: 'Draft',
+		gradient: 'gradient-secondary',
+		icon: 'ic:baseline-edit-note',
+		textColor: 'text-white',
+		shortcut: 'Alt+D',
+		shortcutKey: 'd',
+		requiresSelection: true,
+		dangerLevel: 'low'
+	},
+	{
+		type: 'schedule',
+		label: entrylist_multibutton_schedule(),
+		gradient: 'gradient-tertiary',
+		icon: 'ic:round-schedule',
+		textColor: 'text-white',
+		requiresSelection: true,
+		dangerLevel: 'low'
+	},
+	{
+		type: 'clone',
+		label: entrylist_multibutton_clone(),
+		gradient: 'gradient-secondary',
+		icon: 'ic:round-content-copy',
+		textColor: 'text-white',
+		requiresSelection: true,
+		dangerLevel: 'low'
+	},
+	{
+		type: 'delete',
+		label: button_delete(),
+		gradient: 'gradient-error',
+		icon: 'ic:round-delete-forever',
+		textColor: 'text-white',
+		shortcut: 'Alt+Del',
+		shortcutKey: 'Delete',
+		requiresSelection: true,
+		dangerLevel: 'high'
 	}
+];
 
-	// --- Props ---
-	interface Props {
-		clone: () => Promise<void> | void;
-		create: () => void;
-		delete: (permanent: boolean) => Promise<void> | void;
-		draft: () => Promise<void> | void;
-		hasSelections?: boolean;
-		isCollectionEmpty?: boolean;
-		publish: () => Promise<void> | void;
-		schedule: (date: string, action: string) => void;
-		selectedCount?: number;
-		selectedItems?: any[];
-		showDeleted?: boolean;
-		unpublish: () => Promise<void> | void;
+// --- State ---
+let isDropdownOpen = $state(false);
+let manualActionSet = $state(false);
+let dropdownRef = $state<HTMLElement | null>(null);
+let hoveredAction = $state<ActionType | null>(null);
+let isProcessing = $state(false);
+
+// Dropdown keyboard navigation
+let focusedIndex = $state(0);
+let menuItemRefs = $state<HTMLButtonElement[]>([]);
+
+// Connection Awareness
+let isSlowConnection = $state(false);
+const batchSizeLimit = $derived(isSlowConnection ? 10 : 50);
+
+// --- Derived State ---
+const currentAction = $derived((storeListboxValue.value as ActionType) || 'create');
+
+const currentConfig = $derived.by(() => {
+	const config = ACTION_CONFIGS.find((c) => c.type === currentAction);
+	return config || ACTION_CONFIGS[0]; // Fallback to create
+});
+
+// Aggregate stats for smart filtering
+const stats = $derived.by(() => {
+	const items = selectedItems || [];
+	const published = items.filter((i: any) => i.status === StatusTypes.publish).length;
+	const drafts = items.filter((i: any) => (i.status || i.raw_status) === StatusTypes.draft).length;
+	return { published, drafts, total: items.length };
+});
+
+// Dynamic label with selection count
+const dynamicLabel = $derived.by(() => {
+	if (isProcessing) {
+		return `${button_loading()}...`;
 	}
+	if (selectedCount < 2 || currentAction === 'create') {
+		return currentConfig.label;
+	}
+	return `Bulk ${currentConfig.label} (${selectedCount})`;
+});
 
-	let {
-		isCollectionEmpty = false,
-		hasSelections = false,
-		selectedCount = 0,
-		selectedItems = [],
-		showDeleted = $bindable(false),
-		publish,
-		unpublish,
-		draft,
-		schedule,
-		delete: deleteAction,
-		clone,
-		create
-	}: Props = $props();
-
-	// --- Action Configurations ---
-	const ACTION_CONFIGS: ActionConfig[] = [
-		{
-			type: 'create',
-			label: entrylist_multibutton_create(),
-			gradient: 'gradient-tertiary',
-			icon: 'ic:round-plus',
-			textColor: 'text-white',
-			shortcut: 'Alt+N',
-			shortcutKey: 'n',
-			requiresSelection: false,
-			dangerLevel: 'low'
-		},
-		{
-			type: 'publish',
-			label: entrylist_multibutton_publish(),
-			gradient: 'gradient-primary',
-			icon: 'bi:hand-thumbs-up-fill',
-			textColor: 'text-white',
-			shortcut: 'Alt+P',
-			shortcutKey: 'p',
-			requiresSelection: true,
-			dangerLevel: 'medium'
-		},
-		{
-			type: 'unpublish',
-			label: entrylist_multibutton_unpublish(),
-			gradient: 'gradient-warning',
-			icon: 'bi:pause-circle',
-			textColor: 'text-black',
-			shortcut: 'Alt+U',
-			shortcutKey: 'u',
-			requiresSelection: true,
-			dangerLevel: 'medium'
-		},
-		{
-			type: 'draft',
-			label: 'Draft',
-			gradient: 'gradient-secondary',
-			icon: 'ic:baseline-edit-note',
-			textColor: 'text-white',
-			shortcut: 'Alt+D',
-			shortcutKey: 'd',
-			requiresSelection: true,
-			dangerLevel: 'low'
-		},
-		{
-			type: 'schedule',
-			label: entrylist_multibutton_schedule(),
-			gradient: 'gradient-tertiary',
-			icon: 'ic:round-schedule',
-			textColor: 'text-white',
-			requiresSelection: true,
-			dangerLevel: 'low'
-		},
-		{
-			type: 'clone',
-			label: entrylist_multibutton_clone(),
-			gradient: 'gradient-secondary',
-			icon: 'ic:round-content-copy',
-			textColor: 'text-white',
-			requiresSelection: true,
-			dangerLevel: 'low'
-		},
-		{
-			type: 'delete',
-			label: button_delete(),
-			gradient: 'gradient-error',
-			icon: 'ic:round-delete-forever',
-			textColor: 'text-white',
-			shortcut: 'Alt+Del',
-			shortcutKey: 'Delete',
-			requiresSelection: true,
-			dangerLevel: 'high'
+// Available dropdown actions (filtered)
+const availableActions = $derived.by(() => {
+	return ACTION_CONFIGS.filter((config) => {
+		// Don't show current action in dropdown
+		if (config.type === currentAction) {
+			return false;
 		}
-	];
-
-	// --- State ---
-	let isDropdownOpen = $state(false);
-	let manualActionSet = $state(false);
-	let dropdownRef = $state<HTMLElement | null>(null);
-	let hoveredAction = $state<ActionType | null>(null);
-	let isProcessing = $state(false);
-
-	// Dropdown keyboard navigation
-	let focusedIndex = $state(0);
-	let menuItemRefs = $state<HTMLButtonElement[]>([]);
-
-	// Connection Awareness
-	let isSlowConnection = $state(false);
-	const batchSizeLimit = $derived(isSlowConnection ? 10 : 50);
-
-	// --- Derived State ---
-	const currentAction = $derived((storeListboxValue.value as ActionType) || 'create');
-
-	const currentConfig = $derived.by(() => {
-		const config = ACTION_CONFIGS.find((c) => c.type === currentAction);
-		return config || ACTION_CONFIGS[0]; // Fallback to create
-	});
-
-	// Aggregate stats for smart filtering
-	const stats = $derived.by(() => {
-		const items = selectedItems || [];
-		const published = items.filter((i: any) => i.status === StatusTypes.publish).length;
-		const drafts = items.filter((i: any) => (i.status || i.raw_status) === StatusTypes.draft).length;
-		return { published, drafts, total: items.length };
-	});
-
-	// Dynamic label with selection count
-	const dynamicLabel = $derived.by(() => {
-		if (isProcessing) {
-			return `${button_loading()}...`;
+		// Always hide create from dropdown
+		if (config.type === 'create') {
+			return false;
 		}
-		if (selectedCount < 2 || currentAction === 'create') {
-			return currentConfig.label;
-		}
-		return `Bulk ${currentConfig.label} (${selectedCount})`;
-	});
 
-	// Available dropdown actions (filtered)
-	const availableActions = $derived.by(() => {
-		return ACTION_CONFIGS.filter((config) => {
-			// Don't show current action in dropdown
-			if (config.type === currentAction) {
+		// Hide redundant actions based on selection
+		if (hasSelections) {
+			if (config.type === 'publish' && stats.published === selectedCount) {
 				return false;
 			}
-			// Always hide create from dropdown
-			if (config.type === 'create') {
+			if (config.type === 'unpublish' && stats.drafts === selectedCount && stats.published === 0) {
 				return false;
 			}
-
-			// Hide redundant actions based on selection
-			if (hasSelections) {
-				if (config.type === 'publish' && stats.published === selectedCount) {
-					return false;
-				}
-				if (config.type === 'unpublish' && stats.drafts === selectedCount && stats.published === 0) {
-					return false;
-				}
-				if (config.type === 'draft' && stats.drafts === selectedCount) {
-					return false;
-				}
+			if (config.type === 'draft' && stats.drafts === selectedCount) {
+				return false;
 			}
+		}
 
-			return true;
-		});
+		return true;
 	});
+});
 
-	// --- Effects ---
+// --- Effects ---
 
-	// Smart action selection based on selection state
-	$effect(() => {
-		if (isCollectionEmpty) {
+// Smart action selection based on selection state
+$effect(() => {
+	if (isCollectionEmpty) {
+		storeListboxValue.set('create');
+		manualActionSet = false;
+		return;
+	}
+
+	if (manualActionSet) {
+		return;
+	}
+
+	if (!hasSelections) {
+		if (currentAction !== 'create') {
 			storeListboxValue.set('create');
-			manualActionSet = false;
-			return;
 		}
+		return;
+	}
 
-		if (manualActionSet) {
-			return;
+	// Selection logic: prioritize Unpublish if only published items are selected
+	if (stats.published > 0 && stats.published === selectedCount) {
+		if (currentAction !== 'unpublish') {
+			storeListboxValue.set('unpublish');
 		}
+	} else if (currentAction !== 'publish') {
+		// Mixed or Drafts: prioritize Publish
+		storeListboxValue.set('publish');
+	}
+});
 
-		if (!hasSelections) {
-			if (currentAction !== 'create') {
-				storeListboxValue.set('create');
-			}
-			return;
+// Connection awareness
+$effect(() => {
+	if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+		const conn = (navigator as any).connection;
+		if (conn) {
+			const checkConnection = () => {
+				isSlowConnection = conn.saveData || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g';
+			};
+			checkConnection();
+			conn.addEventListener('change', checkConnection);
+			return () => conn.removeEventListener('change', checkConnection);
 		}
+	}
+});
 
-		// Selection logic: prioritize Unpublish if only published items are selected
-		if (stats.published > 0 && stats.published === selectedCount) {
-			if (currentAction !== 'unpublish') {
-				storeListboxValue.set('unpublish');
-			}
-		} else if (currentAction !== 'publish') {
-			// Mixed or Drafts: prioritize Publish
-			storeListboxValue.set('publish');
+// Click outside handler
+$effect(() => {
+	if (!isDropdownOpen) {
+		return;
+	}
+
+	const handleClickOutside = (event: MouseEvent) => {
+		const target = event.target as HTMLElement;
+		if (dropdownRef && !dropdownRef.contains(target)) {
+			isDropdownOpen = false;
 		}
-	});
+	};
 
-	// Connection awareness
-	$effect(() => {
-		if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-			const conn = (navigator as any).connection;
-			if (conn) {
-				const checkConnection = () => {
-					isSlowConnection = conn.saveData || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g';
-				};
-				checkConnection();
-				conn.addEventListener('change', checkConnection);
-				return () => conn.removeEventListener('change', checkConnection);
-			}
-		}
-	});
+	const timer = setTimeout(() => {
+		document.addEventListener('click', handleClickOutside);
+	}, 10);
 
-	// Click outside handler
-	$effect(() => {
-		if (!isDropdownOpen) {
-			return;
-		}
+	return () => {
+		clearTimeout(timer);
+		document.removeEventListener('click', handleClickOutside);
+	};
+});
 
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as HTMLElement;
-			if (dropdownRef && !dropdownRef.contains(target)) {
+// --- Keyboard Shortcuts ---
+function handleKeyDown(e: KeyboardEvent) {
+	// Dropdown navigation when open
+	if (isDropdownOpen) {
+		switch (e.key) {
+			case 'Escape':
+				e.preventDefault();
 				isDropdownOpen = false;
-			}
-		};
-
-		const timer = setTimeout(() => {
-			document.addEventListener('click', handleClickOutside);
-		}, 10);
-
-		return () => {
-			clearTimeout(timer);
-			document.removeEventListener('click', handleClickOutside);
-		};
-	});
-
-	// --- Keyboard Shortcuts ---
-	function handleKeyDown(e: KeyboardEvent) {
-		// Dropdown navigation when open
-		if (isDropdownOpen) {
-			switch (e.key) {
-				case 'Escape':
-					e.preventDefault();
-					isDropdownOpen = false;
-					return;
-				case 'ArrowDown':
-					e.preventDefault();
-					focusedIndex = Math.min(focusedIndex + 1, availableActions.length - 1);
-					menuItemRefs[focusedIndex]?.focus();
-					return;
-				case 'ArrowUp':
-					e.preventDefault();
-					focusedIndex = Math.max(focusedIndex - 1, 0);
-					menuItemRefs[focusedIndex]?.focus();
-					return;
-				case 'Home':
-					e.preventDefault();
-					focusedIndex = 0;
-					menuItemRefs[0]?.focus();
-					return;
-				case 'End':
-					e.preventDefault();
-					focusedIndex = availableActions.length - 1;
-					menuItemRefs[focusedIndex]?.focus();
-					return;
-				case 'Enter':
-				case ' ': {
-					e.preventDefault();
-					const action = availableActions[focusedIndex];
-					if (action && !(action.requiresSelection && !hasSelections)) {
-						handleAction(action.type);
-					}
-					return;
+				return;
+			case 'ArrowDown':
+				e.preventDefault();
+				focusedIndex = Math.min(focusedIndex + 1, availableActions.length - 1);
+				menuItemRefs[focusedIndex]?.focus();
+				return;
+			case 'ArrowUp':
+				e.preventDefault();
+				focusedIndex = Math.max(focusedIndex - 1, 0);
+				menuItemRefs[focusedIndex]?.focus();
+				return;
+			case 'Home':
+				e.preventDefault();
+				focusedIndex = 0;
+				menuItemRefs[0]?.focus();
+				return;
+			case 'End':
+				e.preventDefault();
+				focusedIndex = availableActions.length - 1;
+				menuItemRefs[focusedIndex]?.focus();
+				return;
+			case 'Enter':
+			case ' ': {
+				e.preventDefault();
+				const action = availableActions[focusedIndex];
+				if (action && !(action.requiresSelection && !hasSelections)) {
+					handleAction(action.type);
 				}
-			}
-		}
-
-		// Global shortcuts with Alt key
-		if (!e.altKey) {
-			return;
-		}
-
-		const matchedConfig = ACTION_CONFIGS.find((config) => {
-			if (!config.shortcutKey) {
-				return false;
-			}
-			return e.key.toLowerCase() === config.shortcutKey.toLowerCase() || e.key === config.shortcutKey;
-		});
-
-		if (matchedConfig) {
-			e.preventDefault();
-			if (matchedConfig.requiresSelection && !hasSelections) {
-				logger.debug(`[MultiButton] Keyboard shortcut ${matchedConfig.shortcut} requires selection`);
 				return;
 			}
-			handleAction(matchedConfig.type);
 		}
 	}
 
-	onMount(() => {
-		window.addEventListener('keydown', handleKeyDown);
+	// Global shortcuts with Alt key
+	if (!e.altKey) {
+		return;
+	}
+
+	const matchedConfig = ACTION_CONFIGS.find((config) => {
+		if (!config.shortcutKey) {
+			return false;
+		}
+		return e.key.toLowerCase() === config.shortcutKey.toLowerCase() || e.key === config.shortcutKey;
 	});
 
-	onDestroy(() => {
-		window.removeEventListener('keydown', handleKeyDown);
-	});
-
-	// --- Action Handlers ---
-	async function handleAction(action: ActionType) {
-		isDropdownOpen = false;
-
-		// Validate batch size
-		if (selectedCount > batchSizeLimit && isSlowConnection) {
-			const limitMsg = entrylist_multibutton_limit_warning
-				? entrylist_multibutton_limit_warning({ count: batchSizeLimit })
-				: 'Slow connection: Batch size limited';
-			toast.warning(limitMsg);
+	if (matchedConfig) {
+		e.preventDefault();
+		if (matchedConfig.requiresSelection && !hasSelections) {
+			logger.debug(`[MultiButton] Keyboard shortcut ${matchedConfig.shortcut} requires selection`);
 			return;
 		}
+		handleAction(matchedConfig.type);
+	}
+}
 
-		// IMMEDIATE EXECUTION - No Queue, No Undo
-		await executeAction(action);
+onMount(() => {
+	window.addEventListener('keydown', handleKeyDown);
+});
+
+onDestroy(() => {
+	window.removeEventListener('keydown', handleKeyDown);
+});
+
+// --- Action Handlers ---
+async function handleAction(action: ActionType) {
+	isDropdownOpen = false;
+
+	// Validate batch size
+	if (selectedCount > batchSizeLimit && isSlowConnection) {
+		const limitMsg = entrylist_multibutton_limit_warning
+			? entrylist_multibutton_limit_warning({ count: batchSizeLimit })
+			: 'Slow connection: Batch size limited';
+		toast.warning(limitMsg);
+		return;
 	}
 
-	async function executeAction(action: ActionType) {
-		isProcessing = true;
-		try {
-			switch (action) {
-				case 'create':
-					create();
-					break;
-				case 'publish':
-					await publish();
-					break;
-				case 'unpublish':
-					await unpublish();
-					break;
-				case 'draft':
-					await draft();
-					break;
-				case 'clone':
-					await clone();
-					break;
-				case 'delete':
-					// Delete usually has its own confirmation in parent if triggering via deleteAction?
-					// If not, we should probably confirm. But user said "only DELETE need a confirmation modal".
-					// Assuming deleteAction triggers the modal logic or actual delete.
-					await deleteAction(showDeleted);
-					break;
-				case 'schedule': {
-					const now = new Date().toISOString();
-					schedule(now, 'publish');
-					break;
-				}
+	// IMMEDIATE EXECUTION - No Queue, No Undo
+	await executeAction(action);
+}
+
+async function executeAction(action: ActionType) {
+	isProcessing = true;
+	try {
+		switch (action) {
+			case 'create':
+				create();
+				break;
+			case 'publish':
+				await publish();
+				break;
+			case 'unpublish':
+				await unpublish();
+				break;
+			case 'draft':
+				await draft();
+				break;
+			case 'clone':
+				await clone();
+				break;
+			case 'delete':
+				// Delete usually has its own confirmation in parent if triggering via deleteAction?
+				// If not, we should probably confirm. But user said "only DELETE need a confirmation modal".
+				// Assuming deleteAction triggers the modal logic or actual delete.
+				await deleteAction(showDeleted);
+				break;
+			case 'schedule': {
+				const now = new Date().toISOString();
+				schedule(now, 'publish');
+				break;
 			}
-		} catch (error) {
-			const errMsg = (error as Error).message;
-			toast.error(errMsg);
-			logger.error(`[MultiButton] Action ${action} failed:`, error);
-		} finally {
-			isProcessing = false;
 		}
+	} catch (error) {
+		const errMsg = (error as Error).message;
+		toast.error(errMsg);
+		logger.error(`[MultiButton] Action ${action} failed:`, error);
+	} finally {
+		isProcessing = false;
 	}
+}
 
-	function toggleDropdown(e: MouseEvent) {
-		e.stopPropagation();
-		isDropdownOpen = !isDropdownOpen;
-	}
+function toggleDropdown(e: MouseEvent) {
+	e.stopPropagation();
+	isDropdownOpen = !isDropdownOpen;
+}
 
-	function handleOptionClick(event: Event, actionType: ActionType) {
-		event.preventDefault();
-		storeListboxValue.set(actionType);
-		manualActionSet = true;
-		isDropdownOpen = false;
-	}
+function handleOptionClick(event: Event, actionType: ActionType) {
+	event.preventDefault();
+	storeListboxValue.set(actionType);
+	manualActionSet = true;
+	isDropdownOpen = false;
+}
 
-	function handleMainButtonClick() {
-		handleAction(currentAction);
-	}
+function handleMainButtonClick() {
+	handleAction(currentAction);
+}
 </script>
 
 <!-- Multi-button group -->

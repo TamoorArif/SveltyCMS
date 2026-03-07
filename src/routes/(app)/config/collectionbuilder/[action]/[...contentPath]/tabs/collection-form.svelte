@@ -14,172 +14,172 @@
 -->
 
 <script lang="ts">
-	// Paraglide Messages
+// Paraglide Messages
 
-	// Components
-	import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
-	import {
-		collection_description_placeholder,
-		collection_name,
-		collection_name_placeholder,
-		collection_slug,
-		collection_slug_input,
-		collection_status,
-		collectionname_description,
-		collectionname_labelicon
-	} from '@src/paraglide/messages';
+// Components
+import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
+import {
+	collection_description_placeholder,
+	collection_name,
+	collection_name_placeholder,
+	collection_slug,
+	collection_slug_input,
+	collection_status,
+	collectionname_description,
+	collectionname_labelicon
+} from '@src/paraglide/messages';
 
-	import { collection, setCollection } from '@src/stores/collection-store.svelte';
-	import { untrack } from 'svelte';
-	// Stores
-	import { page } from '$app/state';
+import { collection, setCollection } from '@src/stores/collection-store.svelte';
+import { untrack } from 'svelte';
+// Stores
+import { page } from '$app/state';
 
-	// Skeleton
-	// Collection Manager
+// Skeleton
+// Collection Manager
 
-	// Props from parent
-	let { data = $bindable(null), handlePageTitleUpdate } = $props();
+// Props from parent
+let { data = $bindable(null), handlePageTitleUpdate } = $props();
 
-	//action
-	const action = page.params.action;
+//action
+const action = page.params.action;
 
-	// Form fields
-	let searchQuery = $state('');
-	let autoUpdateSlug = $state(true);
-	let selectedIcon = $state(data?.icon || '');
+// Form fields
+let searchQuery = $state('');
+let autoUpdateSlug = $state(true);
+let selectedIcon = $state(data?.icon || '');
 
-	// Form field values
-	let name = $state(data?.name ?? '');
-	let slug = $state(data?.slug ?? '');
-	let description = $state(data?.description ?? '');
-	let status = $state(data?.status ?? 'unpublished');
-	// Only sync from server data when collection identity changes (navigation/load), not on every store update (so typing in Name works)
-	let lastSyncedId = $state<string | null>(null);
+// Form field values
+let name = $state(data?.name ?? '');
+let slug = $state(data?.slug ?? '');
+let description = $state(data?.description ?? '');
+let status = $state(data?.status ?? 'unpublished');
+// Only sync from server data when collection identity changes (navigation/load), not on every store update (so typing in Name works)
+let lastSyncedId = $state<string | null>(null);
 
-	// Update form fields when we switch to a different collection (by _id/path) so load data applies; don't overwrite while user is typing.
-	// Only set selectedIcon when syncing a new collection to avoid effect loop with IconifyIconsPicker (effect_update_depth_exceeded).
-	$effect(() => {
-		const fromData = data;
-		const fromStore = collection.value;
+// Update form fields when we switch to a different collection (by _id/path) so load data applies; don't overwrite while user is typing.
+// Only set selectedIcon when syncing a new collection to avoid effect loop with IconifyIconsPicker (effect_update_depth_exceeded).
+$effect(() => {
+	const fromData = data;
+	const fromStore = collection.value;
 
-		const id = fromData?._id ?? fromData?.path ?? fromStore?._id ?? fromStore?.path ?? null;
-		const idStr = id != null ? String(id) : '';
-		if (fromData && idStr !== lastSyncedId) {
-			lastSyncedId = idStr;
-			name = fromData.name ?? '';
-			slug = fromData.slug ?? '';
-			description = fromData.description ?? '';
-			status = fromData.status ?? 'unpublished';
-			// Prefer load data over store so edit page always shows latest icon (no stale cache)
-			const iconValue = (fromData?.icon != null && String(fromData.icon).trim()) || (fromStore?.icon != null && String(fromStore.icon).trim()) || '';
-			selectedIcon = iconValue;
-		}
-	});
+	const id = fromData?._id ?? fromData?.path ?? fromStore?._id ?? fromStore?.path ?? null;
+	const idStr = id != null ? String(id) : '';
+	if (fromData && idStr !== lastSyncedId) {
+		lastSyncedId = idStr;
+		name = fromData.name ?? '';
+		slug = fromData.slug ?? '';
+		description = fromData.description ?? '';
+		status = fromData.status ?? 'unpublished';
+		// Prefer load data over store so edit page always shows latest icon (no stale cache)
+		const iconValue = (fromData?.icon != null && String(fromData.icon).trim()) || (fromStore?.icon != null && String(fromStore.icon).trim()) || '';
+		selectedIcon = iconValue;
+	}
+});
 
-	// Derived values
-	const DBName = $derived(name ? name.toLowerCase().replace(/ /g, '_') : '');
+// Derived values
+const DB_NAME = $derived(name ? name.toLowerCase().replace(/ /g, '_') : '');
 
-	// Update collection value when icon changes
-	$effect(() => {
-		// Only track the selectedIcon, not the collection
-		const currentIcon = selectedIcon;
+// Update collection value when icon changes
+$effect(() => {
+	// Only track the selectedIcon, not the collection
+	const currentIcon = selectedIcon;
 
-		untrack(() => {
-			if (collection.value && currentIcon !== collection.value.icon) {
-				setCollection({
-					...collection.value,
-					icon: currentIcon
-				});
-			}
-		});
-	});
-
-	// Sync form fields (name, slug, description, status, icon) into the collection store for both create and edit.
-	// Without this, Status/Icon/Description are never written to the store for new collections (no _id yet),
-	// so Save sends stale/empty values and they are not persisted.
-	$effect(() => {
-		const currentName = name;
-		const currentSlug = slug;
-		const currentDescription = description;
-		const currentStatus = status;
-		const currentIcon = selectedIcon;
-
-		untrack(() => {
-			if (!collection.value) return;
-			if (
-				collection.value.name === currentName &&
-				collection.value.slug === currentSlug &&
-				collection.value.description === currentDescription &&
-				collection.value.status === currentStatus &&
-				collection.value.icon === currentIcon
-			) {
-				return;
-			}
-
+	untrack(() => {
+		if (collection.value && currentIcon !== collection.value.icon) {
 			setCollection({
 				...collection.value,
-				name: currentName,
-				slug: currentSlug,
-				description: currentDescription,
-				status: currentStatus,
 				icon: currentIcon
 			});
+		}
+	});
+});
+
+// Sync form fields (name, slug, description, status, icon) into the collection store for both create and edit.
+// Without this, Status/Icon/Description are never written to the store for new collections (no _id yet),
+// so Save sends stale/empty values and they are not persisted.
+$effect(() => {
+	const currentName = name;
+	const currentSlug = slug;
+	const currentDescription = description;
+	const currentStatus = status;
+	const currentIcon = selectedIcon;
+
+	untrack(() => {
+		if (!collection.value) return;
+		if (
+			collection.value.name === currentName &&
+			collection.value.slug === currentSlug &&
+			collection.value.description === currentDescription &&
+			collection.value.status === currentStatus &&
+			collection.value.icon === currentIcon
+		) {
+			return;
+		}
+
+		setCollection({
+			...collection.value,
+			name: currentName,
+			slug: currentSlug,
+			description: currentDescription,
+			status: currentStatus,
+			icon: currentIcon
 		});
-
-		console.log('collection.value', JSON.stringify(collection.value));
 	});
 
-	function handleNameInput() {
-		if (typeof name === 'string' && name) {
-			// Update the URL
-			window.history.replaceState({}, '', `/config/collectionbuilder/${action}/${slug}`);
+	console.log('collection.value', JSON.stringify(collection.value));
+});
 
-			// Update the page title
-			handlePageTitleUpdate(name);
+function handleNameInput() {
+	if (typeof name === 'string' && name) {
+		// Update the URL
+		window.history.replaceState({}, '', `/config/collectionbuilder/${action}/${slug}`);
 
-			// Update the linked slug input
-			slug = name.toLowerCase().replace(/\s+/g, '_');
+		// Update the page title
+		handlePageTitleUpdate(name);
 
-			// Call the `onSlugInput` function to update the slug variable
-			onSlugInput();
-		}
+		// Update the linked slug input
+		slug = name.toLowerCase().replace(/\s+/g, '_');
+
+		// Call the `onSlugInput` function to update the slug variable
+		onSlugInput();
+	}
+}
+
+function onSlugInput() {
+	// Update the slug field whenever the name field is changed
+	if (name) {
+		slug = name.toLowerCase().replace(/\s+/g, '_');
+		return slug;
+	}
+	// Disable automatic slug updates
+	autoUpdateSlug = false;
+}
+
+// Update slug and page title when name changes
+$effect(() => {
+	// Only track the name and autoUpdateSlug, not the collection
+	const currentName = name;
+	const shouldAutoUpdate = autoUpdateSlug;
+
+	// Automatically update slug when name changes
+	if (shouldAutoUpdate && currentName) {
+		slug = currentName.toLowerCase().replace(/ /g, '_');
 	}
 
-	function onSlugInput() {
-		// Update the slug field whenever the name field is changed
-		if (name) {
-			slug = name.toLowerCase().replace(/\s+/g, '_');
-			return slug;
-		}
-		// Disable automatic slug updates
-		autoUpdateSlug = false;
+	// Update page title based on action and collection name
+	if (action === 'edit') {
+		handlePageTitleUpdate(currentName);
+	} else if (currentName) {
+		handlePageTitleUpdate(currentName);
+	} else {
+		handlePageTitleUpdate('new');
 	}
+});
 
-	// Update slug and page title when name changes
-	$effect(() => {
-		// Only track the name and autoUpdateSlug, not the collection
-		const currentName = name;
-		const shouldAutoUpdate = autoUpdateSlug;
+// Import status types from the content types
+import { StatusTypes } from '@src/content/types';
 
-		// Automatically update slug when name changes
-		if (shouldAutoUpdate && currentName) {
-			slug = currentName.toLowerCase().replace(/ /g, '_');
-		}
-
-		// Update page title based on action and collection name
-		if (action === 'edit') {
-			handlePageTitleUpdate(currentName);
-		} else if (currentName) {
-			handlePageTitleUpdate(currentName);
-		} else {
-			handlePageTitleUpdate('new');
-		}
-	});
-
-	// Import status types from the content types
-	import { StatusTypes } from '@src/content/types';
-
-	const statuses = Object.values(StatusTypes);
+const statuses = Object.values(StatusTypes);
 </script>
 
 <!-- Single Column Layout Container -->
@@ -206,7 +206,7 @@
 				/>
 				{#if name}
 					<p class="mt-1 text-[10px] uppercase tracking-wider text-surface-500">
-						Database ID: <span class="font-bold text-primary-500">{DBName}</span>
+						Database ID: <span class="font-bold text-primary-500">{DB_NAME}</span>
 					</p>
 				{/if}
 			</div>

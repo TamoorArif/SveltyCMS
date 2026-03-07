@@ -45,7 +45,7 @@ import { TransactionModule } from '../operations/transaction-module';
 import { CacheModule } from '../performance/cache-module';
 import { PerformanceModule } from '../performance/performance-module';
 import { MariaDBQueryBuilder } from '../query-builder/maria-db-query-builder';
-import * as schema from '../schema';
+import type * as schema from '../schema';
 import * as utils from '../utils';
 import { AdapterCore } from './adapter-core';
 
@@ -155,7 +155,7 @@ export class MariaDBAdapter extends AdapterCore implements IDBAdapter {
 
 		this.monitoring = {
 			performance: new PerformanceModule(this),
-			cache: new CacheModule(this),
+			cache: new CacheModule(),
 			getConnectionPoolStats: async () =>
 				this.wrap(async () => {
 					if (!this.pool) return { total: 0, active: 0, idle: 0, waiting: 0, avgConnectionTime: 0 };

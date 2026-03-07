@@ -109,12 +109,12 @@ export async function createSAMLConnection(params: any): Promise<any> {
 // Generates the redirect URL pointing to the IdP.
 export async function generateSAMLAuthUrl(tenant: string, product: string): Promise<string> {
 	const j = await getJackson();
-	const redirect_uri = `${getPublicSettingSync('HOST_DEV') || getPublicSettingSync('HOST_PROD') || 'http://localhost:5173'}/api/auth/saml/acs`;
+	const redirectUri = `${getPublicSettingSync('HOST_DEV') || getPublicSettingSync('HOST_PROD') || 'http://localhost:5173'}/api/auth/saml/acs`;
 	const { redirect_url } = await j.oauthController.authorize({
 		tenant,
 		product,
 		client_id: `tenant=${tenant}&product=${product}`, // Jackson defaults to this mapping
-		redirect_uri,
+		redirect_uri: redirectUri,
 		response_type: 'code',
 		state: 'sveltycms'
 	});

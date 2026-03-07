@@ -196,8 +196,7 @@ class SecurityResponseService {
 			/`[^`]*`/i
 		],
 		// LDAP injection
-		ldapInjection: [/[()\\*|&]/, /\x00/, /\b(objectClass|cn|uid|sn|givenName|mail)\s*[=~><]/i],
-		// Suspicious user agents (scanners, attack tools)
+		ldapInjection: [/[()\\*|&]/, /\\x00/, /\b(objectClass|cn|uid|sn|givenName|mail)\s*[=~><]/i], // Suspicious user agents (scanners, attack tools)
 		suspicious_ua: [
 			/sqlmap/i,
 			/nikto/i,

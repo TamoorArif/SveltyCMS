@@ -4,12 +4,12 @@
 Displays the current step title and icon, and a reset button.
 -->
 <script lang="ts">
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 
-	// Using iconify-icon web component
-	const { currentStep, steps, onreset = () => {} } = $props();
+// Using iconify-icon web component
+const { currentStep, steps, onreset = () => {} } = $props();
 
-	const icons = $derived(['mdi:database', 'mdi:account', 'mdi:cog', 'mdi:email', 'mdi:check-circle']);
+const icons = $derived(['mdi:database', 'mdi:account', 'mdi:cog', 'mdi:email', 'mdi:check-circle']);
 </script>
 
 <div class="flex shrink-0 justify-between border-b px-4 py-3 sm:px-6 sm:py-4">

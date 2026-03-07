@@ -32,7 +32,6 @@ describe('Price Widget', () => {
 			const schema = getSchema({
 				label: 'Test',
 				widget: instance.widget,
-				// biome-ignore lint/style/useNamingConvention: system standard
 				db_fieldName: 'test'
 			});
 
@@ -44,7 +43,6 @@ describe('Price Widget', () => {
 			const schema = getSchema({
 				label: 'Test',
 				widget: instance.widget,
-				// biome-ignore lint/style/useNamingConvention: system standard
 				db_fieldName: 'test',
 				required: false
 			});
@@ -57,7 +55,6 @@ describe('Price Widget', () => {
 			const schema = getSchema({
 				label: 'Test',
 				widget: instance.widget,
-				// biome-ignore lint/style/useNamingConvention: system standard
 				db_fieldName: 'test',
 				required: true
 			});
@@ -70,7 +67,6 @@ describe('Price Widget', () => {
 			const schema = getSchema({
 				label: 'Test',
 				widget: instance.widget,
-				// biome-ignore lint/style/useNamingConvention: system standard
 				db_fieldName: 'test',
 				min: 10
 			});

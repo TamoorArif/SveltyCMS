@@ -42,7 +42,7 @@ function openUrl(url: string) {
  * Plugin to alias @config/private to config/private.test.ts when running in TEST_MODE.
  * This allows local tests to use an isolated configuration without modifying the production config.
  */
-function _testConfigAliasPlugin(): Plugin {
+function testConfigAliasPlugin(): Plugin {
 	return {
 		name: 'test-config-alias',
 		enforce: 'pre',
@@ -69,7 +69,7 @@ function _testConfigAliasPlugin(): Plugin {
  * Vite plugin that provides a fallback for @config/private and @config/private.test when the file doesn't exist
  * This allows builds to succeed in fresh clones without committing sensitive credentials
  */
-function _privateConfigFallbackPlugin(): Plugin {
+function privateConfigFallbackPlugin(): Plugin {
 	const virtualModuleId = '@config/private';
 	const virtualTestModuleId = '@config/private.test';
 	const resolvedVirtualModuleId = `\0${virtualModuleId}`;
@@ -210,7 +210,7 @@ process.on('SIGINT', () => {
 /**
  * Plugin to suppress noisy third-party warnings during build
  */
-function _suppressThirdPartyWarningsPlugin(): Plugin {
+function suppressThirdPartyWarningsPlugin(): Plugin {
 	let originalConsoleWarn: typeof console.warn | undefined;
 	let isIntercepted = false;
 	const warningPatterns = [
@@ -399,7 +399,7 @@ function sveltyCmsPlugin(): Plugin {
  * Plugin to capture build metadata (time, module counts) for analytics.
  * Writes to .svelte-kit/output/build-metadata-{client|server}.json
  */
-function _buildMetadataPlugin(): Plugin {
+function buildMetadataPlugin(): Plugin {
 	let startTime: number;
 	let isSSR = false;
 	const outputPath = path.resolve(CWD, '.svelte-kit/output');
@@ -456,14 +456,14 @@ export default defineConfig((): UserConfig => {
 
 	return {
 		plugins: [
-			_testConfigAliasPlugin(),
-			_privateConfigFallbackPlugin(),
+			testConfigAliasPlugin(),
+			privateConfigFallbackPlugin(),
 			stubServerModulesPlugin(),
 			sveltekit(),
 			sveltyCmsPlugin(),
 			securityCheckPlugin(),
-			_suppressThirdPartyWarningsPlugin(),
-			_buildMetadataPlugin(),
+			suppressThirdPartyWarningsPlugin(),
+			buildMetadataPlugin(),
 			paraglideVitePlugin({
 				project: './project.inlang',
 				outdir: './src/paraglide'

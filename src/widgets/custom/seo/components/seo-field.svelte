@@ -1,60 +1,60 @@
 <script lang="ts">
-	import type { FieldInstance } from '@src/content/types';
-	import type { Locale } from '@src/paraglide/runtime';
-	import { tokenTarget } from '@src/services/token/token-target';
+import type { FieldInstance } from '@src/content/types';
+import type { Locale } from '@src/paraglide/runtime';
+import { tokenTarget } from '@src/services/token/token-target';
 
-	// Lucide Icons
+// Lucide Icons
 
-	import type { Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 
-	interface Props {
-		field: FieldInstance;
-		icon?: Snippet;
-		id: string;
-		label: string;
-		lang: Locale | 'default';
-		maxLength?: number;
-		onUpdate: (value: string) => void;
-		optimalMax?: number;
-		optimalMin?: number;
-		placeholder?: string;
-		rows?: number;
-		translated?: boolean;
-		translationPct?: number;
-		type?: 'input' | 'textarea';
-		value: string;
+interface Props {
+	field: FieldInstance;
+	icon?: Snippet;
+	id: string;
+	label: string;
+	lang: Locale | 'default';
+	maxLength?: number;
+	onUpdate: (value: string) => void;
+	optimalMax?: number;
+	optimalMin?: number;
+	placeholder?: string;
+	rows?: number;
+	translated?: boolean;
+	translationPct?: number;
+	type?: 'input' | 'textarea';
+	value: string;
+}
+
+let {
+	id,
+	label,
+	value = $bindable(),
+	placeholder = '',
+	type = 'input',
+	rows = 3,
+	maxLength,
+	optimalMin = 0,
+	optimalMax = 999,
+	translated = false,
+	lang,
+	translationPct = 0,
+	field,
+	onUpdate,
+	icon
+}: Props = $props();
+
+// Element references
+let inputRef = $state<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
+
+const getLengthClass = () => {
+	if (maxLength && value.length > maxLength) {
+		return 'text-error-500';
 	}
-
-	let {
-		id,
-		label,
-		value = $bindable(),
-		placeholder = '',
-		type = 'input',
-		rows = 3,
-		maxLength,
-		optimalMin = 0,
-		optimalMax = 999,
-		translated = false,
-		lang,
-		translationPct = 0,
-		field,
-		onUpdate,
-		icon
-	}: Props = $props();
-
-	// Element references
-	let inputRef = $state<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
-
-	const getLengthClass = () => {
-		if (maxLength && value.length > maxLength) {
-			return 'text-error-500';
-		}
-		if (value.length >= optimalMin && value.length <= optimalMax) {
-			return 'text-success-500';
-		}
-		return 'text-surface-400';
-	};
+	if (value.length >= optimalMin && value.length <= optimalMax) {
+		return 'text-success-500';
+	}
+	return 'text-surface-400';
+};
 </script>
 
 <div class="space-y-2">

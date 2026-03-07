@@ -12,54 +12,54 @@ This component presents a summary of all configuration steps before finalizing t
 
 -->
 <script lang="ts">
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	// ParaglideJS
-	import {
-		form_email,
-		form_password,
-		form_username,
-		label_database,
-		label_host,
-		label_port,
-		setup_help_admin_email,
-		setup_help_admin_password,
-		setup_help_admin_username,
-		setup_help_content_languages,
-		setup_help_database_host,
-		setup_help_database_name,
-		setup_help_database_port,
-		setup_help_database_type,
-		setup_help_database_user,
-		setup_help_default_content_language,
-		setup_help_default_system_language,
-		setup_help_media_path,
-		setup_help_site_name,
-		setup_help_system_languages,
-		setup_label_database_type,
-		setup_review_intro,
-		setup_review_label_content_languages,
-		setup_review_label_default_content_lang,
-		setup_review_label_default_system_lang,
-		setup_review_label_system_languages,
-		setup_review_label_timezone,
-		setup_review_section_admin,
-		setup_review_section_database,
-		setup_review_section_media,
-		setup_review_section_system,
-		setup_system_demo_mode_desc,
-		setup_system_multi_tenant_desc
-	} from '@src/paraglide/messages';
-	// Types from setupStore
-	import type { AdminUser, DbConfig, SystemSettings } from '@src/stores/setup-store.svelte.ts';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+// ParaglideJS
+import {
+	form_email,
+	form_password,
+	form_username,
+	label_database,
+	label_host,
+	label_port,
+	setup_help_admin_email,
+	setup_help_admin_password,
+	setup_help_admin_username,
+	setup_help_content_languages,
+	setup_help_database_host,
+	setup_help_database_name,
+	setup_help_database_port,
+	setup_help_database_type,
+	setup_help_database_user,
+	setup_help_default_content_language,
+	setup_help_default_system_language,
+	setup_help_media_path,
+	setup_help_site_name,
+	setup_help_system_languages,
+	setup_label_database_type,
+	setup_review_intro,
+	setup_review_label_content_languages,
+	setup_review_label_default_content_lang,
+	setup_review_label_default_system_lang,
+	setup_review_label_system_languages,
+	setup_review_label_timezone,
+	setup_review_section_admin,
+	setup_review_section_database,
+	setup_review_section_media,
+	setup_review_section_system,
+	setup_system_demo_mode_desc,
+	setup_system_multi_tenant_desc
+} from '@src/paraglide/messages';
+// Types from setupStore
+import type { AdminUser, DbConfig, SystemSettings } from '@src/stores/setup-store.svelte.ts';
 
-	//  props
-	interface Props {
-		adminUser: AdminUser;
-		dbConfig: DbConfig;
-		systemSettings: SystemSettings;
-	}
+//  props
+interface Props {
+	adminUser: AdminUser;
+	dbConfig: DbConfig;
+	systemSettings: SystemSettings;
+}
 
-	const { dbConfig, adminUser, systemSettings }: Props = $props();
+const { dbConfig, adminUser, systemSettings }: Props = $props();
 </script>
 
 <div class="fade-in">

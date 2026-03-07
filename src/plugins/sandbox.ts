@@ -14,21 +14,21 @@ import type { IDBAdapter } from '@databases/db-interface';
 import type { PluginContext, PluginLifecycleHooks } from './types';
 
 // Lazy-loaded logger — avoids crashes when logger singleton isn't initialized (e.g., during tests)
-let _logger: any = null;
-let _loggerLoaded = false;
+let LOGGER: any = null;
+let LOGGER_LOADED = false;
 
 function getLogger(): any {
-	if (!_loggerLoaded) {
-		_loggerLoaded = true;
+	if (!LOGGER_LOADED) {
+		LOGGER_LOADED = true;
 		try {
 			// Dynamic import at first use — lazy loaded
 			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			_logger = require('@utils/logger.server')?.logger;
+			LOGGER = require('@utils/logger.server')?.logger;
 		} catch {
-			_logger = null;
+			LOGGER = null;
 		}
 	}
-	return _logger;
+	return LOGGER;
 }
 
 const safeLog = {

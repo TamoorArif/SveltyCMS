@@ -4,86 +4,86 @@
  Renders an iframe and syncs CMS state with the previewed website using postMessage.
 -->
 <script lang="ts">
-	import type { User } from '@auth/types';
-	import type { CollectionEntry, Schema } from '@src/content/types';
-	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { onMount } from 'svelte';
-	import type { CmsUpdateMessage } from './types';
+import type { User } from '@auth/types';
+import type { CollectionEntry, Schema } from '@src/content/types';
+import { publicEnv } from '@src/stores/global-settings.svelte';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { onMount } from 'svelte';
+import type { CmsUpdateMessage } from './types';
 
-	interface Props {
-		collection: { value: Schema };
-		contentLanguage: string;
-		currentCollectionValue: CollectionEntry;
-		tenantId: string;
-		user: User;
+interface Props {
+	collection: { value: Schema };
+	contentLanguage: string;
+	currentCollectionValue: CollectionEntry;
+	tenantId: string;
+	user: User;
+}
+
+let { collection, currentCollectionValue, contentLanguage }: Props = $props();
+
+let iframeEl = $state<HTMLIFrameElement | null>(null);
+let isConnected = $state(false);
+let previewWidth = $state('100%');
+
+// Derived Props
+const hostProd = publicEnv.HOST_PROD || 'http://localhost:5173';
+const entryId = $derived(currentCollectionValue?._id || 'draft');
+const previewUrl = $derived(`${hostProd}?preview=${entryId}&lang=${contentLanguage}`);
+
+// --- Handshake & Sync Logic ---
+
+// Send data update to child
+function sendUpdate() {
+	if (!iframeEl?.contentWindow) {
+		return;
 	}
 
-	let { collection, currentCollectionValue, contentLanguage }: Props = $props();
+	// Derived name from schema or fallback
+	const collectionName = (collection.value?.name as string) || 'unknown';
 
-	let iframeEl = $state<HTMLIFrameElement | null>(null);
-	let isConnected = $state(false);
-	let previewWidth = $state('100%');
+	const message: CmsUpdateMessage = {
+		type: 'svelty:update',
+		collection: collectionName,
+		data: currentCollectionValue
+	};
 
-	// Derived Props
-	const hostProd = publicEnv.HOST_PROD || 'http://localhost:5173';
-	const entryId = $derived(currentCollectionValue?._id || 'draft');
-	const previewUrl = $derived(`${hostProd}?preview=${entryId}&lang=${contentLanguage}`);
+	// Use hostProd as targetOrigin if available for security, else '*' (dev mode fallback)
+	// Note: hostProd might be the frontend URL.
+	const targetOrigin = hostProd.startsWith('http') ? hostProd : '*';
+	iframeEl.contentWindow.postMessage(message, targetOrigin);
+}
 
-	// --- Handshake & Sync Logic ---
-
-	// Send data update to child
-	function sendUpdate() {
-		if (!iframeEl?.contentWindow) {
-			return;
-		}
-
-		// Derived name from schema or fallback
-		const collectionName = (collection.value?.name as string) || 'unknown';
-
-		const message: CmsUpdateMessage = {
-			type: 'svelty:update',
-			collection: collectionName,
-			data: currentCollectionValue
-		};
-
-		// Use hostProd as targetOrigin if available for security, else '*' (dev mode fallback)
-		// Note: hostProd might be the frontend URL.
-		const targetOrigin = hostProd.startsWith('http') ? hostProd : '*';
-		iframeEl.contentWindow.postMessage(message, targetOrigin);
-	}
-
-	// Watch for data changes
-	$effect(() => {
-		// Proper dependency tracking by accessing the value
-		const DATA = currentCollectionValue;
-		if (iframeEl && isConnected && DATA) {
-			sendUpdate();
-		}
-	});
-
-	// Handle Iframe Load
-	function handleLoad() {
-		isConnected = true;
+// Watch for data changes
+$effect(() => {
+	// Proper dependency tracking by accessing the value
+	const DATA = currentCollectionValue;
+	if (iframeEl && isConnected && DATA) {
 		sendUpdate();
 	}
+});
 
-	// Listen for handshake from child
-	onMount(() => {
-		const handleMessage = (event: MessageEvent) => {
-			if (event.data?.type === 'svelty:init') {
-				isConnected = true;
-				sendUpdate();
-			}
-		};
-		window.addEventListener('message', handleMessage);
-		return () => window.removeEventListener('message', handleMessage);
-	});
+// Handle Iframe Load
+function handleLoad() {
+	isConnected = true;
+	sendUpdate();
+}
 
-	function copyUrl() {
-		navigator.clipboard.writeText(previewUrl);
-		toast.success('Preview URL Copied');
-	}
+// Listen for handshake from child
+onMount(() => {
+	const handleMessage = (event: MessageEvent) => {
+		if (event.data?.type === 'svelty:init') {
+			isConnected = true;
+			sendUpdate();
+		}
+	};
+	window.addEventListener('message', handleMessage);
+	return () => window.removeEventListener('message', handleMessage);
+});
+
+function copyUrl() {
+	navigator.clipboard.writeText(previewUrl);
+	toast.success('Preview URL Copied');
+}
 </script>
 
 <div class="flex h-150 flex-col p-4">

@@ -4,18 +4,17 @@
  */
 
 /* TailwindCSS v4 - CSS-first configuration */
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* Skeleton v4 - Import the theme and components */
-@import '@skeletonlabs/skeleton';
-@import '@skeletonlabs/skeleton-svelte';
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton-svelte";
 
 /* Tailwind v4: Enable class-based dark mode with .dark class on <html> */
-/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind v4 custom variant */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* =~= SveltyCMS Theme (Skeleton v4 format) =~= */
-[data-theme='sveltycms'] {
+[data-theme="sveltycms"] {
 	/* =~= Theme Properties =~= */
 	--text-scaling: 1;
 

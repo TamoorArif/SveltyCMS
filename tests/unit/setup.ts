@@ -15,7 +15,7 @@ import { mock } from 'bun:test';
 	if (typeof fn !== 'function') return fn;
 	const obj = {};
 	return new Proxy(obj, {
-		get: (_target, _prop) => (_prop === Symbol.toPrimitive ? () => fn() : typeof fn() === 'object' && fn() !== null ? fn()[_prop] : fn())
+		get: (_target, prop) => (prop === Symbol.toPrimitive ? () => fn() : typeof fn() === 'object' && fn() !== null ? fn()[prop] : fn())
 	});
 };
 (globalThis as any).$derived.by = (globalThis as any).$derived;
@@ -159,7 +159,7 @@ mock.module('@src/databases/db', () => ({
 }));
 
 // CacheService (Full mock with constants and enums)
-const CacheCategory = {
+const CACHE_CATEGORY = {
 	SCHEMA: 'schema',
 	WIDGET: 'widget',
 	THEME: 'theme',
@@ -189,7 +189,7 @@ const mockCacheService = {
 
 const cacheServiceModule = {
 	cacheService: mockCacheService,
-	CacheCategory,
+	CacheCategory: CACHE_CATEGORY,
 	SESSION_CACHE_TTL_MS: 86400000,
 	SESSION_CACHE_TTL_S: 86400,
 	USER_PERM_CACHE_TTL_MS: 60000,

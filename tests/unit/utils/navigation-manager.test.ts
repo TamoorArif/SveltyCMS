@@ -40,15 +40,15 @@ let globalLoadingStore: any;
 let dataChangeStore: any;
 
 beforeAll(async () => {
-	const NavMod = await import('@src/utils/navigation-manager');
-	const ColStore = await import('@src/stores/collection-store.svelte');
-	const LoadStore = await import('@src/stores/loading-store.svelte');
-	const Store = await import('@src/stores/store.svelte');
+	const NAV_MOD = await import('@src/utils/navigation-manager');
+	const COL_STORE = await import('@src/stores/collection-store.svelte');
+	const LOAD_STORE = await import('@src/stores/loading-store.svelte');
+	const STORE = await import('@src/stores/store.svelte');
 
-	navigationManager = NavMod.navigationManager;
-	mode = ColStore.mode;
-	globalLoadingStore = LoadStore.globalLoadingStore;
-	dataChangeStore = Store.dataChangeStore;
+	navigationManager = NAV_MOD.navigationManager;
+	mode = COL_STORE.mode;
+	globalLoadingStore = LOAD_STORE.globalLoadingStore;
+	dataChangeStore = STORE.dataChangeStore;
 });
 
 // We need to spy on 'goto'.

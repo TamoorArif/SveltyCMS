@@ -22,256 +22,256 @@ latest version available on GitHub with comprehensive status reporting.
 - Reduced motion support
 -->
 <script lang="ts">
-	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { onDestroy, onMount } from 'svelte';
-	import { browser } from '$app/environment';
-	import SystemTooltip from './system/system-tooltip.svelte';
+import { publicEnv } from '@src/stores/global-settings.svelte';
+import { onDestroy, onMount } from 'svelte';
+import { browser } from '$app/environment';
+import SystemTooltip from './system/system-tooltip.svelte';
 
-	// Types
-	interface VersionStatus {
-		badgeColor: string;
-		badgeVariant: 'variant-filled' | 'variant-soft' | 'variant-outline' | 'variant-glass';
-		error: string | null;
-		githubVersion: string;
-		isLoading: boolean;
-		lastChecked: number | null;
-		pkg: string;
-		statusIcon: string;
-		statusSeverity: 'critical' | 'warning' | 'info' | 'success' | 'unknown';
-		versionStatusMessage: string;
+// Types
+interface VersionStatus {
+	badgeColor: string;
+	badgeVariant: 'variant-filled' | 'variant-soft' | 'variant-outline' | 'variant-glass';
+	error: string | null;
+	githubVersion: string;
+	isLoading: boolean;
+	lastChecked: number | null;
+	pkg: string;
+	statusIcon: string;
+	statusSeverity: 'critical' | 'warning' | 'info' | 'success' | 'unknown';
+	versionStatusMessage: string;
+}
+
+interface VersionProps {
+	children?: import('svelte').Snippet<[VersionStatus]>;
+	compact?: boolean;
+	onStatusChange?: (status: VersionStatus) => void;
+	transparent?: boolean;
+}
+
+const { transparent = false, compact = false, onStatusChange, children }: VersionProps = $props();
+
+// Constants
+const GITHUB_RELEASES_URL = 'https://github.com/SveltyCMS/SveltyCMS/releases';
+const CHECK_INTERVAL = 1000 * 60 * 60; // 1 hour
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
+
+// State - use publicEnv directly instead of page.data
+const pkg = $derived(publicEnv?.PKG_VERSION || '0.0.0');
+let githubVersion = $state('');
+let badgeVariant = $state<'variant-filled' | 'variant-soft' | 'variant-outline' | 'variant-glass'>('variant-filled');
+let badgeColor = $state('bg-primary-500 text-white');
+let versionStatusMessage = $state('Checking for updates...');
+let statusIcon = $state('mdi:loading');
+let statusSeverity = $state<'critical' | 'warning' | 'info' | 'success' | 'unknown'>('unknown');
+let isLoading = $state(true);
+let error = $state<string | null>(null);
+let lastChecked = $state<number | null>(null);
+let checkInterval: ReturnType<typeof setInterval> | null = null;
+
+// Derived state for full status object
+const versionStatus = $derived<VersionStatus>({
+	pkg,
+	githubVersion,
+	badgeVariant,
+	badgeColor,
+	versionStatusMessage,
+	statusIcon,
+	statusSeverity,
+	isLoading,
+	error,
+	lastChecked
+});
+
+// Transparent mode styling - check pathname defensively
+const isLoginRoute = $derived(browser ? window.location.pathname.startsWith('/login') : false);
+const effectiveTransparent = $derived(transparent || isLoginRoute);
+
+const transparentClasses = $derived.by(() => {
+	if (badgeColor.includes('success')) {
+		return 'bg-primary-500/20 text-success-700 dark:text-success-300';
 	}
-
-	interface VersionProps {
-		children?: import('svelte').Snippet<[VersionStatus]>;
-		compact?: boolean;
-		onStatusChange?: (status: VersionStatus) => void;
-		transparent?: boolean;
+	if (badgeColor.includes('warning')) {
+		return 'bg-warning-500/20 text-warning-700 dark:text-warning-300';
 	}
-
-	const { transparent = false, compact = false, onStatusChange, children }: VersionProps = $props();
-
-	// Constants
-	const GITHUB_RELEASES_URL = 'https://github.com/SveltyCMS/SveltyCMS/releases';
-	const CHECK_INTERVAL = 1000 * 60 * 60; // 1 hour
-	const MAX_RETRIES = 3;
-	const RETRY_DELAY = 2000;
-
-	// State - use publicEnv directly instead of page.data
-	const pkg = $derived(publicEnv?.PKG_VERSION || '0.0.0');
-	let githubVersion = $state('');
-	let badgeVariant = $state<'variant-filled' | 'variant-soft' | 'variant-outline' | 'variant-glass'>('variant-filled');
-	let badgeColor = $state('bg-primary-500 text-white');
-	let versionStatusMessage = $state('Checking for updates...');
-	let statusIcon = $state('mdi:loading');
-	let statusSeverity = $state<'critical' | 'warning' | 'info' | 'success' | 'unknown'>('unknown');
-	let isLoading = $state(true);
-	let error = $state<string | null>(null);
-	let lastChecked = $state<number | null>(null);
-	let checkInterval: ReturnType<typeof setInterval> | null = null;
-
-	// Derived state for full status object
-	const versionStatus = $derived<VersionStatus>({
-		pkg,
-		githubVersion,
-		badgeVariant,
-		badgeColor,
-		versionStatusMessage,
-		statusIcon,
-		statusSeverity,
-		isLoading,
-		error,
-		lastChecked
-	});
-
-	// Transparent mode styling - check pathname defensively
-	const isLoginRoute = $derived(browser ? window.location.pathname.startsWith('/login') : false);
-	const effectiveTransparent = $derived(transparent || isLoginRoute);
-
-	const transparentClasses = $derived.by(() => {
-		if (badgeColor.includes('success')) {
-			return 'bg-primary-500/20 text-success-700 dark:text-success-300';
-		}
-		if (badgeColor.includes('warning')) {
-			return 'bg-warning-500/20 text-warning-700 dark:text-warning-300';
-		}
-		if (badgeColor.includes('error')) {
-			return 'bg-error-500/20 text-black';
-		}
-		return 'bg-surface-900/10 dark:text-white';
-	});
-
-	// Parse semantic version
-	function parseVersion(version: string): [number, number, number] {
-		const parts = version.split('.').map(Number);
-		return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+	if (badgeColor.includes('error')) {
+		return 'bg-error-500/20 text-black';
 	}
+	return 'bg-surface-900/10 dark:text-white';
+});
 
-	// Compare versions
-	function compareVersions(local: string, remote: string): 'major' | 'minor' | 'patch' | 'current' {
-		const [localMajor, localMinor, localPatch] = parseVersion(local);
-		const [remoteMajor, remoteMinor, remotePatch] = parseVersion(remote);
+// Parse semantic version
+function parseVersion(version: string): [number, number, number] {
+	const parts = version.split('.').map(Number);
+	return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+}
 
-		if (remoteMajor > localMajor) {
-			return 'major';
-		}
-		if (remoteMajor === localMajor && remoteMinor > localMinor) {
-			return 'minor';
-		}
-		if (remoteMajor === localMajor && remoteMinor === localMinor && remotePatch > localPatch) {
-			return 'patch';
-		}
-		return 'current';
+// Compare versions
+function compareVersions(local: string, remote: string): 'major' | 'minor' | 'patch' | 'current' {
+	const [localMajor, localMinor, localPatch] = parseVersion(local);
+	const [remoteMajor, remoteMinor, remotePatch] = parseVersion(remote);
+
+	if (remoteMajor > localMajor) {
+		return 'major';
 	}
-
-	interface VersionApiResponse {
-		error?: string;
-		latest?: string;
-		message?: string;
-		security_issue?: boolean;
-		status: 'disabled' | 'error' | 'success';
+	if (remoteMajor === localMajor && remoteMinor > localMinor) {
+		return 'minor';
 	}
-
-	// Update status based on version comparison
-	function updateStatus(data: VersionApiResponse) {
-		if (data.status === 'disabled') {
-			githubVersion = pkg;
-			badgeVariant = 'variant-filled';
-			badgeColor = 'bg-surface-500 text-white';
-			versionStatusMessage = 'Version check disabled';
-			statusIcon = 'mdi:shield-off';
-			statusSeverity = 'info';
-			error = null;
-		} else if (data.status === 'error') {
-			githubVersion = pkg;
-			badgeVariant = 'variant-filled';
-			badgeColor = 'bg-warning-500 text-white';
-			versionStatusMessage = 'Could not check for updates';
-			statusIcon = 'mdi:wifi-off';
-			statusSeverity = 'warning';
-			error = data.error || 'Network error';
-		} else {
-			githubVersion = data.latest || pkg;
-			const comparison = compareVersions(pkg, githubVersion);
-
-			// Security issue takes priority
-			if (data.security_issue) {
-				badgeVariant = 'variant-filled';
-				badgeColor = 'bg-error-500 text-white';
-				versionStatusMessage = data.message || `Critical security update to v${githubVersion} available!`;
-				statusIcon = 'mdi:shield-alert';
-				statusSeverity = 'critical';
-			} else if (comparison === 'major') {
-				badgeVariant = 'variant-filled';
-				badgeColor = 'bg-error-500 text-white';
-				versionStatusMessage = `Major update to v${githubVersion} available`;
-				statusIcon = 'mdi:alert-circle';
-				statusSeverity = 'critical';
-			} else if (comparison === 'minor' || comparison === 'patch') {
-				badgeVariant = 'variant-filled';
-				badgeColor = 'bg-warning-500 text-black';
-				versionStatusMessage = `Update to v${githubVersion} recommended`;
-				statusIcon = 'mdi:information';
-				statusSeverity = 'warning';
-			} else {
-				badgeVariant = 'variant-filled';
-				badgeColor = 'bg-primary-500 text-white';
-				versionStatusMessage = 'You are up to date';
-				statusIcon = 'mdi:check-circle';
-				statusSeverity = 'success';
-			}
-			error = null;
-		}
-
-		lastChecked = Date.now();
+	if (remoteMajor === localMajor && remoteMinor === localMinor && remotePatch > localPatch) {
+		return 'patch';
 	}
+	return 'current';
+}
 
-	// Fetch version with retry logic
-	async function checkVersion(retry = 0): Promise<void> {
-		if (isLoading && retry === 0) {
-			return; // Prevent duplicate requests
-		}
+interface VersionApiResponse {
+	error?: string;
+	latest?: string;
+	message?: string;
+	security_issue?: boolean;
+	status: 'disabled' | 'error' | 'success';
+}
 
-		isLoading = true;
+// Update status based on version comparison
+function updateStatus(data: VersionApiResponse) {
+	if (data.status === 'disabled') {
+		githubVersion = pkg;
+		badgeVariant = 'variant-filled';
+		badgeColor = 'bg-surface-500 text-white';
+		versionStatusMessage = 'Version check disabled';
+		statusIcon = 'mdi:shield-off';
+		statusSeverity = 'info';
 		error = null;
+	} else if (data.status === 'error') {
+		githubVersion = pkg;
+		badgeVariant = 'variant-filled';
+		badgeColor = 'bg-warning-500 text-white';
+		versionStatusMessage = 'Could not check for updates';
+		statusIcon = 'mdi:wifi-off';
+		statusSeverity = 'warning';
+		error = data.error || 'Network error';
+	} else {
+		githubVersion = data.latest || pkg;
+		const comparison = compareVersions(pkg, githubVersion);
 
-		try {
-			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), 10_000); // 10s timeout
-
-			const response = await fetch('/api/system/version', {
-				signal: controller.signal,
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-
-			clearTimeout(timeout);
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-			}
-
-			const data = await response.json();
-			updateStatus(data);
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-
-			if (retry < MAX_RETRIES) {
-				setTimeout(() => checkVersion(retry + 1), RETRY_DELAY * 2 ** retry);
-			} else {
-				githubVersion = pkg;
-				badgeVariant = 'variant-soft';
-				badgeColor = 'bg-surface-500 text-white';
-				versionStatusMessage = 'Update check failed';
-				statusIcon = 'mdi:alert-octagon';
-				statusSeverity = 'unknown';
-				error = errorMessage;
-			}
-		} finally {
-			isLoading = false;
+		// Security issue takes priority
+		if (data.security_issue) {
+			badgeVariant = 'variant-filled';
+			badgeColor = 'bg-error-500 text-white';
+			versionStatusMessage = data.message || `Critical security update to v${githubVersion} available!`;
+			statusIcon = 'mdi:shield-alert';
+			statusSeverity = 'critical';
+		} else if (comparison === 'major') {
+			badgeVariant = 'variant-filled';
+			badgeColor = 'bg-error-500 text-white';
+			versionStatusMessage = `Major update to v${githubVersion} available`;
+			statusIcon = 'mdi:alert-circle';
+			statusSeverity = 'critical';
+		} else if (comparison === 'minor' || comparison === 'patch') {
+			badgeVariant = 'variant-filled';
+			badgeColor = 'bg-warning-500 text-black';
+			versionStatusMessage = `Update to v${githubVersion} recommended`;
+			statusIcon = 'mdi:information';
+			statusSeverity = 'warning';
+		} else {
+			badgeVariant = 'variant-filled';
+			badgeColor = 'bg-primary-500 text-white';
+			versionStatusMessage = 'You are up to date';
+			statusIcon = 'mdi:check-circle';
+			statusSeverity = 'success';
 		}
+		error = null;
 	}
 
-	// Notify parent of status changes
-	$effect(() => {
-		if (onStatusChange && !isLoading) {
-			onStatusChange(versionStatus);
-		}
-	});
+	lastChecked = Date.now();
+}
 
-	// Setup periodic checks
-	onMount(() => {
-		// Initial check
-		checkVersion();
+// Fetch version with retry logic
+async function checkVersion(retry = 0): Promise<void> {
+	if (isLoading && retry === 0) {
+		return; // Prevent duplicate requests
+	}
 
-		// Periodic checks every hour
-		checkInterval = setInterval(() => {
-			checkVersion();
-		}, CHECK_INTERVAL);
+	isLoading = true;
+	error = null;
 
-		return () => {
-			if (checkInterval) {
-				clearInterval(checkInterval);
+	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 10_000); // 10s timeout
+
+		const response = await fetch('/api/system/version', {
+			signal: controller.signal,
+			headers: {
+				'Content-Type': 'application/json'
 			}
-		};
-	});
+		});
 
-	onDestroy(() => {
+		clearTimeout(timeout);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+
+		const data = await response.json();
+		updateStatus(data);
+	} catch (err) {
+		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+
+		if (retry < MAX_RETRIES) {
+			setTimeout(() => checkVersion(retry + 1), RETRY_DELAY * 2 ** retry);
+		} else {
+			githubVersion = pkg;
+			badgeVariant = 'variant-soft';
+			badgeColor = 'bg-surface-500 text-white';
+			versionStatusMessage = 'Update check failed';
+			statusIcon = 'mdi:alert-octagon';
+			statusSeverity = 'unknown';
+			error = errorMessage;
+		}
+	} finally {
+		isLoading = false;
+	}
+}
+
+// Notify parent of status changes
+$effect(() => {
+	if (onStatusChange && !isLoading) {
+		onStatusChange(versionStatus);
+	}
+});
+
+// Setup periodic checks
+onMount(() => {
+	// Initial check
+	checkVersion();
+
+	// Periodic checks every hour
+	checkInterval = setInterval(() => {
+		checkVersion();
+	}, CHECK_INTERVAL);
+
+	return () => {
 		if (checkInterval) {
 			clearInterval(checkInterval);
 		}
-	});
+	};
+});
 
-	// Get appropriate ARIA label
-	const statusAriaLabel = $derived.by(() => {
-		if (isLoading) {
-			return 'Checking application version';
-		}
-		if (error) {
-			return `Version ${pkg}. ${error}`;
-		}
-		return `Application version ${pkg}. ${versionStatusMessage}`;
-	});
+onDestroy(() => {
+	if (checkInterval) {
+		clearInterval(checkInterval);
+	}
+});
+
+// Get appropriate ARIA label
+const statusAriaLabel = $derived.by(() => {
+	if (isLoading) {
+		return 'Checking application version';
+	}
+	if (error) {
+		return `Version ${pkg}. ${error}`;
+	}
+	return `Application version ${pkg}. ${versionStatusMessage}`;
+});
 </script>
 
 {#if children}

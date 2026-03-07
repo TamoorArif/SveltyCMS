@@ -109,7 +109,7 @@ SveltyCMS uses two complementary test frameworks to ensure comprehensive quality
 
 - **Purpose**: Fast, lightweight testing for business logic, services, and API endpoints
 - **Location**: `tests/unit/`
-- **Test Count**: 663 tests
+- **Test Count**: 692 tests
 - **Execution Time**: ~4 seconds
 
 **What It Tests**:
@@ -120,7 +120,7 @@ SveltyCMS uses two complementary test frameworks to ensure comprehensive quality
 - ✅ Widgets (validation, rendering, security)
 - ✅ Middleware Hooks (all 11 hooks)
 - ✅ API Endpoints (integration tests)
-- ✅ Database Operations (MongoDB currently)
+- ✅ Database Operations (Multi-DB via Drizzle)
 
 **Why Bun?**
 
@@ -128,6 +128,11 @@ SveltyCMS uses two complementary test frameworks to ensure comprehensive quality
 - Native TypeScript support (no transpilation)
 - Built-in mocking
 - Perfect for headless CMS architecture
+
+### 🚀 Static Analysis & Linting
+
+- **Biome/Ultracite**: Unified high-speed linting and formatting. Replaced ESLint/Prettier for **20x faster** execution (~0.8s).
+- **Svelte Check**: Deep template validation and type integrity checking.
 
 ### 🎭 Playwright - End-to-End Tests
 

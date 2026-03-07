@@ -15,22 +15,24 @@ tags:
   - 'lancedb'
 ---
 
-# AI Integration & Local Knowledge Core (MPC)
+# AI Integration & Hosted Knowledge Core (MCP)
 
-SveltyCMS 2026 leverages a high-performance **Model Context Protocol (MCP)** server to provide AI agents with deep, real-time project knowledge.
+SveltyCMS 2026 leverages a fully implemented and hosted **Model Context Protocol (MCP)** server to provide AI agents with deep, real-time project knowledge.
 
 > [!TIP]
-> **Status:** Active. Your AI integration is powered by the **SveltyCMS Knowledge Core**.
+> **Status:** Fully Implemented. Your AI integration is powered by the **SveltyCMS Hosted Knowledge Core**.
 >
 > - **Hosted (Primary):** `https://mcp.sveltycms.com/mcp` (Cloud-native agentic memory)
-> - **Local (RAG):** Local environments using **LanceDB** and **hardware acceleration**.
+> - **Real-time Tools:** SSE-based live access to codebase, docs, and system schemas.
+> - **Local (RAG):** Fallback for local environments using **LanceDB**.
 
-### 1. Online MCP Server (https://mcp.sveltycms.com)
+### 1. Hosted MCP Server (mcp.sveltycms.com)
 
-The hosted Knowledge Core provides absolute project context for remote AI agents:
+The hosted Knowledge Core provides absolute project context for remote AI agents (Claude, ChatGPT, etc.):
 
-- **SSE Connection**: Uses standard Server-Sent Events for real-time tool access.
-- **Global Search**: Semantic search across the entire SveltyCMS ecosystem.
+- **Full SSE Protocol**: Uses standard Server-Sent Events for real-time tool access and discovery.
+- **Project-Wide Search**: Semantic search across the entire SveltyCMS ecosystem (Docs + Code).
+- **Schema Awareness**: Understands your specific collection schemas and widget configurations.
 - **Read-Only Safety**: Agents can study the codebase and docs but cannot modify data.
 
 ### 2. The Local Knowledge Core

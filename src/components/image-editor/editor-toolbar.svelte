@@ -5,31 +5,31 @@ The new single, intelligent bottom toolbar for the image editor.
 It dynamically renders controls based on the active tool.
 -->
 <script lang="ts">
-	import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-	import { fade, slide } from 'svelte/transition';
+import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
+import { fade, slide } from 'svelte/transition';
 
-	let {
-		onsave,
-		oncancel,
-		isSaving
-	}: {
-		onsave: () => void;
-		oncancel: () => void;
-		isSaving: boolean;
-	} = $props();
+let {
+	onsave,
+	oncancel,
+	isSaving
+}: {
+	onsave: () => void;
+	oncancel: () => void;
+	isSaving: boolean;
+} = $props();
 
-	/* Restore Tool Icons Logic */
-	import { editorWidgets } from './widgets/registry';
+/* Restore Tool Icons Logic */
+import { editorWidgets } from './widgets/registry';
 
-	const activeState = $derived(imageEditorStore.state.activeState);
-	const hasImage = $derived(!!imageEditorStore.state.imageElement);
-	const toolbarControls = $derived(imageEditorStore.state.toolbarControls);
+const activeState = $derived(imageEditorStore.state.activeState);
+const hasImage = $derived(!!imageEditorStore.state.imageElement);
+const toolbarControls = $derived(imageEditorStore.state.toolbarControls);
 
-	const canUndo = $derived(imageEditorStore.canUndoState);
-	const canRedo = $derived(imageEditorStore.canRedoState);
+const canUndo = $derived(imageEditorStore.canUndoState);
+const canRedo = $derived(imageEditorStore.canRedoState);
 
-	// Get active widget title
-	const activeWidget = $derived(editorWidgets.find((w) => w.key === activeState));
+// Get active widget title
+const activeWidget = $derived(editorWidgets.find((w) => w.key === activeState));
 </script>
 
 <div
