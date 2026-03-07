@@ -13,15 +13,21 @@ import { mock } from 'bun:test';
 (globalThis as any).$state.snapshot = (v: any) => v;
 (globalThis as any).$derived = (fn: any) => {
 	if (typeof fn !== 'function') return fn;
-	const obj = {};
-	return new Proxy(obj, {
-		get: (_target, prop) => (prop === Symbol.toPrimitive ? () => fn() : typeof fn() === 'object' && fn() !== null ? fn()[prop] : fn())
+	// Return a proxy that calls the function on every access
+	return new Proxy({}, {
+		get: (_, prop) => {
+			const val = fn();
+			return val && typeof val === 'object' ? val[prop] : val;
+		},
+		apply: (_, __, args) => fn()(...args)
 	});
 };
-(globalThis as any).$derived.by = (globalThis as any).$derived;
+(globalThis as any).$derived.by = (fn: any) => (typeof fn === 'function' ? fn() : fn);
 (globalThis as any).$effect = (_fn: any) => {};
 (globalThis as any).$effect.root = (fn: any) => fn();
 (globalThis as any).$props = () => ({});
+(globalThis as any).$bindable = (v: any) => v;
+(globalThis as any).$inspect = () => ({ with: () => {} });
 
 const createStorage = () => {
 	let data: Record<string, string> = {};
