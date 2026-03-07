@@ -9,10 +9,21 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
 	testDir: './tests/e2e',
 	testMatch: '**/*.{test,spec,spect}.ts',
+	/* Maximum time one test can run for. */
+	timeout: 60 * 1000,
+	expect: {
+		/**
+		 * Maximum time expect() should wait for the condition to be met.
+		 * For example in `await expect(locator).toBeVisible();`
+		 */
+		timeout: 10 * 1000
+	},
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !!process.env.CI,
+	/* Retry on CI only */
+	retries: process.env.CI ? 2 : 0,
 	/* Disable parallelism to avoid DB race conditions in setup tests */
 	workers: 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */

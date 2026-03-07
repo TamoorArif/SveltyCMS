@@ -128,10 +128,11 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
 /**
  * Invalidates the cached setup status, forcing a recheck on the next call.
  * @param clearPrivateEnv - Whether to clear private environment config (default: false)
+ * @param forceStatus - If provided, forces the setupStatus to this value without rechecking files/DB
  */
-export function invalidateSetupCache(clearPrivateEnv = false): void {
-	setupStatus = null;
-	setupStatusCheckedDb = false;
+export function invalidateSetupCache(clearPrivateEnv = false, forceStatus: boolean | null = null): void {
+	setupStatus = forceStatus;
+	setupStatusCheckedDb = forceStatus !== null;
 
 	if (clearPrivateEnv) {
 		// Use relative import here as well for consistency

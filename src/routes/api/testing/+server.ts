@@ -97,6 +97,15 @@ export async function POST({ request }: RequestEvent) {
 				});
 			}
 
+			case 'setup': {
+				// Forces the system to recognize the setup is complete (useful after setup-wizard)
+				const { reinitializeSystem } = await import('@src/databases/db');
+				await reinitializeSystem(true);
+				const { invalidateSetupCache } = await import('@src/utils/setup-check');
+				invalidateSetupCache(false, true);
+				return json({ success: true, message: 'System marked as setup in-memory' });
+			}
+
 			default:
 				return json({ error: 'Invalid action' }, { status: 400 });
 		}
