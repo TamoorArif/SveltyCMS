@@ -51,7 +51,14 @@ jobs:
       - name: Generate Config Stubs
         run: |
           mkdir -p config
-          echo "export const privateEnv = {}" > config/private.test.ts
+          echo "export const privateEnv: any = {
+            DB_TYPE: process.env.DB_TYPE || '',
+            DB_HOST: process.env.DB_HOST || '127.0.0.1',
+            DB_PORT: process.env.DB_PORT || (process.env.DB_TYPE === 'mongodb' ? '27017' : process.env.DB_TYPE === 'mariadb' ? '3306' : '5432'),
+            DB_NAME: process.env.DB_NAME || 'sveltycms_test',
+            DB_USER: process.env.DB_USER || 'test',
+            DB_PASSWORD: process.env.DB_PASSWORD || 'test'
+          }" > config/private.test.ts
       - name: Run Linter
         run: bun run lint
       - name: Run Type Check
@@ -75,7 +82,14 @@ jobs:
       - name: Generate Config Stubs
         run: |
           mkdir -p config
-          echo "export const privateEnv = {}" > config/private.test.ts
+          echo "export const privateEnv: any = {
+            DB_TYPE: process.env.DB_TYPE || '',
+            DB_HOST: process.env.DB_HOST || '127.0.0.1',
+            DB_PORT: process.env.DB_PORT || (process.env.DB_TYPE === 'mongodb' ? '27017' : process.env.DB_TYPE === 'mariadb' ? '3306' : '5432'),
+            DB_NAME: process.env.DB_NAME || 'sveltycms_test',
+            DB_USER: process.env.DB_USER || 'test',
+            DB_PASSWORD: process.env.DB_PASSWORD || 'test'
+          }" > config/private.test.ts
       - name: Sync SvelteKit
         run: |
           bun x svelte-kit sync
