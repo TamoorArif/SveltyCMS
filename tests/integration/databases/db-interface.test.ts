@@ -62,7 +62,7 @@ describe('Database Interface Contract Tests', () => {
 		const host = privateEnv.DB_HOST || process.env.DB_HOST || '127.0.0.1';
 		const port = privateEnv.DB_PORT || process.env.DB_PORT || '27017';
 		const dbName = privateEnv.DB_NAME || process.env.DB_NAME || 'sveltycms_test';
-		
+
 		// Construct basic connection string for test
 		const connectionString = `mongodb://${host}:${port}/${dbName}`;
 
