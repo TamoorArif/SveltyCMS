@@ -14,15 +14,14 @@ permissions:
   contents: read
 
 env:
-  # Using a relative path within the workspace is more reliable for actions/cache
   BUN_CACHE_DIR: .bun-cache
 
 jobs:
 # --------------------------------
-# PREPARE & BUILD
+# 1. BOOTSTRAP (The Foundation)
 # --------------------------------
-  prepare:
-    name: 🏗️ Build & Prepare
+  bootstrap:
+    name: 🏁 Bootstrap
     runs-on: ubuntu-latest
     outputs:
       pw-version: ${{ steps.pw.outputs.version }}
@@ -40,82 +39,92 @@ jobs:
       - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
-      - run: bun run paraglide
-      - run: bun x svelte-kit sync
-      - run: bun run build
+      - name: Generate Core Files
+        run: |
+          bun run paraglide
+          bun x svelte-kit sync
+          mkdir -p config
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
       - name: Get Playwright version
         id: pw
         run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
 
-      - name: Upload Build Artifact
+      - name: Upload Workspace State
+        uses: actions/upload-artifact@v6
+        with:
+          name: workspace-state
+          include-hidden-files: true
+          path: |
+            src/paraglide
+            .svelte-kit
+            config/private.test.ts
+
+# --------------------------------
+# 2. PARALLEL QUALITY GATES
+# --------------------------------
+  build:
+    name: 🏗️ Build
+    needs: bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-state
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
+      
+      - run: bun run build
+      
+      - name: Upload Build Output
         uses: actions/upload-artifact@v6
         with:
           name: build-output
           include-hidden-files: true
           path: |
-            .svelte-kit
+            .svelte-kit/output
             build
 
-# --------------------------------
-# LINT & TYPECHECK
-# --------------------------------
   lint:
     name: 🔎 Lint & Check
-    needs: prepare
+    needs: bootstrap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
-      - name: Cache Bun packages
-        uses: actions/cache@v5
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-state
+      - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
-      - run: bun run paraglide
-      - run: bun x svelte-kit sync
-
-      - name: Setup Dummy Config
-        run: |
-          mkdir -p config
-          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
-
       - run: bun run lint
       - run: bun run check
 
-# --------------------------------
-# WHITEBOX UNIT TESTS
-# --------------------------------
   unit:
     name: ⚡ Unit Tests
-    needs: prepare
+    needs: bootstrap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
-      - name: Cache Bun packages
-        uses: actions/cache@v5
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-state
+      - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
-      - run: bun run paraglide
-      - run: bun x svelte-kit sync
-
-      - name: Setup Dummy Config
-        run: |
-          mkdir -p config
-          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
-
       - name: Run unit tests
         env:
           TEST_MODE: true
@@ -129,11 +138,11 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
 # --------------------------------
-# DATABASE TESTS
+# 3. DOWNSTREAM TESTS (Blocked by Quality)
 # --------------------------------
   db-tests:
     name: 🧪 DB (${{ matrix.db }})
-    needs: prepare
+    needs: [build, lint, unit]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -152,27 +161,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
-      - name: Cache Bun packages
-        uses: actions/cache@v5
+      - uses: actions/download-artifact@v6
         with:
-          path: ${{ env.BUN_CACHE_DIR }}
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
-      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+          name: workspace-state
       - uses: actions/download-artifact@v6
         with:
           name: build-output
-
-      - run: bun run paraglide
-      - run: bun x svelte-kit sync
-
-      - name: Setup Dummy Config
-        run: |
-          mkdir -p config
-          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
 
       - name: Wait for Services
         run: |
@@ -192,46 +191,33 @@ jobs:
           TEST_MODE: 'true'
         run: bun run scripts/run-integration-tests.ts
 
-# --------------------------------
-# E2E TESTS (SINGLE BROWSER)
-# --------------------------------
   e2e:
     name: 🎭 E2E
-    needs: prepare
+    needs: [build, lint, unit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
-      - name: Cache Bun packages
-        uses: actions/cache@v5
+      - uses: actions/download-artifact@v6
         with:
-          path: ${{ env.BUN_CACHE_DIR }}
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
-      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+          name: workspace-state
       - uses: actions/download-artifact@v6
         with:
           name: build-output
-
-      - run: bun run paraglide
-      - run: bun x svelte-kit sync
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
 
       - name: Cache Playwright
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ needs.prepare.outputs.pw-version }}
+          key: playwright-${{ runner.os }}-${{ needs.bootstrap.outputs.pw-version }}
 
       - name: Install browser
         run: bun x playwright install --with-deps chromium
-
-      - name: Setup Dummy Config
-        run: |
-          mkdir -p config
-          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
       - name: Start server
         run: |
