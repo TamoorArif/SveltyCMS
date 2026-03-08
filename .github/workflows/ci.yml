@@ -13,19 +13,28 @@ permissions:
   contents: read
 
 jobs:
-  # 1. QUALITY GATE & BUILD
-  # This job handles all DB-agnostic tasks in a single runner to reduce overhead.
   build:
     name: 🏗️ Quality Gate & Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint-typecheck, unit-build]
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
+      - name: Cache Bun dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --prefer-offline
 
       - name: Generate Types & Messages
         run: |
@@ -33,20 +42,31 @@ jobs:
           bun x svelte-kit sync
 
       - name: Lint & Type Check
+        if: matrix.task == 'lint-typecheck'
         run: |
           bun run lint
           bun run check
 
       - name: Unit Tests
+        if: matrix.task == 'unit-build'
         env:
           TEST_MODE: true
           NODE_ENV: test
-        run: bun run test:unit
+        run: bun run test:unit --coverage
+
+      - name: Upload Coverage
+        if: matrix.task == 'unit-build'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build Application
+        if: matrix.task == 'unit-build'
         run: bun run build
 
       - name: Upload Build Artifact
+        if: matrix.task == 'unit-build'
         uses: actions/upload-artifact@v6
         with:
           name: build-artifact
@@ -66,8 +86,6 @@ jobs:
             vite.config.ts
             svelte.config.js
 
-  # 2. SETUP PLAYWRIGHT
-  # Prime the browser cache once for the matrix.
   setup-browser:
     name: 🌐 Setup Playwright
     runs-on: ubuntu-latest
@@ -85,12 +103,12 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: bun x playwright install --with-deps chromium
+        run: bun x playwright install --with-deps chromium firefox webkit
 
-  # 3. DATABASE TEST MATRIX (Integration + E2E)
-  # Consolidated matrix to run all DB-dependent tests in one leg per DB.
   database-tests:
     name: '🧪 Tests (${{ matrix.database }})'
     needs: [build, setup-browser]
@@ -101,6 +119,7 @@ jobs:
         database: [mongodb, mariadb, postgresql, sqlite]
 
     services:
+      # We define the service; it will be ignored for SQLite
       db:
         image: ${{ matrix.database == 'mongodb' && 'mongo:latest' || matrix.database == 'mariadb' && 'mariadb:11' || matrix.database == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
         env:
@@ -139,13 +158,20 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-
-          restore-keys: ${{ runner.os }}-playwright-
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: ⏳ Wait for Services
         run: |
-          if [ "${{ matrix.database }}" == "mongodb" ]; then bun x wait-on tcp:127.0.0.1:27017; fi
-          if [ "${{ matrix.database }}" == "mariadb" ]; then bun x wait-on tcp:127.0.0.1:3306; fi
-          if [ "${{ matrix.database }}" == "postgresql" ]; then bun x wait-on tcp:127.0.0.1:5432; fi
+          if [ "${{ matrix.database }}" == "mongodb" ]; then
+            bun x wait-on tcp:127.0.0.1:27017
+          fi
+          if [ "${{ matrix.database }}" == "mariadb" ]; then
+            bun x wait-on tcp:127.0.0.1:3306
+          fi
+          if [ "${{ matrix.database }}" == "postgresql" ]; then
+            bun x wait-on tcp:127.0.0.1:5432
+          fi
           bun x wait-on tcp:127.0.0.1:1025
           sleep 5
 
@@ -158,19 +184,21 @@ jobs:
         run: bun run scripts/run-integration-tests.ts --filter="${{ matrix.database }}"
 
       - name: 🎭 Run E2E Tests (Playwright)
-        # Skip E2E for SQLite if redundant, or run all.
+        if: matrix.database != 'sqlite'
         env:
           DB_HOST: 127.0.0.1
           DB_NAME: sveltycms_test
           DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
           DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
         run: |
-          # The integration tests already started the preview server, but it's killed on cleanup.
-          # We start it again for Playwright legs.
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-          bun x playwright test tests/e2e --project=chromium
+          bun x playwright test tests/e2e --project=chromium --project=firefox --project=webkit
         timeout-minutes: 15
+
+      - name: Cleanup Preview Server
+        if: always()
+        run: pkill -f "bun run preview" || true
 
       - name: Upload Reports on Failure
         if: failure()
