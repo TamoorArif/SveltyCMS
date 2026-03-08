@@ -15,7 +15,7 @@
  * - insertMany
  */
 
-import { isoDateStringToDate, nowISODateString } from '@src/utils/date-utils';
+import { nowISODateString } from '@src/utils/date-utils';
 import { safeQuery } from '@src/utils/security/safe-query';
 import { count, eq, inArray } from 'drizzle-orm';
 import type { BaseEntity, DatabaseId, DatabaseResult, QueryFilter, EntityCreate, EntityUpdate } from '../../db-interface';
@@ -164,7 +164,7 @@ export class CrudModule {
 		return this.core.wrap(async () => {
 			const table = this.core.getTable(collection);
 			const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
-			const now = isoDateStringToDate(nowISODateString());
+			const now = new Date(nowISODateString());
 			const packed = this.packData(table as unknown as Record<string, unknown>, {
 				...(data as unknown as Record<string, unknown>),
 				_id: id,
@@ -198,7 +198,7 @@ export class CrudModule {
 			const where = this.core.mapQuery(table as unknown as Record<string, unknown>, query as Record<string, unknown>) as
 				| import('drizzle-orm').SQL
 				| undefined;
-			const now = isoDateStringToDate(nowISODateString());
+			const now = new Date(nowISODateString());
 			const packed = this.packData(table as unknown as Record<string, unknown>, { ...(data as unknown as Record<string, unknown>), updatedAt: now });
 
 			await this.db
@@ -318,7 +318,7 @@ export class CrudModule {
 				return [];
 			}
 			const table = this.core.getTable(collection);
-			const now = isoDateStringToDate(nowISODateString());
+			const now = new Date(nowISODateString());
 			const values = data.map((d) => {
 				const id = (d as Partial<T>)._id || (utils.generateId() as DatabaseId);
 				return this.packData(table as unknown as Record<string, unknown>, {
@@ -356,7 +356,7 @@ export class CrudModule {
 			const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
 				| import('drizzle-orm').SQL
 				| undefined;
-			const now = nowISODateString();
+			const now = new Date(nowISODateString());
 			const result = await this.db
 				.update(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 				.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
