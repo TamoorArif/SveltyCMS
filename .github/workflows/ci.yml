@@ -13,64 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  # security:
-  #   name: 🛡️ Security (CodeQL)
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     actions: read
-  #     contents: read
-  #     security-events: write
-  #   steps:
-  #     - uses: actions/checkout@v6
-
-  #     # Initialize CodeQL using v4. The correct unified identifier for JS/TS is 'javascript'
-  #     - name: Initialize CodeQL
-  #       uses: github/codeql-action/init@v4
-  #       with:
-  #         languages: javascript
-
-  #     - name: Perform CodeQL Analysis
-  #       uses: github/codeql-action/analyze@v4
-
-  unit-tests:
-    name: ⚡ Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Sync SvelteKit
-        run: |
-          bun x svelte-kit sync
-          # Ensure generated types are fresh
-          rm -rf .svelte-kit/types
-          bun x svelte-kit sync
-      - name: Compile Paraglide
-        run: bun run paraglide
-      - name: Generate Config Stubs
-        run: |
-          mkdir -p config
-          echo "export const privateEnv: any = {
-            DB_TYPE: process.env.DB_TYPE || '',
-            DB_HOST: process.env.DB_HOST || '127.0.0.1',
-            DB_PORT: process.env.DB_PORT || (process.env.DB_TYPE === 'mongodb' ? '27017' : process.env.DB_TYPE === 'mariadb' ? '3306' : '5432'),
-            DB_NAME: process.env.DB_NAME || 'sveltycms_test',
-            DB_USER: process.env.DB_USER || 'test',
-            DB_PASSWORD: process.env.DB_PASSWORD || 'test'
-          }" > config/private.test.ts
-      - name: Run Linter
-        run: bun run lint
-      - name: Run Type Check
-        run: bun run check
-      - name: Run Unit Tests
-        env:
-          TEST_MODE: true
-          NODE_ENV: test
-        run: bun run test:unit
-
-  setup-browser:
-    name: 🌐 Setup Playwright
+  setup:
+    name: 🏗️ Setup & Environment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -89,15 +33,11 @@ jobs:
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bun x playwright install --with-deps chromium
-
-  build:
-    name: 🏗️ Production Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Sync SvelteKit
+        run: |
+          bun x svelte-kit sync
+          rm -rf .svelte-kit/types
+          bun x svelte-kit sync
       - name: Compile Paraglide
         run: bun run paraglide
       - name: Generate Config Stubs
@@ -106,22 +46,61 @@ jobs:
           echo "export const privateEnv: any = {
             DB_TYPE: process.env.DB_TYPE || '',
             DB_HOST: process.env.DB_HOST || '127.0.0.1',
-            DB_PORT: process.env.DB_PORT || (process.env.DB_TYPE === 'mongodb' ? '27017' : process.env.DB_TYPE === 'mariadb' ? '3306' : '5432'),
+            DB_PORT: process.env.DB_PORT || '27017',
             DB_NAME: process.env.DB_NAME || 'sveltycms_test',
             DB_USER: process.env.DB_USER || 'test',
             DB_PASSWORD: process.env.DB_PASSWORD || 'test'
           }" > config/private.test.ts
-      - name: Sync SvelteKit
-        run: |
-          bun x svelte-kit sync
-          rm -rf .svelte-kit/types
-          bun x svelte-kit sync
-      - name: Build
-        run: bun run build
-      - name: Upload Artifact
+      - name: Upload Workspace
         uses: actions/upload-artifact@v6
         with:
-          name: sveltycms-build
+          name: workspace
+          include-hidden-files: true
+          path: |
+            .
+            !.git
+            !node_modules
+
+  unit-tests:
+    name: ⚡ Unit Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oven-sh/setup-bun@v2
+      - name: Download Workspace
+        uses: actions/download-artifact@v6
+        with:
+          name: workspace
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run Linter
+        run: bun run lint
+      - name: Run Type Check
+        run: bun run check
+      - name: Run Unit Tests
+        env:
+          TEST_MODE: true
+          NODE_ENV: test
+        run: bun run test:unit
+
+  build:
+    name: 🏗️ Production Build
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oven-sh/setup-bun@v2
+      - name: Download Workspace
+        uses: actions/download-artifact@v6
+        with:
+          name: workspace
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-artifact
           include-hidden-files: true
           path: |
             .svelte-kit/output
@@ -149,7 +128,6 @@ jobs:
 
     services:
       db:
-        # Flattened to single line to prevent illegal trailing spaces during evaluation
         image: ${{ matrix.database == 'mongodb' && 'mongo:latest' || matrix.database == 'mariadb' && 'mariadb:11' || matrix.database == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
         env:
           MARIADB_ROOT_PASSWORD: root
@@ -161,12 +139,9 @@ jobs:
           POSTGRES_DB: sveltycms_test
         ports:
           - ${{ matrix.database == 'mongodb' && '27017:27017' || matrix.database == 'mariadb' && '3306:3306' || matrix.database == 'postgresql' && '5432:5432' || '6379:6379' }}
-
       mailhog:
         image: mailhog/mailhog
         ports:
-          # CRITICAL: YAML evaluates XX:XX as a sexagesimal (base-60) integer without quotes!
-          # This causes fatal validation errors. They MUST be strings.
           - '1025:1025'
           - '8025:8025'
 
@@ -174,32 +149,23 @@ jobs:
       DB_TYPE: ${{ matrix.database }}
       TEST_MODE: 'true'
       API_BASE_URL: http://localhost:4173
-      # Specific DB configs for scripts
-      MONGODB_URI: mongodb://127.0.0.1:27017/sveltycms_test
-      MARIADB_URL: mysql://test:test@127.0.0.1:3306/sveltycms_test
-      POSTGRESQL_URL: postgresql://test:test@127.0.0.1:5432/sveltycms_test
 
     steps:
-      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-
       - name: Download Build
         uses: actions/download-artifact@v6
         with:
-          name: sveltycms-build
-
+          name: build-artifact
       - name: Install Runtime Deps
         run: bun install --frozen-lockfile
-
       - name: ⏳ Wait for Services
         run: |
           if [ "${{ matrix.database }}" == "mongodb" ]; then bun x wait-on tcp:127.0.0.1:27017; fi
           if [ "${{ matrix.database }}" == "mariadb" ]; then bun x wait-on tcp:127.0.0.1:3306; fi
           if [ "${{ matrix.database }}" == "postgresql" ]; then bun x wait-on tcp:127.0.0.1:5432; fi
           bun x wait-on tcp:127.0.0.1:1025
-          sleep 10 # Extra time for DB initialization
-
-      - name: 🧪 Run Black-Box Tests
+          sleep 10
+      - name: 🧪 Run Integration Tests
         env:
           DB_TYPE: ${{ matrix.database }}
           DB_HOST: 127.0.0.1
@@ -207,18 +173,12 @@ jobs:
           DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
           DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
           TEST_MODE: true
-        run: |
-          # 1. Start preview server in background
-          bun run preview > preview.log 2>&1 &
-          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-
-          # 2. Run the integration tests (includes fast setup via scripts/setup-system.ts)
-          bun run scripts/run-integration-tests.ts
+        run: bun run scripts/run-integration-tests.ts
         timeout-minutes: 15
 
   e2e:
     name: '🎭 E2E (${{ matrix.database }})'
-    needs: [build, setup-browser]
+    needs: [build, setup]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -241,44 +201,35 @@ jobs:
       mailhog:
         image: mailhog/mailhog
         ports:
-          # Same fix for base-60 integer collision
           - '1025:1025'
           - '8025:8025'
 
     steps:
-      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-
       - name: Download Build
         uses: actions/download-artifact@v6
         with:
-          name: sveltycms-build
-
+          name: build-artifact
       - name: Install Runtime Deps
         run: bun install --frozen-lockfile
-
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
-
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
-
       - name: Install Playwright Browsers
         run: bun x playwright install --with-deps chromium
-
       - name: ⏳ Wait for Services
         run: |
           if [ "${{ matrix.database }}" == "mongodb" ]; then bun x wait-on tcp:127.0.0.1:27017; fi
           if [ "${{ matrix.database }}" == "mariadb" ]; then bun x wait-on tcp:127.0.0.1:3306; fi
           if [ "${{ matrix.database }}" == "postgresql" ]; then bun x wait-on tcp:127.0.0.1:5432; fi
           bun x wait-on tcp:127.0.0.1:1025
-          sleep 10 # Extra time for DB initialization
-
+          sleep 10
       - name: 🎭 Run Playwright E2E
         env:
           DB_TYPE: ${{ matrix.database }}
@@ -293,7 +244,6 @@ jobs:
           bun x playwright test tests/e2e/setup-wizard.spec.ts --project=chromium
           bun x playwright test tests/e2e/role-based-access.spec.ts --project=chromium
         timeout-minutes: 20
-
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v6
         if: always()
@@ -301,7 +251,6 @@ jobs:
           name: playwright-report-${{ matrix.database }}
           path: playwright-report/
           retention-days: 14
-
       - name: Upload Server Logs
         if: failure()
         uses: actions/upload-artifact@v6

@@ -70,6 +70,24 @@ async function main() {
 		}
 		console.log('✅ System configured successfully via API.');
 
+		// 1.6. RESTART SERVER to pick up new config/private.test.ts (CRITICAL for Black-Box)
+		console.log('🔄 Restarting preview server to apply new configuration...');
+		if (previewProcess) {
+			previewProcess.kill('SIGTERM');
+			// Wait for it to definitely release the port
+			await new Promise((r) => setTimeout(r, 2000));
+		}
+
+		console.log('📦 Re-starting preview server with NEW configuration...');
+		previewProcess = spawn('bun', ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
+			cwd: rootDir,
+			stdio: 'inherit',
+			shell: true,
+			env: { ...process.env, TEST_MODE: 'true' }
+		});
+		await waitForServer();
+		console.log('✅ Server restarted and ready.');
+
 		// 2. Discover tests
 		const testFiles = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
 		const filesToRun = testFiles.length > 0 ? testFiles : findTestFiles(join(rootDir, 'tests/integration'));
