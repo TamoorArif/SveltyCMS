@@ -194,7 +194,7 @@
 		"ws": "^8.19.0"
 	},
 	"optionalDependencies": {
-		"better-sqlite3": "^11.3.0",
+		"better-sqlite3": "^11.10.0",
 		"mariadb": "^3.5.2",
 		"mongoose": "^9.2.4",
 		"mysql2": "^3.19.0",
