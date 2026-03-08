@@ -2,7 +2,7 @@ import { mock } from 'bun:test';
 
 /**
  * MASTER UNIT TEST SETUP - VERSION 7.1 (STABILIZED PHOENIX)
- * Combines high-fidelity mocks from V6.0 with the architectural 
+ * Combines high-fidelity mocks from V6.0 with the architectural
  * improvements (hoisting, configurable globals) of V7.0.
  */
 
