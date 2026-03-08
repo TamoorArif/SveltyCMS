@@ -53,15 +53,12 @@ jobs:
             build
 
 # --------------------------------
-# QUALITY GATE (LINT & UNIT)
+# LINT & TYPECHECK
 # --------------------------------
-  quality:
-    name: 🔎 Quality (${{ matrix.task }})
+  lint:
+    name: 🔎 Lint & Check
     needs: prepare
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        task: [lint, unit]
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -79,12 +76,44 @@ jobs:
           mkdir -p config
           echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
-      - name: Run Task
+      - run: bun run lint
+      - run: bun run check
+
+# --------------------------------
+# WHITEBOX UNIT TESTS
+# --------------------------------
+  unit:
+    name: ⚡ Unit Tests
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_INSTALL_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - run: bun install --frozen-lockfile
+      - run: bun run paraglide
+      - run: bun x svelte-kit sync
+
+      - name: Setup Dummy Config
+        run: |
+          mkdir -p config
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
+
+      - name: Run unit tests
         env:
           TEST_MODE: true
-        run: |
-          if [ "${{ matrix.task }}" == "lint" ]; then bun run lint && bun run check; fi
-          if [ "${{ matrix.task }}" == "unit" ]; then bun run test:unit; fi
+        run: bun run test:unit --coverage
+
+      - name: Upload Coverage
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
 # --------------------------------
 # DATABASE TESTS
