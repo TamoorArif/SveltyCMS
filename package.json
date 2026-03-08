@@ -161,7 +161,6 @@
 		"@types/serialize-javascript": "^5.0.4",
 		"@zag-js/svelte": "^1.35.3",
 		"argon2": "^0.44.0",
-		"better-sqlite3": "^7.6.13",
 		"better-svelte-email": "^1.4.0",
 		"buffer": "^6.0.3",
 		"chart.js": "^4.5.1",
@@ -195,6 +194,7 @@
 		"ws": "^8.19.0"
 	},
 	"optionalDependencies": {
+		"better-sqlite3": "^11.3.0",
 		"mariadb": "^3.5.2",
 		"mongoose": "^9.2.4",
 		"mysql2": "^3.19.0",
