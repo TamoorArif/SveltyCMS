@@ -1,12 +1,13 @@
 import { mock } from 'bun:test';
 
+// PRE-INITIALIZATION: Set globals that might be checked during module imports
+(globalThis as any).browser = true;
+(globalThis as any).dev = true;
+
 // 1. Svelte 5 Rune Mocks - Enhanced for real proxy behavior
-// This ensures that updates to properties are reflected in the state
 const stateMock = (v: any) => {
 	if (typeof v === 'object' && v !== null) {
-		// If it's already a Proxy or a special class, don't double-wrap if it's SvelteMap/Set
 		if (v instanceof Map || v instanceof Set) return v;
-
 		if (Array.isArray(v)) {
 			return new Proxy(v, {
 				get(target, prop) {
@@ -37,14 +38,12 @@ const stateMock = (v: any) => {
 
 (globalThis as any).$state = stateMock;
 (globalThis as any).$state.snapshot = (v: any) => v;
-// $derived should handle both functions and values
 const derivedMock = (fn: any) => {
 	const obj = {
 		get value() {
 			return typeof fn === 'function' ? fn() : fn;
 		}
 	};
-	// Svelte 5 deriveds are often used via .value in legacy-ish code or just as properties
 	return new Proxy(obj, {
 		get(target, prop) {
 			if (prop === 'value') return target.value;
@@ -67,8 +66,36 @@ const derivedMock = (fn: any) => {
 (globalThis as any).$bindable = (v: any) => v;
 (globalThis as any).$inspect = () => ({ with: () => {} });
 
-// 2. Module Mocks
-// CRITICAL: browser must be true for stores to function
+// 2. Core Svelte Mocks (Aggressive)
+const svelteMock = {
+	untrack: (fn: any) => fn(),
+	onMount: (fn: any) => fn?.(),
+	onDestroy: (fn: any) => fn?.(),
+	beforeUpdate: (fn: any) => fn?.(),
+	afterUpdate: (fn: any) => fn?.(),
+	tick: () => Promise.resolve(),
+	getAllContexts: () => new Map(),
+	getContext: () => undefined,
+	setContext: (_k: any, v: any) => v,
+	hasContext: () => false,
+	createContext: () => ({})
+};
+
+mock.module('svelte', () => svelteMock);
+mock.module('svelte/internal', () => ({
+	noop: () => {},
+	safe_not_equal: () => true,
+	subscribe: () => () => {},
+	run_all: () => {},
+	is_function: (v: any) => typeof v === 'function'
+}));
+
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: class extends Map {},
+	SvelteSet: class extends Set {}
+}));
+
+// 3. SvelteKit Mocks
 const envMock = {
 	browser: true,
 	dev: true,
@@ -76,8 +103,6 @@ const envMock = {
 	version: '1.0.0'
 };
 mock.module('$app/environment', () => envMock);
-// Also set on globalThis for absolute certainty in all contexts
-(globalThis as any).browser = true;
 
 mock.module('$app/navigation', () => ({
 	goto: mock(() => Promise.resolve()),
@@ -101,33 +126,7 @@ mock.module('$app/forms', () => ({
 
 mock.module('$app/paths', () => ({ base: '', assets: '' }));
 
-mock.module('svelte', () => ({
-	untrack: (fn: any) => fn(),
-	onMount: (fn: any) => fn?.(),
-	onDestroy: (fn: any) => fn?.(),
-	beforeUpdate: (fn: any) => fn?.(),
-	afterUpdate: (fn: any) => fn?.(),
-	tick: () => Promise.resolve(),
-	getAllContexts: () => new Map(),
-	getContext: () => undefined,
-	setContext: (_k: any, v: any) => v,
-	hasContext: () => false,
-	createContext: () => ({})
-}));
-
-mock.module('svelte/internal', () => ({
-	noop: () => {},
-	safe_not_equal: () => true,
-	subscribe: () => () => {},
-	run_all: () => {},
-	is_function: (v: any) => typeof v === 'function'
-}));
-
-mock.module('svelte/reactivity', () => ({
-	SvelteMap: class extends Map {},
-	SvelteSet: class extends Set {}
-}));
-
+// 4. External Library Mocks
 mock.module('json-render-svelte', () => ({
 	schema: {
 		createCatalog: () => ({ components: {}, actions: {} })
@@ -144,7 +143,7 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 	}
 }));
 
-// 3. Browser Globals
+// 5. Browser Globals
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() {
@@ -221,7 +220,7 @@ if (typeof window === 'undefined') {
 	(globalThis as any).cancelAnimationFrame = (globalThis as any).window.cancelAnimationFrame;
 }
 
-// 4. AppError injection
+// 6. Application Logic Mocks (Singletons and Services)
 class AppErrorStub extends Error {
 	status: number;
 	code: string;
@@ -245,7 +244,6 @@ import('../../src/utils/error-handling')
 	})
 	.catch(() => {});
 
-// 5. Logger Mock
 const mockLogger = {
 	fatal: mock(() => {}),
 	error: mock(() => {}),
@@ -260,7 +258,6 @@ const mockLogger = {
 mock.module('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
 mock.module('@utils/logger.server', () => ({ logger: mockLogger, default: mockLogger }));
 
-// 6. Settings Service Mock
 const settingsMock = {
 	getPrivateSettingSync: mock((key: string) => {
 		const env = (globalThis as any).privateEnv || (globalThis as any).__privateEnv;
@@ -292,7 +289,6 @@ const settingsMock = {
 };
 mock.module('@src/services/settings-service', () => settingsMock);
 
-// 7. Widget Scanner Mock
 mock.module('@src/widgets/scanner', () => ({
 	coreModules: {},
 	customModules: {},
@@ -300,7 +296,6 @@ mock.module('@src/widgets/scanner', () => ({
 	getWidgetNameFromPath: (path: string) => path.split('/').at(-2) || null
 }));
 
-// 8. Jackson Mock
 mock.module('@boxyhq/saml-jackson', () => ({
 	default: mock(() =>
 		Promise.resolve({
@@ -310,7 +305,6 @@ mock.module('@boxyhq/saml-jackson', () => ({
 	)
 }));
 
-// 9. Database State Mock
 const configStateMock = {
 	get privateEnv() {
 		return (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' };
@@ -327,7 +321,6 @@ const configStateMock = {
 };
 mock.module('@src/databases/config-state', () => configStateMock);
 
-// 10. Metrics Service Mock
 const metricsMock = {
 	incrementRequests: mock(() => {}),
 	incrementErrors: mock(() => {}),
@@ -352,7 +345,6 @@ const metricsMock = {
 (globalThis as any).metricsService = metricsMock;
 mock.module('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
 
-// 11. Cache Service Mock
 const cacheMock = {
 	get: mock(async () => null),
 	set: mock(async () => {}),
@@ -380,7 +372,6 @@ mock.module('@src/databases/cache-service', () => ({
 	REDIS_TTL_S: 1
 }));
 
-// 12. Database Adapter and Audit Log Mocks
 const mockAuditLog = { log: mock(() => Promise.resolve()), getLogs: mock(() => Promise.resolve([])) };
 const mockDbAdapter = {
 	auth: {
@@ -426,7 +417,6 @@ mock.module('@src/services/audit/audit-log-service', () => ({
 	default: mockAuditLog
 }));
 
-// 13. Event Bus Mock
 const mockEventBus = {
 	on: mock(() => {}),
 	off: mock(() => {}),
@@ -437,7 +427,6 @@ const mockEventBus = {
 (globalThis as any).mockEventBus = mockEventBus;
 mock.module('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
 
-// 14. Setup Check Mock
 let isSetupCompleteValue = true;
 const mockSetupCheck = {
 	isSetupComplete: mock(() => isSetupCompleteValue),
@@ -451,3 +440,4 @@ mock.module('@utils/setup-check', () => mockSetupCheck);
 (globalThis as any).mockSetupCheck = mockSetupCheck;
 
 console.log('✅ Fresh Master Test Setup Loaded');
+console.log('Diagnostic - browser:', (globalThis as any).browser);
