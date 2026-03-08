@@ -27,6 +27,9 @@
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 
+// Test-friendly browser check
+const isBrowser = browser || (typeof process !== 'undefined' && process.env.TEST_MODE === 'true');
+
 // Predefined loading operations for consistency
 export const loadingOperations = {
 	navigation: 'navigation',
@@ -100,7 +103,7 @@ export class LoadingStore {
 	 */
 	startLoading(reason: string, context?: string, timeout: number = this._maxTimeout) {
 		// SSR guard: Only run in browser
-		if (!browser) {
+		if (!isBrowser) {
 			return;
 		}
 
@@ -142,7 +145,7 @@ export class LoadingStore {
 	 */
 	stopLoading(reason: string) {
 		// SSR guard
-		if (!browser) {
+		if (!isBrowser) {
 			return;
 		}
 
@@ -224,7 +227,7 @@ export class LoadingStore {
 
 	// Forcefully clear all loading states (emergency use only)
 	clearLoading() {
-		if (!browser) {
+		if (!isBrowser) {
 			return;
 		}
 
@@ -279,7 +282,7 @@ export class LoadingStore {
 
 	// Get loading statistics (for debugging)
 	getStats() {
-		if (!browser) {
+		if (!isBrowser) {
 			return null;
 		}
 

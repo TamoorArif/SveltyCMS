@@ -8,8 +8,11 @@
  * - promise loading
  */
 
-import { browser } from '$app/environment';
+import { isBrowser } from '$app/environment';
 import { screen, ScreenSize } from './screen-size-store.svelte';
+
+// Test-friendly isBrowser check
+const isBrowser = isBrowser || (typeof process !== 'undefined' && process.env.TEST_MODE === 'true');
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
@@ -91,14 +94,14 @@ class ToastStore {
 	}
 
 	constructor() {
-		if (browser) {
+		if (isBrowser) {
 			this.hydrate();
 		}
 	}
 
 	/** Initialize navigation handlers (must be called from onMount) */
 	public init(): void {
-		if (!browser || this.handlersInitialized) return;
+		if (!isBrowser || this.handlersInitialized) return;
 		this.handlersInitialized = true;
 		// Navigation handlers are now set up in +layout.svelte to avoid lifecycle errors
 	}
@@ -206,7 +209,7 @@ class ToastStore {
 	}
 
 	flash(options: Omit<ToastOptions, 'createdAt' | 'remainingTime'>): void {
-		if (!browser) return;
+		if (!isBrowser) return;
 
 		const flashData = {
 			...options,
@@ -217,7 +220,7 @@ class ToastStore {
 	}
 
 	checkFlash(): void {
-		if (!browser) return;
+		if (!isBrowser) return;
 
 		const raw = sessionStorage.getItem(FLASH_KEY);
 		if (!raw) return;
@@ -301,7 +304,7 @@ class ToastStore {
 
 	// Error boundary handling for enterprise robustness
 	setupErrorBoundary(): void {
-		if (!browser) return;
+		if (!isBrowser) return;
 
 		window.addEventListener('error', (e) => {
 			this.error(e.message, {
@@ -417,7 +420,7 @@ class ToastStore {
 	}
 
 	private persist(): void {
-		if (!browser) return;
+		if (!isBrowser) return;
 
 		const savable = this.toasts
 			.filter((t) => t.persistent || t.remainingTime > 1000)
