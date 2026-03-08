@@ -44,10 +44,10 @@ async function main() {
 			await waitForServer();
 		}
 
-		// 1.5. Run Setup Wizard via Playwright to generate config naturally (Black-Box)
-		console.log('⚙️ Running Playwright Setup Wizard to configure system...');
+		// 1.5. Run Fast System Setup (Direct API calls, no browser)
+		console.log('⚙️ Running Fast System Setup to configure system...');
 		const setupResult = await new Promise<number>((resolve) => {
-			const pwProcess = spawn('bun', ['x', 'playwright', 'test', 'tests/e2e/setup-wizard.spec.ts', '--project=chromium'], {
+			const setupProc = spawn('bun', ['run', 'scripts/setup-system.ts'], {
 				cwd: rootDir,
 				stdio: 'inherit',
 				shell: true,
@@ -56,18 +56,19 @@ async function main() {
 					DB_TYPE: process.env.DB_TYPE || 'mongodb',
 					DB_HOST: process.env.DB_HOST || 'localhost',
 					DB_NAME: process.env.DB_NAME || 'sveltycms_test',
-					TEST_MODE: 'true'
+					TEST_MODE: 'true',
+					API_BASE_URL
 				}
 			});
-			pwProcess.on('close', resolve);
+			setupProc.on('close', resolve);
 		});
 
 		if (setupResult !== 0) {
-			console.error('❌ Playwright setup failed. Cannot proceed with integration tests.');
+			console.error('❌ Fast setup failed. Cannot proceed with integration tests.');
 			await cleanup(1);
-			return; // TS narrowing
+			return;
 		}
-		console.log('✅ System configured successfully via UI.');
+		console.log('✅ System configured successfully via API.');
 
 		// 2. Discover tests
 		const testFiles = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));

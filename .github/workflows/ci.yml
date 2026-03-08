@@ -140,7 +140,7 @@ jobs:
 
   integration:
     name: '🔌 Integration (${{ matrix.database }})'
-    needs: [build, setup-browser]
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -191,20 +191,6 @@ jobs:
       - name: Install Runtime Deps
         run: bun install --frozen-lockfile
 
-      - name: Get Playwright version
-        id: playwright-version
-        run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
-
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
-
-      - name: Install Playwright Browsers
-        run: bun x playwright install --with-deps chromium
-
       - name: ⏳ Wait for Services
         run: |
           if [ "${{ matrix.database }}" == "mongodb" ]; then bun x wait-on tcp:127.0.0.1:27017; fi
@@ -226,10 +212,7 @@ jobs:
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
 
-          # 2. Run Setup Wizard via Playwright to generate config/private.test.ts naturally
-          bun x playwright test tests/e2e/setup-wizard.spec.ts --project=chromium
-
-          # 3. Now run the integration tests against the configured system
+          # 2. Run the integration tests (includes fast setup via scripts/setup-system.ts)
           bun run scripts/run-integration-tests.ts
         timeout-minutes: 15
 
