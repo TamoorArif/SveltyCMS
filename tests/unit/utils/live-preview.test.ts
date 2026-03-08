@@ -10,55 +10,57 @@
  * - Cleanup
  */
 
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { createLivePreviewListener } from '@src/utils/use-live-preview';
 
 describe('LivePreview Utility', () => {
 	let mockOnUpdate: any;
-	let addEventListenerSpy: any;
-	let removeEventListenerSpy: any;
-	let postMessageSpy: any;
-	let originalWindow: any;
 
 	beforeEach(() => {
 		mockOnUpdate = mock(() => {});
-		originalWindow = (globalThis as any).window;
 
-		// Mock global window objects
-		addEventListenerSpy = mock((_event, _cb) => {});
-		removeEventListenerSpy = mock((_event, _cb) => {});
-		postMessageSpy = mock((_msg, _origin) => {});
+		// Spy/Mock individual properties instead of replacing window
+		(window as any).addEventListener = mock((_event, _cb) => {});
+		(window as any).removeEventListener = mock((_event, _cb) => {});
 
-		(globalThis as any).window = {
-			...originalWindow,
-			addEventListener: addEventListenerSpy,
-			removeEventListener: removeEventListenerSpy,
-			parent: {
-				postMessage: postMessageSpy
-			}
-		};
-		// Set parent !== window to trigger init message
-		(globalThis as any).window.parent.window = {};
+		// window.parent is often readonly, but we try to mock postMessage on it
+		const mockPostMessage = mock((_msg, _origin) => {});
+
+		// If window.parent is window (which it is in Bun), we mock window.postMessage
+		(window as any).postMessage = mockPostMessage;
 	});
 
 	it('should register a message listener and signal readiness', () => {
+		// Mock window.parent to be different from window to trigger the init message
+		const originalParentObj = window.parent;
+		const mockPostMessage = mock();
+		Object.defineProperty(window, 'parent', {
+			value: { postMessage: mockPostMessage },
+			configurable: true
+		});
+
 		const { destroy } = createLivePreviewListener({ onUpdate: mockOnUpdate });
 
-		expect(addEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
-		expect(postMessageSpy).toHaveBeenCalledWith({ type: 'svelty:init' }, '*');
+		expect(window.addEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+		expect(mockPostMessage).toHaveBeenCalledWith({ type: 'svelty:init' }, '*');
 
 		destroy();
-		expect(removeEventListenerSpy).toHaveBeenCalledWith('message', expect.any(Function));
+		expect(window.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+
+		// Restore
+		Object.defineProperty(window, 'parent', {
+			value: originalParentObj,
+			configurable: true
+		});
 	});
 
 	it('should call onUpdate when a valid message is received', () => {
 		let messageHandler: any;
-		addEventListenerSpy = mock((event, cb) => {
+		(window as any).addEventListener = mock((event, cb) => {
 			if (event === 'message') {
 				messageHandler = cb;
 			}
 		});
-		(globalThis as any).window.addEventListener = addEventListenerSpy;
 
 		createLivePreviewListener({ onUpdate: mockOnUpdate });
 
@@ -77,12 +79,11 @@ describe('LivePreview Utility', () => {
 
 	it('should validate origin if specified', () => {
 		let messageHandler: any;
-		addEventListenerSpy = mock((event, cb) => {
+		(window as any).addEventListener = mock((event, cb) => {
 			if (event === 'message') {
 				messageHandler = cb;
 			}
 		});
-		(globalThis as any).window.addEventListener = addEventListenerSpy;
 
 		createLivePreviewListener({
 			onUpdate: mockOnUpdate,
@@ -102,9 +103,5 @@ describe('LivePreview Utility', () => {
 			origin: 'https://trusted.com'
 		});
 		expect(mockOnUpdate).toHaveBeenCalledWith({ ok: true });
-	});
-
-	afterEach(() => {
-		(globalThis as any).window = originalWindow;
 	});
 });

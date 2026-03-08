@@ -1,37 +1,100 @@
 import { mock } from 'bun:test';
 
 /**
- * AGGRESSIVE UNIT TEST SETUP - VERSION 5.0
- * Simplified for maximum stability in CI (Linux)
+ * AGGRESSIVE UNIT TEST SETUP - VERSION 6.0 (FINAL SHIELD)
+ * Designed to survive CI (Linux) environment differences by locking down globals.
  */
 
-// 1. ABSOLUTE ENVIRONMENT ENFORCEMENT
-// Set these at the very top to ensure any subsequent module evaluations see them.
-const browser = true;
-const dev = true;
+// 1. ABSOLUTE ENVIRONMENT LOCKDOWN
+// We use Object.defineProperty with configurable: false to prevent Svelte or Bun from overriding these.
+const lockGlobal = (name: string, value: any) => {
+	Object.defineProperty(globalThis, name, {
+		value,
+		writable: false,
+		configurable: false,
+		enumerable: true
+	});
+};
 
-(globalThis as any).browser = browser;
-(globalThis as any).dev = dev;
-(globalThis as any).building = false;
-
-// Force define them to prevent any module from overriding
-Object.defineProperty(globalThis, 'browser', { value: true, writable: true });
-Object.defineProperty(globalThis, 'dev', { value: true, writable: true });
+lockGlobal('browser', true);
+lockGlobal('dev', true);
+lockGlobal('building', false);
 
 process.env.BROWSER = 'true';
 process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
-// 2. SVELTE 5 RUNES - Simple Identity Mocks (Most stable for unit tests)
-const runify = (v: any) => (typeof v === 'function' ? v() : v);
+// 2. SVELTE 5 RUNES - High-Fidelity functional shims
 
-const $state = Object.assign(runify, {
-	snapshot: (v: any) => JSON.parse(JSON.stringify(v))
-});
+// Robust $state mock
+const $state = Object.assign(
+	(v: any) => {
+		if (typeof v === 'object' && v !== null) {
+			if (v instanceof Map || v instanceof Set) return v;
+			// Simple proxy for reactive property access
+			return new Proxy(v, {
+				get(target, prop) {
+					const val = target[prop];
+					return typeof val === 'function' ? val.bind(target) : val;
+				},
+				set(target, prop, value) {
+					target[prop] = value;
+					return true;
+				}
+			});
+		}
+		return v;
+	},
+	{
+		snapshot: (v: any) => JSON.parse(JSON.stringify(v))
+	}
+);
 
-const $derived = Object.assign(runify, {
-	by: runify
-});
+// Robust $derived mock with .by support
+const $derived = Object.assign(
+	(fn: any) => {
+		const getter = typeof fn === 'function' ? fn : () => fn;
+		return new Proxy(
+			{},
+			{
+				get(_, prop) {
+					const val = getter();
+					if (prop === 'value') return val;
+					if (prop === 'valueOf') return () => val;
+					if (prop === 'toString') return () => String(val);
+					// If the value is an object, allow access to its properties
+					if (val !== null && typeof val === 'object') {
+						const subVal = val[prop];
+						return typeof subVal === 'function' ? subVal.bind(val) : subVal;
+					}
+					return undefined;
+				}
+			}
+		);
+	},
+	{
+		by: (fn: any) => {
+			const getter = typeof fn === 'function' ? fn : () => fn;
+			return new Proxy(
+				{},
+				{
+					get(_, prop) {
+						const val = getter();
+						if (prop === 'value') return val;
+						if (prop === 'valueOf') return () => val;
+						if (prop === 'toString') return () => String(val);
+						// Handle nested property access like setupStore.passwordRequirements.match
+						if (val !== null && typeof val === 'object') {
+							const subVal = val[prop];
+							return typeof subVal === 'function' ? subVal.bind(val) : subVal;
+						}
+						return undefined;
+					}
+				}
+			);
+		}
+	}
+);
 
 const $effect = Object.assign(
 	(fn: any) => {
@@ -45,22 +108,46 @@ const $effect = Object.assign(
 	}
 );
 
-Object.defineProperties(globalThis, {
-	$state: { value: $state, writable: true },
-	$derived: { value: $derived, writable: true },
-	$effect: { value: $effect, writable: true },
-	$props: { value: () => ({}), writable: true },
-	$bindable: { value: (v: any) => v, writable: true },
-	$inspect: { value: () => ({ with: () => {} }), writable: true }
-});
+lockGlobal('$state', $state);
+lockGlobal('$derived', $derived);
+lockGlobal('$effect', $effect);
+lockGlobal('$props', () => ({}));
+lockGlobal('$bindable', (v: any) => v);
+lockGlobal('$inspect', () => ({ with: () => {} }));
 
-// 3. CORE MODULE MOCKS
+// 3. MODULE MOCKING (Hoisted by Bun)
 mock.module('$app/environment', () => ({
 	browser: true,
 	dev: true,
 	building: false,
-	version: '1.0.0',
-	default: { browser: true, dev: true, building: false, version: '1.0.0' }
+	version: '1.0.0'
+}));
+
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: Map,
+	SvelteSet: Set
+}));
+
+mock.module('svelte', () => ({
+	untrack: (fn: any) => fn(),
+	onMount: (fn: any) => fn?.(),
+	onDestroy: (fn: any) => fn?.(),
+	beforeUpdate: (fn: any) => fn?.(),
+	afterUpdate: (fn: any) => fn?.(),
+	tick: () => Promise.resolve(),
+	getAllContexts: () => new Map(),
+	getContext: () => undefined,
+	setContext: (_k: any, v: any) => v,
+	hasContext: () => false,
+	createContext: () => ({})
+}));
+
+mock.module('svelte/internal', () => ({
+	noop: () => {},
+	safe_not_equal: () => true,
+	subscribe: () => () => {},
+	run_all: () => {},
+	is_function: (v: any) => typeof v === 'function'
 }));
 
 mock.module('$app/navigation', () => ({
@@ -85,32 +172,10 @@ mock.module('$app/forms', () => ({
 
 mock.module('$app/paths', () => ({ base: '', assets: '' }));
 
-mock.module('svelte', () => ({
-	untrack: (fn: any) => fn(),
-	onMount: (fn: any) => fn?.(),
-	onDestroy: (fn: any) => fn?.(),
-	beforeUpdate: (fn: any) => fn?.(),
-	afterUpdate: (fn: any) => fn?.(),
-	tick: () => Promise.resolve(),
-	getAllContexts: () => new Map(),
-	getContext: () => undefined,
-	setContext: (_k: any, v: any) => v,
-	hasContext: () => false,
-	createContext: () => ({})
-}));
-
-mock.module('svelte/internal', () => ({
-	noop: () => {},
-	safe_not_equal: () => true,
-	subscribe: () => () => {},
-	run_all: () => {},
-	is_function: (v: any) => typeof v === 'function'
-}));
-
-// USE NATIVE CONSTRUCTORS for SvelteMap/Set to ensure 100% reliability in CI
-mock.module('svelte/reactivity', () => ({
-	SvelteMap: Map,
-	SvelteSet: Set
+mock.module('$app/state', () => ({
+	page: {
+		url: new URL('http://localhost')
+	}
 }));
 
 mock.module('json-render-svelte', () => ({
@@ -127,7 +192,7 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 	}
 }));
 
-// 4. BROWSER GLOBALS
+// 4. PERSISTENT BROWSER GLOBALS
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() {
@@ -153,63 +218,57 @@ class StorageMock implements Storage {
 const localStorage = new StorageMock();
 const sessionStorage = new StorageMock();
 
-Object.defineProperties(globalThis, {
-	window: {
-		value: {
-			setTimeout,
-			clearTimeout,
-			setInterval,
-			clearInterval,
-			innerWidth: 1024,
-			innerHeight: 768,
-			location: new URL('http://localhost'),
-			matchMedia: mock((query: string) => ({
-				matches: false,
-				media: query,
-				onchange: null,
-				addListener: mock(() => {}),
-				removeListener: mock(() => {}),
-				addEventListener: mock(() => {}),
-				removeEventListener: mock(() => {}),
-				dispatchEvent: mock(() => true)
-			})),
-			localStorage,
-			sessionStorage,
-			crypto: { randomUUID: () => crypto.randomUUID() },
-			fetch: mock(() => Promise.resolve(new Response('{}'))),
-			requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
-			cancelAnimationFrame: (id: any) => clearTimeout(id),
-			addEventListener: mock(() => {}),
-			removeEventListener: mock(() => {})
-		},
-		writable: true
-	},
-	document: {
-		value: {
-			cookie: '',
-			addEventListener: mock(() => {}),
-			removeEventListener: mock(() => {}),
-			dispatchEvent: mock(() => true),
-			createElement: mock(() => ({
-				style: {},
-				appendChild: mock(() => {}),
-				setAttribute: mock(() => {}),
-				classList: {
-					add: mock(() => {}),
-					remove: mock(() => {}),
-					contains: mock(() => false),
-					toggle: mock(() => false)
-				}
-			}))
-		},
-		writable: true
-	},
-	localStorage: { value: localStorage, writable: true },
-	sessionStorage: { value: sessionStorage, writable: true },
-	navigator: { value: { userAgent: 'node' }, writable: true },
-	requestAnimationFrame: { value: (cb: any) => setTimeout(cb, 0), writable: true },
-	cancelAnimationFrame: { value: (id: any) => clearTimeout(id), writable: true }
+lockGlobal('window', {
+	setTimeout,
+	clearTimeout,
+	setInterval,
+	clearInterval,
+	innerWidth: 1024,
+	innerHeight: 768,
+	location: new URL('http://localhost'),
+	matchMedia: mock((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: mock(() => {}),
+		removeListener: mock(() => {}),
+		addEventListener: mock(() => {}),
+		removeEventListener: mock(() => {}),
+		dispatchEvent: mock(() => true)
+	})),
+	localStorage,
+	sessionStorage,
+	crypto: { randomUUID: () => crypto.randomUUID() },
+	fetch: mock(() => Promise.resolve(new Response('{}'))),
+	requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
+	cancelAnimationFrame: (id: any) => clearTimeout(id),
+	addEventListener: mock(() => {}),
+	removeEventListener: mock(() => {})
 });
+
+lockGlobal('document', {
+	cookie: '',
+	addEventListener: mock(() => {}),
+	removeEventListener: mock(() => {}),
+	dispatchEvent: mock(() => true),
+	createElement: mock(() => ({
+		style: {},
+		appendChild: mock(() => {}),
+		setAttribute: mock(() => {}),
+		classList: {
+			add: mock(() => {}),
+			remove: mock(() => {}),
+			contains: mock(() => false),
+			toggle: mock(() => false)
+		}
+	}))
+});
+
+lockGlobal('localStorage', localStorage);
+lockGlobal('sessionStorage', sessionStorage);
+lockGlobal('navigator', { userAgent: 'node' });
+lockGlobal('requestAnimationFrame', (cb: any) => setTimeout(cb, 0));
+lockGlobal('cancelAnimationFrame', (id: any) => clearTimeout(id));
 
 // 5. APPLICATION SERVICE MOCKS
 class AppErrorStub extends Error {
@@ -418,5 +477,5 @@ const mockSetupCheck = {
 mock.module('@utils/setup-check', () => mockSetupCheck);
 (globalThis as any).mockSetupCheck = mockSetupCheck;
 
-console.log('✅ Fresh Master Test Setup Loaded - Version 5.0');
+console.log('✅ Fresh Master Test Setup Loaded - Version 6.0');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
