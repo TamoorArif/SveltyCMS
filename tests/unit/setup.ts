@@ -6,20 +6,25 @@ import { mock } from 'bun:test';
  * Version: 3.0 (Absolute Persistence)
  */
 
-// 1. ABSOLUTE ENVIRONMENT ENFORCEMENT
-// We must set these before ANY application code is imported.
-(globalThis as any).browser = true;
-(globalThis as any).dev = true;
+// 1. SET GLOBALS IMMEDIATELY (Absolute enforcement before any imports)
+const browser = true;
+const dev = true;
+
+(globalThis as any).browser = browser;
+(globalThis as any).dev = dev;
 (globalThis as any).building = false;
 
+// Ensure process.env also has these for some libraries
 process.env.BROWSER = 'true';
 process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
-// 2. SVELTE 5 RUNES - High-fidelity functional mocks
+// 2. Svelte 5 Rune Mocks - Enhanced for real proxy behavior
 const stateMock = (v: any) => {
 	if (typeof v === 'object' && v !== null) {
+		// If it's already a Map or Set (native or mocked), return as-is
 		if (v instanceof Map || v instanceof Set) return v;
+
 		if (Array.isArray(v)) {
 			return new Proxy(v, {
 				get(target, prop) {
@@ -51,17 +56,22 @@ const stateMock = (v: any) => {
 (globalThis as any).$state = stateMock;
 (globalThis as any).$state.snapshot = (v: any) => v;
 
-// $derived mock that supports both being called as a function AND property access
 const derivedMock = (fn: any) => {
-	const getter = typeof fn === 'function' ? fn : () => fn;
-	return {
+	const obj = {
 		get value() {
-			return getter();
-		},
-		// Standard JS toString/valueOf to help with some comparisons
-		toString: () => String(getter()),
-		valueOf: () => getter()
+			return typeof fn === 'function' ? fn() : fn;
+		}
 	};
+	// Proxy derived to look like the value it returns
+	// ALSO handle Svelte 5's .match and other properties inside the return value
+	return new Proxy(obj, {
+		get(target, prop) {
+			if (prop === 'value') return target.value;
+			const val = target.value;
+			if (typeof val === 'object' && val !== null) return val[prop];
+			return undefined;
+		}
+	});
 };
 
 (globalThis as any).$derived = derivedMock;
@@ -70,6 +80,7 @@ const derivedMock = (fn: any) => {
 (globalThis as any).$effect = (fn: any) => {
 	if (typeof fn === 'function') fn();
 };
+
 (globalThis as any).$effect.root = (fn: any) => {
 	if (typeof fn === 'function') fn();
 	return () => {};
@@ -79,10 +90,9 @@ const derivedMock = (fn: any) => {
 (globalThis as any).$bindable = (v: any) => v;
 (globalThis as any).$inspect = () => ({ with: () => {} });
 
-// 3. CORE MODULE MOCKS
-// Lock down the environment module so it never returns false
-const env = { browser: true, dev: true, building: false, version: '1.0.0' };
-mock.module('$app/environment', () => env);
+// 3. Module Mocks
+// Mock $app/environment with high priority
+mock.module('$app/environment', () => ({ browser, dev, building: false, version: '1.0.0' }));
 
 mock.module('$app/navigation', () => ({
 	goto: mock(() => Promise.resolve()),
@@ -128,14 +138,16 @@ mock.module('svelte/internal', () => ({
 	is_function: (v: any) => typeof v === 'function'
 }));
 
-// FORCE Svelte reactivity to use native collections for 100% reliable test state
+// USE NATIVE CONSTRUCTORS for SvelteMap/Set to ensure 100% reactivity in tests
 mock.module('svelte/reactivity', () => ({
 	SvelteMap: Map,
 	SvelteSet: Set
 }));
 
 mock.module('json-render-svelte', () => ({
-	schema: { createCatalog: () => ({ components: {}, actions: {} }) },
+	schema: {
+		createCatalog: () => ({ components: {}, actions: {} })
+	},
 	defineRegistry: () => ({ registry: {} })
 }));
 
@@ -148,7 +160,7 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 	}
 }));
 
-// 4. PERSISTENT BROWSER GLOBALS
+// 4. Browser Globals
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() {
@@ -174,8 +186,8 @@ class StorageMock implements Storage {
 const localStorage = new StorageMock();
 const sessionStorage = new StorageMock();
 
-// Create a robust window/document mock that persists across the test runner
-const windowMock = {
+// Aggressive window/document polyfill
+(globalThis as any).window = (globalThis as any).window || {
 	setTimeout,
 	clearTimeout,
 	setInterval,
@@ -203,37 +215,32 @@ const windowMock = {
 	removeEventListener: mock(() => {})
 };
 
-// Force assign to globalThis using property descriptors to prevent overrides
-Object.defineProperty(globalThis, 'window', { value: windowMock, writable: true, configurable: true });
-Object.defineProperty(globalThis, 'document', {
-	value: {
-		cookie: '',
-		addEventListener: mock(() => {}),
-		removeEventListener: mock(() => {}),
-		dispatchEvent: mock(() => true),
-		createElement: mock(() => ({
-			style: {},
-			appendChild: mock(() => {}),
-			setAttribute: mock(() => {}),
-			classList: {
-				add: mock(() => {}),
-				remove: mock(() => {}),
-				contains: mock(() => false),
-				toggle: mock(() => false)
-			}
-		}))
-	},
-	writable: true,
-	configurable: true
-});
+(globalThis as any).document = (globalThis as any).document || {
+	cookie: '',
+	addEventListener: mock(() => {}),
+	removeEventListener: mock(() => {}),
+	dispatchEvent: mock(() => true),
+	createElement: mock(() => ({
+		style: {},
+		appendChild: mock(() => {}),
+		setAttribute: mock(() => {}),
+		classList: {
+			add: mock(() => {}),
+			remove: mock(() => {}),
+			contains: mock(() => false),
+			toggle: mock(() => false)
+		}
+	}))
+};
 
+// Ensure critical storage is present
 Object.defineProperty(globalThis, 'localStorage', { value: localStorage, writable: true, configurable: true });
 Object.defineProperty(globalThis, 'sessionStorage', { value: sessionStorage, writable: true, configurable: true });
 Object.defineProperty(globalThis, 'navigator', { value: { userAgent: 'node' }, writable: true, configurable: true });
 Object.defineProperty(globalThis, 'requestAnimationFrame', { value: (cb: any) => setTimeout(cb, 0), writable: true, configurable: true });
 Object.defineProperty(globalThis, 'cancelAnimationFrame', { value: (id: any) => clearTimeout(id), writable: true, configurable: true });
 
-// 5. APPLICATION LOGIC MOCKS
+// 5. Application Logic Mocks (Singletons and Services)
 class AppErrorStub extends Error {
 	status: number;
 	code: string;
@@ -275,7 +282,13 @@ const settingsMock = {
 	getPrivateSettingSync: mock((key: string) => {
 		const env = (globalThis as any).privateEnv || (globalThis as any).__privateEnv;
 		if (env && key in env) return env[key];
-		return { DB_TYPE: 'mongodb', MULTI_TENANT: false, FIREWALL_ENABLED: true }[key];
+		const fallbacks: any = {
+			DB_TYPE: 'mongodb',
+			MULTI_TENANT: false,
+			FIREWALL_ENABLED: true,
+			USE_REDIS: false
+		};
+		return fallbacks[key];
 	}),
 	getPublicSettingSync: mock((key: string) => (key === 'SITE_NAME' ? 'SveltyCMS Test' : undefined)),
 	getPrivateSetting: mock(async (key: string) => {
@@ -303,8 +316,12 @@ mock.module('@src/widgets/scanner', () => ({
 mock.module('@boxyhq/saml-jackson', () => ({
 	default: mock(() =>
 		Promise.resolve({
-			oauthController: { authorize: mock(() => Promise.resolve({ redirect_url: 'sso' })) },
-			connectionAPIController: { createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' })) }
+			oauthController: {
+				authorize: mock(() => Promise.resolve({ redirect_url: 'https://idp.example.com/sso' }))
+			},
+			connectionAPIController: {
+				createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' }))
+			}
 		})
 	)
 }));
