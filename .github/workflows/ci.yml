@@ -45,7 +45,7 @@ jobs:
         if: matrix.task == 'lint-typecheck'
         run: |
           mkdir -p config
-          echo "export const privateEnv = {};" > config/private.test.ts
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
       - name: Lint & Type Check
         if: matrix.task == 'lint-typecheck'
@@ -159,7 +159,7 @@ jobs:
       - name: Setup Dummy Config
         run: |
           mkdir -p config
-          echo "export const privateEnv = {};" > config/private.test.ts
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
       - name: Restore Playwright Cache
         uses: actions/cache@v5
