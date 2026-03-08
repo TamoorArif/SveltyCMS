@@ -8,11 +8,11 @@
  * - promise loading
  */
 
-import { isBrowser } from '$app/environment';
+import { browser } from '$app/environment';
 import { screen, ScreenSize } from './screen-size-store.svelte';
 
-// Test-friendly isBrowser check
-const isBrowser = isBrowser || (typeof process !== 'undefined' && process.env.TEST_MODE === 'true');
+// Test-friendly browser check
+const isBrowser = browser || (typeof process !== 'undefined' && process.env.TEST_MODE === 'true');
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
