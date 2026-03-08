@@ -112,7 +112,7 @@
         "wait-on": "^9.0.4",
       },
       "optionalDependencies": {
-        "better-sqlite3": "^11.3.0",
+        "better-sqlite3": "^12.6.2",
         "mariadb": "^3.5.2",
         "mongoose": "^9.2.4",
         "mysql2": "^3.19.0",
@@ -1223,7 +1223,7 @@
 
     "before-after-hook": ["before-after-hook@4.0.0", "", {}, "sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ=="],
 
-    "better-sqlite3": ["better-sqlite3@11.10.0", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-EwhOpyXiOEL/lKzHz9AW1msWFNzGc/z+LzeB3/jnFJpxu+th2yqvzsSWas1v9jgs9+xiXJcD5A8CJxAG2TaghQ=="],
+    "better-sqlite3": ["better-sqlite3@12.6.2", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-8VYKM3MjCa9WcaSAI3hzwhmyHVlH8tiGFwf0RlTsZPWJ1I5MkzjiudCo4KC4DxOaL/53A5B1sI/IbldNFDbsKA=="],
 
     "better-svelte-email": ["better-svelte-email@1.4.0", "", { "dependencies": { "html-to-text": "^9.0.5", "parse5": "^8.0.0", "postcss": "^8.5.6", "postcss-value-parser": "^4.2.0", "tailwindcss": "^4.1.18" }, "optionalDependencies": { "prettier": "^3.8.1", "resend": "^6.8.0", "shiki": "^3.21.0" }, "peerDependencies": { "@sveltejs/kit": ">=2", "svelte": ">=5.14.3" }, "optionalPeers": ["@sveltejs/kit"] }, "sha512-YXjoMw243d33GOqOS64LCicclwLdzI+VdpYgfmyxeWKw04/T+R+CWvMxMw9858chZeH6WU7Uu7CcWLM8ILf8XA=="],
 
