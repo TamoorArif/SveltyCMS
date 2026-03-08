@@ -143,7 +143,6 @@ async function main() {
 		} else {
 			console.warn(`⚠️ Warning: ${configName} not found at expected path: ${configPath}`);
 		}
-
 	} catch (error) {
 		console.error('❌ Setup failed:', error);
 		process.exit(1);
