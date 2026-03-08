@@ -67,7 +67,7 @@ jobs:
         env:
           TEST_MODE: true
           NODE_ENV: test
-        run: bun test --preload ./tests/unit/setup.ts ./tests/unit
+        run: bun run test:unit
 
   build:
     name: 🏗️ Production Build
