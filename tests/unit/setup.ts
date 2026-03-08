@@ -1,13 +1,23 @@
 import { mock } from 'bun:test';
 
-// PRE-INITIALIZATION: Set globals that might be checked during module imports
-(globalThis as any).browser = true;
-(globalThis as any).dev = true;
+// 1. SET GLOBALS IMMEDIATELY (Absolute enforcement)
+const browser = true;
+const dev = true;
 
-// 1. Svelte 5 Rune Mocks - Enhanced for real proxy behavior
+(globalThis as any).browser = browser;
+(globalThis as any).dev = dev;
+(globalThis as any).building = false;
+
+// Ensure process.env also has these for some libraries
+process.env.BROWSER = 'true';
+process.env.NODE_ENV = 'test';
+
+// 2. Svelte 5 Rune Mocks - Enhanced for real proxy behavior
 const stateMock = (v: any) => {
 	if (typeof v === 'object' && v !== null) {
+		// If it's already a Map or Set (native or mocked), return as-is to avoid proxy issues with native methods
 		if (v instanceof Map || v instanceof Set) return v;
+
 		if (Array.isArray(v)) {
 			return new Proxy(v, {
 				get(target, prop) {
@@ -66,42 +76,9 @@ const derivedMock = (fn: any) => {
 (globalThis as any).$bindable = (v: any) => v;
 (globalThis as any).$inspect = () => ({ with: () => {} });
 
-// 2. Core Svelte Mocks (Aggressive)
-const svelteMock = {
-	untrack: (fn: any) => fn(),
-	onMount: (fn: any) => fn?.(),
-	onDestroy: (fn: any) => fn?.(),
-	beforeUpdate: (fn: any) => fn?.(),
-	afterUpdate: (fn: any) => fn?.(),
-	tick: () => Promise.resolve(),
-	getAllContexts: () => new Map(),
-	getContext: () => undefined,
-	setContext: (_k: any, v: any) => v,
-	hasContext: () => false,
-	createContext: () => ({})
-};
-
-mock.module('svelte', () => svelteMock);
-mock.module('svelte/internal', () => ({
-	noop: () => {},
-	safe_not_equal: () => true,
-	subscribe: () => () => {},
-	run_all: () => {},
-	is_function: (v: any) => typeof v === 'function'
-}));
-
-mock.module('svelte/reactivity', () => ({
-	SvelteMap: class extends Map {},
-	SvelteSet: class extends Set {}
-}));
-
-// 3. SvelteKit Mocks
-const envMock = {
-	browser: true,
-	dev: true,
-	building: false,
-	version: '1.0.0'
-};
+// 3. Module Mocks
+// Mock $app/environment with high priority
+const envMock = { browser, dev, building: false, version: '1.0.0' };
 mock.module('$app/environment', () => envMock);
 
 mock.module('$app/navigation', () => ({
@@ -126,7 +103,34 @@ mock.module('$app/forms', () => ({
 
 mock.module('$app/paths', () => ({ base: '', assets: '' }));
 
-// 4. External Library Mocks
+mock.module('svelte', () => ({
+	untrack: (fn: any) => fn(),
+	onMount: (fn: any) => fn?.(),
+	onDestroy: (fn: any) => fn?.(),
+	beforeUpdate: (fn: any) => fn?.(),
+	afterUpdate: (fn: any) => fn?.(),
+	tick: () => Promise.resolve(),
+	getAllContexts: () => new Map(),
+	getContext: () => undefined,
+	setContext: (_k: any, v: any) => v,
+	hasContext: () => false,
+	createContext: () => ({})
+}));
+
+mock.module('svelte/internal', () => ({
+	noop: () => {},
+	safe_not_equal: () => true,
+	subscribe: () => () => {},
+	run_all: () => {},
+	is_function: (v: any) => typeof v === 'function'
+}));
+
+// Use native Map/Set for SvelteMap/Set mocks to ensure real collection behavior in tests
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: Map,
+	SvelteSet: Set
+}));
+
 mock.module('json-render-svelte', () => ({
 	schema: {
 		createCatalog: () => ({ components: {}, actions: {} })
@@ -143,7 +147,7 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 	}
 }));
 
-// 5. Browser Globals
+// 4. Browser Globals (Always set them to ensure consistency)
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() {
@@ -166,61 +170,63 @@ class StorageMock implements Storage {
 	}
 }
 
-if (typeof window === 'undefined') {
-	const localStorage = new StorageMock();
-	const sessionStorage = new StorageMock();
-	(globalThis as any).window = {
-		setTimeout,
-		clearTimeout,
-		setInterval,
-		clearInterval,
-		addEventListener: mock(() => {}),
-		removeEventListener: mock(() => {}),
-		innerWidth: 1024,
-		innerHeight: 768,
-		location: new URL('http://localhost'),
-		matchMedia: mock((query: string) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: mock(() => {}),
-			removeListener: mock(() => {}),
-			addEventListener: mock(() => {}),
-			removeEventListener: mock(() => {}),
-			dispatchEvent: mock(() => true)
-		})),
-		localStorage,
-		sessionStorage,
-		crypto: { randomUUID: () => crypto.randomUUID() },
-		fetch: mock(() => Promise.resolve(new Response('{}'))),
-		requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
-		cancelAnimationFrame: (id: any) => clearTimeout(id)
-	};
-	(globalThis as any).document = {
-		cookie: '',
-		addEventListener: mock(() => {}),
-		removeEventListener: mock(() => {}),
-		dispatchEvent: mock(() => true),
-		createElement: mock(() => ({
-			style: {},
-			appendChild: mock(() => {}),
-			setAttribute: mock(() => {}),
-			classList: {
-				add: mock(() => {}),
-				remove: mock(() => {}),
-				contains: mock(() => false),
-				toggle: mock(() => false)
-			}
-		}))
-	};
-	(globalThis as any).localStorage = localStorage;
-	(globalThis as any).sessionStorage = sessionStorage;
-	(globalThis as any).navigator = { userAgent: 'node' };
-	(globalThis as any).requestAnimationFrame = (globalThis as any).window.requestAnimationFrame;
-	(globalThis as any).cancelAnimationFrame = (globalThis as any).window.cancelAnimationFrame;
-}
+const localStorage = new StorageMock();
+const sessionStorage = new StorageMock();
 
-// 6. Application Logic Mocks (Singletons and Services)
+(globalThis as any).window = (globalThis as any).window || {
+	setTimeout,
+	clearTimeout,
+	setInterval,
+	clearInterval,
+	innerWidth: 1024,
+	innerHeight: 768,
+	location: new URL('http://localhost'),
+	matchMedia: mock((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: mock(() => {}),
+		removeListener: mock(() => {}),
+		addEventListener: mock(() => {}),
+		removeEventListener: mock(() => {}),
+		dispatchEvent: mock(() => true)
+	})),
+	localStorage,
+	sessionStorage,
+	crypto: { randomUUID: () => crypto.randomUUID() },
+	fetch: mock(() => Promise.resolve(new Response('{}'))),
+	requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
+	cancelAnimationFrame: (id: any) => clearTimeout(id),
+	addEventListener: mock(() => {}),
+	removeEventListener: mock(() => {})
+};
+
+(globalThis as any).document = (globalThis as any).document || {
+	cookie: '',
+	addEventListener: mock(() => {}),
+	removeEventListener: mock(() => {}),
+	dispatchEvent: mock(() => true),
+	createElement: mock(() => ({
+		style: {},
+		appendChild: mock(() => {}),
+		setAttribute: mock(() => {}),
+		classList: {
+			add: mock(() => {}),
+			remove: mock(() => {}),
+			contains: mock(() => false),
+			toggle: mock(() => false)
+		}
+	}))
+};
+
+// Force assign these even if they exist, to use our mocks
+(globalThis as any).localStorage = localStorage;
+(globalThis as any).sessionStorage = sessionStorage;
+(globalThis as any).navigator = { userAgent: 'node' };
+(globalThis as any).requestAnimationFrame = (cb: any) => setTimeout(cb, 0);
+(globalThis as any).cancelAnimationFrame = (id: any) => clearTimeout(id);
+
+// 5. Application Logic Mocks (Singletons and Services)
 class AppErrorStub extends Error {
 	status: number;
 	code: string;
