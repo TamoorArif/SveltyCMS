@@ -1,9 +1,9 @@
 import { mock } from 'bun:test';
 
 /**
- * MASTER UNIT TEST SETUP - VERSION 7.1 (STABILIZED PHOENIX)
- * Combines high-fidelity mocks from V6.0 with the architectural
- * improvements (hoisting, configurable globals) of V7.0.
+ * MASTER UNIT TEST SETUP - VERSION 7.2 (STABILIZED RUNES)
+ * Optimized for Svelte 5 runes in unit tests without a compiler.
+ * Fixed primitive state handling to avoid Proxy-to-boolean comparison failures.
  */
 
 // 1. MODULE MOCKING (Hoisted by Bun)
@@ -90,10 +90,15 @@ process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
 // 3. SVELTE 5 RUNES
+// For unit tests without a compiler, $state should be transparent for primitives
+// to avoid Proxy-to-boolean identity check failures (e.g. expect(val).toBe(true)).
 const $state = Object.assign(
 	(v: any) => {
+		// Only use Proxy for objects/arrays to allow deep reactivity simulation
 		if (typeof v === 'object' && v !== null) {
-			if (v instanceof Map || v instanceof Set) return v;
+			if (v instanceof Map || v instanceof Set || v instanceof Date || v instanceof RegExp) {
+				return v;
+			}
 			return new Proxy(v, {
 				get(target, prop) {
 					const val = target[prop];
@@ -105,29 +110,41 @@ const $state = Object.assign(
 				}
 			});
 		}
+		// Return primitives directly
 		return v;
 	},
 	{
-		snapshot: (v: any) => JSON.parse(JSON.stringify(v))
+		snapshot: (v: any) => {
+			if (typeof v !== 'object' || v === null) return v;
+			try {
+				return JSON.parse(JSON.stringify(v));
+			} catch {
+				return v;
+			}
+		}
 	}
 );
 
+// $derived should also be transparent if possible, or a reactive-like object
 const $derived = Object.assign(
 	(fn: any) => {
 		const getter = typeof fn === 'function' ? fn : () => fn;
+		// In tests without a compiler, a class property assigned $derived(fn)
+		// will be set once. To support dynamic updates, we'd need a real getter.
+		// For now, we return a Proxy that traps common coercion.
 		return new Proxy(
 			{},
 			{
 				get(_, prop) {
 					const val = getter();
-					if (prop === 'value') return val;
+					if (prop === Symbol.toPrimitive) return (hint: string) => (hint === 'string' ? String(val) : val);
 					if (prop === 'valueOf') return () => val;
 					if (prop === 'toString') return () => String(val);
 					if (val !== null && typeof val === 'object') {
 						const subVal = val[prop];
 						return typeof subVal === 'function' ? subVal.bind(val) : subVal;
 					}
-					return undefined;
+					return val;
 				}
 			}
 		);
@@ -140,14 +157,14 @@ const $derived = Object.assign(
 				{
 					get(_, prop) {
 						const val = getter();
-						if (prop === 'value') return val;
+						if (prop === Symbol.toPrimitive) return (hint: string) => (hint === 'string' ? String(val) : val);
 						if (prop === 'valueOf') return () => val;
 						if (prop === 'toString') return () => String(val);
 						if (val !== null && typeof val === 'object') {
 							const subVal = val[prop];
 							return typeof subVal === 'function' ? subVal.bind(val) : subVal;
 						}
-						return undefined;
+						return val;
 					}
 				}
 			);
@@ -163,6 +180,9 @@ const $effect = Object.assign(
 		root: (fn: any) => {
 			if (typeof fn === 'function') fn();
 			return () => {};
+		},
+		pre: (fn: any) => {
+			if (typeof fn === 'function') fn();
 		}
 	}
 );
@@ -521,5 +541,5 @@ mock.module('@boxyhq/saml-jackson', () => ({
 	)
 }));
 
-console.log('✅ Master Test Setup Loaded - Version 7.1 (STABILIZED)');
+console.log('✅ Master Test Setup Loaded - Version 7.2 (STABILIZED RUNES)');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
