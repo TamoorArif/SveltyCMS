@@ -1,8 +1,12 @@
 import { mock } from 'bun:test';
 
 // 1. Svelte 5 Rune Mocks - Enhanced for real proxy behavior
+// This ensures that updates to properties are reflected in the state
 const stateMock = (v: any) => {
 	if (typeof v === 'object' && v !== null) {
+		// If it's already a Proxy or a special class, don't double-wrap if it's SvelteMap/Set
+		if (v instanceof Map || v instanceof Set) return v;
+
 		if (Array.isArray(v)) {
 			return new Proxy(v, {
 				get(target, prop) {
@@ -33,12 +37,14 @@ const stateMock = (v: any) => {
 
 (globalThis as any).$state = stateMock;
 (globalThis as any).$state.snapshot = (v: any) => v;
+// $derived should handle both functions and values
 const derivedMock = (fn: any) => {
 	const obj = {
 		get value() {
 			return typeof fn === 'function' ? fn() : fn;
 		}
 	};
+	// Svelte 5 deriveds are often used via .value in legacy-ish code or just as properties
 	return new Proxy(obj, {
 		get(target, prop) {
 			if (prop === 'value') return target.value;
@@ -70,6 +76,7 @@ const envMock = {
 	version: '1.0.0'
 };
 mock.module('$app/environment', () => envMock);
+// Also set on globalThis for absolute certainty in all contexts
 (globalThis as any).browser = true;
 
 mock.module('$app/navigation', () => ({
