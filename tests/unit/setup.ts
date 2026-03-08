@@ -33,9 +33,17 @@ const $derived = Object.assign(runify, {
 	by: runify
 });
 
-const $effect = Object.assign((fn: any) => { if (typeof fn === 'function') fn(); }, {
-	root: (fn: any) => { if (typeof fn === 'function') fn(); return () => {}; }
-});
+const $effect = Object.assign(
+	(fn: any) => {
+		if (typeof fn === 'function') fn();
+	},
+	{
+		root: (fn: any) => {
+			if (typeof fn === 'function') fn();
+			return () => {};
+		}
+	}
+);
 
 Object.defineProperties(globalThis, {
 	$state: { value: $state, writable: true },
@@ -66,7 +74,13 @@ mock.module('$app/navigation', () => ({
 mock.module('$app/forms', () => ({
 	applyAction: mock(() => Promise.resolve()),
 	enhance: mock(() => {}),
-	deserialize: mock((v: any) => { try { return JSON.parse(v); } catch { return v; } })
+	deserialize: mock((v: any) => {
+		try {
+			return JSON.parse(v);
+		} catch {
+			return v;
+		}
+	})
 }));
 
 mock.module('$app/paths', () => ({ base: '', assets: '' }));
@@ -116,12 +130,24 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 // 4. BROWSER GLOBALS
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
-	get length() { return Object.keys(this.store).length; }
-	clear() { this.store = {}; }
-	getItem(key: string) { return this.store[key] || null; }
-	key(index: number) { return Object.keys(this.store)[index] || null; }
-	removeItem(key: string) { delete this.store[key]; }
-	setItem(key: string, value: string) { this.store[key] = String(value); }
+	get length() {
+		return Object.keys(this.store).length;
+	}
+	clear() {
+		this.store = {};
+	}
+	getItem(key: string) {
+		return this.store[key] || null;
+	}
+	key(index: number) {
+		return Object.keys(this.store)[index] || null;
+	}
+	removeItem(key: string) {
+		delete this.store[key];
+	}
+	setItem(key: string, value: string) {
+		this.store[key] = String(value);
+	}
 }
 
 const localStorage = new StorageMock();
@@ -130,16 +156,25 @@ const sessionStorage = new StorageMock();
 Object.defineProperties(globalThis, {
 	window: {
 		value: {
-			setTimeout, clearTimeout, setInterval, clearInterval,
-			innerWidth: 1024, innerHeight: 768,
+			setTimeout,
+			clearTimeout,
+			setInterval,
+			clearInterval,
+			innerWidth: 1024,
+			innerHeight: 768,
 			location: new URL('http://localhost'),
 			matchMedia: mock((query: string) => ({
-				matches: false, media: query, onchange: null,
-				addListener: mock(() => {}), removeListener: mock(() => {}),
-				addEventListener: mock(() => {}), removeEventListener: mock(() => {}),
+				matches: false,
+				media: query,
+				onchange: null,
+				addListener: mock(() => {}),
+				removeListener: mock(() => {}),
+				addEventListener: mock(() => {}),
+				removeEventListener: mock(() => {}),
 				dispatchEvent: mock(() => true)
 			})),
-			localStorage, sessionStorage,
+			localStorage,
+			sessionStorage,
 			crypto: { randomUUID: () => crypto.randomUUID() },
 			fetch: mock(() => Promise.resolve(new Response('{}'))),
 			requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
@@ -156,10 +191,14 @@ Object.defineProperties(globalThis, {
 			removeEventListener: mock(() => {}),
 			dispatchEvent: mock(() => true),
 			createElement: mock(() => ({
-				style: {}, appendChild: mock(() => {}), setAttribute: mock(() => {}),
+				style: {},
+				appendChild: mock(() => {}),
+				setAttribute: mock(() => {}),
 				classList: {
-					add: mock(() => {}), remove: mock(() => {}),
-					contains: mock(() => false), toggle: mock(() => false)
+					add: mock(() => {}),
+					remove: mock(() => {}),
+					contains: mock(() => false),
+					toggle: mock(() => false)
 				}
 			}))
 		},
@@ -174,20 +213,37 @@ Object.defineProperties(globalThis, {
 
 // 5. APPLICATION SERVICE MOCKS
 class AppErrorStub extends Error {
-	status: number; code: string; details: any;
+	status: number;
+	code: string;
+	details: any;
 	constructor(message: string, status = 500, code: string | any = 'INTERNAL_ERROR', details?: any) {
-		super(message); this.status = status;
-		if (typeof code === 'string') { this.code = code; this.details = details; }
-		else { this.code = 'INTERNAL_ERROR'; this.details = code; }
+		super(message);
+		this.status = status;
+		if (typeof code === 'string') {
+			this.code = code;
+			this.details = details;
+		} else {
+			this.code = 'INTERNAL_ERROR';
+			this.details = code;
+		}
 	}
 }
 (globalThis as any).AppError = AppErrorStub;
-import('../../src/utils/error-handling').then((mod) => { (globalThis as any).AppError = mod.AppError; }).catch(() => {});
+import('../../src/utils/error-handling')
+	.then((mod) => {
+		(globalThis as any).AppError = mod.AppError;
+	})
+	.catch(() => {});
 
 const mockLogger = {
-	fatal: mock(() => {}), error: mock(() => {}), warn: mock(() => {}),
-	info: mock(() => {}), debug: mock(() => {}), trace: mock(() => {}),
-	channel: mock(() => mockLogger), dump: mock(() => {})
+	fatal: mock(() => {}),
+	error: mock(() => {}),
+	warn: mock(() => {}),
+	info: mock(() => {}),
+	debug: mock(() => {}),
+	trace: mock(() => {}),
+	channel: mock(() => mockLogger),
+	dump: mock(() => {})
 };
 (globalThis as any).logger = mockLogger;
 mock.module('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
@@ -199,7 +255,7 @@ const settingsMock = {
 		if (env && key in env) return env[key];
 		return { DB_TYPE: 'mongodb', MULTI_TENANT: false, FIREWALL_ENABLED: true, USE_REDIS: false }[key];
 	}),
-	getPublicSettingSync: mock((key: string) => key === 'SITE_NAME' ? 'SveltyCMS Test' : undefined),
+	getPublicSettingSync: mock((key: string) => (key === 'SITE_NAME' ? 'SveltyCMS Test' : undefined)),
 	getPrivateSetting: mock(async (key: string) => {
 		const env = (globalThis as any).privateEnv || (globalThis as any).__privateEnv;
 		if (env && key in env) return env[key];
@@ -216,21 +272,30 @@ const settingsMock = {
 mock.module('@src/services/settings-service', () => settingsMock);
 
 mock.module('@src/widgets/scanner', () => ({
-	coreModules: {}, customModules: {}, allWidgetModules: {},
+	coreModules: {},
+	customModules: {},
+	allWidgetModules: {},
 	getWidgetNameFromPath: (path: string) => path.split('/').at(-2) || null
 }));
 
 mock.module('@boxyhq/saml-jackson', () => ({
-	default: mock(() => Promise.resolve({
-		oauthController: { authorize: mock(() => Promise.resolve({ redirect_url: 'https://idp.example.com/sso' })) },
-		connectionAPIController: { createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' })) }
-	}))
+	default: mock(() =>
+		Promise.resolve({
+			oauthController: { authorize: mock(() => Promise.resolve({ redirect_url: 'https://idp.example.com/sso' })) },
+			connectionAPIController: { createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' })) }
+		})
+	)
 }));
 
 const configStateMock = {
-	get privateEnv() { return (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }; },
+	get privateEnv() {
+		return (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' };
+	},
 	getPrivateEnv: () => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' },
-	setPrivateEnv: (env: any) => { (globalThis as any).privateEnv = env; (globalThis as any).__privateEnv = env; },
+	setPrivateEnv: (env: any) => {
+		(globalThis as any).privateEnv = env;
+		(globalThis as any).__privateEnv = env;
+	},
 	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
 	clearPrivateConfigCache: () => {},
 	getDatabaseConfig: () => ({ type: 'mongodb', name: 'test_db', host: 'localhost' }),
@@ -239,29 +304,54 @@ const configStateMock = {
 mock.module('@src/databases/config-state', () => configStateMock);
 
 const metricsMock = {
-	incrementRequests: mock(() => {}), incrementErrors: mock(() => {}), recordResponseTime: mock(() => {}),
-	incrementAuthValidations: mock(() => {}), incrementAuthFailures: mock(() => {}),
-	recordAuthCacheHit: mock(() => {}), recordAuthCacheMiss: mock(() => {}),
-	incrementApiRequests: mock(() => {}), incrementApiErrors: mock(() => {}),
-	recordApiCacheHit: mock(() => {}), recordApiCacheMiss: mock(() => {}),
-	incrementRateLimitViolations: mock(() => {}), incrementCSPViolations: mock(() => {}),
-	incrementSecurityViolations: mock(() => {}), recordHookExecutionTime: mock(() => {}),
-	getReport: mock(() => ({})), reset: mock(() => {}), exportPrometheus: mock(() => ''), destroy: mock(() => {})
+	incrementRequests: mock(() => {}),
+	incrementErrors: mock(() => {}),
+	recordResponseTime: mock(() => {}),
+	incrementAuthValidations: mock(() => {}),
+	incrementAuthFailures: mock(() => {}),
+	recordAuthCacheHit: mock(() => {}),
+	recordAuthCacheMiss: mock(() => {}),
+	incrementApiRequests: mock(() => {}),
+	incrementApiErrors: mock(() => {}),
+	recordApiCacheHit: mock(() => {}),
+	recordApiCacheMiss: mock(() => {}),
+	incrementRateLimitViolations: mock(() => {}),
+	incrementCSPViolations: mock(() => {}),
+	incrementSecurityViolations: mock(() => {}),
+	recordHookExecutionTime: mock(() => {}),
+	getReport: mock(() => ({})),
+	reset: mock(() => {}),
+	exportPrometheus: mock(() => ''),
+	destroy: mock(() => {})
 };
 (globalThis as any).metricsService = metricsMock;
 mock.module('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
 
 const cacheMock = {
-	get: mock(async () => null), set: mock(async () => {}), setWithCategory: mock(async () => {}),
-	delete: mock(async () => {}), clearByTags: mock(async () => {}), clearByPattern: mock(async () => {}),
-	initialize: mock(async () => {}), invalidateAll: mock(async () => {}), getInstance: () => cacheMock
+	get: mock(async () => null),
+	set: mock(async () => {}),
+	setWithCategory: mock(async () => {}),
+	delete: mock(async () => {}),
+	clearByTags: mock(async () => {}),
+	clearByPattern: mock(async () => {}),
+	initialize: mock(async () => {}),
+	invalidateAll: mock(async () => {}),
+	getInstance: () => cacheMock
 };
 (globalThis as any).cacheService = cacheMock;
 mock.module('@src/databases/cache-service', () => ({
-	cacheService: cacheMock, default: cacheMock,
+	cacheService: cacheMock,
+	default: cacheMock,
 	CacheCategory: { SESSION: 'session', USER: 'user', API: 'api' },
-	SESSION_CACHE_TTL_MS: 1, USER_PERM_CACHE_TTL_MS: 1, USER_COUNT_CACHE_TTL_MS: 1, API_CACHE_TTL_MS: 1,
-	SESSION_CACHE_TTL_S: 1, USER_PERM_CACHE_TTL_S: 1, USER_COUNT_CACHE_TTL_S: 1, API_CACHE_TTL_S: 1, REDIS_TTL_S: 1
+	SESSION_CACHE_TTL_MS: 1,
+	USER_PERM_CACHE_TTL_MS: 1,
+	USER_COUNT_CACHE_TTL_MS: 1,
+	API_CACHE_TTL_MS: 1,
+	SESSION_CACHE_TTL_S: 1,
+	USER_PERM_CACHE_TTL_S: 1,
+	USER_COUNT_CACHE_TTL_S: 1,
+	API_CACHE_TTL_S: 1,
+	REDIS_TTL_S: 1
 }));
 
 const mockAuditLog = { log: mock(() => Promise.resolve()), getLogs: mock(() => Promise.resolve([])) };
@@ -287,12 +377,18 @@ const mockDbAdapter = {
 (globalThis as any).mockDbAdapter = mockDbAdapter;
 
 const dbMock = {
-	dbAdapter: mockDbAdapter, auth: mockDbAdapter.auth,
-	getDb: () => mockDbAdapter, getAuth: () => mockDbAdapter.auth,
+	dbAdapter: mockDbAdapter,
+	auth: mockDbAdapter.auth,
+	getDb: () => mockDbAdapter,
+	getAuth: () => mockDbAdapter.auth,
 	getPrivateEnv: () => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' },
-	setPrivateEnv: (env: any) => { (globalThis as any).privateEnv = env; },
+	setPrivateEnv: (env: any) => {
+		(globalThis as any).privateEnv = env;
+	},
 	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
-	clearPrivateConfigCache: () => {}, initializeOnRequest: () => Promise.resolve(), dbInitPromise: Promise.resolve()
+	clearPrivateConfigCache: () => {},
+	initializeOnRequest: () => Promise.resolve(),
+	dbInitPromise: Promise.resolve()
 };
 mock.module('@src/databases/db', () => dbMock);
 mock.module('@databases/db', () => dbMock);
@@ -301,7 +397,11 @@ mock.module('@databases/db', () => dbMock);
 mock.module('@src/services/audit/audit-log-service', () => ({ auditLogService: mockAuditLog, default: mockAuditLog }));
 
 const mockEventBus = {
-	on: mock(() => {}), off: mock(() => {}), emit: mock(() => {}), once: mock(() => {}), removeAllListeners: mock(() => {})
+	on: mock(() => {}),
+	off: mock(() => {}),
+	emit: mock(() => {}),
+	once: mock(() => {}),
+	removeAllListeners: mock(() => {})
 };
 (globalThis as any).mockEventBus = mockEventBus;
 mock.module('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
@@ -311,7 +411,9 @@ const mockSetupCheck = {
 	isSetupComplete: mock(() => isSetupCompleteValue),
 	isSetupCompleteAsync: mock(async () => isSetupCompleteValue),
 	invalidateSetupCache: mock(() => {}),
-	setSetupComplete: (val: boolean) => { isSetupCompleteValue = val; }
+	setSetupComplete: (val: boolean) => {
+		isSetupCompleteValue = val;
+	}
 };
 mock.module('@utils/setup-check', () => mockSetupCheck);
 (globalThis as any).mockSetupCheck = mockSetupCheck;
