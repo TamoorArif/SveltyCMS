@@ -3,8 +3,19 @@ name: CI
 on:
   push:
     branches: [main, next]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.vscode/**'
+      - 'LICENSE'
+      - 'CODE-OF-CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
   pull_request:
     branches: [main, next]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -18,12 +29,13 @@ env:
   NODE_OPTIONS: "--no-warnings --no-deprecation"
 
 jobs:
-# --------------------------------
+# ────────────────────────────────────────────────
 # 1. BOOTSTRAP (Validate Environment)
-# --------------------------------
+# ────────────────────────────────────────────────
   bootstrap:
     name: 🏁 Bootstrap
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       pw-version: ${{ steps.pw.outputs.version }}
     steps:
@@ -68,15 +80,20 @@ jobs:
             .svelte-kit
             config/private.test.ts
 
-# --------------------------------
+# ────────────────────────────────────────────────
 # 2. PARALLEL QUALITY GATES
-# --------------------------------
+# ────────────────────────────────────────────────
   lint:
     name: 🔎 Lint
     needs: bootstrap
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+      - name: Setup Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
@@ -92,8 +109,13 @@ jobs:
     name: ✅ Check
     needs: bootstrap
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+      - name: Setup Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
@@ -109,8 +131,13 @@ jobs:
     name: ⚡ Unit
     needs: bootstrap
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - name: Setup Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
@@ -130,8 +157,13 @@ jobs:
     name: 🏗️ Build
     needs: bootstrap
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - name: Setup Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
@@ -151,13 +183,14 @@ jobs:
             .svelte-kit/output
             build
 
-# --------------------------------
+# ────────────────────────────────────────────────
 # 3. HEAVY TESTING (Blocked by Quality)
-# --------------------------------
+# ────────────────────────────────────────────────
   db-tests-container:
     name: 🧪 DB (${{ matrix.db }})
     needs: [lint, check, unit, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -170,42 +203,57 @@ jobs:
           - ${{ matrix.db == 'mongodb' && '27017:27017' || matrix.db == 'mariadb' && '3306:3306' || '5432:5432' }}
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
-          MARIADB_DATABASE: 'sveltycms_test'
-          POSTGRES_HOST_AUTH_METHOD: 'trust'
-          POSTGRES_DB: 'sveltycms_test'
-          POSTGRES_USER: 'postgres'
+          MARIADB_DATABASE: sveltycms_test
+          MARIADB_USER: testuser
+          MARIADB_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: sveltycms_test
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
 
     steps:
       - uses: actions/checkout@v6
-      
       - name: Setup Node.js 25
         uses: actions/setup-node@v4
         with:
           node-version: 25
-
       - uses: oven-sh/setup-bun@v2
-      
       - uses: actions/download-artifact@v6
         with:
           name: workspace-meta
-      
       - uses: actions/download-artifact@v6
         with:
           name: build-output
-      
       - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
+      - name: Wait for database to be ready
+        run: |
+          case "${{ matrix.db }}" in
+            mongodb)
+              bun x wait-on tcp:127.0.0.1:27017 --timeout 45000
+              ;;
+            mariadb)
+              bun x wait-on tcp:127.0.0.1:3306 --timeout 60000
+              until bun x mysqladmin -h 127.0.0.1 -u root ping >/dev/null 2>&1; do sleep 2; done
+              ;;
+            postgresql)
+              bun x wait-on tcp:127.0.0.1:5432 --timeout 60000
+              until bun x pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1; do sleep 2; done
+              ;;
+          esac
+
       - name: Run DB tests
         env:
           DB_TYPE: ${{ matrix.db }}
           DB_HOST: 127.0.0.1
           DB_NAME: sveltycms_test
-          DB_USER: ${{ matrix.db == 'mariadb' && 'root' || matrix.db == 'postgresql' && 'postgres' || '' }}
+          DB_USER: testuser
+          DB_PASSWORD: testpass
           TEST_MODE: true
         run: bun run scripts/run-integration-tests.ts
 
@@ -213,29 +261,24 @@ jobs:
     name: 🧪 DB (sqlite)
     needs: [lint, check, unit, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      
       - name: Setup Node.js 25
         uses: actions/setup-node@v4
         with:
           node-version: 25
-
       - uses: oven-sh/setup-bun@v2
-      
       - uses: actions/download-artifact@v6
         with:
           name: workspace-meta
-      
       - uses: actions/download-artifact@v6
         with:
           name: build-output
-      
       - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
       - name: Run DB tests
@@ -250,6 +293,7 @@ jobs:
     name: 🎭 E2E (${{ matrix.suite }})
     needs: [lint, check, unit, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -267,27 +311,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      
       - name: Setup Node.js 25
         uses: actions/setup-node@v4
         with:
           node-version: 25
-
       - uses: oven-sh/setup-bun@v2
-      
       - uses: actions/download-artifact@v6
         with:
           name: workspace-meta
-      
       - uses: actions/download-artifact@v6
         with:
           name: build-output
-      
       - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
 
       - name: Cache Playwright
@@ -295,6 +333,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ needs.bootstrap.outputs.pw-version }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - run: bun x playwright install --with-deps chromium
 
@@ -307,7 +347,6 @@ jobs:
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
           bun run scripts/setup-system.ts
-          # Kill preview to allow the actual test run to start it fresh if needed
           pkill -f "bun run preview" || true
           sleep 2
 
@@ -319,6 +358,10 @@ jobs:
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
           bun x playwright test ${{ matrix.files }} --project=chromium
+
+      - name: Cleanup preview server
+        if: always()
+        run: pkill -f "bun run preview" || true
 
       - uses: actions/upload-artifact@v6
         if: always()
