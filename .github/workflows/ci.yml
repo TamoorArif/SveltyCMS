@@ -7,108 +7,133 @@ on:
   pull_request:
     branches: [main, next]
     paths-ignore: ['**/*.md', '**/*.mdx', 'docs/**']
-  workflow_dispatch: {}
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
+env:
+  BUN_INSTALL_CACHE_DIR: ~/.bun/install/cache
+
 jobs:
-  build:
-    name: 🏗️ Quality Gate & Build
+# -----------------------------
+# LINT + TYPECHECK
+# -----------------------------
+  lint:
+    name: 🔎 Lint & Typecheck
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        task: [lint-typecheck, unit-build]
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@v5
+      - uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          path: |
+            ${{ env.BUN_INSTALL_CACHE_DIR }}
+            node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            bun-${{ runner.os }}-
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile --prefer-offline
+      - run: bun install --frozen-lockfile
 
-      - name: Generate Types & Messages
-        run: |
-          bun run paraglide
-          bun x svelte-kit sync
+      - run: bun run paraglide
+      - run: bun x svelte-kit sync
 
-      - name: Setup Dummy Config for Linting
-        if: matrix.task == 'lint-typecheck'
+      - name: Setup Dummy Config
         run: |
           mkdir -p config
           echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
-      - name: Lint & Type Check
-        if: matrix.task == 'lint-typecheck'
-        run: |
-          bun run lint
-          bun run check
+      - run: bun run lint
+      - run: bun run check
 
-      - name: Unit Tests
-        if: matrix.task == 'unit-build'
-        env:
-          TEST_MODE: true
-          NODE_ENV: test
-        run: bun run test:unit --coverage
-
-      - name: Upload Coverage
-        if: matrix.task == 'unit-build' && success()
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build Application
-        if: matrix.task == 'unit-build'
-        run: bun run build
-
-      - name: Upload Build Artifact
-        if: matrix.task == 'unit-build'
-        uses: actions/upload-artifact@v6
-        with:
-          name: build-artifact
-          include-hidden-files: true
-          path: |
-            .svelte-kit/output
-            build
-            package.json
-            bun.lock
-
-  setup-browser:
-    name: 🌐 Setup Playwright
+# -----------------------------
+# UNIT TESTS
+# -----------------------------
+  unit:
+    name: ⚡ Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Get Playwright version
-        id: playwright-version
-        run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: bun x playwright install --with-deps chromium firefox webkit
 
-  database-tests:
-    name: '🧪 Tests (${{ matrix.database }})'
-    needs: [build, setup-browser]
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ${{ env.BUN_INSTALL_CACHE_DIR }}
+            node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run paraglide
+      - run: bun x svelte-kit sync
+
+      - name: Setup Dummy Config
+        run: |
+          mkdir -p config
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
+
+      - name: Run unit tests
+        env:
+          TEST_MODE: true
+        run: bun run test:unit --coverage
+
+# -----------------------------
+# BUILD
+# -----------------------------
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ${{ env.BUN_INSTALL_CACHE_DIR }}
+            node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run paraglide
+      - run: bun x svelte-kit sync
+
+      - name: Setup Dummy Config
+        run: |
+          mkdir -p config
+          echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
+
+      - run: bun run build
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: sveltycms-build
+          include-hidden-files: true
+          path: |
+            .svelte-kit
+            build
+            node_modules
+            package.json
+            bun.lock
+
+# -----------------------------
+# DATABASE + E2E MATRIX
+# -----------------------------
+  db-tests:
+    name: 🧪 Tests (${{ matrix.database }})
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -116,7 +141,6 @@ jobs:
         database: [mongodb, mariadb, postgresql, sqlite]
 
     services:
-      # We define the service; it will be ignored for SQLite
       db:
         image: ${{ matrix.database == 'mongodb' && 'mongo:latest' || matrix.database == 'mariadb' && 'mariadb:11' || matrix.database == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
         env:
@@ -129,91 +153,77 @@ jobs:
           POSTGRES_DB: sveltycms_test
         ports:
           - ${{ matrix.database == 'mongodb' && '27017:27017' || matrix.database == 'mariadb' && '3306:3306' || matrix.database == 'postgresql' && '5432:5432' || '6379:6379' }}
+
       mailhog:
         image: mailhog/mailhog
         ports:
           - '1025:1025'
           - '8025:8025'
 
-    env:
-      DB_TYPE: ${{ matrix.database }}
-      TEST_MODE: 'true'
-      API_BASE_URL: http://localhost:4173
-
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      - name: Download Build
-        uses: actions/download-artifact@v6
+
+      - uses: actions/download-artifact@v6
         with:
-          name: build-artifact
+          name: sveltycms-build
 
-      - name: Install Runtime Deps
-        run: bun install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
-      - name: Generate Types & Messages
-        run: |
-          bun run paraglide
-          bun x svelte-kit sync
+      - name: Install Playwright
+        run: bunx playwright install --with-deps chromium
 
       - name: Setup Dummy Config
         run: |
           mkdir -p config
           echo "export const privateEnv: Record<string, any> = {};" > config/private.test.ts
 
-      - name: Restore Playwright Cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-
-          restore-keys: |
-            ${{ runner.os }}-playwright-
+      - name: Generate Messages
+        run: bun run paraglide
 
-      - name: ⏳ Wait for Services
+      - name: Wait for DB
         run: |
-          if [ "${{ matrix.database }}" == "mongodb" ]; then
-            bun x wait-on tcp:127.0.0.1:27017
-          fi
-          if [ "${{ matrix.database }}" == "mariadb" ]; then
-            bun x wait-on tcp:127.0.0.1:3306
-          fi
-          if [ "${{ matrix.database }}" == "postgresql" ]; then
-            bun x wait-on tcp:127.0.0.1:5432
-          fi
-          bun x wait-on tcp:127.0.0.1:1025
-          sleep 5
+          if [ "${{ matrix.database }}" == "mongodb" ]; then bun x wait-on tcp:27017; fi
+          if [ "${{ matrix.database }}" == "mariadb" ]; then bun x wait-on tcp:3306; fi
+          if [ "${{ matrix.database }}" == "postgresql" ]; then bun x wait-on tcp:5432; fi
+          bun x wait-on tcp:1025
 
-      - name: 🔌 Run Integration Tests
-        env:
-          DB_HOST: 127.0.0.1
-          DB_NAME: sveltycms_test
-          DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
-          DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
-        run: bun run scripts/run-integration-tests.ts --filter="${{ matrix.database }}"
-
-      - name: 🎭 Run E2E Tests (Playwright)
-        if: matrix.database != 'sqlite'
-        env:
-          DB_HOST: 127.0.0.1
-          DB_NAME: sveltycms_test
-          DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
-          DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
+      - name: Start preview
         run: |
           bun run preview > preview.log 2>&1 &
           bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-          bun x playwright test tests/e2e --project=chromium --project=firefox --project=webkit
-        timeout-minutes: 15
 
-      - name: Cleanup Preview Server
+      - name: Run setup wizard
+        run: bunx playwright test tests/e2e/setup-wizard.spec.ts --project=chromium
+
+      - name: Run integration tests
+        env:
+          DB_TYPE: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_NAME: sveltycms_test
+          DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
+          DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
+          TEST_MODE: 'true'
+          API_BASE_URL: http://localhost:4173
+        run: bun run scripts/run-integration-tests.ts --filter="${{ matrix.database }}"
+
+      - name: Run full E2E
+        env:
+          DB_TYPE: ${{ matrix.database }}
+          TEST_MODE: 'true'
+        run: bun x playwright test tests/e2e --project=chromium
+
+      - name: Upload reports
         if: always()
-        run: pkill -f "bun run preview" || true
-
-      - name: Upload Reports on Failure
-        if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: reports-${{ matrix.database }}
           path: |
-            playwright-report/
+            playwright-report
             preview.log
-            tests/integration/results/
