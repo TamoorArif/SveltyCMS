@@ -89,8 +89,27 @@ async function main() {
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests
-		const testFiles = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
-		const filesToRun = testFiles.length > 0 ? testFiles : findTestFiles(join(rootDir, 'tests/integration'));
+		const args = process.argv.slice(2);
+		const filterArg = args.find((arg) => arg.startsWith('--filter='));
+		const dbFilter = filterArg ? filterArg.split('=')[1] : null;
+
+		const testFiles = args.filter((arg) => !arg.startsWith('--'));
+		let filesToRun = testFiles.length > 0 ? testFiles : findTestFiles(join(rootDir, 'tests/integration'));
+
+		// 2.1. Filter files based on DB_TYPE if requested
+		if (dbFilter) {
+			console.log(`🔍 Applying filter: ${dbFilter}`);
+			const otherDbs = ['mongodb', 'mariadb', 'postgresql', 'sqlite'].filter((db) => db !== dbFilter);
+
+			filesToRun = filesToRun.filter((file) => {
+				const lowerFile = file.toLowerCase();
+				// If the filename contains another DB's name, skip it
+				if (otherDbs.some((other) => lowerFile.includes(`${other}-adapter`) || lowerFile.includes(`${other}.test`))) {
+					return false;
+				}
+				return true;
+			});
+		}
 
 		console.log(`🧪 Running ${filesToRun.length} test files sequentially...`);
 

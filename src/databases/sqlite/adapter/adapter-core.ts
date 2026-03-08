@@ -225,6 +225,12 @@ export class AdapterCore {
 
 	public getTable(collection: string): any {
 		const schemaAny = schema as unknown as Record<string, any>;
+
+		// Aliases
+		if (collection === 'system_content_structure') {
+			return schema.contentNodes;
+		}
+
 		// 1. Static schema tables
 		if (schemaAny[collection]) {
 			return schemaAny[collection];

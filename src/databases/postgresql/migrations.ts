@@ -363,9 +363,6 @@ async function createTablesIfNotExist(sql: postgres.Sql): Promise<void> {
 		'CREATE INDEX IF NOT EXISTS roles_permissions_gin ON roles USING gin (permissions)',
 		`CREATE INDEX IF NOT EXISTS auth_users_roleIds_gin ON auth_users USING gin ("roleIds")`,
 
-		// ── Partial index for active sessions (skip expired rows) ──
-		`CREATE INDEX IF NOT EXISTS auth_sessions_active_idx ON auth_sessions (user_id) WHERE expires > CURRENT_TIMESTAMP`,
-
 		// ── Partial index for unconsumed tokens ──
 		'CREATE INDEX IF NOT EXISTS auth_tokens_active_idx ON auth_tokens (token) WHERE consumed = FALSE AND blocked = FALSE'
 	];

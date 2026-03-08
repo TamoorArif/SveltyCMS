@@ -60,6 +60,7 @@ jobs:
             .
             !.git
             !node_modules
+            .svelte-kit
 
   unit-tests:
     name: ⚡ Unit Tests
@@ -173,7 +174,10 @@ jobs:
           DB_USER: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
           DB_PASSWORD: ${{ (matrix.database == 'mariadb' || matrix.database == 'postgresql') && 'test' || '' }}
           TEST_MODE: true
-        run: bun run scripts/run-integration-tests.ts
+        run: |
+          # Only run generic tests and those matching the current DB_TYPE
+          # This prevents MongoDB-specific tests from failing during a MariaDB run.
+          bun run scripts/run-integration-tests.ts --filter="${{ matrix.database }}"
         timeout-minutes: 15
 
   e2e:

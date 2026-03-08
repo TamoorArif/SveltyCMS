@@ -239,7 +239,8 @@ export class AdapterCore {
 		preferences: 'systemPreferences',
 		tokens: 'authTokens',
 		sessions: 'authSessions',
-		users: 'authUsers'
+		users: 'authUsers',
+		system_content_structure: 'contentNodes'
 	};
 
 	public getTable(collection: string): Record<string, unknown> {
