@@ -26,7 +26,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": " svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "bun run test:unit",
-		"test:unit": "svelte-kit sync && bun test ./tests/unit",
+		"test:unit": "svelte-kit sync && bun test --preload ./tests/unit/setup.ts ./tests/unit",
 		"test:integration": "bun run scripts/run-integration-tests.ts",
 		"test:integration:run": "bun run scripts/run-integration-tests.ts",
 		"test:hooks": "for test in authorization security-headers theme authentication firewall static-asset-caching system-state api-requests rate-limit locale setup token-resolution; do bun test ./tests/unit/hooks/${test}.test.ts || exit 1; done",
