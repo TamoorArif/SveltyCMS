@@ -61,13 +61,45 @@ const derivedMock = (fn: any) => {
 (globalThis as any).$bindable = (v: any) => v;
 (globalThis as any).$inspect = () => ({ with: () => {} });
 
-// Mock svelte core to prevent SyntaxErrors in Bun environment
+// 2. Module Mocks
+// CRITICAL: browser must be true for stores to function
+const envMock = {
+	browser: true,
+	dev: true,
+	building: false,
+	version: '1.0.0'
+};
+mock.module('$app/environment', () => envMock);
+(globalThis as any).browser = true;
+
+mock.module('$app/navigation', () => ({
+	goto: mock(() => Promise.resolve()),
+	invalidate: mock(() => Promise.resolve()),
+	invalidateAll: mock(() => Promise.resolve()),
+	afterNavigate: mock(() => {}),
+	beforeNavigate: mock(() => {})
+}));
+
+mock.module('$app/forms', () => ({
+	applyAction: mock(() => Promise.resolve()),
+	enhance: mock(() => {}),
+	deserialize: mock((v: any) => {
+		try {
+			return JSON.parse(v);
+		} catch {
+			return v;
+		}
+	})
+}));
+
+mock.module('$app/paths', () => ({ base: '', assets: '' }));
+
 mock.module('svelte', () => ({
 	untrack: (fn: any) => fn(),
-	onMount: () => {},
-	onDestroy: () => {},
-	beforeUpdate: () => {},
-	afterUpdate: () => {},
+	onMount: (fn: any) => fn?.(),
+	onDestroy: (fn: any) => fn?.(),
+	beforeUpdate: (fn: any) => fn?.(),
+	afterUpdate: (fn: any) => fn?.(),
 	tick: () => Promise.resolve(),
 	getAllContexts: () => new Map(),
 	getContext: () => undefined,
@@ -84,6 +116,11 @@ mock.module('svelte/internal', () => ({
 	is_function: (v: any) => typeof v === 'function'
 }));
 
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: class extends Map {},
+	SvelteSet: class extends Set {}
+}));
+
 mock.module('json-render-svelte', () => ({
 	schema: {
 		createCatalog: () => ({ components: {}, actions: {} })
@@ -91,31 +128,6 @@ mock.module('json-render-svelte', () => ({
 	defineRegistry: () => ({ registry: {} })
 }));
 
-// 2. Module Mocks
-mock.module('$app/environment', () => ({ browser: true, dev: true, building: false, version: '1.0.0' }));
-mock.module('$app/navigation', () => ({
-	goto: mock(() => Promise.resolve()),
-	invalidate: mock(() => Promise.resolve()),
-	invalidateAll: mock(() => Promise.resolve()),
-	afterNavigate: mock(() => {}),
-	beforeNavigate: mock(() => {})
-}));
-mock.module('$app/forms', () => ({
-	applyAction: mock(() => Promise.resolve()),
-	enhance: mock(() => {}),
-	deserialize: mock((v: any) => {
-		try {
-			return JSON.parse(v);
-		} catch {
-			return v;
-		}
-	})
-}));
-mock.module('$app/paths', () => ({ base: '', assets: '' }));
-mock.module('svelte/reactivity', () => ({
-	SvelteMap: class extends Map {},
-	SvelteSet: class extends Set {}
-}));
 mock.module('sveltekit-rate-limiter/server', () => ({
 	RateLimiter: class {
 		check = mock(() => Promise.resolve({ success: true }));
@@ -187,7 +199,12 @@ if (typeof window === 'undefined') {
 			style: {},
 			appendChild: mock(() => {}),
 			setAttribute: mock(() => {}),
-			classList: { add: mock(() => {}), remove: mock(() => {}), contains: mock(() => false), toggle: mock(() => false) }
+			classList: {
+				add: mock(() => {}),
+				remove: mock(() => {}),
+				contains: mock(() => false),
+				toggle: mock(() => false)
+			}
 		}))
 	};
 	(globalThis as any).localStorage = localStorage;
