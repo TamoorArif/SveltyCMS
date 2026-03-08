@@ -113,7 +113,6 @@ jobs:
       # We define the service; it will be ignored for SQLite
       db:
         image: ${{ matrix.database == 'mongodb' && 'mongo:latest' || matrix.database == 'mariadb' && 'mariadb:11' || matrix.database == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
-        if: matrix.database != 'sqlite'
         env:
           MARIADB_ROOT_PASSWORD: root
           MARIADB_DATABASE: sveltycms_test
