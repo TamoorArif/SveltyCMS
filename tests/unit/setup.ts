@@ -522,4 +522,4 @@ mock.module('@boxyhq/saml-jackson', () => ({
 }));
 
 console.log('✅ Master Test Setup Loaded - Version 7.1 (STABILIZED)');
-console.log('Diagnostic - browser:', globalThis.browser);
+console.log('Diagnostic - browser:', (globalThis as any).browser);
