@@ -18,9 +18,11 @@ describe('LivePreview Utility', () => {
 	let addEventListenerSpy: any;
 	let removeEventListenerSpy: any;
 	let postMessageSpy: any;
+	let originalWindow: any;
 
 	beforeEach(() => {
 		mockOnUpdate = mock(() => {});
+		originalWindow = (globalThis as any).window;
 
 		// Mock global window objects
 		addEventListenerSpy = mock((_event, _cb) => {});
@@ -28,6 +30,7 @@ describe('LivePreview Utility', () => {
 		postMessageSpy = mock((_msg, _origin) => {});
 
 		(globalThis as any).window = {
+			...originalWindow,
 			addEventListener: addEventListenerSpy,
 			removeEventListener: removeEventListenerSpy,
 			parent: {
@@ -102,6 +105,6 @@ describe('LivePreview Utility', () => {
 	});
 
 	afterEach(() => {
-		delete (globalThis as any).window;
+		(globalThis as any).window = originalWindow;
 	});
 });

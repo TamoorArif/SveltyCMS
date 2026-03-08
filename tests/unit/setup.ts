@@ -1,97 +1,59 @@
 import { mock } from 'bun:test';
 
 /**
- * AGGRESSIVE UNIT TEST SETUP
- * Optimized for Svelte 5 + Bun + CI (Linux)
- * Version: 4.0 (High-Fidelity Runes & Global Lockdown)
+ * AGGRESSIVE UNIT TEST SETUP - VERSION 5.0
+ * Simplified for maximum stability in CI (Linux)
  */
 
 // 1. ABSOLUTE ENVIRONMENT ENFORCEMENT
-// We must set these before ANY application code is imported.
-Object.defineProperties(globalThis, {
-	browser: { value: true, writable: true, configurable: true },
-	dev: { value: true, writable: true, configurable: true },
-	building: { value: false, writable: true, configurable: true }
-});
+// Set these at the very top to ensure any subsequent module evaluations see them.
+const browser = true;
+const dev = true;
+
+(globalThis as any).browser = browser;
+(globalThis as any).dev = dev;
+(globalThis as any).building = false;
+
+// Force define them to prevent any module from overriding
+Object.defineProperty(globalThis, 'browser', { value: true, writable: true });
+Object.defineProperty(globalThis, 'dev', { value: true, writable: true });
 
 process.env.BROWSER = 'true';
 process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
-// 2. SVELTE 5 RUNES - High-fidelity functional mocks
-// In Svelte 5, $state(v) returns a proxy. We simulate this.
-const stateMock = (v: any) => {
-	if (typeof v === 'object' && v !== null) {
-		if (v instanceof Map || v instanceof Set) return v;
-		if (Array.isArray(v)) {
-			return new Proxy(v, {
-				get(target, prop) {
-					const val = target[prop as any];
-					if (typeof val === 'function') return val.bind(target);
-					return val;
-				},
-				set(target, prop, value) {
-					target[prop as any] = value;
-					return true;
-				}
-			});
-		}
-		return new Proxy(v, {
-			get(target, prop) {
-				const val = target[prop];
-				if (typeof val === 'function') return val.bind(target);
-				return val;
-			},
-			set(target, prop, value) {
-				target[prop] = value;
-				return true;
-			}
-		});
-	}
-	return v;
-};
+// 2. SVELTE 5 RUNES - Simple Identity Mocks (Most stable for unit tests)
+const runify = (v: any) => (typeof v === 'function' ? v() : v);
 
-// Define $state and its methods
-const $state = stateMock as any;
-$state.snapshot = (v: any) => JSON.parse(JSON.stringify(v));
+const $state = Object.assign(runify, {
+	snapshot: (v: any) => JSON.parse(JSON.stringify(v))
+});
 
-// $derived mock that supports property access transparently
-const derivedMock = (fn: any) => {
-	const getter = typeof fn === 'function' ? fn : () => fn;
-	// Return a proxy that behaves like the returned value
-	return new Proxy({}, {
-		get(_, prop) {
-			const val = getter();
-			if (prop === 'valueOf') return () => val;
-			if (prop === 'toString') return () => String(val);
-			// Support .value for legacy compatibility or explicit access
-			if (prop === 'value') return val;
-			// Normal property access
-			return val[prop];
-		}
-	});
-};
+const $derived = Object.assign(runify, {
+	by: runify
+});
 
-const $derived = derivedMock as any;
-$derived.by = derivedMock;
+const $effect = Object.assign((fn: any) => { if (typeof fn === 'function') fn(); }, {
+	root: (fn: any) => { if (typeof fn === 'function') fn(); return () => {}; }
+});
 
-// Assign to globalThis with protection
 Object.defineProperties(globalThis, {
-	$state: { value: $state, writable: true, configurable: true },
-	$derived: { value: $derived, writable: true, configurable: true },
-	$effect: { 
-		value: Object.assign((fn: any) => { if (typeof fn === 'function') fn(); }, {
-			root: (fn: any) => { if (typeof fn === 'function') fn(); return () => {}; }
-		}),
-		writable: true, configurable: true 
-	},
-	$props: { value: () => ({}), writable: true, configurable: true },
-	$bindable: { value: (v: any) => v, writable: true, configurable: true },
-	$inspect: { value: () => ({ with: () => {} }), writable: true, configurable: true }
+	$state: { value: $state, writable: true },
+	$derived: { value: $derived, writable: true },
+	$effect: { value: $effect, writable: true },
+	$props: { value: () => ({}), writable: true },
+	$bindable: { value: (v: any) => v, writable: true },
+	$inspect: { value: () => ({ with: () => {} }), writable: true }
 });
 
 // 3. CORE MODULE MOCKS
-mock.module('$app/environment', () => ({ browser: true, dev: true, building: false, version: '1.0.0' }));
+mock.module('$app/environment', () => ({
+	browser: true,
+	dev: true,
+	building: false,
+	version: '1.0.0',
+	default: { browser: true, dev: true, building: false, version: '1.0.0' }
+}));
 
 mock.module('$app/navigation', () => ({
 	goto: mock(() => Promise.resolve()),
@@ -131,7 +93,7 @@ mock.module('svelte/internal', () => ({
 	is_function: (v: any) => typeof v === 'function'
 }));
 
-// FORCE Svelte reactivity to use native collections for 100% reliable test state
+// USE NATIVE CONSTRUCTORS for SvelteMap/Set to ensure 100% reliability in CI
 mock.module('svelte/reactivity', () => ({
 	SvelteMap: Map,
 	SvelteSet: Set
@@ -151,7 +113,7 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 	}
 }));
 
-// 4. PERSISTENT BROWSER GLOBALS
+// 4. BROWSER GLOBALS
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() { return Object.keys(this.store).length; }
@@ -165,50 +127,52 @@ class StorageMock implements Storage {
 const localStorage = new StorageMock();
 const sessionStorage = new StorageMock();
 
-const windowMock = {
-	setTimeout, clearTimeout, setInterval, clearInterval,
-	innerWidth: 1024, innerHeight: 768,
-	location: new URL('http://localhost'),
-	matchMedia: mock((query: string) => ({
-		matches: false, media: query, onchange: null,
-		addListener: mock(() => {}), removeListener: mock(() => {}),
-		addEventListener: mock(() => {}), removeEventListener: mock(() => {}),
-		dispatchEvent: mock(() => true)
-	})),
-	localStorage, sessionStorage,
-	crypto: { randomUUID: () => crypto.randomUUID() },
-	fetch: mock(() => Promise.resolve(new Response('{}'))),
-	requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
-	cancelAnimationFrame: (id: any) => clearTimeout(id),
-	addEventListener: mock(() => {}),
-	removeEventListener: mock(() => {})
-};
-
-Object.defineProperty(globalThis, 'window', { value: windowMock, writable: true, configurable: true });
-Object.defineProperty(globalThis, 'document', {
-	value: {
-		cookie: '',
-		addEventListener: mock(() => {}),
-		removeEventListener: mock(() => {}),
-		dispatchEvent: mock(() => true),
-		createElement: mock(() => ({
-			style: {}, appendChild: mock(() => {}), setAttribute: mock(() => {}),
-			classList: {
-				add: mock(() => {}), remove: mock(() => {}),
-				contains: mock(() => false), toggle: mock(() => false)
-			}
-		}))
+Object.defineProperties(globalThis, {
+	window: {
+		value: {
+			setTimeout, clearTimeout, setInterval, clearInterval,
+			innerWidth: 1024, innerHeight: 768,
+			location: new URL('http://localhost'),
+			matchMedia: mock((query: string) => ({
+				matches: false, media: query, onchange: null,
+				addListener: mock(() => {}), removeListener: mock(() => {}),
+				addEventListener: mock(() => {}), removeEventListener: mock(() => {}),
+				dispatchEvent: mock(() => true)
+			})),
+			localStorage, sessionStorage,
+			crypto: { randomUUID: () => crypto.randomUUID() },
+			fetch: mock(() => Promise.resolve(new Response('{}'))),
+			requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
+			cancelAnimationFrame: (id: any) => clearTimeout(id),
+			addEventListener: mock(() => {}),
+			removeEventListener: mock(() => {})
+		},
+		writable: true
 	},
-	writable: true, configurable: true
+	document: {
+		value: {
+			cookie: '',
+			addEventListener: mock(() => {}),
+			removeEventListener: mock(() => {}),
+			dispatchEvent: mock(() => true),
+			createElement: mock(() => ({
+				style: {}, appendChild: mock(() => {}), setAttribute: mock(() => {}),
+				classList: {
+					add: mock(() => {}), remove: mock(() => {}),
+					contains: mock(() => false), toggle: mock(() => false)
+				}
+			}))
+		},
+		writable: true
+	},
+	localStorage: { value: localStorage, writable: true },
+	sessionStorage: { value: sessionStorage, writable: true },
+	navigator: { value: { userAgent: 'node' }, writable: true },
+	requestAnimationFrame: { value: (cb: any) => setTimeout(cb, 0), writable: true },
+	cancelAnimationFrame: { value: (id: any) => clearTimeout(id), writable: true }
 });
 
-Object.defineProperty(globalThis, 'localStorage', { value: localStorage, writable: true, configurable: true });
-Object.defineProperty(globalThis, 'sessionStorage', { value: sessionStorage, writable: true, configurable: true });
-Object.defineProperty(globalThis, 'navigator', { value: { userAgent: 'node' }, writable: true, configurable: true });
-Object.defineProperty(globalThis, 'requestAnimationFrame', { value: (cb: any) => setTimeout(cb, 0), writable: true, configurable: true });
-Object.defineProperty(globalThis, 'cancelAnimationFrame', { value: (id: any) => clearTimeout(id), writable: true, configurable: true });
-
-// 5. APPLICATION LOGIC MOCKS
+// 5. APPLICATION SERVICE MOCKS
 class AppErrorStub extends Error {
 	status: number; code: string; details: any;
 	constructor(message: string, status = 500, code: string | any = 'INTERNAL_ERROR', details?: any) {
@@ -233,7 +197,7 @@ const settingsMock = {
 	getPrivateSettingSync: mock((key: string) => {
 		const env = (globalThis as any).privateEnv || (globalThis as any).__privateEnv;
 		if (env && key in env) return env[key];
-		return { DB_TYPE: 'mongodb', MULTI_TENANT: false, FIREWALL_ENABLED: true }[key];
+		return { DB_TYPE: 'mongodb', MULTI_TENANT: false, FIREWALL_ENABLED: true, USE_REDIS: false }[key];
 	}),
 	getPublicSettingSync: mock((key: string) => key === 'SITE_NAME' ? 'SveltyCMS Test' : undefined),
 	getPrivateSetting: mock(async (key: string) => {
@@ -352,5 +316,5 @@ const mockSetupCheck = {
 mock.module('@utils/setup-check', () => mockSetupCheck);
 (globalThis as any).mockSetupCheck = mockSetupCheck;
 
-console.log('✅ Fresh Master Test Setup Loaded');
+console.log('✅ Fresh Master Test Setup Loaded - Version 5.0');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
