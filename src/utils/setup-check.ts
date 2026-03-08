@@ -23,17 +23,18 @@ export function isSetupComplete(): boolean {
 	try {
 		// Use process.cwd() to ensure we look at the project root
 		// Support TEST_MODE for isolated testing without affecting live config
-		const configFileName = process.env.TEST_MODE ? 'private.test.ts' : 'private.ts';
+		const isTestMode = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.TEST_MODE === 'true';
+		const configFileName = isTestMode ? 'private.test.ts' : 'private.ts';
 		const privateConfigPath = path.join(process.cwd(), 'config', configFileName);
 
 		if (!fs.existsSync(privateConfigPath)) {
-			if (process.env.TEST_MODE) {
+			if (isTestMode) {
 				console.log(`[setupCheck] ${configFileName} NOT FOUND`);
 			}
 			setupStatus = false;
 			return setupStatus;
 		}
-		if (process.env.TEST_MODE) {
+		if (isTestMode) {
 			console.log(`[setupCheck] ${configFileName} FOUND`);
 		}
 
@@ -144,7 +145,8 @@ export function invalidateSetupCache(clearPrivateEnv = false, forceStatus: boole
 			})
 			.catch((err) => {
 				// Ignore module load errors during invalidation, just log warning in dev
-				if (process.env.NODE_ENV === 'development') {
+				const isDev = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV === 'development';
+				if (isDev) {
 					console.warn('[setupCheck] Could not clear private config cache:', err);
 				}
 			});

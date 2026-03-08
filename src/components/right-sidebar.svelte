@@ -211,7 +211,8 @@ async function save() {
 	}
 	dataToSave.updatedBy = getDisplayName(user?.username);
 
-	if (process.env.NODE_ENV !== 'production') {
+	const isProd = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV === 'production';
+	if (!isProd) {
 		logger.debug('[RightSidebar] Saving entry:', dataToSave);
 	}
 

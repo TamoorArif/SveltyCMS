@@ -35,10 +35,14 @@ let activeCheckPromise: Promise<unknown> | null = null; // Deduping promise
 export const telemetryService = {
 	async checkUpdateStatus() {
 		// Disable telemetry strictly in test mode or CI/CD
-		if (
-			typeof process !== 'undefined' &&
-			(process.env.TEST_MODE === 'true' || process.env.CI === 'true' || process.env.VITEST === 'true' || process.env.NODE_ENV === 'test')
-		) {
+		const isTestOrCI =
+			typeof globalThis !== 'undefined' &&
+			((globalThis as any).process?.env?.TEST_MODE === 'true' ||
+				(globalThis as any).process?.env?.CI === 'true' ||
+				(globalThis as any).process?.env?.VITEST === 'true' ||
+				(globalThis as any).process?.env?.NODE_ENV === 'test');
+
+		if (isTestOrCI) {
 			return { status: 'test_mode', latest: null, security_issue: false };
 		}
 
@@ -214,7 +218,13 @@ export const telemetryService = {
 					os_arch: os.arch()
 				};
 
-				const environment = process.env.NODE_ENV || (dev ? 'development' : 'production');
+				const nodeVersion = typeof globalThis !== 'undefined' ? (globalThis as any).process?.version || 'unknown' : 'browser';
+				const environment =
+					typeof globalThis !== 'undefined'
+						? (globalThis as any).process?.env?.NODE_ENV || (dev ? 'development' : 'production')
+						: dev
+							? 'development'
+							: 'production';
 				const timestamp = Date.now();
 
 				// 3. Generate HMAC Signature (Identifies this request as an authentic SveltyCMS instance)
@@ -226,7 +236,7 @@ export const telemetryService = {
 
 				const payload = {
 					current_version: pkg.version, // ✅ Required
-					node_version: process.version, // ✅ Required
+					node_version: nodeVersion, // ✅ Required
 					environment, // ✅ Required
 					os: os.type(), // ✅ Required
 					installation_id: installationId, // ✅ Required for auth
@@ -245,7 +255,10 @@ export const telemetryService = {
 					widgets // Optional
 				};
 
-				const telemetryEndpoint = process.env.TELEMETRY_ENDPOINT || 'https://telemetry.sveltycms.com/api/check-update';
+				const telemetryEndpoint =
+					typeof globalThis !== 'undefined'
+						? (globalThis as any).process?.env?.TELEMETRY_ENDPOINT || 'https://telemetry.sveltycms.com/api/check-update'
+						: 'https://telemetry.sveltycms.com/api/check-update';
 				const response = await fetch(telemetryEndpoint, {
 					method: 'POST',
 					headers: {

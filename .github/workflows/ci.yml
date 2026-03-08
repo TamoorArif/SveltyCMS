@@ -55,7 +55,7 @@ jobs:
         run: bun run test:unit --coverage
 
       - name: Upload Coverage
-        if: matrix.task == 'unit-build'
+        if: matrix.task == 'unit-build' && success()
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
@@ -76,15 +76,6 @@ jobs:
             build
             package.json
             bun.lock
-            config
-            src
-            tests
-            scripts
-            project.inlang
-            drizzle.config.ts
-            tsconfig.json
-            vite.config.ts
-            svelte.config.js
 
   setup-browser:
     name: 🌐 Setup Playwright
@@ -122,6 +113,7 @@ jobs:
       # We define the service; it will be ignored for SQLite
       db:
         image: ${{ matrix.database == 'mongodb' && 'mongo:latest' || matrix.database == 'mariadb' && 'mariadb:11' || matrix.database == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
+        if: matrix.database != 'sqlite'
         env:
           MARIADB_ROOT_PASSWORD: root
           MARIADB_DATABASE: sveltycms_test
@@ -144,6 +136,7 @@ jobs:
       API_BASE_URL: http://localhost:4173
 
     steps:
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - name: Download Build
         uses: actions/download-artifact@v6
@@ -152,6 +145,11 @@ jobs:
 
       - name: Install Runtime Deps
         run: bun install --frozen-lockfile --prefer-offline
+
+      - name: Generate Types & Messages
+        run: |
+          bun run paraglide
+          bun x svelte-kit sync
 
       - name: Restore Playwright Cache
         uses: actions/cache@v5

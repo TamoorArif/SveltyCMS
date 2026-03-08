@@ -27,7 +27,8 @@ export async function cleanupExpiredDemoTenants() {
 	const { getDb } = await import('@src/databases/db');
 	const env = getPrivateEnv();
 	// Check ONLY private config (static) or env var - enforced security
-	const isDemo = process.env.SVELTYCMS_DEMO === 'true' || env?.DEMO === true;
+	const isDemoEnv = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.SVELTYCMS_DEMO === 'true';
+	const isDemo = isDemoEnv || env?.DEMO === true;
 
 	// Safety check: ONLY run in demo mode
 	if (!isDemo) {

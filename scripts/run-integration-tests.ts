@@ -10,7 +10,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const rootDir = join(import.meta.dir, '..');
-const API_BASE_URL = (globalThis as any).process?.env.API_BASE_URL || 'http://127.0.0.1:4173';
+const API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
 
 let previewProcess: ReturnType<typeof spawn> | null = null;
 
@@ -53,9 +53,9 @@ async function main() {
 				shell: true,
 				env: {
 					...(globalThis as any).process?.env,
-					DB_TYPE: (globalThis as any).process?.env.DB_TYPE || 'mongodb',
-					DB_HOST: (globalThis as any).process?.env.DB_HOST || 'localhost',
-					DB_NAME: (globalThis as any).process?.env.DB_NAME || 'sveltycms_test',
+					DB_TYPE: (globalThis as any).process?.env?.DB_TYPE || 'mongodb',
+					DB_HOST: (globalThis as any).process?.env?.DB_HOST || 'localhost',
+					DB_NAME: (globalThis as any).process?.env?.DB_NAME || 'sveltycms_test',
 					TEST_MODE: 'true',
 					API_BASE_URL
 				}

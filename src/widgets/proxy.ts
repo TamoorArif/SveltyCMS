@@ -214,7 +214,8 @@ export const widgetProxy = new Proxy(registry, {
 		logger.warn(`[Widget Proxy] Widget "${prop}" not found. Available widgets: ${target.list().join(', ')}`);
 
 		// Return fallback factory in production, undefined in development
-		if (process.env.NODE_ENV === 'production') {
+		const isProd = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV === 'production';
+		if (isProd) {
 			return createMissingWidgetFactory(prop);
 		}
 
