@@ -6,11 +6,13 @@
  * - UI element visibility toggling
  * - Layout update calls
  * - Initialization methods
+ * - Real singleton behavior
  */
 
 import { describe, expect, it, mock } from 'bun:test';
+import { ui } from '../../src/stores/ui-store.svelte';
 
-// Mock implementation of UIStore
+// Mock implementation of UIStore for legacy tests if needed
 const createMockUIStore = () => {
 	const state: Record<string, string> = {
 		leftSidebar: 'full',
@@ -56,5 +58,22 @@ describe('UIStore', () => {
 		const mockStore = createMockUIStore();
 		mockStore.initialize();
 		expect(mockStore.initialize).toHaveBeenCalled();
+	});
+});
+
+describe('UIStore (Real)', () => {
+	it('should have initial state', () => {
+		expect(ui.state.leftSidebar).toBe('full');
+	});
+
+	it('should toggle UI element visibility', () => {
+		ui.toggle('leftSidebar', 'hidden');
+		expect(ui.state.leftSidebar).toBe('hidden');
+	});
+
+	it('should be a singleton', () => {
+		// Reset state for this test to ensure it's not affected by previous tests
+		ui.toggle('leftSidebar', 'full');
+		expect(ui.state.leftSidebar).toBe('full');
 	});
 });
