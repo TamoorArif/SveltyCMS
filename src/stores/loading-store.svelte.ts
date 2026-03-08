@@ -28,7 +28,8 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 
 // Test-friendly browser check
-const isBrowser = browser || (typeof process !== 'undefined' && process.env.TEST_MODE === 'true');
+const isTest = typeof process !== 'undefined' && process.env?.TEST_MODE === 'true';
+const isBrowser = browser || isTest;
 
 // Predefined loading operations for consistency
 export const loadingOperations = {
@@ -121,7 +122,7 @@ export class LoadingStore {
 		};
 
 		// Create timeout to auto-cleanup stuck states (skip in TEST_MODE for stable unit tests)
-		if (process.env.TEST_MODE !== 'true') {
+		if (!isTest) {
 			entry.timeoutId = setTimeout(() => {
 				console.warn(`[LoadingStore] Auto-cleanup: "${reason}" exceeded ${timeout}ms`);
 				this.stopLoading(reason);

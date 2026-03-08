@@ -14,6 +14,8 @@ import { publicEnv } from '@src/stores/global-settings.svelte';
 import type { Component } from 'svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
+const isProd = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+
 // --- TYPES & INTERFACES ---
 
 interface SaveFunction {
@@ -98,7 +100,7 @@ function setCookie(name: string, value: string) {
 		return;
 	}
 	// biome-ignore lint/suspicious/noDocumentCookie: intentional cookie write
-	document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+	document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${isProd ? '; Secure' : ''}`;
 }
 
 // --- CORE APP STORE ---

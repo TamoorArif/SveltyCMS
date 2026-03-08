@@ -12,7 +12,6 @@
  * - Clear preferences
  */
 
-import { isoDateStringToDate, nowISODateString } from '@src/utils/date-utils';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { DatabaseId, DatabaseResult } from '../../../db-interface';
 import type { AdapterCore } from '../../adapter/adapter-core';
@@ -108,7 +107,7 @@ export class PreferencesModule {
 			if (exists.length > 0) {
 				await this.db
 					.update(schema.systemPreferences)
-					.set({ value: value as unknown as Record<string, unknown>, updatedAt: isoDateStringToDate(nowISODateString()) })
+					.set({ value: value as unknown as Record<string, unknown>, updatedAt: new Date() })
 					.where(eq(schema.systemPreferences.key, key));
 			} else {
 				await this.db.insert(schema.systemPreferences).values({
@@ -118,8 +117,8 @@ export class PreferencesModule {
 					scope: scope || 'system',
 					userId: (userId as string) || null,
 					visibility: 'private',
-					createdAt: isoDateStringToDate(nowISODateString()),
-					updatedAt: isoDateStringToDate(nowISODateString())
+					createdAt: new Date(),
+					updatedAt: new Date()
 				});
 			}
 		}, 'SET_PREFERENCE_FAILED');

@@ -3,7 +3,6 @@
  * @description CRUD operations module for MariaDB.
  */
 
-import { nowISODateString } from '@src/utils/date-utils';
 import { safeQuery } from '@src/utils/security/safe-query';
 import { count, eq, inArray } from 'drizzle-orm';
 import type { BaseEntity, DatabaseId, DatabaseResult, QueryFilter, EntityCreate, EntityUpdate } from '../../db-interface';
@@ -101,7 +100,7 @@ export class CrudModule {
 		return this.core.wrap(async () => {
 			const table = this.core.getTable(collection);
 			const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
-			const now = nowISODateString();
+			const now = new Date();
 			const values = {
 				...data,
 				_id: id,
@@ -132,7 +131,7 @@ export class CrudModule {
 			const secureQuery = safeQuery({ _id: id } as unknown as QueryFilter<T>, tenantId, { bypassTenantCheck });
 			const table = this.core.getTable(collection);
 			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const now = nowISODateString();
+			const now = new Date();
 			await this.db
 				.update(table as unknown as import('drizzle-orm/mysql-core').MySqlTable)
 				.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
@@ -238,7 +237,7 @@ export class CrudModule {
 				return [];
 			}
 			const table = this.core.getTable(collection);
-			const now = nowISODateString();
+			const now = new Date();
 			const values = data.map((d) => ({
 				...d,
 				_id: utils.generateId() as DatabaseId,
@@ -268,7 +267,7 @@ export class CrudModule {
 			const table = this.core.getTable(collection);
 			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
 			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const now = nowISODateString();
+			const now = new Date();
 			const [result] = await this.db
 				.update(table as unknown as import('drizzle-orm/mysql-core').MySqlTable)
 				.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
