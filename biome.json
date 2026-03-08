@@ -7,8 +7,22 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"experimentalScannerIgnores": ["node_modules/**", "build/**", ".svelte-kit/**", "dist/**", "package/**", "src/paraglide/**"],
-		"includes": ["**/*.ts", "**/*.js", "**/*.mjs", "**/*.cjs", "**/*.json", "**/*.svelte", "**/*.css"]
+		"includes": [
+			"**/*.ts",
+			"**/*.js",
+			"**/*.mjs",
+			"**/*.cjs",
+			"**/*.json",
+			"**/*.svelte",
+			"**/*.css",
+			"!!**/node_modules/**",
+			"!!**/build/**",
+			"!!**/.svelte-kit/**",
+			"!!**/dist/**",
+			"!!**/package/**",
+			"!!**/src/paraglide/**",
+			"!!**/.bun-cache/**"
+		]
 	},
 	"formatter": {
 		"enabled": true,

@@ -102,13 +102,21 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
 			return true;
 		}
 
-		// 4. Data Verification: Check if admin users exist
-		const result = await dbAdapter.auth.getAllUsers({ limit: 1 }, { bypassTenantCheck: true });
-		// console.log('[setupCheck] User check result:', JSON.stringify(result)); // Uncomment for deep debugging
+		// 4. Data Verification: Check if users and roles exist
+		// We check for both to ensure a consistent system state
+		const [userResult, roles] = await Promise.all([
+			dbAdapter.auth.getAllUsers({ limit: 1 }, { bypassTenantCheck: true }),
+			dbAdapter.auth.getAllRoles(undefined, { bypassTenantCheck: true })
+		]);
 
-		const hasUsers = result.success && result.data && result.data.length > 0;
-		if (!hasUsers) {
-			console.warn('[setupCheck] Config exists but NO USERS found in DB. System will stay in setup mode.');
+		const hasUsers = userResult.success && userResult.data && userResult.data.length > 0;
+		const hasRoles = Array.isArray(roles) && roles.length > 0;
+
+		if (!hasUsers || !hasRoles) {
+			const missing = [];
+			if (!hasUsers) missing.push('USERS');
+			if (!hasRoles) missing.push('ROLES');
+			console.warn(`[setupCheck] Config exists but NO ${missing.join(' and ')} found in DB. System will stay in setup mode.`);
 			setupStatus = false;
 			setupStatusCheckedDb = true;
 			return false;

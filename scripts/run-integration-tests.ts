@@ -75,7 +75,7 @@ async function main() {
 		if (previewProcess) {
 			previewProcess.kill('SIGTERM');
 			// Wait for it to definitely release the port
-			await new Promise((r) => setTimeout(r, 2000));
+			await new Promise((r) => setTimeout(r, 5000));
 		}
 
 		console.log('📦 Re-starting preview server with NEW configuration...');
@@ -86,6 +86,8 @@ async function main() {
 			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
 		});
 		await waitForServer();
+		// Additional safety sleep after health check passes
+		await new Promise((r) => setTimeout(r, 2000));
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests

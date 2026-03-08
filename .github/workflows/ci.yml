@@ -28,17 +28,25 @@ jobs:
       pw-version: ${{ steps.pw.outputs.version }}
     steps:
       - uses: actions/checkout@v6
+      
+      - name: Setup Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+
       - uses: oven-sh/setup-bun@v2
+      
       - name: Cache Bun
         uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
+          restore-keys: |
+            bun-${{ runner.os }}-
 
       - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+
       - name: Verify Codegen
         run: |
           bun run paraglide
@@ -79,6 +87,22 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       - run: bun run lint
+
+  check:
+    name: ✅ Check
+    needs: bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-meta
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       - run: bun run check
 
   unit:
@@ -132,17 +156,30 @@ jobs:
 # --------------------------------
   db-tests:
     name: 🧪 DB (${{ matrix.db }})
-    needs: [lint, unit, build]
+    needs: [lint, check, unit, build]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         db: [mongodb, mariadb, postgresql, sqlite]
+
     services:
-      db:
-        image: ${{ matrix.db == 'mongodb' && 'mongo:latest' || matrix.db == 'mariadb' && 'mariadb:11' || matrix.db == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
-        ports:
-          - ${{ matrix.db == 'mongodb' && '27017:27017' || matrix.db == 'mariadb' && '3306:3306' || matrix.db == 'postgresql' && '5432:5432' || '6379:6379' }}
+      mongodb:
+        image: ${{ matrix.db == 'mongodb' && 'mongo:7' || 'alpine' }}
+        ports: [27017:27017]
+      mariadb:
+        image: ${{ matrix.db == 'mariadb' && 'mariadb:11' || 'alpine' }}
+        ports: [3306:3306]
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+          MARIADB_DATABASE: 'sveltycms_test'
+      postgresql:
+        image: ${{ matrix.db == 'postgresql' && 'postgres:16' || 'alpine' }}
+        ports: [5432:5432]
+        env:
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+          POSTGRES_DB: 'sveltycms_test'
+
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -157,23 +194,33 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
-      - name: Wait & Run
+      - name: Run DB tests
         env:
           DB_TYPE: ${{ matrix.db }}
-          TEST_MODE: 'true'
-        run: |
-          if [ "${{ matrix.db }}" == "mongodb" ]; then bun x wait-on tcp:27017; fi
-          if [ "${{ matrix.db }}" == "mariadb" ]; then bun x wait-on tcp:3306; fi
-          if [ "${{ matrix.db }}" == "postgresql" ]; then bun x wait-on tcp:5432; fi
-          bun run preview > preview.log 2>&1 &
-          bun x wait-on http://localhost:4173/api/system/health
-          bun run scripts/run-integration-tests.ts
+          DB_HOST: 127.0.0.1
+          DB_NAME: sveltycms_test
+          TEST_MODE: true
+        run: bun run scripts/run-integration-tests.ts
 
   e2e:
-    name: 🎭 E2E
-    needs: [lint, unit, build]
+    name: 🎭 E2E (${{ matrix.suite }})
+    needs: [lint, check, unit, build]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [setup, unauthenticated, authenticated]
+        include:
+          - suite: setup
+            files: "tests/e2e/setup-wizard.spec.ts"
+            fast_setup: false
+          - suite: unauthenticated
+            files: "tests/e2e/login.spec.ts tests/e2e/signupfirstuser.spec.ts"
+            fast_setup: false
+          - suite: authenticated
+            files: "tests/e2e/collection.spec.ts tests/e2e/user.spec.ts"
+            fast_setup: true
+
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -188,7 +235,7 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+
       - name: Cache Playwright
         uses: actions/cache@v5
         with:
@@ -196,13 +243,32 @@ jobs:
           key: playwright-${{ runner.os }}-${{ needs.bootstrap.outputs.pw-version }}
 
       - run: bun x playwright install --with-deps chromium
-      - name: Run E2E
+
+      - name: Fast System Setup
+        if: matrix.fast_setup == true
+        env:
+          DB_TYPE: sqlite
+          TEST_MODE: true
         run: |
           bun run preview > preview.log 2>&1 &
-          bun x wait-on http://localhost:4173/api/system/health
-          bun x playwright test --project=chromium
+          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
+          bun run scripts/setup-system.ts
+          # Kill preview to allow the actual test run to start it fresh if needed, 
+          # though we'll start it again below.
+          pkill -f "bun run preview" || true
+          sleep 2
+
+      - name: Run E2E
+        env:
+          DB_TYPE: sqlite
+          TEST_MODE: true
+        run: |
+          bun run preview > preview.log 2>&1 &
+          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
+          bun x playwright test ${{ matrix.files }} --project=chromium
+
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.suite }}
           path: playwright-report
