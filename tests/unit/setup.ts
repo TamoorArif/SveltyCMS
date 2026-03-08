@@ -1,29 +1,95 @@
 import { mock } from 'bun:test';
 
 /**
- * AGGRESSIVE UNIT TEST SETUP - VERSION 6.0 (FINAL SHIELD)
- * Designed to survive CI (Linux) environment differences by locking down globals.
+ * MASTER UNIT TEST SETUP - VERSION 7.1 (STABILIZED PHOENIX)
+ * Combines high-fidelity mocks from V6.0 with the architectural 
+ * improvements (hoisting, configurable globals) of V7.0.
  */
 
-// 1. ABSOLUTE ENVIRONMENT LOCKDOWN
-const lockGlobal = (name: string, value: any) => {
+// 1. MODULE MOCKING (Hoisted by Bun)
+const mockLogger = {
+	fatal: mock(() => {}),
+	error: mock(() => {}),
+	warn: mock(() => {}),
+	info: mock(() => {}),
+	debug: mock(() => {}),
+	trace: mock(() => {}),
+	channel: mock(() => mockLogger),
+	dump: mock(() => {})
+};
+
+mock.module('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
+mock.module('@utils/logger.server', () => ({ logger: mockLogger, default: mockLogger }));
+
+mock.module('$app/environment', () => ({
+	browser: true,
+	dev: true,
+	building: false,
+	version: '1.0.0'
+}));
+
+mock.module('svelte/reactivity', () => ({
+	SvelteMap: Map,
+	SvelteSet: Set
+}));
+
+mock.module('$app/navigation', () => ({
+	goto: mock(() => Promise.resolve()),
+	invalidate: mock(() => Promise.resolve()),
+	invalidateAll: mock(() => Promise.resolve()),
+	afterNavigate: mock(() => {}),
+	beforeNavigate: mock(() => {})
+}));
+
+mock.module('$app/forms', () => ({
+	applyAction: mock(() => Promise.resolve()),
+	enhance: mock(() => {}),
+	deserialize: mock((v: any) => {
+		try {
+			return JSON.parse(v);
+		} catch {
+			return v;
+		}
+	})
+}));
+
+mock.module('$app/paths', () => ({ base: '', assets: '' }));
+
+mock.module('$app/state', () => ({
+	page: {
+		url: new URL('http://localhost')
+	}
+}));
+
+mock.module('sveltekit-rate-limiter/server', () => ({
+	RateLimiter: class {
+		check = mock(() => Promise.resolve({ success: true }));
+		isLimited = mock(() => Promise.resolve(false));
+		add = mock(() => {});
+		clear = mock(() => {});
+	}
+}));
+
+// 2. ENVIRONMENT GLOBALS
+const setGlobal = (name: string, value: any) => {
 	Object.defineProperty(globalThis, name, {
 		value,
-		writable: false,
-		configurable: false,
+		writable: true,
+		configurable: true,
 		enumerable: true
 	});
 };
 
-lockGlobal('browser', true);
-lockGlobal('dev', true);
-lockGlobal('building', false);
+setGlobal('browser', true);
+setGlobal('dev', true);
+setGlobal('building', false);
+setGlobal('logger', mockLogger);
 
 process.env.BROWSER = 'true';
 process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
-// 2. SVELTE 5 RUNES - High-Fidelity functional shims
+// 3. SVELTE 5 RUNES
 const $state = Object.assign(
 	(v: any) => {
 		if (typeof v === 'object' && v !== null) {
@@ -57,7 +123,6 @@ const $derived = Object.assign(
 					if (prop === 'value') return val;
 					if (prop === 'valueOf') return () => val;
 					if (prop === 'toString') return () => String(val);
-					// If the value is an object, allow access to its properties
 					if (val !== null && typeof val === 'object') {
 						const subVal = val[prop];
 						return typeof subVal === 'function' ? subVal.bind(val) : subVal;
@@ -78,7 +143,6 @@ const $derived = Object.assign(
 						if (prop === 'value') return val;
 						if (prop === 'valueOf') return () => val;
 						if (prop === 'toString') return () => String(val);
-						// Handle nested property access like setupStore.passwordRequirements.match
 						if (val !== null && typeof val === 'object') {
 							const subVal = val[prop];
 							return typeof subVal === 'function' ? subVal.bind(val) : subVal;
@@ -103,26 +167,14 @@ const $effect = Object.assign(
 	}
 );
 
-lockGlobal('$state', $state);
-lockGlobal('$derived', $derived);
-lockGlobal('$effect', $effect);
-lockGlobal('$props', () => ({}));
-lockGlobal('$bindable', (v: any) => v);
-lockGlobal('$inspect', () => ({ with: () => {} }));
+setGlobal('$state', $state);
+setGlobal('$derived', $derived);
+setGlobal('$effect', $effect);
+setGlobal('$props', () => ({}));
+setGlobal('$bindable', (v: any) => v);
+setGlobal('$inspect', () => ({ with: () => {} }));
 
-// 3. MODULE MOCKING (Hoisted by Bun)
-mock.module('$app/environment', () => ({
-	browser: true,
-	dev: true,
-	building: false,
-	version: '1.0.0'
-}));
-
-mock.module('svelte/reactivity', () => ({
-	SvelteMap: Map,
-	SvelteSet: Set
-}));
-
+// 4. SVELTE COMMON MODULES
 const svelteCommon = {
 	untrack: (fn: any) => fn(),
 	onMount: (fn: any) => fn?.(),
@@ -147,49 +199,7 @@ mock.module('svelte/internal', () => ({
 	is_function: (v: any) => typeof v === 'function'
 }));
 
-mock.module('$app/navigation', () => ({
-	goto: mock(() => Promise.resolve()),
-	invalidate: mock(() => Promise.resolve()),
-	invalidateAll: mock(() => Promise.resolve()),
-	afterNavigate: mock(() => {}),
-	beforeNavigate: mock(() => {})
-}));
-
-mock.module('$app/forms', () => ({
-	applyAction: mock(() => Promise.resolve()),
-	enhance: mock(() => {}),
-	deserialize: mock((v: any) => {
-		try {
-			return JSON.parse(v);
-		} catch {
-			return v;
-		}
-	})
-}));
-
-mock.module('$app/paths', () => ({ base: '', assets: '' }));
-
-mock.module('$app/state', () => ({
-	page: {
-		url: new URL('http://localhost')
-	}
-}));
-
-mock.module('json-render-svelte', () => ({
-	schema: { createCatalog: () => ({ components: {}, actions: {} }) },
-	defineRegistry: () => ({ registry: {} })
-}));
-
-mock.module('sveltekit-rate-limiter/server', () => ({
-	RateLimiter: class {
-		check = mock(() => Promise.resolve({ success: true }));
-		isLimited = mock(() => Promise.resolve(false));
-		add = mock(() => {});
-		clear = mock(() => {});
-	}
-}));
-
-// 4. PERSISTENT BROWSER GLOBALS
+// 5. STORAGE MOCK
 class StorageMock implements Storage {
 	private store: Record<string, string> = {};
 	get length() {
@@ -215,7 +225,11 @@ class StorageMock implements Storage {
 const localStorage = new StorageMock();
 const sessionStorage = new StorageMock();
 
-lockGlobal('window', {
+setGlobal('localStorage', localStorage);
+setGlobal('sessionStorage', sessionStorage);
+
+// 6. WINDOW & DOCUMENT
+const windowMock = {
 	setTimeout,
 	clearTimeout,
 	setInterval,
@@ -241,9 +255,10 @@ lockGlobal('window', {
 	cancelAnimationFrame: (id: any) => clearTimeout(id),
 	addEventListener: mock(() => {}),
 	removeEventListener: mock(() => {})
-});
+};
 
-lockGlobal('document', {
+setGlobal('window', windowMock);
+setGlobal('document', {
 	cookie: '',
 	addEventListener: mock(() => {}),
 	removeEventListener: mock(() => {}),
@@ -260,14 +275,11 @@ lockGlobal('document', {
 		}
 	}))
 });
+setGlobal('navigator', { userAgent: 'node' });
+setGlobal('requestAnimationFrame', (cb: any) => setTimeout(cb, 0));
+setGlobal('cancelAnimationFrame', (id: any) => clearTimeout(id));
 
-lockGlobal('localStorage', localStorage);
-lockGlobal('sessionStorage', sessionStorage);
-lockGlobal('navigator', { userAgent: 'node' });
-lockGlobal('requestAnimationFrame', (cb: any) => setTimeout(cb, 0));
-lockGlobal('cancelAnimationFrame', (id: any) => clearTimeout(id));
-
-// 5. APPLICATION SERVICE MOCKS
+// 7. APPLICATION SERVICE MOCKS
 class AppError extends Error {
 	status: number;
 	code: string;
@@ -290,7 +302,7 @@ class AppError extends Error {
 		}
 	}
 }
-(globalThis as any).AppError = AppError;
+setGlobal('AppError', AppError);
 
 const isAppError = (v: any): v is AppError => {
 	if (!v || typeof v !== 'object') return false;
@@ -303,15 +315,10 @@ const isHttpError = (v: any) => v !== null && typeof v === 'object' && typeof v.
 const getErrorMessage = (error: any): string => {
 	if (error instanceof Error) return error.message;
 	if (typeof error === 'string') return error;
-
-	// Handle SvelteKit HttpError structure manually
 	if (typeof error === 'object' && error !== null && 'body' in error) {
 		const body = (error as { body: { message?: string } }).body;
-		if (body?.message) {
-			return String(body.message);
-		}
+		if (body?.message) return String(body.message);
 	}
-
 	if (typeof error === 'object' && error !== null) {
 		if ('message' in error) return String((error as any).message);
 		try {
@@ -325,23 +332,16 @@ const getErrorMessage = (error: any): string => {
 };
 
 const wrapError = (error: any, message = 'An unexpected error occurred', status = 500) => {
-	if (isAppError(error)) {
-		return error;
-	}
-
+	if (isAppError(error)) return error;
 	if (isHttpError(error)) {
 		const bodyMsg = (error as any).body?.message;
 		return new AppError(bodyMsg || message, error.status, `HTTP_${error.status}`, error);
 	}
-
 	const errorMsg = getErrorMessage(error);
-	// Align with source implementation: preference given to extracted errorMsg
 	const finalMessage = errorMsg || message;
-
 	return new AppError(finalMessage, status, 'INTERNAL_ERROR', error);
 };
 
-// Mock the module itself to return our global AppError
 mock.module('@src/utils/error-handling', () => ({
 	AppError,
 	isAppError,
@@ -364,19 +364,56 @@ mock.module('@src/utils/error-handling', () => ({
 	})
 }));
 
-const mockLogger = {
-	fatal: mock(() => {}),
-	error: mock(() => {}),
-	warn: mock(() => {}),
-	info: mock(() => {}),
-	debug: mock(() => {}),
-	trace: mock(() => {}),
-	channel: mock(() => mockLogger),
-	dump: mock(() => {})
+const metricsMock = {
+	incrementRequests: mock(() => {}),
+	incrementErrors: mock(() => {}),
+	recordResponseTime: mock(() => {}),
+	incrementAuthValidations: mock(() => {}),
+	incrementAuthFailures: mock(() => {}),
+	recordAuthCacheHit: mock(() => {}),
+	recordAuthCacheMiss: mock(() => {}),
+	incrementApiRequests: mock(() => {}),
+	incrementApiErrors: mock(() => {}),
+	recordApiCacheHit: mock(() => {}),
+	recordApiCacheMiss: mock(() => {}),
+	incrementRateLimitViolations: mock(() => {}),
+	incrementCSPViolations: mock(() => {}),
+	incrementSecurityViolations: mock(() => {}),
+	recordHookExecutionTime: mock(() => {}),
+	getReport: mock(() => ({})),
+	reset: mock(() => {}),
+	exportPrometheus: mock(() => ''),
+	destroy: mock(() => {})
 };
-(globalThis as any).logger = mockLogger;
-mock.module('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
-mock.module('@utils/logger.server', () => ({ logger: mockLogger, default: mockLogger }));
+setGlobal('metricsService', metricsMock);
+mock.module('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
+
+const cacheMock = {
+	get: mock(async () => null),
+	set: mock(async () => {}),
+	setWithCategory: mock(async () => {}),
+	delete: mock(async () => {}),
+	clearByTags: mock(async () => {}),
+	clearByPattern: mock(async () => {}),
+	initialize: mock(async () => {}),
+	invalidateAll: mock(async () => {}),
+	getInstance: () => cacheMock
+};
+setGlobal('cacheService', cacheMock);
+mock.module('@src/databases/cache-service', () => ({
+	cacheService: cacheMock,
+	default: cacheMock,
+	CacheCategory: { SESSION: 'session', USER: 'user', API: 'api' },
+	SESSION_CACHE_TTL_MS: 1,
+	USER_PERM_CACHE_TTL_MS: 1,
+	USER_COUNT_CACHE_TTL_MS: 1,
+	API_CACHE_TTL_MS: 1,
+	SESSION_CACHE_TTL_S: 1,
+	USER_PERM_CACHE_TTL_S: 1,
+	USER_COUNT_CACHE_TTL_S: 1,
+	API_CACHE_TTL_S: 1,
+	REDIS_TTL_S: 1
+}));
 
 const settingsMock = {
 	getPrivateSettingSync: mock((key: string) => {
@@ -400,6 +437,70 @@ const settingsMock = {
 };
 mock.module('@src/services/settings-service', () => settingsMock);
 
+const mockAuditLog = { log: mock(() => Promise.resolve()), getLogs: mock(() => Promise.resolve([])) };
+const mockDbAdapter = {
+	auth: {
+		getUserById: mock((id: string) => Promise.resolve({ success: true, data: { _id: id } })),
+		updateUserAttributes: mock(() => Promise.resolve({ success: true })),
+		getAllUsers: mock(() => Promise.resolve({ success: true, data: [] })),
+		getUserCount: mock(() => Promise.resolve((globalThis as any).__mockUserCount ?? 10)),
+		getAllRoles: mock(() => Promise.resolve((globalThis as any).__mockRoles ?? [{ _id: 'admin', isAdmin: true, name: 'Admin' }])),
+		ensureAuth: mock(() => Promise.resolve())
+	},
+	system: {
+		preferences: {
+			get: mock(() => Promise.resolve({ success: true, data: [] })),
+			set: mock(() => Promise.resolve({ success: true })),
+			getMany: mock(() => Promise.resolve({ success: true, data: {} }))
+		}
+	},
+	crud: { update: mock(() => Promise.resolve({ success: true })) }
+};
+setGlobal('mockAuditLog', mockAuditLog);
+setGlobal('mockDbAdapter', mockDbAdapter);
+
+const dbMock = {
+	dbAdapter: mockDbAdapter,
+	auth: mockDbAdapter.auth,
+	getDb: () => mockDbAdapter,
+	getAuth: () => mockDbAdapter.auth,
+	getPrivateEnv: mock(() => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
+	setPrivateEnv: mock((env: any) => {
+		(globalThis as any).privateEnv = env;
+	}),
+	loadPrivateConfig: mock(() => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' })),
+	clearPrivateConfigCache: mock(() => {}),
+	initializeOnRequest: mock(() => Promise.resolve()),
+	dbInitPromise: Promise.resolve()
+};
+mock.module('@src/databases/db', () => dbMock);
+mock.module('@databases/db', () => dbMock);
+setGlobal('auth', dbMock.auth);
+
+mock.module('@src/services/audit/audit-log-service', () => ({ auditLogService: mockAuditLog, default: mockAuditLog }));
+
+const mockEventBus = {
+	on: mock(() => {}),
+	off: mock(() => {}),
+	emit: mock(() => {}),
+	once: mock(() => {}),
+	removeAllListeners: mock(() => {})
+};
+setGlobal('mockEventBus', mockEventBus);
+mock.module('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
+
+let isSetupCompleteValue = true;
+const mockSetupCheck = {
+	isSetupComplete: mock(() => isSetupCompleteValue),
+	isSetupCompleteAsync: mock(async () => isSetupCompleteValue),
+	invalidateSetupCache: mock(() => {}),
+	setSetupComplete: mock((val: boolean) => {
+		isSetupCompleteValue = val;
+	})
+};
+mock.module('@utils/setup-check', () => mockSetupCheck);
+setGlobal('mockSetupCheck', mockSetupCheck);
+
 mock.module('@src/widgets/scanner', () => ({
 	coreModules: {},
 	customModules: {},
@@ -420,139 +521,5 @@ mock.module('@boxyhq/saml-jackson', () => ({
 	)
 }));
 
-const configStateMock = {
-	get privateEnv() {
-		return (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' };
-	},
-	getPrivateEnv: () => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' },
-	setPrivateEnv: (env: any) => {
-		(globalThis as any).privateEnv = env;
-		(globalThis as any).__privateEnv = env;
-	},
-	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
-	clearPrivateConfigCache: () => {},
-	getDatabaseConfig: () => ({ type: 'mongodb', name: 'test_db', host: 'localhost' }),
-	getDatabaseConnectionString: () => 'mongodb://localhost:27017/test_db'
-};
-mock.module('@src/databases/config-state', () => configStateMock);
-
-const metricsMock = {
-	incrementRequests: mock(() => {}),
-	incrementErrors: mock(() => {}),
-	recordResponseTime: mock(() => {}),
-	incrementAuthValidations: mock(() => {}),
-	incrementAuthFailures: mock(() => {}),
-	recordAuthCacheHit: mock(() => {}),
-	recordAuthCacheMiss: mock(() => {}),
-	incrementApiRequests: mock(() => {}),
-	incrementApiErrors: mock(() => {}),
-	recordApiCacheHit: mock(() => {}),
-	recordApiCacheMiss: mock(() => {}),
-	incrementRateLimitViolations: mock(() => {}),
-	incrementCSPViolations: mock(() => {}),
-	incrementSecurityViolations: mock(() => {}),
-	recordHookExecutionTime: mock(() => {}),
-	getReport: mock(() => ({})),
-	reset: mock(() => {}),
-	exportPrometheus: mock(() => ''),
-	destroy: mock(() => {})
-};
-(globalThis as any).metricsService = metricsMock;
-mock.module('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
-
-const cacheMock = {
-	get: mock(async () => null),
-	set: mock(async () => {}),
-	setWithCategory: mock(async () => {}),
-	delete: mock(async () => {}),
-	clearByTags: mock(async () => {}),
-	clearByPattern: mock(async () => {}),
-	initialize: mock(async () => {}),
-	invalidateAll: mock(async () => {}),
-	getInstance: () => cacheMock
-};
-(globalThis as any).cacheService = cacheMock;
-mock.module('@src/databases/cache-service', () => ({
-	cacheService: cacheMock,
-	default: cacheMock,
-	CacheCategory: { SESSION: 'session', USER: 'user', API: 'api' },
-	SESSION_CACHE_TTL_MS: 1,
-	USER_PERM_CACHE_TTL_MS: 1,
-	USER_COUNT_CACHE_TTL_MS: 1,
-	API_CACHE_TTL_MS: 1,
-	SESSION_CACHE_TTL_S: 1,
-	USER_PERM_CACHE_TTL_S: 1,
-	USER_COUNT_CACHE_TTL_S: 1,
-	API_CACHE_TTL_S: 1,
-	REDIS_TTL_S: 1
-}));
-
-const mockAuditLog = { log: mock(() => Promise.resolve()), getLogs: mock(() => Promise.resolve([])) };
-const mockDbAdapter = {
-	auth: {
-		getUserById: mock((id: string) => Promise.resolve({ success: true, data: { _id: id } })),
-		updateUserAttributes: mock(() => Promise.resolve({ success: true })),
-		getAllUsers: mock(() => Promise.resolve({ success: true, data: [] })),
-		getUserCount: mock(() => Promise.resolve((globalThis as any).__mockUserCount ?? 10)),
-		getAllRoles: mock(() => Promise.resolve((globalThis as any).__mockRoles ?? [{ _id: 'admin', isAdmin: true, name: 'Admin' }])),
-		ensureAuth: mock(() => Promise.resolve())
-	},
-	system: {
-		preferences: {
-			get: mock(() => Promise.resolve({ success: true, data: [] })),
-			set: mock(() => Promise.resolve({ success: true })),
-			getMany: mock(() => Promise.resolve({ success: true, data: {} }))
-		}
-	},
-	crud: { update: mock(() => Promise.resolve({ success: true })) }
-};
-(globalThis as any).mockAuditLog = mockAuditLog;
-(globalThis as any).mockDbAdapter = mockDbAdapter;
-
-const dbMock = {
-	dbAdapter: mockDbAdapter,
-	auth: mockDbAdapter.auth,
-	getDb: () => mockDbAdapter,
-	getAuth: () => mockDbAdapter.auth,
-	getPrivateEnv: mock(() => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
-	setPrivateEnv: mock((env: any) => {
-		(globalThis as any).privateEnv = env;
-	}),
-	loadPrivateConfig: mock(() => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' })),
-	clearPrivateConfigCache: mock(() => {}),
-	initializeOnRequest: mock(() => Promise.resolve()),
-	dbInitPromise: Promise.resolve()
-};
-mock.module('@src/databases/db', () => dbMock);
-mock.module('@databases/db', () => dbMock);
-(globalThis as any).auth = dbMock.auth;
-
-mock.module('@src/services/audit/audit-log-service', () => ({ auditLogService: mockAuditLog, default: mockAuditLog }));
-
-const mockEventBus = {
-	on: mock(() => {}),
-	off: mock(() => {}),
-	emit: mock(() => {}),
-	once: mock(() => {}),
-	removeAllListeners: mock(() => {})
-};
-(globalThis as any).mockEventBus = mockEventBus;
-mock.module('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
-
-let isSetupCompleteValue = true;
-const mockSetupCheck = {
-	isSetupComplete: mock(() => isSetupCompleteValue),
-	isSetupCompleteAsync: mock(async () => isSetupCompleteValue),
-	invalidateSetupCache: mock(() => {}),
-	setSetupComplete: mock((val: boolean) => {
-		isSetupCompleteValue = val;
-	})
-};
-mock.module('@utils/setup-check', () => mockSetupCheck);
-(globalThis as any).mockSetupCheck = mockSetupCheck;
-
-// Final Global Shims
-(globalThis as any).importMetaGlobMock = () => ({});
-
-console.log('✅ Fresh Master Test Setup Loaded - Version 6.0');
-console.log('Diagnostic - browser:', (globalThis as any).browser);
+console.log('✅ Master Test Setup Loaded - Version 7.1 (STABILIZED)');
+console.log('Diagnostic - browser:', globalThis.browser);
