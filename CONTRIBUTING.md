@@ -339,6 +339,14 @@ Improving documentation? See:
 
 ## 🧪 Testing Guidelines
 
+### CI Architecture
+
+SveltyCMS uses a performance-optimized GitHub Actions workflow designed for fast feedback and comprehensive coverage.
+
+1.  **Parallel Quality Gate**: Static analysis (`lint`, `svelte-check`) and `unit tests` run in parallel to minimize wait times.
+2.  **Consolidated Database Matrix**: Integration and E2E tests are grouped by database (MongoDB, MariaDB, PostgreSQL, SQLite). Each database leg starts its service once and runs all relevant tests sequentially.
+3.  **Cross-Browser E2E**: Playwright validates the UI across Chromium, Firefox, and Webkit.
+
 ### Writing Tests
 
 ```typescript
@@ -353,20 +361,33 @@ describe('Collection API', () => {
 });
 ```
 
-### Running Tests
+### Running Tests Locally
+
+Before pushing, ensure your changes pass all local checks:
 
 ```bash
-# All unit tests
-bun run test
+# Full local verification (Linter, Typecheck, Build, Unit Tests)
+bun run lint && bun run check && bun run build && bun run test:unit
+```
 
-# Run specific file
-bun test path/to/test.test.ts
+Individual commands:
 
-# Integration tests
+```bash
+# Integration tests (runs against a live system)
 bun run test:integration
+
+# Integration tests for a specific database (if you have it running)
+bun run test:integration --filter=mongodb
+
+# E2E tests (Playwright)
+bun run test:e2e
 ```
 
 See [Testing Guide](docs/TESTING_GUIDE.md) for comprehensive testing documentation.
+
+### 🔐 CI Security Note
+
+The credentials used in the CI environment (e.g., `test`/`test` for MariaDB/Postgres) are hardcoded for **automated testing only**. They must never be used in a production environment. SveltyCMS forces a secure setup wizard on first run to ensure unique, secure credentials for every installation.
 
 ---
 
