@@ -15,10 +15,11 @@ permissions:
 
 env:
   BUN_CACHE_DIR: .bun-cache
+  NODE_OPTIONS: "--no-warnings --no-deprecation"
 
 jobs:
 # --------------------------------
-# 1. BOOTSTRAP (The Foundation)
+# 1. BOOTSTRAP (Validate Environment)
 # --------------------------------
   bootstrap:
     name: 🏁 Bootstrap
@@ -28,8 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
-      - name: Cache Bun packages
+      - name: Cache Bun
         uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
@@ -39,7 +39,7 @@ jobs:
       - run: mkdir -p ${{ env.BUN_CACHE_DIR }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
       
-      - name: Generate Core Files
+      - name: Verify Codegen
         run: |
           bun run paraglide
           bun x svelte-kit sync
@@ -50,10 +50,10 @@ jobs:
         id: pw
         run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
 
-      - name: Upload Workspace State
+      - name: Upload Workspace Meta
         uses: actions/upload-artifact@v6
         with:
-          name: workspace-state
+          name: workspace-meta
           include-hidden-files: true
           path: |
             src/paraglide
@@ -63,6 +63,45 @@ jobs:
 # --------------------------------
 # 2. PARALLEL QUALITY GATES
 # --------------------------------
+  lint:
+    name: 🔎 Lint
+    needs: bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-meta
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
+      - run: bun run lint
+      - run: bun run check
+
+  unit:
+    name: ⚡ Unit
+    needs: bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-meta
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.BUN_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
+      - run: bun run test:unit --coverage
+      - uses: codecov/codecov-action@v4
+        if: success()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   build:
     name: 🏗️ Build
     needs: bootstrap
@@ -72,16 +111,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
-          name: workspace-state
+          name: workspace-meta
       - uses: actions/cache@v5
         with:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
       - run: bun run build
-      
-      - name: Upload Build Output
+      - name: Upload Build
         uses: actions/upload-artifact@v6
         with:
           name: build-output
@@ -90,59 +127,12 @@ jobs:
             .svelte-kit/output
             build
 
-  lint:
-    name: 🔎 Lint & Check
-    needs: bootstrap
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/download-artifact@v6
-        with:
-          name: workspace-state
-      - uses: actions/cache@v5
-        with:
-          path: ${{ env.BUN_CACHE_DIR }}
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
-      - run: bun run lint
-      - run: bun run check
-
-  unit:
-    name: ⚡ Unit Tests
-    needs: bootstrap
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/download-artifact@v6
-        with:
-          name: workspace-state
-      - uses: actions/cache@v5
-        with:
-          path: ${{ env.BUN_CACHE_DIR }}
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-      - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
-      - name: Run unit tests
-        env:
-          TEST_MODE: true
-        run: bun run test:unit --coverage
-
-      - name: Upload Coverage
-        if: success()
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-
 # --------------------------------
-# 3. DOWNSTREAM TESTS (Blocked by Quality)
+# 3. HEAVY TESTING (Blocked by Quality)
 # --------------------------------
   db-tests:
     name: 🧪 DB (${{ matrix.db }})
-    needs: [build, lint, unit]
+    needs: [lint, unit, build]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -153,17 +143,12 @@ jobs:
         image: ${{ matrix.db == 'mongodb' && 'mongo:latest' || matrix.db == 'mariadb' && 'mariadb:11' || matrix.db == 'postgresql' && 'postgres:16' || 'redis:alpine' }}
         ports:
           - ${{ matrix.db == 'mongodb' && '27017:27017' || matrix.db == 'mariadb' && '3306:3306' || matrix.db == 'postgresql' && '5432:5432' || '6379:6379' }}
-      mailhog:
-        image: mailhog/mailhog
-        ports:
-          - '1025:1025'
-          - '8025:8025'
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
-          name: workspace-state
+          name: workspace-meta
       - uses: actions/download-artifact@v6
         with:
           name: build-output
@@ -172,35 +157,29 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-
-      - name: Wait for Services
+      
+      - name: Wait & Run
+        env:
+          DB_TYPE: ${{ matrix.db }}
+          TEST_MODE: 'true'
         run: |
           if [ "${{ matrix.db }}" == "mongodb" ]; then bun x wait-on tcp:27017; fi
           if [ "${{ matrix.db }}" == "mariadb" ]; then bun x wait-on tcp:3306; fi
           if [ "${{ matrix.db }}" == "postgresql" ]; then bun x wait-on tcp:5432; fi
-          bun x wait-on tcp:1025
-
-      - name: Start server
-        run: |
           bun run preview > preview.log 2>&1 &
-          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-
-      - name: Run tests
-        env:
-          DB_TYPE: ${{ matrix.db }}
-          TEST_MODE: 'true'
-        run: bun run scripts/run-integration-tests.ts
+          bun x wait-on http://localhost:4173/api/system/health
+          bun run scripts/run-integration-tests.ts
 
   e2e:
     name: 🎭 E2E
-    needs: [build, lint, unit]
+    needs: [lint, unit, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v6
         with:
-          name: workspace-state
+          name: workspace-meta
       - uses: actions/download-artifact@v6
         with:
           name: build-output
@@ -209,24 +188,19 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-
+      
       - name: Cache Playwright
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ needs.bootstrap.outputs.pw-version }}
 
-      - name: Install browser
-        run: bun x playwright install --with-deps chromium
-
-      - name: Start server
+      - run: bun x playwright install --with-deps chromium
+      - name: Run E2E
         run: |
           bun run preview > preview.log 2>&1 &
-          bun x wait-on http://localhost:4173/api/system/health --timeout 60000
-
-      - name: Run Playwright
-        run: bun x playwright test --project=chromium
-
+          bun x wait-on http://localhost:4173/api/system/health
+          bun x playwright test --project=chromium
       - uses: actions/upload-artifact@v6
         if: always()
         with:
