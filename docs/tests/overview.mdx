@@ -238,60 +238,20 @@ Tests that editor users:
 
 ---
 
-## CI/CD Testing Workflow
+## CI/CD Testing Workflow (Optimized)
 
-### GitHub Actions Strategy
+SveltyCMS uses a highly optimized, parallelized CI pipeline in GitHub Actions to ensure rapid feedback.
 
-SveltyCMS uses a comprehensive multi-stage testing pipeline:
+### Stage 1: Parallel Quality Gate
+We run two critical jobs in parallel to catch static and unit regressions early:
+1.  **lint-typecheck**: Performs high-speed linting (Biome/Ultracite) and Svelte template validation (`svelte-check`).
+2.  **unit-build**: Executes all unit tests with coverage reporting and verifies the production build.
 
-#### Stage 1: Unit Tests
-
-```yaml
-- name: ⚡ Unit Tests
-  run: bun run test:unit
-```
-
-**Duration**: ~5 seconds
-**Coverage**: 611 tests
-**No dependencies**: Tests run without database or server
-
-#### Stage 2: Integration Tests
-
-```yaml
-- name: 🔌 Integration Tests
-  run: bun run test:integration
-  env:
-    DB_TYPE: mongodb
-    TEST_MODE: 'true'
-```
-
-**Duration**: ~30 seconds
-**Setup**:
-
-1.  Creates `config/private.test.ts` (protects real config)
-2.  Starts preview server (port 4173)
-3.  Runs API and database tests
-
-#### Stage 3: E2E Tests
-
-```yaml
-- name: 🎭 E2E Tests
-  steps:
-    # Step A: Setup Wizard
-    - run: bunx playwright test tests/e2e/setup-wizard.spec.ts
-
-    # Step B: Seed Test Users
-    - run: bun run scripts/seed-test-users.ts
-
-    # Step C: RBAC Tests
-    - run: bunx playwright test tests/e2e/role-based-access.spec.ts
-
-    # Step D: Main E2E Suite
-    - run: bunx playwright test --grep-invert "setup-wizard|role-based"
-```
-
-**Duration**: ~2-3 minutes
-**Coverage**: Complete user workflows
+### Stage 2: Consolidated Database Matrix
+Once the Quality Gate passes, we run integration and E2E tests against a matrix of databases:
+- **Matrix**: [MongoDB, MariaDB, PostgreSQL, SQLite]
+- **Efficiency**: Each leg starts its database service **once** and runs the full Integration suite, followed immediately by the Playwright E2E suite.
+- **Cross-Browser**: Playwright validates the UI on Chromium, Firefox, and Webkit.
 
 ### Test Seeding Scripts
 

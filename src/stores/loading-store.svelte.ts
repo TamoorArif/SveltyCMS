@@ -28,7 +28,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { browser } from '$app/environment';
 
 // Test-friendly browser check
-const isTest = typeof process !== 'undefined' && process.env?.TEST_MODE === 'true';
+const isTest = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.TEST_MODE === 'true';
 const isBrowser = browser || isTest;
 
 // Predefined loading operations for consistency

@@ -83,6 +83,21 @@ To reach the "1009%" ambition, we are planning:
 - **Visual Regression**: Pixel-perfect UI verification.
 - **Dependency Auditing**: Automated `npm audit` checks in CI.
 
+## Continuous Integration (CI) Architecture
+
+SveltyCMS uses a performance-optimized CI pipeline designed for maximum reliability and fast feedback.
+
+### 1. Parallel Quality Gate
+All static analysis and unit checks run in parallel:
+- **Lint & Type Check**: Biome/Ultracite linting + `svelte-check` validation.
+- **Unit Tests & Coverage**: Bun-powered logic verification with Codecov reporting.
+- **Build Verification**: Production SSR and Client build.
+
+### 2. Consolidated Database Matrix
+Integration and E2E tests are grouped by database engine (MongoDB, MariaDB, PostgreSQL, SQLite).
+- **One Leg, Dual Suite**: Each matrix leg starts its database service once and runs both Integration and E2E tests sequentially.
+- **Cross-Browser Coverage**: E2E tests validate against Chromium, Firefox, and Webkit.
+
 ## Summary
 
 By combining **Bun-powered White-Box unit tests** for speed and logic depth with **Black-Box API testing** for security and integration reliability, and layering **Static Analysis** on top, SveltyCMS achieves a robust quality assurance posture that is both rigorous and maintainable. our goal is nothing less than **100% System Confidence**.

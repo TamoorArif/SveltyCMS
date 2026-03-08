@@ -10,7 +10,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const rootDir = join(import.meta.dir, '..');
-const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:4173';
+const API_BASE_URL = (globalThis as any).process?.env.API_BASE_URL || 'http://127.0.0.1:4173';
 
 let previewProcess: ReturnType<typeof spawn> | null = null;
 
@@ -39,7 +39,7 @@ async function main() {
 				cwd: rootDir,
 				stdio: 'inherit',
 				shell: true,
-				env: { ...process.env, TEST_MODE: 'true' }
+				env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
 			});
 			await waitForServer();
 		}
@@ -52,10 +52,10 @@ async function main() {
 				stdio: 'inherit',
 				shell: true,
 				env: {
-					...process.env,
-					DB_TYPE: process.env.DB_TYPE || 'mongodb',
-					DB_HOST: process.env.DB_HOST || 'localhost',
-					DB_NAME: process.env.DB_NAME || 'sveltycms_test',
+					...(globalThis as any).process?.env,
+					DB_TYPE: (globalThis as any).process?.env.DB_TYPE || 'mongodb',
+					DB_HOST: (globalThis as any).process?.env.DB_HOST || 'localhost',
+					DB_NAME: (globalThis as any).process?.env.DB_NAME || 'sveltycms_test',
 					TEST_MODE: 'true',
 					API_BASE_URL
 				}
@@ -83,7 +83,7 @@ async function main() {
 			cwd: rootDir,
 			stdio: 'inherit',
 			shell: true,
-			env: { ...process.env, TEST_MODE: 'true' }
+			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
 		});
 		await waitForServer();
 		console.log('✅ Server restarted and ready.');
@@ -208,7 +208,7 @@ function runTest(file: string): Promise<number> {
 		const proc = spawn('bun', ['test', file], {
 			cwd: rootDir,
 			stdio: 'inherit',
-			env: { ...process.env, TEST_MODE: 'true', API_BASE_URL }
+			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', API_BASE_URL }
 		});
 		proc.on('close', (code) => resolve(code || 0));
 	});

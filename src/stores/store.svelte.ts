@@ -14,7 +14,7 @@ import { publicEnv } from '@src/stores/global-settings.svelte';
 import type { Component } from 'svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-const isProd = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+const isProd = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV === 'production';
 
 // --- TYPES & INTERFACES ---
 
