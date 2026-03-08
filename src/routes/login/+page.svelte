@@ -357,7 +357,7 @@ function handleSignUpPointerEnter() {
 		{#if data.demoMode}
 			<!-- DEMO MODE -->
 			<div
-				class="absolute bottom-2.5 left-1/2 flex min-w-87.5 -translate-x-1/2 -translate-y-1/2 transform flex-col items-center justify-center rounded-xl bg-error-500 p-3 text-center text-white transition-opacity duration-300 sm:bottom-12"
+				class="absolute bottom-2.75 left-1/2 flex min-w-87.5 -translate-x-1/2 -translate-y-1/2 transform flex-col items-center justify-center rounded-xl bg-error-500 p-3 text-center text-white transition-opacity duration-300 sm:bottom-12"
 				class:opacity-50={isTransitioning}
 				aria-live="polite"
 				aria-atomic="true"
