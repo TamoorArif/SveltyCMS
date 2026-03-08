@@ -6,7 +6,6 @@ import { mock } from 'bun:test';
  */
 
 // 1. ABSOLUTE ENVIRONMENT LOCKDOWN
-// We use Object.defineProperty with configurable: false to prevent Svelte or Bun from overriding these.
 const lockGlobal = (name: string, value: any) => {
 	Object.defineProperty(globalThis, name, {
 		value,
@@ -25,13 +24,10 @@ process.env.NODE_ENV = 'test';
 process.env.TEST_MODE = 'true';
 
 // 2. SVELTE 5 RUNES - High-Fidelity functional shims
-
-// Robust $state mock
 const $state = Object.assign(
 	(v: any) => {
 		if (typeof v === 'object' && v !== null) {
 			if (v instanceof Map || v instanceof Set) return v;
-			// Simple proxy for reactive property access
 			return new Proxy(v, {
 				get(target, prop) {
 					const val = target[prop];
@@ -50,7 +46,6 @@ const $state = Object.assign(
 	}
 );
 
-// Robust $derived mock with .by support
 const $derived = Object.assign(
 	(fn: any) => {
 		const getter = typeof fn === 'function' ? fn : () => fn;
@@ -128,7 +123,7 @@ mock.module('svelte/reactivity', () => ({
 	SvelteSet: Set
 }));
 
-mock.module('svelte', () => ({
+const svelteCommon = {
 	untrack: (fn: any) => fn(),
 	onMount: (fn: any) => fn?.(),
 	onDestroy: (fn: any) => fn?.(),
@@ -137,11 +132,13 @@ mock.module('svelte', () => ({
 	tick: () => Promise.resolve(),
 	getAllContexts: () => new Map(),
 	getContext: () => undefined,
-	setContext: (_k: any, v: any) => v,
+	setContext: (_unused: any, v: any) => v,
 	hasContext: () => false,
-	createContext: () => ({})
-}));
+	createContext: () => [() => ({}), (v: any) => v]
+};
 
+mock.module('svelte', () => svelteCommon);
+mock.module('svelte/server', () => svelteCommon);
 mock.module('svelte/internal', () => ({
 	noop: () => {},
 	safe_not_equal: () => true,
@@ -271,28 +268,101 @@ lockGlobal('requestAnimationFrame', (cb: any) => setTimeout(cb, 0));
 lockGlobal('cancelAnimationFrame', (id: any) => clearTimeout(id));
 
 // 5. APPLICATION SERVICE MOCKS
-class AppErrorStub extends Error {
+class AppError extends Error {
 	status: number;
 	code: string;
 	details: any;
+	originalError: any;
 	constructor(message: string, status = 500, code: string | any = 'INTERNAL_ERROR', details?: any) {
 		super(message);
 		this.status = status;
+		this.name = 'AppError';
 		if (typeof code === 'string') {
 			this.code = code;
+			if (details instanceof Error) {
+				this.originalError = details;
+			}
 			this.details = details;
 		} else {
 			this.code = 'INTERNAL_ERROR';
-			this.details = code;
+			this.originalError = code;
+			this.details = details;
 		}
 	}
 }
-(globalThis as any).AppError = AppErrorStub;
-import('../../src/utils/error-handling')
-	.then((mod) => {
-		(globalThis as any).AppError = mod.AppError;
+(globalThis as any).AppError = AppError;
+
+const isAppError = (v: any): v is AppError => {
+	if (!v || typeof v !== 'object') return false;
+	return v instanceof AppError || v.name === 'AppError' || v.__isAppError === true;
+};
+(AppError.prototype as any).__isAppError = true;
+
+const isHttpError = (v: any) => v !== null && typeof v === 'object' && typeof v.status === 'number';
+
+const getErrorMessage = (error: any): string => {
+	if (error instanceof Error) return error.message;
+	if (typeof error === 'string') return error;
+
+	// Handle SvelteKit HttpError structure manually
+	if (typeof error === 'object' && error !== null && 'body' in error) {
+		const body = (error as { body: { message?: string } }).body;
+		if (body?.message) {
+			return String(body.message);
+		}
+	}
+
+	if (typeof error === 'object' && error !== null) {
+		if ('message' in error) return String((error as any).message);
+		try {
+			const str = JSON.stringify(error);
+			return str === '{}' ? '[object Object]' : str;
+		} catch {
+			return '[object Object]';
+		}
+	}
+	return String(error);
+};
+
+const wrapError = (error: any, message = 'An unexpected error occurred', status = 500) => {
+	if (isAppError(error)) {
+		return error;
+	}
+
+	if (isHttpError(error)) {
+		const bodyMsg = (error as any).body?.message;
+		return new AppError(bodyMsg || message, error.status, `HTTP_${error.status}`, error);
+	}
+
+	const errorMsg = getErrorMessage(error);
+	// Align with source implementation: preference given to extracted errorMsg
+	const finalMessage = errorMsg || message;
+
+	return new AppError(finalMessage, status, 'INTERNAL_ERROR', error);
+};
+
+// Mock the module itself to return our global AppError
+mock.module('@src/utils/error-handling', () => ({
+	AppError,
+	isAppError,
+	isHttpError,
+	getErrorMessage,
+	wrapError,
+	handleApiError: mock((err: any) => {
+		const status = err?.status || (isHttpError(err) ? (err as any).status : 500);
+		return new Response(
+			JSON.stringify({
+				success: false,
+				message: getErrorMessage(err),
+				code: err?.code || (isHttpError(err) ? `HTTP_${err.status}` : 'INTERNAL_ERROR')
+			}),
+			{
+				status,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	})
-	.catch(() => {});
+}));
 
 const mockLogger = {
 	fatal: mock(() => {}),
@@ -340,8 +410,12 @@ mock.module('@src/widgets/scanner', () => ({
 mock.module('@boxyhq/saml-jackson', () => ({
 	default: mock(() =>
 		Promise.resolve({
-			oauthController: { authorize: mock(() => Promise.resolve({ redirect_url: 'https://idp.example.com/sso' })) },
-			connectionAPIController: { createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' })) }
+			oauthController: {
+				authorize: mock(() => Promise.resolve({ redirect_url: 'https://idp.example.com/sso' }))
+			},
+			connectionAPIController: {
+				createSAMLConnection: mock(() => Promise.resolve({ id: 'conn_123' }))
+			}
 		})
 	)
 }));
@@ -440,13 +514,13 @@ const dbMock = {
 	auth: mockDbAdapter.auth,
 	getDb: () => mockDbAdapter,
 	getAuth: () => mockDbAdapter.auth,
-	getPrivateEnv: () => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' },
-	setPrivateEnv: (env: any) => {
+	getPrivateEnv: mock(() => (globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
+	setPrivateEnv: mock((env: any) => {
 		(globalThis as any).privateEnv = env;
-	},
-	loadPrivateConfig: () => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' }),
-	clearPrivateConfigCache: () => {},
-	initializeOnRequest: () => Promise.resolve(),
+	}),
+	loadPrivateConfig: mock(() => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' })),
+	clearPrivateConfigCache: mock(() => {}),
+	initializeOnRequest: mock(() => Promise.resolve()),
 	dbInitPromise: Promise.resolve()
 };
 mock.module('@src/databases/db', () => dbMock);
@@ -470,12 +544,15 @@ const mockSetupCheck = {
 	isSetupComplete: mock(() => isSetupCompleteValue),
 	isSetupCompleteAsync: mock(async () => isSetupCompleteValue),
 	invalidateSetupCache: mock(() => {}),
-	setSetupComplete: (val: boolean) => {
+	setSetupComplete: mock((val: boolean) => {
 		isSetupCompleteValue = val;
-	}
+	})
 };
 mock.module('@utils/setup-check', () => mockSetupCheck);
 (globalThis as any).mockSetupCheck = mockSetupCheck;
+
+// Final Global Shims
+(globalThis as any).importMetaGlobMock = () => ({});
 
 console.log('✅ Fresh Master Test Setup Loaded - Version 6.0');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
