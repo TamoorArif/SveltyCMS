@@ -47,19 +47,32 @@ This component presents a summary of all configuration steps before finalizing t
 		setup_review_section_media,
 		setup_review_section_system,
 		setup_system_demo_mode_desc,
-		setup_system_multi_tenant_desc
+		setup_system_multi_tenant_desc,
+		setup_email_from,
+		setup_email_host,
+		setup_email_port,
+		setup_email_user
 	} from '@src/paraglide/messages';
 	// Types from setupStore
-	import type { AdminUser, DbConfig, SystemSettings } from '@src/stores/setup-store.svelte.ts';
+	import type { AdminUser, DbConfig, EmailSettings, SystemSettings } from '@src/stores/setup-store.svelte.ts';
 
+	//  props
 	//  props
 	interface Props {
 		adminUser: AdminUser;
 		dbConfig: DbConfig;
 		systemSettings: SystemSettings;
+		emailSettings: EmailSettings;
 	}
 
-	const { dbConfig, adminUser, systemSettings }: Props = $props();
+	const { dbConfig, adminUser, systemSettings, emailSettings }: Props = $props();
+
+	// Redaction helper (masking)
+	function redact(value: string | undefined): string {
+		if (!value) return '-';
+		if (value.length <= 4) return '****';
+		return value.substring(0, 2) + '••••' + value.substring(value.length - 2);
+	}
 </script>
 
 <div class="fade-in">
@@ -111,7 +124,7 @@ This component presents a summary of all configuration steps before finalizing t
 									</button>
 								</SystemTooltip>
 							</dt>
-							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{dbConfig.host}</dd>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(dbConfig.host)}</dd>
 						{/if}
 
 						{#if dbConfig.port}
@@ -162,7 +175,7 @@ This component presents a summary of all configuration steps before finalizing t
 									</button>
 								</SystemTooltip>
 							</dt>
-							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{dbConfig.user}</dd>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(dbConfig.user)}</dd>
 						{/if}
 					</dl>
 				</div>
@@ -201,7 +214,7 @@ This component presents a summary of all configuration steps before finalizing t
 								</button>
 							</SystemTooltip>
 						</dt>
-						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{adminUser.email}</dd>
+						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(adminUser.email)}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{form_password()}:
 							<SystemTooltip title={setup_help_admin_password?.() || 'Admin password'}>
@@ -266,6 +279,54 @@ This component presents a summary of all configuration steps before finalizing t
 							</SystemTooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.mediaFolder}</dd>
+					</dl>
+				</div>
+
+				<!-- Email Configuration (SMTP) -->
+				<div>
+					<h3 class="mb-3 flex items-center font-semibold tracking-tight text-black dark:text-white">
+						<iconify-icon icon="mdi:email" width="24" class="mr-2 text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
+						Email Configuration
+					</h3>
+					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
+						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
+							Status:
+							<SystemTooltip title="Shows if the SMTP configuration was successfully tested and saved, or skipped.">
+								<button
+									type="button"
+									tabindex="-1"
+									class="text-slate-400 hover:text-tertiary-500 hover:dark:text-primary-500"
+									aria-label="Help for Email Status"
+								>
+									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
+								</button>
+							</SystemTooltip>
+						</dt>
+						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">
+							{emailSettings.smtpConfigured ? '✅ Configured' : '❌ Not Configured (Skipped)'}
+						</dd>
+
+						{#if emailSettings.smtpConfigured}
+							<dt class="flex items-center font-medium text-black dark:text-white">
+								{setup_email_host()}:
+							</dt>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(emailSettings.host)}</dd>
+
+							<dt class="flex items-center font-medium text-black dark:text-white">
+								{setup_email_port()}:
+							</dt>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{emailSettings.port}</dd>
+
+							<dt class="flex items-center font-medium text-black dark:text-white">
+								{setup_email_user()}:
+							</dt>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(emailSettings.user)}</dd>
+
+							<dt class="flex items-center font-medium text-black dark:text-white">
+								{setup_email_from()}:
+							</dt>
+							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(emailSettings.from || emailSettings.user)}</dd>
+						{/if}
 					</dl>
 				</div>
 			</div>
@@ -448,7 +509,19 @@ This component presents a summary of all configuration steps before finalizing t
 						</dd>
 
 						{#if systemSettings.useRedis}
-							<dt class="flex items-center justify-between font-medium text-black dark:text-white">Redis Host:</dt>
+							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
+								Redis Host:
+								<SystemTooltip title="The connection address and port for your Redis instance.">
+									<button
+										type="button"
+										tabindex="-1"
+										class="text-slate-400 hover:text-tertiary-500 hover:dark:text-primary-500"
+										aria-label="Help for Redis Host"
+									>
+										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
+									</button>
+								</SystemTooltip>
+							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.redisHost}:{systemSettings.redisPort}</dd>
 						{/if}
 					</dl>

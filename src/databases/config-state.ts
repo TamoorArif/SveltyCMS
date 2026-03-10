@@ -134,7 +134,6 @@ export function getDatabaseConfig() {
 		name,
 		user,
 		password,
-		authSource: env.DB_AUTH_SOURCE || 'admin',
 		poolSize: env.DB_POOL_SIZE || 10,
 		retryAttempts: env.DB_RETRY_ATTEMPTS || 5,
 		retryDelay: env.DB_RETRY_DELAY || 2000
@@ -187,15 +186,17 @@ export function getDatabaseConnectionString(): string {
 		return host;
 	}
 
-	const authPart = user && password ? `${encodeURIComponent(user)}:${encodeURIComponent(password)}@` : '';
+	const authPart = user ? `${encodeURIComponent(user)}${password ? `:${encodeURIComponent(password)}` : ''}@` : '';
 
 	switch (type) {
 		case 'mongodb': {
-			const authSource = user ? `?authSource=${encodeURIComponent(config.authSource || 'admin')}` : '';
-			return `mongodb://${authPart}${host}:${port}/${name}${authSource}`;
+			const authParam = user ? `?authSource=admin` : '';
+			return `mongodb://${authPart}${host}:${port}/${name}${authParam}`;
 		}
-		case 'mongodb+srv':
-			return `mongodb+srv://${authPart}${host}/${name}?retryWrites=true&w=majority`;
+		case 'mongodb+srv': {
+			const authParam = user ? `&authSource=admin` : '';
+			return `mongodb+srv://${authPart}${host}/${name}?retryWrites=true&w=majority${authParam}`;
+		}
 		case 'mariadb':
 			return `mysql://${authPart}${host}:${port}/${name}`;
 		case 'postgresql':

@@ -334,33 +334,45 @@ export class MongoContentMethods {
 		}
 
 		try {
+			const paths = expectedNodes.map((n) => n.path);
+			const existingNodes = await this.nodesRepo.model.find({ path: { $in: paths } }).lean().exec();
+			const existingMap = new Map(existingNodes.map((n) => [n.path, n]));
+
+			const bulkOps: any[] = [];
 			let fixedCount = 0;
 
 			for (const { path, expectedId, changes } of expectedNodes) {
-				// Find existing node by path
-				const existing = await this.nodesRepo.model.findOne({ path });
+				const existing = existingMap.get(path);
 
 				if (existing) {
 					const existingId = normalizeId(existing._id);
 					if (existingId !== expectedId) {
-						// ID mismatch - delete and recreate with correct ID
-						logger.info(`[fixMismatchedNodeIds] Fixing node at path="${path}": ${existingId} → ${expectedId}`);
-						await this.nodesRepo.model.deleteOne({ path });
-						// Use insertMany or create for single insert to satisfy type requirements
-						await this.nodesRepo.model.create({
-							...changes,
-							_id: expectedId,
-							createdAt: ((existing as unknown as { createdAt: string }).createdAt || new Date().toISOString()) as unknown as ISODateString,
-							updatedAt: new Date().toISOString() as unknown as ISODateString
+						// ID mismatch - delete and recreate with correct ID in a single bulk operation
+						logger.info(`[fixMismatchedNodeIds] Queuing fix for node at path="${path}": ${existingId} → ${expectedId}`);
+						
+						bulkOps.push({
+							deleteOne: { filter: { _id: existing._id } }
+						});
+
+						bulkOps.push({
+							insertOne: {
+								document: {
+									...changes,
+									_id: expectedId,
+									createdAt: ((existing as any).createdAt || new Date().toISOString()) as unknown as ISODateString,
+									updatedAt: new Date().toISOString() as unknown as ISODateString
+								}
+							}
 						});
 						fixedCount++;
 					}
 				}
 			}
 
-			if (fixedCount > 0) {
+			if (bulkOps.length > 0) {
+				await this.nodesRepo.model.bulkWrite(bulkOps);
 				await invalidateCategoryCache(CacheCategory.CONTENT);
-				logger.info(`[fixMismatchedNodeIds] Fixed ${fixedCount} nodes with mismatched IDs`);
+				logger.info(`[fixMismatchedNodeIds] Bulk fixed ${fixedCount} nodes with mismatched IDs`);
 			}
 
 			return { success: true, data: { fixed: fixedCount } };

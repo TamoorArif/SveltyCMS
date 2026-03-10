@@ -384,7 +384,8 @@ class ToastStore {
 		this.clearTimer(id);
 
 		// Skip auto-removal in TEST_MODE for stable unit tests
-		if (process.env.TEST_MODE === 'true') {
+		// Use typeof check to avoid 'Process is not defined' in browser
+		if (typeof process !== 'undefined' && process.env?.TEST_MODE === 'true') {
 			return;
 		}
 

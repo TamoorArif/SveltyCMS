@@ -45,8 +45,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 			throw error(403, 'Insufficient permissions');
 		}
 
-		// Initializecontent-managerbefore accessing data
-		await contentManager.initialize();
+		// Initialize content-manager before accessing data
+		// Pass tenantId to ensure we wait for the correct tenant's initialization
+		await contentManager.initialize(tenantId);
 
 		// Fetch the initial content structure directly from database
 		// CollectionBuilder needs the current database state (not in-memory cache) to:

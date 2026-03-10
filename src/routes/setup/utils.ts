@@ -26,19 +26,19 @@ export function buildDatabaseConnectionString(config: DatabaseConfig): string {
 			const protocol = isSrv ? 'mongodb+srv' : 'mongodb';
 			const port = isSrv || !config.port ? '' : `:${config.port}`;
 
-			// Check if credentials are provided
-			const hasCredentials = config.user && config.password;
+			// Check if username is provided
+			const user = config.user ? `${encodeURIComponent(config.user)}${config.password ? `:${encodeURIComponent(config.password)}` : ''}@` : '';
 
-			const user = hasCredentials ? `${encodeURIComponent(config.user!)}:${encodeURIComponent(config.password!)}@` : '';
-
-			// For MongoDB Atlas (mongodb+srv), add standard query parameters
-			// For regular MongoDB with auth, add authSource=admin
-			// For localhost without auth, no query params needed
+			// Only add authSource when credentials are provided
+			// For MongoDB Atlas (mongodb+srv), default authSource to 'admin' when user is provided
+			// For local MongoDB, only use authSource if explicitly provided
 			let queryParams = '';
-			if (isSrv && hasCredentials) {
+			if (config.user) {
+				const authSource = 'admin';
+				queryParams = `?authSource=${encodeURIComponent(authSource)}${isSrv ? '&retryWrites=true&w=majority' : ''}`;
+			} else if (isSrv) {
+				// Atlas without credentials
 				queryParams = '?retryWrites=true&w=majority';
-			} else if (!isSrv && hasCredentials) {
-				queryParams = '?authSource=admin';
 			}
 
 			// Logging happens in getSetupDatabaseAdapter with correlationId
@@ -128,21 +128,24 @@ export async function getSetupDatabaseAdapter(
 			dbAdapter = new MongoDBAdapter() as unknown as IDBAdapter;
 
 			// Prepare connection options for MongoDB
-			const connectionOptions = {
+			const connectionOptions: any = {
 				serverSelectionTimeoutMS: 15_000,
 				socketTimeoutMS: 45_000,
 				maxPoolSize: 50, // Increased to handle parallel seeding
 				retryWrites: true,
-				dbName: config.name,
-				...(config.user &&
-					config.password && {
-						user: config.user,
-						pass: config.password,
-						// Always use 'admin' as authSource for both MongoDB and Atlas
-						// MongoDB Atlas stores user accounts in the admin database by default
-						authSource: 'admin'
-					})
+				dbName: config.name
 			};
+
+			if (config.user) {
+				connectionOptions.user = config.user;
+				if (config.password) {
+					connectionOptions.pass = config.password;
+				}
+
+				// Default authSource to 'admin' when user is provided
+				const authSource = 'admin';
+				connectionOptions.authSource = authSource;
+			}
 
 			try {
 				const connectResult = await dbAdapter.connect(connectionString, connectionOptions);

@@ -19,7 +19,6 @@ export const privateConfigSchema = object({
 	DB_NAME: pipe(string(), minLength(1, 'Database name is required.')),
 	DB_USER: string(),
 	DB_PASSWORD: string(),
-	DB_AUTH_SOURCE: optional(string()),
 	DB_RETRY_ATTEMPTS: optional(pipe(number(), minValue(1))),
 	DB_RETRY_DELAY: optional(pipe(number(), minValue(1))),
 	DB_POOL_SIZE: optional(pipe(number(), minValue(1))),
@@ -205,8 +204,7 @@ export const databaseConfigSchema = object({
 	port: optional(pipe(number(), minValue(0))),
 	name: pipe(string(), minLength(1)),
 	user: optional(string()),
-	password: optional(string()),
-	authSource: optional(string())
+	password: optional(string())
 });
 
 // ----------------- TYPES & HELPERS -----------------

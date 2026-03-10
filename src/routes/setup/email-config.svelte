@@ -97,32 +97,27 @@
 	let touchedFields = $state(new Set<string>());
 	let localValidationErrors = $derived(() => validationResult().errors);
 
-	// SMTP Configuration
-	let smtpHost = $state('');
-	let smtpPort = $state(587);
-	let smtpUser = $state('');
-	let smtpPassword = $state('');
-	let smtpFrom = $state('');
+	// SMTP Configuration is now bound to wizard.emailSettings
 	let useCustomPort = $state(false);
 
 	let showPassword = $state(false);
 
 	// Derived values for auto-detection
 	let detectedPort = $derived(() => {
-		if (!useCustomPort && smtpHost) {
-			const provider = detectProviderFromHost(smtpHost);
+		if (!useCustomPort && wizard.emailSettings.host) {
+			const provider = detectProviderFromHost(wizard.emailSettings.host);
 			return provider?.port;
 		}
 		return null;
 	});
 
 	let detectedSecure = $derived(() => {
-		const port = detectedPort() ?? smtpPort;
+		const port = detectedPort() ?? Number(wizard.emailSettings.port);
 		return autoDetectSecure(port);
 	});
 
 	// Effective values (use detected values when available)
-	let effectivePort = $derived(() => detectedPort() ?? smtpPort);
+	let effectivePort = $derived(() => detectedPort() ?? Number(wizard.emailSettings.port));
 	let effectiveSecure = $derived(() => detectedSecure());
 
 	// Common SMTP ports with descriptions
@@ -266,12 +261,12 @@
 	let lastDetectedHost = '';
 	$effect(() => {
 		// Only auto-detect if user isn't using custom port and host has changed
-		if (!useCustomPort && smtpHost !== lastDetectedHost) {
-			lastDetectedHost = smtpHost;
+		if (!useCustomPort && wizard.emailSettings.host !== lastDetectedHost) {
+			lastDetectedHost = wizard.emailSettings.host;
 
-			const provider = detectProviderFromHost(smtpHost);
+			const provider = detectProviderFromHost(wizard.emailSettings.host);
 			if (provider) {
-				smtpPort = provider.port;
+				wizard.emailSettings.port = String(provider.port);
 			}
 		}
 	});
@@ -279,11 +274,11 @@
 	// Validation using schema
 	const validationResult = $derived(() => {
 		const config: SmtpConfigSchema = {
-			host: smtpHost,
+			host: wizard.emailSettings.host,
 			port: effectivePort(),
-			user: smtpUser,
-			password: smtpPassword,
-			from: smtpFrom || smtpUser,
+			user: wizard.emailSettings.user,
+			password: wizard.emailSettings.password,
+			from: wizard.emailSettings.from || wizard.emailSettings.user,
 			secure: effectiveSecure()
 		};
 
@@ -332,13 +327,13 @@
 
 	// Legacy hostname validation for UI feedback
 	const isValidHostname = $derived(() => {
-		if (!smtpHost.trim()) {
+		if (!wizard.emailSettings.host.trim()) {
 			return true;
 		}
-		if (smtpHost.includes('@')) {
+		if (wizard.emailSettings.host.includes('@')) {
 			return false;
 		}
-		return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(smtpHost);
+		return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(wizard.emailSettings.host);
 	});
 
 	// SMTP presets for dropdown
@@ -386,8 +381,8 @@
 		const preset = presets.find((p) => p.name === presetName);
 		if (preset) {
 			selectedPreset = presetName;
-			smtpHost = preset.host;
-			smtpPort = preset.port;
+			wizard.emailSettings.host = preset.host;
+			wizard.emailSettings.port = String(preset.port);
 			useCustomPort = false;
 			testSuccess = false;
 			testError = '';
@@ -407,11 +402,11 @@
 
 		try {
 			const formData = new FormData();
-			formData.append('host', smtpHost);
+			formData.append('host', wizard.emailSettings.host);
 			formData.append('port', String(effectivePort()));
-			formData.append('user', smtpUser);
-			formData.append('password', smtpPassword);
-			formData.append('from', smtpFrom || smtpUser);
+			formData.append('user', wizard.emailSettings.user);
+			formData.append('password', wizard.emailSettings.password);
+			formData.append('from', wizard.emailSettings.from || wizard.emailSettings.user);
 			formData.append('secure', String(effectiveSecure()));
 			formData.append('testEmail', wizard.adminUser.email);
 			formData.append('saveToDatabase', 'true');
@@ -559,8 +554,8 @@
 			<input
 				type="text"
 				class="input"
-				class:input-error={displayErrors.host || (smtpHost.trim() && !isValidHostname())}
-				bind:value={smtpHost}
+				class:input-error={displayErrors.host || (wizard.emailSettings.host.trim() && !isValidHostname())}
+				bind:value={wizard.emailSettings.host}
 				placeholder={setup_email_host_placeholder()}
 				required
 				onblur={() => handleBlur('host')}
@@ -574,10 +569,10 @@
 					<iconify-icon icon="mdi:alert-circle" class="text-sm"></iconify-icon>
 					{displayErrors.host}
 				</span>
-			{:else if smtpHost.trim() && !isValidHostname()}
+			{:else if wizard.emailSettings.host.trim() && !isValidHostname()}
 				<span class="mt-1 flex items-center gap-1 text-xs text-error-500">
 					<iconify-icon icon="mdi:alert-circle" class="text-sm"></iconify-icon>
-					{#if smtpHost.includes('@')}
+					{#if wizard.emailSettings.host.includes('@')}
 						{setup_email_invalid_hostname()}
 					{:else}
 						{setup_email_invalid_hostname_format()}
@@ -612,7 +607,7 @@
 						type="number"
 						class="input flex-1"
 						class:input-error={displayErrors.port}
-						bind:value={smtpPort}
+						bind:value={wizard.emailSettings.port}
 						placeholder={setup_email_port_custom()}
 						min="1"
 						max="65535"
@@ -629,7 +624,7 @@
 						aria-label={setup_email_aria_switch_standard()}
 						onclick={() => {
 							useCustomPort = false;
-							smtpPort = 587; // Reset to default
+							wizard.emailSettings.port = '587'; // Reset to default
 						}}
 					>
 						<iconify-icon icon="mdi:arrow-u-left-top" class="text-lg" aria-hidden="true"></iconify-icon>
@@ -649,7 +644,7 @@
 				<div class="flex gap-2">
 					<select
 						class="select flex-1"
-						bind:value={smtpPort}
+						bind:value={wizard.emailSettings.port}
 						aria-label="Select a standard SMTP port"
 						onchange={() => {
 							testSuccess = false;
@@ -707,14 +702,14 @@
 				type="text"
 				class="input"
 				class:input-error={displayErrors.user}
-				bind:value={smtpUser}
+				bind:value={wizard.emailSettings.user}
 				placeholder={setup_email_user_placeholder()}
 				required
 				autocomplete="username"
 				onblur={() => {
-					const trimmed = smtpUser.trim();
-					if (trimmed !== smtpUser) {
-						smtpUser = trimmed;
+					const trimmed = wizard.emailSettings.user.trim();
+					if (trimmed !== wizard.emailSettings.user) {
+						wizard.emailSettings.user = trimmed;
 					}
 					handleBlur('user');
 				}}
@@ -752,14 +747,14 @@
 					type={showPassword ? 'text' : 'password'}
 					class="input pr-10"
 					class:input-error={displayErrors.password}
-					bind:value={smtpPassword}
+					bind:value={wizard.emailSettings.password}
 					placeholder={setup_email_password_placeholder()}
 					required
 					autocomplete="current-password"
 					onblur={() => {
-						const trimmed = smtpPassword.trim();
-						if (trimmed !== smtpPassword) {
-							smtpPassword = trimmed;
+						const trimmed = wizard.emailSettings.password.trim();
+						if (trimmed !== wizard.emailSettings.password) {
+							wizard.emailSettings.password = trimmed;
 						}
 						handleBlur('password');
 					}}
@@ -794,12 +789,12 @@
 			<input
 				type="email"
 				class="input"
-				bind:value={smtpFrom}
-				placeholder={smtpUser || 'noreply@example.com'}
+				bind:value={wizard.emailSettings.from}
+				placeholder={wizard.emailSettings.user || 'noreply@example.com'}
 				onblur={() => {
-					const trimmed = smtpFrom.trim();
-					if (trimmed !== smtpFrom) {
-						smtpFrom = trimmed;
+					const trimmed = wizard.emailSettings.from.trim();
+					if (trimmed !== wizard.emailSettings.from) {
+						wizard.emailSettings.from = trimmed;
 					}
 				}}
 			/>

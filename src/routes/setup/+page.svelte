@@ -270,7 +270,12 @@
 					{:else if wizard.currentStep === 3}
 						<EmailConfig />
 					{:else if wizard.currentStep === 4}
-						<ReviewConfig dbConfig={wizard.dbConfig} adminUser={wizard.adminUser} systemSettings={wizard.systemSettings} />
+						<ReviewConfig
+							dbConfig={wizard.dbConfig}
+							adminUser={wizard.adminUser}
+							systemSettings={wizard.systemSettings}
+							emailSettings={wizard.emailSettings}
+						/>
 					{/if}
 
 					{#if (wizard.successMessage || wizard.errorMessage) && wizard.lastDbTestResult}

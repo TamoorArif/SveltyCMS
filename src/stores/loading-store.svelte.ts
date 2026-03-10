@@ -118,7 +118,8 @@ export class LoadingStore {
 		};
 
 		// Create timeout to auto-cleanup stuck states (skip in TEST_MODE for stable unit tests)
-		if (process.env.TEST_MODE !== 'true') {
+		// Use typeof check to avoid 'Process is not defined' in browser
+		if (typeof process === 'undefined' || process.env?.TEST_MODE !== 'true') {
 			entry.timeoutId = setTimeout(() => {
 				console.warn(`[LoadingStore] Auto-cleanup: "${reason}" exceeded ${timeout}ms`);
 				this.stopLoading(reason);

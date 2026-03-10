@@ -163,16 +163,6 @@ Provides DB type, host, port, name, user, password inputs, validation display, t
 					dbConfig.name = parsed.database;
 				}
 
-				if (parsed.authSource) {
-					dbConfig.authSource = parsed.authSource;
-				}
-
-				// Show helper message
-				showConnectionStringHelper = true;
-				setTimeout(() => {
-					showConnectionStringHelper = false;
-				}, 5000);
-
 				// Clear any previous test errors
 				clearDbTestError();
 			}
@@ -661,35 +651,6 @@ Provides DB type, host, port, name, user, password inputs, validation display, t
 						<div id="db-password-error" class="mt-1 text-xs text-error-500" role="alert">{displayErrors.password}</div>
 					{/if}
 				</div>
-
-				{#if dbConfig.type.startsWith('mongodb')}
-					<div>
-						<label for="db-auth-source" class="mb-1 flex items-center gap-1 text-sm font-medium">
-							<iconify-icon icon="mdi:shield-account-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"
-							></iconify-icon>
-							<span class="text-black dark:text-white">Auth Database</span>
-							<SystemTooltip title="The database where user credentials are stored (default: admin)">
-								<button
-									type="button"
-									tabindex="-1"
-									aria-label="Help: Auth Database"
-									class="ml-1 text-slate-400 hover:text-tertiary-500 hover:dark:text-primary-500"
-								>
-									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
-								</button>
-							</SystemTooltip>
-						</label>
-
-						<input
-							id="db-auth-source"
-							bind:value={dbConfig.authSource}
-							type="text"
-							onchange={clearDbTestError}
-							placeholder="admin"
-							class="input rounded border-slate-200"
-						/>
-					</div>
-				{/if}
 			{/if}
 		</div>
 		{#if !unsupportedDbSelected}

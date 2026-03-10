@@ -34,7 +34,7 @@
 
 <h3 align="center"><strong>It's lightning fast, flexible and an easy to use modern content management system to provide a headless backend</strong></h3>
 
-This SveltyCMS headless CMS provides a powerful backend based on a modern [SvelteKit 2 / Svelte 5](https://svelte.dev) framework. Being designed to be database agnostic, we fully support **MongoDB**, **PostgreSQL**, **SQLite**, and **MariaDB/MySQL** (via [Drizzle ORM](https://drizzle-orm.netlify.app)).
+This SveltyCMS headless CMS provides a powerful backend based on a modern [SvelteKit 2 / Svelte 5](https://svelte.dev) framework. Being designed to be database agnostic, we fully support **MongoDB**, **PostgreSQL**, **SQLite**, and **MariaDB/MySQL** (via [Drizzle ORM](https://drizzle.dev)).
 
 - [x] **PostgreSQL Support**: Full adapter implementation; core CRUD and Auth modules operational. Verified production-ready.
       You can define Content Collections in two ways: in code or via the GUI-based collection builder. Full TypeScript support and a rich widget library make it straightforward to build custom data structures.
@@ -111,7 +111,7 @@ cd SveltyCMS
 
 ### Install all dependencies
 
-Install STABLE [Node.js (>=24)](https://nodejs.org/en) to get started. Then choose your preferred package manager:
+Install LATEST STABLE [Node.js (>=24)](https://nodejs.org/en) to get started. We recommend using [Bun](https://bun.sh) for the best experience (3-4x faster than npm/pnpm). Then choose your preferred package manager:
 
 <details open>
 <summary><b>npm</b></summary>

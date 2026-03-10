@@ -1421,15 +1421,18 @@ class ContentManager {
 			throw new Error('Database adapter is not available');
 		}
 
-		await dbAdapter.content.nodes.bulkUpdate([
-			{
-				path: node.path as string,
-				changes: {
-					parentId: newParentId as DatabaseId | undefined,
-					updatedAt: node.updatedAt
+		await dbAdapter.content.nodes.bulkUpdate(
+			[
+				{
+					path: node.path as string,
+					changes: {
+						parentId: newParentId as DatabaseId | undefined,
+						updatedAt: node.updatedAt
+					}
 				}
-			}
-		]);
+			],
+			{ tenantId: node.tenantId, bypassTenantCheck: true }
+		);
 
 		// Increment version
 		this.contentVersion = Date.now();
@@ -1573,7 +1576,7 @@ class ContentManager {
 		}
 
 		if (bulkUpdates.length > 0) {
-			await dbAdapter.content.nodes.bulkUpdate(bulkUpdates);
+			await dbAdapter.content.nodes.bulkUpdate(bulkUpdates, { tenantId, bypassTenantCheck: true });
 			logger.info('[ContentManager] Bulk updated nodes:', bulkUpdates.length);
 		}
 
@@ -1658,13 +1661,16 @@ class ContentManager {
 		const { widgetRegistryService } = await import('@src/services/widget-registry-service');
 		await widgetRegistryService.initialize();
 
+		// Hoist utils import for performance
+		const { processModule } = await import('./utils');
+
 		// Process in batches to avoid memory spikes
 		const BATCH_SIZE = 10;
 		const schemas: Schema[] = [];
 
 		for (let i = 0; i < jsFiles.length; i += BATCH_SIZE) {
 			const batch = jsFiles.slice(i, i + BATCH_SIZE);
-			const batchSchemas = await Promise.all(batch.map((filePath) => this._processSchemaFile(filePath)));
+			const batchSchemas = await Promise.all(batch.map((filePath) => this._processSchemaFile(filePath, processModule)));
 			schemas.push(...batchSchemas.filter((s): s is Schema => !!s));
 
 			logger.trace(`Processed batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(jsFiles.length / BATCH_SIZE)}`);
@@ -1673,12 +1679,11 @@ class ContentManager {
 		return schemas;
 	}
 
-	private async _processSchemaFile(filePath: string): Promise<Schema | null> {
+	private async _processSchemaFile(filePath: string, processModule: Function): Promise<Schema | null> {
 		try {
 			const fs = await getFs();
 			const content = await fs.readFile(filePath, 'utf-8');
-			const { processModule } = await import('./utils');
-			const moduleData = await processModule(content);
+			const moduleData = await (processModule as any)(content);
 
 			if (!moduleData?.schema) {
 				return null;
@@ -1726,6 +1731,21 @@ class ContentManager {
 		}
 
 		let operations: ContentNode[] = [];
+		const dbNodes: ContentNode[] = [];
+
+		// Consolidate DB fetch: fetch once at the beginning
+		try {
+			const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
+				tenantId,
+				bypassTenantCheck: true,
+				bypassCache: true
+			});
+			if (dbResult.success && dbResult.data) {
+				dbNodes.push(...dbResult.data);
+			}
+		} catch (err) {
+			logger.warn('[ContentManager] Failed to fetch initial DB state:', err);
+		}
 
 		// CRITICAL: Mongoose models must ALWAYS be registered, even if we skip reconciliation.
 		// Otherwise we cannot query collections.
@@ -1749,19 +1769,11 @@ class ContentManager {
 
 		if (skipReconciliation) {
 			// SAFETY CHECK: Verify that the database actually has content.
-			// If seedCollectionsForSetup failed to persist nodes or if the DB was reset,
-			// trusting the DB state would lead to an emptycontent-manager(0 nodes).
-			try {
-				// Check for at least one node
-				const countResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
-				if (!(countResult.success && countResult.data) || countResult.data.length === 0) {
-					logger.warn('[ContentManager] ⚠️ Skip reconciliation requested, but DB is EMPTY! Forcing reconciliation to restore content.');
-					skipReconciliation = false;
-				} else {
-					logger.info(`[ContentManager] Skipping reconciliation (trusting DB state with ${countResult.data.length} nodes).`);
-				}
-			} catch (err) {
-				logger.warn('[ContentManager] Failed to verify DB state, proceeding with requested skip settings:', err);
+			if (dbNodes.length === 0) {
+				logger.warn('[ContentManager] ⚠️ Skip reconciliation requested, but DB is EMPTY! Forcing reconciliation to restore content.');
+				skipReconciliation = false;
+			} else {
+				logger.info(`[ContentManager] Skipping reconciliation (trusting DB state with ${dbNodes.length} nodes).`);
 			}
 		}
 
@@ -1793,30 +1805,20 @@ class ContentManager {
 			logger.trace(JSON.stringify(schemas.map((s) => s.path)));
 			logger.trace('---------------------------------');
 
-			const dbResult = await dbAdapter.content.nodes.getStructure('flat', {
-				tenantId,
-				bypassTenantCheck: true,
-				bypassCache: true
-			});
-
 			const dbNodeMap = new Map<string, ContentNode>(
-				dbResult.success
-					? dbResult.data.filter((node: ContentNode) => typeof node.path === 'string').map((node: ContentNode) => [node.path as string, node])
-					: []
+				dbNodes.filter((node: ContentNode) => typeof node.path === 'string').map((node: ContentNode) => [node.path as string, node])
 			);
 
 			// Build operations with parentId resolution in a single pass
 			operations = this._buildReconciliationOperations(schemas, fileCategoryNodes, dbNodeMap);
 
-			// CRITICAL FIX: Resolve ID conflicts before upsert
-			// Use dbNodeMap which is already built in line 1553 from `dbResult`
+			// Resolve ID conflicts before upsert
 			const nodesToDelete: string[] = [];
 			for (const op of operations) {
 				if (!op.path) {
 					continue;
 				}
 				const existingNode = dbNodeMap.get(op.path);
-				// op._id might be ObjectId or string, ensure string comparison
 				if (existingNode && existingNode._id.toString() !== op._id.toString()) {
 					logger.warn(`[ContentManager] ID Mismatch for path="${op.path}": DB=${existingNode._id} vs Schema=${op._id}. Deleting old node.`);
 					nodesToDelete.push(op.path);
@@ -1830,12 +1832,12 @@ class ContentManager {
 
 			// Single bulk upsert with all data including parentIds
 			if (operations.length > 0) {
-				await this._bulkUpsertWithParentIds(dbAdapter, operations, tenantId);
+				await this._bulkUpsertWithParentIds(dbAdapter, operations, tenantId, dbNodes);
 			}
 		}
 
 		// Load final structure and rebuild maps
-		await this._loadFinalStructure(dbAdapter, operations, tenantId);
+		await this._loadFinalStructure(dbAdapter, operations, tenantId, dbNodes);
 	}
 
 	private _buildReconciliationOperations(
@@ -1985,7 +1987,7 @@ class ContentManager {
 		return operations;
 	}
 
-	private async _bulkUpsertWithParentIds(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null): Promise<void> {
+	private async _bulkUpsertWithParentIds(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null, dbNodes?: ContentNode[]): Promise<void> {
 		const upsertOps = operations.map((op) => ({
 			path: op.path as string,
 			id: op._id.toString(),
@@ -2007,7 +2009,7 @@ class ContentManager {
 			} as Partial<ContentNode>
 		}));
 
-		const bulkResult = await dbAdapter.content.nodes.bulkUpdate(upsertOps);
+		const bulkResult = await dbAdapter.content.nodes.bulkUpdate(upsertOps, { tenantId, bypassTenantCheck: true });
 
 		if (!bulkResult.success) {
 			logger.error('[ContentManager] Bulk upsert failed:', bulkResult.error);
@@ -2021,7 +2023,10 @@ class ContentManager {
 		logger.debug(`Current Ops Paths Count: ${currentPaths.size}`);
 		logger.debug(`Ops Paths: ${JSON.stringify(Array.from(currentPaths))}`);
 
-		const dbResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
+
+		const dbResult = dbNodes && dbNodes.length > 0 
+			? { success: true, data: dbNodes }
+			: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
 
 		if (dbResult.success && dbResult.data) {
 			const orphanedNodes = dbResult.data.filter((node: ContentNode) => node.path && !currentPaths.has(node.path));
@@ -2094,11 +2099,13 @@ class ContentManager {
 		logger.debug('[ContentManager] Single-pass bulk upsert and cleanup completed');
 	}
 
-	private async _loadFinalStructure(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null): Promise<void> {
+	private async _loadFinalStructure(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null, dbNodes?: ContentNode[]): Promise<void> {
 		// CRITICAL: Fetch the final structure from database after all phases complete
 		// This ensures we have the correct parentId relationships and MongoDB-assigned _ids
 		logger.debug('[ContentManager] Final phase: Fetching complete structure from database', { tenantId });
-		const finalStructureResult = await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true }); // bypassCache = true
+		const finalStructureResult = dbNodes && dbNodes.length > 0
+			? { success: true, data: dbNodes }
+			: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true }); // bypassCache = true
 
 		if (!(finalStructureResult.success && finalStructureResult.data)) {
 			logger.error('[ContentManager] Failed to fetch final structure from database');

@@ -98,7 +98,7 @@ function setCookie(name: string, value: string) {
 		return;
 	}
 	// biome-ignore lint/suspicious/noDocumentCookie: intentional cookie write
-	document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+	document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${typeof process !== 'undefined' && process.env?.NODE_ENV === 'production' ? '; Secure' : ''}`;
 }
 
 // --- CORE APP STORE ---

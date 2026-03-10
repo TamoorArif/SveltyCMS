@@ -53,8 +53,7 @@ export function resetDbInitPromise() {
 }
 
 // Auth
-import { Auth } from '@src/databases/auth';
-import { getDefaultSessionStore } from '@src/databases/auth/session-manager';
+import type { Auth as AuthType } from '@src/databases/auth';
 // Settings loader
 import { privateConfigSchema, publicConfigSchema } from '@src/databases/schemas';
 import { getPublicSetting, invalidateSettingsCache, type PublicEnv, setSettingsCache } from '@src/services/settings-service';
@@ -66,10 +65,8 @@ import type { DatabaseAdapter } from './db-interface';
 // Type definition for private config schema
 
 // Theme
-import { DEFAULT_THEME, ThemeManager } from '@src/databases/theme-manager';
+import { DEFAULT_THEME } from '@src/databases/theme-manager';
 // Plugins
-import { initializePlugins } from '@src/plugins';
-import { waitForServiceHealthy } from '@src/stores/system/async';
 // System State Management
 import { setSystemState, updateServiceHealth } from '@src/stores/system/state';
 // System Logger
@@ -81,7 +78,7 @@ import { logger } from '@utils/logger';
 // State Variables
 export let dbAdapter: DatabaseAdapter | null = null; // Database adapter
 
-export let auth: Auth | null = null; // Authentication instance
+export let auth: AuthType | null = null; // Authentication instance
 export let isConnected = false; // Database connection state (primarily for external checks if needed)
 let isInitialized = false; // Initialization state
 let initializationPromise: Promise<void> | null = null; // Initialization promise
@@ -320,6 +317,7 @@ async function initializeThemeManager(): Promise<void> {
 	}
 	try {
 		logger.debug('Initializing ThemeManager...');
+		const { ThemeManager } = await import('@src/databases/theme-manager');
 		const themeManager = ThemeManager.getInstance();
 		await themeManager.initialize(dbAdapter);
 	} catch (err) {
@@ -473,6 +471,10 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 				if (dbAdapter?.ensureAuth) {
 					await dbAdapter.ensureAuth();
 				}
+				const [{ Auth }, { getDefaultSessionStore }] = await Promise.all([
+					import('@src/databases/auth'),
+					import('@src/databases/auth/session-manager')
+				]);
 				auth = new Auth(dbAdapter!, getDefaultSessionStore());
 				updateServiceHealth('auth', 'healthy', 'Authentication service ready');
 			})(),
@@ -544,6 +546,7 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 
 				// Step 7: Initialize Plugins
 				if (dbAdapter) {
+					const [{ initializePlugins }] = await Promise.all([import('@src/plugins')]);
 					await initializePlugins(dbAdapter).catch((e) => logger.warn('Plugins init failed:', e));
 				}
 
@@ -780,6 +783,7 @@ export async function reinitializeSystem(force = false, waitForAuth = true): Pro
 		// Optionally wait for auth service to be ready (skip during setup to avoid blocking)
 		if (waitForAuth) {
 			logger.info('Waiting for auth service to become available after reinitialization...');
+			const { waitForServiceHealthy } = await import('@src/stores/system/async');
 			const authReady = await waitForServiceHealthy('auth', {
 				timeoutMs: 3000
 			}); // Reduced from 10s to 3s
