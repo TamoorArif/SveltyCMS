@@ -259,12 +259,12 @@ export const actions: Actions = {
 					const { compile } = await import('@utils/compilation/compile');
 
 					const sourceDir = resolve(process.cwd(), 'src', 'presets', systemData.preset);
-					const targetDir = resolve(process.cwd(), 'src', 'collections');
+					const targetDir = resolve(process.cwd(), 'config', 'collections');
 
 					if (existsSync(sourceDir)) {
-						// Copy recursive
+						mkdirSync(targetDir, { recursive: true });
 						cpSync(sourceDir, targetDir, { recursive: true, force: true });
-						logger.info(`✅ Copied preset ${systemData.preset} to src/collections`);
+						logger.info(`✅ Copied preset ${systemData.preset} to config/collections`);
 
 						// Force compilation of new preset files
 						try {
@@ -631,7 +631,6 @@ export const actions: Actions = {
 					DB_NAME: database.name,
 					DB_USER: database.user || '',
 					DB_PASSWORD: database.password || '',
-					DB_AUTH_SOURCE: database.authSource || 'admin',
 					JWT_SECRET_KEY: 'temp_secret',
 					ENCRYPTION_KEY: 'temp_key',
 					USE_REDIS: system.useRedis,
