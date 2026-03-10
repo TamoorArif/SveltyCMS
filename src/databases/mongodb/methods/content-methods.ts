@@ -336,7 +336,10 @@ export class MongoContentMethods {
 
 		try {
 			const paths = expectedNodes.map((n) => n.path);
-			const existingNodes = await this.nodesRepo.model.find({ path: { $in: paths } }).lean().exec();
+			const existingNodes = await this.nodesRepo.model
+				.find({ path: { $in: paths } })
+				.lean()
+				.exec();
 			const existingMap = new Map(existingNodes.map((n) => [n.path, n]));
 
 			const bulkOps: any[] = [];
@@ -350,7 +353,7 @@ export class MongoContentMethods {
 					if (existingId !== expectedId) {
 						// ID mismatch - delete and recreate with correct ID in a single bulk operation
 						logger.info(`[fixMismatchedNodeIds] Queuing fix for node at path="${path}": ${existingId} → ${expectedId}`);
-						
+
 						bulkOps.push({
 							deleteOne: { filter: { _id: existing._id } }
 						});

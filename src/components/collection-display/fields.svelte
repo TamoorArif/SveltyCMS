@@ -404,7 +404,7 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 							{@const field = ensureFieldProperties(rawField)}
 							<div
 								class="mx-auto text-center {!field?.width ? 'w-full ' : 'max-md:w-full!'}"
-								style={'min-width:min(300px,100%);' + (field.width ? `width:calc(${Math.floor(100 / field?.width)}% - 0.5rem)` : '')}
+								style={'min-width:min(300px,100%);' + (field.width ? `width:calc(${(field.width / 12) * 100}% - 0.5rem)` : '')}
 							>
 								<div class="flex items-center justify-between gap-2 px-[5px] text-start field-label">
 									<!-- Field label -->
@@ -462,6 +462,9 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 
 										// 3. Robust Search in modules (fallback)
 										const normalized = widgetName.toLowerCase();
+										const kebabMatch = normalized.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+										const flatMatch = normalized.replace(/-/g, '');
+
 										for (const path in modules) {
 											const lowerPath = path.toLowerCase();
 											const parts = lowerPath.split('/');
@@ -469,15 +472,22 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 											const folderName = parts.pop();
 
 											// A. Match 3-Pillar Structure: /WidgetName/Input.svelte
-											// IMPORTANT: Enforce folder name matches widget name to avoid matching other widgets' Input.svelte
-											if (folderName === normalized && fileName === 'input.svelte') return modules[path];
+											// IMPORTANT: Enforce folder name matches widget name (handle kebab-case and flat naming)
+											const isFolderMatch =
+												folderName === normalized ||
+												folderName === kebabMatch ||
+												folderName === flatMatch ||
+												folderName?.replace(/-/g, '') === flatMatch;
+
+											if (isFolderMatch && fileName === 'input.svelte') return modules[path];
 
 											// B. Match 3-Pillar Index: /WidgetName/index.svelte
-											if (folderName === normalized && fileName === 'index.svelte') return modules[path];
+											if (isFolderMatch && fileName === 'index.svelte') return modules[path];
 
 											// C. Match Single File: /WidgetName.svelte
 											// EXCEPTION: Do not loosely match "Input.svelte" as it causes collisions with standard 3-pillar components
 											if (fileName === `${normalized}.svelte` && normalized !== 'input') return modules[path];
+											if (fileName === `${kebabMatch}.svelte` && kebabMatch !== 'input') return modules[path];
 										}
 										return null;
 									})()}

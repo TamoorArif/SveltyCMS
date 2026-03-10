@@ -1,4 +1,4 @@
-﻿<!-- 
+<!-- 
 @file src/routes/(app)/user/+page.svelte
 @component
 **This file sets up and displays the user page, providing a streamlined interface for managing user accounts and settings**
@@ -15,234 +15,181 @@
 -->
 
 <script lang="ts">
-import { Avatar } from '@skeletonlabs/skeleton-svelte';
-import PageTitle from '@src/components/page-title.svelte';
-import PermissionGuard from '@src/components/permission-guard.svelte';
-// ParaglideJS
-import {
-	button_delete,
-	email,
-	form_password,
-	role,
-	usermodalconfirmbody,
-	usermodalconfirmtitle,
-	usermodaluser_edittitle,
-	usermodaluser_settingbody,
-	usermodaluser_settingtitle,
-	username,
-	userpage_edit_usersetting,
-	userpage_editavatar,
-	userpage_title,
-	userpage_user_id
-} from '@src/paraglide/messages';
-// Stores
-import { collaboration } from '@src/stores/collaboration-store.svelte';
-import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
-import { onMount } from 'svelte';
-import { invalidateAll } from '$app/navigation';
-import AdminArea from './components/admin-area.svelte';
-// Auth
-import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
-import '@src/stores/store.svelte.ts';
-import { setCollection } from '@src/stores/collection-store.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { triggerActionStore } from '@utils/global-search-index';
-import { modalState } from '@utils/modal-state.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import ModalEditAvatar from './components/modal-edit-avatar.svelte';
-import ModalEditForm from './components/modal-edit-form.svelte';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
+	import PageTitle from '@src/components/page-title.svelte';
+	import PermissionGuard from '@src/components/permission-guard.svelte';
+	// ParaglideJS
+	import {
+		button_delete,
+		email,
+		form_password,
+		role,
+		usermodalconfirmbody,
+		usermodalconfirmtitle,
+		usermodaluser_edittitle,
+		usermodaluser_settingbody,
+		usermodaluser_settingtitle,
+		username,
+		userpage_edit_usersetting,
+		userpage_editavatar,
+		userpage_title,
+		userpage_user_id
+	} from '@src/paraglide/messages';
+	// Stores
+	import { collaboration } from '@src/stores/collaboration-store.svelte';
+	import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
+	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
+	import AdminArea from './components/admin-area.svelte';
+	// Auth
+	import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
+	import '@src/stores/store.svelte.ts';
+	import { setCollection } from '@src/stores/collection-store.svelte';
+	import { toast } from '@src/stores/toast.svelte.ts';
+	import { triggerActionStore } from '@utils/global-search-index';
+	import { modalState } from '@utils/modal-state.svelte';
+	import { showConfirm } from '@utils/modal-utils';
+	import ModalEditAvatar from './components/modal-edit-avatar.svelte';
+	import ModalEditForm from './components/modal-edit-form.svelte';
+	import ModalPrivacyData from './components/modal-privacy-data.svelte';
 
-// Props
-const { data } = $props();
-const { user: serverUser, isFirstUser, isMultiTenant, is2FAEnabledGlobal } = $derived(data);
+	// Props
+	const { data } = $props();
+	const { user: serverUser, isFirstUser, isMultiTenant, is2FAEnabledGlobal } = $derived(data);
 
-// Make user data reactive
-const user = $derived({
-	_id: serverUser?._id ?? '',
-	email: serverUser?.email ?? '',
-	username: serverUser?.username ?? '',
-	role: serverUser?.role ?? '',
-	avatar: serverUser?.avatar ?? '/Default_User.svg',
-	tenantId: serverUser?.tenantId ?? '', // Add tenantId
-	is2FAEnabled: serverUser?.is2FAEnabled ?? false,
-	permissions: []
-});
-
-// Define password as state
-let password = $state('hash-password');
-
-// Function to open 2FA modal
-function open2FAModal(): void {
-	modalState.trigger(ModalTwoFactorAuth, { user }, async (r: any) => {
-		if (r) {
-			// Refresh user data after 2FA changes
-			await invalidateAll();
-		}
+	// Make user data reactive
+	const user = $derived({
+		_id: serverUser?._id ?? '',
+		email: serverUser?.email ?? '',
+		username: serverUser?.username ?? '',
+		role: serverUser?.role ?? '',
+		avatar: serverUser?.avatar ?? '/Default_User.svg',
+		tenantId: serverUser?.tenantId ?? '', // Add tenantId
+		is2FAEnabled: serverUser?.is2FAEnabled ?? false,
+		permissions: []
 	});
-}
 
-// Function to update RTC preferences
-async function updateRtcPreference(key: 'enabled' | 'sound', value: boolean) {
-	const newUserData = {
-		preferences: {
-			rtc: {
-				...serverUser?.preferences?.rtc,
-				[key]: value
-			}
-		}
-	};
+	// Define password as state
+	let password = $state('hash-password');
 
-	try {
-		const res = await fetch('/api/user/update-user-attributes', {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ user_id: 'self', newUserData })
-		});
-
-		if (res.ok) {
-			toast.success('Preferences updated');
-			await invalidateAll();
-			// If RTC was disabled, close connection
-			if (key === 'enabled' && !value) {
-				collaboration.close();
-			} else if (key === 'enabled' && value) {
-				collaboration.connect();
-			}
-		} else {
-			toast.error('Failed to update preferences');
-		}
-	} catch {
-		toast.error('Error updating preferences');
-	}
-}
-
-// Function to execute actions
-function executeActions() {
-	const actions = $triggerActionStore;
-	if (actions.length === 1) {
-		actions[0]();
-	} else {
-		for (const action of actions) {
-			action();
-		}
-	}
-	triggerActionStore.set([]);
-}
-
-// Execute actions on mount if triggerActionStore has data
-onMount(() => {
-	if ($triggerActionStore.length > 0) {
-		executeActions();
-	}
-	setCollection(null);
-
-	// Note: Avatar initialization is handled by the layout component
-	// to ensure consistent avatar state across the application
-});
-
-// Modal Trigger - User Form
-function modalUserForm(): void {
-	modalState.trigger(ModalEditForm, {
-		title: usermodaluser_edittitle(),
-		body: usermodaluser_settingbody() || 'Update your user details below.'
-	});
-}
-
-// Modal Trigger - Edit Avatar
-function modalEditAvatar(): void {
-	modalState.trigger(
-		ModalEditAvatar,
-		{
-			title: usermodaluser_settingtitle(),
-			body: usermodaluser_settingbody()
-		},
-		async (r: any) => {
+	// Function to open 2FA modal
+	function open2FAModal(): void {
+		modalState.trigger(ModalTwoFactorAuth, { user }, async (r: any) => {
 			if (r) {
-				toast.success({
-					description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
-				});
-			}
-		}
-	);
-}
-
-// Modal Confirm
-function modalConfirm(): void {
-	showConfirm({
-		title: usermodalconfirmtitle(),
-		body: usermodalconfirmbody(),
-		// confirmText: usermodalconfirmdeleteuser(),
-		onConfirm: async () => {
-			const res = await fetch('/api/user/deleteUsers', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify([user])
-			});
-			if (res.status === 200) {
+				// Refresh user data after 2FA changes
 				await invalidateAll();
 			}
-		}
-	});
-}
-
-// GDPR: Data Portability
-async function handleExportData() {
-	try {
-		const res = await fetch('/api/gdpr', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ action: 'export', userId: user._id })
 		});
-		const result = await res.json();
-		if (result.success) {
-			const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-				type: 'application/json'
-			});
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `sveltycms-data-export-${user.username}-${new Date().toISOString().split('T')[0]}.json`;
-			a.click();
-			URL.revokeObjectURL(url);
-			toast.success('Data export started');
-		} else {
-			toast.error(result.error || 'Export failed');
-		}
-	} catch (_err) {
-		toast.error('Failed to export data');
 	}
-}
 
-// GDPR: Right to Erasure
-function handleAnonymize() {
-	showConfirm({
-		title: 'Delete & Anonymize Account',
-		body: 'This will permanently anonymize your account. This action cannot be undone. Are you sure?',
-		onConfirm: async () => {
-			try {
-				const res = await fetch('/api/gdpr', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						action: 'anonymize',
-						userId: user._id,
-						reason: 'User self-request (Right to Erasure)'
-					})
-				});
-				const result = await res.json();
-				if (result.success) {
-					toast.success('Account anonymized successfully');
-					// Force logout by redirecting to logout
-					window.location.href = '/api/user/logout';
-				} else {
-					toast.error(result.error || 'Anonymization failed');
+	// Function to update RTC preferences
+	async function updateRtcPreference(key: 'enabled' | 'sound', value: boolean) {
+		const newUserData = {
+			preferences: {
+				rtc: {
+					...serverUser?.preferences?.rtc,
+					[key]: value
 				}
-			} catch (_err) {
-				toast.error('Failed to anonymize account');
+			}
+		};
+
+		try {
+			const res = await fetch('/api/user/update-user-attributes', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ user_id: 'self', newUserData })
+			});
+
+			if (res.ok) {
+				toast.success('Preferences updated');
+				await invalidateAll();
+				// If RTC was disabled, close connection
+				if (key === 'enabled' && !value) {
+					collaboration.close();
+				} else if (key === 'enabled' && value) {
+					collaboration.connect();
+				}
+			} else {
+				toast.error('Failed to update preferences');
+			}
+		} catch {
+			toast.error('Error updating preferences');
+		}
+	}
+
+	// Function to execute actions
+	function executeActions() {
+		const actions = $triggerActionStore;
+		if (actions.length === 1) {
+			actions[0]();
+		} else {
+			for (const action of actions) {
+				action();
 			}
 		}
+		triggerActionStore.set([]);
+	}
+
+	// Execute actions on mount if triggerActionStore has data
+	onMount(() => {
+		if ($triggerActionStore.length > 0) {
+			executeActions();
+		}
+		setCollection(null);
+
+		// Note: Avatar initialization is handled by the layout component
+		// to ensure consistent avatar state across the application
 	});
-}
+
+	// Modal Trigger - User Form
+	function modalUserForm(): void {
+		modalState.trigger(ModalEditForm, {
+			title: usermodaluser_edittitle(),
+			body: usermodaluser_settingbody() || 'Update your user details below.'
+		});
+	}
+
+	// Modal Trigger - Edit Avatar
+	function modalEditAvatar(): void {
+		modalState.trigger(
+			ModalEditAvatar,
+			{
+				title: usermodaluser_settingtitle(),
+				body: usermodaluser_settingbody()
+			},
+			async (r: any) => {
+				if (r) {
+					toast.success({
+						description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
+					});
+				}
+			}
+		);
+	}
+
+	// Modal Trigger - Privacy & Data (GDPR)
+	function modalPrivacyData(): void {
+		modalState.trigger(ModalPrivacyData as any, { user });
+	}
+
+	// Modal Confirm
+	function modalConfirm(): void {
+		showConfirm({
+			title: usermodalconfirmtitle(),
+			body: usermodalconfirmbody(),
+			// confirmText: usermodalconfirmdeleteuser(),
+			onConfirm: async () => {
+				const res = await fetch('/api/user/deleteUsers', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify([user])
+				});
+				if (res.status === 200) {
+					await invalidateAll();
+				}
+			}
+		});
+	}
 </script>
 
 <!-- Page Title with Back Button -->
@@ -281,12 +228,22 @@ function handleAnonymize() {
 				{/if}
 				<!-- Two-Factor Authentication Status -->
 				{#if is2FAEnabledGlobal}
-					<button onclick={open2FAModal} class="btn preset-outlined-surface-500 btn-sm w-full max-w-xs">
-						<div class="flex w-full items-center justify-between">
-							<span>Two-Factor Auth</span>
+					<button
+						onclick={open2FAModal}
+						class="btn {user?.is2FAEnabled ? 'preset-tonal-success' : 'preset-tonal-error'} btn-sm w-full max-w-xs border border-surface-500/20"
+					>
+						<div class="flex w-full items-center justify-between py-1">
+							<div class="flex items-center gap-2">
+								<iconify-icon icon="mdi:shield-lock" width={20} class="text-error-500"></iconify-icon>
+								<span class="text-sm font-bold">Two-Factor Auth</span>
+							</div>
 							<div class="flex items-center gap-1">
-								<iconify-icon icon="mdi:{user?.is2FAEnabled ? 'shield-check' : 'shield-off'}" class="text-error-500" width={20}></iconify-icon>
-								<span class="text-xs">{user?.is2FAEnabled ? 'Enabled' : 'Disabled'}</span>
+								<iconify-icon
+									icon="mdi:{user?.is2FAEnabled ? 'check-decagram' : 'alert-circle'}"
+									width={20}
+									class={user?.is2FAEnabled ? 'text-primary-500' : 'text-error-500'}
+								></iconify-icon>
+								<span class="text-xs font-bold uppercase">{user?.is2FAEnabled ? 'Enabled' : 'Disabled'}</span>
 							</div>
 						</div>
 					</button>
@@ -295,13 +252,13 @@ function handleAnonymize() {
 				<!-- Collaboration Settings -->
 				<div class="card p-4 w-full max-w-xs space-y-1 bg-surface-200-700-token border border-surface-500 shadow-sm">
 					<div class="flex items-center justify-between">
-						<div class="flex items-center">
-							<iconify-icon icon="material-symbols:Forum-outline" class="text-primary-500" width={20}></iconify-icon>
-							<span class="text-xs">Real-time Collaboration</span>
+						<div class="flex items-center gap-2">
+							<iconify-icon icon="mdi:forum" class="text-primary-500" width={18}></iconify-icon>
+							<span class="text-sm">Real-time Collaboration</span>
 						</div>
 						<input
 							type="checkbox"
-							class="checkbox"
+							class="checkbox checkbox-sm"
 							checked={serverUser?.preferences?.rtc?.enabled ?? true}
 							onchange={async (e) => {
 								const enabled = (e.target as HTMLInputElement).checked;
@@ -310,10 +267,13 @@ function handleAnonymize() {
 						/>
 					</div>
 					<div class="flex items-center justify-between">
-						<span class="text-xs">Sound Notifications</span>
+						<div class="flex items-center gap-2">
+							<iconify-icon icon="material-symbols:volume-up-outline" class="text-primary-500" width={18}></iconify-icon>
+							<span class="text-sm">Sound Notifications</span>
+						</div>
 						<input
 							type="checkbox"
-							class="checkbox"
+							class="checkbox checkbox-sm"
 							checked={serverUser?.preferences?.rtc?.sound ?? true}
 							onchange={async (e) => {
 								const sound = (e.target as HTMLInputElement).checked;
@@ -332,28 +292,40 @@ function handleAnonymize() {
 			<!-- User fields -->
 			{#if user}
 				<form>
-					<label>
-						{username()}:
-						<input value={user.username} name="username" type="text" autocomplete="username" disabled class="input" />
-					</label>
-					<label>
-						{email()}:
-						<input value={user.email} name="email" type="email" autocomplete="email" disabled class="input" />
-					</label>
-					<label>
-						{form_password()}:
-						<input bind:value={password} name="password" type="password" autocomplete="current-password" disabled class="input" />
-					</label>
+					<div class="flex items-center gap-2 mb-1">
+						<iconify-icon icon="mdi:account" class="text-primary-500" width={20}></iconify-icon>
+						<span class="text-sm font-bold">{username()}:</span>
+					</div>
+					<input value={user.username} name="username" type="text" autocomplete="username" disabled class="input mb-4" />
 
-					<div class="mt-4 flex flex-col justify-between gap-2 sm:flex-row sm:gap-1">
+					<div class="flex items-center gap-2 mb-1">
+						<iconify-icon icon="mdi:email" class="text-primary-500" width={20}></iconify-icon>
+						<span class="text-sm font-bold">{email()}:</span>
+					</div>
+					<input value={user.email} name="email" type="email" autocomplete="email" disabled class="input mb-4" />
+
+					<div class="flex items-center gap-2 mb-1">
+						<iconify-icon icon="mdi:lock" class="text-primary-500" width={20}></iconify-icon>
+						<span class="text-sm font-bold">{form_password()}:</span>
+					</div>
+					<input bind:value={password} name="password" type="password" autocomplete="current-password" disabled class="input" />
+
+					<div class="mt-4 flex flex-col gap-2">
 						<!-- Edit Modal Button -->
-						<button
-							onclick={modalUserForm}
-							aria-label={userpage_edit_usersetting()}
-							class="gradient-tertiary btn w-full max-w-sm text-white {isFirstUser ? '' : 'mx-auto md:mx-0'}"
-						>
+						<button onclick={modalUserForm} aria-label={userpage_edit_usersetting()} class="gradient-tertiary btn w-full max-w-sm text-white">
 							<iconify-icon icon="bi:pencil-fill" width={24}></iconify-icon>
 							{userpage_edit_usersetting()}
+						</button>
+
+						<!-- GDPR Compact Tile -->
+						<button onclick={modalPrivacyData} class="gradient-tertiary btn w-full max-w-sm flex items-center justify-between text-white">
+							<div class="flex items-center gap-3">
+								<iconify-icon icon="mdi:shield-account" width={24}></iconify-icon>
+								<div class="text-left">
+									<h3 class="text-sm font-bold">Privacy & Data (GDPR)</h3>
+								</div>
+							</div>
+							<iconify-icon icon="mdi:chevron-right" width={24}></iconify-icon>
 						</button>
 
 						<!-- Delete Modal Button -->
@@ -365,39 +337,6 @@ function handleAnonymize() {
 						{/if}
 					</div>
 				</form>
-
-				<!-- GDPR Privacy Section -->
-				<div class="mt-8 border-t border-surface-200 pt-6 dark:border-surface-700">
-					<h3 class="flex items-center gap-2 text-lg font-bold">
-						<iconify-icon icon="mdi:shield-lock" class="text-primary-500"></iconify-icon>
-						Privacy & Data (GDPR)
-					</h3>
-					<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div class="card p-4 bg-surface-50 dark:bg-surface-900/40 border border-surface-200 dark:border-surface-700">
-							<h4 class="font-bold text-sm">Download My Data</h4>
-							<p class="mt-1 text-xs text-surface-600 dark:text-surface-400">
-								Receive a copy of all your personal data stored in the system (JSON format).
-							</p>
-							<button onclick={handleExportData} class="btn btn-sm preset-outlined-secondary-500 mt-3 w-full">
-								<iconify-icon icon="mdi:download"></iconify-icon>
-								Request Export
-							</button>
-						</div>
-
-						{#if (data.totalUsers ?? 1) > 1 || !data.isAdmin}
-							<div class="card p-4 bg-surface-50 dark:bg-surface-900/40 border border-surface-200 dark:border-surface-700">
-								<h4 class="font-bold text-sm text-error-500">Delete My Account</h4>
-								<p class="mt-1 text-xs text-surface-600 dark:text-surface-400">
-									Anonymize your personal data and permanently delete your account (Right to Erasure).
-								</p>
-								<button onclick={handleAnonymize} class="btn btn-sm preset-outlined-error-500 mt-3 w-full">
-									<iconify-icon icon="mdi:account-remove"></iconify-icon>
-									Delete Account
-								</button>
-							</div>
-						{/if}
-					</div>
-				</div>
 			{/if}
 		</div>
 	</div>

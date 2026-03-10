@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @file src/widgets/custom/Seo/components/SeoPreview.svelte
 @component
 **SEO Preview widget for SEO Widget**
@@ -17,111 +17,112 @@
 -->
 
 <script lang="ts">
-// ParaglideJS
-import { widget_seo_powerwords } from '@src/paraglide/messages';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { fade } from 'svelte/transition';
+	// ParaglideJS
+	import { widget_seo_powerwords } from '@src/paraglide/messages';
+	import { publicEnv } from '@src/stores/global-settings.svelte';
+	import { fade } from 'svelte/transition';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 
-// Logic for Heatmap
-const POWER_WORDS = new Set(
-	widget_seo_powerwords()
-		.split(',')
-		.map((w: string) => w.trim().toLowerCase())
-);
+	// Logic for Heatmap
+	const POWER_WORDS = new Set(
+		widget_seo_powerwords()
+			.split(',')
+			.map((w: string) => w.trim().toLowerCase())
+	);
 
-function getHeatColor(word: string, index: number): string {
-	const lower = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-	if (!lower) {
-		return 'transparent';
+	function getHeatColor(word: string, index: number): string {
+		const lower = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+		if (!lower) {
+			return 'transparent';
+		}
+
+		// 1. Keyword match (Highest - Red)
+		if (keywords?.some((k) => lower.includes(k.toLowerCase()) || k.toLowerCase().includes(lower))) {
+			return 'rgba(239, 68, 68, 0.8)';
+		}
+
+		// 2. Power Word match (Yellow - Gold)
+		if (POWER_WORDS.has(lower)) {
+			return 'rgba(234, 179, 8, 0.8)';
+		}
+
+		// 3. Position (Start of sentence is hot/Prominent - Orange)
+		if (index < 3) {
+			return 'rgba(249, 115, 22, 0.6)';
+		}
+
+		// 4. Length / Interest (Green)
+		if (lower.length > 4) {
+			return 'rgba(34, 197, 94, 0.5)';
+		}
+
+		// 5. Neutral (Blue)
+		return 'rgba(59, 130, 246, 0.3)';
 	}
 
-	// 1. Keyword match (Highest - Red)
-	if (keywords?.some((k) => lower.includes(k.toLowerCase()) || k.toLowerCase().includes(lower))) {
-		return 'rgba(239, 68, 68, 0.8)';
+	function renderHeatmap(text: string) {
+		return text.split(' ').map((word, i) => {
+			const color = getHeatColor(word, i);
+			return { word, color };
+		});
 	}
 
-	// 2. Power Word match (Yellow - Gold)
-	if (POWER_WORDS.has(lower)) {
-		return 'rgba(234, 179, 8, 0.8)';
+	interface Props {
+		description: string;
+		hostUrl: string;
+		keywords?: string[];
+		SeoPreviewToggle?: boolean;
+		title: string;
 	}
 
-	// 3. Position (Start of sentence is hot/Prominent - Orange)
-	if (index < 3) {
-		return 'rgba(249, 115, 22, 0.6)';
-	}
+	let { title, description, hostUrl, keywords = [], SeoPreviewToggle = $bindable(false) }: Props = $props();
 
-	// 4. Length / Interest (Green)
-	if (lower.length > 4) {
-		return 'rgba(34, 197, 94, 0.5)';
-	}
+	let heatmapMode = $state(false);
 
-	// 5. Neutral (Blue)
-	return 'rgba(59, 130, 246, 0.3)';
-}
-
-function renderHeatmap(text: string) {
-	return text.split(' ').map((word, i) => {
-		const color = getHeatColor(word, i);
-		return { word, color };
-	});
-}
-
-interface Props {
-	description: string;
-	hostUrl: string;
-	keywords?: string[];
-	ontogglePreview?: () => void;
-	SeoPreviewToggle: boolean;
-	title: string;
-}
-
-const { title, description, hostUrl, keywords = [], SeoPreviewToggle, ontogglePreview = () => {} }: Props = $props();
-
-let heatmapMode = $state(false);
-
-let heatmapDataTitle = $derived(renderHeatmap(title || 'Page Title'));
-let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description goes here...'));
-
-function handleTogglePreview() {
-	ontogglePreview();
-}
+	let heatmapDataTitle = $derived(renderHeatmap(title || 'Page Title'));
+	let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description goes here...'));
 </script>
 
-<div class="mt-4 border-t border-surface-500 pt-4 dark:text-surface-50">
+<div class="mt-1 border-t border-surface-500 dark:text-surface-50">
 	<div class="mb-4 flex flex-wrap items-center justify-between gap-4">
-		<h3 class="h3">SEO Preview</h3>
+		<h3 class="h3 text-xl">SEO Preview</h3>
 
-		<div class="flex items-center gap-2">
-			<!-- Device Toggle -->
-			<div class="preset-filled-surface-500 btn-group [&>*+*]:border-surface-500">
+		<div class="btn-group border border-surface-500 overflow-hidden">
+			<!-- Device Toggle: Desktop -->
+			<SystemTooltip title="Desktop View">
 				<button
 					type="button"
-					onclick={() => !SeoPreviewToggle && handleTogglePreview()}
-					class="{!SeoPreviewToggle ? 'preset-filled-primary-500' : ''} btn-sm"
-					title="Desktop View"
+					onclick={() => (SeoPreviewToggle = false)}
+					class="{!SeoPreviewToggle ? 'preset-filled-primary-500' : 'preset-filled-surface-500'} btn-icon"
+					aria-label="Desktop View"
 				>
 					<iconify-icon icon="mdi:monitor" width={24}></iconify-icon>
 				</button>
+			</SystemTooltip>
+
+			<!-- Device Toggle: Mobile -->
+			<SystemTooltip title="Mobile View">
 				<button
 					type="button"
-					onclick={() => SeoPreviewToggle && handleTogglePreview()}
-					class="{SeoPreviewToggle ? 'preset-filled-primary-500' : ''} btn-sm"
-					title="Mobile View"
+					onclick={() => (SeoPreviewToggle = true)}
+					class="{SeoPreviewToggle ? 'preset-filled-primary-500' : 'preset-filled-surface-500'} btn-icon"
+					aria-label="Mobile View"
 				>
 					<iconify-icon icon="mdi:cellphone" width={24}></iconify-icon>
 				</button>
-			</div>
+			</SystemTooltip>
 
 			<!-- Heatmap Toggle -->
-			<button
-				type="button"
-				class="btn-sm {heatmapMode ? 'variant-filled-warning' : 'preset-filled-surface-500'}"
-				onclick={() => (heatmapMode = !heatmapMode)}
-				title="Toggle Heatmap Visualization"
-			>
-				<iconify-icon icon="mdi:fire" width={24}></iconify-icon>
-				Heatmap
-			</button>
+			<SystemTooltip title="Toggle Heatmap Visualization">
+				<button
+					type="button"
+					class="btn {heatmapMode ? 'preset-filled-warning' : 'preset-filled-surface-500'}"
+					onclick={() => (heatmapMode = !heatmapMode)}
+				>
+					<iconify-icon icon="mdi:fire" width={24}></iconify-icon>
+					<span class="hidden sm:inline">Heatmap</span>
+				</button>
+			</SystemTooltip>
 		</div>
 	</div>
 
@@ -136,7 +137,6 @@ function handleTogglePreview() {
 				<span class="font-bold text-surface-700 dark:text-surface-300">{publicEnv.HOST_PROD || 'Your Site'}</span>
 				<span class="truncate text-[10px]">{hostUrl}</span>
 			</div>
-			<iconify-icon icon="mdi:dots-vertical" width={24} class="ml-auto"></iconify-icon>
 		</div>
 
 		<!-- Title -->
@@ -173,7 +173,7 @@ function handleTogglePreview() {
 					{/each}
 				</p>
 			{:else}
-				<p class="text-sm leading-normal text-surface-600 dark:text-surface-300">{description || 'Page description goes here...'}</p>
+				<p class="text-sm leading-normal text-surface-600 dark:text-white">{description || 'Page description goes here...'}</p>
 			{/if}
 		</div>
 	</div>
