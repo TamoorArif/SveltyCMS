@@ -154,7 +154,10 @@ export class MongoCollectionMethods {
 		logger.info(`Collection model created: ${collectionId} (${modelName})`);
 
 		// Create database indexes in background to avoid blocking system initialization
-		this.createIndexes(model as any, schema);
+		// Use fire-and-forget but maintain visibility via logs/errors within the method
+		this.createIndexes(model as any, schema).catch((error) => {
+			logger.warn(`Background index creation failed for ${collectionId}:`, error);
+		});
 
 		// Invalidate cache for this collection AFTER successful creation
 		await invalidateCollectionCache(`schema:collection:${collectionId}`);

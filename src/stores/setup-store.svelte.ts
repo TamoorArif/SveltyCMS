@@ -72,6 +72,12 @@ export interface SystemSettings {
 export interface EmailSettings {
 	skipWelcomeEmail: boolean;
 	smtpConfigured: boolean;
+	host: string;
+	port: string;
+	user: string;
+	password: string;
+	from: string;
+	secure: boolean;
 }
 
 // --- API Response Types ---
@@ -135,7 +141,13 @@ const initialSystemSettings: SystemSettings = {
 };
 const initialEmailSettings: EmailSettings = {
 	smtpConfigured: false,
-	skipWelcomeEmail: true
+	skipWelcomeEmail: true,
+	host: '',
+	port: '587',
+	user: '',
+	password: '',
+	from: '',
+	secure: false
 };
 // Explicitly type initialStepErrors as a Record<number, string[]>
 const initialStepErrors: Record<number, string[]> = {

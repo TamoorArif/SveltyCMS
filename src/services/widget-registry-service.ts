@@ -46,7 +46,6 @@ class WidgetRegistryService {
 						logger.trace(`[WidgetRegistryService] Registered core: ${processed.name}`);
 					}
 				}
-
 				// Register custom widgets
 				for (const [path, module] of Object.entries(customModules)) {
 					const processed = this._processWidgetModule(path, module as WidgetModule, 'custom');
@@ -55,19 +54,6 @@ class WidgetRegistryService {
 						logger.trace(`[WidgetRegistryService] Registered custom: ${processed.name}`);
 					}
 				}
-
-				// Process custom widgets specifically if needed, or just rely on allModules loop above.
-				// The previous code looped over allModules AND customModules again?
-				// Looking at the original file:
-				// Line 39 looped allModules. Line 60 looped customModules.
-				// This seems redundant if allModules contains customModules.
-				// I will stick to looping allModules only to avoid duplicates, assuming customModules are in allModules.
-				// Wait, the original code had:
-				// const allModules = { ...coreModules, ...customModules };
-				// Loop allModules...
-				// Then Loop customModules...
-				// This DEFINITELY caused double registration for custom widgets.
-				// I will REMOVE the second redundant loop.
 
 				logger.trace('[WidgetRegistryService] All registered widget names:', Array.from(this.widgets.keys()));
 

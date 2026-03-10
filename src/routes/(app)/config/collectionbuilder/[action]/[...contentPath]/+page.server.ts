@@ -118,6 +118,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		}
 
 		// 6. Handle 'edit' action (default)
+		// Initialize content-manager for this tenant before accessing data
+		await contentManager.initialize(locals.tenantId);
 		await contentManager.refresh(); // Force a refresh to bypass any stale cache
 		const collectionIdentifier = params.contentPath;
 

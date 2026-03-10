@@ -37,14 +37,16 @@ SveltyCMS is a **modern headless CMS** built with SvelteKit that provides:
 ### 1. Install SveltyCMS
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/SveltyCMS/SveltyCMS.git
 cd SveltyCMS
 
-# Install dependencies (we use bun as its fast vs npm, pnpm or yarn)
+# 2. Install dependencies
+# We recommend Bun (3-4x faster), but npm/pnpm also work
 bun install
 
-# Start development server (CLI installer launches automatically)
+# 3. Start development server
+# The interactive CLI Setup Wizard will launch automatically
 bun run dev
 ```
 
@@ -52,11 +54,13 @@ bun run dev
 
 The CLI installer guides you through:
 
-1. ✅ **Choose Database** (MongoDB, PostgreSQL, SQLite, or MariaDB/MySQL)
-2. ✅ **Enter Connection Details** (or use MongoDB Atlas free tier)
-3. ✅ **Test Connection** (automatic)
-4. ✅ **Create Admin User** (your email and password)
-5. ✅ **Seed Initial Data** (automatic)
+1. ✅ **Choose Database**
+   - **NoSQL**: MongoDB (Local or Atlas Atlas)
+   - **SQL**: SQLite (fastest for local), PostgreSQL, MariaDB, or MySQL
+2. ✅ **Enter Connection Details** (Wizard validates automatically)
+3. ✅ **Test Connection** (Driver auto-installation if needed)
+4. ✅ **Create Admin User** (Your secure credentials)
+5. ✅ **Seed Initial Data** (System readiness in <1s)
 
 ### 3. Access Admin Panel
 
