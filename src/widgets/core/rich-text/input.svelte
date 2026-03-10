@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @file src/widgets/core/RichText/Input.svelte
 @component SveltyCMS – Enterprise RichText Editor (2025 Edition)
 -->
@@ -59,6 +59,7 @@
 	let createEditor: any = $state(null);
 
 	let isScrolled = $state(false);
+	let editorStateVersion = $state(0);
 	let showSlashMenu = $state(false);
 	let showSource = $state(false); // Source View Toggle
 	let activeDropdown = $state<string | null>(null);
@@ -462,6 +463,10 @@
 					value = newContent;
 				}
 			});
+
+			editor.on('transaction', () => {
+				editorStateVersion++;
+			});
 		})();
 
 		window.addEventListener('scroll', handleScroll);
@@ -499,27 +504,27 @@
 			? 'fixed inset-x-0 top-0 z-50 shadow-lg'
 			: ''}"
 	>
-		<div class="w-full flex max-w-none flex-wrap items-center gap-1">
+		<div class="w-full flex max-w-none flex-wrap items-center gap-2 py-1">
 			{#each toolbarGroups as group, groupIdx (groupIdx)}
 				{#if !group.condition || group.condition()}
-					<div class="flex items-center gap-1">
+					<div class="btn-group border border-surface-200 dark:border-surface-700 overflow-hidden">
 						{#each group.buttons as btn (btn.label)}
 							{#if btn.type === 'dropdown'}
 								<div class="relative">
 									<SystemTooltip title={btn.label}>
 										<button
-											class="flex items-center gap-1 rounded px-2 py-1.5 text-sm font-medium hover:bg-surface-200 dark:hover:bg-white/20 transition {activeDropdown ===
-											btn.label
-												? 'bg-surface-200 dark:bg-white/20'
-												: ''} text-surface-900 dark:text-white"
+											type="button"
+											class="btn {editorStateVersion && activeDropdown === btn.label
+												? 'preset-filled-primary-500'
+												: 'preset-tonal'} flex items-center gap-2"
 											onclick={(e) => toggleDropdown(btn.label, e)}
 										>
 											{#if btn.icon}
-												<iconify-icon icon="mdi:{btn.icon}" width="24"></iconify-icon>
+												<iconify-icon icon="mdi:{btn.icon}" width="20"></iconify-icon>
 											{/if}
 											{#if !btn.icon || btn.label !== 'Table'}
 												<span class={btn.icon ? 'hidden sm:inline' : ''}>{btn.label}</span>
-												<iconify-icon icon="mdi:chevron-down" width="16"></iconify-icon>
+												<iconify-icon icon="mdi:chevron-down" width="14"></iconify-icon>
 											{/if}
 										</button>
 									</SystemTooltip>
@@ -671,10 +676,9 @@
 							{:else}
 								<SystemTooltip title={btn.label}>
 									<button
+										type="button"
 										aria-label={btn.label}
-										class="rounded-lg p-2 hover:bg-surface-100 dark:hover:bg-white/10 transition-all {btn.active?.()
-											? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500'
-											: 'text-surface-900 dark:text-white'}"
+										class="btn-icon {editorStateVersion && btn.active?.() ? 'preset-filled-primary-500' : 'preset-tonal'}"
 										onclick={btn.cmd}
 									>
 										<iconify-icon icon="mdi:{btn.icon}" width="24"></iconify-icon>
@@ -682,7 +686,6 @@
 								</SystemTooltip>
 							{/if}
 						{/each}
-						<div class="h-5 w-px bg-surface-300 dark:bg-surface-700 mx-1"></div>
 					</div>
 				{/if}
 			{/each}

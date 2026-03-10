@@ -6,6 +6,7 @@ Displays a preview of the shared link for different platforms.
 -->
 
 <script lang="ts">
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 	// Using iconify-icon web component
 	interface Props {
 		hostUrl: string;
@@ -81,16 +82,19 @@ Displays a preview of the shared link for different platforms.
 	<!-- Platform Tabs -->
 	<div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
 		{#each platforms as platform (platform.id)}
-			<button
-				type="button"
-				class="btn btn-icon btn-icon-sm transition-all {activePlatform === platform.id
-					? 'variant-filled-secondary ring-2 ring-surface-900 dark:ring-white scale-110'
-					: 'preset-tonal-surface hover:preset-filled-surface-500'}"
-				onclick={() => (activePlatform = platform.id)}
-				title={platform.label}
-			>
-				<iconify-icon icon={platform.icon} width="24" class="text-xl {activePlatform === platform.id ? 'text-white' : platform.color}"></iconify-icon>
-			</button>
+			<SystemTooltip title={platform.label}>
+				<button
+					type="button"
+					class="btn btn-icon btn-icon-sm transition-all {activePlatform === platform.id
+						? 'variant-filled-secondary ring-2 ring-surface-900 dark:ring-white scale-110'
+						: 'preset-tonal-surface hover:preset-filled-surface-500'}"
+					onclick={() => (activePlatform = platform.id)}
+					aria-label={platform.label}
+				>
+					<iconify-icon icon={platform.icon} width="24" class="text-xl {activePlatform === platform.id ? 'text-white' : platform.color}"
+					></iconify-icon>
+				</button>
+			</SystemTooltip>
 		{/each}
 	</div>
 
@@ -125,21 +129,21 @@ Displays a preview of the shared link for different platforms.
 	</div>
 
 	<!-- Tips/Warnings based on active platform -->
-	<div class="mt-4 text-sm text-surface-600 dark:text-surface-300">
+	<div class="mt-4 text-sm text-surface-600 dark:text-surface-200">
 		{#if displayTitle.length > 95 && activePlatform === 'facebook'}
-			<div class="flex items-center gap-2 text-warning-600">
+			<div class="flex items-center gap-2 text-warning-600 dark:text-warning-300">
 				<iconify-icon icon="mdi:alert"></iconify-icon>
 				<span>Title is slightly long for Facebook (recommended &lt; 95 chars).</span>
 			</div>
 		{/if}
 		{#if displayTitle.length > 70 && activePlatform === 'twitter'}
-			<div class="flex items-center gap-2 text-warning-600">
+			<div class="flex items-center gap-2 text-warning-600 dark:text-warning-300">
 				<iconify-icon icon="mdi:alert"></iconify-icon>
 				<span>Title is too long for X cards (recommended &lt; 70 chars).</span>
 			</div>
 		{/if}
 		{#if !displayImage}
-			<div class="flex items-center gap-2 text-warning-600 mt-1">
+			<div class="flex items-center gap-2 text-warning-600 dark:text-warning-300 mt-1">
 				<iconify-icon icon="mdi:image-search" width={24}></iconify-icon>
 				<span>No Og Image selected. The platform will try to scrape one from your page body.</span>
 			</div>

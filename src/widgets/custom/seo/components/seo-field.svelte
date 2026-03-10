@@ -2,6 +2,7 @@
 	import type { FieldInstance } from '@src/content/types';
 	import type { Locale } from '@src/paraglide/runtime';
 	import { tokenTarget } from '@src/services/token/token-target';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 
 	// Lucide Icons
 
@@ -53,28 +54,34 @@
 		if (value.length >= optimalMin && value.length <= optimalMax) {
 			return 'text-success-500';
 		}
-		return 'text-surface-400';
+		return 'text-surface-400 dark:text-surface-300';
 	};
 </script>
 
 <div class="space-y-2">
 	<div class="flex items-center justify-between mb-1">
 		<div class="flex items-center gap-2">
-			<label for={id} class="font-bold text-sm cursor-pointer">{label}</label>
+			<label for={id} class="font-bold text-sm cursor-pointer dark:text-surface-50">{label}</label>
 			{@render icon?.()}
-			<span class="text-surface-400 cursor-help" title={placeholder}> <iconify-icon icon="mdi:information-outline" width={16}></iconify-icon> </span>
+			<SystemTooltip title={placeholder}>
+				<span class="text-surface-400 dark:text-surface-300 cursor-help">
+					<iconify-icon icon="mdi:information-outline" width={16}></iconify-icon>
+				</span>
+			</SystemTooltip>
 		</div>
 		<div class="flex items-center gap-3 text-xs">
-			<button
-				type="button"
-				class=""
-				title="Insert Token"
-				onclick={() => {
-					inputRef?.focus();
-				}}
-			>
-				<iconify-icon icon="mdi:code-braces" width={24}></iconify-icon>
-			</button>
+			<SystemTooltip title="Insert Token">
+				<button
+					type="button"
+					class=""
+					aria-label="Insert Token"
+					onclick={() => {
+						inputRef?.focus();
+					}}
+				>
+					<iconify-icon icon="mdi:code-braces" width={16} class="dark:text-primary-500"></iconify-icon>
+				</button>
+			</SystemTooltip>
 			{#if maxLength}
 				{#if type === 'input'}
 					<span class={getLengthClass()}>({value.length}/{maxLength})</span>
@@ -84,9 +91,9 @@
 			{/if}
 			{#if translated}
 				<div class="flex items-center gap-1 text-xs">
-					<iconify-icon icon="bi:translate" width={24}></iconify-icon>
+					<iconify-icon icon="bi:translate" width={16}></iconify-icon>
 					<span class="font-medium text-tertiary-500 dark:text-primary-500">{lang.toUpperCase()}</span>
-					<span class="font-medium text-surface-400">({translationPct}%)</span>
+					<span class="font-medium text-error-500">({translationPct}%)</span>
 				</div>
 			{/if}
 		</div>

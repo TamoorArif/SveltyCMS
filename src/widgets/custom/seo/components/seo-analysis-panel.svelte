@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @file src/widgets/custom/Seo/components/SeoAnalysisPanel.svelte
 @component
 **SEO Analysis Panel**
@@ -8,6 +8,7 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 
 <script lang="ts">
 	import { slide } from 'svelte/transition';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 	// Using iconify-icon web component
 	import type { SeoAnalysisResult } from '../seo-types';
 
@@ -21,7 +22,7 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 	let { analysisResult, class: className = '', expanded = $bindable(false), isAnalyzing = false }: Props = $props();
 </script>
 
-<div class="card preset-tonal-surface flex flex-col overflow-hidden {className} transition-all duration-300 {expanded ? 'h-[500px]' : 'h-16'}">
+<div class="card pt-1 preset-tonal-surface flex flex-col overflow-hidden {className} transition-all duration-300 {expanded ? 'h-[500px]' : 'h-16'}">
 	<button
 		type="button"
 		class="flex items-center gap-4 w-full p-3 bg-surface-100-800-token hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors text-left"
@@ -35,8 +36,8 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 		{#if analysisResult}
 			<div class="flex items-center gap-3">
 				<div
-					class="font-bold text-lg {analysisResult.score.overall >= 80
-						? 'text-success-500'
+					class="font-bold {analysisResult.score.overall >= 80
+						? 'text-primary-500'
 						: analysisResult.score.overall >= 50
 							? 'text-warning-500'
 							: 'text-error-500'}"
@@ -98,8 +99,16 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 									></iconify-icon>
 								</div>
 								<div class="flex-1 min-w-0">
-									<div class="font-bold text-sm truncate" title={suggestion.title}>{suggestion.title}</div>
-									<p class="text-xs opacity-80 line-clamp-2" title={suggestion.description}>{suggestion.description}</p>
+									<SystemTooltip title={suggestion.title}>
+										<div class="font-bold text-sm truncate dark:text-surface-50">
+											{suggestion.title}
+										</div>
+									</SystemTooltip>
+									<SystemTooltip title={suggestion.description}>
+										<p class="text-xs opacity-80 line-clamp-2 dark:text-surface-200">
+											{suggestion.description}
+										</p>
+									</SystemTooltip>
 									{#if suggestion.fix}
 										<div class="mt-1.5 text-[10px] font-mono bg-surface-100 dark:bg-surface-700 p-1.5 rounded opacity-80">
 											<strong>Fix:</strong>

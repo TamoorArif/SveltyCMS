@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
 	import { publicEnv } from '@src/stores/global-settings.svelte.ts';
 	// Stores & Props
 	import { app } from '@src/stores/store.svelte';
@@ -27,6 +27,7 @@
 
 	// --- State ---
 	let activeTab = $state(0);
+	let seoPreviewMobile = $state(false);
 	let analysisResults: any = $state(null);
 	let showAnalysis = $state(false); // Collapsible analysis panel
 	let isAnalyzing = $state(false);
@@ -159,7 +160,7 @@
 				title={value?.[lang]?.title || ''}
 				description={value?.[lang]?.description || ''}
 				hostUrl={`${publicEnv.HOST_PROD}/${value?.[lang]?.canonicalUrl || ''}`}
-				SeoPreviewToggle={false}
+				bind:SeoPreviewToggle={seoPreviewMobile}
 			/>
 		</div>
 
@@ -367,7 +368,7 @@
 								<div class="flex items-center gap-1 text-xs">
 									<iconify-icon icon="bi:translate" width="24"></iconify-icon>
 									<span class="font-medium text-tertiary-500 dark:text-primary-500">{lang.toUpperCase()}</span>
-									<span class="font-medium text-surface-400">({getFieldTranslationPercentage('schemaMarkup')}%)</span>
+									<span class="font-medium text-surface-400 dark:text-surface-300">({getFieldTranslationPercentage('schemaMarkup')}%)</span>
 								</div>
 							{/if}
 						</div>
@@ -382,7 +383,7 @@
 								use:tokenTarget={{ name: field.db_fieldName, label: field.label, collection: field.collection }}
 							></textarea>
 						</div>
-						<p class="text-xs text-surface-400">Paste valid JSON-LD structure here.</p>
+						<p class="text-xs text-surface-400 dark:text-surface-300">Paste valid JSON-LD structure here.</p>
 					</div>
 				{/if}
 			{/if}

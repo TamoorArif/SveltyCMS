@@ -356,10 +356,15 @@ export class MongoDBAdapter implements IDBAdapter {
 					create: (f) => this.crud.insert('media_folders', f),
 					createMany: (f) => this.crud.insertMany('media_folders', f),
 					delete: (id) => this.crud.delete('media_folders', id),
-					deleteMany: (ids) =>
-						this.crud.deleteMany('media_folders', { _id: { $in: ids } } as unknown as import('../db-interface').QueryFilter<
-							import('../db-interface').BaseEntity
-						>),
+					deleteMany: (ids) => {
+						const query: Record<string, unknown> = { _id: { $in: ids } };
+						return this.crud.deleteMany(
+							'media_folders',
+							query as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
+							undefined, // tenantId (handled by safeQuery if needed, but here it's IDs)
+							true // bypassTenantCheck
+						);
+					},
 					getTree: () => this._wrapResult(async () => []),
 					getFolderContents: () =>
 						this._wrapResult(async () => ({
@@ -402,21 +407,20 @@ export class MongoDBAdapter implements IDBAdapter {
 				nodes: {
 					getStructure: (m, o) => this._wrapResult(() => contentMethods.getStructure(m, o)),
 					upsertContentStructureNode: (n) => this._wrapResult(() => contentMethods.upsertNodeByPath(n)),
-					create: (n) => this.crud.insert('system_content_structure', n),
-					createMany: (n) => this.crud.insertMany('system_content_structure', n),
-					update: (p, c) => this.crud.update('system_content_structure', p as DatabaseId, c),
+					create: (n) => this.crud.insert('system_content_structure', n, n.tenantId, true),
+					createMany: (n) => this.crud.insertMany('system_content_structure', n, undefined, true),
+					update: (p, c) => this.crud.update('system_content_structure', p as DatabaseId, c, undefined, true),
 					bulkUpdate: (u, o) =>
 						this._wrapResult(() => contentMethods.bulkUpdateNodes(u, o)) as Promise<DatabaseResult<import('../db-interface').ContentNode[]>>,
 					fixMismatchedNodeIds: (n) => contentMethods.fixMismatchedNodeIds(n),
-					delete: (p) => this.crud.delete('system_content_structure', p as DatabaseId),
+					delete: (p) => this.crud.delete('system_content_structure', p as DatabaseId, undefined, true),
 					deleteMany: (p, o) => {
 						const query: Record<string, unknown> = { path: { $in: p } };
-						if (o?.tenantId) {
-							query.tenantId = o.tenantId;
-						}
 						return this.crud.deleteMany(
 							'system_content_structure',
-							query as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>
+							query as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
+							o?.tenantId,
+							(o as any)?.bypassTenantCheck ?? true
 						);
 					},
 					reorder: () => this._wrapResult(async () => [] as import('../db-interface').ContentNode[]),
@@ -435,11 +439,14 @@ export class MongoDBAdapter implements IDBAdapter {
 						}),
 					publishMany: (ids) => this._wrapResult(() => contentMethods.publishManyDrafts(ids)) as Promise<DatabaseResult<{ publishedCount: number }>>,
 					getForContent: (id, o) => this._wrapResult(() => contentMethods.getDraftsForContent(id, o)),
-					delete: (id) => this.crud.delete('content_drafts', id),
+					delete: (id) => this.crud.delete('content_drafts', id, undefined, true),
 					deleteMany: (ids) =>
-						this.crud.deleteMany('content_drafts', { _id: { $in: ids } } as unknown as import('../db-interface').QueryFilter<
-							import('../db-interface').BaseEntity
-						>)
+						this.crud.deleteMany(
+							'content_drafts',
+							{ _id: { $in: ids } } as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
+							undefined,
+							true
+						)
 				},
 				revisions: {
 					create: (r) =>
@@ -448,11 +455,14 @@ export class MongoDBAdapter implements IDBAdapter {
 						),
 					getHistory: (id, o) => this._wrapResult(() => contentMethods.getRevisionHistory(id, o)),
 					restore: () => this._wrapResult(async () => {}),
-					delete: (id) => this.crud.delete('content_revisions', id),
+					delete: (id) => this.crud.delete('content_revisions', id, undefined, true),
 					deleteMany: (ids) =>
-						this.crud.deleteMany('content_revisions', { _id: { $in: ids } } as unknown as import('../db-interface').QueryFilter<
-							import('../db-interface').BaseEntity
-						>),
+						this.crud.deleteMany(
+							'content_revisions',
+							{ _id: { $in: ids } } as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
+							undefined,
+							true
+						),
 					cleanup: (id, k) => this._wrapResult(() => contentMethods.cleanupRevisions(id, k))
 				}
 			};

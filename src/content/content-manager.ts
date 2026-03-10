@@ -1987,7 +1987,12 @@ class ContentManager {
 		return operations;
 	}
 
-	private async _bulkUpsertWithParentIds(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null, dbNodes?: ContentNode[]): Promise<void> {
+	private async _bulkUpsertWithParentIds(
+		dbAdapter: IDBAdapter,
+		operations: ContentNode[],
+		tenantId?: string | null,
+		dbNodes?: ContentNode[]
+	): Promise<void> {
 		const upsertOps = operations.map((op) => ({
 			path: op.path as string,
 			id: op._id.toString(),
@@ -2023,10 +2028,10 @@ class ContentManager {
 		logger.debug(`Current Ops Paths Count: ${currentPaths.size}`);
 		logger.debug(`Ops Paths: ${JSON.stringify(Array.from(currentPaths))}`);
 
-
-		const dbResult = dbNodes && dbNodes.length > 0 
-			? { success: true, data: dbNodes }
-			: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
+		const dbResult =
+			dbNodes && dbNodes.length > 0
+				? { success: true, data: dbNodes }
+				: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true });
 
 		if (dbResult.success && dbResult.data) {
 			const orphanedNodes = dbResult.data.filter((node: ContentNode) => node.path && !currentPaths.has(node.path));
@@ -2099,13 +2104,19 @@ class ContentManager {
 		logger.debug('[ContentManager] Single-pass bulk upsert and cleanup completed');
 	}
 
-	private async _loadFinalStructure(dbAdapter: IDBAdapter, operations: ContentNode[], tenantId?: string | null, dbNodes?: ContentNode[]): Promise<void> {
+	private async _loadFinalStructure(
+		dbAdapter: IDBAdapter,
+		operations: ContentNode[],
+		tenantId?: string | null,
+		dbNodes?: ContentNode[]
+	): Promise<void> {
 		// CRITICAL: Fetch the final structure from database after all phases complete
 		// This ensures we have the correct parentId relationships and MongoDB-assigned _ids
 		logger.debug('[ContentManager] Final phase: Fetching complete structure from database', { tenantId });
-		const finalStructureResult = dbNodes && dbNodes.length > 0
-			? { success: true, data: dbNodes }
-			: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true }); // bypassCache = true
+		const finalStructureResult =
+			dbNodes && dbNodes.length > 0
+				? { success: true, data: dbNodes }
+				: await dbAdapter.content.nodes.getStructure('flat', { tenantId, bypassCache: true, bypassTenantCheck: true }); // bypassCache = true
 
 		if (!(finalStructureResult.success && finalStructureResult.data)) {
 			logger.error('[ContentManager] Failed to fetch final structure from database');
