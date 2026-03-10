@@ -4,70 +4,70 @@
 Modern, responsive crop controls with keyboard shortcuts and accessibility
 -->
 <script lang="ts">
-import type { CropShape } from './types';
+	import type { CropShape } from './types';
 
-let {
-	onRotateLeft,
-	onRotateRight,
-	onFlipHorizontal,
-	onFlipVertical,
-	onCropShapeChange,
-	onAspectRatio,
-	cropShape
-}: {
-	onRotateLeft: () => void;
-	onRotateRight: () => void;
-	onFlipHorizontal: () => void;
-	onFlipVertical?: () => void;
-	onCropShapeChange: (shape: CropShape) => void;
-	onAspectRatio: (ratio: number | null) => void;
-	cropShape: CropShape;
-} = $props();
+	let {
+		onRotateLeft,
+		onRotateRight,
+		onFlipHorizontal,
+		onFlipVertical,
+		onCropShapeChange,
+		onAspectRatio,
+		cropShape
+	}: {
+		onRotateLeft: () => void;
+		onRotateRight: () => void;
+		onFlipHorizontal: () => void;
+		onFlipVertical?: () => void;
+		onCropShapeChange: (shape: CropShape) => void;
+		onAspectRatio: (ratio: number | null) => void;
+		cropShape: CropShape;
+	} = $props();
 
-// Unused presets removed for Square Only enforcement
+	// Unused presets removed for Square Only enforcement
 
-function handleRatio(ratio: number | null) {
-	onAspectRatio(ratio);
-}
-
-// Keyboard shortcuts
-function handleKeyDown(e: KeyboardEvent) {
-	// Skip if typing in input
-	if ((e.target as HTMLElement).tagName === 'INPUT') {
-		return;
+	function handleRatio(ratio: number | null) {
+		onAspectRatio(ratio);
 	}
 
-	const cmdOrCtrl = e.metaKey || e.ctrlKey;
+	// Keyboard shortcuts
+	function handleKeyDown(e: KeyboardEvent) {
+		// Skip if typing in input
+		if ((e.target as HTMLElement).tagName === 'INPUT') {
+			return;
+		}
 
-	switch (e.key) {
-		case 'r':
-		case 'R':
-			if (!cmdOrCtrl) {
+		const cmdOrCtrl = e.metaKey || e.ctrlKey;
+
+		switch (e.key) {
+			case 'r':
+			case 'R':
+				if (!cmdOrCtrl) {
+					e.preventDefault();
+					onRotateRight();
+				}
+				break;
+			case 'l':
+			case 'L':
+				if (!cmdOrCtrl) {
+					e.preventDefault();
+					onRotateLeft();
+				}
+				break;
+			case 'f':
+			case 'F':
+				if (!cmdOrCtrl) {
+					e.preventDefault();
+					onFlipHorizontal();
+				}
+				break;
+			// Quick aspect ratio shortcut (square only)
+			case '1':
 				e.preventDefault();
-				onRotateRight();
-			}
-			break;
-		case 'l':
-		case 'L':
-			if (!cmdOrCtrl) {
-				e.preventDefault();
-				onRotateLeft();
-			}
-			break;
-		case 'f':
-		case 'F':
-			if (!cmdOrCtrl) {
-				e.preventDefault();
-				onFlipHorizontal();
-			}
-			break;
-		// Quick aspect ratio shortcut (square only)
-		case '1':
-			e.preventDefault();
-			handleRatio(1);
-			break;
+				handleRatio(1);
+				break;
+		}
 	}
-}
 </script>
 
 <svelte:window onkeydown={handleKeyDown} />

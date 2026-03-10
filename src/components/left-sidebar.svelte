@@ -19,219 +19,219 @@
 -->
 
 <script lang="ts">
-// Skeleton V4
-import { Avatar, Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-import Collections from '@src/components/collections.svelte';
-import MediaFolders from '@src/components/media-folders.svelte';
-import SettingsMenu from '@src/components/settings-menu.svelte';
-import SiteName from '@src/components/site-name.svelte';
-// Components
-import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
-// System Components
-import Slot from '@src/components/system/slot.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import ThemeToggle from '@src/components/theme-toggle.svelte';
-import VersionCheck from '@src/components/version-check.svelte';
-import type { ContentNode } from '@src/content/types'; // Import Schema type (collection definition)
-// Paraglide Messages
-import {
-	applayout_githubdiscussion,
-	applayout_signout,
-	applayout_systemconfiguration,
-	applayout_systemlanguage,
-	applayout_userprofile,
-	button_Collections,
-	Collections_MediaGallery,
-	collections_media
-} from '@src/paraglide/messages';
-import type { Locale } from '@src/paraglide/runtime';
-import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
-// Stores
-import { contentStructure, setMode } from '@src/stores/collection-store.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte';
-import { avatarSrc, systemLanguage } from '@src/stores/store.svelte';
-import { themeStore } from '@src/stores/theme-store.svelte';
-import { toggleUIElement, uiStateManager, userPreferredState } from '@src/stores/ui-store.svelte';
-import { getLanguageName } from '@utils/language-utils';
-import { logger } from '@utils/logger';
-// Removed axios import
-import { browser } from '$app/environment';
-import { goto } from '$app/navigation';
-// Import necessary utilities and types
-import { page } from '$app/state';
+	// Skeleton V4
+	import { Avatar, Menu, Portal } from '@skeletonlabs/skeleton-svelte';
+	import Collections from '@src/components/collections.svelte';
+	import MediaFolders from '@src/components/media-folders.svelte';
+	import SettingsMenu from '@src/components/settings-menu.svelte';
+	import SiteName from '@src/components/site-name.svelte';
+	// Components
+	import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
+	// System Components
+	import Slot from '@src/components/system/slot.svelte';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+	import ThemeToggle from '@src/components/theme-toggle.svelte';
+	import VersionCheck from '@src/components/version-check.svelte';
+	import type { ContentNode } from '@src/content/types'; // Import Schema type (collection definition)
+	// Paraglide Messages
+	import {
+		applayout_githubdiscussion,
+		applayout_signout,
+		applayout_systemconfiguration,
+		applayout_systemlanguage,
+		applayout_userprofile,
+		button_Collections,
+		Collections_MediaGallery,
+		collections_media
+	} from '@src/paraglide/messages';
+	import type { Locale } from '@src/paraglide/runtime';
+	import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
+	// Stores
+	import { contentStructure, setMode } from '@src/stores/collection-store.svelte';
+	import { publicEnv } from '@src/stores/global-settings.svelte';
+	import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte';
+	import { avatarSrc, systemLanguage } from '@src/stores/store.svelte';
+	import { themeStore } from '@src/stores/theme-store.svelte';
+	import { toggleUIElement, uiStateManager, userPreferredState } from '@src/stores/ui-store.svelte';
+	import { getLanguageName } from '@utils/language-utils';
+	import { logger } from '@utils/logger';
+	// Removed axios import
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+	// Import necessary utilities and types
+	import { page } from '$app/state';
 
-// Constants
-const MOBILE_BREAKPOINT = 768;
-const LANGUAGE_DROPDOWN_THRESHOLD = 5;
-const AVATAR_CACHE_BUSTER = Date.now();
+	// Constants
+	const MOBILE_BREAKPOINT = 768;
+	const LANGUAGE_DROPDOWN_THRESHOLD = 5;
+	const AVATAR_CACHE_BUSTER = Date.now();
 
-// Types
-type AvailableLanguage = string;
-type SidebarState = 'full' | 'collapsed' | 'hidden';
+	// Types
+	type AvailableLanguage = string;
+	type SidebarState = 'full' | 'collapsed' | 'hidden';
 
-// Reactive user data
-const user = $derived(page.data.user);
-const currentPath = $derived(page.url.pathname);
-const collections: ContentNode[] = $derived(contentStructure.value || []);
-// Check if we're in media mode
-const isMediaMode = $derived(currentPath.includes('/mediagallery'));
-// Check if we're in settings mode
-const isSettingsMode = $derived(currentPath.includes('/config/systemsetting'));
+	// Reactive user data
+	const user = $derived(page.data.user);
+	const currentPath = $derived(page.url.pathname);
+	const collections: ContentNode[] = $derived(contentStructure.value || []);
+	// Check if we're in media mode
+	const isMediaMode = $derived(currentPath.includes('/mediagallery'));
+	// Check if we're in settings mode
+	const isSettingsMode = $derived(currentPath.includes('/config/systemsetting'));
 
-// Language state
-let languageTag = $state(getLocale() as AvailableLanguage);
-let searchQuery = $state('');
-// Removed isDropdownOpen and dropdownRef as Menu handles this
+	// Language state
+	let languageTag = $state(getLocale() as AvailableLanguage);
+	let searchQuery = $state('');
+	// Removed isDropdownOpen and dropdownRef as Menu handles this
 
-// Derived values
-const isSidebarFull = $derived(uiStateManager.uiState.value.leftSidebar === 'full');
+	// Derived values
+	const isSidebarFull = $derived(uiStateManager.uiState.value.leftSidebar === 'full');
 
-const firstCollectionPath = $derived.by(() => {
-	if (collections?.[0]) {
-		const node = collections[0] as any;
-		return node.path ? `/${getLocale()}${node.path}` : `/Collections/${node.name}`;
-	}
-	return '/collections';
-});
+	const firstCollectionPath = $derived.by(() => {
+		if (collections?.[0]) {
+			const node = collections[0] as any;
+			return node.path ? `/${getLocale()}${node.path}` : `/Collections/${node.name}`;
+		}
+		return '/collections';
+	});
 
-const availableLanguages = $derived([...availableLocales].sort((a, b) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en'))));
+	const availableLanguages = $derived([...availableLocales].sort((a, b) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en'))));
 
-const showLanguageDropdown = $derived(availableLanguages.length > LANGUAGE_DROPDOWN_THRESHOLD);
+	const showLanguageDropdown = $derived(availableLanguages.length > LANGUAGE_DROPDOWN_THRESHOLD);
 
-const filteredLanguages = $derived(
-	availableLanguages
-		.filter((lang) => lang !== languageTag) // Hide current language
-		.filter((lang: string) => {
-			const searchLower = searchQuery.toLowerCase();
-			const systemLangName = getLanguageName(lang, systemLanguage.value).toLowerCase();
-			const enLangName = getLanguageName(lang, 'en').toLowerCase();
-			return systemLangName.includes(searchLower) || enLangName.includes(searchLower);
-		}) as AvailableLanguage[]
-);
+	const filteredLanguages = $derived(
+		availableLanguages
+			.filter((lang) => lang !== languageTag) // Hide current language
+			.filter((lang: string) => {
+				const searchLower = searchQuery.toLowerCase();
+				const systemLangName = getLanguageName(lang, systemLanguage.value).toLowerCase();
+				const enLangName = getLanguageName(lang, 'en').toLowerCase();
+				return systemLangName.includes(searchLower) || enLangName.includes(searchLower);
+			}) as AvailableLanguage[]
+	);
 
-const avatarUrl = $derived.by(() => {
-	let src = avatarSrc.value;
-	if (!src || src === 'Default_User.svg' || src === '/Default_User.svg') {
-		return '/Default_User.svg';
-	}
-	if (src.startsWith('data:')) {
-		return src;
-	}
+	const avatarUrl = $derived.by(() => {
+		let src = avatarSrc.value;
+		if (!src || src === 'Default_User.svg' || src === '/Default_User.svg') {
+			return '/Default_User.svg';
+		}
+		if (src.startsWith('data:')) {
+			return src;
+		}
 
-	// Normalize path
-	// 1. Remove leading slashes
-	src = src.replace(/^\/+/, '');
-	// 2. Remove prefixes
-	src = src.replace(/^mediaFolder\//, '').replace(/^files\//, '');
-	// 3. Remove leading slashes again just in case
-	src = src.replace(/^\/+/, '');
+		// Normalize path
+		// 1. Remove leading slashes
+		src = src.replace(/^\/+/, '');
+		// 2. Remove prefixes
+		src = src.replace(/^mediaFolder\//, '').replace(/^files\//, '');
+		// 3. Remove leading slashes again just in case
+		src = src.replace(/^\/+/, '');
 
-	return `/files/${src}?t=${AVATAR_CACHE_BUSTER}`;
-});
+		return `/files/${src}?t=${AVATAR_CACHE_BUSTER}`;
+	});
 
-const themeTooltipText = $derived.by(() => {
-	const current = themeStore.themePreference;
-	if (current === 'system') {
-		return 'System theme (click for Light)';
-	}
-	if (current === 'light') {
-		return 'Light theme (click for Dark)';
-	}
-	return 'Dark theme (click for System)';
-});
+	const themeTooltipText = $derived.by(() => {
+		const current = themeStore.themePreference;
+		if (current === 'system') {
+			return 'System theme (click for Light)';
+		}
+		if (current === 'light') {
+			return 'Light theme (click for Dark)';
+		}
+		return 'Dark theme (click for System)';
+	});
 
-// Helper functions
-function isMobile(): boolean {
-	return browser && window.innerWidth < MOBILE_BREAKPOINT;
-}
-
-async function navigateTo(path: string): Promise<void> {
-	if (currentPath === path) {
-		return;
+	// Helper functions
+	function isMobile(): boolean {
+		return browser && window.innerWidth < MOBILE_BREAKPOINT;
 	}
 
-	if (isMobile()) {
-		toggleUIElement('leftSidebar', 'hidden');
-	}
-
-	setMode('view');
-
-	// Start loading state for navigation
-	globalLoadingStore.startLoading(loadingOperations.navigation, `LeftSidebar.navigateTo(${path})`);
-
-	try {
-		// Special handling: System routes that don't use language prefixes
-		const unlocalizedRoutes = ['/mediagallery', '/config', '/user', '/dashboard', '/setup'];
-		const isUnlocalized = unlocalizedRoutes.some((r) => path === r || path.startsWith(`${r}/`));
-
-		if (isUnlocalized) {
-			await goto(path, { replaceState: false });
+	async function navigateTo(path: string): Promise<void> {
+		if (currentPath === path) {
 			return;
 		}
 
-		// Ensure path includes language prefix for collection routes
-		const currentLocale = getLocale();
-		const pathWithLanguage = path.startsWith(`/${currentLocale}`) ? path : `/${currentLocale}${path}`;
+		if (isMobile()) {
+			toggleUIElement('leftSidebar', 'hidden');
+		}
 
-		await goto(pathWithLanguage, { replaceState: false });
-	} finally {
-		// Stop loading after navigation completes
-		// Note: SvelteKit will handle the actual page load, this just shows initial navigation
-		setTimeout(() => {
-			globalLoadingStore.stopLoading(loadingOperations.navigation);
-		}, 100);
-	}
-}
+		setMode('view');
 
-// Event handlers
-function handleLanguageSelection(lang: AvailableLanguage): void {
-	systemLanguage.set(lang as Locale);
-	languageTag = lang;
-	searchQuery = '';
-}
+		// Start loading state for navigation
+		globalLoadingStore.startLoading(loadingOperations.navigation, `LeftSidebar.navigateTo(${path})`);
 
-function toggleSidebar(): void {
-	const current = uiStateManager.uiState.value.leftSidebar;
-	const newState: SidebarState = current === 'full' ? 'collapsed' : 'full';
-	toggleUIElement('leftSidebar', newState);
-	userPreferredState.set(newState);
-}
+		try {
+			// Special handling: System routes that don't use language prefixes
+			const unlocalizedRoutes = ['/mediagallery', '/config', '/user', '/dashboard', '/setup'];
+			const isUnlocalized = unlocalizedRoutes.some((r) => path === r || path.startsWith(`${r}/`));
 
-async function handleUserClick(event?: Event): Promise<void> {
-	event?.stopPropagation();
-	await navigateTo('/user');
-}
+			if (isUnlocalized) {
+				await goto(path, { replaceState: false });
+				return;
+			}
 
-async function handleConfigClick(event?: Event): Promise<void> {
-	event?.stopPropagation();
-	await navigateTo('/config');
-}
+			// Ensure path includes language prefix for collection routes
+			const currentLocale = getLocale();
+			const pathWithLanguage = path.startsWith(`/${currentLocale}`) ? path : `/${currentLocale}${path}`;
 
-async function signOut(): Promise<void> {
-	try {
-		await fetch('/api/user/logout', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
-		});
-	} catch (error) {
-		logger.error('Error during sign-out:', error instanceof Error ? error.message : 'Unknown error');
-	} finally {
-		// Always redirect to login, even if logout fails
-		if (browser) {
-			window.location.href = '/login';
+			await goto(pathWithLanguage, { replaceState: false });
+		} finally {
+			// Stop loading after navigation completes
+			// Note: SvelteKit will handle the actual page load, this just shows initial navigation
+			setTimeout(() => {
+				globalLoadingStore.stopLoading(loadingOperations.navigation);
+			}, 100);
 		}
 	}
-}
 
-// Keyboard handlers
-function handleKeyPress(event: KeyboardEvent, callback: () => void | Promise<void>): void {
-	if (event.key === 'Enter' || event.key === ' ') {
-		event.preventDefault();
-		event.stopPropagation();
-		callback();
+	// Event handlers
+	function handleLanguageSelection(lang: AvailableLanguage): void {
+		systemLanguage.set(lang as Locale);
+		languageTag = lang;
+		searchQuery = '';
 	}
-}
+
+	function toggleSidebar(): void {
+		const current = uiStateManager.uiState.value.leftSidebar;
+		const newState: SidebarState = current === 'full' ? 'collapsed' : 'full';
+		toggleUIElement('leftSidebar', newState);
+		userPreferredState.set(newState);
+	}
+
+	async function handleUserClick(event?: Event): Promise<void> {
+		event?.stopPropagation();
+		await navigateTo('/user');
+	}
+
+	async function handleConfigClick(event?: Event): Promise<void> {
+		event?.stopPropagation();
+		await navigateTo('/config');
+	}
+
+	async function signOut(): Promise<void> {
+		try {
+			await fetch('/api/user/logout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+		} catch (error) {
+			logger.error('Error during sign-out:', error instanceof Error ? error.message : 'Unknown error');
+		} finally {
+			// Always redirect to login, even if logout fails
+			if (browser) {
+				window.location.href = '/login';
+			}
+		}
+	}
+
+	// Keyboard handlers
+	function handleKeyPress(event: KeyboardEvent, callback: () => void | Promise<void>): void {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			event.stopPropagation();
+			callback();
+		}
+	}
 </script>
 
 <div class="flex h-full w-full flex-col justify-between bg-transparent">

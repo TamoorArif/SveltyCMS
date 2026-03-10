@@ -11,183 +11,183 @@ for the image editor canvas with reactive rendering.
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import type { Snippet } from 'svelte';
-import { onMount } from 'svelte';
-import { fade } from 'svelte/transition';
-import { Canvas, Layer } from 'svelte-canvas';
+	import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
+	import type { Snippet } from 'svelte';
+	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { Canvas, Layer } from 'svelte-canvas';
 
-// Props
-let {
-	hasImage = false,
-	isLoading = false,
-	loadingMessage = 'Loading...',
-	loadingProgress = undefined,
-	showZoomControls = false,
-	containerRef = $bindable(),
-	containerWidth = $bindable(0),
-	containerHeight = $bindable(0),
-	activeTool = null,
-	ondrop,
-	onupload,
-	onzoom,
-	children
-}: {
-	hasImage?: boolean;
-	isLoading?: boolean;
-	loadingMessage?: string;
-	loadingProgress?: number;
-	showZoomControls?: boolean;
-	containerRef?: HTMLDivElement;
-	containerWidth?: number;
-	containerHeight?: number;
-	activeTool?: any;
-	ondrop?: (file: File) => void;
-	onupload?: () => void;
-	onzoom?: (type: 'in' | 'out' | 'reset') => void;
-	children?: Snippet;
-} = $props();
+	// Props
+	let {
+		hasImage = false,
+		isLoading = false,
+		loadingMessage = 'Loading...',
+		loadingProgress = undefined,
+		showZoomControls = false,
+		containerRef = $bindable(),
+		containerWidth = $bindable(0),
+		containerHeight = $bindable(0),
+		activeTool = null,
+		ondrop,
+		onupload,
+		onzoom,
+		children
+	}: {
+		hasImage?: boolean;
+		isLoading?: boolean;
+		loadingMessage?: string;
+		loadingProgress?: number;
+		showZoomControls?: boolean;
+		containerRef?: HTMLDivElement;
+		containerWidth?: number;
+		containerHeight?: number;
+		activeTool?: any;
+		ondrop?: (file: File) => void;
+		onupload?: () => void;
+		onzoom?: (type: 'in' | 'out' | 'reset') => void;
+		children?: Snippet;
+	} = $props();
 
-let mounted = $state(false);
-let isDragging = $state(false);
-let isPanning = $state(false);
-let lastPos = { x: 0, y: 0 };
-let resizeObserver: ResizeObserver;
+	let mounted = $state(false);
+	let isDragging = $state(false);
+	let isPanning = $state(false);
+	let lastPos = { x: 0, y: 0 };
+	let resizeObserver: ResizeObserver;
 
-const storeState = imageEditorStore.state;
+	const storeState = imageEditorStore.state;
 
-function handleDragOver(e: DragEvent) {
-	e.preventDefault();
-	if (!hasImage) {
-		isDragging = true;
-	}
-}
-
-function handleDragLeave(e: DragEvent) {
-	e.preventDefault();
-	isDragging = false;
-}
-
-function handleDrop(e: DragEvent) {
-	e.preventDefault();
-	isDragging = false;
-
-	const files = e.dataTransfer?.files;
-	if (files?.[0]) {
-		ondrop?.(files[0]);
-	}
-}
-
-// Interactive Panning & Tool Delegation
-function handleMouseDown(e: MouseEvent) {
-	if (!hasImage) {
-		return;
+	function handleDragOver(e: DragEvent) {
+		e.preventDefault();
+		if (!hasImage) {
+			isDragging = true;
+		}
 	}
 
-	if (activeTool?.handleMouseDown) {
-		activeTool.handleMouseDown(e, containerWidth, containerHeight);
-	} else {
-		isPanning = true;
-		lastPos = { x: e.clientX, y: e.clientY };
-	}
-}
-
-function handleMouseMove(e: MouseEvent) {
-	if (!hasImage) {
-		return;
+	function handleDragLeave(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
 	}
 
-	if (activeTool?.handleMouseMove) {
-		activeTool.handleMouseMove(e, containerWidth, containerHeight);
-	} else if (isPanning) {
-		const dx = e.clientX - lastPos.x;
-		const dy = e.clientY - lastPos.y;
-		storeState.translateX += dx;
-		storeState.translateY += dy;
-		lastPos = { x: e.clientX, y: e.clientY };
-	}
-}
+	function handleDrop(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
 
-function handleMouseUp(e: MouseEvent) {
-	if (activeTool?.handleMouseUp) {
-		activeTool.handleMouseUp(e, containerWidth, containerHeight);
-	}
-	isPanning = false;
-}
-
-function handleWheel(e: WheelEvent) {
-	if (!hasImage) {
-		return;
-	}
-	e.preventDefault();
-	const zoomSpeed = 0.001;
-	const delta = -e.deltaY;
-	const newZoom = storeState.zoom * (1 + delta * zoomSpeed);
-	storeState.zoom = Math.max(0.1, Math.min(5, newZoom));
-}
-
-// Main image render function
-const renderImage = ({ context, width, height }: { context: CanvasRenderingContext2D; width: number; height: number }) => {
-	const { imageElement, zoom, rotation, flipH, flipV, translateX, translateY, crop, filters } = storeState;
-
-	if (!imageElement) {
-		return;
+		const files = e.dataTransfer?.files;
+		if (files?.[0]) {
+			ondrop?.(files[0]);
+		}
 	}
 
-	context.save();
+	// Interactive Panning & Tool Delegation
+	function handleMouseDown(e: MouseEvent) {
+		if (!hasImage) {
+			return;
+		}
 
-	// Move to center of canvas
-	context.translate(width / 2 + translateX, height / 2 + translateY);
-
-	// Apply transforms
-	context.scale(flipH ? -zoom : zoom, flipV ? -zoom : zoom);
-	context.rotate((rotation * Math.PI) / 180);
-
-	// Apply filters
-	let filterString = '';
-	if (filters.brightness !== 0) {
-		filterString += `brightness(${100 + filters.brightness}%) `;
-	}
-	if (filters.contrast !== 0) {
-		filterString += `contrast(${100 + filters.contrast}%) `;
-	}
-	if (filters.saturation !== 0) {
-		filterString += `saturate(${100 + filters.saturation}%) `;
-	}
-	if (filterString) {
-		context.filter = filterString.trim();
+		if (activeTool?.handleMouseDown) {
+			activeTool.handleMouseDown(e, containerWidth, containerHeight);
+		} else {
+			isPanning = true;
+			lastPos = { x: e.clientX, y: e.clientY };
+		}
 	}
 
-	// Draw image
-	if (crop) {
-		context.drawImage(imageElement, crop.x, crop.y, crop.width, crop.height, -crop.width / 2, -crop.height / 2, crop.width, crop.height);
-	} else {
-		context.drawImage(imageElement, -imageElement.width / 2, -imageElement.height / 2, imageElement.width, imageElement.height);
+	function handleMouseMove(e: MouseEvent) {
+		if (!hasImage) {
+			return;
+		}
+
+		if (activeTool?.handleMouseMove) {
+			activeTool.handleMouseMove(e, containerWidth, containerHeight);
+		} else if (isPanning) {
+			const dx = e.clientX - lastPos.x;
+			const dy = e.clientY - lastPos.y;
+			storeState.translateX += dx;
+			storeState.translateY += dy;
+			lastPos = { x: e.clientX, y: e.clientY };
+		}
 	}
 
-	context.restore();
-};
-
-onMount(() => {
-	mounted = true;
-
-	if (containerRef) {
-		resizeObserver = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				const { width, height } = entry.contentRect;
-				if (width > 0 && height > 0) {
-					containerWidth = width;
-					containerHeight = height;
-				}
-			}
-		});
-		resizeObserver.observe(containerRef);
+	function handleMouseUp(e: MouseEvent) {
+		if (activeTool?.handleMouseUp) {
+			activeTool.handleMouseUp(e, containerWidth, containerHeight);
+		}
+		isPanning = false;
 	}
 
-	return () => {
-		resizeObserver?.disconnect();
+	function handleWheel(e: WheelEvent) {
+		if (!hasImage) {
+			return;
+		}
+		e.preventDefault();
+		const zoomSpeed = 0.001;
+		const delta = -e.deltaY;
+		const newZoom = storeState.zoom * (1 + delta * zoomSpeed);
+		storeState.zoom = Math.max(0.1, Math.min(5, newZoom));
+	}
+
+	// Main image render function
+	const renderImage = ({ context, width, height }: { context: CanvasRenderingContext2D; width: number; height: number }) => {
+		const { imageElement, zoom, rotation, flipH, flipV, translateX, translateY, crop, filters } = storeState;
+
+		if (!imageElement) {
+			return;
+		}
+
+		context.save();
+
+		// Move to center of canvas
+		context.translate(width / 2 + translateX, height / 2 + translateY);
+
+		// Apply transforms
+		context.scale(flipH ? -zoom : zoom, flipV ? -zoom : zoom);
+		context.rotate((rotation * Math.PI) / 180);
+
+		// Apply filters
+		let filterString = '';
+		if (filters.brightness !== 0) {
+			filterString += `brightness(${100 + filters.brightness}%) `;
+		}
+		if (filters.contrast !== 0) {
+			filterString += `contrast(${100 + filters.contrast}%) `;
+		}
+		if (filters.saturation !== 0) {
+			filterString += `saturate(${100 + filters.saturation}%) `;
+		}
+		if (filterString) {
+			context.filter = filterString.trim();
+		}
+
+		// Draw image
+		if (crop) {
+			context.drawImage(imageElement, crop.x, crop.y, crop.width, crop.height, -crop.width / 2, -crop.height / 2, crop.width, crop.height);
+		} else {
+			context.drawImage(imageElement, -imageElement.width / 2, -imageElement.height / 2, imageElement.width, imageElement.height);
+		}
+
+		context.restore();
 	};
-});
+
+	onMount(() => {
+		mounted = true;
+
+		if (containerRef) {
+			resizeObserver = new ResizeObserver((entries) => {
+				for (const entry of entries) {
+					const { width, height } = entry.contentRect;
+					if (width > 0 && height > 0) {
+						containerWidth = width;
+						containerHeight = height;
+					}
+				}
+			});
+			resizeObserver.observe(containerRef);
+		}
+
+		return () => {
+			resizeObserver?.disconnect();
+		};
+	});
 </script>
 
 <div

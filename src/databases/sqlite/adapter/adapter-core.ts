@@ -268,8 +268,12 @@ export class AdapterCore {
 			tenantId: text('tenantId', { length: 36 }),
 			data: text('data', { mode: 'json' }).notNull().default('{}'),
 			status: text('status', { length: 50 }).notNull().default('draft'),
-			createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
-			updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`)
+			createdAt: integer('createdAt', { mode: 'timestamp_ms' })
+				.notNull()
+				.default(sql`(strftime('%s', 'now') * 1000)`),
+			updatedAt: integer('updatedAt', { mode: 'timestamp_ms' })
+				.notNull()
+				.default(sql`(strftime('%s', 'now') * 1000)`)
 		});
 	}
 

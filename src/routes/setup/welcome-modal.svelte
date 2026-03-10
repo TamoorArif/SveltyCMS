@@ -11,22 +11,22 @@ Features:
 -->
 
 <script lang="ts">
-// Components
-import SiteName from '@src/components/site-name.svelte';
+	// Components
+	import SiteName from '@src/components/site-name.svelte';
 
-// Paraglide Messages
-import { welcome_modal_body, welcome_modal_cta, welcome_modal_eta } from '@src/paraglide/messages';
+	// Paraglide Messages
+	import { welcome_modal_body, welcome_modal_cta, welcome_modal_eta } from '@src/paraglide/messages';
 
-// Props
-interface Props {
-	close?: (result?: boolean) => void;
-}
-const { close }: Props = $props();
+	// Props
+	interface Props {
+		close?: (result?: boolean) => void;
+	}
+	const { close }: Props = $props();
 
-// Function to close the modal and trigger the 'Get Started' action
-function handleGetStarted() {
-	close?.(true);
-}
+	// Function to close the modal and trigger the 'Get Started' action
+	function handleGetStarted() {
+		close?.(true);
+	}
 </script>
 
 <div class="space-y-4 text-center">

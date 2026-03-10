@@ -19,215 +19,215 @@
 -->
 
 <script lang="ts">
-import MediaLibraryModal from '@components/media-library-modal.svelte';
-import { logger } from '@utils/logger';
-import type { MediaBase, MediaImage } from '@utils/media/media-models';
-import { modalState } from '@utils/modal-state.svelte';
-import { flip } from 'svelte/animate';
-import { dndzone } from 'svelte-dnd-action';
-import { page } from '$app/state';
-import type { FieldType } from './';
-import type { MediaFile } from './types';
-import 'iconify-icon';
+	import MediaLibraryModal from '@components/media-library-modal.svelte';
+	import { logger } from '@utils/logger';
+	import type { MediaBase, MediaImage } from '@utils/media/media-models';
+	import { modalState } from '@utils/modal-state.svelte';
+	import { flip } from 'svelte/animate';
+	import { dndzone } from 'svelte-dnd-action';
+	import { page } from '$app/state';
+	import type { FieldType } from './';
+	import type { MediaFile } from './types';
+	import 'iconify-icon';
 
-const tenantId = $derived(page.data?.tenantId);
+	const tenantId = $derived(page.data?.tenantId);
 
-// SECURITY: File validation constants
-const ALLOWED_MIME_TYPES = [
-	'image/jpeg',
-	'image/png',
-	'image/gif',
-	'image/webp',
-	'image/svg+xml',
-	'video/mp4',
-	'video/webm',
-	'video/ogg',
-	'application/pdf',
-	'audio/mpeg',
-	'audio/wav'
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const VALID_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'ogg', 'pdf', 'mp3', 'wav'];
+	// SECURITY: File validation constants
+	const ALLOWED_MIME_TYPES = [
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'image/svg+xml',
+		'video/mp4',
+		'video/webm',
+		'video/ogg',
+		'application/pdf',
+		'audio/mpeg',
+		'audio/wav'
+	];
+	const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+	const VALID_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'ogg', 'pdf', 'mp3', 'wav'];
 
-function validateFile(file: { name: string; type: string; size: number }): {
-	valid: boolean;
-	error?: string;
-} {
-	// Check MIME type
-	if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-		return { valid: false, error: `Invalid file type: ${file.type}` };
+	function validateFile(file: { name: string; type: string; size: number }): {
+		valid: boolean;
+		error?: string;
+	} {
+		// Check MIME type
+		if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+			return { valid: false, error: `Invalid file type: ${file.type}` };
+		}
+		// Check file size
+		if (file.size > MAX_FILE_SIZE) {
+			return {
+				valid: false,
+				error: `File too large (max 10MB): ${(file.size / 1024 / 1024).toFixed(2)}MB`
+			};
+		}
+		// Check file extension
+		const ext = file.name.split('.').pop()?.toLowerCase();
+		if (!(ext && VALID_EXTENSIONS.includes(ext))) {
+			return { valid: false, error: `Invalid file extension: ${ext}` };
+		}
+		return { valid: true };
 	}
-	// Check file size
-	if (file.size > MAX_FILE_SIZE) {
-		return {
-			valid: false,
-			error: `File too large (max 10MB): ${(file.size / 1024 / 1024).toFixed(2)}MB`
-		};
-	}
-	// Check file extension
-	const ext = file.name.split('.').pop()?.toLowerCase();
-	if (!(ext && VALID_EXTENSIONS.includes(ext))) {
-		return { valid: false, error: `Invalid file extension: ${ext}` };
-	}
-	return { valid: true };
-}
 
-let {
-	field,
-	value = $bindable(),
-	error,
-	collectionName
-}: {
-	field: FieldType;
-	value: string | string[] | null | undefined;
-	error?: string | null;
-	collectionName?: string;
-} = $props();
+	let {
+		field,
+		value = $bindable(),
+		error,
+		collectionName
+	}: {
+		field: FieldType;
+		value: string | string[] | null | undefined;
+		error?: string | null;
+		collectionName?: string;
+	} = $props();
 
-// A local, reactive array of the full, resolved media file objects for display.
-let selectedFiles = $state<MediaFile[]>([]);
+	// A local, reactive array of the full, resolved media file objects for display.
+	let selectedFiles = $state<MediaFile[]>([]);
 
-// Helper function to fetch full media data from an array of IDs.
-async function fetchMediaData(ids: string[]): Promise<MediaFile[]> {
-	logger.debug('Fetching data for IDs:', ids);
-	try {
-		const fetchedFiles: MediaFile[] = [];
+	// Helper function to fetch full media data from an array of IDs.
+	async function fetchMediaData(ids: string[]): Promise<MediaFile[]> {
+		logger.debug('Fetching data for IDs:', ids);
+		try {
+			const fetchedFiles: MediaFile[] = [];
 
-		// Helper to map DB path to URL path
-		const normalizePath = (p: string) => {
-			if (!p) {
-				return '';
-			}
-			let path = p.replace(/^mediaFolder\//, '').replace(/^files\//, '');
-			path = path.replace(/^\/+/, '');
-			return `/files/${path}`;
-		};
-
-		for (const id of ids) {
-			const response = await fetch(`/api/media/${id}`);
-			if (response.ok) {
-				const found = await response.json();
-				if (found) {
-					fetchedFiles.push({
-						_id: found._id,
-						name: found.filename,
-						type: found.mimeType,
-						size: found.size,
-						url: normalizePath(found.path),
-						thumbnailUrl: found.thumbnails?.md?.url ? normalizePath(found.thumbnails.md.url) : normalizePath(found.path),
-						aiTags: found.metadata?.aiTags || []
-					} as any);
+			// Helper to map DB path to URL path
+			const normalizePath = (p: string) => {
+				if (!p) {
+					return '';
 				}
-			}
-		}
-		return fetchedFiles;
-	} catch (e) {
-		logger.error('Error fetching media data:', e);
-		return [];
-	}
-}
+				let path = p.replace(/^mediaFolder\//, '').replace(/^files\//, '');
+				path = path.replace(/^\/+/, '');
+				return `/files/${path}`;
+			};
 
-function getFileIcon(file: MediaFile): string {
-	const fileName = file.name || '';
-	const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-
-	switch (true) {
-		case file.type?.startsWith('image/'):
-			return 'fa-solid:image';
-		case file.type?.startsWith('video/'):
-			return 'fa-solid:video';
-		case file.type?.startsWith('audio/'):
-			return 'fa-solid:play-circle';
-		case fileExt === '.pdf':
-			return 'vscode-icons:file-type-pdf2';
-		case fileExt === '.doc' || fileExt === '.docx' || fileExt === '.docm':
-			return 'vscode-icons:file-type-word';
-		case fileExt === '.ppt' || fileExt === '.pptx':
-			return 'vscode-icons:file-type-powerpoint';
-		case fileExt === '.xls' || fileExt === '.xlsx':
-			return 'vscode-icons:file-type-excel';
-		case fileExt === '.txt':
-			return 'fa-solid:file-lines';
-		case fileExt === '.zip' || fileExt === '.rar':
-			return 'fa-solid:file-zipper';
-	}
-	return 'vscode-icons:file';
-}
-
-// Effect 1: When the parent `value` (the IDs) changes, fetch the full data.
-$effect(() => {
-	const ids = Array.isArray(value) ? value : value ? [value] : [];
-	if (ids.length > 0) {
-		const missingIds = ids.filter((id) => !selectedFiles.some((f) => f._id === id));
-		if (missingIds.length > 0) {
-			fetchMediaData(ids).then((files) => {
-				selectedFiles = files;
-			});
-		}
-	} else {
-		selectedFiles = [];
-	}
-});
-
-// Effect 2: When the local `selectedFiles` array changes (e.g., reordering), update the parent `value`.
-$effect(() => {
-	const newIds = selectedFiles.map((file) => file._id);
-	if (field.multiupload) {
-		value = newIds;
-	} else {
-		value = newIds[0] || null;
-	}
-});
-
-function openMediaLibrary() {
-	// DYNAMIC FOLDER:
-	// 1. Explicitly configured field.folder
-	// 2. Default to collection/[name] if available
-	// 3. Fallback to tenantId or 'global'
-	const dynamicFolder = (field as any).folder || (collectionName ? `collections/${collectionName.toLowerCase()}` : tenantId || 'global');
-
-	modalState.trigger(
-		MediaLibraryModal as any,
-		{
-			selectionMode: field.multiupload ? 'multiple' : 'single',
-			allowedTypes: field.allowedTypes || [],
-			folder: dynamicFolder,
-			size: 'fullscreen',
-			modalClasses: 'w-full h-full max-w-none max-h-none'
-		},
-		(files: (MediaBase | MediaImage)[]) => {
-			if (files && Array.isArray(files)) {
-				const mappedFiles: MediaFile[] = files.map((f) => ({
-					_id: f._id as string,
-					name: f.filename,
-					type: f.mimeType,
-					size: f.size,
-					url: (f as any).url,
-					thumbnailUrl: (f as any).thumbnails?.md?.url || (f as any).url
-				}));
-
-				const validFiles = mappedFiles.filter((file) => {
-					const validation = validateFile(file);
-					if (!validation.valid) {
-						logger.warn(`Rejected file ${file.name}: ${validation.error}`);
-						return false;
+			for (const id of ids) {
+				const response = await fetch(`/api/media/${id}`);
+				if (response.ok) {
+					const found = await response.json();
+					if (found) {
+						fetchedFiles.push({
+							_id: found._id,
+							name: found.filename,
+							type: found.mimeType,
+							size: found.size,
+							url: normalizePath(found.path),
+							thumbnailUrl: found.thumbnails?.md?.url ? normalizePath(found.thumbnails.md.url) : normalizePath(found.path),
+							aiTags: found.metadata?.aiTags || []
+						} as any);
 					}
-					return true;
-				});
-
-				if (field.multiupload) {
-					selectedFiles = [...selectedFiles, ...validFiles];
-				} else if (validFiles.length > 0) {
-					selectedFiles = [validFiles[0]];
 				}
 			}
+			return fetchedFiles;
+		} catch (e) {
+			logger.error('Error fetching media data:', e);
+			return [];
 		}
-	);
-}
+	}
 
-function removeFile(fileId: string) {
-	selectedFiles = selectedFiles.filter((file) => file._id !== fileId);
-}
+	function getFileIcon(file: MediaFile): string {
+		const fileName = file.name || '';
+		const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+
+		switch (true) {
+			case file.type?.startsWith('image/'):
+				return 'fa-solid:image';
+			case file.type?.startsWith('video/'):
+				return 'fa-solid:video';
+			case file.type?.startsWith('audio/'):
+				return 'fa-solid:play-circle';
+			case fileExt === '.pdf':
+				return 'vscode-icons:file-type-pdf2';
+			case fileExt === '.doc' || fileExt === '.docx' || fileExt === '.docm':
+				return 'vscode-icons:file-type-word';
+			case fileExt === '.ppt' || fileExt === '.pptx':
+				return 'vscode-icons:file-type-powerpoint';
+			case fileExt === '.xls' || fileExt === '.xlsx':
+				return 'vscode-icons:file-type-excel';
+			case fileExt === '.txt':
+				return 'fa-solid:file-lines';
+			case fileExt === '.zip' || fileExt === '.rar':
+				return 'fa-solid:file-zipper';
+		}
+		return 'vscode-icons:file';
+	}
+
+	// Effect 1: When the parent `value` (the IDs) changes, fetch the full data.
+	$effect(() => {
+		const ids = Array.isArray(value) ? value : value ? [value] : [];
+		if (ids.length > 0) {
+			const missingIds = ids.filter((id) => !selectedFiles.some((f) => f._id === id));
+			if (missingIds.length > 0) {
+				fetchMediaData(ids).then((files) => {
+					selectedFiles = files;
+				});
+			}
+		} else {
+			selectedFiles = [];
+		}
+	});
+
+	// Effect 2: When the local `selectedFiles` array changes (e.g., reordering), update the parent `value`.
+	$effect(() => {
+		const newIds = selectedFiles.map((file) => file._id);
+		if (field.multiupload) {
+			value = newIds;
+		} else {
+			value = newIds[0] || null;
+		}
+	});
+
+	function openMediaLibrary() {
+		// DYNAMIC FOLDER:
+		// 1. Explicitly configured field.folder
+		// 2. Default to collection/[name] if available
+		// 3. Fallback to tenantId or 'global'
+		const dynamicFolder = (field as any).folder || (collectionName ? `collections/${collectionName.toLowerCase()}` : tenantId || 'global');
+
+		modalState.trigger(
+			MediaLibraryModal as any,
+			{
+				selectionMode: field.multiupload ? 'multiple' : 'single',
+				allowedTypes: field.allowedTypes || [],
+				folder: dynamicFolder,
+				size: 'fullscreen',
+				modalClasses: 'w-full h-full max-w-none max-h-none'
+			},
+			(files: (MediaBase | MediaImage)[]) => {
+				if (files && Array.isArray(files)) {
+					const mappedFiles: MediaFile[] = files.map((f) => ({
+						_id: f._id as string,
+						name: f.filename,
+						type: f.mimeType,
+						size: f.size,
+						url: (f as any).url,
+						thumbnailUrl: (f as any).thumbnails?.md?.url || (f as any).url
+					}));
+
+					const validFiles = mappedFiles.filter((file) => {
+						const validation = validateFile(file);
+						if (!validation.valid) {
+							logger.warn(`Rejected file ${file.name}: ${validation.error}`);
+							return false;
+						}
+						return true;
+					});
+
+					if (field.multiupload) {
+						selectedFiles = [...selectedFiles, ...validFiles];
+					} else if (validFiles.length > 0) {
+						selectedFiles = [validFiles[0]];
+					}
+				}
+			}
+		);
+	}
+
+	function removeFile(fileId: string) {
+		selectedFiles = selectedFiles.filter((file) => file._id !== fileId);
+	}
 </script>
 
 <div class="min-h-[120px] rounded-lg border-2 border-dashed border-surface-300 p-4 dark:border-surface-600" class:!border-error-500={error}>

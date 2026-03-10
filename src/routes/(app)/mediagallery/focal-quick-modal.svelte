@@ -16,108 +16,108 @@ and rule-of-thirds grid overlay.
 -->
 
 <script lang="ts">
-import type { MediaImage } from '@utils/media/media-models';
-import { fade, scale } from 'svelte/transition';
+	import type { MediaImage } from '@utils/media/media-models';
+	import { fade, scale } from 'svelte/transition';
 
-interface Props {
-	/** The media image to adjust focal point for */
-	media: MediaImage;
-	/** Callback when modal is closed without saving */
-	onClose: () => void;
-	/** Callback when focal point is saved */
-	onSave: (focalPoint: { x: number; y: number }) => void;
-	/** Whether to show the modal */
-	show: boolean;
-}
-
-let { media, show = $bindable(), onClose, onSave }: Props = $props();
-
-// Initialize focal point with defaults
-let focalPoint = $state({
-	x: 50,
-	y: 50
-});
-
-let containerRef: HTMLDivElement | undefined = $state();
-let isDragging = $state(false);
-
-// Reset focal point when media changes
-$effect(() => {
-	if (media) {
-		focalPoint = {
-			x: media.metadata?.focalPoint?.x ?? 50,
-			y: media.metadata?.focalPoint?.y ?? 50
-		};
+	interface Props {
+		/** The media image to adjust focal point for */
+		media: MediaImage;
+		/** Callback when modal is closed without saving */
+		onClose: () => void;
+		/** Callback when focal point is saved */
+		onSave: (focalPoint: { x: number; y: number }) => void;
+		/** Whether to show the modal */
+		show: boolean;
 	}
-});
 
-function handleMouseDown(e: MouseEvent) {
-	isDragging = true;
-	updateFocalPoint(e);
-}
+	let { media, show = $bindable(), onClose, onSave }: Props = $props();
 
-function handleMouseMove(e: MouseEvent) {
-	if (isDragging) {
+	// Initialize focal point with defaults
+	let focalPoint = $state({
+		x: 50,
+		y: 50
+	});
+
+	let containerRef: HTMLDivElement | undefined = $state();
+	let isDragging = $state(false);
+
+	// Reset focal point when media changes
+	$effect(() => {
+		if (media) {
+			focalPoint = {
+				x: media.metadata?.focalPoint?.x ?? 50,
+				y: media.metadata?.focalPoint?.y ?? 50
+			};
+		}
+	});
+
+	function handleMouseDown(e: MouseEvent) {
+		isDragging = true;
 		updateFocalPoint(e);
 	}
-}
 
-function handleMouseUp() {
-	isDragging = false;
-}
-
-function updateFocalPoint(e: MouseEvent) {
-	if (!containerRef) {
-		return;
+	function handleMouseMove(e: MouseEvent) {
+		if (isDragging) {
+			updateFocalPoint(e);
+		}
 	}
-	const rect = containerRef.getBoundingClientRect();
-	focalPoint = {
-		x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
-		y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100))
-	};
-}
 
-function handleKeyDown(e: KeyboardEvent) {
-	const step = e.shiftKey ? 10 : 1;
-	switch (e.key) {
-		case 'ArrowLeft':
-			focalPoint.x = Math.max(0, focalPoint.x - step);
-			e.preventDefault();
-			break;
-		case 'ArrowRight':
-			focalPoint.x = Math.min(100, focalPoint.x + step);
-			e.preventDefault();
-			break;
-		case 'ArrowUp':
-			focalPoint.y = Math.max(0, focalPoint.y - step);
-			e.preventDefault();
-			break;
-		case 'ArrowDown':
-			focalPoint.y = Math.min(100, focalPoint.y + step);
-			e.preventDefault();
-			break;
-		case 'Escape':
-			handleClose();
-			break;
+	function handleMouseUp() {
+		isDragging = false;
 	}
-}
 
-function handleSave() {
-	onSave(focalPoint);
-	show = false;
-}
+	function updateFocalPoint(e: MouseEvent) {
+		if (!containerRef) {
+			return;
+		}
+		const rect = containerRef.getBoundingClientRect();
+		focalPoint = {
+			x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
+			y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100))
+		};
+	}
 
-function handleClose() {
-	onClose();
-	show = false;
-}
+	function handleKeyDown(e: KeyboardEvent) {
+		const step = e.shiftKey ? 10 : 1;
+		switch (e.key) {
+			case 'ArrowLeft':
+				focalPoint.x = Math.max(0, focalPoint.x - step);
+				e.preventDefault();
+				break;
+			case 'ArrowRight':
+				focalPoint.x = Math.min(100, focalPoint.x + step);
+				e.preventDefault();
+				break;
+			case 'ArrowUp':
+				focalPoint.y = Math.max(0, focalPoint.y - step);
+				e.preventDefault();
+				break;
+			case 'ArrowDown':
+				focalPoint.y = Math.min(100, focalPoint.y + step);
+				e.preventDefault();
+				break;
+			case 'Escape':
+				handleClose();
+				break;
+		}
+	}
 
-function resetToCenter() {
-	focalPoint = { x: 50, y: 50 };
-}
+	function handleSave() {
+		onSave(focalPoint);
+		show = false;
+	}
 
-// Get image URL (prefer thumbnail for faster loading)
-const imageUrl = $derived(media.thumbnails?.md?.url || media.thumbnails?.sm?.url || media.url);
+	function handleClose() {
+		onClose();
+		show = false;
+	}
+
+	function resetToCenter() {
+		focalPoint = { x: 50, y: 50 };
+	}
+
+	// Get image URL (prefer thumbnail for faster loading)
+	const imageUrl = $derived(media.thumbnails?.md?.url || media.thumbnails?.sm?.url || media.url);
 </script>
 
 {#if show}

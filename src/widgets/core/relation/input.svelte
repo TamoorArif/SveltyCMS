@@ -27,77 +27,77 @@ Interactive selector with "Select" button and clear functionality
 -->
 
 <script lang="ts">
-import { app } from '@src/stores/store.svelte';
-import { showModal } from '@utils/modal-utils';
-import type { FieldType } from './';
+	import { app } from '@src/stores/store.svelte';
+	import { showModal } from '@utils/modal-utils';
+	import type { FieldType } from './';
 
-let {
-	field,
-	value,
-	error
-}: {
-	field: FieldType;
-	value: string | string[] | null | undefined;
-	error?: string | null;
-} = $props();
+	let {
+		field,
+		value,
+		error
+	}: {
+		field: FieldType;
+		value: string | string[] | null | undefined;
+		error?: string | null;
+	} = $props();
 
-// Local state for the resolved entry's display text.
-let selectedEntries = $state<Record<string, any>[]>([]);
-const lang = $derived(app.contentLanguage);
+	// Local state for the resolved entry's display text.
+	let selectedEntries = $state<Record<string, any>[]>([]);
+	const lang = $derived(app.contentLanguage);
 
-// Stub function for fetching entry data - implement with your API
-async function fetchEntryData(ids: string[]): Promise<Record<string, any>[]> {
-	// TODO: Implement API call to fetch entries by IDs
-	// This should return an array of entry objects
-	return ids.map((id) => ({
-		_id: id,
-		[field.displayField as string]: `Entry ${id}`
-	}));
-}
-
-// Fetch the full entry data when the ID `value` changes.
-$effect(() => {
-	const ids = Array.isArray(value) ? value : value ? [value] : [];
-	if (ids.length > 0) {
-		fetchEntryData(ids).then((entries) => (selectedEntries = entries));
-	} else {
-		selectedEntries = [];
+	// Stub function for fetching entry data - implement with your API
+	async function fetchEntryData(ids: string[]): Promise<Record<string, any>[]> {
+		// TODO: Implement API call to fetch entries by IDs
+		// This should return an array of entry objects
+		return ids.map((id) => ({
+			_id: id,
+			[field.displayField as string]: `Entry ${id}`
+		}));
 	}
-});
 
-// Function to open the selection/creation modal.
-function openRelationModal() {
-	showModal({
-		component: 'relationModal',
-		meta: {
-			collectionId: field.collection,
-			multiple: field.multiple,
-			// Callback to update the value when an entry is selected in the modal
-			callback: (selected: string | string[] | undefined) => {
-				if (selected) {
-					if (field.multiple) {
-						// If multiple, ensuring we have an array
-						const newSelection = Array.isArray(selected) ? selected : [selected];
-						// Merge with existing if needed, or replace.
-						// For now, let's assume the modal returns the *full* new selection
-						value = newSelection;
-					} else {
-						// Single select
-						value = Array.isArray(selected) ? selected[0] : selected;
+	// Fetch the full entry data when the ID `value` changes.
+	$effect(() => {
+		const ids = Array.isArray(value) ? value : value ? [value] : [];
+		if (ids.length > 0) {
+			fetchEntryData(ids).then((entries) => (selectedEntries = entries));
+		} else {
+			selectedEntries = [];
+		}
+	});
+
+	// Function to open the selection/creation modal.
+	function openRelationModal() {
+		showModal({
+			component: 'relationModal',
+			meta: {
+				collectionId: field.collection,
+				multiple: field.multiple,
+				// Callback to update the value when an entry is selected in the modal
+				callback: (selected: string | string[] | undefined) => {
+					if (selected) {
+						if (field.multiple) {
+							// If multiple, ensuring we have an array
+							const newSelection = Array.isArray(selected) ? selected : [selected];
+							// Merge with existing if needed, or replace.
+							// For now, let's assume the modal returns the *full* new selection
+							value = newSelection;
+						} else {
+							// Single select
+							value = Array.isArray(selected) ? selected[0] : selected;
+						}
 					}
 				}
 			}
-		}
-	});
-}
-
-function removeItem(id: string) {
-	if (Array.isArray(value)) {
-		value = value.filter((v) => v !== id);
-	} else if (value === id) {
-		value = null;
+		});
 	}
-}
+
+	function removeItem(id: string) {
+		if (Array.isArray(value)) {
+			value = value.filter((v) => v !== id);
+		} else if (value === id) {
+			value = null;
+		}
+	}
 </script>
 
 <div class="relation-container" class:invalid={error}>

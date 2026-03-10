@@ -88,13 +88,17 @@ To reach the "1009%" ambition, we are planning:
 SveltyCMS uses a performance-optimized CI pipeline designed for maximum reliability and fast feedback.
 
 ### 1. Parallel Quality Gate
+
 All static analysis and unit checks run in parallel:
+
 - **Lint & Type Check**: Biome/Ultracite linting + `svelte-check` validation.
 - **Unit Tests & Coverage**: Bun-powered logic verification with Codecov reporting.
 - **Build Verification**: Production SSR and Client build.
 
 ### 2. Consolidated Database Matrix
+
 Integration and E2E tests are grouped by database engine (MongoDB, MariaDB, PostgreSQL, SQLite).
+
 - **One Leg, Dual Suite**: Each matrix leg starts its database service once and runs both Integration and E2E tests sequentially.
 - **Cross-Browser Coverage**: E2E tests validate against Chromium, Firefox, and Webkit.
 

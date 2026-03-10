@@ -17,12 +17,12 @@
 - Theme-aware rendering (light/dark mode support)
 -->
 <script lang="ts" module>
-export const widgetMeta = {
-	name: 'System Health',
-	icon: 'mdi:heart-pulse',
-	description: 'Monitor system services and overall health',
-	defaultSize: { w: 2, h: 2 }
-};
+	export const widgetMeta = {
+		name: 'System Health',
+		icon: 'mdi:heart-pulse',
+		description: 'Monitor system services and overall health',
+		defaultSize: { w: 2, h: 2 }
+	};
 </script>
 
 <script lang="ts">

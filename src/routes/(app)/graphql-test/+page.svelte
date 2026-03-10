@@ -10,21 +10,21 @@
 - Demonstrates live updates from the backend using GraphQL subscriptions.
 -->
 <script lang="ts">
-import { logger } from '@utils/logger';
-import { createClient } from 'graphql-ws';
-import { onMount } from 'svelte';
+	import { logger } from '@utils/logger';
+	import { createClient } from 'graphql-ws';
+	import { onMount } from 'svelte';
 
-let posts: any[] = $state([]);
-let error: any = $state(null);
+	let posts: any[] = $state([]);
+	let error: any = $state(null);
 
-onMount(() => {
-	const client = createClient({
-		url: 'ws://localhost:3001/api/graphql'
-	});
+	onMount(() => {
+		const client = createClient({
+			url: 'ws://localhost:3001/api/graphql'
+		});
 
-	client.subscribe(
-		{
-			query: `
+		client.subscribe(
+			{
+				query: `
 					subscription PostAdded {
 						postAdded {
 							_id
@@ -32,22 +32,22 @@ onMount(() => {
 						}
 					}
 				`
-		},
-		{
-			next: (data) => {
-				if (data?.data?.postAdded) {
-					posts = [...posts, data.data.postAdded];
+			},
+			{
+				next: (data) => {
+					if (data?.data?.postAdded) {
+						posts = [...posts, data.data.postAdded];
+					}
+				},
+				error: (err) => {
+					error = err;
+				},
+				complete: () => {
+					logger.debug('Subscription complete');
 				}
-			},
-			error: (err) => {
-				error = err;
-			},
-			complete: () => {
-				logger.debug('Subscription complete');
 			}
-		}
-	);
-});
+		);
+	});
 </script>
 
 <h1>GraphQL Subscription Test</h1>

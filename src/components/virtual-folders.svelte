@@ -27,161 +27,161 @@
 -->
 
 <script lang="ts">
-// Import types
-import type { SystemVirtualFolder } from '@src/databases/db-interface';
-import { setMode } from '@src/stores/collection-store.svelte.ts';
-// Stores
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte.ts';
-import { ui } from '@src/stores/ui-store.svelte.ts';
-import { logger } from '@utils/logger';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
+	// Import types
+	import type { SystemVirtualFolder } from '@src/databases/db-interface';
+	import { setMode } from '@src/stores/collection-store.svelte.ts';
+	// Stores
+	import { publicEnv } from '@src/stores/global-settings.svelte';
+	import { screen } from '@src/stores/screen-size-store.svelte.ts';
+	import { ui } from '@src/stores/ui-store.svelte.ts';
+	import { logger } from '@utils/logger';
+	import { toast } from '@src/stores/toast.svelte.ts';
+	import { onMount } from 'svelte';
 
-interface Props {
-	// Component props and state
-	currentFolder?: SystemVirtualFolder | null;
-}
-
-const { currentFolder = null }: Props = $props();
-let folders: SystemVirtualFolder[] = $state([]);
-let newFolderName = '';
-let isLoading = $state(false);
-let error = $state<string | null>(null);
-
-// Determine if a folder is the root folder
-export function isRootFolder(folder: { name: string; parent?: string | null }): boolean {
-	return folder.name === publicEnv.MEDIA_FOLDER && folder.parent === null;
-}
-
-// Fetch virtual folders from the API
-export async function fetchVirtualFolders(): Promise<void> {
-	isLoading = true;
-	error = null;
-	try {
-		const response = await fetch('/api/systemVirtualFolder');
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-
-		const result = await response.json();
-		if (result.success && result.folders) {
-			folders = result.folders.map((folder: SystemVirtualFolder) => ({
-				...folder,
-				path: Array.isArray(folder.path) ? folder.path : (folder.path as string).split('/')
-			}));
-		} else {
-			throw new Error(result.error || 'Failed to fetch folders');
-		}
-	} catch (err) {
-		const message = err instanceof Error ? err.message : String(err);
-		error = message;
-		toast.error(`Error fetching folders: ${message}`);
-		folders = [];
-	} finally {
-		isLoading = false;
+	interface Props {
+		// Component props and state
+		currentFolder?: SystemVirtualFolder | null;
 	}
-}
 
-// Create a new folder
-export async function createFolder(): Promise<void> {
-	if (!newFolderName.trim()) {
-		return;
+	const { currentFolder = null }: Props = $props();
+	let folders: SystemVirtualFolder[] = $state([]);
+	let newFolderName = '';
+	let isLoading = $state(false);
+	let error = $state<string | null>(null);
+
+	// Determine if a folder is the root folder
+	export function isRootFolder(folder: { name: string; parent?: string | null }): boolean {
+		return folder.name === publicEnv.MEDIA_FOLDER && folder.parent === null;
 	}
-	isLoading = true;
 
-	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				name: newFolderName,
-				parent: currentFolder?._id
-			})
-		});
+	// Fetch virtual folders from the API
+	export async function fetchVirtualFolders(): Promise<void> {
+		isLoading = true;
+		error = null;
+		try {
+			const response = await fetch('/api/systemVirtualFolder');
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
 
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
+			const result = await response.json();
+			if (result.success && result.folders) {
+				folders = result.folders.map((folder: SystemVirtualFolder) => ({
+					...folder,
+					path: Array.isArray(folder.path) ? folder.path : (folder.path as string).split('/')
+				}));
+			} else {
+				throw new Error(result.error || 'Failed to fetch folders');
+			}
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			error = message;
+			toast.error(`Error fetching folders: ${message}`);
+			folders = [];
+		} finally {
+			isLoading = false;
 		}
+	}
 
-		const result = await response.json();
-		if (result.success) {
-			toast.success('Folder created successfully');
-			newFolderName = '';
-			await fetchVirtualFolders();
-		} else {
-			throw new Error(result.error || 'Failed to create folder');
+	// Create a new folder
+	export async function createFolder(): Promise<void> {
+		if (!newFolderName.trim()) {
+			return;
 		}
-	} catch (err) {
-		const message = err instanceof Error ? err.message : String(err);
-		error = message;
-		toast.error(`Error creating folder: ${message}`);
-	} finally {
-		isLoading = false;
-	}
-}
+		isLoading = true;
 
-// Update an existing folder
-export async function updateFolder(folderId: string, newName: string): Promise<void> {
-	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ folderId, name: newName })
-		});
-		const result = await response.json();
+		try {
+			const response = await fetch('/api/systemVirtualFolder', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: newFolderName,
+					parent: currentFolder?._id
+				})
+			});
 
-		if (result.success) {
-			toast.success('Folder updated successfully');
-			await fetchVirtualFolders();
-		} else {
-			throw new Error(result.error || 'Failed to update folder');
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const result = await response.json();
+			if (result.success) {
+				toast.success('Folder created successfully');
+				newFolderName = '';
+				await fetchVirtualFolders();
+			} else {
+				throw new Error(result.error || 'Failed to create folder');
+			}
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			error = message;
+			toast.error(`Error creating folder: ${message}`);
+		} finally {
+			isLoading = false;
 		}
-	} catch (error) {
-		logger.error('Error updating folder:', error);
-		toast.error('Error updating folder');
 	}
-}
 
-// Delete a folder
-export async function deleteFolder(folderId: string): Promise<void> {
-	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ folderId })
-		});
-		const result = await response.json();
+	// Update an existing folder
+	export async function updateFolder(folderId: string, newName: string): Promise<void> {
+		try {
+			const response = await fetch('/api/systemVirtualFolder', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ folderId, name: newName })
+			});
+			const result = await response.json();
 
-		if (result.success) {
-			toast.success('Folder deleted successfully');
-			await fetchVirtualFolders();
-		} else {
-			throw new Error(result.error || 'Failed to delete folder');
+			if (result.success) {
+				toast.success('Folder updated successfully');
+				await fetchVirtualFolders();
+			} else {
+				throw new Error(result.error || 'Failed to update folder');
+			}
+		} catch (error) {
+			logger.error('Error updating folder:', error);
+			toast.error('Error updating folder');
 		}
-	} catch (error) {
-		logger.error('Error deleting folder:', error);
-		toast.error('Error deleting folder');
 	}
-}
 
-// Handle mobile sidebar close on navigation
-function handleMobileSidebarClose() {
-	if (screen.isMobile) {
-		ui.toggle('leftSidebar', 'hidden');
+	// Delete a folder
+	export async function deleteFolder(folderId: string): Promise<void> {
+		try {
+			const response = await fetch('/api/systemVirtualFolder', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ folderId })
+			});
+			const result = await response.json();
+
+			if (result.success) {
+				toast.success('Folder deleted successfully');
+				await fetchVirtualFolders();
+			} else {
+				throw new Error(result.error || 'Failed to delete folder');
+			}
+		} catch (error) {
+			logger.error('Error deleting folder:', error);
+			toast.error('Error deleting folder');
+		}
 	}
-}
 
-// Return to Collections - handle mode switching
-function handleReturnToCollections() {
-	setMode('view');
-	handleMobileSidebarClose();
-}
+	// Handle mobile sidebar close on navigation
+	function handleMobileSidebarClose() {
+		if (screen.isMobile) {
+			ui.toggle('leftSidebar', 'hidden');
+		}
+	}
 
-// Fetch folders on component mount
-onMount(() => {
-	fetchVirtualFolders();
-});
+	// Return to Collections - handle mode switching
+	function handleReturnToCollections() {
+		setMode('view');
+		handleMobileSidebarClose();
+	}
+
+	// Fetch folders on component mount
+	onMount(() => {
+		fetchVirtualFolders();
+	});
 </script>
 
 <div class="mt-2 overflow-y-auto">

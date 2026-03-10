@@ -26,12 +26,12 @@ permissions:
 
 env:
   BUN_CACHE_DIR: .bun-cache
-  NODE_OPTIONS: "--no-warnings --no-deprecation"
+  NODE_OPTIONS: '--no-warnings --no-deprecation'
 
 jobs:
-# ────────────────────────────────────────────────
-# 1. BOOTSTRAP (Validate Environment)
-# ────────────────────────────────────────────────
+  # ────────────────────────────────────────────────
+  # 1. BOOTSTRAP (Validate Environment)
+  # ────────────────────────────────────────────────
   bootstrap:
     name: 🏁 Bootstrap
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
-      
+
       - name: Cache Bun
         uses: actions/cache@v5
         with:
@@ -74,9 +74,9 @@ jobs:
             .svelte-kit
             config/private.test.ts
 
-# ────────────────────────────────────────────────
-# 2. PARALLEL QUALITY GATES
-# ────────────────────────────────────────────────
+  # ────────────────────────────────────────────────
+  # 2. PARALLEL QUALITY GATES
+  # ────────────────────────────────────────────────
   lint:
     name: 🔎 Lint
     needs: bootstrap
@@ -161,9 +161,9 @@ jobs:
             .svelte-kit/output
             build
 
-# ────────────────────────────────────────────────
-# 3. HEAVY TESTING (Blocked by Quality)
-# ────────────────────────────────────────────────
+  # ────────────────────────────────────────────────
+  # 3. HEAVY TESTING (Blocked by Quality)
+  # ────────────────────────────────────────────────
   db-tests-container:
     name: 🧪 DB (${{ matrix.db }})
     needs: [lint, check, unit, build]
@@ -174,7 +174,7 @@ jobs:
       max-parallel: 4
       matrix:
         db: [mongodb, mariadb, postgresql]
-    
+
     services:
       db:
         image: ${{ matrix.db == 'mongodb' && 'mongo:7' || matrix.db == 'mariadb' && 'mariadb:11' || 'postgres:16' }}
@@ -205,7 +205,7 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+
       - name: Wait for database to be ready
         run: |
           case "${{ matrix.db }}" in
@@ -252,7 +252,7 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      
+
       - name: Run DB tests
         env:
           DB_TYPE: sqlite
@@ -273,13 +273,13 @@ jobs:
         suite: [setup, unauthenticated, authenticated]
         include:
           - suite: setup
-            files: "tests/e2e/setup-wizard.spec.ts"
+            files: 'tests/e2e/setup-wizard.spec.ts'
             fast_setup: false
           - suite: unauthenticated
-            files: "tests/e2e/login.spec.ts tests/e2e/signupfirstuser.spec.ts"
+            files: 'tests/e2e/login.spec.ts tests/e2e/signupfirstuser.spec.ts'
             fast_setup: false
           - suite: authenticated
-            files: "tests/e2e/collection.spec.ts tests/e2e/user.spec.ts"
+            files: 'tests/e2e/collection.spec.ts tests/e2e/user.spec.ts'
             fast_setup: true
 
     steps:

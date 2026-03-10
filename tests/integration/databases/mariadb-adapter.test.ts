@@ -50,6 +50,7 @@ describe('MariaDB Adapter Functional Tests', () => {
 		adapterClass = adapterModule.MariaDBAdapter;
 
 		try {
+			// @ts-expect-error - private.test.ts is generated at runtime in CI, not present at type-check time
 			const configModule = await import('../../../config/private.test');
 			privateEnv = configModule.privateEnv;
 		} catch {

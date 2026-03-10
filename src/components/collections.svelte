@@ -22,270 +22,270 @@ Provides an organized interface for navigating hierarchical content structures.
 -->
 
 <script lang="ts">
-// Components
-import TreeView from '@src/components/system/tree-view.svelte';
-import type { ContentNode, Schema } from '@src/content/types';
-import { type StatusType, StatusTypes } from '@src/content/types';
-import { sortContentNodes } from '@src/content/utils';
-// Paraglide Messages
-import { collection_no_collections_found, collections_search } from '@src/paraglide/messages';
-import { collection, contentStructure, setMode } from '@src/stores/collection-store.svelte.ts';
-import { app } from '@src/stores/store.svelte';
-import { ui } from '@src/stores/ui-store.svelte.ts';
-import { widgets } from '@src/stores/widget-store.svelte.ts';
-import { debounce } from '@utils/utils';
-import { validateSchemaWidgets } from '@widgets/widget-validation';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { goto, invalidateAll } from '$app/navigation';
-import { page } from '$app/state';
+	// Components
+	import TreeView from '@src/components/system/tree-view.svelte';
+	import type { ContentNode, Schema } from '@src/content/types';
+	import { type StatusType, StatusTypes } from '@src/content/types';
+	import { sortContentNodes } from '@src/content/utils';
+	// Paraglide Messages
+	import { collection_no_collections_found, collections_search } from '@src/paraglide/messages';
+	import { collection, contentStructure, setMode } from '@src/stores/collection-store.svelte.ts';
+	import { app } from '@src/stores/store.svelte';
+	import { ui } from '@src/stores/ui-store.svelte.ts';
+	import { widgets } from '@src/stores/widget-store.svelte.ts';
+	import { debounce } from '@utils/utils';
+	import { validateSchemaWidgets } from '@widgets/widget-validation';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 
-interface ExtendedContentNode extends ContentNode {
-	children?: ExtendedContentNode[];
-	fileCount?: number;
-	lastModified?: Date;
-}
+	interface ExtendedContentNode extends ContentNode {
+		children?: ExtendedContentNode[];
+		fileCount?: number;
+		lastModified?: Date;
+	}
 
-interface CollectionTreeNode {
-	badge?: {
-		count?: number;
-		status?: 'archive' | 'draft' | 'publish' | 'schedule' | 'clone' | 'test' | 'delete';
-		color?: string;
-		visible?: boolean;
+	interface CollectionTreeNode {
+		badge?: {
+			count?: number;
+			status?: 'archive' | 'draft' | 'publish' | 'schedule' | 'clone' | 'test' | 'delete';
+			color?: string;
+			visible?: boolean;
+			icon?: string;
+			title?: string;
+		};
+		children?: CollectionTreeNode[];
+		depth: number;
 		icon?: string;
-		title?: string;
-	};
-	children?: CollectionTreeNode[];
-	depth: number;
-	icon?: string;
-	id: string;
-	isExpanded: boolean;
-	name: string;
-	onClick: () => void;
-	order: number;
-	path?: string;
-}
-
-// Mutable state
-let search = $state('');
-let debouncedSearch = $state('');
-let isSearching = $state(false);
-let expandedNodes = new SvelteSet<string>();
-
-let updateDebounced = debounce.create((value: unknown) => {
-	debouncedSearch = (value as string).toLowerCase().trim();
-	isSearching = false;
-}, 300);
-
-$effect(() => {
-	if (search) {
-		isSearching = true;
+		id: string;
+		isExpanded: boolean;
+		name: string;
+		onClick: () => void;
+		order: number;
+		path?: string;
 	}
-	updateDebounced(search);
-});
 
-// Derived UI & data
-let isFullSidebar = $derived(ui.state.leftSidebar === 'full');
-let currentLanguage = $derived(app.contentLanguage);
-let selectedId = $derived(collection.value?._id ?? null);
-let activeWidgetList = $derived(widgets.activeWidgets);
-let structure = $derived(contentStructure.value ?? []);
+	// Mutable state
+	let search = $state('');
+	let debouncedSearch = $state('');
+	let isSearching = $state(false);
+	let expandedNodes = new SvelteSet<string>();
 
-let treeNodes = $derived.by(() => {
-	const localCountCache = new SvelteMap<string, number>();
+	let updateDebounced = debounce.create((value: unknown) => {
+		debouncedSearch = (value as string).toLowerCase().trim();
+		isSearching = false;
+	}, 300);
 
-	function countCollections(node: ExtendedContentNode): number {
-		const key = node._id;
-		if (localCountCache.has(key)) {
-			return localCountCache.get(key)!;
+	$effect(() => {
+		if (search) {
+			isSearching = true;
 		}
+		updateDebounced(search);
+	});
 
-		if (!node.children || node.nodeType !== 'category') {
-			localCountCache.set(key, 0);
-			return 0;
-		}
+	// Derived UI & data
+	let isFullSidebar = $derived(ui.state.leftSidebar === 'full');
+	let currentLanguage = $derived(app.contentLanguage);
+	let selectedId = $derived(collection.value?._id ?? null);
+	let activeWidgetList = $derived(widgets.activeWidgets);
+	let structure = $derived(contentStructure.value ?? []);
 
-		let total = 0;
-		for (const child of node.children) {
-			if (child.nodeType === 'collection') {
-				total++;
-			} else if (child.nodeType === 'category') {
-				total += countCollections(child);
+	let treeNodes = $derived.by(() => {
+		const localCountCache = new SvelteMap<string, number>();
+
+		function countCollections(node: ExtendedContentNode): number {
+			const key = node._id;
+			if (localCountCache.has(key)) {
+				return localCountCache.get(key)!;
 			}
-		}
-		localCountCache.set(key, total);
-		return total;
-	}
 
-	function getBadgeColor(status?: StatusType): string {
-		const map: Record<StatusType, string> = {
-			[StatusTypes.publish]: 'bg-primary-500',
-			[StatusTypes.draft]: 'bg-warning-500',
-			[StatusTypes.archive]: 'bg-surface-500',
-			[StatusTypes.schedule]: 'bg-primary-500',
-			[StatusTypes.clone]: 'bg-secondary-500',
-			[StatusTypes.delete]: 'bg-error-500',
-			[StatusTypes.unpublish]: 'bg-warning-400'
-		};
-		return status ? (map[status] ?? 'bg-primary-500') : 'bg-primary-500';
-	}
+			if (!node.children || node.nodeType !== 'category') {
+				localCountCache.set(key, 0);
+				return 0;
+			}
 
-	function mapToTreeNode(node: ExtendedContentNode, depth = 0): CollectionTreeNode {
-		const translation = node.translations?.find((t) => t.languageTag === currentLanguage);
-		const label = translation?.translationName || node.name;
-		const isCategory = node.nodeType === 'category';
-		const isExpanded = expandedNodes.has(node._id) || selectedId === node._id;
-
-		// Inactive widget warning for collections
-		let hasInactiveWidgets = false;
-		if (!isCategory && node.collectionDef?.fields) {
-			const validation = validateSchemaWidgets(node.collectionDef as Schema, activeWidgetList);
-			hasInactiveWidgets = !validation.valid;
+			let total = 0;
+			for (const child of node.children) {
+				if (child.nodeType === 'collection') {
+					total++;
+				} else if (child.nodeType === 'category') {
+					total += countCollections(child);
+				}
+			}
+			localCountCache.set(key, total);
+			return total;
 		}
 
-		// Children
-		let children: CollectionTreeNode[] | undefined;
-		if (isCategory && node.children) {
-			const sorted = [...node.children].sort(sortContentNodes);
-			children = sorted.map((child) => mapToTreeNode(child, depth + 1));
-		}
-
-		// Badge
-		let badge: CollectionTreeNode['badge'];
-		if (isCategory) {
-			badge = {
-				count: countCollections(node),
-				visible: true,
-				color: getBadgeColor(node.collectionDef?.status)
+		function getBadgeColor(status?: StatusType): string {
+			const map: Record<StatusType, string> = {
+				[StatusTypes.publish]: 'bg-primary-500',
+				[StatusTypes.draft]: 'bg-warning-500',
+				[StatusTypes.archive]: 'bg-surface-500',
+				[StatusTypes.schedule]: 'bg-primary-500',
+				[StatusTypes.clone]: 'bg-secondary-500',
+				[StatusTypes.delete]: 'bg-error-500',
+				[StatusTypes.unpublish]: 'bg-warning-400'
 			};
-		} else if (hasInactiveWidgets) {
-			badge = {
-				visible: true,
-				color: 'bg-warning-500',
-				icon: 'mdi:alert-circle',
-				title: 'This collection uses inactive widgets'
+			return status ? (map[status] ?? 'bg-primary-500') : 'bg-primary-500';
+		}
+
+		function mapToTreeNode(node: ExtendedContentNode, depth = 0): CollectionTreeNode {
+			const translation = node.translations?.find((t) => t.languageTag === currentLanguage);
+			const label = translation?.translationName || node.name;
+			const isCategory = node.nodeType === 'category';
+			const isExpanded = expandedNodes.has(node._id) || selectedId === node._id;
+
+			// Inactive widget warning for collections
+			let hasInactiveWidgets = false;
+			if (!isCategory && node.collectionDef?.fields) {
+				const validation = validateSchemaWidgets(node.collectionDef as Schema, activeWidgetList);
+				hasInactiveWidgets = !validation.valid;
+			}
+
+			// Children
+			let children: CollectionTreeNode[] | undefined;
+			if (isCategory && node.children) {
+				const sorted = [...node.children].sort(sortContentNodes);
+				children = sorted.map((child) => mapToTreeNode(child, depth + 1));
+			}
+
+			// Badge
+			let badge: CollectionTreeNode['badge'];
+			if (isCategory) {
+				badge = {
+					count: countCollections(node),
+					visible: true,
+					color: getBadgeColor(node.collectionDef?.status)
+				};
+			} else if (hasInactiveWidgets) {
+				badge = {
+					visible: true,
+					color: 'bg-warning-500',
+					icon: 'mdi:alert-circle',
+					title: 'This collection uses inactive widgets'
+				};
+			}
+
+			return {
+				id: node._id,
+				name: label,
+				isExpanded,
+				onClick: () => selectNode(node),
+				children,
+				icon: node.icon || (isCategory ? 'bi:folder' : 'bi:collection'),
+				badge,
+				path: isCategory ? undefined : `/${currentLanguage}${node.path || `/${node._id}`}`,
+				depth,
+				order: node.order ?? 0
 			};
 		}
 
-		return {
-			id: node._id,
-			name: label,
-			isExpanded,
-			onClick: () => selectNode(node),
-			children,
-			icon: node.icon || (isCategory ? 'bi:folder' : 'bi:collection'),
-			badge,
-			path: isCategory ? undefined : `/${currentLanguage}${node.path || `/${node._id}`}`,
-			depth,
-			order: node.order ?? 0
-		};
-	}
+		function buildTree(nodes: ExtendedContentNode[]): ExtendedContentNode[] {
+			if (!nodes || nodes.length === 0) {
+				return [];
+			}
 
-	function buildTree(nodes: ExtendedContentNode[]): ExtendedContentNode[] {
-		if (!nodes || nodes.length === 0) {
-			return [];
-		}
+			const nodeMap = new SvelteMap<string, ExtendedContentNode>();
+			const roots: ExtendedContentNode[] = [];
 
-		const nodeMap = new SvelteMap<string, ExtendedContentNode>();
-		const roots: ExtendedContentNode[] = [];
-
-		// First pass: flattened map of all unique nodes
-		function gatherNodes(itemList: ExtendedContentNode[]) {
-			for (const item of itemList) {
-				const id = String(item._id);
-				if (!nodeMap.has(id)) {
-					nodeMap.set(id, { ...item, children: [] });
-					if (item.children && item.children.length > 0) {
-						gatherNodes(item.children as ExtendedContentNode[]);
+			// First pass: flattened map of all unique nodes
+			function gatherNodes(itemList: ExtendedContentNode[]) {
+				for (const item of itemList) {
+					const id = String(item._id);
+					if (!nodeMap.has(id)) {
+						nodeMap.set(id, { ...item, children: [] });
+						if (item.children && item.children.length > 0) {
+							gatherNodes(item.children as ExtendedContentNode[]);
+						}
 					}
 				}
 			}
-		}
 
-		gatherNodes(nodes);
+			gatherNodes(nodes);
 
-		// Second pass: link using parentId
-		nodeMap.forEach((node: ExtendedContentNode) => {
-			if (node.parentId) {
-				const parentId = String(node.parentId);
-				const parent = nodeMap.get(parentId);
-				if (parent) {
-					parent.children = parent.children || [];
-					if (!parent.children.some((c: ExtendedContentNode) => String(c._id) === String(node._id))) {
-						parent.children.push(node);
+			// Second pass: link using parentId
+			nodeMap.forEach((node: ExtendedContentNode) => {
+				if (node.parentId) {
+					const parentId = String(node.parentId);
+					const parent = nodeMap.get(parentId);
+					if (parent) {
+						parent.children = parent.children || [];
+						if (!parent.children.some((c: ExtendedContentNode) => String(c._id) === String(node._id))) {
+							parent.children.push(node);
+						}
+					} else {
+						// Parent not in map, promote to root
+						roots.push(node);
 					}
 				} else {
-					// Parent not in map, promote to root
+					// No parentId, it's a root
 					roots.push(node);
 				}
-			} else {
-				// No parentId, it's a root
-				roots.push(node);
-			}
+			});
+
+			return roots;
+		}
+
+		console.log('[Collections] Structure changed, building tree...', {
+			inputSize: structure.length,
+			roots: structure.filter((n) => !n.parentId).map((n) => n.name)
 		});
 
-		return roots;
-	}
+		const nestedStructure = buildTree(structure as ExtendedContentNode[]);
 
-	console.log('[Collections] Structure changed, building tree...', {
-		inputSize: structure.length,
-		roots: structure.filter((n) => !n.parentId).map((n) => n.name)
+		console.log('[Collections] Tree results:', {
+			rootCount: nestedStructure.length,
+			roots: nestedStructure.map((n) => n.name)
+		});
+
+		const sorted = [...nestedStructure].sort(sortContentNodes);
+		return sorted.map((n) => mapToTreeNode(n));
 	});
 
-	const nestedStructure = buildTree(structure as ExtendedContentNode[]);
+	async function navigate(path: string, force = false): Promise<void> {
+		if (page.url.pathname === path && !force) {
+			return;
+		}
+		if (force || page.url.pathname === path) {
+			await invalidateAll();
+		}
 
-	console.log('[Collections] Tree results:', {
-		rootCount: nestedStructure.length,
-		roots: nestedStructure.map((n) => n.name)
-	});
-
-	const sorted = [...nestedStructure].sort(sortContentNodes);
-	return sorted.map((n) => mapToTreeNode(n));
-});
-
-async function navigate(path: string, force = false): Promise<void> {
-	if (page.url.pathname === path && !force) {
-		return;
-	}
-	if (force || page.url.pathname === path) {
-		await invalidateAll();
+		await goto(path, { invalidateAll: true });
 	}
 
-	await goto(path, { invalidateAll: true });
-}
+	function selectNode(node: ExtendedContentNode): void {
+		if (node.nodeType === 'category') {
+			toggleExpand(node._id);
+			return;
+		}
 
-function selectNode(node: ExtendedContentNode): void {
-	if (node.nodeType === 'category') {
-		toggleExpand(node._id);
-		return;
+		// Collection selected
+		const same = selectedId === node._id;
+		setMode('view');
+		app.shouldShowNextButton = true;
+
+		document.dispatchEvent(
+			new CustomEvent('clearEntryListCache', {
+				detail: { resetState: true, reason: 'collection-switch' }
+			})
+		);
+
+		const target = `/${currentLanguage}${node.path || `/${node._id}`}`;
+		navigate(target, same);
 	}
 
-	// Collection selected
-	const same = selectedId === node._id;
-	setMode('view');
-	app.shouldShowNextButton = true;
-
-	document.dispatchEvent(
-		new CustomEvent('clearEntryListCache', {
-			detail: { resetState: true, reason: 'collection-switch' }
-		})
-	);
-
-	const target = `/${currentLanguage}${node.path || `/${node._id}`}`;
-	navigate(target, same);
-}
-
-function toggleExpand(id: string): void {
-	if (expandedNodes.has(id)) {
-		expandedNodes.delete(id);
-	} else {
-		expandedNodes.add(id);
+	function toggleExpand(id: string): void {
+		if (expandedNodes.has(id)) {
+			expandedNodes.delete(id);
+		} else {
+			expandedNodes.add(id);
+		}
 	}
-}
 
-function clearSearch(): void {
-	search = '';
-	debouncedSearch = '';
-}
+	function clearSearch(): void {
+		search = '';
+		debouncedSearch = '';
+	}
 </script>
 
 <div class="mt-2 space-y-2" role="navigation" aria-label="Collections">

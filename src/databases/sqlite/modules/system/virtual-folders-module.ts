@@ -50,7 +50,10 @@ export class VirtualFoldersModule {
 		return this.core.wrap(async () => {
 			const folders = parentId
 				? await this.db.select().from(schema.systemVirtualFolders).where(eq(schema.systemVirtualFolders.parentId, parentId))
-				: await this.db.select().from(schema.systemVirtualFolders).where(sql`${schema.systemVirtualFolders.parentId} IS NULL`);
+				: await this.db
+						.select()
+						.from(schema.systemVirtualFolders)
+						.where(sql`${schema.systemVirtualFolders.parentId} IS NULL`);
 
 			return utils.convertArrayDatesToISO(folders) as unknown as SystemVirtualFolder[];
 		}, 'GET_VIRTUAL_FOLDERS_BY_PARENT_FAILED');

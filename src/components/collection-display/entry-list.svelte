@@ -40,7 +40,7 @@ bulk actions, and predictive preloading.
 -->
 
 <script module lang="ts">
-export type SortOrder = 0 | 1 | -1; // Strict type for sort order
+	export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 </script>
 
 <script lang="ts">

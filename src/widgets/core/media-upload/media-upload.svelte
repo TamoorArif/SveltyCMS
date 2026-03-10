@@ -22,242 +22,242 @@ functionality for image editing and basic file information display.
 - **Styling**: Adheres to the project's style guide using Tailwind CSS utility classes and semantic colors.
 -->
 <script lang="ts">
-type Any = any;
+	type Any = any;
 
-import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
-// Components
-import FileInput from '@src/components/system/inputs/file-input.svelte';
-import type { ISODateString } from '@src/content/types';
-// Paraglide Messages
-import {
-	widget_ImageUpload_LastModified,
-	widget_ImageUpload_Name,
-	widget_ImageUpload_Size,
-	widget_ImageUpload_Type,
-	widget_ImageUpload_Uploaded
-} from '@src/paraglide/messages';
-import { collectionValue } from '@src/stores/collection-store.svelte.ts';
-// Stores
-import { validationStore } from '@src/stores/store.svelte.ts';
-import { isoDateStringToDate } from '@utils/date-utils';
-import { logger } from '@utils/logger';
-import { updateMediaMetadata } from '@utils/media/api';
-import type { MediaImage, WatermarkOptions } from '@utils/media/media-models';
-import { convertTimestampToDateString, getFieldName } from '@utils/utils';
+	import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
+	// Components
+	import FileInput from '@src/components/system/inputs/file-input.svelte';
+	import type { ISODateString } from '@src/content/types';
+	// Paraglide Messages
+	import {
+		widget_ImageUpload_LastModified,
+		widget_ImageUpload_Name,
+		widget_ImageUpload_Size,
+		widget_ImageUpload_Type,
+		widget_ImageUpload_Uploaded
+	} from '@src/paraglide/messages';
+	import { collectionValue } from '@src/stores/collection-store.svelte.ts';
+	// Stores
+	import { validationStore } from '@src/stores/store.svelte.ts';
+	import { isoDateStringToDate } from '@utils/date-utils';
+	import { logger } from '@utils/logger';
+	import { updateMediaMetadata } from '@utils/media/api';
+	import type { MediaImage, WatermarkOptions } from '@utils/media/media-models';
+	import { convertTimestampToDateString, getFieldName } from '@utils/utils';
 
-// Define reactive state
-let isFlipped = $state(false);
+	// Define reactive state
+	let isFlipped = $state(false);
 
-let validationError: string | null = $state(null);
-let debounceTimeout: number | undefined;
-let showEditor = $state(false);
+	let validationError: string | null = $state(null);
+	let debounceTimeout: number | undefined;
+	let showEditor = $state(false);
 
-// Define props
-let { field, value = $bindable<File | MediaImage | undefined>(), collectionName, tenantId } = $props(); // 'value' is the bindable prop
+	// Define props
+	let { field, value = $bindable<File | MediaImage | undefined>(), collectionName, tenantId } = $props(); // 'value' is the bindable prop
 
-// Extract watermark preset from field configuration
-const watermarkPreset = $derived((field as Record<string, unknown>).watermark as WatermarkOptions | undefined);
+	// Extract watermark preset from field configuration
+	const watermarkPreset = $derived((field as Record<string, unknown>).watermark as WatermarkOptions | undefined);
 
-// Effect to initialize 'value' if it's undefined and a default is available
-// This runs after the component has initialized and 'value' would have received its initial binding
-$effect(() => {
-	if (value === undefined && (collectionValue.value as Record<string, unknown>)[getFieldName(field)] !== undefined) {
-		value = (collectionValue.value as Record<string, unknown>)[getFieldName(field)] as File | MediaImage;
-	}
-});
-
-// Define validation schema
-import { check, instance, number, object, parse, pipe, record, string, union, type ValiError } from 'valibot';
-
-const validImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'image/svg+xml'];
-
-const fileSchema = pipe(
-	instance(File),
-	check((input: File) => validImageTypes.includes(input.type), 'Invalid file format')
-);
-
-const thumbnailSchema = object({
-	width: number(),
-	height: number(),
-	url: string()
-});
-
-const mediaImageSchema = object({
-	_id: string(),
-	name: string(),
-	type: string(),
-	size: number(),
-	path: string(),
-	thumbnails: record(string(), thumbnailSchema),
-	createdAt: number(),
-	updatedAt: number()
-});
-
-const widgetSchema = union([fileSchema, mediaImageSchema]);
-
-// Validation function
-function validateSchema(data: unknown): string | null {
-	try {
-		parse(widgetSchema, data);
-		validationStore.clearError(getFieldName(field));
-		return null;
-	} catch (error) {
-		if ((error as ValiError<Any>).issues) {
-			const valiError = error as ValiError<Any>;
-			const errorMessage = valiError.issues[0]?.message || 'Invalid input';
-			validationStore.setError(getFieldName(field), errorMessage);
-			return errorMessage;
+	// Effect to initialize 'value' if it's undefined and a default is available
+	// This runs after the component has initialized and 'value' would have received its initial binding
+	$effect(() => {
+		if (value === undefined && (collectionValue.value as Record<string, unknown>)[getFieldName(field)] !== undefined) {
+			value = (collectionValue.value as Record<string, unknown>)[getFieldName(field)] as File | MediaImage;
 		}
-		return 'Invalid input';
-	}
-}
+	});
 
-// Validate input with debounce
-function validateInput() {
-	if (debounceTimeout) {
-		clearTimeout(debounceTimeout);
-	}
-	debounceTimeout = window.setTimeout(() => {
-		validationError = validateSchema(value);
-	}, 300);
-}
+	// Define validation schema
+	import { check, instance, number, object, parse, pipe, record, string, union, type ValiError } from 'valibot';
 
-async function handleEditorSave(detail: {
-	dataURL: string;
-	file: File;
-	operations?: unknown;
-	focalPoint?: unknown;
-	mediaId?: string;
-	saveBehavior?: 'new' | 'overwrite';
-}) {
-	const { file, operations, focalPoint, mediaId, saveBehavior } = detail;
+	const validImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'image/svg+xml'];
 
-	const formData = new FormData();
-	formData.append('file', file);
-	if (mediaId) {
-		formData.append('mediaId', mediaId);
-	}
-	if (operations) {
-		formData.append('operations', JSON.stringify(operations));
-	}
-	if (focalPoint) {
-		formData.append('focalPoint', JSON.stringify(focalPoint));
-	}
-	if (saveBehavior) {
-		formData.append('saveBehavior', saveBehavior);
-	}
+	const fileSchema = pipe(
+		instance(File),
+		check((input: File) => validImageTypes.includes(input.type), 'Invalid file format')
+	);
 
-	try {
-		const response = await fetch('/api/media/edit', {
-			method: 'POST',
-			body: formData
-		});
+	const thumbnailSchema = object({
+		width: number(),
+		height: number(),
+		url: string()
+	});
 
-		if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(errorData.error || 'Failed to save edited image');
-		}
+	const mediaImageSchema = object({
+		_id: string(),
+		name: string(),
+		type: string(),
+		size: number(),
+		path: string(),
+		thumbnails: record(string(), thumbnailSchema),
+		createdAt: number(),
+		updatedAt: number()
+	});
 
-		const result = await response.json();
-		if (!result.success) {
-			throw new Error(result.error || 'Failed to process edited image');
-		}
+	const widgetSchema = union([fileSchema, mediaImageSchema]);
 
-		// Update the widget data with the new persisted image data
-		value = result.data; // Assign directly to the bindable prop
-		showEditor = false;
-	} catch (error) {
-		logger.error('Error saving edited image:', error);
-	}
-}
-
-let focalPoint = $state({ x: 50, y: 50 });
-let isDraggingFocalPoint = $state(false);
-let containerRef: HTMLDivElement | undefined = $state(undefined); // Changed to $state
-
-// Global event handlers
-function handleGlobalMouseMove(event: MouseEvent) {
-	if (isDraggingFocalPoint && containerRef) {
-		handleFocalPointDrag(event, containerRef);
-	}
-}
-
-function handleGlobalMouseUp() {
-	if (isDraggingFocalPoint) {
-		saveFocalPoint();
-	}
-}
-
-$effect(() => {
-	if (value && !(value instanceof File) && value.metadata?.focalPoint) {
-		focalPoint = value.metadata.focalPoint;
-	} else {
-		focalPoint = { x: 50, y: 50 };
-	}
-});
-
-// Effect to attach/detach global listeners
-$effect(() => {
-	if (isDraggingFocalPoint) {
-		window.addEventListener('mousemove', handleGlobalMouseMove);
-		window.addEventListener('mouseup', handleGlobalMouseUp);
-	} else {
-		window.removeEventListener('mousemove', handleGlobalMouseMove);
-		window.removeEventListener('mouseup', handleGlobalMouseUp);
-	}
-
-	// Cleanup on component destroy
-	return () => {
-		window.removeEventListener('mousemove', handleGlobalMouseMove);
-		window.removeEventListener('mouseup', handleGlobalMouseUp);
-	};
-});
-
-function handleFocalPointDrag(event: MouseEvent, container: HTMLDivElement) {
-	if (!isDraggingFocalPoint) {
-		return;
-	}
-	const rect = container.getBoundingClientRect();
-	let x = ((event.clientX - rect.left) / rect.width) * 100;
-	let y = ((event.clientY - rect.top) / rect.height) * 100;
-
-	// Clamp values between 0 and 100
-	focalPoint.x = Math.max(0, Math.min(100, x));
-	focalPoint.y = Math.max(0, Math.min(100, y));
-}
-
-async function saveFocalPoint() {
-	isDraggingFocalPoint = false;
-	if (value && !(value instanceof File) && value._id) {
+	// Validation function
+	function validateSchema(data: unknown): string | null {
 		try {
-			await updateMediaMetadata(value._id, { focalPoint });
-			// Optionally show a success toast
-		} catch (e) {
-			logger.error('Failed to save focal point', e);
-			// Optionally show an error toast
+			parse(widgetSchema, data);
+			validationStore.clearError(getFieldName(field));
+			return null;
+		} catch (error) {
+			if ((error as ValiError<Any>).issues) {
+				const valiError = error as ValiError<Any>;
+				const errorMessage = valiError.issues[0]?.message || 'Invalid input';
+				validationStore.setError(getFieldName(field), errorMessage);
+				return errorMessage;
+			}
+			return 'Invalid input';
 		}
 	}
-}
 
-const dynamicFolder = $derived((field as any).folder || (collectionName ? `collections/${collectionName.toLowerCase()}` : tenantId || 'global'));
-
-import { getWidgetData } from './widget-data';
-
-// The `WidgetData` function needs to be explicitly defined or called when needed.
-export async function WidgetDataExport() {
-	return getWidgetData(value, { ...field, folder: dynamicFolder }, value);
-}
-
-// Helper function to get timestamp
-function getTimestamp(date: Date | number | ISODateString): number {
-	if (typeof date === 'number') {
-		return date;
+	// Validate input with debounce
+	function validateInput() {
+		if (debounceTimeout) {
+			clearTimeout(debounceTimeout);
+		}
+		debounceTimeout = window.setTimeout(() => {
+			validationError = validateSchema(value);
+		}, 300);
 	}
-	if (typeof date === 'string') {
-		return isoDateStringToDate(date as ISODateString).getTime();
+
+	async function handleEditorSave(detail: {
+		dataURL: string;
+		file: File;
+		operations?: unknown;
+		focalPoint?: unknown;
+		mediaId?: string;
+		saveBehavior?: 'new' | 'overwrite';
+	}) {
+		const { file, operations, focalPoint, mediaId, saveBehavior } = detail;
+
+		const formData = new FormData();
+		formData.append('file', file);
+		if (mediaId) {
+			formData.append('mediaId', mediaId);
+		}
+		if (operations) {
+			formData.append('operations', JSON.stringify(operations));
+		}
+		if (focalPoint) {
+			formData.append('focalPoint', JSON.stringify(focalPoint));
+		}
+		if (saveBehavior) {
+			formData.append('saveBehavior', saveBehavior);
+		}
+
+		try {
+			const response = await fetch('/api/media/edit', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Failed to save edited image');
+			}
+
+			const result = await response.json();
+			if (!result.success) {
+				throw new Error(result.error || 'Failed to process edited image');
+			}
+
+			// Update the widget data with the new persisted image data
+			value = result.data; // Assign directly to the bindable prop
+			showEditor = false;
+		} catch (error) {
+			logger.error('Error saving edited image:', error);
+		}
 	}
-	return date.getTime();
-}
+
+	let focalPoint = $state({ x: 50, y: 50 });
+	let isDraggingFocalPoint = $state(false);
+	let containerRef: HTMLDivElement | undefined = $state(undefined); // Changed to $state
+
+	// Global event handlers
+	function handleGlobalMouseMove(event: MouseEvent) {
+		if (isDraggingFocalPoint && containerRef) {
+			handleFocalPointDrag(event, containerRef);
+		}
+	}
+
+	function handleGlobalMouseUp() {
+		if (isDraggingFocalPoint) {
+			saveFocalPoint();
+		}
+	}
+
+	$effect(() => {
+		if (value && !(value instanceof File) && value.metadata?.focalPoint) {
+			focalPoint = value.metadata.focalPoint;
+		} else {
+			focalPoint = { x: 50, y: 50 };
+		}
+	});
+
+	// Effect to attach/detach global listeners
+	$effect(() => {
+		if (isDraggingFocalPoint) {
+			window.addEventListener('mousemove', handleGlobalMouseMove);
+			window.addEventListener('mouseup', handleGlobalMouseUp);
+		} else {
+			window.removeEventListener('mousemove', handleGlobalMouseMove);
+			window.removeEventListener('mouseup', handleGlobalMouseUp);
+		}
+
+		// Cleanup on component destroy
+		return () => {
+			window.removeEventListener('mousemove', handleGlobalMouseMove);
+			window.removeEventListener('mouseup', handleGlobalMouseUp);
+		};
+	});
+
+	function handleFocalPointDrag(event: MouseEvent, container: HTMLDivElement) {
+		if (!isDraggingFocalPoint) {
+			return;
+		}
+		const rect = container.getBoundingClientRect();
+		let x = ((event.clientX - rect.left) / rect.width) * 100;
+		let y = ((event.clientY - rect.top) / rect.height) * 100;
+
+		// Clamp values between 0 and 100
+		focalPoint.x = Math.max(0, Math.min(100, x));
+		focalPoint.y = Math.max(0, Math.min(100, y));
+	}
+
+	async function saveFocalPoint() {
+		isDraggingFocalPoint = false;
+		if (value && !(value instanceof File) && value._id) {
+			try {
+				await updateMediaMetadata(value._id, { focalPoint });
+				// Optionally show a success toast
+			} catch (e) {
+				logger.error('Failed to save focal point', e);
+				// Optionally show an error toast
+			}
+		}
+	}
+
+	const dynamicFolder = $derived((field as any).folder || (collectionName ? `collections/${collectionName.toLowerCase()}` : tenantId || 'global'));
+
+	import { getWidgetData } from './widget-data';
+
+	// The `WidgetData` function needs to be explicitly defined or called when needed.
+	export async function WidgetDataExport() {
+		return getWidgetData(value, { ...field, folder: dynamicFolder }, value);
+	}
+
+	// Helper function to get timestamp
+	function getTimestamp(date: Date | number | ISODateString): number {
+		if (typeof date === 'number') {
+			return date;
+		}
+		if (typeof date === 'string') {
+			return isoDateStringToDate(date as ISODateString).getTime();
+		}
+		return date.getTime();
+	}
 </script>
 
 <div class="relative mb-4 min-h-1">

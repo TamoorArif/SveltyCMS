@@ -5,72 +5,72 @@
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
-import type { ActionReturn } from 'svelte/action';
+	import { onMount } from 'svelte';
+	import type { ActionReturn } from 'svelte/action';
 
-interface Props {
-	close?: () => void;
-	onRequestFeedback?: () => void;
-}
+	interface Props {
+		close?: () => void;
+		onRequestFeedback?: () => void;
+	}
 
-const { close, onRequestFeedback }: Props = $props();
-let dialogRef = $state<HTMLDivElement | null>(null);
-let previousFocus: HTMLElement | null = null;
+	const { close, onRequestFeedback }: Props = $props();
+	let dialogRef = $state<HTMLDivElement | null>(null);
+	let previousFocus: HTMLElement | null = null;
 
-// Keyboard shortcuts with application-specific ones
-const shortcuts = [
-	// Application-specific (ATAG requirement)
-	{ key: '?', desc: 'Open this accessibility help dialog' },
-	{ key: 'Ctrl/Cmd + S', desc: 'Save current content' },
-	{ key: 'Alt + 1-5', desc: 'Jump to setup wizard steps 1-5' },
-	{ key: 'Alt + T', desc: 'Toggle theme (light/dark)' },
+	// Keyboard shortcuts with application-specific ones
+	const shortcuts = [
+		// Application-specific (ATAG requirement)
+		{ key: '?', desc: 'Open this accessibility help dialog' },
+		{ key: 'Ctrl/Cmd + S', desc: 'Save current content' },
+		{ key: 'Alt + 1-5', desc: 'Jump to setup wizard steps 1-5' },
+		{ key: 'Alt + T', desc: 'Toggle theme (light/dark)' },
 
-	// Navigation
-	{ key: 'Tab', desc: 'Navigate forward through interactive elements' },
-	{ key: 'Shift + Tab', desc: 'Navigate backward' },
-	{ key: 'Enter / Space', desc: 'Activate buttons and controls' },
-	{ key: 'Escape', desc: 'Close dialogs and clear selections' },
-	{ key: 'Arrow Keys', desc: 'Navigate within components' }
-];
+		// Navigation
+		{ key: 'Tab', desc: 'Navigate forward through interactive elements' },
+		{ key: 'Shift + Tab', desc: 'Navigate backward' },
+		{ key: 'Enter / Space', desc: 'Activate buttons and controls' },
+		{ key: 'Escape', desc: 'Close dialogs and clear selections' },
+		{ key: 'Arrow Keys', desc: 'Navigate within components' }
+	];
 
-// Focus Trap Action
-function focusTrap(node: HTMLElement): ActionReturn {
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Tab') {
-			const focusableElements = node.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-			const firstElement = focusableElements[0] as HTMLElement;
-			const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+	// Focus Trap Action
+	function focusTrap(node: HTMLElement): ActionReturn {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Tab') {
+				const focusableElements = node.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+				const firstElement = focusableElements[0] as HTMLElement;
+				const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
-			if (e.shiftKey && document.activeElement === firstElement) {
+				if (e.shiftKey && document.activeElement === firstElement) {
+					e.preventDefault();
+					lastElement.focus();
+				} else if (!e.shiftKey && document.activeElement === lastElement) {
+					e.preventDefault();
+					firstElement.focus();
+				}
+			} else if (e.key === 'Escape') {
 				e.preventDefault();
-				lastElement.focus();
-			} else if (!e.shiftKey && document.activeElement === lastElement) {
-				e.preventDefault();
-				firstElement.focus();
+				close?.();
 			}
-		} else if (e.key === 'Escape') {
-			e.preventDefault();
-			close?.();
-		}
-	};
+		};
 
-	node.addEventListener('keydown', handleKeyDown);
-	return {
-		destroy() {
-			node.removeEventListener('keydown', handleKeyDown);
-		}
-	};
-}
+		node.addEventListener('keydown', handleKeyDown);
+		return {
+			destroy() {
+				node.removeEventListener('keydown', handleKeyDown);
+			}
+		};
+	}
 
-// Restore focus on unmount
-onMount(() => {
-	previousFocus = document.activeElement as HTMLElement;
-	dialogRef?.focus();
+	// Restore focus on unmount
+	onMount(() => {
+		previousFocus = document.activeElement as HTMLElement;
+		dialogRef?.focus();
 
-	return () => {
-		previousFocus?.focus();
-	};
-});
+		return () => {
+			previousFocus?.focus();
+		};
+	});
 </script>
 
 <div

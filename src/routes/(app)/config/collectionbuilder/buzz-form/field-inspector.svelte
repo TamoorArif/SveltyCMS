@@ -16,44 +16,44 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
-import InputSwitch from '@src/components/system/builder/input-switch.svelte';
-import { collections } from '@src/stores/collection-store.svelte';
-import { widgets } from '@src/stores/widget-store.svelte.ts';
-import { asAny } from '@utils/utils';
-import type { Component } from 'svelte';
-import Permission from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte';
-import Specific from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/specific.svelte';
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
+	import InputSwitch from '@src/components/system/builder/input-switch.svelte';
+	import { collections } from '@src/stores/collection-store.svelte';
+	import { widgets } from '@src/stores/widget-store.svelte.ts';
+	import { asAny } from '@utils/utils';
+	import type { Component } from 'svelte';
+	import Permission from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte';
+	import Specific from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/specific.svelte';
 
-interface Props {
-	onDelete: () => void;
-}
-const { onDelete }: Props = $props();
-
-let activeTab = $state('general');
-
-const target = $derived(collections.targetWidget) as any;
-const widgetKey = $derived(target?.widget?.key || target?.widget?.Name?.toLowerCase() || '');
-const availableWidgets = $derived(widgets.widgetFunctions || {});
-const guiSchema = $derived((asAny<any>(availableWidgets)[widgetKey]?.GuiSchema || {}) as Record<string, { widget: Component<any> }>);
-
-const allProperties = $derived(Object.keys(guiSchema || {}));
-const standardProperties = ['label', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width'];
-const displayProperties = $derived([...standardProperties]);
-const specificProperties = $derived(allProperties.filter((prop) => !standardProperties.includes(prop) && prop !== 'permissions'));
-
-function defaultValue(property: string) {
-	if (property === 'required' || property === 'translated') {
-		return false;
+	interface Props {
+		onDelete: () => void;
 	}
-	return (target.widget as any)?.Name;
-}
+	const { onDelete }: Props = $props();
 
-function handleUpdate(detail: { value: any }, property: string) {
-	const current = collections.targetWidget;
-	current[property] = detail.value;
-	collections.setTargetWidget(current);
-}
+	let activeTab = $state('general');
+
+	const target = $derived(collections.targetWidget) as any;
+	const widgetKey = $derived(target?.widget?.key || target?.widget?.Name?.toLowerCase() || '');
+	const availableWidgets = $derived(widgets.widgetFunctions || {});
+	const guiSchema = $derived((asAny<any>(availableWidgets)[widgetKey]?.GuiSchema || {}) as Record<string, { widget: Component<any> }>);
+
+	const allProperties = $derived(Object.keys(guiSchema || {}));
+	const standardProperties = ['label', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width'];
+	const displayProperties = $derived([...standardProperties]);
+	const specificProperties = $derived(allProperties.filter((prop) => !standardProperties.includes(prop) && prop !== 'permissions'));
+
+	function defaultValue(property: string) {
+		if (property === 'required' || property === 'translated') {
+			return false;
+		}
+		return (target.widget as any)?.Name;
+	}
+
+	function handleUpdate(detail: { value: any }, property: string) {
+		const current = collections.targetWidget;
+		current[property] = detail.value;
+		collections.setTargetWidget(current);
+	}
 </script>
 
 <div class="flex h-full flex-col border-l border-surface-200-800 bg-surface-50-950 w-80">

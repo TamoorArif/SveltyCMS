@@ -8,69 +8,69 @@ with the AI collaboration assistant.
 -->
 
 <script lang="ts">
-import { collaboration } from '@src/stores/collaboration-store.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { tick } from 'svelte';
-import { slide } from 'svelte/transition';
-import { page } from '$app/state';
+	import { collaboration } from '@src/stores/collaboration-store.svelte';
+	import { screen } from '@src/stores/screen-size-store.svelte';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+	import { tick } from 'svelte';
+	import { slide } from 'svelte/transition';
+	import { page } from '$app/state';
 
-let { ondrag } = $props();
+	let { ondrag } = $props();
 
-const totalUsers = $derived(page.data.totalUsers ?? 1);
-const chatLabel = $derived(totalUsers === 1 ? 'AI Assistant' : 'Chat');
-const aiEmptyText = $derived(
-	totalUsers === 1
-		? 'Ask me anything about your project'
-		: collaboration.currentRoom
-			? 'Start collaborating with others'
-			: 'Ask me anything about your data'
-);
+	const totalUsers = $derived(page.data.totalUsers ?? 1);
+	const chatLabel = $derived(totalUsers === 1 ? 'AI Assistant' : 'Chat');
+	const aiEmptyText = $derived(
+		totalUsers === 1
+			? 'Ask me anything about your project'
+			: collaboration.currentRoom
+				? 'Start collaborating with others'
+				: 'Ask me anything about your data'
+	);
 
-let newMessage = $state('');
-let scrollContainer: HTMLDivElement | undefined = $state(undefined);
+	let newMessage = $state('');
+	let scrollContainer: HTMLDivElement | undefined = $state(undefined);
 
-// Auto-scroll to bottom of chat
-$effect(() => {
-	if (collaboration.activeTab === 'chat' && collaboration.aiHistory.length) {
-		tick().then(() => {
-			if (scrollContainer) {
-				scrollContainer.scrollTop = scrollContainer.scrollHeight;
-			}
-		});
+	// Auto-scroll to bottom of chat
+	$effect(() => {
+		if (collaboration.activeTab === 'chat' && collaboration.aiHistory.length) {
+			tick().then(() => {
+				if (scrollContainer) {
+					scrollContainer.scrollTop = scrollContainer.scrollHeight;
+				}
+			});
+		}
+	});
+
+	function handleSendMessage(event: Event) {
+		event.preventDefault();
+		if (!newMessage.trim()) {
+			return;
+		}
+		collaboration.sendMessage(newMessage);
+		newMessage = '';
 	}
-});
 
-function handleSendMessage(event: Event) {
-	event.preventDefault();
-	if (!newMessage.trim()) {
-		return;
+	function formatTimestamp(ts: string) {
+		const date = new Date(ts);
+		return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
-	collaboration.sendMessage(newMessage);
-	newMessage = '';
-}
 
-function formatTimestamp(ts: string) {
-	const date = new Date(ts);
-	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function getEventIcon(event: string) {
-	switch (event) {
-		case 'entry:create':
-			return 'mdi:plus-circle';
-		case 'entry:update':
-			return 'mdi:pencil';
-		case 'entry:publish':
-			return 'mdi:publish';
-		case 'webhook:failure':
-			return 'mdi:alert-circle';
-		case 'ai:response':
-			return 'mdi:robot';
-		default:
-			return 'mdi:information';
+	function getEventIcon(event: string) {
+		switch (event) {
+			case 'entry:create':
+				return 'mdi:plus-circle';
+			case 'entry:update':
+				return 'mdi:pencil';
+			case 'entry:publish':
+				return 'mdi:publish';
+			case 'webhook:failure':
+				return 'mdi:alert-circle';
+			case 'ai:response':
+				return 'mdi:robot';
+			default:
+				return 'mdi:information';
+		}
 	}
-}
 </script>
 
 <div

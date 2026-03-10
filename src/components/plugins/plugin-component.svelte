@@ -4,43 +4,43 @@
 -->
 
 <script lang="ts">
-import { getPluginComponent } from '@src/plugins/client';
+	import { getPluginComponent } from '@src/plugins/client';
 
-interface Props {
-	componentName: string;
-	pluginId: string;
-	[key: string]: any; // Props to pass to the plugin component
-}
+	interface Props {
+		componentName: string;
+		pluginId: string;
+		[key: string]: any; // Props to pass to the plugin component
+	}
 
-const { pluginId, componentName, ...restProps }: Props = $props();
+	const { pluginId, componentName, ...restProps }: Props = $props();
 
-let COMPONENT: any = $state(null);
-let loading = $state(true);
-let error = $state(false);
+	let COMPONENT: any = $state(null);
+	let loading = $state(true);
+	let error = $state(false);
 
-$effect(() => {
-	let isMounted = true;
-	loading = true;
-	error = false;
+	$effect(() => {
+		let isMounted = true;
+		loading = true;
+		error = false;
 
-	getPluginComponent(pluginId, componentName)
-		.then((comp) => {
-			if (isMounted) {
-				COMPONENT = comp;
-				loading = false;
-			}
-		})
-		.catch(() => {
-			if (isMounted) {
-				error = true;
-				loading = false;
-			}
-		});
+		getPluginComponent(pluginId, componentName)
+			.then((comp) => {
+				if (isMounted) {
+					COMPONENT = comp;
+					loading = false;
+				}
+			})
+			.catch(() => {
+				if (isMounted) {
+					error = true;
+					loading = false;
+				}
+			});
 
-	return () => {
-		isMounted = false;
-	};
-});
+		return () => {
+			isMounted = false;
+		};
+	});
 </script>
 
 {#if COMPONENT}

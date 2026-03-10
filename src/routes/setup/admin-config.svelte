@@ -21,87 +21,87 @@
 
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import {
-	form_confirmpassword,
-	form_email,
-	form_password,
-	form_username,
-	setup_admin_placeholder_confirm_password,
-	setup_admin_placeholder_email,
-	setup_admin_placeholder_password,
-	setup_admin_placeholder_username,
-	setup_help_admin_confirm_password,
-	setup_help_admin_email,
-	setup_help_admin_password,
-	setup_help_admin_password_requirements_account_note,
-	setup_help_admin_password_requirements_character,
-	setup_help_admin_password_requirements_length,
-	setup_help_admin_password_requirements_letter,
-	setup_help_admin_password_requirements_match,
-	setup_help_admin_password_requirements_number,
-	setup_help_admin_username
-} from '@src/paraglide/messages';
-import type { ValidationErrors } from '@src/stores/setup-store.svelte.ts';
-import { setupAdminSchema } from '@utils/form-schemas';
-import { safeParse } from 'valibot';
+	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+	import {
+		form_confirmpassword,
+		form_email,
+		form_password,
+		form_username,
+		setup_admin_placeholder_confirm_password,
+		setup_admin_placeholder_email,
+		setup_admin_placeholder_password,
+		setup_admin_placeholder_username,
+		setup_help_admin_confirm_password,
+		setup_help_admin_email,
+		setup_help_admin_password,
+		setup_help_admin_password_requirements_account_note,
+		setup_help_admin_password_requirements_character,
+		setup_help_admin_password_requirements_length,
+		setup_help_admin_password_requirements_letter,
+		setup_help_admin_password_requirements_match,
+		setup_help_admin_password_requirements_number,
+		setup_help_admin_username
+	} from '@src/paraglide/messages';
+	import type { ValidationErrors } from '@src/stores/setup-store.svelte.ts';
+	import { setupAdminSchema } from '@utils/form-schemas';
+	import { safeParse } from 'valibot';
 
-// Props from parent
-let {
-	adminUser = $bindable(),
-	validationErrors,
-	passwordRequirements,
-	showAdminPassword = $bindable(),
-	showConfirmPassword = $bindable(),
-	toggleAdminPassword,
-	toggleConfirmPassword,
-	checkPasswordRequirements // This is still called by oninput
-} = $props(); // Now uses imported type
+	// Props from parent
+	let {
+		adminUser = $bindable(),
+		validationErrors,
+		passwordRequirements,
+		showAdminPassword = $bindable(),
+		showConfirmPassword = $bindable(),
+		toggleAdminPassword,
+		toggleConfirmPassword,
+		checkPasswordRequirements // This is still called by oninput
+	} = $props(); // Now uses imported type
 
-// Local real-time validation state
-let touchedFields = $state(new Set<string>());
-let localValidationErrors = $state<Record<string, string>>({});
+	// Local real-time validation state
+	let touchedFields = $state(new Set<string>());
+	let localValidationErrors = $state<Record<string, string>>({});
 
-const validationResult = $derived(
-	safeParse(setupAdminSchema, {
-		username: adminUser.username,
-		email: adminUser.email,
-		password: adminUser.password,
-		confirmPassword: adminUser.confirmPassword
-	})
-);
+	const validationResult = $derived(
+		safeParse(setupAdminSchema, {
+			username: adminUser.username,
+			email: adminUser.email,
+			password: adminUser.password,
+			confirmPassword: adminUser.confirmPassword
+		})
+	);
 
-// ✅ FIX: Removed unused getIsValid() function.
+	// ✅ FIX: Removed unused getIsValid() function.
 
-// Update local validation errors
-$effect(() => {
-	const newErrors: ValidationErrors = {};
-	if (!validationResult.success) {
-		for (const issue of validationResult.issues) {
-			const path = issue.path?.[0]?.key as string;
-			if (path) {
-				newErrors[path] = issue.message;
+	// Update local validation errors
+	$effect(() => {
+		const newErrors: ValidationErrors = {};
+		if (!validationResult.success) {
+			for (const issue of validationResult.issues) {
+				const path = issue.path?.[0]?.key as string;
+				if (path) {
+					newErrors[path] = issue.message;
+				}
 			}
 		}
-	}
-	localValidationErrors = newErrors;
-});
+		localValidationErrors = newErrors;
+	});
 
-// Merge local errors (for touched fields) with parent errors (from API)
-const displayErrors = $derived.by(() => {
-	const errors: ValidationErrors = {};
-	for (const field of touchedFields) {
-		if (localValidationErrors[field]) {
-			errors[field] = localValidationErrors[field];
+	// Merge local errors (for touched fields) with parent errors (from API)
+	const displayErrors = $derived.by(() => {
+		const errors: ValidationErrors = {};
+		for (const field of touchedFields) {
+			if (localValidationErrors[field]) {
+				errors[field] = localValidationErrors[field];
+			}
 		}
-	}
-	return { ...errors, ...validationErrors };
-});
+		return { ...errors, ...validationErrors };
+	});
 
-function handleBlur(fieldName: string) {
-	touchedFields.add(fieldName);
-	touchedFields = touchedFields; // Trigger reactivity
-}
+	function handleBlur(fieldName: string) {
+		touchedFields.add(fieldName);
+		touchedFields = touchedFields; // Trigger reactivity
+	}
 </script>
 
 <div class="fade-in">

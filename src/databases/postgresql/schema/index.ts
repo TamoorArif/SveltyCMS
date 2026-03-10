@@ -13,8 +13,12 @@ import type { TenantQuota, TenantUsage } from '../../db-interface';
 
 // Helper for timestamps
 const timestamps = {
-	createdAt: timestamp('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`)
+	createdAt: timestamp('createdAt')
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp('updatedAt')
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`)
 };
 
 // Helper for tenantId (nullable for multi-tenant support)
@@ -24,7 +28,9 @@ const tenantField = () => varchar('tenantId', { length: 36 });
 export const authUsers = pgTable(
 	'auth_users',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		email: varchar('email', { length: 255 }).notNull(),
 		username: varchar('username', { length: 255 }),
 		password: varchar('password', { length: 255 }),
@@ -48,7 +54,9 @@ export const authUsers = pgTable(
 export const authSessions = pgTable(
 	'auth_sessions',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		user_id: varchar('user_id', { length: 36 }).notNull(),
 		expires: timestamp('expires').notNull(),
 		tenantId: tenantField(),
@@ -65,7 +73,9 @@ export const authSessions = pgTable(
 export const authTokens = pgTable(
 	'auth_tokens',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		user_id: varchar('user_id', { length: 36 }).notNull(),
 		email: varchar('email', { length: 255 }).notNull(),
 		token: varchar('token', { length: 255 }).notNull(),
@@ -90,7 +100,9 @@ export const authTokens = pgTable(
 export const roles = pgTable(
 	'roles',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 255 }).notNull(),
 		description: text('description'),
 		permissions: jsonb('permissions').$type<string[]>().notNull().default([]),
@@ -110,7 +122,9 @@ export const roles = pgTable(
 export const contentNodes = pgTable(
 	'content_nodes',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		path: varchar('path', { length: 500 }).notNull(),
 		parentId: varchar('parentId', { length: 36 }),
 		nodeType: varchar('nodeType', { length: 50 }).notNull(),
@@ -141,7 +155,9 @@ export const contentNodes = pgTable(
 export const contentDrafts = pgTable(
 	'content_drafts',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		contentId: varchar('contentId', { length: 36 }).notNull(),
 		data: jsonb('data').notNull(),
 		version: integer('version').notNull().default(1),
@@ -162,7 +178,9 @@ export const contentDrafts = pgTable(
 export const contentRevisions = pgTable(
 	'content_revisions',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		contentId: varchar('contentId', { length: 36 }).notNull(),
 		data: jsonb('data').notNull(),
 		version: integer('version').notNull().default(1),
@@ -183,7 +201,9 @@ export const contentRevisions = pgTable(
 export const themes = pgTable(
 	'themes',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 255 }).notNull(),
 		path: varchar('path', { length: 500 }).notNull(),
 		isActive: boolean('isActive').notNull().default(false),
@@ -205,7 +225,9 @@ export const themes = pgTable(
 export const widgets = pgTable(
 	'widgets',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 255 }).notNull(),
 		isActive: boolean('isActive').notNull().default(true),
 		instances: jsonb('instances').notNull().default({}),
@@ -224,7 +246,9 @@ export const widgets = pgTable(
 export const mediaItems = pgTable(
 	'media_items',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		filename: varchar('filename', { length: 500 }).notNull(),
 		originalFilename: varchar('originalFilename', { length: 500 }).notNull(),
 		hash: varchar('hash', { length: 255 }).notNull(),
@@ -253,7 +277,9 @@ export const mediaItems = pgTable(
 export const systemVirtualFolders = pgTable(
 	'system_virtual_folders',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 500 }).notNull(),
 		path: varchar('path', { length: 1000 }).notNull(),
 		parentId: varchar('parentId', { length: 36 }),
@@ -276,7 +302,9 @@ export const systemVirtualFolders = pgTable(
 export const systemPreferences = pgTable(
 	'system_preferences',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		key: varchar('key', { length: 255 }).notNull(),
 		value: jsonb('value'),
 		category: varchar('category', { length: 255 }),
@@ -300,7 +328,9 @@ export const systemPreferences = pgTable(
 export const websiteTokens = pgTable(
 	'website_tokens',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 255 }).notNull(),
 		token: varchar('token', { length: 255 }).notNull(),
 		createdBy: varchar('createdBy', { length: 36 }).notNull(),
@@ -320,7 +350,9 @@ export const websiteTokens = pgTable(
 export const pluginPagespeedResults = pgTable(
 	'plugin_pagespeed_results',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		entryId: varchar('entryId', { length: 36 }).notNull(),
 		collectionId: varchar('collectionId', { length: 36 }).notNull(),
 		tenantId: tenantField(),
@@ -328,7 +360,9 @@ export const pluginPagespeedResults = pgTable(
 		device: varchar('device', { length: 20 }).notNull().default('mobile'),
 		url: varchar('url', { length: 2000 }).notNull(),
 		performanceScore: integer('performanceScore').notNull().default(0),
-		fetchedAt: timestamp('fetchedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+		fetchedAt: timestamp('fetchedAt')
+			.notNull()
+			.default(sql`CURRENT_TIMESTAMP`),
 		...timestamps
 	},
 	(table) => ({
@@ -343,7 +377,9 @@ export const pluginPagespeedResults = pgTable(
 export const pluginStates = pgTable(
 	'plugin_states',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		pluginId: varchar('pluginId', { length: 255 }).notNull(),
 		tenantId: tenantField(),
 		enabled: boolean('enabled').notNull().default(false),
@@ -362,12 +398,16 @@ export const pluginStates = pgTable(
 export const pluginMigrations = pgTable(
 	'plugin_migrations',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		pluginId: varchar('pluginId', { length: 255 }).notNull(),
 		migrationId: varchar('migrationId', { length: 255 }).notNull(),
 		version: integer('version').notNull(),
 		tenantId: tenantField(),
-		appliedAt: timestamp('appliedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+		appliedAt: timestamp('appliedAt')
+			.notNull()
+			.default(sql`CURRENT_TIMESTAMP`),
 		...timestamps
 	},
 	(table) => ({
@@ -381,7 +421,9 @@ export const pluginMigrations = pgTable(
 export const tenants = pgTable(
 	'tenants',
 	{
-		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		_id: varchar('_id', { length: 36 })
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		name: varchar('name', { length: 255 }).notNull(),
 		ownerId: varchar('ownerId', { length: 36 }).notNull(),
 		status: varchar('status', { length: 20 }).notNull().default('active'),

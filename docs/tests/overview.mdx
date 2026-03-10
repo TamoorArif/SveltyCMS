@@ -243,12 +243,16 @@ Tests that editor users:
 SveltyCMS uses a highly optimized, parallelized CI pipeline in GitHub Actions to ensure rapid feedback.
 
 ### Stage 1: Parallel Quality Gate
+
 We run two critical jobs in parallel to catch static and unit regressions early:
+
 1.  **lint-typecheck**: Performs high-speed linting (Biome/Ultracite) and Svelte template validation (`svelte-check`).
 2.  **unit-build**: Executes all unit tests with coverage reporting and verifies the production build.
 
 ### Stage 2: Consolidated Database Matrix
+
 Once the Quality Gate passes, we run integration and E2E tests against a matrix of databases:
+
 - **Matrix**: [MongoDB, MariaDB, PostgreSQL, SQLite]
 - **Efficiency**: Each leg starts its database service **once** and runs the full Integration suite, followed immediately by the Playwright E2E suite.
 - **Cross-Browser**: Playwright validates the UI on Chromium, Firefox, and Webkit.
