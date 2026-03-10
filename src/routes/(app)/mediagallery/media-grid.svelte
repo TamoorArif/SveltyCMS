@@ -20,151 +20,151 @@ Key features:
 -->
 
 <script lang="ts">
-	// Using iconify-icon web component
-	// Utils
+// Using iconify-icon web component
+// Utils
 
-	import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
-	// Components
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	import type { MediaBase, MediaImage, MediaVideo } from '@utils/media/media-models';
-	// Utils
-	import { formatBytes } from '@utils/utils';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-	import { scale } from 'svelte/transition';
+import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
+// Components
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import type { MediaBase, MediaImage, MediaVideo } from '@utils/media/media-models';
+// Utils
+import { formatBytes } from '@utils/utils';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { scale } from 'svelte/transition';
 
-	interface Props {
-		filteredFiles?: (MediaBase | MediaImage)[];
-		gridSize?: 'tiny' | 'small' | 'medium' | 'large';
-		isSelectionMode?: boolean;
-		onBulkDelete?: (files: (MediaBase | MediaImage)[]) => void;
-		ondeleteImage?: (file: MediaBase | MediaImage) => void;
-		onEditImage?: (file: MediaImage) => void;
-		onUpdateImage?: (file: MediaImage) => void;
-		selectedFiles?: Set<string> | SvelteSet<string>;
+interface Props {
+	filteredFiles?: (MediaBase | MediaImage)[];
+	gridSize?: 'tiny' | 'small' | 'medium' | 'large';
+	isSelectionMode?: boolean;
+	onBulkDelete?: (files: (MediaBase | MediaImage)[]) => void;
+	ondeleteImage?: (file: MediaBase | MediaImage) => void;
+	onEditImage?: (file: MediaImage) => void;
+	onUpdateImage?: (file: MediaImage) => void;
+	selectedFiles?: Set<string> | SvelteSet<string>;
+}
+
+let {
+	filteredFiles = $bindable([]),
+	gridSize = 'medium',
+	ondeleteImage = () => {},
+	onBulkDelete = () => {},
+	onEditImage = () => {},
+	onUpdateImage = () => {},
+	isSelectionMode: isSelectionModeProp = $bindable(false),
+	selectedFiles = $bindable(new SvelteSet<string>())
+}: Props = $props();
+
+let localSelectionMode = $state<boolean | undefined>(undefined);
+let isSelectionMode = {
+	get value() {
+		return localSelectionMode ?? isSelectionModeProp;
+	},
+	set value(v: boolean) {
+		localSelectionMode = v;
 	}
+};
 
-	let {
-		filteredFiles = $bindable([]),
-		gridSize = 'medium',
-		ondeleteImage = () => {},
-		onBulkDelete = () => {},
-		onEditImage = () => {},
-		onUpdateImage = () => {},
-		isSelectionMode: isSelectionModeProp = $bindable(false),
-		selectedFiles = $bindable(new SvelteSet<string>())
-	}: Props = $props();
+let showInfo = new SvelteMap<number, boolean>();
 
-	let localSelectionMode = $state<boolean | undefined>(undefined);
-	let isSelectionMode = {
-		get value() {
-			return localSelectionMode ?? isSelectionModeProp;
-		},
-		set value(v: boolean) {
-			localSelectionMode = v;
-		}
+// Tag Modal State
+let showTagModal = $state(false);
+let taggingFile = $state<MediaImage | null>(null);
+
+function openTagEditor(file: MediaImage) {
+	taggingFile = file;
+	showTagModal = true;
+}
+
+// Format MIME type for display
+function formatMimeType(mime?: string): string {
+	if (!mime) {
+		return 'Unknown';
+	}
+	const parts = mime.split('/');
+	return parts[1] ? parts[1].toUpperCase() : parts[0].toUpperCase();
+}
+
+// Helper: Get icon string
+function getFileIcon(file: MediaBase): string {
+	const fileName = file.filename || '';
+	const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+
+	switch (true) {
+		case file.type === 'image':
+			return 'fa-solid:image';
+		case file.type === 'video':
+			return 'fa-solid:video';
+		case file.type === 'audio':
+			return 'fa-solid:play-circle';
+		case fileExt === '.pdf':
+			return 'vscode-icons:file-type-pdf2';
+		case fileExt === '.doc' || fileExt === '.docx' || fileExt === '.docm':
+			return 'vscode-icons:file-type-word';
+		case fileExt === '.ppt' || fileExt === '.pptx':
+			return 'vscode-icons:file-type-powerpoint';
+		case fileExt === '.xls' || fileExt === '.xlsx':
+			return 'vscode-icons:file-type-excel';
+		case fileExt === '.txt':
+			return 'fa-solid:file-lines';
+		case fileExt === '.zip' || fileExt === '.rar':
+			return 'fa-solid:file-zipper';
+	}
+	return 'vscode-icons:file';
+}
+
+function handleDelete(file: MediaBase | MediaImage) {
+	ondeleteImage(file);
+}
+
+function toggleSelection(file: MediaBase | MediaImage) {
+	const fileId = file._id?.toString() || file.filename;
+	if (selectedFiles.has(fileId)) {
+		selectedFiles.delete(fileId);
+	} else {
+		selectedFiles.add(fileId);
+	}
+}
+
+function selectAll() {
+	selectedFiles.clear();
+	for (const f of filteredFiles) {
+		selectedFiles.add(f._id?.toString() || f.filename);
+	}
+}
+
+function deselectAll() {
+	selectedFiles.clear();
+}
+
+function handleBulkDelete() {
+	const filesToDelete = filteredFiles.filter((f: MediaBase | MediaImage) => selectedFiles.has(f._id?.toString() || f.filename));
+	if (filesToDelete.length > 0) {
+		onBulkDelete(filesToDelete);
+		selectedFiles.clear();
+		isSelectionMode.value = false;
+	}
+}
+
+function getThumbnails(file: MediaBase | MediaImage) {
+	return 'thumbnails' in file ? file.thumbnails || {} : {};
+}
+
+function getThumbnail(file: MediaBase | MediaImage, size: string) {
+	const thumbnails = getThumbnails(file);
+	const sizeMap: Record<string, string> = {
+		tiny: 'thumbnail',
+		small: 'sm',
+		medium: 'md',
+		large: 'lg'
 	};
+	const key = sizeMap[size] || size;
+	return thumbnails ? thumbnails[key as keyof typeof thumbnails] : undefined;
+}
 
-	let showInfo = new SvelteMap<number, boolean>();
-
-	// Tag Modal State
-	let showTagModal = $state(false);
-	let taggingFile = $state<MediaImage | null>(null);
-
-	function openTagEditor(file: MediaImage) {
-		taggingFile = file;
-		showTagModal = true;
-	}
-
-	// Format MIME type for display
-	function formatMimeType(mime?: string): string {
-		if (!mime) {
-			return 'Unknown';
-		}
-		const parts = mime.split('/');
-		return parts[1] ? parts[1].toUpperCase() : parts[0].toUpperCase();
-	}
-
-	// Helper: Get icon string
-	function getFileIcon(file: MediaBase): string {
-		const fileName = file.filename || '';
-		const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-
-		switch (true) {
-			case file.type === 'image':
-				return 'fa-solid:image';
-			case file.type === 'video':
-				return 'fa-solid:video';
-			case file.type === 'audio':
-				return 'fa-solid:play-circle';
-			case fileExt === '.pdf':
-				return 'vscode-icons:file-type-pdf2';
-			case fileExt === '.doc' || fileExt === '.docx' || fileExt === '.docm':
-				return 'vscode-icons:file-type-word';
-			case fileExt === '.ppt' || fileExt === '.pptx':
-				return 'vscode-icons:file-type-powerpoint';
-			case fileExt === '.xls' || fileExt === '.xlsx':
-				return 'vscode-icons:file-type-excel';
-			case fileExt === '.txt':
-				return 'fa-solid:file-lines';
-			case fileExt === '.zip' || fileExt === '.rar':
-				return 'fa-solid:file-zipper';
-		}
-		return 'vscode-icons:file';
-	}
-
-	function handleDelete(file: MediaBase | MediaImage) {
-		ondeleteImage(file);
-	}
-
-	function toggleSelection(file: MediaBase | MediaImage) {
-		const fileId = file._id?.toString() || file.filename;
-		if (selectedFiles.has(fileId)) {
-			selectedFiles.delete(fileId);
-		} else {
-			selectedFiles.add(fileId);
-		}
-	}
-
-	function selectAll() {
-		selectedFiles.clear();
-		for (const f of filteredFiles) {
-			selectedFiles.add(f._id?.toString() || f.filename);
-		}
-	}
-
-	function deselectAll() {
-		selectedFiles.clear();
-	}
-
-	function handleBulkDelete() {
-		const filesToDelete = filteredFiles.filter((f: MediaBase | MediaImage) => selectedFiles.has(f._id?.toString() || f.filename));
-		if (filesToDelete.length > 0) {
-			onBulkDelete(filesToDelete);
-			selectedFiles.clear();
-			isSelectionMode.value = false;
-		}
-	}
-
-	function getThumbnails(file: MediaBase | MediaImage) {
-		return 'thumbnails' in file ? file.thumbnails || {} : {};
-	}
-
-	function getThumbnail(file: MediaBase | MediaImage, size: string) {
-		const thumbnails = getThumbnails(file);
-		const sizeMap: Record<string, string> = {
-			tiny: 'thumbnail',
-			small: 'sm',
-			medium: 'md',
-			large: 'lg'
-		};
-		const key = sizeMap[size] || size;
-		return thumbnails ? thumbnails[key as keyof typeof thumbnails] : undefined;
-	}
-
-	function getImageUrl(file: MediaBase | MediaImage, size: string) {
-		const thumbnail = getThumbnail(file, size);
-		return thumbnail?.url || (file as MediaImage).url;
-	}
+function getImageUrl(file: MediaBase | MediaImage, size: string) {
+	const thumbnail = getThumbnail(file, size);
+	return thumbnail?.url || (file as MediaImage).url;
+}
 </script>
 
 <div class="flex flex-wrap items-start gap-4 overflow-auto content-start">

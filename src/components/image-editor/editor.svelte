@@ -7,292 +7,292 @@ Comprehensive image editing interface with svelte-canvas integration.
 -->
 
 <script lang="ts">
-	import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-	import { logger } from '@utils/logger';
-	import { onDestroy, onMount } from 'svelte';
-	import EditorCanvas from './editor-canvas.svelte';
-	import { editorWidgets } from './widgets/registry';
+import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
+import { logger } from '@utils/logger';
+import { onDestroy, onMount } from 'svelte';
+import EditorCanvas from './editor-canvas.svelte';
+import { editorWidgets } from './widgets/registry';
 
-	interface Props {
-		focalPoint?: { x: number; y: number };
-		imageFile?: File | null;
-		initialImageSrc?: string;
+interface Props {
+	focalPoint?: { x: number; y: number };
+	imageFile?: File | null;
+	initialImageSrc?: string;
+	mediaId?: string;
+	onsave?: (detail: {
+		dataURL?: string;
+		file?: File;
+		focalPoint?: any;
 		mediaId?: string;
-		onsave?: (detail: {
-			dataURL?: string;
-			file?: File;
-			focalPoint?: any;
-			mediaId?: string;
-			manipulations?: any;
-			operations?: Record<string, unknown>;
-			saveBehavior?: 'new' | 'overwrite';
-		}) => void;
+		manipulations?: any;
+		operations?: Record<string, unknown>;
+		saveBehavior?: 'new' | 'overwrite';
+	}) => void;
+}
+
+let { imageFile = null, initialImageSrc = '', mediaId = '', focalPoint = $bindable({ x: 0.5, y: 0.5 }), onsave = () => {} }: Props = $props();
+
+// State
+let selectedImage = $state('');
+let containerRef = $state<HTMLDivElement | undefined>(undefined);
+let containerWidth = $state(0);
+let containerHeight = $state(0);
+let initialImageLoaded = $state(false);
+let isProcessing = $state(false);
+let error = $state<string | null>(null);
+let activeToolInstance = $state<any>(null);
+
+// Save behavior: 'new' creates a timestamped copy, 'overwrite' replaces the original
+let saveBehavior = $state<'new' | 'overwrite'>('new');
+
+// Derived values
+const storeState = imageEditorStore.state;
+const activeState = $derived(imageEditorStore.state.activeState);
+const hasImage = $derived(!!storeState.imageElement);
+
+// Active tool component
+const activeToolComponent = $derived.by(() => {
+	if (!activeState) {
+		return null;
+	}
+	const widget = editorWidgets.find((w) => w.key === activeState);
+	return widget?.tool ?? null;
+});
+
+// Reset load state when image source changes
+let lastLoadedSrc = $state('');
+let lastLoadedFile = $state<File | null>(null);
+
+$effect(() => {
+	const src = initialImageSrc;
+	const file = imageFile;
+	if (src !== lastLoadedSrc || file !== lastLoadedFile) {
+		initialImageLoaded = false;
+		selectedImage = '';
+	}
+});
+
+// Cleanup effect for selected image
+$effect(() => {
+	return () => {
+		if (selectedImage?.startsWith('blob:')) {
+			URL.revokeObjectURL(selectedImage);
+		}
+	};
+});
+
+// Load initial image effect
+$effect(() => {
+	const src = initialImageSrc;
+	const file = imageFile;
+
+	if (src !== lastLoadedSrc || file !== lastLoadedFile) {
+		initialImageLoaded = false;
 	}
 
-	let { imageFile = null, initialImageSrc = '', mediaId = '', focalPoint = $bindable({ x: 0.5, y: 0.5 }), onsave = () => {} }: Props = $props();
-
-	// State
-	let selectedImage = $state('');
-	let containerRef = $state<HTMLDivElement | undefined>(undefined);
-	let containerWidth = $state(0);
-	let containerHeight = $state(0);
-	let initialImageLoaded = $state(false);
-	let isProcessing = $state(false);
-	let error = $state<string | null>(null);
-	let activeToolInstance = $state<any>(null);
-
-	// Save behavior: 'new' creates a timestamped copy, 'overwrite' replaces the original
-	let saveBehavior = $state<'new' | 'overwrite'>('new');
-
-	// Derived values
-	const storeState = imageEditorStore.state;
-	const activeState = $derived(imageEditorStore.state.activeState);
-	const hasImage = $derived(!!storeState.imageElement);
-
-	// Active tool component
-	const activeToolComponent = $derived.by(() => {
-		if (!activeState) {
-			return null;
-		}
-		const widget = editorWidgets.find((w) => w.key === activeState);
-		return widget?.tool ?? null;
-	});
-
-	// Reset load state when image source changes
-	let lastLoadedSrc = $state('');
-	let lastLoadedFile = $state<File | null>(null);
-
-	$effect(() => {
-		const src = initialImageSrc;
-		const file = imageFile;
-		if (src !== lastLoadedSrc || file !== lastLoadedFile) {
-			initialImageLoaded = false;
-			selectedImage = '';
-		}
-	});
-
-	// Cleanup effect for selected image
-	$effect(() => {
-		return () => {
-			if (selectedImage?.startsWith('blob:')) {
-				URL.revokeObjectURL(selectedImage);
-			}
-		};
-	});
-
-	// Load initial image effect
-	$effect(() => {
-		const src = initialImageSrc;
-		const file = imageFile;
-
-		if (src !== lastLoadedSrc || file !== lastLoadedFile) {
-			initialImageLoaded = false;
-		}
-
-		if (!(containerRef && (src || file))) {
-			return;
-		}
-
-		// Wait for container to have size
-		if (containerWidth === 0 || containerHeight === 0) {
-			const timeoutId = setTimeout(() => {
-				if (containerRef && containerRef.clientWidth > 0) {
-					containerWidth = containerRef.clientWidth;
-					containerHeight = containerRef.clientHeight;
-				}
-			}, 150);
-			return () => clearTimeout(timeoutId);
-		}
-
-		if (initialImageLoaded && src === selectedImage && !file) {
-			return;
-		}
-
-		queueMicrotask(() => {
-			if (src) {
-				selectedImage = src;
-				loadImage(src);
-				lastLoadedSrc = src;
-				lastLoadedFile = null;
-			} else if (file) {
-				const blobUrl = URL.createObjectURL(file);
-				selectedImage = blobUrl;
-				loadImage(blobUrl, file);
-				lastLoadedSrc = '';
-				lastLoadedFile = file;
-			}
-			initialImageLoaded = true;
-		});
-	});
-
-	function loadImage(imageSrc: string, file?: File, retryAttempt = 0) {
-		let cleanedSrc = imageSrc;
-		// Handle duplicate /files/ paths correctly, allowing dynamic paths via regex
-		cleanedSrc = cleanedSrc.replace(/(?:\/files)+\//g, '/files/');
-
-		isProcessing = true;
-		error = null;
-
-		const img = new Image();
-		img.crossOrigin = 'anonymous';
-
-		img.onerror = () => {
-			if (retryAttempt < 3) {
-				setTimeout(() => loadImage(imageSrc, file, retryAttempt + 1), 1000);
-			} else {
-				error = 'Failed to load image after 3 attempts';
-				isProcessing = false;
-			}
-		};
-
-		img.onload = () => {
-			imageEditorStore.setImageElement(img);
-			if (file) {
-				imageEditorStore.setFile(file);
-			}
-
-			// Initial fit
-			const containerWidth = containerRef?.clientWidth;
-			const containerHeight = containerRef?.clientHeight;
-			const scaleX = (containerWidth! * 0.8) / img.width;
-			const scaleY = (containerHeight! * 0.8) / img.height;
-			imageEditorStore.state.zoom = Math.min(scaleX, scaleY);
-
-			imageEditorStore.takeSnapshot();
-			isProcessing = false;
-		};
-
-		img.src = cleanedSrc;
+	if (!(containerRef && (src || file))) {
+		return;
 	}
 
-	function handleKeyDown(event: KeyboardEvent) {
-		// Guard against events with detached targets (e.g. in embedded browser contexts)
-		if (!event?.target || !(event.target as Node).ownerDocument) return;
-		const target = event.target as HTMLElement;
-		if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
-			return;
-		}
-
-		if (event.key === 'Escape') {
-			imageEditorStore.cancelActiveTool();
-			return;
-		}
-
-		const cmdOrCtrl = event.metaKey || event.ctrlKey;
-		const shift = event.shiftKey;
-
-		if (cmdOrCtrl && !shift && event.key === 'z') {
-			event.preventDefault();
-			imageEditorStore.undoState();
-		} else if (cmdOrCtrl && shift && event.key === 'z') {
-			event.preventDefault();
-			imageEditorStore.redoState();
-		}
-	}
-
-	/**
-	 * Convert a data: URL to a Blob without fetch() — avoids CSP connect-src blocking data: URLs.
-	 */
-	function dataURLToBlob(dataURL: string): Blob {
-		const [header, base64] = dataURL.split(',');
-		const mime = header.match(/:(.*?);/)?.[1] || 'image/webp';
-		const binary = atob(base64);
-		const bytes = new Uint8Array(binary.length);
-		for (let i = 0; i < binary.length; i++) {
-			bytes[i] = binary.charCodeAt(i);
-		}
-		return new Blob([bytes], { type: mime });
-	}
-
-	export async function handleSave() {
-		const { imageElement, file, rotation, flipH, flipV, crop, filters } = imageEditorStore.state;
-		const storeMediaId = mediaId;
-
-		// Allow saving when we have either a file or a mediaId (existing image in DB)
-		const canSave = imageElement && (file || storeMediaId);
-		if (!canSave) {
-			error = 'Nothing to save';
-			return;
-		}
-
-		isProcessing = true;
-		try {
-			// Instruction set for server-side Sharp.js baking
-			const manipulations = {
-				rotation,
-				flipH,
-				flipV,
-				focalPoint: $state.snapshot(focalPoint),
-				crop: crop
-					? {
-							x: Math.max(0, crop.x),
-							y: Math.max(0, crop.y),
-							width: Math.min(imageElement.width, crop.width),
-							height: Math.min(imageElement.height, crop.height)
-						}
-					: null,
-				filters: $state.snapshot(filters)
-			};
-
-			const mediaIdFromProp = mediaId;
-			const mediaIdFromFile = (file as any)._id;
-			const targetMediaId = mediaIdFromFile || mediaIdFromProp;
-
-			if (targetMediaId) {
-				// Server-side baking via Sharp.js
-				const response = await fetch(`/api/media/manipulate/${targetMediaId}`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(manipulations)
-				});
-
-				const result = await response.json();
-				if (!result.success) {
-					throw new Error(result.error || 'Server-side manipulation failed');
-				}
-
-				// Return the updated media item data
-				onsave(result.data);
-			} else {
-				// Fallback to client-side blob if no mediaId (e.g. fresh upload not yet in DB)
-				const canvas = containerRef?.querySelector('canvas');
-				if (!canvas) {
-					throw new Error('Canvas not found');
-				}
-
-				const dataURL = canvas.toDataURL('image/webp', 0.95);
-				// Use dataURLToBlob instead of fetch(dataURL) to avoid CSP connect-src issues
-				const blob = dataURLToBlob(dataURL);
-				const timestamp = Date.now();
-				const newFileName = `edited-${timestamp}.webp`;
-				const editedFile = new File([blob], newFileName, { type: 'image/webp' });
-
-				onsave({
-					dataURL,
-					file: editedFile,
-					focalPoint,
-					mediaId: storeMediaId || mediaId,
-					manipulations,
-					saveBehavior
-				});
+	// Wait for container to have size
+	if (containerWidth === 0 || containerHeight === 0) {
+		const timeoutId = setTimeout(() => {
+			if (containerRef && containerRef.clientWidth > 0) {
+				containerWidth = containerRef.clientWidth;
+				containerHeight = containerRef.clientHeight;
 			}
-		} catch (err) {
-			logger.error('Save error:', err);
-			error = `Failed to save image: ${err instanceof Error ? err.message : String(err)}`;
-		} finally {
+		}, 150);
+		return () => clearTimeout(timeoutId);
+	}
+
+	if (initialImageLoaded && src === selectedImage && !file) {
+		return;
+	}
+
+	queueMicrotask(() => {
+		if (src) {
+			selectedImage = src;
+			loadImage(src);
+			lastLoadedSrc = src;
+			lastLoadedFile = null;
+		} else if (file) {
+			const blobUrl = URL.createObjectURL(file);
+			selectedImage = blobUrl;
+			loadImage(blobUrl, file);
+			lastLoadedSrc = '';
+			lastLoadedFile = file;
+		}
+		initialImageLoaded = true;
+	});
+});
+
+function loadImage(imageSrc: string, file?: File, retryAttempt = 0) {
+	let cleanedSrc = imageSrc;
+	// Handle duplicate /files/ paths correctly, allowing dynamic paths via regex
+	cleanedSrc = cleanedSrc.replace(/(?:\/files)+\//g, '/files/');
+
+	isProcessing = true;
+	error = null;
+
+	const img = new Image();
+	img.crossOrigin = 'anonymous';
+
+	img.onerror = () => {
+		if (retryAttempt < 3) {
+			setTimeout(() => loadImage(imageSrc, file, retryAttempt + 1), 1000);
+		} else {
+			error = 'Failed to load image after 3 attempts';
 			isProcessing = false;
 		}
+	};
+
+	img.onload = () => {
+		imageEditorStore.setImageElement(img);
+		if (file) {
+			imageEditorStore.setFile(file);
+		}
+
+		// Initial fit
+		const containerWidth = containerRef?.clientWidth;
+		const containerHeight = containerRef?.clientHeight;
+		const scaleX = (containerWidth! * 0.8) / img.width;
+		const scaleY = (containerHeight! * 0.8) / img.height;
+		imageEditorStore.state.zoom = Math.min(scaleX, scaleY);
+
+		imageEditorStore.takeSnapshot();
+		isProcessing = false;
+	};
+
+	img.src = cleanedSrc;
+}
+
+function handleKeyDown(event: KeyboardEvent) {
+	// Guard against events with detached targets (e.g. in embedded browser contexts)
+	if (!event?.target || !(event.target as Node).ownerDocument) return;
+	const target = event.target as HTMLElement;
+	if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+		return;
 	}
 
-	onMount(() => {
-		imageEditorStore.reset();
-		window.addEventListener('keydown', handleKeyDown);
-	});
+	if (event.key === 'Escape') {
+		imageEditorStore.cancelActiveTool();
+		return;
+	}
 
-	onDestroy(() => {
-		window.removeEventListener('keydown', handleKeyDown);
-		imageEditorStore.reset();
-	});
+	const cmdOrCtrl = event.metaKey || event.ctrlKey;
+	const shift = event.shiftKey;
+
+	if (cmdOrCtrl && !shift && event.key === 'z') {
+		event.preventDefault();
+		imageEditorStore.undoState();
+	} else if (cmdOrCtrl && shift && event.key === 'z') {
+		event.preventDefault();
+		imageEditorStore.redoState();
+	}
+}
+
+/**
+ * Convert a data: URL to a Blob without fetch() — avoids CSP connect-src blocking data: URLs.
+ */
+function dataURLToBlob(dataURL: string): Blob {
+	const [header, base64] = dataURL.split(',');
+	const mime = header.match(/:(.*?);/)?.[1] || 'image/webp';
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return new Blob([bytes], { type: mime });
+}
+
+export async function handleSave() {
+	const { imageElement, file, rotation, flipH, flipV, crop, filters } = imageEditorStore.state;
+	const storeMediaId = mediaId;
+
+	// Allow saving when we have either a file or a mediaId (existing image in DB)
+	const canSave = imageElement && (file || storeMediaId);
+	if (!canSave) {
+		error = 'Nothing to save';
+		return;
+	}
+
+	isProcessing = true;
+	try {
+		// Instruction set for server-side Sharp.js baking
+		const manipulations = {
+			rotation,
+			flipH,
+			flipV,
+			focalPoint: $state.snapshot(focalPoint),
+			crop: crop
+				? {
+						x: Math.max(0, crop.x),
+						y: Math.max(0, crop.y),
+						width: Math.min(imageElement.width, crop.width),
+						height: Math.min(imageElement.height, crop.height)
+					}
+				: null,
+			filters: $state.snapshot(filters)
+		};
+
+		const mediaIdFromProp = mediaId;
+		const mediaIdFromFile = (file as any)._id;
+		const targetMediaId = mediaIdFromFile || mediaIdFromProp;
+
+		if (targetMediaId) {
+			// Server-side baking via Sharp.js
+			const response = await fetch(`/api/media/manipulate/${targetMediaId}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(manipulations)
+			});
+
+			const result = await response.json();
+			if (!result.success) {
+				throw new Error(result.error || 'Server-side manipulation failed');
+			}
+
+			// Return the updated media item data
+			onsave(result.data);
+		} else {
+			// Fallback to client-side blob if no mediaId (e.g. fresh upload not yet in DB)
+			const canvas = containerRef?.querySelector('canvas');
+			if (!canvas) {
+				throw new Error('Canvas not found');
+			}
+
+			const dataURL = canvas.toDataURL('image/webp', 0.95);
+			// Use dataURLToBlob instead of fetch(dataURL) to avoid CSP connect-src issues
+			const blob = dataURLToBlob(dataURL);
+			const timestamp = Date.now();
+			const newFileName = `edited-${timestamp}.webp`;
+			const editedFile = new File([blob], newFileName, { type: 'image/webp' });
+
+			onsave({
+				dataURL,
+				file: editedFile,
+				focalPoint,
+				mediaId: storeMediaId || mediaId,
+				manipulations,
+				saveBehavior
+			});
+		}
+	} catch (err) {
+		logger.error('Save error:', err);
+		error = `Failed to save image: ${err instanceof Error ? err.message : String(err)}`;
+	} finally {
+		isProcessing = false;
+	}
+}
+
+onMount(() => {
+	imageEditorStore.reset();
+	window.addEventListener('keydown', handleKeyDown);
+});
+
+onDestroy(() => {
+	window.removeEventListener('keydown', handleKeyDown);
+	imageEditorStore.reset();
+});
 </script>
 
 <div class="image-editor flex h-full w-full flex-col overflow-hidden" role="application" aria-label="Image editor" aria-busy={isProcessing}>

@@ -12,259 +12,259 @@ Features:
 	
 -->
 <script lang="ts">
-	import Autocomplete from '@src/components/autocomplete.svelte';
-	import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-	// Paraglide Messages
-	import {
-		button_add,
-		setup_help_content_languages,
-		setup_help_default_content_language,
-		setup_help_default_system_language,
-		setup_help_host_prod,
-		setup_help_media_path,
-		setup_help_media_type,
-		setup_help_no_matches,
-		setup_help_site_name,
-		setup_help_system_languages,
-		setup_help_timezone,
-		setup_label_content_languages,
-		setup_label_default_content_language,
-		setup_label_default_system_language,
-		setup_label_system_languages,
-		setup_media_type_cloudinary,
-		setup_media_type_local,
-		setup_media_type_r2,
-		setup_media_type_s3,
-		setup_note_cloud_credentials,
-		setup_note_demo_requires_multitenant,
-		setup_system_bucket_placeholder,
-		setup_system_demo_mode,
-		setup_system_demo_mode_desc,
-		setup_system_host_prod,
-		setup_system_host_prod_placeholder,
-		setup_system_intro,
-		setup_system_media_folder_cloud,
-		setup_system_media_folder_local,
-		setup_system_media_path_placeholder,
-		setup_system_media_type,
-		setup_system_multi_tenant,
-		setup_system_multi_tenant_desc,
-		setup_system_site_name,
-		setup_system_site_name_placeholder,
-		setup_system_timezone
-	} from '@src/paraglide/messages';
-	import { locales as systemLocales } from '@src/paraglide/runtime';
-	//  Import types from the store
-	import type { ValidationErrors } from '@src/stores/setup-store.svelte.ts';
-	import { systemSettingsSchema } from '@utils/form-schemas';
-	import iso6391 from '@utils/iso639-1.json';
-	import { getLanguageName } from '@utils/language-utils';
-	import { safeParse } from 'valibot';
-	// Components
-	import PresetSelector from './preset-selector.svelte';
-	import { PRESETS } from './presets';
+import Autocomplete from '@src/components/autocomplete.svelte';
+import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+// Paraglide Messages
+import {
+	button_add,
+	setup_help_content_languages,
+	setup_help_default_content_language,
+	setup_help_default_system_language,
+	setup_help_host_prod,
+	setup_help_media_path,
+	setup_help_media_type,
+	setup_help_no_matches,
+	setup_help_site_name,
+	setup_help_system_languages,
+	setup_help_timezone,
+	setup_label_content_languages,
+	setup_label_default_content_language,
+	setup_label_default_system_language,
+	setup_label_system_languages,
+	setup_media_type_cloudinary,
+	setup_media_type_local,
+	setup_media_type_r2,
+	setup_media_type_s3,
+	setup_note_cloud_credentials,
+	setup_note_demo_requires_multitenant,
+	setup_system_bucket_placeholder,
+	setup_system_demo_mode,
+	setup_system_demo_mode_desc,
+	setup_system_host_prod,
+	setup_system_host_prod_placeholder,
+	setup_system_intro,
+	setup_system_media_folder_cloud,
+	setup_system_media_folder_local,
+	setup_system_media_path_placeholder,
+	setup_system_media_type,
+	setup_system_multi_tenant,
+	setup_system_multi_tenant_desc,
+	setup_system_site_name,
+	setup_system_site_name_placeholder,
+	setup_system_timezone
+} from '@src/paraglide/messages';
+import { locales as systemLocales } from '@src/paraglide/runtime';
+//  Import types from the store
+import type { ValidationErrors } from '@src/stores/setup-store.svelte.ts';
+import { systemSettingsSchema } from '@utils/form-schemas';
+import iso6391 from '@utils/iso639-1.json';
+import { getLanguageName } from '@utils/language-utils';
+import { safeParse } from 'valibot';
+// Components
+import PresetSelector from './preset-selector.svelte';
+import { PRESETS } from './presets';
 
-	const presets = PRESETS;
+const presets = PRESETS;
 
-	// --- PROPS ---
-	let { systemSettings = $bindable(), validationErrors, redisAvailable = $bindable() } = $props();
+// --- PROPS ---
+let { systemSettings = $bindable(), validationErrors, redisAvailable = $bindable() } = $props();
 
-	const availableLanguages: string[] = [...systemLocales];
+const availableLanguages: string[] = [...systemLocales];
 
-	// Real-time validation state
-	let localValidationErrors = $state<Record<string, string>>({});
-	let touchedFields = $state(new Set<string>());
+// Real-time validation state
+let localValidationErrors = $state<Record<string, string>>({});
+let touchedFields = $state(new Set<string>());
 
-	const validationResult = $derived(
-		safeParse(systemSettingsSchema, {
-			...systemSettings
-		})
-	);
+const validationResult = $derived(
+	safeParse(systemSettingsSchema, {
+		...systemSettings
+	})
+);
 
-	$effect(() => {
-		const newErrors: ValidationErrors = {};
-		if (!validationResult.success) {
-			for (const issue of validationResult.issues) {
-				const path = issue.path?.[0]?.key as string;
-				if (path) {
-					newErrors[path] = issue.message;
-				}
+$effect(() => {
+	const newErrors: ValidationErrors = {};
+	if (!validationResult.success) {
+		for (const issue of validationResult.issues) {
+			const path = issue.path?.[0]?.key as string;
+			if (path) {
+				newErrors[path] = issue.message;
 			}
 		}
-		localValidationErrors = newErrors;
-	});
+	}
+	localValidationErrors = newErrors;
+});
 
-	const displayErrors = $derived.by(() => {
-		const errors: ValidationErrors = {};
-		for (const field of touchedFields) {
-			if (localValidationErrors[field]) {
-				errors[field] = localValidationErrors[field];
-			}
+const displayErrors = $derived.by(() => {
+	const errors: ValidationErrors = {};
+	for (const field of touchedFields) {
+		if (localValidationErrors[field]) {
+			errors[field] = localValidationErrors[field];
 		}
-		return { ...errors, ...validationErrors };
-	});
+	}
+	return { ...errors, ...validationErrors };
+});
 
-	function handleBlur(fieldName: string) {
-		touchedFields.add(fieldName);
-		touchedFields = touchedFields;
-	}
+function handleBlur(fieldName: string) {
+	touchedFields.add(fieldName);
+	touchedFields = touchedFields;
+}
 
-	function displayLang(code: string) {
-		try {
-			const name = getLanguageName(code);
-			return `${name} (${code.toUpperCase()})`;
-		} catch {
-			return code.toUpperCase();
-		}
+function displayLang(code: string) {
+	try {
+		const name = getLanguageName(code);
+		return `${name} (${code.toUpperCase()})`;
+	} catch {
+		return code.toUpperCase();
 	}
+}
 
-	// System languages
-	function removeSystemLang(code: string) {
-		if (code === systemSettings.defaultSystemLanguage && systemSettings.systemLanguages.length === 1) {
-			return;
-		}
-		systemSettings.systemLanguages = systemSettings.systemLanguages.filter((c: string) => c !== code);
-		if (!systemSettings.systemLanguages.includes(systemSettings.defaultSystemLanguage)) {
-			systemSettings.defaultSystemLanguage = systemSettings.systemLanguages[0] || 'en';
+// System languages
+function removeSystemLang(code: string) {
+	if (code === systemSettings.defaultSystemLanguage && systemSettings.systemLanguages.length === 1) {
+		return;
+	}
+	systemSettings.systemLanguages = systemSettings.systemLanguages.filter((c: string) => c !== code);
+	if (!systemSettings.systemLanguages.includes(systemSettings.defaultSystemLanguage)) {
+		systemSettings.defaultSystemLanguage = systemSettings.systemLanguages[0] || 'en';
+	}
+}
+let showSystemPicker = $state(false);
+let systemPickerSearch = $state('');
+function openSystemPicker() {
+	showSystemPicker = true;
+	queueMicrotask(() => document.getElementById('system-lang-search')?.focus());
+}
+function closeSystemPicker() {
+	showSystemPicker = false;
+	systemPickerSearch = '';
+}
+function addSystemLanguage(code: string) {
+	const c = code.toLowerCase();
+	if (!availableLanguages.includes(c)) {
+		return;
+	}
+	if (!systemSettings.systemLanguages.includes(c)) {
+		systemSettings.systemLanguages = [...systemSettings.systemLanguages, c];
+		if (!systemSettings.defaultSystemLanguage) {
+			systemSettings.defaultSystemLanguage = c;
 		}
 	}
-	let showSystemPicker = $state(false);
-	let systemPickerSearch = $state('');
-	function openSystemPicker() {
-		showSystemPicker = true;
-		queueMicrotask(() => document.getElementById('system-lang-search')?.focus());
+	closeSystemPicker();
+}
+$effect(() => {
+	if (!showSystemPicker) {
+		return;
 	}
-	function closeSystemPicker() {
-		showSystemPicker = false;
-		systemPickerSearch = '';
-	}
-	function addSystemLanguage(code: string) {
-		const c = code.toLowerCase();
-		if (!availableLanguages.includes(c)) {
-			return;
-		}
-		if (!systemSettings.systemLanguages.includes(c)) {
-			systemSettings.systemLanguages = [...systemSettings.systemLanguages, c];
-			if (!systemSettings.defaultSystemLanguage) {
-				systemSettings.defaultSystemLanguage = c;
-			}
-		}
-		closeSystemPicker();
-	}
-	$effect(() => {
-		if (!showSystemPicker) {
-			return;
-		}
-		const handler = (e: MouseEvent) => {
-			const el = document.getElementById('system-lang-picker');
-			if (el && !el.contains(e.target as Node)) {
-				closeSystemPicker();
-			}
-		};
-		document.addEventListener('mousedown', handler);
-		return () => document.removeEventListener('mousedown', handler);
-	});
-	function onSystemPickerKey(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
+	const handler = (e: MouseEvent) => {
+		const el = document.getElementById('system-lang-picker');
+		if (el && !el.contains(e.target as Node)) {
 			closeSystemPicker();
 		}
-	}
-
-	// Content languages
-	function removeContentLang(code: string) {
-		if (code === systemSettings.defaultContentLanguage && systemSettings.contentLanguages.length === 1) {
-			return;
-		}
-		systemSettings.contentLanguages = systemSettings.contentLanguages.filter((c: string) => c !== code);
-		if (!systemSettings.contentLanguages.includes(systemSettings.defaultContentLanguage)) {
-			systemSettings.defaultContentLanguage = systemSettings.contentLanguages[0] || '';
-		}
-	}
-	let showContentPicker = $state(false);
-	let contentPickerSearch = $state('');
-	function openContentPicker() {
-		showContentPicker = true;
-		queueMicrotask(() => document.getElementById('content-lang-search')?.focus());
-	}
-	function closeContentPicker() {
-		showContentPicker = false;
-		contentPickerSearch = '';
-	}
-	function addContentLanguage(code: string) {
-		const c = code.toLowerCase().trim();
-		if (!c || c.length < 2) {
-			return;
-		}
-		if (!systemSettings.contentLanguages.includes(c)) {
-			systemSettings.contentLanguages = [...systemSettings.contentLanguages, c];
-			if (!systemSettings.defaultContentLanguage) {
-				systemSettings.defaultContentLanguage = c;
-			}
-		}
+	};
+	document.addEventListener('mousedown', handler);
+	return () => document.removeEventListener('mousedown', handler);
+});
+function onSystemPickerKey(e: KeyboardEvent) {
+	if (e.key === 'Escape') {
 		closeSystemPicker();
 	}
-	$effect(() => {
-		if (!showContentPicker) {
-			return;
-		}
-		const handler = (e: MouseEvent) => {
-			const el = document.getElementById('content-lang-picker');
-			if (el && !el.contains(e.target as Node)) {
-				closeContentPicker();
-			}
-		};
-		document.addEventListener('mousedown', handler);
-		return () => document.removeEventListener('mousedown', handler);
-	});
-	function onContentPickerKey(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			closeContentPicker();
-		}
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			addContentLanguage(contentPickerSearch.trim());
+}
+
+// Content languages
+function removeContentLang(code: string) {
+	if (code === systemSettings.defaultContentLanguage && systemSettings.contentLanguages.length === 1) {
+		return;
+	}
+	systemSettings.contentLanguages = systemSettings.contentLanguages.filter((c: string) => c !== code);
+	if (!systemSettings.contentLanguages.includes(systemSettings.defaultContentLanguage)) {
+		systemSettings.defaultContentLanguage = systemSettings.contentLanguages[0] || '';
+	}
+}
+let showContentPicker = $state(false);
+let contentPickerSearch = $state('');
+function openContentPicker() {
+	showContentPicker = true;
+	queueMicrotask(() => document.getElementById('content-lang-search')?.focus());
+}
+function closeContentPicker() {
+	showContentPicker = false;
+	contentPickerSearch = '';
+}
+function addContentLanguage(code: string) {
+	const c = code.toLowerCase().trim();
+	if (!c || c.length < 2) {
+		return;
+	}
+	if (!systemSettings.contentLanguages.includes(c)) {
+		systemSettings.contentLanguages = [...systemSettings.contentLanguages, c];
+		if (!systemSettings.defaultContentLanguage) {
+			systemSettings.defaultContentLanguage = c;
 		}
 	}
+	closeSystemPicker();
+}
+$effect(() => {
+	if (!showContentPicker) {
+		return;
+	}
+	const handler = (e: MouseEvent) => {
+		const el = document.getElementById('content-lang-picker');
+		if (el && !el.contains(e.target as Node)) {
+			closeContentPicker();
+		}
+	};
+	document.addEventListener('mousedown', handler);
+	return () => document.removeEventListener('mousedown', handler);
+});
+function onContentPickerKey(e: KeyboardEvent) {
+	if (e.key === 'Escape') {
+		closeContentPicker();
+	}
+	if (e.key === 'Enter') {
+		e.preventDefault();
+		addContentLanguage(contentPickerSearch.trim());
+	}
+}
 
-	$effect(() => {
-		// Auto-detect timezone if set to default UTC
-		if (systemSettings.timezone === 'UTC') {
-			try {
-				const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-				if (detected && Intl.supportedValuesOf('timeZone').includes(detected)) {
-					systemSettings.timezone = detected;
-				}
-			} catch (e) {
-				// Fallback to UTC if detection fails
-				console.warn('Timezone detection failed', e);
+$effect(() => {
+	// Auto-detect timezone if set to default UTC
+	if (systemSettings.timezone === 'UTC') {
+		try {
+			const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			if (detected && Intl.supportedValuesOf('timeZone').includes(detected)) {
+				systemSettings.timezone = detected;
 			}
+		} catch (e) {
+			// Fallback to UTC if detection fails
+			console.warn('Timezone detection failed', e);
 		}
-	});
+	}
+});
 
-	// Enforce dependency: Demo Mode REQUIRES Multi-Tenant
-	$effect(() => {
-		if (systemSettings.demoMode) {
-			systemSettings.multiTenant = true;
-		}
-	});
+// Enforce dependency: Demo Mode REQUIRES Multi-Tenant
+$effect(() => {
+	if (systemSettings.demoMode) {
+		systemSettings.multiTenant = true;
+	}
+});
 
-	// Derived available suggestions
-	let systemAvailable = $state<string[]>([]);
-	let contentAvailable = $state<{ code: string; name: string; native: string }[]>([]);
-	$effect(() => {
-		systemAvailable = availableLanguages.filter(
-			(l: string) => !systemSettings.systemLanguages.includes(l) && l.toLowerCase().includes(systemPickerSearch.toLowerCase())
-		);
-		const search = contentPickerSearch.toLowerCase();
-		contentAvailable = iso6391.filter(
-			(lang) =>
-				!systemSettings.contentLanguages.includes(lang.code) &&
-				(lang.code.toLowerCase().includes(search) || lang.name.toLowerCase().includes(search) || lang.native.toLowerCase().includes(search))
-		);
-	});
+// Derived available suggestions
+let systemAvailable = $state<string[]>([]);
+let contentAvailable = $state<{ code: string; name: string; native: string }[]>([]);
+$effect(() => {
+	systemAvailable = availableLanguages.filter(
+		(l: string) => !systemSettings.systemLanguages.includes(l) && l.toLowerCase().includes(systemPickerSearch.toLowerCase())
+	);
+	const search = contentPickerSearch.toLowerCase();
+	contentAvailable = iso6391.filter(
+		(lang) =>
+			!systemSettings.contentLanguages.includes(lang.code) &&
+			(lang.code.toLowerCase().includes(search) || lang.name.toLowerCase().includes(search) || lang.native.toLowerCase().includes(search))
+	);
+});
 
-	// Options for Autocomplete
-	const allTimezones = Intl.supportedValuesOf('timeZone');
+// Options for Autocomplete
+const allTimezones = Intl.supportedValuesOf('timeZone');
 </script>
 
 <form onsubmit={(e) => e.preventDefault()} class="fade-in w-full min-w-0">

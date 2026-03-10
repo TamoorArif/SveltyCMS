@@ -23,12 +23,8 @@ const uuidPk = () => text('_id', { length: 36 }).primaryKey();
 // Using timestamp_ms mode allows us to pass JS Date objects to insert/update
 // and get JS Date objects back, which matches the behavior expected by shared modules.
 const timestamps = {
-	createdAt: integer('createdAt', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(strftime('%s', 'now') * 1000)`),
-	updatedAt: integer('updatedAt', { mode: 'timestamp_ms' })
-		.notNull()
-		.default(sql`(strftime('%s', 'now') * 1000)`)
+	createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`)
 };
 
 // Helper for tenantId (nullable for multi-tenant support)
@@ -337,9 +333,7 @@ export const pluginPagespeedResults = sqliteTable(
 		device: text('device', { length: 20 }).notNull().default('mobile'),
 		url: text('url', { length: 2000 }).notNull(),
 		performanceScore: integer('performanceScore').notNull().default(0),
-		fetchedAt: integer('fetchedAt', { mode: 'timestamp_ms' })
-			.notNull()
-			.default(sql`(strftime('%s', 'now') * 1000)`),
+		fetchedAt: integer('fetchedAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
 		...timestamps
 	},
 	(table) => ({
@@ -378,9 +372,7 @@ export const pluginMigrations = sqliteTable(
 		migrationId: text('migrationId', { length: 255 }).notNull(),
 		version: integer('version').notNull(),
 		tenantId: tenantField(),
-		appliedAt: integer('appliedAt', { mode: 'timestamp_ms' })
-			.notNull()
-			.default(sql`(strftime('%s', 'now') * 1000)`),
+		appliedAt: integer('appliedAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
 		...timestamps
 	},
 	(table) => ({

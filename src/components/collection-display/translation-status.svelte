@@ -13,400 +13,400 @@ FIXES:
 -->
 
 <script lang="ts">
-	// Skeleton V4
-	import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-	// Components
-	import ProgressBar from '@src/components/system/progress-bar.svelte';
-	// Paraglide Messages
-	import { applayout_contentlanguage, translationsstatus_completed } from '@src/paraglide/messages';
-	import type { Locale } from '@src/paraglide/runtime';
-	import { collection, collectionValue, mode } from '@src/stores/collection-store.svelte';
-	import { publicEnv } from '@src/stores/global-settings.svelte';
-	import { contentLanguage, translationProgress } from '@src/stores/store.svelte';
-	import { getLanguageName } from '@utils/language-utils';
-	import { logger } from '@utils/logger';
-	import { getFieldName } from '@utils/utils';
-	import { untrack } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
+// Skeleton V4
+import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
+// Components
+import ProgressBar from '@src/components/system/progress-bar.svelte';
+// Paraglide Messages
+import { applayout_contentlanguage, translationsstatus_completed } from '@src/paraglide/messages';
+import type { Locale } from '@src/paraglide/runtime';
+import { collection, collectionValue, mode } from '@src/stores/collection-store.svelte';
+import { publicEnv } from '@src/stores/global-settings.svelte';
+import { contentLanguage, translationProgress } from '@src/stores/store.svelte';
+import { getLanguageName } from '@utils/language-utils';
+import { logger } from '@utils/logger';
+import { getFieldName } from '@utils/utils';
+import { untrack } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
 
-	// State
-	let isInitialized = $state(false);
-	let completionTotals = $state({ total: 0, translated: 0 });
+// State
+let isInitialized = $state(false);
+let completionTotals = $state({ total: 0, translated: 0 });
 
-	// Derived values
-	const availableLanguages = $derived.by(() => {
-		const languages = publicEnv?.AVAILABLE_CONTENT_LANGUAGES;
-		if (!(languages && Array.isArray(languages))) {
-			return ['en'] as Locale[];
+// Derived values
+const availableLanguages = $derived.by(() => {
+	const languages = publicEnv?.AVAILABLE_CONTENT_LANGUAGES;
+	if (!(languages && Array.isArray(languages))) {
+		return ['en'] as Locale[];
+	}
+	return languages as Locale[];
+});
+
+const currentLanguage = $derived(contentLanguage.value);
+const currentMode = $derived(mode.value);
+const isViewMode = $derived(currentMode === 'view');
+
+// Logic: In View Mode, only show *other* languages (switcher style). In Edit Mode, show all (status style).
+const dropdownLanguages = $derived.by(() => {
+	if (isViewMode) {
+		return availableLanguages.filter((l) => l !== currentLanguage);
+	}
+	return availableLanguages;
+});
+
+const overallPercentage = $derived.by(() => {
+	const { total, translated } = completionTotals;
+	return total > 0 ? Math.round((translated / total) * 100) : 0;
+});
+
+const showProgress = $derived(translationProgress.value?.show || completionTotals.total > 0);
+
+// Calculate language-specific progress
+const languageProgress = $derived.by(() => {
+	const progress: Record<string, number> = {};
+	const currentProgress = translationProgress.value;
+
+	for (const lang of availableLanguages) {
+		const langProgress = currentProgress?.[lang as Locale];
+		if (langProgress && langProgress.total.size > 0) {
+			progress[lang] = Math.round((langProgress.translated.size / langProgress.total.size) * 100);
+		} else {
+			progress[lang] = 0;
 		}
-		return languages as Locale[];
-	});
-
-	const currentLanguage = $derived(contentLanguage.value);
-	const currentMode = $derived(mode.value);
-	const isViewMode = $derived(currentMode === 'view');
-
-	// Logic: In View Mode, only show *other* languages (switcher style). In Edit Mode, show all (status style).
-	const dropdownLanguages = $derived.by(() => {
-		if (isViewMode) {
-			return availableLanguages.filter((l) => l !== currentLanguage);
-		}
-		return availableLanguages;
-	});
-
-	const overallPercentage = $derived.by(() => {
-		const { total, translated } = completionTotals;
-		return total > 0 ? Math.round((translated / total) * 100) : 0;
-	});
-
-	const showProgress = $derived(translationProgress.value?.show || completionTotals.total > 0);
-
-	// Calculate language-specific progress
-	const languageProgress = $derived.by(() => {
-		const progress: Record<string, number> = {};
-		const currentProgress = translationProgress.value;
-
-		for (const lang of availableLanguages) {
-			const langProgress = currentProgress?.[lang as Locale];
-			if (langProgress && langProgress.total.size > 0) {
-				progress[lang] = Math.round((langProgress.translated.size / langProgress.total.size) * 100);
-			} else {
-				progress[lang] = 0;
-			}
-		}
-
-		return progress;
-	});
-
-	// Helper functions
-	function getProgressVariant(value: number): 'primary' | 'warning' | 'error' {
-		if (value >= 80) {
-			return 'primary';
-		}
-		if (value >= 40) {
-			return 'warning';
-		}
-		return 'error';
 	}
 
-	function getTextColor(value: number): string {
-		return `text-${getProgressVariant(value)}-500`;
+	return progress;
+});
+
+// Helper functions
+function getProgressVariant(value: number): 'primary' | 'warning' | 'error' {
+	if (value >= 80) {
+		return 'primary';
+	}
+	if (value >= 40) {
+		return 'warning';
+	}
+	return 'error';
+}
+
+function getTextColor(value: number): string {
+	return `text-${getProgressVariant(value)}-500`;
+}
+
+/**
+ * FIXED: Multi-field translation detection
+ * Handles complex widgets like SEO with nested language objects
+ */
+function isFieldTranslated(value: unknown): boolean {
+	if (value === null || value === undefined) {
+		return false;
 	}
 
-	/**
-	 * FIXED: Multi-field translation detection
-	 * Handles complex widgets like SEO with nested language objects
-	 */
-	function isFieldTranslated(value: unknown): boolean {
-		if (value === null || value === undefined) {
-			return false;
-		}
+	// Handle string values (simple fields)
+	if (typeof value === 'string') {
+		return value.trim() !== '';
+	}
 
-		// Handle string values (simple fields)
-		if (typeof value === 'string') {
-			return value.trim() !== '';
-		}
+	// Handle object values (complex widgets like SEO)
+	// For complex widgets, value might be an object with language keys
+	if (typeof value === 'object' && !Array.isArray(value)) {
+		const obj = value as Record<string, any>;
 
-		// Handle object values (complex widgets like SEO)
-		// For complex widgets, value might be an object with language keys
-		if (typeof value === 'object' && !Array.isArray(value)) {
-			const obj = value as Record<string, any>;
+		// Check if this is a language-keyed object (SEO widget pattern)
+		// Look for language codes as keys (en, de, fr, etc.)
+		const hasLanguageKeys = availableLanguages.some((lang) => lang in obj);
 
-			// Check if this is a language-keyed object (SEO widget pattern)
-			// Look for language codes as keys (en, de, fr, etc.)
-			const hasLanguageKeys = availableLanguages.some((lang) => lang in obj);
-
-			if (hasLanguageKeys) {
-				// For language-keyed objects, check if the current language has content
-				const langData = obj[currentLanguage as string];
-				if (!langData) {
-					return false;
-				}
-
-				// Check if any required field in the language data has content
-				// For SEO: check title and description
-				if ('title' in langData && typeof langData.title === 'string') {
-					return langData.title.trim() !== '';
-				}
-				if ('description' in langData && typeof langData.description === 'string') {
-					return langData.description.trim() !== '';
-				}
-			}
-
-			// For other objects, check if they have any meaningful content
-			return Object.values(obj).some((v) => {
-				if (typeof v === 'string') {
-					return v.trim() !== '';
-				}
-				if (typeof v === 'number') {
-					return true;
-				}
-				if (Array.isArray(v)) {
-					return v.length > 0;
-				}
+		if (hasLanguageKeys) {
+			// For language-keyed objects, check if the current language has content
+			const langData = obj[currentLanguage as string];
+			if (!langData) {
 				return false;
-			});
+			}
+
+			// Check if any required field in the language data has content
+			// For SEO: check title and description
+			if ('title' in langData && typeof langData.title === 'string') {
+				return langData.title.trim() !== '';
+			}
+			if ('description' in langData && typeof langData.description === 'string') {
+				return langData.description.trim() !== '';
+			}
 		}
 
-		// Handle arrays and other types
-		if (Array.isArray(value)) {
-			return value.length > 0;
-		}
-		return Boolean(value);
+		// For other objects, check if they have any meaningful content
+		return Object.values(obj).some((v) => {
+			if (typeof v === 'string') {
+				return v.trim() !== '';
+			}
+			if (typeof v === 'number') {
+				return true;
+			}
+			if (Array.isArray(v)) {
+				return v.length > 0;
+			}
+			return false;
+		});
 	}
 
-	/**
-	 * FIXED: Widget-aware field name generation
-	 * Handles both simple and complex (multi-input) widgets
-	 */
-	// Updated to handle both generic widgets with simple values and multi-field widgets
-	function getTranslatableFieldPath(collectionName: string, field: any): string[] {
-		const baseName = `${collectionName}.${getFieldName(field)}`;
-		// Check if widget has a custom path definition (Generic Architecture)
-		if (field.widget?.getTranslatablePaths) {
-			return field.widget.getTranslatablePaths(baseName);
-		}
+	// Handle arrays and other types
+	if (Array.isArray(value)) {
+		return value.length > 0;
+	}
+	return Boolean(value);
+}
 
-		// Fallback for simple widgets
-		return [baseName];
+/**
+ * FIXED: Widget-aware field name generation
+ * Handles both simple and complex (multi-input) widgets
+ */
+// Updated to handle both generic widgets with simple values and multi-field widgets
+function getTranslatableFieldPath(collectionName: string, field: any): string[] {
+	const baseName = `${collectionName}.${getFieldName(field)}`;
+	// Check if widget has a custom path definition (Generic Architecture)
+	if (field.widget?.getTranslatablePaths) {
+		return field.widget.getTranslatablePaths(baseName);
 	}
 
-	// Initialize translation progress
-	function initializeTranslationProgress(currentCollection: { fields: unknown[]; name?: unknown; _id?: string }): void {
-		const newProgress: typeof translationProgress.value = { show: false };
+	// Fallback for simple widgets
+	return [baseName];
+}
 
-		for (const lang of availableLanguages) {
-			newProgress[lang] = {
-				total: new SvelteSet<string>(),
-				translated: new SvelteSet<string>()
-			};
+// Initialize translation progress
+function initializeTranslationProgress(currentCollection: { fields: unknown[]; name?: unknown; _id?: string }): void {
+	const newProgress: typeof translationProgress.value = { show: false };
+
+	for (const lang of availableLanguages) {
+		newProgress[lang] = {
+			total: new SvelteSet<string>(),
+			translated: new SvelteSet<string>()
+		};
+	}
+
+	let hasTranslatableFields = false;
+
+	// Iterate through all fields
+	for (const field of currentCollection.fields as {
+		translated?: boolean;
+		label: string;
+		widget?: any;
+	}[]) {
+		if (field.translated) {
+			hasTranslatableFields = true;
+
+			// Get all trackable paths for this field
+			const fieldPaths = getTranslatableFieldPath(currentCollection.name as string, field);
+
+			// Add each path to all languages
+			for (const lang of availableLanguages) {
+				fieldPaths.forEach((path) => {
+					newProgress[lang]?.total.add(path);
+				});
+			}
+		}
+	}
+
+	newProgress.show = hasTranslatableFields;
+	translationProgress.value = newProgress;
+}
+
+/**
+ * FIXED: Multi-field progress tracking
+ * Properly handles complex widgets with nested language data
+ */
+function updateTranslationProgressFromFields(
+	currentCollection: { fields: unknown[]; name?: unknown },
+	currentCollectionValue: Record<string, any>
+): void {
+	const newProgress = { ...translationProgress.value };
+	let hasUpdates = false;
+
+	for (const lang of availableLanguages) {
+		const originalLangProgress = newProgress[lang];
+		if (!originalLangProgress) {
+			continue;
 		}
 
-		let hasTranslatableFields = false;
+		const newTranslatedSet = new SvelteSet(originalLangProgress.translated);
+		let langHasUpdates = false;
 
-		// Iterate through all fields
 		for (const field of currentCollection.fields as {
 			translated?: boolean;
 			label: string;
 			widget?: any;
 		}[]) {
 			if (field.translated) {
-				hasTranslatableFields = true;
+				const dbFieldName = getFieldName(field, false);
+				const fieldValue = currentCollectionValue[dbFieldName];
 
 				// Get all trackable paths for this field
 				const fieldPaths = getTranslatableFieldPath(currentCollection.name as string, field);
 
-				// Add each path to all languages
-				for (const lang of availableLanguages) {
-					fieldPaths.forEach((path) => {
-						newProgress[lang]?.total.add(path);
-					});
-				}
+				// Check translation status for each path
+				fieldPaths.forEach((fullPath) => {
+					// Extract sub-field name if present (e.g., "title" from "seo.title")
+					const pathParts = fullPath.split('.');
+					const subFieldName = pathParts.length > 2 ? pathParts.at(-1) : null;
+
+					let valueToCheck: unknown;
+
+					if (subFieldName && fieldValue && typeof fieldValue === 'object') {
+						// For complex widgets, check the language-specific sub-field
+						const langData = (fieldValue as Record<string, any>)[lang];
+						valueToCheck = langData?.[subFieldName];
+					} else if (fieldValue && typeof fieldValue === 'object' && !Array.isArray(fieldValue)) {
+						valueToCheck = (fieldValue as Record<string, any>)[lang];
+					} else {
+						valueToCheck = fieldValue;
+					}
+
+					const isTranslated = isFieldTranslated(valueToCheck);
+					const wasTranslated = originalLangProgress.translated.has(fullPath);
+
+					if (isTranslated && !wasTranslated) {
+						newTranslatedSet.add(fullPath);
+						langHasUpdates = true;
+					} else if (!isTranslated && wasTranslated) {
+						newTranslatedSet.delete(fullPath);
+						langHasUpdates = true;
+					}
+				});
 			}
 		}
 
-		newProgress.show = hasTranslatableFields;
+		if (langHasUpdates) {
+			newProgress[lang] = {
+				...originalLangProgress,
+				translated: newTranslatedSet
+			};
+			hasUpdates = true;
+		}
+	}
+
+	if (hasUpdates) {
 		translationProgress.value = newProgress;
+		calculateCompletionTotals();
+	}
+}
+
+// Calculate overall completion totals
+function calculateCompletionTotals(): void {
+	const progress = translationProgress.value;
+	let total = 0;
+	let translated = 0;
+
+	for (const lang of availableLanguages) {
+		const langProgress = progress[lang as Locale];
+		if (!langProgress) {
+			continue;
+		}
+		translated += langProgress.translated.size;
+		total += langProgress.total.size;
 	}
 
-	/**
-	 * FIXED: Multi-field progress tracking
-	 * Properly handles complex widgets with nested language data
-	 */
-	function updateTranslationProgressFromFields(
-		currentCollection: { fields: unknown[]; name?: unknown },
-		currentCollectionValue: Record<string, any>
-	): void {
-		const newProgress = { ...translationProgress.value };
-		let hasUpdates = false;
+	completionTotals = { total, translated };
+}
 
-		for (const lang of availableLanguages) {
-			const originalLangProgress = newProgress[lang];
-			if (!originalLangProgress) {
-				continue;
-			}
+// Dropdown positioning handled by Skeleton Menu
 
-			const newTranslatedSet = new SvelteSet(originalLangProgress.translated);
-			let langHasUpdates = false;
+function handleLanguageChange(selectedLanguage: Locale): void {
+	logger.debug('[TranslationStatus] Language change:', contentLanguage.value, '→', selectedLanguage);
+	contentLanguage.set(selectedLanguage);
 
-			for (const field of currentCollection.fields as {
-				translated?: boolean;
-				label: string;
-				widget?: any;
-			}[]) {
-				if (field.translated) {
-					const dbFieldName = getFieldName(field, false);
-					const fieldValue = currentCollectionValue[dbFieldName];
+	// Handle View Mode Navigation (previously handleViewModeLanguageChange)
+	if (isViewMode) {
+		const currentCollectionId = collection.value?._id;
+		const currentSearch = page.url.search;
 
-					// Get all trackable paths for this field
-					const fieldPaths = getTranslatableFieldPath(currentCollection.name as string, field);
-
-					// Check translation status for each path
-					fieldPaths.forEach((fullPath) => {
-						// Extract sub-field name if present (e.g., "title" from "seo.title")
-						const pathParts = fullPath.split('.');
-						const subFieldName = pathParts.length > 2 ? pathParts.at(-1) : null;
-
-						let valueToCheck: unknown;
-
-						if (subFieldName && fieldValue && typeof fieldValue === 'object') {
-							// For complex widgets, check the language-specific sub-field
-							const langData = (fieldValue as Record<string, any>)[lang];
-							valueToCheck = langData?.[subFieldName];
-						} else if (fieldValue && typeof fieldValue === 'object' && !Array.isArray(fieldValue)) {
-							valueToCheck = (fieldValue as Record<string, any>)[lang];
-						} else {
-							valueToCheck = fieldValue;
-						}
-
-						const isTranslated = isFieldTranslated(valueToCheck);
-						const wasTranslated = originalLangProgress.translated.has(fullPath);
-
-						if (isTranslated && !wasTranslated) {
-							newTranslatedSet.add(fullPath);
-							langHasUpdates = true;
-						} else if (!isTranslated && wasTranslated) {
-							newTranslatedSet.delete(fullPath);
-							langHasUpdates = true;
-						}
-					});
-				}
-			}
-
-			if (langHasUpdates) {
-				newProgress[lang] = {
-					...originalLangProgress,
-					translated: newTranslatedSet
-				};
-				hasUpdates = true;
-			}
-		}
-
-		if (hasUpdates) {
-			translationProgress.value = newProgress;
-			calculateCompletionTotals();
-		}
-	}
-
-	// Calculate overall completion totals
-	function calculateCompletionTotals(): void {
-		const progress = translationProgress.value;
-		let total = 0;
-		let translated = 0;
-
-		for (const lang of availableLanguages) {
-			const langProgress = progress[lang as Locale];
-			if (!langProgress) {
-				continue;
-			}
-			translated += langProgress.translated.size;
-			total += langProgress.total.size;
-		}
-
-		completionTotals = { total, translated };
-	}
-
-	// Dropdown positioning handled by Skeleton Menu
-
-	function handleLanguageChange(selectedLanguage: Locale): void {
-		logger.debug('[TranslationStatus] Language change:', contentLanguage.value, '→', selectedLanguage);
-		contentLanguage.set(selectedLanguage);
-
-		// Handle View Mode Navigation (previously handleViewModeLanguageChange)
-		if (isViewMode) {
-			const currentCollectionId = collection.value?._id;
-			const currentSearch = page.url.search;
-
-			if (currentCollectionId) {
-				const newPath = `/${selectedLanguage}/${currentCollectionId}${currentSearch}`;
-				goto(newPath, { replaceState: false, invalidateAll: true });
-			} else {
-				const currentPath = page.url.pathname;
-				const pathParts = currentPath.split('/').filter(Boolean);
-				if (pathParts.length > 0) {
-					pathParts[0] = selectedLanguage;
-					const newPath = `/${pathParts.join('/')}${currentSearch}`;
-					goto(newPath, { replaceState: false, invalidateAll: true });
-				}
-			}
-			return;
-		}
-
-		if (typeof window !== 'undefined') {
-			const currentPath = window.location.pathname;
+		if (currentCollectionId) {
+			const newPath = `/${selectedLanguage}/${currentCollectionId}${currentSearch}`;
+			goto(newPath, { replaceState: false, invalidateAll: true });
+		} else {
+			const currentPath = page.url.pathname;
 			const pathParts = currentPath.split('/').filter(Boolean);
-
 			if (pathParts.length > 0) {
 				pathParts[0] = selectedLanguage;
-				const newPath = `/${pathParts.join('/')}${window.location.search}`;
-				window.history.replaceState({}, '', newPath);
-				logger.debug('[TranslationStatus] Updated URL to:', newPath);
+				const newPath = `/${pathParts.join('/')}${currentSearch}`;
+				goto(newPath, { replaceState: false, invalidateAll: true });
 			}
-
-			const customEvent = new CustomEvent('languageChanged', {
-				detail: { language: selectedLanguage },
-				bubbles: true
-			});
-			window.dispatchEvent(customEvent);
-			logger.debug('[TranslationStatus] Dispatched languageChanged event');
 		}
+		return;
 	}
 
-	// Effects
-	let lastEntryId = $state<string | undefined>(undefined);
-	let lastCollectionId = $state<string | undefined>(undefined);
+	if (typeof window !== 'undefined') {
+		const currentPath = window.location.pathname;
+		const pathParts = currentPath.split('/').filter(Boolean);
 
-	$effect(() => {
-		const currentCollection = collection.value;
-		const currentEntry = collectionValue.value as { _id?: string } | undefined;
-		const entryId = currentEntry?._id;
-		const collectionId = currentCollection?._id;
-
-		const collectionChanged = collectionId !== lastCollectionId;
-		const entryChanged = entryId !== lastEntryId;
-
-		if (currentCollection?.fields && (collectionChanged || entryChanged)) {
-			logger.debug('[TranslationStatus] Initializing translation progress', {
-				collectionId,
-				entryId,
-				collectionChanged,
-				entryChanged,
-				mode: entryId ? 'edit' : 'create'
-			});
-
-			untrack(() => {
-				isInitialized = false;
-				initializeTranslationProgress(currentCollection);
-
-				if (entryId && currentEntry && Object.keys(currentEntry).length > 0) {
-					updateTranslationProgressFromFields(currentCollection, currentEntry);
-				} else {
-					calculateCompletionTotals();
-				}
-
-				isInitialized = true;
-				lastEntryId = entryId;
-				lastCollectionId = collectionId;
-			});
+		if (pathParts.length > 0) {
+			pathParts[0] = selectedLanguage;
+			const newPath = `/${pathParts.join('/')}${window.location.search}`;
+			window.history.replaceState({}, '', newPath);
+			logger.debug('[TranslationStatus] Updated URL to:', newPath);
 		}
-	});
 
-	let lastCollectionValueStr = $state<string>('');
-	$effect(() => {
-		const currentCollection = collection.value;
-		const currentCollectionValue = collectionValue.value as Record<string, any>;
+		const customEvent = new CustomEvent('languageChanged', {
+			detail: { language: selectedLanguage },
+			bubbles: true
+		});
+		window.dispatchEvent(customEvent);
+		logger.debug('[TranslationStatus] Dispatched languageChanged event');
+	}
+}
 
-		if (currentCollection?.fields && currentCollectionValue && Object.keys(currentCollectionValue).length > 0 && isInitialized) {
-			const currentStr = JSON.stringify(currentCollectionValue);
-			if (currentStr !== lastCollectionValueStr) {
-				logger.debug('[TranslationStatus] Collection value changed, updating progress');
-				updateTranslationProgressFromFields(currentCollection, currentCollectionValue);
-				lastCollectionValueStr = currentStr;
+// Effects
+let lastEntryId = $state<string | undefined>(undefined);
+let lastCollectionId = $state<string | undefined>(undefined);
+
+$effect(() => {
+	const currentCollection = collection.value;
+	const currentEntry = collectionValue.value as { _id?: string } | undefined;
+	const entryId = currentEntry?._id;
+	const collectionId = currentCollection?._id;
+
+	const collectionChanged = collectionId !== lastCollectionId;
+	const entryChanged = entryId !== lastEntryId;
+
+	if (currentCollection?.fields && (collectionChanged || entryChanged)) {
+		logger.debug('[TranslationStatus] Initializing translation progress', {
+			collectionId,
+			entryId,
+			collectionChanged,
+			entryChanged,
+			mode: entryId ? 'edit' : 'create'
+		});
+
+		untrack(() => {
+			isInitialized = false;
+			initializeTranslationProgress(currentCollection);
+
+			if (entryId && currentEntry && Object.keys(currentEntry).length > 0) {
+				updateTranslationProgressFromFields(currentCollection, currentEntry);
+			} else {
+				calculateCompletionTotals();
 			}
+
+			isInitialized = true;
+			lastEntryId = entryId;
+			lastCollectionId = collectionId;
+		});
+	}
+});
+
+let lastCollectionValueStr = $state<string>('');
+$effect(() => {
+	const currentCollection = collection.value;
+	const currentCollectionValue = collectionValue.value as Record<string, any>;
+
+	if (currentCollection?.fields && currentCollectionValue && Object.keys(currentCollectionValue).length > 0 && isInitialized) {
+		const currentStr = JSON.stringify(currentCollectionValue);
+		if (currentStr !== lastCollectionValueStr) {
+			logger.debug('[TranslationStatus] Collection value changed, updating progress');
+			updateTranslationProgressFromFields(currentCollection, currentCollectionValue);
+			lastCollectionValueStr = currentStr;
 		}
-	});
+	}
+});
 </script>
 
 <div class="translation-status-container relative mt-1 inline-block text-left">

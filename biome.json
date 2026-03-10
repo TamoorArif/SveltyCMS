@@ -15,13 +15,13 @@
 			"**/*.json",
 			"**/*.svelte",
 			"**/*.css",
-			"!!**/node_modules/**",
-			"!!**/build/**",
-			"!!**/.svelte-kit/**",
-			"!!**/dist/**",
-			"!!**/package/**",
-			"!!**/src/paraglide/**",
-			"!!**/.bun-cache/**"
+			"!!**/node_modules",
+			"!!**/build",
+			"!!**/.svelte-kit",
+			"!!**/dist",
+			"!!**/package",
+			"!!**/src/paraglide",
+			"!!**/.bun-cache"
 		]
 	},
 	"formatter": {

@@ -27,27 +27,27 @@
  -->
 
 <script lang="ts" module>
-	export interface TreeNode {
-		ariaLabel?: string; // Optional aria label for the node
-		badge?: {
-			visible?: boolean; // Whether the badge is visible
-			count?: number; // Count for the badge
-			status?: 'draft' | 'publish' | 'archive' | 'schedule' | 'delete' | 'clone' | 'test'; // Status for the badge
-			color?: string; // Color for the badge
-		};
-		children?: TreeNode[]; // Optional children nodes
-		depth?: number; // Depth of the node
-		icon?: string; // Optional icon for the node
-		id: string; // Unique identifier for the node
-		isCollection?: boolean; // Whether the node is a collection
-		isExpanded?: boolean; // Whether the node is expanded
-		isLoading?: boolean; // Whether the node is loading
-		name: string; // Name of the node
-		nodeType?: string; // Type of the node
-		onClick?: (node: TreeNode) => void;
-		order?: number; // Order of the node
-		path?: string; // Path of the node
-	}
+export interface TreeNode {
+	ariaLabel?: string; // Optional aria label for the node
+	badge?: {
+		visible?: boolean; // Whether the badge is visible
+		count?: number; // Count for the badge
+		status?: 'draft' | 'publish' | 'archive' | 'schedule' | 'delete' | 'clone' | 'test'; // Status for the badge
+		color?: string; // Color for the badge
+	};
+	children?: TreeNode[]; // Optional children nodes
+	depth?: number; // Depth of the node
+	icon?: string; // Optional icon for the node
+	id: string; // Unique identifier for the node
+	isCollection?: boolean; // Whether the node is a collection
+	isExpanded?: boolean; // Whether the node is expanded
+	isLoading?: boolean; // Whether the node is loading
+	name: string; // Name of the node
+	nodeType?: string; // Type of the node
+	onClick?: (node: TreeNode) => void;
+	order?: number; // Order of the node
+	path?: string; // Path of the node
+}
 </script>
 
 <script lang="ts">

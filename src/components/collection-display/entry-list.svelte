@@ -40,7 +40,7 @@ bulk actions, and predictive preloading.
 -->
 
 <script module lang="ts">
-	export type SortOrder = 0 | 1 | -1; // Strict type for sort order
+export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 </script>
 
 <script lang="ts">
@@ -59,6 +59,7 @@ bulk actions, and predictive preloading.
 	// =================================================================
 	import type { EntryListProps, PaginationSettings, TableHeader } from '@src/content/types';
 	import { StatusTypes } from '@src/content/types';
+	import { useContent } from '@src/content/content-context.svelte';
 	// ParaglideJS
 	import { EntryList_no_collection, entrylist_all, entrylist_dnd } from '@src/paraglide/messages';
 	// Stores
@@ -98,6 +99,9 @@ bulk actions, and predictive preloading.
 	import { page } from '$app/state';
 	import EntryListMultiButton from './entry-list-multi-button.svelte';
 	import TranslationStatus from './translation-status.svelte';
+
+	// Content Context
+	const { isReady } = useContent();
 
 	// =================================================================
 	// 1. RECEIVE DATA AS PROPS (From +page.server.ts)
@@ -839,7 +843,12 @@ bulk actions, and predictive preloading.
 </script>
 
 <!--Table -->
-{#if !currentCollection}
+{#if !isReady}
+	<div class="flex h-64 flex-col items-center justify-center p-8">
+		<div class="h-12 w-12 animate-spin rounded-full border-4 border-surface-200 border-t-tertiary-500"></div>
+		<p class="mt-4 text-surface-500">Initializing content system...</p>
+	</div>
+{:else if !currentCollection}
 	<div class="dark:bg-error-950 flex h-64 flex-col items-center justify-center rounded-lg border border-error-500 bg-error-50 p-8">
 		<svg aria-hidden="true" class="mb-4 h-16 w-16 text-error-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path

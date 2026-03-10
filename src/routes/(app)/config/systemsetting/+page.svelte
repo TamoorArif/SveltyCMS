@@ -15,84 +15,84 @@ All dynamic CMS settings organized into logical groups
 -->
 
 <script lang="ts">
-	// Components
-	import PageTitle from '@src/components/page-title.svelte';
-	import GDPRSettings from '@src/components/system/gdpr-settings.svelte';
-	import { groupsNeedingConfig } from '@src/stores/config-store.svelte.ts';
-	import { logger } from '@utils/logger';
-	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import GenericSettingsGroup from './generic-settings-group.svelte';
-	import type { SettingGroup } from './settings-groups';
-	// Import settings structure
-	import { getSettingGroupsByRole } from './settings-groups';
+// Components
+import PageTitle from '@src/components/page-title.svelte';
+import GDPRSettings from '@src/components/system/gdpr-settings.svelte';
+import { groupsNeedingConfig } from '@src/stores/config-store.svelte.ts';
+import { logger } from '@utils/logger';
+import { onMount } from 'svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import GenericSettingsGroup from './generic-settings-group.svelte';
+import type { SettingGroup } from './settings-groups';
+// Import settings structure
+import { getSettingGroupsByRole } from './settings-groups';
 
-	// Get user admin status from page data (set by +page.server.ts)
-	const { data } = $props();
-	const isAdmin = $derived(data.isAdmin);
+// Get user admin status from page data (set by +page.server.ts)
+const { data } = $props();
+const isAdmin = $derived(data.isAdmin);
 
-	//  Use $state for all component state
-	let availableGroups: SettingGroup[] = $state([]);
+//  Use $state for all component state
+let availableGroups: SettingGroup[] = $state([]);
 
-	// Derived selection from URL
-	const selectedGroupId = $derived(page.url.searchParams.get('group'));
+// Derived selection from URL
+const selectedGroupId = $derived(page.url.searchParams.get('group'));
 
-	// Track which groups need configuration
-	const unconfiguredCount = $derived(groupsNeedingConfig.size);
+// Track which groups need configuration
+const unconfiguredCount = $derived(groupsNeedingConfig.size);
 
-	// Remove filteredGroups logic as sidebar manages it externally
+// Remove filteredGroups logic as sidebar manages it externally
 
-	// Check all groups for empty fields on page load
-	async function checkAllGroupsForEmptyFields() {
-		const groupsWithEmptyFields = new SvelteSet<string>();
+// Check all groups for empty fields on page load
+async function checkAllGroupsForEmptyFields() {
+	const groupsWithEmptyFields = new SvelteSet<string>();
 
-		// Check each available group
-		for (const group of availableGroups) {
-			try {
-				const response = await fetch(`/api/settings/${group.id}`);
-				const data = await response.json();
+	// Check each available group
+	for (const group of availableGroups) {
+		try {
+			const response = await fetch(`/api/settings/${group.id}`);
+			const data = await response.json();
 
-				if (data.success && data.values) {
-					// Check if this group has empty required/critical fields
-					const hasEmptyFields = group.fields.some((field) => {
-						const value = data.values[field.key];
+			if (data.success && data.values) {
+				// Check if this group has empty required/critical fields
+				const hasEmptyFields = group.fields.some((field) => {
+					const value = data.values[field.key];
 
-						// Check for empty strings in critical fields
-						if (typeof value === 'string') {
-							return value === '' && (field.required || field.key.includes('HOST') || field.key.includes('EMAIL'));
-						}
-
-						return false;
-					});
-
-					if (hasEmptyFields) {
-						groupsWithEmptyFields.add(group.id);
+					// Check for empty strings in critical fields
+					if (typeof value === 'string') {
+						return value === '' && (field.required || field.key.includes('HOST') || field.key.includes('EMAIL'));
 					}
-				}
-			} catch (err) {
-				logger.error(`Failed to check group ${group.id}:`, err);
-			}
-		}
 
-		// Update the store with all groups that need configuration
-		groupsNeedingConfig.clear();
-		groupsWithEmptyFields.forEach((id) => groupsNeedingConfig.add(id));
+					return false;
+				});
+
+				if (hasEmptyFields) {
+					groupsWithEmptyFields.add(group.id);
+				}
+			}
+		} catch (err) {
+			logger.error(`Failed to check group ${group.id}:`, err);
+		}
 	}
 
-	onMount(() => {
-		availableGroups = getSettingGroupsByRole(isAdmin).sort((a, b) => a.name.localeCompare(b.name));
+	// Update the store with all groups that need configuration
+	groupsNeedingConfig.clear();
+	groupsWithEmptyFields.forEach((id) => groupsNeedingConfig.add(id));
+}
 
-		// Default selection if none in URL
-		if (!selectedGroupId && availableGroups.length > 0) {
-			const url = new URL(window.location.href);
-			url.searchParams.set('group', availableGroups[0].id);
-			goto(url.toString(), { replaceState: true });
-		}
+onMount(() => {
+	availableGroups = getSettingGroupsByRole(isAdmin).sort((a, b) => a.name.localeCompare(b.name));
 
-		checkAllGroupsForEmptyFields();
-	});
+	// Default selection if none in URL
+	if (!selectedGroupId && availableGroups.length > 0) {
+		const url = new URL(window.location.href);
+		url.searchParams.set('group', availableGroups[0].id);
+		goto(url.toString(), { replaceState: true });
+	}
+
+	checkAllGroupsForEmptyFields();
+});
 </script>
 
 <PageTitle name="Dynamic System Settings" icon="mdi:cog" showBackButton={true} backUrl="/config" />

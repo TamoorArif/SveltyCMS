@@ -7,170 +7,170 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 -->
 
 <script lang="ts">
-	import { collaboration } from '@src/stores/collaboration-store.svelte';
-	import { screen } from '@src/stores/screen-size-store.svelte';
-	import { ui } from '@src/stores/ui-store.svelte';
-	import { onMount } from 'svelte';
-	import { fade, scale } from 'svelte/transition';
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
-	import ActivityStream from './activity-stream.svelte';
+import { collaboration } from '@src/stores/collaboration-store.svelte';
+import { screen } from '@src/stores/screen-size-store.svelte';
+import { ui } from '@src/stores/ui-store.svelte';
+import { onMount } from 'svelte';
+import { fade, scale } from 'svelte/transition';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import ActivityStream from './activity-stream.svelte';
 
-	// --- Derived ---
-	const user = $derived(page.data.user);
-	const totalUsers = $derived(page.data.totalUsers ?? 1);
-	const aiEnabled = $derived(page.data.aiEnabled ?? false);
-	const isRtcEnabled = $derived(user?.preferences?.rtc?.enabled ?? true);
-	// Show chat if RTC is enabled AND (either multiple users OR AI is available)
-	const shouldShowChat = $derived(isRtcEnabled && (totalUsers > 1 || aiEnabled));
-	const isOpen = $derived(ui.state.chatPanel !== 'hidden');
+// --- Derived ---
+const user = $derived(page.data.user);
+const totalUsers = $derived(page.data.totalUsers ?? 1);
+const aiEnabled = $derived(page.data.aiEnabled ?? false);
+const isRtcEnabled = $derived(user?.preferences?.rtc?.enabled ?? true);
+// Show chat if RTC is enabled AND (either multiple users OR AI is available)
+const shouldShowChat = $derived(isRtcEnabled && (totalUsers > 1 || aiEnabled));
+const isOpen = $derived(ui.state.chatPanel !== 'hidden');
 
-	// Constants for desktop layout
-	const DESKTOP_PANEL_WIDTH = 350;
-	const DESKTOP_PANEL_HEIGHT = 500;
-	const GAP = 16;
+// Constants for desktop layout
+const DESKTOP_PANEL_WIDTH = 350;
+const DESKTOP_PANEL_HEIGHT = 500;
+const GAP = 16;
 
-	// Calculate expansion direction and height constraints
-	const layoutInfo = $derived.by(() => {
-		if (!browser) return { expandUp: true, expandLeft: true, maxHeight: DESKTOP_PANEL_HEIGHT };
+// Calculate expansion direction and height constraints
+const layoutInfo = $derived.by(() => {
+	if (!browser) return { expandUp: true, expandLeft: true, maxHeight: DESKTOP_PANEL_HEIGHT };
 
-		const spaceAbove = pos.y - EDGE_MARGIN;
-		const spaceBelow = window.innerHeight - (pos.y + BUTTON_RADIUS * 2 + EDGE_MARGIN);
-		const spaceLeft = pos.x - EDGE_MARGIN;
-		const spaceRight = window.innerWidth - (pos.x + BUTTON_RADIUS * 2 + EDGE_MARGIN);
+	const spaceAbove = pos.y - EDGE_MARGIN;
+	const spaceBelow = window.innerHeight - (pos.y + BUTTON_RADIUS * 2 + EDGE_MARGIN);
+	const spaceLeft = pos.x - EDGE_MARGIN;
+	const spaceRight = window.innerWidth - (pos.x + BUTTON_RADIUS * 2 + EDGE_MARGIN);
 
-		// Prefer expanding UP if there's more space or if it fits better
-		const expandUp = spaceAbove >= spaceBelow || spaceBelow < DESKTOP_PANEL_HEIGHT;
-		// Prefer expanding LEFT if there's more space on the left
-		const expandLeft = spaceLeft >= spaceRight || spaceRight < DESKTOP_PANEL_WIDTH;
+	// Prefer expanding UP if there's more space or if it fits better
+	const expandUp = spaceAbove >= spaceBelow || spaceBelow < DESKTOP_PANEL_HEIGHT;
+	// Prefer expanding LEFT if there's more space on the left
+	const expandLeft = spaceLeft >= spaceRight || spaceRight < DESKTOP_PANEL_WIDTH;
 
-		const availableHeight = expandUp ? spaceAbove : spaceBelow;
-		const maxHeight = Math.min(DESKTOP_PANEL_HEIGHT, availableHeight - GAP);
+	const availableHeight = expandUp ? spaceAbove : spaceBelow;
+	const maxHeight = Math.min(DESKTOP_PANEL_HEIGHT, availableHeight - GAP);
 
-		return { expandUp, expandLeft, maxHeight };
-	});
+	return { expandUp, expandLeft, maxHeight };
+});
 
-	// --- Constants ---
-	const BUTTON_RADIUS = 28;
-	const EDGE_MARGIN = 12; // Aligned with FloatingNav
-	const DRAG_THRESHOLD = 5;
+// --- Constants ---
+const BUTTON_RADIUS = 28;
+const EDGE_MARGIN = 12; // Aligned with FloatingNav
+const DRAG_THRESHOLD = 5;
 
-	// --- State ---
-	let pos = $state({ x: 0, y: 0 });
-	let isDragging = $state(false);
+// --- State ---
+let pos = $state({ x: 0, y: 0 });
+let isDragging = $state(false);
 
-	// --- Logic ---
-	function loadPosition() {
-		if (!browser) {
+// --- Logic ---
+function loadPosition() {
+	if (!browser) {
+		return;
+	}
+	try {
+		const saved = localStorage.getItem('floatingChatPosition');
+		if (saved) {
+			pos = JSON.parse(saved);
+		} else {
+			// Default position: bottom-right, aligned with FloatingNav
+			const initialX = window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
+			const initialY = window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
+			pos = { x: initialX, y: initialY };
+		}
+	} catch {
+		pos = { x: 0, y: 0 };
+	}
+}
+
+function savePosition() {
+	if (browser) {
+		localStorage.setItem('floatingChatPosition', JSON.stringify(pos));
+	}
+}
+
+function drag(node: HTMLElement) {
+	let startX: number, startY: number;
+	let initialPos: { x: number; y: number };
+	let moved = false;
+
+	function handleDown(e: PointerEvent) {
+		// Don't drag if clicking close button
+		if ((e.target as HTMLElement).closest('.close-btn')) {
 			return;
 		}
-		try {
-			const saved = localStorage.getItem('floatingChatPosition');
-			if (saved) {
-				pos = JSON.parse(saved);
-			} else {
-				// Default position: bottom-right, aligned with FloatingNav
-				const initialX = window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
-				const initialY = window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN);
-				pos = { x: initialX, y: initialY };
-			}
-		} catch {
-			pos = { x: 0, y: 0 };
+
+		startX = e.clientX;
+		startY = e.clientY;
+		initialPos = { ...pos };
+		moved = false;
+		isDragging = true;
+
+		node.setPointerCapture(e.pointerId);
+		window.addEventListener('pointermove', handleMove);
+		window.addEventListener('pointerup', handleUp);
+	}
+
+	function handleMove(e: PointerEvent) {
+		const dx = e.clientX - startX;
+		const dy = e.clientY - startY;
+
+		if (!moved && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+			moved = true;
+		}
+
+		if (moved) {
+			pos = {
+				x: initialPos.x + dx,
+				y: initialPos.y + dy
+			};
 		}
 	}
 
-	function savePosition() {
-		if (browser) {
-			localStorage.setItem('floatingChatPosition', JSON.stringify(pos));
+	function handleUp(_e: PointerEvent) {
+		isDragging = false;
+		window.removeEventListener('pointermove', handleMove);
+		window.removeEventListener('pointerup', handleUp);
+
+		if (moved) {
+			// Snap to bounds
+			pos.x = Math.max(EDGE_MARGIN, Math.min(pos.x, window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
+			pos.y = Math.max(EDGE_MARGIN, Math.min(pos.y, window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
+			savePosition();
+		} else {
+			collaboration.togglePanel();
 		}
 	}
 
-	function drag(node: HTMLElement) {
-		let startX: number, startY: number;
-		let initialPos: { x: number; y: number };
-		let moved = false;
-
-		function handleDown(e: PointerEvent) {
-			// Don't drag if clicking close button
-			if ((e.target as HTMLElement).closest('.close-btn')) {
-				return;
-			}
-
-			startX = e.clientX;
-			startY = e.clientY;
-			initialPos = { ...pos };
-			moved = false;
-			isDragging = true;
-
-			node.setPointerCapture(e.pointerId);
-			window.addEventListener('pointermove', handleMove);
-			window.addEventListener('pointerup', handleUp);
+	node.addEventListener('pointerdown', handleDown);
+	return {
+		destroy() {
+			node.removeEventListener('pointerdown', handleDown);
 		}
+	};
+}
 
-		function handleMove(e: PointerEvent) {
-			const dx = e.clientX - startX;
-			const dy = e.clientY - startY;
+onMount(() => {
+	loadPosition();
+});
 
-			if (!moved && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
-				moved = true;
-			}
+// Handle mobile layout: center the panel if screen is small
+const panelStyle = $derived.by(() => {
+	if (screen.isMobile) {
+		return `position: fixed; bottom: 80px; left: 10px; right: 10px; width: calc(100% - 20px); height: 70vh;`;
+	}
+	// Desktop constraints
+	return `transform: translateY(${layoutInfo.expandUp ? '0' : '0'}); height: ${layoutInfo.maxHeight}px; width: ${DESKTOP_PANEL_WIDTH}px; flex-direction: column; display: flex;`;
+});
 
-			if (moved) {
-				pos = {
-					x: initialPos.x + dx,
-					y: initialPos.y + dy
-				};
-			}
-		}
+// Calculate container position and layout
+const containerStyle = $derived.by(() => {
+	if (screen.isMobile && isOpen) return '';
 
-		function handleUp(_e: PointerEvent) {
-			isDragging = false;
-			window.removeEventListener('pointermove', handleMove);
-			window.removeEventListener('pointerup', handleUp);
+	const commonStyle = `left: ${pos.x}px; width: ${BUTTON_RADIUS * 2}px; display: flex; align-items: ${layoutInfo.expandLeft ? 'flex-end' : 'flex-start'};`;
 
-			if (moved) {
-				// Snap to bounds
-				pos.x = Math.max(EDGE_MARGIN, Math.min(pos.x, window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
-				pos.y = Math.max(EDGE_MARGIN, Math.min(pos.y, window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
-				savePosition();
-			} else {
-				collaboration.togglePanel();
-			}
-		}
-
-		node.addEventListener('pointerdown', handleDown);
-		return {
-			destroy() {
-				node.removeEventListener('pointerdown', handleDown);
-			}
-		};
+	if (!screen.isMobile && isOpen && layoutInfo.expandUp) {
+		return `${commonStyle} bottom: ${window.innerHeight - (pos.y + BUTTON_RADIUS * 2)}px; flex-direction: column-reverse;`;
 	}
 
-	onMount(() => {
-		loadPosition();
-	});
-
-	// Handle mobile layout: center the panel if screen is small
-	const panelStyle = $derived.by(() => {
-		if (screen.isMobile) {
-			return `position: fixed; bottom: 80px; left: 10px; right: 10px; width: calc(100% - 20px); height: 70vh;`;
-		}
-		// Desktop constraints
-		return `transform: translateY(${layoutInfo.expandUp ? '0' : '0'}); height: ${layoutInfo.maxHeight}px; width: ${DESKTOP_PANEL_WIDTH}px; flex-direction: column; display: flex;`;
-	});
-
-	// Calculate container position and layout
-	const containerStyle = $derived.by(() => {
-		if (screen.isMobile && isOpen) return '';
-
-		const commonStyle = `left: ${pos.x}px; width: ${BUTTON_RADIUS * 2}px; display: flex; align-items: ${layoutInfo.expandLeft ? 'flex-end' : 'flex-start'};`;
-
-		if (!screen.isMobile && isOpen && layoutInfo.expandUp) {
-			return `${commonStyle} bottom: ${window.innerHeight - (pos.y + BUTTON_RADIUS * 2)}px; flex-direction: column-reverse;`;
-		}
-
-		return `${commonStyle} top: ${pos.y}px; flex-direction: column;`;
-	});
+	return `${commonStyle} top: ${pos.y}px; flex-direction: column;`;
+});
 </script>
 
 {#if shouldShowChat}

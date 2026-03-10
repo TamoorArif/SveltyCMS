@@ -233,8 +233,15 @@ const processedfields = collection.fields.map((field) => ({
 
 ## 📁 Key Files
 
+- **`src/content/content-manager.ts`**: Thin coordinator (public API facade)
+- **`src/content/content-structure.svelte.ts`**: Svelte 5 runes-based state
+- **`src/content/content-initializer.ts`**: Lifecycle and initialization
+- **`src/content/content-navigation.ts`**: Tree and navigation operations
+- **`src/content/content-reconciler.ts`**: DB-agnostic file ↔ DB synchronization
+- **`src/content/content-cache.svelte.ts`**: L1/L2 cache integration
+- **`src/content/content-metrics.ts`**: Performance and health monitoring
 - **`src/content/vite.ts`**: Vite plugin for type generation
-- **`src/content/types.ts`**: Generated ContentTypes union
+- **`src/content/types.ts`**: Generated ContentTypes union and core interfaces
 - **`src/content/index.ts`**: Collection loading with production optimization
 - **`src/content/collectionScanner.ts`**: Production filesystem scanner
 - **`config/collections/**/\*.ts`\*\*: Source collection schemas

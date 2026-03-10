@@ -6,73 +6,73 @@ It handles widget configuration, permissions, and specific options.
 -->
 
 <script lang="ts">
-	// Stores
+// Stores
 
-	import { Tabs } from '@skeletonlabs/skeleton-svelte';
-	import { button_cancel, button_delete, button_save, system_permission } from '@src/paraglide/messages';
-	import { collectionValue, setCollectionValue, targetWidget } from '@src/stores/collection-store.svelte';
-	import { widgets } from '@src/stores/widget-store.svelte.ts';
-	import { modalState } from '@utils/modal-state.svelte';
-	import type { Role } from '@src/databases/auth/types';
-	import type { SvelteComponent } from 'svelte';
-	import Default from './tabs-fields/default.svelte';
-	import Permission from './tabs-fields/permission.svelte';
-	import Specific from './tabs-fields/specific.svelte';
+import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import { button_cancel, button_delete, button_save, system_permission } from '@src/paraglide/messages';
+import { collectionValue, setCollectionValue, targetWidget } from '@src/stores/collection-store.svelte';
+import { widgets } from '@src/stores/widget-store.svelte.ts';
+import { modalState } from '@utils/modal-state.svelte';
+import type { Role } from '@src/databases/auth/types';
+import type { SvelteComponent } from 'svelte';
+import Default from './tabs-fields/default.svelte';
+import Permission from './tabs-fields/permission.svelte';
+import Specific from './tabs-fields/specific.svelte';
 
-	let localTabSet = $state('0');
+let localTabSet = $state('0');
 
-	// Props
-	interface Props {
-		/** Exposes parent props to this component. */
-		parent?: any;
-		response?: (r: any) => void;
-		value: any;
-		roles?: Role[];
+// Props
+interface Props {
+	/** Exposes parent props to this component. */
+	parent?: any;
+	response?: (r: any) => void;
+	value: any;
+	roles?: Role[];
+}
+
+const { value, response, roles: rolesProp = [] }: Props = $props();
+
+// Local variables
+// Use props directly instead of modalData
+// Widget key is the folder name (lowercase), not the widget Name
+const widgetKey = $derived(value?.widget?.key || (value?.widget?.Name?.toLowerCase() as string));
+const availableWidgets = $derived(widgets.widgetFunctions || {});
+const guiSchema = $derived((availableWidgets[widgetKey]?.GuiSchema || {}) as Record<string, { widget: typeof SvelteComponent }>);
+
+// Derive options from guiSchema
+const options = $derived(guiSchema ? Object.keys(guiSchema) : []);
+const specificOptions = $derived(
+	options.filter(
+		(option) => !['label', 'display', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width', 'permissions'].includes(option)
+	)
+);
+
+// We've created a custom submit function to pass the response and close the modal.
+async function onFormSubmit(): Promise<void> {
+	if (response) {
+		response(targetWidget.value);
 	}
+	modalState.close();
+}
 
-	const { value, response, roles: rolesProp = [] }: Props = $props();
-
-	// Local variables
-	// Use props directly instead of modalData
-	// Widget key is the folder name (lowercase), not the widget Name
-	const widgetKey = $derived(value?.widget?.key || (value?.widget?.Name?.toLowerCase() as string));
-	const availableWidgets = $derived(widgets.widgetFunctions || {});
-	const guiSchema = $derived((availableWidgets[widgetKey]?.GuiSchema || {}) as Record<string, { widget: typeof SvelteComponent }>);
-
-	// Derive options from guiSchema
-	const options = $derived(guiSchema ? Object.keys(guiSchema) : []);
-	const specificOptions = $derived(
-		options.filter(
-			(option) => !['label', 'display', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width', 'permissions'].includes(option)
-		)
-	);
-
-	// We've created a custom submit function to pass the response and close the modal.
-	async function onFormSubmit(): Promise<void> {
-		if (response) {
-			response(targetWidget.value);
+// Function to delete the widget
+function deleteWidget() {
+	const confirmDelete = confirm('Are you sure you want to delete this widget?');
+	if (confirmDelete) {
+		// Perform deletion logic here
+		if (collectionValue && Array.isArray(collectionValue.value.fields)) {
+			const newFields = (collectionValue.value.fields as any[]).filter((field: any) => field.id !== value.id);
+			setCollectionValue({
+				...collectionValue.value,
+				fields: newFields
+			});
 		}
 		modalState.close();
 	}
+}
 
-	// Function to delete the widget
-	function deleteWidget() {
-		const confirmDelete = confirm('Are you sure you want to delete this widget?');
-		if (confirmDelete) {
-			// Perform deletion logic here
-			if (collectionValue && Array.isArray(collectionValue.value.fields)) {
-				const newFields = (collectionValue.value.fields as any[]).filter((field: any) => field.id !== value.id);
-				setCollectionValue({
-					...collectionValue.value,
-					fields: newFields
-				});
-			}
-			modalState.close();
-		}
-	}
-
-	// Base Classes
-	const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
+// Base Classes
+const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 </script>
 
 <div class="space-y-4">

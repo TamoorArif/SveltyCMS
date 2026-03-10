@@ -12,142 +12,142 @@ Renders a list of forms, one for each item in the array. Supports Drag-and-Drop 
 -->
 
 <script lang="ts">
-	import WidgetLoader from '@src/components/collection-display/widget-loader.svelte';
-	import { widgets } from '@src/stores/widget-store.svelte';
-	import { getFieldName } from '@utils/utils';
-	import { flip } from 'svelte/animate';
-	import type { DndEvent } from 'svelte-dnd-action';
-	import { dndzone } from 'svelte-dnd-action';
-	import { v4 as uuidv4 } from 'uuid'; // Ensure uuid is available, or use a simple generator
-	import type { FieldType } from './index';
+import WidgetLoader from '@src/components/collection-display/widget-loader.svelte';
+import { widgets } from '@src/stores/widget-store.svelte';
+import { getFieldName } from '@utils/utils';
+import { flip } from 'svelte/animate';
+import type { DndEvent } from 'svelte-dnd-action';
+import { dndzone } from 'svelte-dnd-action';
+import { v4 as uuidv4 } from 'uuid'; // Ensure uuid is available, or use a simple generator
+import type { FieldType } from './index';
 
-	interface Props {
-		collectionName?: string;
-		field: FieldType;
-		tenantId?: string | null;
-		value: Record<string, any>[] | null | undefined;
+interface Props {
+	collectionName?: string;
+	field: FieldType;
+	tenantId?: string | null;
+	value: Record<string, any>[] | null | undefined;
+}
+
+let { field, value = $bindable([]), tenantId, collectionName }: Props = $props();
+
+// Ensure value is an array and handle null/undefined safely
+$effect(() => {
+	if (value === null || value === undefined || !Array.isArray(value)) {
+		value = [];
+	}
+});
+
+// --- WIDGET LOADING LOGIC ---
+const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../**/*.svelte') as Record<
+	string,
+	() => Promise<{ default: any }>
+>;
+
+function getWidgetLoader(widgetName: string) {
+	if (!widgetName) return null;
+
+	// 1. Exact match via store
+	const fn = widgets.widgetFunctions[widgetName];
+	const storePath = (fn as any)?.componentPath || (fn as any)?.inputComponentPath;
+	if (storePath && storePath in modules) {
+		return modules[storePath];
 	}
 
-	let { field, value = $bindable([]), tenantId, collectionName }: Props = $props();
-
-	// Ensure value is an array and handle null/undefined safely
-	$effect(() => {
-		if (value === null || value === undefined || !Array.isArray(value)) {
-			value = [];
+	// 2. Normalized casing and common path search
+	const normalized = widgetName.toLowerCase();
+	for (const path in modules) {
+		const lowerPath = path.toLowerCase();
+		if (
+			lowerPath.includes(`/widgets/core/${normalized}/input.svelte`) ||
+			lowerPath.includes(`/widgets/core/${normalized}/index.svelte`) ||
+			lowerPath.includes(`/widgets/custom/${normalized}/input.svelte`) ||
+			lowerPath.includes(`/widgets/custom/${normalized}/index.svelte`)
+		) {
+			return modules[path];
 		}
-	});
+	}
 
-	// --- WIDGET LOADING LOGIC ---
-	const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../**/*.svelte') as Record<
-		string,
-		() => Promise<{ default: any }>
-	>;
-
-	function getWidgetLoader(widgetName: string) {
-		if (!widgetName) return null;
-
-		// 1. Exact match via store
-		const fn = widgets.widgetFunctions[widgetName];
-		const storePath = (fn as any)?.componentPath || (fn as any)?.inputComponentPath;
-		if (storePath && storePath in modules) {
-			return modules[storePath];
+	// 3. Last resort fallback
+	for (const path in modules) {
+		if (path.toLowerCase().includes(`/${normalized}/input.svelte`)) {
+			return modules[path];
 		}
+	}
 
-		// 2. Normalized casing and common path search
-		const normalized = widgetName.toLowerCase();
-		for (const path in modules) {
-			const lowerPath = path.toLowerCase();
-			if (
-				lowerPath.includes(`/widgets/core/${normalized}/input.svelte`) ||
-				lowerPath.includes(`/widgets/core/${normalized}/index.svelte`) ||
-				lowerPath.includes(`/widgets/custom/${normalized}/input.svelte`) ||
-				lowerPath.includes(`/widgets/custom/${normalized}/index.svelte`)
-			) {
-				return modules[path];
-			}
+	return null;
+}
+// -----------------------------------------------------------
+
+// --- DnD Logic ---
+let items = $state<{ id: string; data: Record<string, any> }[]>([]);
+
+// Sync value to items
+$effect(() => {
+	const safeValue = value || [];
+	if (safeValue.length !== items.length) {
+		items = safeValue.map((item) => ({
+			id: (item._dndId as string) || uuidv4(),
+			data: item
+		}));
+	}
+});
+
+// Sync items back to value
+function updateValue() {
+	if (!value) return;
+	value = items.map((i) => i.data);
+}
+
+function handleDndConsider(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
+	items = e.detail.items;
+}
+
+function handleDndFinalize(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
+	items = e.detail.items;
+	updateValue();
+}
+
+function addItem() {
+	const newItemId = uuidv4();
+	const newItemData: Record<string, any> = { _dndId: newItemId };
+
+	// Initialize fields with defaults if possible
+	if ((field as any).fields) {
+		(field as any).fields.forEach((f: any) => {
+			const name = f.db_fieldName || getFieldName(f);
+			newItemData[name] = f.default !== undefined ? f.default : null;
+		});
+	}
+
+	items = [...items, { id: newItemId, data: newItemData }];
+	updateValue();
+}
+
+function removeItem(id: string) {
+	items = items.filter((i) => i.id !== id);
+	updateValue();
+}
+
+// Helper specific to formatting labels for collapsed items (e.g. show first field)
+function getItemLabel(itemData: Record<string, any>, index: number) {
+	const fields = (field as any).fields;
+	if (fields && fields.length > 0) {
+		// Try to find a title/name field
+		const titleField = fields.find((f: any) => f.label.toLowerCase().includes('title') || f.label.toLowerCase().includes('name'));
+		const fieldName = titleField ? titleField.db_fieldName || getFieldName(titleField) : fields[0].db_fieldName || getFieldName(fields[0]);
+		const val = itemData[fieldName];
+		if (val && typeof val === 'string') {
+			return val;
 		}
-
-		// 3. Last resort fallback
-		for (const path in modules) {
-			if (path.toLowerCase().includes(`/${normalized}/input.svelte`)) {
-				return modules[path];
-			}
-		}
-
-		return null;
 	}
-	// -----------------------------------------------------------
+	return `Item ${index + 1}`;
+}
 
-	// --- DnD Logic ---
-	let items = $state<{ id: string; data: Record<string, any> }[]>([]);
+let collapsedItems = $state<Record<string, boolean>>({});
 
-	// Sync value to items
-	$effect(() => {
-		const safeValue = value || [];
-		if (safeValue.length !== items.length) {
-			items = safeValue.map((item) => ({
-				id: (item._dndId as string) || uuidv4(),
-				data: item
-			}));
-		}
-	});
-
-	// Sync items back to value
-	function updateValue() {
-		if (!value) return;
-		value = items.map((i) => i.data);
-	}
-
-	function handleDndConsider(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
-		items = e.detail.items;
-	}
-
-	function handleDndFinalize(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
-		items = e.detail.items;
-		updateValue();
-	}
-
-	function addItem() {
-		const newItemId = uuidv4();
-		const newItemData: Record<string, any> = { _dndId: newItemId };
-
-		// Initialize fields with defaults if possible
-		if ((field as any).fields) {
-			(field as any).fields.forEach((f: any) => {
-				const name = f.db_fieldName || getFieldName(f);
-				newItemData[name] = f.default !== undefined ? f.default : null;
-			});
-		}
-
-		items = [...items, { id: newItemId, data: newItemData }];
-		updateValue();
-	}
-
-	function removeItem(id: string) {
-		items = items.filter((i) => i.id !== id);
-		updateValue();
-	}
-
-	// Helper specific to formatting labels for collapsed items (e.g. show first field)
-	function getItemLabel(itemData: Record<string, any>, index: number) {
-		const fields = (field as any).fields;
-		if (fields && fields.length > 0) {
-			// Try to find a title/name field
-			const titleField = fields.find((f: any) => f.label.toLowerCase().includes('title') || f.label.toLowerCase().includes('name'));
-			const fieldName = titleField ? titleField.db_fieldName || getFieldName(titleField) : fields[0].db_fieldName || getFieldName(fields[0]);
-			const val = itemData[fieldName];
-			if (val && typeof val === 'string') {
-				return val;
-			}
-		}
-		return `Item ${index + 1}`;
-	}
-
-	let collapsedItems = $state<Record<string, boolean>>({});
-
-	function toggleCollapse(id: string) {
-		collapsedItems[id] = !collapsedItems[id];
-	}
+function toggleCollapse(id: string) {
+	collapsedItems[id] = !collapsedItems[id];
+}
 </script>
 
 <div class="w-full space-y-2">

@@ -1,12 +1,12 @@
 ---
 path: 'docs/architecture/content-system.mdx'
 title: 'Content System Architecture'
-description: 'Detailed overview of the SveltyCMS Content System, including the Content Manager, Scanner, Index, and Reactivity model.'
+description: 'Detailed overview of the SveltyCMS Content System, including the modular Content Manager, Reconciler, and Reactivity model.'
 order: 5
 icon: 'mdi:database-sync'
 author: 'admin'
 created: '2025-12-02'
-updated: '2026-03-05'
+updated: '2026-03-10'
 tags:
   - 'architecture'
   - 'content-system'
@@ -19,44 +19,51 @@ tags:
 
 The Content System is the core of SveltyCMS, responsible for managing, indexing, and serving content and collections. It leverages Svelte 5 runes for fine-grained reactivity and supports multi-tenant isolation at the filesystem level.
 
-## Core Components
+## Modular Architecture (2026 Refactor)
 
-### 1. Content Manager (`src/content/content-manager.ts`)
+To ensure maintainability and tree-shakability, the Content System has been decomposed into specialized, decoupled modules. The legacy `index.ts` layer has been refactored into a thin bridge, delegating all complex logic to the following subsystems:
 
-The `ContentManager` is a singleton class that orchestrates the entire content lifecycle. It serves as the central point of access for:
+```mermaid
+graph TD
+    Bridge[Content Bridge Index.ts] --> CI[ContentInitializer]
+    Bridge --> CP[ContentPolling]
+    
+    CM[ContentManager Facade] --> CI
+    CM --> CN[ContentNavigation]
+    CM --> CR[ContentReconciler]
+    CM --> CMt[ContentMetrics]
+    
+    CI --> CC[ContentCache]
+    CI --> CR
+    
+    CR --> CS[ContentStructure $state]
+    CR --> Scan[ScanFiles Utility]
+    CR --> DB[(Database Adapter)]
+    
+    CN --> CS
+    
+    CC --> Srv[CacheService L1/L2]
+```
 
-- **Initialization**: Bootstrapping the content management system on server start.
-- **Multi-Tenant Isolation**: Manages collection structures per tenant using `.compiledCollections/{tenantId}/`.
-- **Reactivity (Svelte 5)**: Uses `$state()` to track `contentVersion` and navigation structures.
-- **Access Control**: Dynamic filtering of collections based on user permissions and roles.
+### Core Components
 
-**Key Features:**
+#### 1. Content Manager Facade (`src/content/content-manager.ts`)
+A thin coordinator providing a stable public API. It orchestrates the various specialized modules to ensure consistent data flow across the CMS.
 
-- **Singleton Pattern**: Ensures a single source of truth for content state across the server.
-- **Svelte 5 Runes**: Uses `$state()` for deep reactivity and `$derived()` for computed navigation trees.
-- **Multi-Tenant Folders**: Compiled collection JS files are stored in `.compiledCollections/{tenantId}/` to ensure strict isolation.
-- **Progressive Loading**: Navigation nodes are fetched incrementally to support massive sites (>10k categories).
-- **Diagnostics**: Built-in health checks (`getHealthStatus`) monitor cache performance and system health.
-- **Stable ID Generation**: Deterministic hashing prevents hydration mismatches between SSR and client.
+#### 2. Content Structure (`src/content/content-structure.svelte.ts`)
+The single source of truth for in-memory content state. It uses **Svelte 5 runes** (`$state`, `$derived`) to provide reactive access to the content node map and path lookup map. It includes a `sync()` method for atomic bulk updates.
 
-### 2. Content Index (`src/content/index.ts`)
+#### 3. Content Initializer (`src/content/content-initializer.ts`)
+Manages the system lifecycle (IDLE → INITIALIZING → READY). It handles tenant-specific bootstrapping and implements self-healing retries with exponential backoff.
 
-This module handles the low-level details of content loading and processing.
+#### 4. Content Reconciler (`src/content/content-reconciler.ts`)
+A **database-agnostic** module responsible for synchronizing filesystem definitions (`.compiledCollections/`) with the database. It delegates filesystem scanning to the high-performance `scan-files.ts` utility.
 
-- **Dynamic Imports**: Uses `import.meta.glob` (dev) and filesystem scanning (prod) to load collections.
-- **Batch Processing**: Processes collections in concurrent batches to maximize startup speed.
-- **Polling**: Lightweight client-side polling checks for `contentVersion` updates.
+#### 5. Content Polling (`src/content/content-polling.svelte.ts`)
+A client-side service that synchronizes local state with the server by polling the `/api/content/version` endpoint. It triggers a reactive refresh only when a version mismatch is detected.
 
-### 3. Collection Scanner (`src/content/collectionScanner.ts`)
-
-A utility for production that scans `.compiledCollections/` for tenant-specific definitions. This bypasses dynamic imports in the built application.
-
-### 4. Migration Engine (`src/services/MigrationEngine.ts`)
-
-A database-agnostic service that synchronizes Code Definitions with the Database Schema.
-
-- **Drift Detection**: Identifies changes between TypeScript schemas and DB collections.
-- **Safe Mode**: Prevents accidental data loss during schema migrations.
+#### 6. Content Navigation (`src/content/content-navigation.ts`)
+Provides pure tree operations, including breadcrumb generation and descendant lookups, reading directly from the reactive `ContentStructure`.
 
 ---
 
@@ -64,23 +71,22 @@ A database-agnostic service that synchronizes Code Definitions with the Database
 
 SveltyCMS uses a **Signal-based Reactivity Model**:
 
-1.  **State Tracking**: The `ContentManager` exposes reactive state via Svelte 5 runes.
-2.  **Version Propagation**: When content is modified, `contentVersion` ($state) increments.
-3.  **Fine-Grained Updates**: Components using `collections` or `contentStructure` re-render only for the specific pieces of data that changed.
-4.  **Client Polling**: The client polls `/api/content/version` every 10s. If it detects a mismatch, it triggers a reactive update of the local state.
+1.  **State Tracking**: The system exposes reactive state via Svelte 5 runes.
+2.  **Version Propagation**: When content is modified on the server, the `contentVersion` increments.
+3.  **Client Sync**: The `ContentPolling` service detects version increments and triggers `contentInitializer.refresh()`, updating local stores without a full page reload.
+4.  **Fine-Grained Updates**: Components using `collections` or `contentStructure` re-render only for the specific nodes or paths that changed.
 
 ---
 
-## Caching & Performance
+## Performance & Scaling
 
-- **Layered Caching**: Combines Redis (L1) and Database (L2) for sub-ms schema lookups.
-- **Prefetching**: Automatically warms collection caches on system start.
-- **Hydration**: SSR transfers the initial state to the client, preventing initial layout shifts.
+- **Smart Filesystem Scanning**: The reconciler uses a parallelized recursive scanner optimized for both `.ts` (development) and `.js` (production) files.
+- **Dual-Layer Caching**: Integrates with the global `CacheService` for sub-millisecond schema lookups using L1 (Redis) and L2 (In-memory) caches.
+- **Tree-Shakable API**: By decomposing the monolithic manager, the client bundle is reduced by isolating server-side reconciliation logic from client-side state.
 
 ---
 
-## Future Improvements
+## Documentation Updates
 
-- **WebSocket Real-time**: Moving from polling to push-based updates.
-- **Granular Permissions**: Per-field access control within the `ContentManager`.
-- **Edge-Compiled Schemas**: Pre-compiling schemas to WASM for even faster execution.
+- **API Documentation**: See [Content API Reference](../api/content-api.mdx) for endpoint details.
+- **Developer Guide**: See [Collection Builder Guide](../guides/development/collection-builder.mdx) for UI-driven schema management.

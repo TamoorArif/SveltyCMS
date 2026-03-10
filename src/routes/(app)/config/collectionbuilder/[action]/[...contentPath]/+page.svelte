@@ -11,181 +11,183 @@
 -->
 
 <script lang="ts">
-	// Paraglide Messages
+// Paraglide Messages
 
-	import PageTitle from '@src/components/page-title.svelte';
-	// Types
-	import type { FieldInstance, Schema } from '@src/content/types';
-	import type { User } from '@src/databases/auth/types';
-	import { button_cancel, button_delete, button_save } from '@src/paraglide/messages';
-	import ModalSchemaWarning from '@src/routes/(app)/config/collectionbuilder/modal-schema-warning.svelte';
-	// Stores
-	import { collection, setCollection } from '@src/stores/collection-store.svelte';
-	import { validationStore } from '@src/stores/store.svelte.ts';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
-	import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
-	// Utils
-	import { logger } from '@utils/logger';
-	import { showConfirm } from '@utils/modal-utils';
-	import { obj2formData } from '@utils/utils';
-	import { onMount } from 'svelte';
-	import { afterNavigate, goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import CollectionForm from './tabs/collection-form.svelte';
-	import CollectionWidgetOptimized from './tabs/collection-widget-optimized.svelte';
+import PageTitle from '@src/components/page-title.svelte';
+// Types
+import type { FieldInstance, Schema } from '@src/content/types';
+import type { User } from '@src/databases/auth/types';
+import { button_cancel, button_delete, button_save } from '@src/paraglide/messages';
+import ModalSchemaWarning from '@src/routes/(app)/config/collectionbuilder/modal-schema-warning.svelte';
+// Stores
+import { collection, setCollection } from '@src/stores/collection-store.svelte';
+import { useContent } from '@src/content/content-context.svelte';
+import { validationStore } from '@src/stores/store.svelte.ts';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { setRouteContext } from '@src/stores/ui-store.svelte.ts';
+import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
+// Utils
+import { logger } from '@utils/logger';
+import { showConfirm } from '@utils/modal-utils';
+import { obj2formData } from '@utils/utils';
+import { onMount } from 'svelte';
+import { afterNavigate, goto } from '$app/navigation';
+import { page } from '$app/state';
+import CollectionForm from './tabs/collection-form.svelte';
+import CollectionWidgetOptimized from './tabs/collection-widget-optimized.svelte';
 
-	// Reactive: re-evaluates when URL params change during client-side navigation
-	const action = $derived(page.params.action);
+// Reactive: re-evaluates when URL params change during client-side navigation
+const action = $derived(page.params.action);
 
-	interface Props {
-		data: {
-			collection?: Schema;
-			contentLanguage: string;
-			user: User;
-		};
+interface Props {
+	data: {
+		collection?: Schema;
+		contentLanguage: string;
+		user: User;
+	};
+}
+
+const { data }: Props = $props();
+useContent();
+let originalName = $state('');
+let isLoading = $state(false);
+let migrationPlan = $state<any>(null);
+let showWarningModal = $state(false);
+
+// Use afterNavigate to update collection state after SPA navigation completes.
+// This is critical because $effect fires BEFORE SvelteKit updates data.collection
+// during SPA navigation, causing stale data to be displayed.
+
+function initializeCollectionFromData() {
+	const currentAction = page.params.action;
+	const currentCollection = data.collection;
+
+	if (currentAction === 'edit' && currentCollection) {
+		setCollection(currentCollection);
+		originalName = String(currentCollection.name || '');
+	} else if (currentAction === 'new') {
+		setCollection({
+			name: 'new',
+			icon: 'bi:collection',
+			status: 'unpublished',
+			slug: '',
+			fields: []
+		} as any);
+		originalName = '';
 	}
+}
 
-	const { data }: Props = $props();
-	let originalName = $state('');
-	let isLoading = $state(false);
-	let migrationPlan = $state<any>(null);
-	let showWarningModal = $state(false);
+// afterNavigate fires after SvelteKit has fully updated data props
+afterNavigate(() => {
+	initializeCollectionFromData();
+});
 
-	// Use afterNavigate to update collection state after SPA navigation completes.
-	// This is critical because $effect fires BEFORE SvelteKit updates data.collection
-	// during SPA navigation, causing stale data to be displayed.
+onMount(() => {
+	widgetStoreActions.initializeWidgets();
+	// Also initialize on mount for the initial page load
+	initializeCollectionFromData();
 
-	function initializeCollectionFromData() {
-		const currentAction = page.params.action;
-		const currentCollection = data.collection;
-
-		if (currentAction === 'edit' && currentCollection) {
-			setCollection(currentCollection);
-			originalName = String(currentCollection.name || '');
-		} else if (currentAction === 'new') {
-			setCollection({
-				name: 'new',
-				icon: 'bi:collection',
-				status: 'unpublished',
-				slug: '',
-				fields: []
-			} as any);
-			originalName = '';
+	// Keyboard Shortcuts
+	const handleKeyDown = (e: KeyboardEvent) => {
+		if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+			e.preventDefault();
+			handleCollectionSave();
 		}
+		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+			e.preventDefault();
+			document.getElementById('save-status')?.focus();
+		}
+	};
+	window.addEventListener('keydown', handleKeyDown);
+	return () => window.removeEventListener('keydown', handleKeyDown);
+});
+
+const collectionValue = $derived(collection.value);
+
+async function handleCollectionSave(confirmDeletions = false) {
+	if (validationStore.errors && Object.keys(validationStore.errors).length > 0) {
+		toast.error('Please fix validation errors before saving');
+		return;
 	}
 
-	// afterNavigate fires after SvelteKit has fully updated data props
-	afterNavigate(() => {
-		initializeCollectionFromData();
-	});
-
-	onMount(() => {
-		widgetStoreActions.initializeWidgets();
-		// Also initialize on mount for the initial page load
-		initializeCollectionFromData();
-
-		// Keyboard Shortcuts
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-				e.preventDefault();
-				handleCollectionSave();
-			}
-			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-				e.preventDefault();
-				document.getElementById('save-status')?.focus();
-			}
+	try {
+		isLoading = true;
+		const currentCollection = collection.value;
+		const payload: any = {
+			originalName,
+			...currentCollection
 		};
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	});
 
-	const collectionValue = $derived(collection.value);
+		if (confirmDeletions) {
+			payload.confirmDeletions = 'true';
+		}
 
-	async function handleCollectionSave(confirmDeletions = false) {
-		if (validationStore.errors && Object.keys(validationStore.errors).length > 0) {
-			toast.error('Please fix validation errors before saving');
+		const response = await fetch('?/saveCollection', {
+			method: 'POST',
+			body: obj2formData(payload)
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const result = await response.json();
+		let data = result;
+		if (result.type === 'success' && result.data) {
+			data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+		}
+
+		// Check for drift detection from server (status 202)
+		if (data?.driftDetected) {
+			migrationPlan = data.plan;
+			showWarningModal = true;
+			toast.info('Manual confirmation required for schema changes');
 			return;
 		}
 
-		try {
-			isLoading = true;
-			const currentCollection = collection.value;
-			const payload: any = {
-				originalName,
-				...currentCollection
-			};
-
-			if (confirmDeletions) {
-				payload.confirmDeletions = 'true';
+		if (response.status === 200 || (data && data.status === 200)) {
+			toast.success('Collection Saved Successfully');
+			showWarningModal = false;
+			migrationPlan = null;
+			if (originalName !== currentCollection?.name) {
+				originalName = String(currentCollection?.name);
+				goto(`/config/collectionbuilder/edit/${originalName}`);
 			}
+		}
+	} catch (error) {
+		logger.error('Save failed', error);
+		toast.error('Failed to save collection');
+	} finally {
+		isLoading = false;
+	}
+}
 
-			const response = await fetch('?/saveCollection', {
+function handleCollectionDelete() {
+	showConfirm({
+		title: 'Delete Collection?',
+		body: `Are you sure you want to delete "${collectionValue?.name}"? This cannot be undone.`,
+		onConfirm: async () => {
+			const response = await fetch('?/deleteCollections', {
 				method: 'POST',
-				body: obj2formData(payload)
+				body: obj2formData({ ids: JSON.stringify([collectionValue?._id]) })
 			});
 
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+			if (response.ok) {
+				toast.success('Collection Deleted');
+				goto('/config/collectionbuilder');
+			} else {
+				toast.error('Failed to delete collection');
 			}
-
-			const result = await response.json();
-			let data = result;
-			if (result.type === 'success' && result.data) {
-				data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-			}
-
-			// Check for drift detection from server (status 202)
-			if (data?.driftDetected) {
-				migrationPlan = data.plan;
-				showWarningModal = true;
-				toast.info('Manual confirmation required for schema changes');
-				return;
-			}
-
-			if (response.status === 200 || (data && data.status === 200)) {
-				toast.success('Collection Saved Successfully');
-				showWarningModal = false;
-				migrationPlan = null;
-				if (originalName !== currentCollection?.name) {
-					originalName = String(currentCollection?.name);
-					goto(`/config/collectionbuilder/edit/${originalName}`);
-				}
-			}
-		} catch (error) {
-			logger.error('Save failed', error);
-			toast.error('Failed to save collection');
-		} finally {
-			isLoading = false;
 		}
-	}
-
-	function handleCollectionDelete() {
-		showConfirm({
-			title: 'Delete Collection?',
-			body: `Are you sure you want to delete "${collectionValue?.name}"? This cannot be undone.`,
-			onConfirm: async () => {
-				const response = await fetch('?/deleteCollections', {
-					method: 'POST',
-					body: obj2formData({ ids: JSON.stringify([collectionValue?._id]) })
-				});
-
-				if (response.ok) {
-					toast.success('Collection Deleted');
-					goto('/config/collectionbuilder');
-				} else {
-					toast.error('Failed to delete collection');
-				}
-			}
-		});
-	}
-
-	$effect(() => {
-		setRouteContext({ isCollectionBuilder: true });
-		return () => setRouteContext({ isCollectionBuilder: false });
 	});
+}
 
-	let activeSection = $state('general');
+$effect(() => {
+	setRouteContext({ isCollectionBuilder: true });
+	return () => setRouteContext({ isCollectionBuilder: false });
+});
+
+let activeSection = $state('general');
 </script>
 
 <PageTitle

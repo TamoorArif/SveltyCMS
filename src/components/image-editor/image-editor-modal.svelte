@@ -4,181 +4,181 @@
 A reusable modal that wraps the main Image Editor.
 -->
 <script lang="ts">
-	import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-	// biome-ignore lint/style/useImportType: Used as value in bind:this
-	import Editor from './editor.svelte';
-	import type { MediaImage, WatermarkOptions } from '@src/utils/media/media-models';
-	import { onMount, setContext } from 'svelte';
-	import EditorToolbar from './editor-toolbar.svelte';
+import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
+// biome-ignore lint/style/useImportType: Used as value in bind:this
+import Editor from './editor.svelte';
+import type { MediaImage, WatermarkOptions } from '@src/utils/media/media-models';
+import { onMount, setContext } from 'svelte';
+import EditorToolbar from './editor-toolbar.svelte';
 
-	let {
-		image = null,
-		watermarkPreset = null,
-		onsave = () => {},
-		close = () => {}
-	}: {
-		image: MediaImage | File | string | null;
-		/** Optional watermark preset to auto-apply when editing */
-		watermarkPreset?: WatermarkOptions | null;
-		onsave?: (detail: any) => void;
-		close?: () => void;
-	} = $props();
+let {
+	image = null,
+	watermarkPreset = null,
+	onsave = () => {},
+	close = () => {}
+}: {
+	image: MediaImage | File | string | null;
+	/** Optional watermark preset to auto-apply when editing */
+	watermarkPreset?: WatermarkOptions | null;
+	onsave?: (detail: any) => void;
+	close?: () => void;
+} = $props();
 
-	// Computed image source and metadata
-	const imageSrc = $derived.by(() => {
-		if (!image) {
-			return '';
-		}
-		if (typeof image === 'string') {
-			return image;
-		}
-		if (image instanceof File) {
-			return ''; // File will be passed separately
-		}
-		return (image as MediaImage).url || '';
+// Computed image source and metadata
+const imageSrc = $derived.by(() => {
+	if (!image) {
+		return '';
+	}
+	if (typeof image === 'string') {
+		return image;
+	}
+	if (image instanceof File) {
+		return ''; // File will be passed separately
+	}
+	return (image as MediaImage).url || '';
+});
+
+// File object to pass to editor (for direct file uploads)
+const imageFile = $derived.by(() => {
+	if (image instanceof File) {
+		return image;
+	}
+	return null;
+});
+
+const initialFocalPoint = $derived.by(() => {
+	if (image && typeof image === 'object' && 'metadata' in image) {
+		return (image as MediaImage).metadata?.focalPoint as { x: number; y: number } | undefined;
+	}
+	return undefined;
+});
+
+const mediaId = $derived.by(() => {
+	if (image && typeof image === 'object' && '_id' in image) {
+		return (image as MediaImage)._id;
+	}
+	return undefined;
+});
+
+const getImageType = (img: any) => {
+	if (!img) {
+		return 'null';
+	}
+	if (img instanceof File) {
+		return 'File';
+	}
+	if (typeof img === 'string') {
+		return 'string';
+	}
+	return 'MediaImage';
+};
+
+$effect(() => {
+	console.log('[ImageEditorModal] Props received:', {
+		imageType: getImageType(image),
+		imageSrc: imageSrc || '(empty)',
+		hasFile: !!imageFile,
+		mediaId: mediaId || '(none)'
 	});
+});
 
-	// File object to pass to editor (for direct file uploads)
-	const imageFile = $derived.by(() => {
-		if (image instanceof File) {
-			return image;
-		}
-		return null;
-	});
+// Provide watermark preset to child widgets via context
+setContext('watermarkPreset', () => watermarkPreset);
 
-	const initialFocalPoint = $derived.by(() => {
-		if (image && typeof image === 'object' && 'metadata' in image) {
-			return (image as MediaImage).metadata?.focalPoint as { x: number; y: number } | undefined;
-		}
-		return undefined;
-	});
+let editorComponent: Editor | undefined = $state();
 
-	const mediaId = $derived.by(() => {
-		if (image && typeof image === 'object' && '_id' in image) {
-			return (image as MediaImage)._id;
-		}
-		return undefined;
-	});
+/* Error & Loading States */
+let error = $state<string | null>(null);
+let isSaving = $state(false);
+// Initializing state - use the store to know when image node is ready
+let isInitializing = $state(true);
 
-	const getImageType = (img: any) => {
-		if (!img) {
-			return 'null';
-		}
-		if (img instanceof File) {
-			return 'File';
-		}
-		if (typeof img === 'string') {
-			return 'string';
-		}
-		return 'MediaImage';
-	};
+$effect(() => {
+	if (imageEditorStore.state.imageElement) {
+		isInitializing = false;
+	}
+});
 
-	$effect(() => {
-		console.log('[ImageEditorModal] Props received:', {
-			imageType: getImageType(image),
-			imageSrc: imageSrc || '(empty)',
-			hasFile: !!imageFile,
-			mediaId: mediaId || '(none)'
-		});
-	});
+function handleSaveError(err: Error) {
+	error = `Failed to save: ${err.message}`;
+	console.error('[ImageEditorModal] Save error:', err);
+	isSaving = false;
+}
 
-	// Provide watermark preset to child widgets via context
-	setContext('watermarkPreset', () => watermarkPreset);
-
-	let editorComponent: Editor | undefined = $state();
-
-	/* Error & Loading States */
-	let error = $state<string | null>(null);
-	let isSaving = $state(false);
-	// Initializing state - use the store to know when image node is ready
-	let isInitializing = $state(true);
-
-	$effect(() => {
-		if (imageEditorStore.state.imageElement) {
-			isInitializing = false;
-		}
-	});
-
-	function handleSaveError(err: Error) {
-		error = `Failed to save: ${err.message}`;
-		console.error('[ImageEditorModal] Save error:', err);
+async function handleSaveClick() {
+	try {
+		isSaving = true;
+		error = null;
+		await editorComponent?.handleSave();
+	} catch (err) {
+		handleSaveError(err as Error);
+	} finally {
 		isSaving = false;
 	}
+}
 
-	async function handleSaveClick() {
-		try {
-			isSaving = true;
-			error = null;
-			await editorComponent?.handleSave();
-		} catch (err) {
-			handleSaveError(err as Error);
-		} finally {
-			isSaving = false;
-		}
+/* Unsaved Changes */
+// Restore UI Logic
+const activeState = $derived(imageEditorStore.state.activeState);
+
+function handleClose() {
+	if (imageEditorStore.canUndoState && !confirm('You have unsaved changes. Are you sure you want to close?')) {
+		return;
 	}
+	close?.();
+}
 
-	/* Unsaved Changes */
-	// Restore UI Logic
-	const activeState = $derived(imageEditorStore.state.activeState);
-
-	function handleClose() {
-		if (imageEditorStore.canUndoState && !confirm('You have unsaved changes. Are you sure you want to close?')) {
+function handleCancelClick() {
+	// If a tool is active, exit the tool first
+	if (activeState) {
+		imageEditorStore.cancelActiveTool();
+	} else {
+		// No tool active, ask for confirmation if dirty
+		if (imageEditorStore.canUndoState && !confirm('You have unsaved changes. Are you sure you want to discard them?')) {
 			return;
 		}
-		close?.();
+		handleClose();
+	}
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+	const cmdOrCtrl = e.metaKey || e.ctrlKey;
+
+	// Ctrl/Cmd+S: Save
+	if (cmdOrCtrl && e.key === 's') {
+		e.preventDefault();
+		editorComponent?.handleSave();
 	}
 
-	function handleCancelClick() {
-		// If a tool is active, exit the tool first
-		if (activeState) {
-			imageEditorStore.cancelActiveTool();
-		} else {
-			// No tool active, ask for confirmation if dirty
-			if (imageEditorStore.canUndoState && !confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-				return;
-			}
-			handleClose();
-		}
+	// Escape: Close or exit tool
+	// Note: The template-level onkeydown for the modal container also handles this,
+	// but having it here ensures it's caught even if focus is inside the specific element
+	if (e.key === 'Escape') {
+		e.preventDefault();
+		handleCancelClick();
 	}
+}
 
-	function handleKeyDown(e: KeyboardEvent) {
-		const cmdOrCtrl = e.metaKey || e.ctrlKey;
+onMount(() => {
+	window.addEventListener('keydown', handleKeyDown);
+	return () => window.removeEventListener('keydown', handleKeyDown);
+});
 
-		// Ctrl/Cmd+S: Save
-		if (cmdOrCtrl && e.key === 's') {
-			e.preventDefault();
-			editorComponent?.handleSave();
+$effect(() => {
+	return () => {
+		// Clean up blob URLs from both sources
+		if (imageSrc?.startsWith('blob:')) {
+			URL.revokeObjectURL(imageSrc);
 		}
-
-		// Escape: Close or exit tool
-		// Note: The template-level onkeydown for the modal container also handles this,
-		// but having it here ensures it's caught even if focus is inside the specific element
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			handleCancelClick();
+		// Also clean up if imageFile was converted to blob
+		if (imageFile) {
+			const file = imageFile as any;
+			if (file._blobUrl) {
+				URL.revokeObjectURL(file._blobUrl);
+			}
 		}
-	}
-
-	onMount(() => {
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	});
-
-	$effect(() => {
-		return () => {
-			// Clean up blob URLs from both sources
-			if (imageSrc?.startsWith('blob:')) {
-				URL.revokeObjectURL(imageSrc);
-			}
-			// Also clean up if imageFile was converted to blob
-			if (imageFile) {
-				const file = imageFile as any;
-				if (file._blobUrl) {
-					URL.revokeObjectURL(file._blobUrl);
-				}
-			}
-		};
-	});
+	};
+});
 </script>
 
 {#if image}

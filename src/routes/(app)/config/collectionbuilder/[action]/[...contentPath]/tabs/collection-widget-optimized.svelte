@@ -4,266 +4,266 @@
 **This Component handles the optimized collection widget**
 -->
 <script lang="ts">
-	import { SvelteSet } from 'svelte/reactivity';
-	import type { FieldInstance } from '@src/content/types';
-	import type { Role } from '@src/databases/auth/types';
-	import BuzzForm from '@src/routes/(app)/config/collectionbuilder/buzz-form/buzz-form.svelte';
-	import { collection, setCollection, setTargetWidget } from '@src/stores/collection-store.svelte';
-	import { toast } from '@src/stores/toast.svelte.ts';
-	import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
-	import { sveltyRegistry } from '@src/services/json-render/catalog';
-	import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
-	import { modalState } from '@utils/modal-state.svelte';
-	import { asAny, getGuiFields } from '@utils/utils';
-	import { untrack } from 'svelte';
-	import { flip } from 'svelte/animate';
-	import { get } from 'svelte/store';
-	import type { DndEvent } from 'svelte-dnd-action';
-	import { dndzone } from 'svelte-dnd-action';
-	import ModalSelectWidget from './collection-widget/modal-select-widget.svelte';
-	import ModalWidgetForm from './collection-widget/modal-widget-form.svelte';
+import { SvelteSet } from 'svelte/reactivity';
+import type { FieldInstance } from '@src/content/types';
+import type { Role } from '@src/databases/auth/types';
+import BuzzForm from '@src/routes/(app)/config/collectionbuilder/buzz-form/buzz-form.svelte';
+import { collection, setCollection, setTargetWidget } from '@src/stores/collection-store.svelte';
+import { toast } from '@src/stores/toast.svelte.ts';
+import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
+import { sveltyRegistry } from '@src/services/json-render/catalog';
+import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
+import { modalState } from '@utils/modal-state.svelte';
+import { asAny, getGuiFields } from '@utils/utils';
+import { untrack } from 'svelte';
+import { flip } from 'svelte/animate';
+import { get } from 'svelte/store';
+import type { DndEvent } from 'svelte-dnd-action';
+import { dndzone } from 'svelte-dnd-action';
+import ModalSelectWidget from './collection-widget/modal-select-widget.svelte';
+import ModalWidgetForm from './collection-widget/modal-widget-form.svelte';
 
-	type WidgetListItem = FieldInstance & { id: number; _dragId: string };
+type WidgetListItem = FieldInstance & { id: number; _dragId: string };
 
-	let { fields = [], roles = [] } = $props<{ fields: FieldInstance[]; roles?: Role[] }>();
+let { fields = [], roles = [] } = $props<{ fields: FieldInstance[]; roles?: Role[] }>();
 
-	// Stable _dragId by index so we can sync items from props without losing drag identity
-	let dragIdsByIndex = $state<Record<number, string>>({});
+// Stable _dragId by index so we can sync items from props without losing drag identity
+let dragIdsByIndex = $state<Record<number, string>>({});
 
-	let items = $state<WidgetListItem[]>(
-		untrack(() =>
-			(fields ?? []).map((f: FieldInstance, i: number) => {
-				const id = (dragIdsByIndex[i] ??= Math.random().toString(36).substring(7));
-				return { id: i + 1, ...f, _dragId: id } as WidgetListItem;
-			})
-		)
+let items = $state<WidgetListItem[]>(
+	untrack(() =>
+		(fields ?? []).map((f: FieldInstance, i: number) => {
+			const id = (dragIdsByIndex[i] ??= Math.random().toString(36).substring(7));
+			return { id: i + 1, ...f, _dragId: id } as WidgetListItem;
+		})
+	)
+);
+
+// Sync items from props when store updates (e.g. after save) so list and inspector show saved data
+$effect(() => {
+	const nextFields = fields ?? [];
+	const nextDragIds = { ...dragIdsByIndex };
+	let added = false;
+	for (let i = 0; i < nextFields.length; i++) {
+		if (nextDragIds[i] === undefined) {
+			nextDragIds[i] = Math.random().toString(36).substring(7);
+			added = true;
+		}
+	}
+	if (added) {
+		dragIdsByIndex = nextDragIds;
+	}
+	items = nextFields.map((f: FieldInstance, i: number) => ({
+		id: i + 1,
+		...f,
+		_dragId: nextDragIds[i] ?? Math.random().toString(36).substring(7)
+	})) as WidgetListItem[];
+});
+
+const flipDurationMs = 200;
+
+function handleDndConsider(_e: CustomEvent<DndEvent<WidgetListItem>>) {
+	// Do not update items during consider — re-render removes the dragged node from DOM
+	// and svelte-dnd-action throws "Cannot read properties of undefined (reading 'parentElement')".
+	// Only update on finalize.
+}
+
+function handleDndFinalize(e: CustomEvent<DndEvent<WidgetListItem>>) {
+	items = e.detail.items;
+	dragIdsByIndex = items.reduce(
+		(acc, it, i) => {
+			acc[i] = it._dragId;
+			return acc;
+		},
+		{} as Record<number, string>
 	);
+	updateStore();
+}
 
-	// Sync items from props when store updates (e.g. after save) so list and inspector show saved data
-	$effect(() => {
-		const nextFields = fields ?? [];
-		const nextDragIds = { ...dragIdsByIndex };
-		let added = false;
-		for (let i = 0; i < nextFields.length; i++) {
-			if (nextDragIds[i] === undefined) {
-				nextDragIds[i] = Math.random().toString(36).substring(7);
-				added = true;
+function updateStore() {
+	if (collection.value) {
+		const nextFields = items.map(({ _dragId, id: _id, ...rest }: { _dragId?: string; id?: number; [key: string]: any }) => rest as FieldInstance);
+		setCollection({ ...collection.value, fields: nextFields });
+	}
+}
+
+function addField() {
+	modalState.trigger(
+		ModalSelectWidget as any,
+		{
+			title: 'Add Field',
+			body: 'Select a widget type to add to your collection'
+		},
+		(r: { selectedWidget: string } | undefined) => {
+			if (!r) {
+				return;
+			}
+			const widgetInstance = get(widgetFunctions)[r.selectedWidget];
+			if (widgetInstance) {
+				const newWidget = {
+					widget: { key: r.selectedWidget, Name: r.selectedWidget } as any,
+					GuiFields: getGuiFields({ key: r.selectedWidget }, asAny(widgetInstance.GuiSchema)),
+					permissions: {}
+				};
+				editField(newWidget);
 			}
 		}
-		if (added) {
-			dragIdsByIndex = nextDragIds;
+	);
+}
+
+function editField(field: any) {
+	const idx = items.findIndex((i: WidgetListItem) => i.id === field.id);
+	setTargetWidget({ ...field, __fieldIndex: idx >= 0 ? idx : undefined });
+	modalState.trigger(
+		ModalWidgetForm as any,
+		{
+			title: field.id ? 'Edit Field' : 'New Field',
+			value: field,
+			roles
+		},
+		(r: { id?: number; [key: string]: any } | undefined) => {
+			if (!r) {
+				return;
+			}
+			// Ensure new fields have a unique db_fieldName so they persist on save
+			const existingNames = new SvelteSet((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
+			const ensureFieldName = (obj: Record<string, unknown>): string => {
+				const name = (obj.db_fieldName as string) || (obj.label as string) || (obj.widget as { Name?: string })?.Name || 'field';
+				const base =
+					String(name)
+						.trim()
+						.replace(/\s+/g, '_')
+						.replace(/[^a-zA-Z0-9_]/g, '') || 'field';
+				let candidate = base;
+				let n = 0;
+				while (existingNames.has(candidate)) {
+					candidate = `${base}_${++n}`;
+				}
+				existingNames.add(candidate);
+				return candidate;
+			};
+			const normalized = { ...r, db_fieldName: r.db_fieldName || ensureFieldName(r) };
+			const idx = items.findIndex((i: WidgetListItem) => i.id === r.id);
+			if (idx !== -1) {
+				items = items.map((item, i) => (i === idx ? ({ ...item, ...normalized } as WidgetListItem) : item));
+			} else {
+				const newIndex = items.length;
+				const newDragId = Math.random().toString(36).substring(7);
+				dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
+				items = [...items, { id: newIndex + 1, _dragId: newDragId, ...normalized } as WidgetListItem];
+			}
+			updateStore();
+			// Refresh inspector so right panel shows saved field (label, db_fieldName, required, icon) without reload
+			const updatedIndex = idx !== -1 ? idx : items.length - 1;
+			const updated = items[updatedIndex];
+			if (updated) {
+				setTargetWidget({
+					...updated,
+					__fieldIndex: updatedIndex,
+					permissions: updated.permissions ?? {}
+				});
+			}
 		}
-		items = nextFields.map((f: FieldInstance, i: number) => ({
-			id: i + 1,
-			...f,
-			_dragId: nextDragIds[i] ?? Math.random().toString(36).substring(7)
-		})) as WidgetListItem[];
+	);
+}
+
+function deleteField(id: number) {
+	items = items
+		.filter((i: WidgetListItem) => i.id !== id)
+		.map((item: WidgetListItem, idx: number) => ({
+			...item,
+			id: idx + 1
+		}));
+	dragIdsByIndex = items.reduce(
+		(acc, it, i) => {
+			acc[i] = it._dragId;
+			return acc;
+		},
+		{} as Record<number, string>
+	);
+	updateStore();
+	toast.info('Field removed from collection');
+}
+
+function duplicateField(field: WidgetListItem) {
+	const newIndex = items.length;
+	const newDragId = Math.random().toString(36).substring(7);
+	dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
+	const newField = {
+		...field,
+		id: newIndex + 1,
+		_dragId: newDragId,
+		label: `${field.label} (Copy)`,
+		db_fieldName: field.db_fieldName ? `${field.db_fieldName}_copy` : field.db_fieldName
+	} as WidgetListItem;
+	items = [...items, newField];
+	updateStore();
+}
+
+let builderView = $state<'list' | 'buzz' | 'preview'>('buzz');
+
+let mockData = $state<Record<string, any>>({});
+
+function generatePreviewSpec(fieldsToRender: FieldInstance[]): Spec {
+	const elements: Record<string, any> = {
+		root: {
+			type: 'VerticalLayout',
+			elements: fieldsToRender.map((f) => f.db_fieldName || f.label)
+		}
+	};
+	fieldsToRender.forEach((field) => {
+		const widgetName = field.widget?.Name || 'Text';
+		const id = field.db_fieldName || field.label;
+		elements[id] = {
+			type: 'Control',
+			scope: `#/properties/${id}`,
+			label: field.label,
+			options: {
+				widget: widgetName,
+				...((field.GuiFields as any) || {})
+			}
+		};
 	});
 
-	const flipDurationMs = 200;
+	return {
+		root: 'root',
+		elements
+	} as unknown as Spec;
+}
 
-	function handleDndConsider(_e: CustomEvent<DndEvent<WidgetListItem>>) {
-		// Do not update items during consider — re-render removes the dragged node from DOM
-		// and svelte-dnd-action throws "Cannot read properties of undefined (reading 'parentElement')".
-		// Only update on finalize.
+const quickWidgets = [
+	{ key: 'Text', icon: 'material-symbols:text-fields', label: 'Short Text' },
+	{
+		key: 'RichText',
+		icon: 'material-symbols:format-list-bulleted-rounded',
+		label: 'Rich Text'
+	},
+	{ key: 'Image', icon: 'material-symbols:image-outline', label: 'Image' },
+	{
+		key: 'Relation',
+		icon: 'material-symbols:account-tree-outline',
+		label: 'Relation'
 	}
+];
 
-	function handleDndFinalize(e: CustomEvent<DndEvent<WidgetListItem>>) {
-		items = e.detail.items;
-		dragIdsByIndex = items.reduce(
-			(acc, it, i) => {
-				acc[i] = it._dragId;
-				return acc;
-			},
-			{} as Record<number, string>
-		);
-		updateStore();
-	}
-
-	function updateStore() {
-		if (collection.value) {
-			const nextFields = items.map(({ _dragId, id: _id, ...rest }: { _dragId?: string; id?: number; [key: string]: any }) => rest as FieldInstance);
-			setCollection({ ...collection.value, fields: nextFields });
-		}
-	}
-
-	function addField() {
-		modalState.trigger(
-			ModalSelectWidget as any,
-			{
-				title: 'Add Field',
-				body: 'Select a widget type to add to your collection'
-			},
-			(r: { selectedWidget: string } | undefined) => {
-				if (!r) {
-					return;
-				}
-				const widgetInstance = get(widgetFunctions)[r.selectedWidget];
-				if (widgetInstance) {
-					const newWidget = {
-						widget: { key: r.selectedWidget, Name: r.selectedWidget } as any,
-						GuiFields: getGuiFields({ key: r.selectedWidget }, asAny(widgetInstance.GuiSchema)),
-						permissions: {}
-					};
-					editField(newWidget);
-				}
-			}
-		);
-	}
-
-	function editField(field: any) {
-		const idx = items.findIndex((i: WidgetListItem) => i.id === field.id);
-		setTargetWidget({ ...field, __fieldIndex: idx >= 0 ? idx : undefined });
-		modalState.trigger(
-			ModalWidgetForm as any,
-			{
-				title: field.id ? 'Edit Field' : 'New Field',
-				value: field,
-				roles
-			},
-			(r: { id?: number; [key: string]: any } | undefined) => {
-				if (!r) {
-					return;
-				}
-				// Ensure new fields have a unique db_fieldName so they persist on save
-				const existingNames = new SvelteSet((items ?? []).map((i) => (i as FieldInstance).db_fieldName).filter(Boolean));
-				const ensureFieldName = (obj: Record<string, unknown>): string => {
-					const name = (obj.db_fieldName as string) || (obj.label as string) || (obj.widget as { Name?: string })?.Name || 'field';
-					const base =
-						String(name)
-							.trim()
-							.replace(/\s+/g, '_')
-							.replace(/[^a-zA-Z0-9_]/g, '') || 'field';
-					let candidate = base;
-					let n = 0;
-					while (existingNames.has(candidate)) {
-						candidate = `${base}_${++n}`;
-					}
-					existingNames.add(candidate);
-					return candidate;
-				};
-				const normalized = { ...r, db_fieldName: r.db_fieldName || ensureFieldName(r) };
-				const idx = items.findIndex((i: WidgetListItem) => i.id === r.id);
-				if (idx !== -1) {
-					items = items.map((item, i) => (i === idx ? ({ ...item, ...normalized } as WidgetListItem) : item));
-				} else {
-					const newIndex = items.length;
-					const newDragId = Math.random().toString(36).substring(7);
-					dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
-					items = [...items, { id: newIndex + 1, _dragId: newDragId, ...normalized } as WidgetListItem];
-				}
-				updateStore();
-				// Refresh inspector so right panel shows saved field (label, db_fieldName, required, icon) without reload
-				const updatedIndex = idx !== -1 ? idx : items.length - 1;
-				const updated = items[updatedIndex];
-				if (updated) {
-					setTargetWidget({
-						...updated,
-						__fieldIndex: updatedIndex,
-						permissions: updated.permissions ?? {}
-					});
-				}
-			}
-		);
-	}
-
-	function deleteField(id: number) {
-		items = items
-			.filter((i: WidgetListItem) => i.id !== id)
-			.map((item: WidgetListItem, idx: number) => ({
-				...item,
-				id: idx + 1
-			}));
-		dragIdsByIndex = items.reduce(
-			(acc, it, i) => {
-				acc[i] = it._dragId;
-				return acc;
-			},
-			{} as Record<number, string>
-		);
-		updateStore();
-		toast.info('Field removed from collection');
-	}
-
-	function duplicateField(field: WidgetListItem) {
+function addQuickWidget(key: string) {
+	const widgetInstance = get(widgetFunctions)[key];
+	if (widgetInstance) {
 		const newIndex = items.length;
 		const newDragId = Math.random().toString(36).substring(7);
 		dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
-		const newField = {
-			...field,
-			id: newIndex + 1,
-			_dragId: newDragId,
-			label: `${field.label} (Copy)`,
-			db_fieldName: field.db_fieldName ? `${field.db_fieldName}_copy` : field.db_fieldName
-		} as WidgetListItem;
-		items = [...items, newField];
-		updateStore();
-	}
-
-	let builderView = $state<'list' | 'buzz' | 'preview'>('buzz');
-
-	let mockData = $state<Record<string, any>>({});
-
-	function generatePreviewSpec(fieldsToRender: FieldInstance[]): Spec {
-		const elements: Record<string, any> = {
-			root: {
-				type: 'VerticalLayout',
-				elements: fieldsToRender.map((f) => f.db_fieldName || f.label)
-			}
+		const newWidget = {
+			label: `New ${key}`,
+			db_fieldName: `new_${key.toLowerCase()}`,
+			widget: { key, Name: key } as any,
+			GuiFields: getGuiFields({ key }, asAny(widgetInstance.GuiSchema)),
+			permissions: {}
 		};
-		fieldsToRender.forEach((field) => {
-			const widgetName = field.widget?.Name || 'Text';
-			const id = field.db_fieldName || field.label;
-			elements[id] = {
-				type: 'Control',
-				scope: `#/properties/${id}`,
-				label: field.label,
-				options: {
-					widget: widgetName,
-					...((field.GuiFields as any) || {})
-				}
-			};
-		});
-
-		return {
-			root: 'root',
-			elements
-		} as unknown as Spec;
+		items = [...items, { id: newIndex + 1, _dragId: newDragId, ...newWidget } as unknown as WidgetListItem];
+		updateStore();
+		toast.success(`Added ${key} field`);
 	}
-
-	const quickWidgets = [
-		{ key: 'Text', icon: 'material-symbols:text-fields', label: 'Short Text' },
-		{
-			key: 'RichText',
-			icon: 'material-symbols:format-list-bulleted-rounded',
-			label: 'Rich Text'
-		},
-		{ key: 'Image', icon: 'material-symbols:image-outline', label: 'Image' },
-		{
-			key: 'Relation',
-			icon: 'material-symbols:account-tree-outline',
-			label: 'Relation'
-		}
-	];
-
-	function addQuickWidget(key: string) {
-		const widgetInstance = get(widgetFunctions)[key];
-		if (widgetInstance) {
-			const newIndex = items.length;
-			const newDragId = Math.random().toString(36).substring(7);
-			dragIdsByIndex = { ...dragIdsByIndex, [newIndex]: newDragId };
-			const newWidget = {
-				label: `New ${key}`,
-				db_fieldName: `new_${key.toLowerCase()}`,
-				widget: { key, Name: key } as any,
-				GuiFields: getGuiFields({ key }, asAny(widgetInstance.GuiSchema)),
-				permissions: {}
-			};
-			items = [...items, { id: newIndex + 1, _dragId: newDragId, ...newWidget } as unknown as WidgetListItem];
-			updateStore();
-			toast.success(`Added ${key} field`);
-		}
-	}
+}
 </script>
 
 <div class="space-y-4 sm:space-y-6">

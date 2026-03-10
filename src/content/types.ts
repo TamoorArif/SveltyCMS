@@ -316,6 +316,21 @@ export interface WidgetMeta {
 
 // --- Import/Export Types ---
 
+export interface NavigationNode {
+	_id: string;
+	children?: NavigationNode[];
+	hasChildren?: boolean;
+	icon?: string;
+	lastModified?: Date;
+	name: string;
+	nodeType: 'category' | 'collection';
+	order?: number;
+	parentId?: string;
+	path?: string;
+	status?: string;
+	translations?: { languageTag: string; translationName: string }[];
+}
+
 export interface ExportMetadata {
 	cms_version: string;
 	environment: string;

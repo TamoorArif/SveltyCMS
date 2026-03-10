@@ -313,7 +313,7 @@ function sveltyCmsPlugin(): Plugin {
 						try {
 							const { dbAdapter } = await server.ssrLoadModule(path.join(CWD, 'src/databases/db.ts'));
 							if (dbAdapter?.collection) {
-								const { scanCompiledCollections } = await server.ssrLoadModule(path.join(CWD, 'src/content/collection-scanner.ts'));
+								const { scanCompiledCollections } = await server.ssrLoadModule(path.join(CWD, 'src/content/content-reconciler/scan-files.ts'));
 								const collections = await scanCompiledCollections();
 								log.info(`Found ${collections.length} collections, registering models...`);
 
@@ -544,6 +544,11 @@ export default defineConfig((): UserConfig => {
 						// Separate server-side heavy libraries into their own chunk
 						// This doesn't remove them (stubbing failed), but isolates them
 						if (id.includes('node_modules')) {
+							// Group Svelte internal modules to avoid circular dependencies between chunks
+							// This resolves warnings about 'untrack' and 'index-client.js' circularity
+							if (id.includes('node_modules/svelte')) {
+								return 'vendor-svelte';
+							}
 							if (id.includes('mongoose') || id.includes('mongodb')) {
 								return 'vendor-db-mongo';
 							}

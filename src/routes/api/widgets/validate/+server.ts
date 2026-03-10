@@ -49,8 +49,8 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 		let validCollections = 0;
 		let invalidCollections = 0;
 
-		for (const [, collection] of Object.entries(allCollections)) {
-			const coll = collection as Record<string, unknown>;
+		for (const collection of allCollections) {
+			const coll = collection as any;
 			if (!coll.fields) {
 				validCollections++;
 				continue;
@@ -59,7 +59,7 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 			let collectionValid = true;
 			const missingWidgets: string[] = [];
 
-			for (const field of coll.fields as Record<string, unknown>[]) {
+			for (const field of coll.fields as any[]) {
 				if (field && typeof field === 'object') {
 					let widgetType: string | undefined;
 

@@ -62,15 +62,10 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			// Check if widget is used in any collection
 			const allCollections = contentManager.getCollections();
 			const usedInCollections: string[] = [];
-			for (const [, schema] of Object.entries(allCollections)) {
-				const schemaObj = schema as Record<string, unknown>;
+			for (const schema of allCollections) {
 				// Check if any fields use this widget
-				if (
-					schemaObj.fields &&
-					Array.isArray(schemaObj.fields) &&
-					schemaObj.fields.some((field: Record<string, unknown>) => field.widget === widgetName)
-				) {
-					usedInCollections.push((schemaObj.name as string) || 'Unknown');
+				if (schema.fields && Array.isArray(schema.fields) && schema.fields.some((field: any) => (field as any).widget === widgetName)) {
+					usedInCollections.push((schema.name as string) || 'Unknown');
 				}
 			}
 

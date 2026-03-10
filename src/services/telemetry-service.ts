@@ -199,7 +199,7 @@ export const telemetryService = {
 						}
 					}
 
-					if (contentManager.isInitialized?.()) {
+					if (contentManager.isInitialized) {
 						const collections = await contentManager.getCollections();
 						collectionCount = collections.length;
 					}

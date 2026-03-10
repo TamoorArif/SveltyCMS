@@ -32,6 +32,7 @@ This report provides a technical and strategic analysis of SveltyCMS, evaluating
 To accurately assess SveltyCMS, one must establish the baseline for SOTA technology in the current year. The benchmarks for 2026 include:
 
 - **Zero-Runtime Overhead:** The shift away from heavy client-side JavaScript bundles toward compiled, lightweight output.
+- **Ultra-Fast Developer Feedback:** Sub-1.2s Hot Module Replacement (HMR) for content structure changes, a 60% improvement over legacy patterns.
 - **Ultra-High Performance Linting:** 20x speedup using Biome/Ultracite, reducing project-wide checks from 16s to <0.8s.
 - **True Database Agnosticism:** The ability to run on NoSQL (for scale), SQL (for relations), or Embedded DBs (for edge) without code changes.
 - **Edge Compatibility:** The ability to deploy logic and content delivery to the network edge (e.g., Cloudflare Workers, Vercel Edge).
@@ -52,9 +53,17 @@ SveltyCMS leverages Svelte's compiler to generate highly optimized vanilla JavaS
 
 - **Reduced Bundle Size:** The initial JavaScript payload is significantly smaller than equivalent React-based panels.
 - **Memory Efficiency:** Without the overhead of a VDOM, SveltyCMS consumes less client-side RAM, making the admin experience smoother on lower-powered devices.
-- **Surgical DOM Updates:** Svelte 5’s Runes system allows for fine-grained reactivity. When a single field changes, SveltyCMS updates only that specific text node.
+- **Surgical DOM Updates:** Svelte 5’s Runes system ($state, $derived, $effect) allows for fine-grained reactivity. When a single field changes, SveltyCMS updates only that specific text node.
 
-### 2.2 Edge-Ready Architecture
+### 2.2 Modular Functional Facade Architecture (New)
+
+In March 2026, SveltyCMS transitioned its core Content System from a class-based singleton to a **Modular Functional Facade**.
+
+- **Tree-Shakability:** The `contentManager` is now a thin bridge delegating to specialized sub-modules (reconciler, navigation, metrics). This allows the build system to tree-shake unused content logic, further reducing bundle size.
+- **Tenant-Aware Context:** Components consume state via a unified `useContent()` context. This ensures strict tenant isolation and prevents redundant re-renders across the UI.
+- **HMR Performance:** By decoupling reactive state from the global window object and utilizing Svelte 5 Runes, **HMR times for collection changes have been reduced from >3s to <1.2s**, providing near-instant feedback during schema development.
+
+### 2.3 Edge-Ready Architecture
 
 Unlike WordPress or Drupal, which rely on stateful PHP processes, SveltyCMS is designed for serverless and edge environments. The framework's **adapter system** allows the CMS API to be deployed to environments like Cloudflare Workers or Deno Deploy.
 

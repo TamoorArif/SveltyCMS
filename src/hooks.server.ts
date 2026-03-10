@@ -48,6 +48,7 @@ import { handleStaticAssetCaching } from './hooks/handle-static-asset-caching';
 import { handleSystemState } from './hooks/handle-system-state';
 import { handleTheme } from './hooks/handle-theme';
 import { handleTokenResolution } from './hooks/token-resolution';
+import { contentManager } from '@src/content/content-manager';
 
 // --- Server Startup Logic ---
 if (!building) {
@@ -140,6 +141,17 @@ const middleware: Handle[] = [
 
 	// 9. Authorization & access control (permissions with threat detection)
 	handleAuthorization,
+
+	// 9.5 Content System Initialization (Identity & Tenant aware)
+	async ({ event, resolve }) => {
+		const { locals } = event;
+		// Initialize content system for the resolved tenant
+		// Reconciliation is handled only on server startup or forced refresh
+		if (!contentManager.isInitialized || contentManager.initState === 'uninitialized') {
+			await contentManager.initialize(locals.tenantId, true);
+		}
+		return resolve(event);
+	},
 
 	// 10. API request handling (role-based access control & caching)
 	handleApiRequests,
