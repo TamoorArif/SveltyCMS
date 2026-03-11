@@ -47,6 +47,9 @@ export const contentReconciler = {
 		if (dbAdapter.ensureContent) {
 			await dbAdapter.ensureContent();
 		}
+		if (dbAdapter.ensureCollections) {
+			await dbAdapter.ensureCollections();
+		}
 
 		let operations: ContentNode[] = [];
 		const dbNodes: ContentNode[] = [];
@@ -67,6 +70,28 @@ export const contentReconciler = {
 		// Register models (Delegated)
 		const { registerModels } = await import('./content-reconciler/db-operations');
 		await registerModels(dbAdapter, schemas);
+
+		// Cleanup database-only collections if their files are missing
+		// This prevents "Customers" redirects when config/collections is empty
+		if (!skipReconciliation) {
+			const currentIds = new Set(schemas.filter((s) => s._id).map((s) => s._id));
+			const staleCollections = dbNodes.filter((node) => node.nodeType === 'collection' && !currentIds.has(node._id.toString()));
+
+			if (staleCollections.length > 0) {
+				logger.info(`[ContentReconciler] Cleaning up ${staleCollections.length} stale collection nodes...`);
+				const staleIds = staleCollections.map((n) => n._id.toString());
+				await dbAdapter.crud.deleteMany('system_content_structure', {
+					_id: { $in: staleIds },
+					...(tenantId ? { tenantId } : {})
+				} as any);
+
+				// Remove from dbNodes to prevent re-processing
+				for (const id of staleIds) {
+					const idx = dbNodes.findIndex((n) => n._id.toString() === id);
+					if (idx !== -1) dbNodes.splice(idx, 1);
+				}
+			}
+		}
 
 		if (skipReconciliation) {
 			if (dbNodes.length === 0) {

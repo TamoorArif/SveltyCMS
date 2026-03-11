@@ -29,7 +29,7 @@
  * - clearAllSessionCaches(): Clears all cached sessions
  */
 import { metricsService } from '@src/services/metrics-service';
-import type { Handle } from '@sveltejs/kit';
+import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { logger } from '@utils/logger.server';
 import { building } from '$app/environment';
@@ -144,12 +144,35 @@ const middleware: Handle[] = [
 
 	// 9.5 Content System Initialization (Identity & Tenant aware)
 	async ({ event, resolve }) => {
-		const { locals } = event;
-		// Initialize content system for the resolved tenant
+		const { locals, url } = event;
+		// Initialize content system for the resolved tenant if not already ready
 		// Reconciliation is handled only on server startup or forced refresh
-		if (!contentManager.isInitialized || contentManager.initState === 'uninitialized') {
-			await contentManager.initialize(locals.tenantId, true);
+		if (!contentManager.isInitializedForTenant(locals.tenantId)) {
+			// Set skipReconciliation to false to ensure stale DB nodes are cleaned up
+			await contentManager.initialize(locals.tenantId, false);
 		}
+
+		// FRESH INSTALL: If no collections exist, redirect authenticated users to builder or dashboard
+		// Skip redirect for API, static assets, and config/builder routes
+		const isApi = url.pathname.startsWith('/api');
+		const isConfig = url.pathname.startsWith('/config');
+		const isLogin = url.pathname.includes('/login');
+
+		if (locals.user && !isApi && !isConfig && !isLogin) {
+			const collections = contentManager.getCollections(locals.tenantId);
+			if (collections.length === 0) {
+				// Admins go to collection builder, others to dashboard
+				if (locals.isAdmin) {
+					logger.info(`[hooks.server] No collections found for tenant: ${locals.tenantId}. Redirecting Admin to builder.`);
+					throw redirect(302, '/config/collectionbuilder');
+				}
+				if (url.pathname !== '/dashboard') {
+					logger.info(`[hooks.server] No collections found for tenant: ${locals.tenantId}. Redirecting to dashboard.`);
+					throw redirect(302, '/dashboard');
+				}
+			}
+		}
+
 		return resolve(event);
 	},
 

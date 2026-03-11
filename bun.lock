@@ -5,7 +5,7 @@
     "": {
       "name": "sveltycms",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.1005.0",
+        "@aws-sdk/client-s3": "^3.1006.0",
         "@boxyhq/saml-jackson": "^1.52.2",
         "@floating-ui/dom": "^1.7.6",
         "@googlemaps/js-api-loader": "^2.0.2",
@@ -105,7 +105,7 @@
         "prettier-plugin-svelte": "^3.5.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "semantic-release": "^25.0.3",
-        "svelte": "^5.53.9",
+        "svelte": "^5.53.10",
         "svelte-awesome-color-picker": "^4.1.1",
         "svelte-check": "^4.4.5",
         "svelte-dnd-action": "^0.9.69",
@@ -122,7 +122,7 @@
       },
       "optionalDependencies": {
         "mariadb": "^3.5.2",
-        "mongoose": "^9.2.4",
+        "mongoose": "^9.3.0",
         "mysql2": "^3.19.1",
         "postgres": "^3.4.8",
       },

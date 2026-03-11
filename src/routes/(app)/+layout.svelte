@@ -47,12 +47,14 @@ import { widgets } from '@src/stores/widget-store.svelte.ts';
 import { Portal } from '@skeletonlabs/skeleton-svelte';
 // Utils
 import { isSearchVisible } from '@utils/global-search-index';
-import { getTextDirection } from '@utils/utils';
+import { getTextDirection, debounce } from '@utils/utils';
 import { onDestroy, onMount } from 'svelte';
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from '$app/navigation';
 import { page } from '$app/state';
 import type { ContentNode, Schema } from '../../content/types';
+import { setContentContext } from '@src/content/content-context.svelte';
+import { contentManager } from '@src/content/content-manager';
 
 // =============================================
 // TYPE DEFINITIONS
@@ -65,6 +67,7 @@ interface LayoutData {
 	publicSettings?: Record<string, any>;
 	theme?: string;
 	user: User | null;
+	tenantId?: string | null;
 }
 
 interface Props {
@@ -77,6 +80,9 @@ interface Props {
 // =============================================
 
 const { children, data }: Props = $props();
+
+// Initialize Content Context
+setContentContext(data.tenantId || null);
 
 // Component State
 let loadError = $state<Error | null>(null);
@@ -124,6 +130,8 @@ $effect(() => {
 			if (Array.isArray(structure)) {
 				defer(() => {
 					setContentStructure(structure);
+					// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
+					contentManager.sync(structure);
 					globalLoadingStore.stopLoading(loadingOperations.initialization);
 				});
 			}

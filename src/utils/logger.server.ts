@@ -230,18 +230,18 @@ async function rotate() {
 // Batch queue
 const queue: { level: LogLevel; msg: string; args: unknown[] }[] = [];
 let timeout: NodeJS.Timeout | null = null;
+let isFlushing = false;
 
-function flush() {
-	if (!queue.length) {
+async function flush() {
+	if (!queue.length || isFlushing) {
 		return;
 	}
+	isFlushing = true;
 	const batch = queue.splice(0, queue.length);
 
-	ensureStream()
-		.then(async (s) => {
-			if (!s) {
-				return;
-			}
+	try {
+		const s = await ensureStream();
+		if (s) {
 			await rotate();
 
 			for (const e of batch) {
@@ -258,8 +258,19 @@ function flush() {
 				const logLine = `${ts} ${color}${icon} [${e.level.toUpperCase().padEnd(5)}]${RESET} ${msg} ${args} [CHAIN:${lastHash}]\n`;
 				s.write(logLine);
 			}
-		})
-		.catch((err) => console.error('Log write failed:', err));
+		}
+	} catch (err) {
+		console.error('Log write failed:', err);
+	} finally {
+		isFlushing = false;
+		// If more logs came in during flush, schedule another one
+		if (queue.length > 0 && !timeout) {
+			timeout = setTimeout(() => {
+				timeout = null;
+				flush();
+			}, 5000);
+		}
+	}
 }
 
 function enqueue(level: LogLevel, msg: string, args: unknown[]) {
@@ -268,16 +279,23 @@ function enqueue(level: LogLevel, msg: string, args: unknown[]) {
 	}
 
 	const masked = args.map(mask);
-	const color = LEVELS[level].color;
-	const icon = ICONS[level.toUpperCase()] ?? '●';
-	const argsStr = masked.map(formatValue).join(' ');
-	const pretty = colorMessage(msg);
+	
+	// Enterprise optimization: Only write to stdout for high priority or if explicitly enabled
+	// This prevents console 'clogging' in high-traffic environments
+	const isHighPriority = LEVELS[level].prio <= LEVELS.warn.prio;
+	const forceStdout = process.env.VERBOSE_STDOUT === 'true' || process.env.NODE_ENV === 'development';
 
-	const ts = new Date().toISOString().slice(0, 19).replace('T', ' ');
-	// One-line enforcement: strip newlines
-	const safeMsg = pretty.replace(/\r?\n/g, ' ');
-	const safeArgs = argsStr.replace(/\r?\n/g, ' ');
-	process.stdout.write(`${ts} ${color}${icon} [${level.toUpperCase().padEnd(5)}]${RESET} ${safeMsg} ${safeArgs}\n`);
+	if (isHighPriority || forceStdout) {
+		const color = LEVELS[level].color;
+		const icon = ICONS[level.toUpperCase()] ?? '●';
+		const argsStr = masked.map(formatValue).join(' ');
+		const pretty = colorMessage(msg);
+
+		const ts = new Date().toISOString().slice(0, 19).replace('T', ' ');
+		const safeMsg = pretty.replace(/\r?\n/g, ' ');
+		const safeArgs = argsStr.replace(/\r?\n/g, ' ');
+		process.stdout.write(`${ts} ${color}${icon} [${level.toUpperCase().padEnd(5)}]${RESET} ${safeMsg} ${safeArgs}\n`);
+	}
 
 	queue.push({ level, msg, args: masked });
 	if (queue.length >= 100) {

@@ -101,7 +101,7 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 	import TranslationStatus from './translation-status.svelte';
 
 	// Content Context
-	const { isReady } = useContent();
+	const contentContext = useContent();
 
 	// =================================================================
 	// 1. RECEIVE DATA AS PROPS (From +page.server.ts)
@@ -843,7 +843,7 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 </script>
 
 <!--Table -->
-{#if !isReady}
+{#if !contentContext.isReady}
 	<div class="flex h-64 flex-col items-center justify-center p-8">
 		<div class="h-12 w-12 animate-spin rounded-full border-4 border-surface-200 border-t-tertiary-500"></div>
 		<p class="mt-4 text-surface-500">Initializing content system...</p>

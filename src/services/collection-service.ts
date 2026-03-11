@@ -102,6 +102,11 @@ export class CollectionService {
 			throw error(500, 'Database adapter is not available.');
 		}
 
+		// Ensure collection infra (QueryBuilder) is ready
+		if (dbAdapter.ensureCollections) {
+			await dbAdapter.ensureCollections();
+		}
+
 		const collectionTableName = `collection_${collection._id}`;
 		const finalFilter: Record<string, unknown> = { ...filter };
 		if (getPrivateSettingSync('MULTI_TENANT')) {

@@ -65,6 +65,8 @@ export const contentManager = {
 
 	refresh: (tenantId: string | null = null, skipReconciliation = false) => contentInitializer.refresh(tenantId, skipReconciliation),
 
+	sync: (nodes: ContentNode[]) => contentStructure.sync(nodes),
+
 	// --- Collection Management (Delegated to content-collections) ---
 	collections: contentCollections,
 

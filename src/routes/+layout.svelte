@@ -65,6 +65,7 @@ afterNavigate(() => toast.handleAfterNavigate());
 // ============================================================================
 
 import { setContentStructure } from '@src/stores/collection-store.svelte';
+import { initializeContent } from '@src/content';
 
 // Initialize public environment settings from server data
 // Note: Only access page.data after mount to avoid hydration issues
@@ -75,6 +76,8 @@ $effect(() => {
 		}
 		if (page.data.navigationStructure) {
 			setContentStructure(page.data.navigationStructure);
+			// Initialize the modern content system with hydration data
+			initializeContent(page.data as any);
 		}
 	}
 });

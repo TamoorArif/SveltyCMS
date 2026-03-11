@@ -15,6 +15,7 @@
 export { collections, contentStructure, setCollection, setCollectionValue, setMode, unAssigned } from '@src/stores/collection-store.svelte';
 export { contentStructure as categories } from './content-structure.svelte';
 
+import { contentStructure } from './content-structure.svelte';
 import { contentInitializer } from './content-initializer';
 import { contentPolling } from './content-polling.svelte';
 import { logger } from '@utils/logger';
@@ -23,12 +24,18 @@ import { logger } from '@utils/logger';
  * Modern content initialization.
  * Coordinates hydration, initial load, and polling.
  */
-export async function initializeContent(_pageData?: { navigationStructure: any; contentVersion: number }) {
+export async function initializeContent(pageData?: { navigationStructure: any; contentNodes: any[]; contentVersion: number; tenantId?: string | null }) {
 	try {
-		// 1. Initial system hydration
-		await contentInitializer.initialize(undefined, true);
+		// 1. Fast path hydration from server data
+		if (pageData?.contentNodes) {
+			logger.debug('💧 Hydrating Content System from server data...');
+			contentStructure.sync(pageData.contentNodes);
+		}
 
-		// 2. Start polling for real-time updates in browser
+		// 2. Mark system as initialized for this tenant (handles locks and state)
+		await contentInitializer.initialize(pageData?.tenantId, true);
+
+		// 3. Start polling for real-time updates in browser
 		contentPolling.start();
 
 		logger.info('✅ Content System Initialized');

@@ -44,7 +44,7 @@ import { showConfirm } from '@utils/modal-utils';
 import WidgetLoader from './widget-loader.svelte';
 
 // Content Context
-const { isReady, tenantId: contextTenantId } = useContent();
+const contentContext = useContent();
 
 // --- PERFORMANCE FIX: DYNAMIC WIDGET IMPORTS ---
 // Lazy-load widgets for code-splitting (eager: false is default)
@@ -345,7 +345,7 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 
 <h1 class="sr-only">{collection.value?.name ? `Edit ${collection.value.name} Entry` : 'Edit Entry'}</h1>
 
-{#if !isReady}
+{#if !contentContext.isReady}
 	<div class="flex h-64 flex-col items-center justify-center gap-4">
 		<div class="h-12 w-12 animate-spin rounded-full border-4 border-surface-200 border-t-primary-500"></div>
 		<p class="text-surface-500 animate-pulse">Initializing content system...</p>
@@ -505,7 +505,7 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 												{field}
 												WidgetData={{}}
 												bind:value={currentCollectionValue[fieldName]}
-												tenantId={tenantId || contextTenantId}
+												tenantId={tenantId || contentContext.tenantId}
 												collectionName={collection.value?.name}
 											/>
 										{/key}
@@ -613,7 +613,7 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 								{collection}
 								{currentCollectionValue}
 								{user}
-								tenantId={tenantId || contextTenantId}
+								tenantId={tenantId || contentContext.tenantId}
 								contentLanguage={currentContentLanguage}
 								{...slot.props}
 							/>
@@ -622,7 +622,7 @@ const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
 								{collection}
 								{currentCollectionValue}
 								{user}
-								tenantId={tenantId || contextTenantId}
+								tenantId={tenantId || contentContext.tenantId}
 								contentLanguage={currentContentLanguage}
 								{...slot.props}
 							/>

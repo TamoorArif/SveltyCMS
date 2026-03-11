@@ -19,6 +19,7 @@ import { app } from '@src/stores/store.svelte';
 import { ui } from '@src/stores/ui-store.svelte.ts';
 import { debounce } from '@utils/utils';
 import { SvelteSet } from 'svelte/reactivity';
+import { scale } from 'svelte/transition';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 
@@ -166,45 +167,47 @@ function clearSearch(): void {
 </script>
 
 <div class="mt-2 space-y-2" role="navigation" aria-label="Collections">
-	<!-- Search -->
-	<div class="relative {isFullSidebar ? 'w-full' : 'max-w--33.7'}">
-		<input
-			type="text"
-			bind:value={search}
-			placeholder={collections_search()}
-			class="w-full rounded border border-surface-300 bg-surface-50 px-3 pr-11 text-sm outline-none transition-all hover:border-surface-400 focus:border-tertiary-500 dark:border-surface-600 dark:bg-surface-800 {isFullSidebar
-				? 'h-12 py-3'
-				: 'h-10 py-2'}"
-			aria-label="Search collections"
-		/>
+	<!-- Search - Only show if we have collections -->
+	{#if treeNodes.length > 0}
+		<div class="relative {isFullSidebar ? 'w-full' : 'max-w--33.7'}" transition:scale={{ duration: 200, start: 0.95 }}>
+			<input
+				type="text"
+				bind:value={search}
+				placeholder={collections_search()}
+				class="w-full rounded border border-surface-300 bg-surface-50 px-3 pr-11 text-sm outline-none transition-all hover:border-surface-400 focus:border-tertiary-500 dark:border-surface-600 dark:bg-surface-800 {isFullSidebar
+					? 'h-12 py-3'
+					: 'h-10 py-2'}"
+				aria-label="Search collections"
+			/>
 
-		<div class="absolute right-0 top-0 flex h-full items-center">
-			{#if isSearching}
-				<div class="flex h-12 w-12 items-center justify-center">
-					<div class="h-2 w-2 animate-pulse rounded-full bg-tertiary-500 dark:bg-primary-500"></div>
-				</div>
-			{:else if search}
-				<button type="button" onclick={clearSearch} class="btn rounded-full preset-outline-surface-500 {isFullSidebar ? 'h-11 w-11' : 'h-10 w-10'}" aria-label="Clear search">
-					<iconify-icon icon="ic:round-close" width={24}></iconify-icon>
-				</button>
-			{:else}
-				<div class="flex items-center justify-center rounded-r bg-secondary-100 dark:bg-surface-700 {isFullSidebar ? 'h-11 w-11 mt-px mr-px' : 'h-8 w-8'}">
-					<iconify-icon icon="ic:outline-search" width={24}></iconify-icon>
-				</div>
-			{/if}
+			<div class="absolute right-0 top-0 flex h-full items-center">
+				{#if isSearching}
+					<div class="flex h-12 w-12 items-center justify-center">
+						<div class="h-2 w-2 animate-pulse rounded-full bg-tertiary-500 dark:bg-primary-500"></div>
+					</div>
+				{:else if search}
+					<button type="button" onclick={clearSearch} class="btn rounded-full preset-outline-surface-500 {isFullSidebar ? 'h-11 w-11' : 'h-10 w-10'}" aria-label="Clear search">
+						<iconify-icon icon="ic:round-close" width={24}></iconify-icon>
+					</button>
+				{:else}
+					<div class="flex items-center justify-center rounded-r bg-secondary-100 dark:bg-surface-700 {isFullSidebar ? 'h-11 w-11 mt-px mr-px' : 'h-8 w-8'}">
+						<iconify-icon icon="ic:outline-search" width={24}></iconify-icon>
+					</div>
+				{/if}
+			</div>
 		</div>
-	</div>
+	{/if}
 
 	<!-- Tree -->
 	<div class="collections-list" role="tree" aria-label="Collection tree">
 		{#if !content.isInitialized}
-			<div class="flex h-24 items-center justify-center">
+			<div class="flex h-24 items-center justify-center" transition:scale={{ duration: 200, start: 0.95 }}>
 				<div class="h-6 w-6 animate-spin rounded-full border-2 border-surface-300 border-t-tertiary-500"></div>
 			</div>
 		{:else if treeNodes.length === 0}
-			<div class="flex flex-col items-center justify-center gap-2 p-6 text-center">
-				<iconify-icon icon="bi:collection" width={24}></iconify-icon>
-				<p class="text-sm text-surface-500 dark:text-surface-50">{collection_no_collections_found()}</p>
+			<div class="flex flex-col items-center justify-center gap-2 p-6 text-center opacity-60" transition:scale={{ duration: 200, start: 0.95 }}>
+				<iconify-icon icon="bi:collection" width={32} class="text-surface-400"></iconify-icon>
+				<p class="text-xs text-surface-500 dark:text-surface-300">{collection_no_collections_found()}</p>
 			</div>
 		{:else}
 			<TreeView nodes={treeNodes} {selectedId} compact={!isFullSidebar} search={debouncedSearch} iconColorClass="text-error-500" showBadges={true} />

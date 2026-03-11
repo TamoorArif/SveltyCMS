@@ -355,6 +355,12 @@ export async function collectionsResolvers(dbAdapter: DatabaseAdapter, cacheClie
 				}
 
 				const collectionName = `collection_${collection._id}`;
+
+				// Ensure collection infra (QueryBuilder) is ready
+				if (dbAdapter.ensureCollections) {
+					await dbAdapter.ensureCollections();
+				}
+
 				const queryBuilder = dbAdapter
 					.queryBuilder(collectionName)
 					.where(Object.keys(query).length ? query : {})

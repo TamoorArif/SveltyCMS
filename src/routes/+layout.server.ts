@@ -38,6 +38,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 			tenantId: null,
 			darkMode: locals.darkMode ?? false,
 			navigationStructure: [],
+			contentNodes: [],
 			contentVersion: 0,
 			settings: {
 				PKG_VERSION: version,
@@ -64,6 +65,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 			tenantId: null,
 			darkMode: locals.darkMode ?? false,
 			navigationStructure: [],
+			contentNodes: [],
 			contentVersion: 0,
 			settings: {
 				PKG_VERSION: version,
@@ -85,6 +87,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 	// Content System Hydration with error handling for preview mode
 	const { contentManager } = await import('@src/content/content-manager');
 	let navigationStructure: NavigationNode[] = [];
+	let contentNodes: any[] = [];
 	let contentVersion = 0;
 	let firstCollectionRedirectUrl = '';
 
@@ -97,6 +100,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 			maxDepth: 1,
 			tenantId: locals.tenantId
 		});
+		contentNodes = await contentManager.getContentStructure(locals.tenantId);
 		contentVersion = contentManager.getContentVersion();
 
 		// Get the redirect URL for the first collection
@@ -116,6 +120,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 		tenantId: locals.tenantId ?? null,
 		darkMode: locals.darkMode ?? false,
 		navigationStructure,
+		contentNodes,
 		contentVersion,
 		// Pass public settings to client for store initialization
 		settings: {

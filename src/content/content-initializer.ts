@@ -10,10 +10,13 @@ import { contentReconciler } from './content-reconciler';
 import { contentCache } from './content-cache.svelte';
 import { contentMetrics } from './content-metrics';
 import type { IDBAdapter } from '@src/databases/db-interface';
+import { browser } from '$app/environment';
 
 const initPromises = new Map<string | null, Promise<void>>();
 const initializedTenants = new Set<string>();
 let initializedInSetupMode = false;
+
+const getDbAdapter = async () => (await import('@src/databases/db')).dbAdapter as IDBAdapter;
 
 /**
  * Orchestrates: contentCache.loadFromCache() → contentReconciler.fullReload() → contentCache.populateCache()
@@ -67,6 +70,14 @@ export const contentInitializer = {
 	 * Core initialization logic with self-healing retry
 	 */
 	async _doInitialize(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
+		if (browser) {
+			logger.debug('[ContentInitializer] Client-side initialization complete (deferred/hydrated).');
+			if (contentStructure.initState === 'uninitialized') {
+				contentStructure.initState = 'initialized';
+			}
+			return;
+		}
+
 		const { isSetupComplete } = await import('@utils/setup-check');
 		const setupComplete = isSetupComplete();
 
@@ -80,7 +91,17 @@ export const contentInitializer = {
 				logger.trace(`[ContentInitializer] initialization attempt ${attempt}/${maxRetries}`, { tenantId });
 
 				// 1. Attempt to load from high-speed cache
-				if (setupComplete && (await contentCache.loadFromCache(tenantId))) {
+				// CRITICAL: Only load from cache if we are skipping reconciliation.
+				// If skipReconciliation is false, we WANT to verify against DB/Files.
+				if (skipReconciliation && setupComplete && (await contentCache.loadFromCache(tenantId))) {
+					// CRITICAL: Ensure database query builder infra is initialized even on cache hits
+					// Since we bypass contentReconciler.fullReload(), we must ensure adapter is ready.
+					const dbAdapter = adapter || (await getDbAdapter());
+					if (dbAdapter) {
+						if (dbAdapter.ensureCollections) await dbAdapter.ensureCollections();
+						if (dbAdapter.ensureContent) await dbAdapter.ensureContent();
+					}
+
 					contentStructure.initState = 'initialized';
 					contentMetrics.setInitializationTime(performance.now() - startTime);
 					logger.info(`🚀 [ContentInitializer] initialized from cache in ${contentMetrics.getMetrics().initializationTime.toFixed(2)}ms`);

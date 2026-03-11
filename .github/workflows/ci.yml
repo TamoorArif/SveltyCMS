@@ -129,7 +129,7 @@ jobs:
           path: ${{ env.BUN_CACHE_DIR }}
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
       - run: bun install --frozen-lockfile --cache-dir ${{ env.BUN_CACHE_DIR }}
-      - run: bun run test:unit --coverage
+      - run: bun run test:unit
       - uses: codecov/codecov-action@v4
         if: success()
         with:
