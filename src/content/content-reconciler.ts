@@ -12,10 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { ContentNode, Schema, DatabaseId } from './types';
 import type { IDBAdapter } from '@src/databases/db-interface';
 
-// Sub-module imports
-import { scanAndProcessFiles } from './content-reconciler/scan-files';
-import { buildReconciliationOperations } from './content-reconciler/reconcile-logic';
-import { registerModels, bulkUpsertWithParentIds } from './content-reconciler/db-operations';
+// Sub-module imports (server-side only, imported dynamically below)
 
 const getDbAdapter = async () => (await import('@src/databases/db')).dbAdapter;
 const normalizeId = (id: string) => id.replace(/-/g, '');
@@ -28,8 +25,9 @@ export const contentReconciler = {
 	 * Full scan, reconcile, and populate cache
 	 */
 	async fullReload(tenantId?: string | null, skipReconciliation = false, adapter?: IDBAdapter): Promise<void> {
-		const schemas = await scanAndProcessFiles();
-		await this.reconcileAndBuildStructure(schemas, tenantId, skipReconciliation, adapter);
+		const { scanAndProcessFiles } = await import('./content-reconciler/scan-files.server');
+		const allSchemas = await scanAndProcessFiles();
+		await this.reconcileAndBuildStructure(allSchemas, tenantId, skipReconciliation, adapter);
 		await contentCache.populateCache(tenantId);
 	},
 
@@ -67,6 +65,7 @@ export const contentReconciler = {
 		}
 
 		// Register models (Delegated)
+		const { registerModels } = await import('./content-reconciler/db-operations');
 		await registerModels(dbAdapter, schemas);
 
 		if (skipReconciliation) {
@@ -79,7 +78,7 @@ export const contentReconciler = {
 		}
 
 		if (skipReconciliation) {
-			const { generateCategoryNodesFromPaths } = await import('./utils');
+			const { generateCategoryNodesFromPaths } = await import('./content-utils');
 			const fileCategoryNodes = generateCategoryNodesFromPaths(schemas);
 
 			for (const cat of fileCategoryNodes.values()) {
@@ -95,7 +94,7 @@ export const contentReconciler = {
 				} as unknown as ContentNode);
 			}
 		} else {
-			const { generateCategoryNodesFromPaths } = await import('./utils');
+			const { generateCategoryNodesFromPaths } = await import('./content-utils');
 			const fileCategoryNodes = generateCategoryNodesFromPaths(schemas);
 
 			const dbNodeMap = new Map<string, ContentNode>(
@@ -103,6 +102,7 @@ export const contentReconciler = {
 			);
 
 			// Core Logic (Delegated)
+			const { buildReconciliationOperations } = await import('./content-reconciler/reconcile-logic');
 			operations = buildReconciliationOperations(schemas, fileCategoryNodes, dbNodeMap);
 
 			const nodesToDelete: string[] = [];
@@ -121,6 +121,7 @@ export const contentReconciler = {
 
 			if (operations.length > 0) {
 				// DB Operations (Delegated)
+				const { bulkUpsertWithParentIds } = await import('./content-reconciler/db-operations');
 				await bulkUpsertWithParentIds(dbAdapter, operations, tenantId, dbNodes);
 			}
 		}
@@ -158,7 +159,7 @@ export const contentReconciler = {
 
 	async _buildInMemoryStructureFromSchemas(schemas: Schema[]): Promise<void> {
 		const now = dateToISODateString(new Date());
-		const { generateCategoryNodesFromPaths } = await import('./utils');
+		const { generateCategoryNodesFromPaths } = await import('./content-utils');
 		const fileCategoryNodes = generateCategoryNodesFromPaths(schemas);
 		const pathToIdMap = new Map<string, DatabaseId>();
 

@@ -9,7 +9,7 @@ import path from 'node:path';
 import { building, dev } from '$app/environment';
 import { logger } from '@utils/logger.server';
 import type { Schema } from '../types';
-import { processModule } from '../utils';
+import { processModule } from '../module-processor.server';
 
 /**
  * Scans the configured directory for collection definition files.

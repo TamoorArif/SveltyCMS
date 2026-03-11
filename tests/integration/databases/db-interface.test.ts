@@ -49,7 +49,8 @@ describe('Database Interface Contract Tests', () => {
 	beforeAll(async () => {
 		// Import the REAL adapter implementation directly, bypassing the mocked 'db.ts'
 		const { MongoDBAdapter } = await import('../../../src/databases/mongodb/mongo-db-adapter');
-		// @ts-expect-error - private.test.ts is generated at runtime in CI, not present at type-check time
+		// biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
+		// @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
 		const { privateEnv } = await import('../../../config/private.test');
 
 		if (!privateEnv?.DB_TYPE) {

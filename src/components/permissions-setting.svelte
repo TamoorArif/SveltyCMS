@@ -27,7 +27,7 @@ Advanced permission management interface with bulk actions and presets.
 
 <script lang="ts">
 import type { Role } from '@src/databases/auth/types';
-import { PermissionAction } from '@src/databases/auth/types';
+import { PermissionAction } from '@src/databases/auth/permission-constants';
 import { toast } from '@src/stores/toast.svelte.ts';
 import { onMount } from 'svelte';
 import { fade, slide } from 'svelte/transition';

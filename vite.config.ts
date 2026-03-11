@@ -247,28 +247,60 @@ function suppressThirdPartyWarningsPlugin(): Plugin {
 	};
 }
 
-/**
- * Plugin to stub out server-only modules in the client build.
- * This prevents unnecessary bundling of heavy server dependencies and fixes "ENOENT" or "cannot find module" errors
- * in the client bundle for files that should only run on the server.
- */
 function stubServerModulesPlugin(): Plugin {
+	// Directories/files that must NEVER appear in the client bundle.
+	// Only loaded file paths are checked, so these are matched as substrings.
+	const serverOnlySegments = [
+		'/src/databases/mongodb/',
+		'/src/databases/mariadb/',
+		'/src/databases/postgresql/',
+		'/src/databases/sqlite/',
+		'/src/databases/db.ts',
+		'/src/databases/database-resilience.ts',
+		'/src/databases/cache-service.ts',
+		'/src/databases/cache-warming-service.ts',
+		'/src/databases/cache-metrics.ts',
+		'/src/databases/config-state.ts',
+		'/src/databases/webhook-wrapper.ts',
+		'/src/databases/theme-manager.ts',
+		'/src/databases/db-adapter-wrapper.ts',
+		'/src/databases/db-utils.ts',
+		'/src/databases/schemas.ts',
+		'/src/databases/auth/index.ts',
+		'/src/databases/auth/session-cleanup.ts',
+		'/src/databases/auth/session-manager.ts',
+		'/src/databases/auth/two-factor-auth.ts',
+		'/src/databases/auth/permissions.ts',
+		'/src/databases/cache/cache-service.ts',
+		'/src/databases/cache/redis-store.ts',
+		'/src/databases/cache/inmemory-store.ts',
+		// Server services that should not leak to client
+		'/src/services/settings-service.ts',
+		// Email templates and dev-only preview tools are huge and shouldn't bloat the client
+		'/src/components/emails/',
+		'better-svelte-email',
+		// Also stub out server-only code
+		'.server.ts',
+		'.server.js',
+		'privateSettings.server.ts'
+	];
+
 	return {
 		name: 'stub-server-modules',
 		enforce: 'pre',
-		resolveId(id, _importer, options) {
-			// Stub out anything ending in .server.ts, .server.js, or .server directory (if used)
+		load(id, options) {
+			// Only stub for client builds, never for SSR
 			if (!options?.ssr) {
-				// Only stub for client build
-				if (id.includes('.server') || id.endsWith('privateSettings.server')) {
-					return '\0stub-server-module';
+				const normalizedId = id.replace(/\\/g, '/');
+				if (serverOnlySegments.some((seg) => normalizedId.includes(seg))) {
+					return `export default {};
+export const getPrivateSettingSync = () => ({});
+export const getPrivateSetting = async () => ({});
+export const getPublicSettingSync = () => ({});
+export const getPublicSetting = async () => ({});
+export const getUntypedSetting = async () => ({});
+export const logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };`;
 				}
-			}
-			return null;
-		},
-		load(id) {
-			if (id === '\0stub-server-module') {
-				return 'export default {}; export const getPrivateSettingSync = () => ({}); export const logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };';
 			}
 			return null;
 		}
@@ -541,29 +573,15 @@ export default defineConfig((): UserConfig => {
 				},
 				output: {
 					manualChunks: (id) => {
-						// Separate server-side heavy libraries into their own chunk
-						// This doesn't remove them (stubbing failed), but isolates them
-						if (id.includes('node_modules')) {
-							// Group Svelte internal modules to avoid circular dependencies between chunks
-							// This resolves warnings about 'untrack' and 'index-client.js' circularity
-							if (id.includes('node_modules/svelte')) {
-								return 'vendor-svelte';
-							}
-							if (id.includes('mongoose') || id.includes('mongodb')) {
-								return 'vendor-db-mongo';
-							}
-							if (id.includes('@aws-sdk') || id.includes('aws-crt')) {
-								return 'vendor-aws';
-							}
-							if (id.includes('mapbox-gl')) {
-								return 'vendor-maps';
-							}
-							if (id.includes('googleapis') || id.includes('google-auth-library')) {
-								return 'vendor-google';
-							}
-							if (id.includes('chart.js') || id.includes('chartjs')) {
-								return 'vendor-charts';
-							}
+						// Group Svelte internal modules to avoid circular dependencies between chunks.
+						// Server-only packages (mongoose, @aws-sdk, googleapis, etc.) are now
+						// stubbed by stubServerModulesPlugin and should never reach the client.
+						if (id.includes('node_modules/svelte')) {
+							return 'vendor-svelte';
+						}
+						// Move heavy editor dependencies to their own chunk
+						if (id.includes('node_modules/@tiptap') || id.includes('node_modules/prosemirror')) {
+							return 'vendor-editor';
 						}
 					}
 				},

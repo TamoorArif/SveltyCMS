@@ -26,7 +26,7 @@
 <script lang="ts">
 import type { ContentNode, DatabaseId } from '@databases/db-interface';
 import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { sortContentNodes } from '@src/content/utils';
+import { sortContentNodes } from '@src/content/content-utils';
 import { toast } from '@src/stores/toast.svelte.ts';
 import { tick } from 'svelte';
 import { flip } from 'svelte/animate';

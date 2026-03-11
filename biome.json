@@ -21,7 +21,8 @@
 			"!!**/dist",
 			"!!**/package",
 			"!!**/src/paraglide",
-			"!!**/.bun-cache"
+			"!!**/.bun-cache",
+			"!!**/bundle-report.json"
 		]
 	},
 	"formatter": {

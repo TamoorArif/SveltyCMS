@@ -4,22 +4,10 @@
  */
 import type { RedisClientType } from 'redis';
 
-// Standardized cache categories for unified metrics and multi-level caching.
-export const CacheCategory = {
-	SCHEMA: 'schema',
-	COLLECTION: 'collection',
-	ENTRY: 'entry',
-	SESSION: 'session',
-	SETTING: 'setting',
-	THEME: 'theme',
-	USER: 'user',
-	API: 'api',
-	CONTENT: 'content',
-	WIDGET: 'widget',
-	MEDIA: 'media'
-} as const;
-
-export type CacheCategory = (typeof CacheCategory)[keyof typeof CacheCategory];
+// Re-export client-safe cache constants
+import { CacheCategory } from './cache-constants';
+export { CacheCategory };
+export type { CacheCategory as CacheCategoryType } from './cache-constants';
 
 export interface CacheStore {
 	clearByPattern(pattern: string): Promise<void>;

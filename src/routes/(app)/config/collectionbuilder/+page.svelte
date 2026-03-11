@@ -37,7 +37,7 @@ None (TreeView has its own keyboard navigation)
 import { SvelteSet } from 'svelte/reactivity';
 import type { ISODateString } from '@root/src/content/types';
 import type { ContentNode, DatabaseId } from '@root/src/databases/db-interface';
-import { hasDuplicateSiblingName } from '@src/content/utils';
+import { hasDuplicateSiblingName } from '@src/content/content-utils';
 import PageTitle from '@src/components/page-title.svelte';
 import { button_save, collection_add, collection_addcategory, collection_description, collection_pagetitle } from '@src/paraglide/messages';
 import TreeViewBoard from '@src/routes/(app)/config/collectionbuilder/nested-content/tree-view-board.svelte';

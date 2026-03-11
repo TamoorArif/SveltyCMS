@@ -20,7 +20,7 @@ It provides the following functionality:
 <script lang="ts">
 // Auth
 import type { Permission, Role } from '@src/databases/auth/types';
-import { PermissionType } from '@src/databases/auth/types';
+import { PermissionType } from '@src/databases/auth/permission-constants';
 // Stores
 import { page } from '$app/state';
 
