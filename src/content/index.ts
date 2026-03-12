@@ -24,7 +24,12 @@ import { logger } from '@utils/logger';
  * Modern content initialization.
  * Coordinates hydration, initial load, and polling.
  */
-export async function initializeContent(pageData?: { navigationStructure: any; contentNodes: any[]; contentVersion: number; tenantId?: string | null }) {
+export async function initializeContent(pageData?: {
+	navigationStructure: any;
+	contentNodes: any[];
+	contentVersion: number;
+	tenantId?: string | null;
+}) {
 	try {
 		// 1. Fast path hydration from server data
 		if (pageData?.contentNodes) {

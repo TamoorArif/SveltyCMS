@@ -10,15 +10,7 @@
  * - Integration
  */
 
-import { beforeAll, describe, expect, it, mock } from 'bun:test';
-
-// Mock SvelteKit environment
-mock.module('$app/environment', () => ({
-	dev: true,
-	browser: false,
-	building: false,
-	version: 'test'
-}));
+import { beforeAll, describe, expect, it } from 'bun:test';
 
 let APP_ERROR: any;
 let getErrorMessage: any;

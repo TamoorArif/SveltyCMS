@@ -46,11 +46,6 @@ mock.module('ollama', () => ({
 	}
 }));
 
-// Mock $app/environment
-mock.module('$app/environment', () => ({
-	building: false
-}));
-
 // Mock fetch globally
 const originalFetch = global.fetch;
 (global as any).fetch = mock(() =>

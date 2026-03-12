@@ -8,40 +8,8 @@
  * NOTE: TypeScript errors for 'bun:test' module are expected - it's a runtime module.
  */
 
-import { beforeAll, describe, expect, it, mock } from 'bun:test';
+import { beforeAll, describe, expect, it } from 'bun:test';
 import type { DatabaseResult } from '../../../src/databases/db-interface';
-
-// Mock SvelteKit modules
-mock.module('$app/environment', () => ({
-	browser: true,
-	building: false,
-	dev: true,
-	version: 'test'
-}));
-
-// Mock logger to avoid import issues
-mock.module('@src/utils/logger', () => ({
-	logger: {
-		fatal: () => {},
-		error: () => {},
-		warn: () => {},
-		info: () => {},
-		debug: () => {},
-		trace: () => {},
-		channel: () => ({
-			info: () => {},
-			error: () => {},
-			warn: () => {},
-			debug: () => {}
-		})
-	}
-}));
-
-// Mock Svelte 5 Runes
-(globalThis as any).$state = (initial: any) => initial; // Simple pass-through for tests
-(globalThis as any).$derived = (fn: any) => (typeof fn === 'function' ? fn() : fn);
-(globalThis as any).$effect = () => {};
-(globalThis as any).$props = () => ({});
 
 describe('Database Interface Contract Tests', () => {
 	let db: any = null;

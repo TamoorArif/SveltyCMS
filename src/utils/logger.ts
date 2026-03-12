@@ -129,11 +129,10 @@ function log(level: LogLevel, msg: string, args: unknown[]) {
 	// Enterprise optimization: Prevent console clogging
 	// In production, only show WARN and above unless explicitly requested
 	const isDev = import.meta.env?.DEV || process?.env?.NODE_ENV === 'development';
-	const verboseEnabled = (IS_BROWSER && localStorage.getItem('VITE_VERBOSE_LOGS') === 'true') || 
-						  (import.meta.env?.VITE_VERBOSE_LOGS === 'true');
-	
+	const verboseEnabled = (IS_BROWSER && localStorage.getItem('VITE_VERBOSE_LOGS') === 'true') || import.meta.env?.VITE_VERBOSE_LOGS === 'true';
+
 	const isHighPriority = PRIORITY[level] <= PRIORITY.warn;
-	
+
 	if (!isDev && !isHighPriority && !verboseEnabled) {
 		return;
 	}

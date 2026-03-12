@@ -9,40 +9,8 @@
  * - Token operations
  */
 
-import { afterAll, beforeAll, describe, expect, it, mock } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import mongoose from 'mongoose';
-
-// Mock SvelteKit modules
-mock.module('$app/environment', () => ({
-	browser: true,
-	building: false,
-	dev: true,
-	version: 'test'
-}));
-
-// Mock logger
-mock.module('@src/utils/logger', () => ({
-	logger: {
-		fatal: () => {},
-		error: () => {},
-		warn: () => {},
-		info: () => {},
-		debug: () => {},
-		trace: () => {},
-		channel: () => ({
-			info: () => {},
-			error: () => {},
-			warn: () => {},
-			debug: () => {}
-		})
-	}
-}));
-
-// Mock Svelte 5 Runes
-(globalThis as any).$state = (initial: any) => initial;
-(globalThis as any).$derived = (fn: any) => (typeof fn === 'function' ? fn() : fn);
-(globalThis as any).$effect = () => {};
-(globalThis as any).$props = () => ({});
 
 // Dynamic imports
 let adapterClass: typeof import('@src/databases/mongodb/mongo-db-adapter').MongoDBAdapter;

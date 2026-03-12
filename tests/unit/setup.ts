@@ -196,7 +196,7 @@ setGlobal('$inspect', () => ({ with: () => {} }));
 
 // 4. SVELTE COMMON MODULES
 const svelteCommon = {
-	untrack: (fn: any) => fn(),
+	untrack: mock((fn: any) => fn()),
 	onMount: (fn: any) => fn?.(),
 	onDestroy: (fn: any) => fn?.(),
 	beforeUpdate: (fn: any) => fn?.(),

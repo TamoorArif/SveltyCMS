@@ -279,7 +279,7 @@ function enqueue(level: LogLevel, msg: string, args: unknown[]) {
 	}
 
 	const masked = args.map(mask);
-	
+
 	// Enterprise optimization: Only write to stdout for high priority or if explicitly enabled
 	// This prevents console 'clogging' in high-traffic environments
 	const isHighPriority = LEVELS[level].prio <= LEVELS.warn.prio;

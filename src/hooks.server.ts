@@ -147,9 +147,9 @@ const middleware: Handle[] = [
 		const { locals, url } = event;
 		// Initialize content system for the resolved tenant if not already ready
 		// Reconciliation is handled only on server startup or forced refresh
-		if (!contentManager.isInitializedForTenant(locals.tenantId)) {
+		if (!contentManager.isInitializedForTenant(locals.tenantId ?? null)) {
 			// Set skipReconciliation to false to ensure stale DB nodes are cleaned up
-			await contentManager.initialize(locals.tenantId, false);
+			await contentManager.initialize(locals.tenantId ?? null, false);
 		}
 
 		// FRESH INSTALL: If no collections exist, redirect authenticated users to builder or dashboard

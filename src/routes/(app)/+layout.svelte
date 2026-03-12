@@ -47,8 +47,8 @@ import { widgets } from '@src/stores/widget-store.svelte.ts';
 import { Portal } from '@skeletonlabs/skeleton-svelte';
 // Utils
 import { isSearchVisible } from '@utils/global-search-index';
-import { getTextDirection, debounce } from '@utils/utils';
-import { onDestroy, onMount } from 'svelte';
+import { getTextDirection } from '@utils/utils';
+import { onDestroy, onMount, untrack } from 'svelte';
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from '$app/navigation';
 import { page } from '$app/state';
@@ -82,7 +82,7 @@ interface Props {
 const { children, data }: Props = $props();
 
 // Initialize Content Context
-setContentContext(data.tenantId || null);
+setContentContext(untrack(() => data.tenantId) || null);
 
 // Component State
 let loadError = $state<Error | null>(null);

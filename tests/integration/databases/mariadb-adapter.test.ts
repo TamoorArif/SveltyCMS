@@ -9,33 +9,7 @@
  * - DatabaseResilience integration
  */
 
-import { afterAll, beforeAll, describe, expect, it, mock } from 'bun:test';
-
-// Mock SvelteKit environment
-mock.module('$app/environment', () => ({
-	browser: false,
-	building: false,
-	dev: true,
-	version: 'test'
-}));
-
-// Mock logger
-mock.module('@src/utils/logger', () => ({
-	logger: {
-		fatal: () => {},
-		error: () => {},
-		warn: () => {},
-		info: () => {},
-		debug: () => {},
-		trace: () => {},
-		channel: () => ({
-			info: () => {},
-			error: () => {},
-			warn: () => {},
-			debug: () => {}
-		})
-	}
-}));
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 
 // Dynamic import for adapter
 let adapterClass: typeof import('../../../src/databases/mariadb/adapter').MariaDBAdapter;
