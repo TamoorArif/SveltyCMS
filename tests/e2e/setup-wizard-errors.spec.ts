@@ -29,7 +29,7 @@ test('should show error on bad database connection', async ({ page }) => {
 
 test('should show error on admin user password mismatch', async ({ page }) => {
 	await page.goto('/setup');
-	
+
 	// Skip to Admin Step (assuming we can bypass via Next if DB is already valid or mocked)
 	// For E2E we usually have to follow the flow, so we use SQLite which should be fast
 	await page.locator('#db-type').selectOption('sqlite');
@@ -51,7 +51,7 @@ test('should show error on admin user password mismatch', async ({ page }) => {
 
 test('should show error on invalid SMTP configuration', async ({ page }) => {
 	await page.goto('/setup');
-	
+
 	// Fast track to SMTP (Step 4 approx)
 	await page.locator('#db-type').selectOption('sqlite');
 	await page.getByLabel('Next', { exact: true }).click(); // To Admin

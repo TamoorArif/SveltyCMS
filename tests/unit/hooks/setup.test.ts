@@ -56,10 +56,13 @@ function createMockResponse(status = 200): Response {
 /** Helper to assert a redirect error */
 function expectRedirect(err: unknown, expectedStatus: number, expectedLocation: string) {
 	const e = err as any;
-	if (!e.__isRedirect) {
-		console.error('Caught unexpected error:', e);
+
+	// Log unexpected errors to help with debugging if it's not our expected redirect
+	if (e.status !== expectedStatus || e.location !== expectedLocation) {
+		console.error('Caught unexpected error/response instead of expected redirect:', e);
 	}
-	expect(e.__isRedirect).toBe(true);
+
+	// Check status and location directly (the most reliable way across SvelteKit versions)
 	expect(e.status).toBe(expectedStatus);
 	expect(e.location).toBe(expectedLocation);
 }

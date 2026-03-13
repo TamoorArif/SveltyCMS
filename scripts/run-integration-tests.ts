@@ -225,7 +225,12 @@ function findTestFiles(dir: string, list: string[] = []) {
 		const p = join(dir, f);
 		if (statSync(p).isDirectory()) {
 			findTestFiles(p, list);
-		} else if (f.endsWith('.test.ts') && !f.includes('setup-actions') && !f.includes('setup-wizard.test.ts') && !f.includes('setup-presets.test.ts')) {
+		} else if (
+			f.endsWith('.test.ts') &&
+			!f.includes('setup-actions') &&
+			!f.includes('setup-wizard.test.ts') &&
+			!f.includes('setup-presets.test.ts')
+		) {
 			list.push(p);
 		}
 	}
