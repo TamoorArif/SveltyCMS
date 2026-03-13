@@ -123,15 +123,12 @@ class UIStore {
 
 		// Special routes
 		if (this.routeContext.isImageEditor) {
-			this.state = {
-				...this.state,
-				leftSidebar: 'collapsed',
-				rightSidebar: 'hidden',
-				pageheader: 'full',
-				pagefooter: 'full',
-				header: 'hidden',
-				footer: 'hidden'
-			};
+			this.state.leftSidebar = 'collapsed';
+			this.state.rightSidebar = 'hidden';
+			this.state.pageheader = 'full';
+			this.state.pagefooter = 'full';
+			this.state.header = 'hidden';
+			this.state.footer = 'hidden';
 			return;
 		}
 
@@ -144,15 +141,12 @@ class UIStore {
 				sidebarState = 'collapsed';
 			}
 
-			this.state = {
-				...this.state,
-				leftSidebar: sidebarState,
-				rightSidebar: 'hidden',
-				pageheader: 'hidden', // No HeaderEdit in collection builder
-				pagefooter: 'hidden',
-				header: 'hidden',
-				footer: 'hidden'
-			};
+			this.state.leftSidebar = sidebarState;
+			this.state.rightSidebar = 'hidden';
+			this.state.pageheader = 'hidden'; // No HeaderEdit in collection builder
+			this.state.pagefooter = 'hidden';
+			this.state.header = 'hidden';
+			this.state.footer = 'hidden';
 			return;
 		}
 
@@ -160,42 +154,33 @@ class UIStore {
 
 		// Mobile
 		if (size === ScreenSize.XS || size === ScreenSize.SM) {
-			this.state = {
-				...this.state,
-				leftSidebar: 'hidden',
-				rightSidebar: 'hidden',
-				pageheader: showPageHeader ? 'full' : 'hidden',
-				pagefooter: 'hidden',
-				header: 'hidden',
-				footer: 'hidden'
-			};
+			this.state.leftSidebar = 'hidden';
+			this.state.rightSidebar = 'hidden';
+			this.state.pageheader = showPageHeader ? 'full' : 'hidden';
+			this.state.pagefooter = 'hidden';
+			this.state.header = 'hidden';
+			this.state.footer = 'hidden';
 			return;
 		}
 
 		// Tablet
 		if (size === ScreenSize.MD) {
-			this.state = {
-				...this.state,
-				leftSidebar: isViewMode ? 'collapsed' : 'hidden',
-				rightSidebar: 'hidden',
-				pageheader: showPageHeader ? 'full' : 'hidden',
-				pagefooter: 'hidden',
-				header: 'hidden',
-				footer: 'hidden'
-			};
+			this.state.leftSidebar = isViewMode ? 'collapsed' : 'hidden';
+			this.state.rightSidebar = 'hidden';
+			this.state.pageheader = showPageHeader ? 'full' : 'hidden';
+			this.state.pagefooter = 'hidden';
+			this.state.header = 'hidden';
+			this.state.footer = 'hidden';
 			return;
 		}
 
 		// Desktop
-		this.state = {
-			...this.state,
-			leftSidebar: isViewMode ? 'full' : 'collapsed',
-			rightSidebar: isViewMode ? 'hidden' : 'full',
-			pageheader: showPageHeader ? 'full' : 'hidden',
-			pagefooter: 'hidden',
-			header: 'hidden',
-			footer: 'hidden'
-		};
+		this.state.leftSidebar = isViewMode ? 'full' : 'collapsed';
+		this.state.rightSidebar = isViewMode ? 'hidden' : 'full';
+		this.state.pageheader = showPageHeader ? 'full' : 'hidden';
+		this.state.pagefooter = 'hidden';
+		this.state.header = 'hidden';
+		this.state.footer = 'hidden';
 	}
 
 	/**

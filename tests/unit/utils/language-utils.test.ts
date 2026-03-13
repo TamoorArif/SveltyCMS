@@ -8,7 +8,6 @@
  * - Edge cases
  */
 
-import { describe, expect, it } from 'bun:test';
 import { getLanguageName } from '@src/utils/language-utils';
 
 describe('Language Utils - Get Language Name', () => {

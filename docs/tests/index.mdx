@@ -317,6 +317,28 @@ This script:
 3. Runs appropriate tests (setup tests OR full suite)
 4. Cleans up after itself
 
+### `scripts/seed-test-users.ts`
+
+Creates additional test users for RBAC testing:
+
+- Developer user (developer@example.com)
+- Editor user (editor@example.com)
+
+**Process**:
+
+1.  Logs in as admin (created by setup wizard)
+2.  Creates invitation tokens for each role
+3.  Registers users using invitation tokens
+4.  Fallback to direct user creation if needed
+
+**Usage**:
+
+```bash
+bun run seed:test-users
+# or
+API_BASE_URL=http://localhost:4173 bun run scripts/seed-test-users.ts
+```
+
 ---
 
 ## Test Status & Coverage

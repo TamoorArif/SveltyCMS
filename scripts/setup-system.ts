@@ -78,6 +78,9 @@ async function main() {
 
 	console.log(`🚀 Starting system setup for ${dbType}...`);
 
+	const multiTenant = process.env.MULTI_TENANT === 'true';
+	const demoMode = process.env.DEMO === 'true';
+
 	try {
 		// 1. Test Database
 		console.log('🔗 Testing database connection...');
@@ -105,7 +108,7 @@ async function main() {
 		console.log('✅ Database seeding started.');
 
 		// 3. Complete Setup (Create Admin)
-		console.log('👤 Creating admin user and completing setup...');
+		console.log(`👤 Creating admin user and completing setup (Multi-Tenant: ${multiTenant}, Demo: ${demoMode})...`);
 		const completeForm = new FormData();
 		const payload = {
 			database: dbConfig,
@@ -116,9 +119,9 @@ async function main() {
 				confirmPassword: 'Admin123!'
 			},
 			system: {
-				multiTenant: false,
-				demoMode: false,
-				useRedis: false,
+				multiTenant,
+				demoMode,
+				useRedis: process.env.USE_REDIS === 'true',
 				siteName: 'SveltyCMS Test',
 				defaultContentLanguage: 'en',
 				contentLanguages: ['en'],

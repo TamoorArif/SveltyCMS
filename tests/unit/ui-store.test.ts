@@ -9,7 +9,6 @@
  * - Real singleton behavior
  */
 
-import { describe, expect, it, mock } from 'bun:test';
 import { ui } from '../../src/stores/ui-store.svelte';
 
 // Mock implementation of UIStore for legacy tests if needed

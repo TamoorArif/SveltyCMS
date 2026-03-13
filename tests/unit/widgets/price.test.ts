@@ -9,12 +9,11 @@
  * - Required field handling
  */
 
-import { describe, expect, it, mock } from 'bun:test';
 import PriceWidget from '@widgets/custom/price';
 import { parse } from 'valibot';
 
 // Mock dependencies
-mock.module('@stores/widgetStore.svelte', () => ({ widgets: {} }));
+vi.mock('@stores/widgetStore.svelte', () => ({ widgets: {} }));
 
 describe('Price Widget', () => {
 	it('should have correct default configuration', () => {

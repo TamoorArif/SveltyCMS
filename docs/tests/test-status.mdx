@@ -6,7 +6,7 @@ order: 2
 icon: 'mdi:chart-box'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-03-06'
+updated: '2026-03-13'
 tags:
   - 'testing'
   - 'status'
@@ -17,15 +17,15 @@ tags:
 
 # SveltyCMS Test Suite Status
 
-> **Last Updated:** March 7, 2026
+> **Last Updated:** March 13, 2026
 > **Total Tests:** ~1032+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (695 unit tests verified)
+> **Overall Pass Rate:** 100% (693 unit tests across 51 suites)
 
 ## Executive Summary
 
-The testing suite has been fully synchronized with the modern Svelte 5 architecture and optimized for **Enterprise-grade reliability** in both local and CI (Linux) environments. Recent efforts have stabilized global state management, resolved Git casing conflicts, and hardened security hooks.
+The testing suite has been fully migrated to **Vitest 4.1.0** (Vite 8) and optimized for **Enterprise-grade reliability** in both local and CI (Linux) environments. Recent efforts have stabilized global state management (resolved rune loops), fixed module resolution for SvelteKit aliases, and hardened security hooks.
 
-- **Unit Tests:** 695 tests across 51 files (Passing - 100%)
+- **Unit Tests:** 693 tests across 51 suites (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
 - **E2E Tests:** Critical flows (Setup, RBAC, Redirection) fully automated and verified.
 
@@ -104,20 +104,22 @@ All core features are verified to work seamlessly across our supported database 
 
 ---
 
-## 🔧 Infrastructure & Reliability
+### Unit Test Architecture (Vitest 4.1.0)
+
+Our unit tests leverage **Vitest** for native Svelte 5 rune support and fast execution:
+
+- **Dedicated Vitest Config**: `vitest.config.ts` manages all aliases (`@widgets`, `@services`, `$paraglide`).
+- **SvelteKit Mocks**: Specialized mock files in `tests/unit/mocks/$app/` simulate the SvelteKit environment without the full runtime overhead.
+- **Rune Stabilization**: Fixed recursive update loops in `UIStore` by moving to granular property updates.
+- **Isomorphic Mocking**: `tests/unit/setup.ts` provides a consistent environment for both Browser and Node-based logic.
 
 ### Automated CI/CD
 
-Our GitHub Actions pipeline (`ci.yml`) is 100% synchronized with the local environment:
+Our GitHub Actions pipeline is 100% synchronized with the local environment:
 
-- **Git Casing Alignment**: Standardized `contentPath` casing ensures compatibility with Linux runners.
+- **Vite 8 Compatibility**: Optimized for the latest Vite ecosystem.
 - **Timer Stabilization**: `TEST_MODE` now bypasses non-deterministic timers in `LoadingStore` and `ToastStore` for synchronous reliability.
-- **Matrix Testing**: Integration and E2E tests are executed against all supported databases in a matrix.
-
-### Recent Improvements
-
-- ✅ **Consolidated Mocking**: High-fidelity mocks in `tests/unit/setup.ts` provide a stable foundation for the entire logic layer.
-- ✅ **Logic Transparency**: Project-internal services (Automation, GDPR, SystemStore) now run against real source code instead of shallow mocks.
+- **Matrix Testing**: Integration and E2E tests are executed against all supported databases (MongoDB, MariaDB, PostgreSQL, SQLite).
 
 ---
 
@@ -146,3 +148,17 @@ bun x playwright test
 ```bash
 bun run test:all
 ```
+
+## CI Workflow & Data Isolation (Latest)
+
+We have transitioned to a **Pure Black-Box** CI strategy to ensure 100% data isolation and environment parity:
+
+- **No Fake Configs**: Manual creation of `private.test.ts` in CI is removed.
+- **Native Setup**: CI jobs now run `scripts/setup-system.ts` against a live server to generate real test configurations.
+- **Cache-Busting Imports**: Dynamic imports of configuration files now use a timestamp query parameter to ensure in-process reinitialization picks up disk changes immediately.
+- **Server Resilience**: E2E jobs include explicit server restarts and health checks after setup to guarantee a fresh, verified state.
+- **Unit Isolation**: Unit tests remain 100% isolated via in-memory mocks, completely decoupled from the physical filesystem.
+
+Last Updated: 2026-03-13
+Current Unit Pass Rate: 100%
+Current Browser/E2E Strategy: Native Setup

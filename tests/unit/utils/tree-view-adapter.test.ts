@@ -12,7 +12,6 @@
  * - Path recalculation
  */
 
-import { describe, expect, test } from 'bun:test';
 import type { ContentNode } from '@src/content/types';
 import { fromTreeViewData, recalculatePaths, type TreeViewItem, toFlatContentNodes, toTreeViewData } from '@src/utils/tree-view-adapter';
 

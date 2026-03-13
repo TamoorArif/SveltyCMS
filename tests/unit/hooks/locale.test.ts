@@ -10,7 +10,6 @@
  * - Store availability check
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { handleLocale } from '@src/hooks/handle-locale';
 import type { RequestEvent } from '@sveltejs/kit';
 

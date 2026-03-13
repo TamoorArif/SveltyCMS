@@ -12,7 +12,6 @@
  * - Response Handling
  */
 
-import { describe, expect, test } from 'bun:test';
 import { securityResponseService } from '@src/services/security-response-service';
 
 describe('SecurityResponseService', () => {

@@ -9,7 +9,6 @@
  * - Security properties
  */
 
-import { describe, expect, it } from 'bun:test';
 import { createChecksum, generateRandomToken, hashPassword, verifyPassword } from '@src/utils/crypto';
 
 describe('Crypto Utils - Password Hashing', () => {

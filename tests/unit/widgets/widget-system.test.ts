@@ -14,11 +14,10 @@
  * @coverage ~60 tests
  */
 
-import { describe, expect, test, mock, beforeEach } from 'bun:test';
 
 // Mock json-render catalog must be declared BEFORE importing widget-factory
-mock.module('@src/services/json-render/catalog', () => ({
-	registerForJsonRender: mock(() => {})
+vi.mock('@src/services/json-render/catalog', () => ({
+	registerForJsonRender: vi.fn()
 }));
 import { registerForJsonRender } from '@src/services/json-render/catalog';
 
@@ -33,7 +32,7 @@ describe('Widget System - Factory Pattern', () => {
 				validationSchema: string()
 			});
 
-			expect(widget).toBeFunction();
+			expect(widget).toBeInstanceOf(Function);
 			expect(widget.Name).toBe('TestWidget');
 		});
 
@@ -67,7 +66,7 @@ describe('Widget System - Factory Pattern', () => {
 			});
 
 			const field = widget({ label: 'Test', required: true });
-			expect(field.widget.validationSchema).toBeFunction();
+			expect(typeof field.widget.validationSchema).toBe('function');
 		});
 
 		test('should support static validation schema', () => {
@@ -109,7 +108,7 @@ describe('Widget System - Factory Pattern', () => {
 				})
 			});
 
-			expect(widget.GraphqlSchema).toBeFunction();
+			expect(widget.GraphqlSchema).toBeInstanceOf(Function);
 		});
 
 		test('should attach aggregations to widget', () => {
@@ -123,8 +122,8 @@ describe('Widget System - Factory Pattern', () => {
 			});
 
 			expect(widget.aggregations).toBeDefined();
-			expect(widget.aggregations?.filters).toBeFunction();
-			expect(widget.aggregations?.sorts).toBeFunction();
+			expect(widget.aggregations?.filters).toBeInstanceOf(Function);
+			expect(widget.aggregations?.sorts).toBeInstanceOf(Function);
 		});
 
 		describe('jsonRender Integration', () => {
@@ -390,8 +389,8 @@ describe('Widget System - Validation Schemas', () => {
 			const optionalField = widget({ label: 'Optional', required: false });
 
 			// Both should have validation schemas
-			expect(requiredField.widget.validationSchema).toBeFunction();
-			expect(optionalField.widget.validationSchema).toBeFunction();
+			expect(typeof requiredField.widget.validationSchema).toBe('function');
+			expect(typeof optionalField.widget.validationSchema).toBe('function');
 		});
 
 		test('should access field properties in schema function', () => {
@@ -499,7 +498,7 @@ describe('Widget System - Widget Metadata', () => {
 				validationSchema: string()
 			});
 
-			expect(widget.toString).toBeFunction();
+			expect(widget.toString).toBeInstanceOf(Function);
 			expect(widget.toString()).toBe('');
 		});
 	});

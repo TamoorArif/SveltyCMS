@@ -12,7 +12,6 @@
  * - Bulk operation abuse
  */
 
-import { beforeEach, describe, expect, it, mock, test } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Use global metricsService from setup.ts

@@ -1,7 +1,6 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test';
 
 // Properly mock @src/databases/config-state
-mock.module('@src/databases/config-state', () => ({
+vi.mock('@src/databases/config-state', () => ({
 	getPrivateEnv: () => (globalThis as any).__privateEnv,
 	setPrivateEnv: (env: any) => {
 		(globalThis as any).__privateEnv = env;

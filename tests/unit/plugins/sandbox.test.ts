@@ -9,7 +9,6 @@
  * - Error boundary tests
  */
 
-import { describe, expect, it } from 'bun:test';
 import { createScopedDbAdapter } from '@src/plugins/sandbox';
 
 // Create a minimal mock dbAdapter for testing

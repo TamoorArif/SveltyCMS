@@ -2,7 +2,6 @@
  * @file tests/unit/stores/toast.svelte.test.ts
  * @description Unit tests for the ToastStore.
  */
-import { describe, expect, it, beforeEach, spyOn, afterEach } from 'bun:test';
 import { toast } from '@stores/toast.svelte';
 
 describe('ToastStore', () => {
@@ -73,8 +72,8 @@ describe('ToastStore', () => {
 	});
 
 	it('should store and read flash messages across sessions', () => {
-		const spySet = spyOn(globalThis.sessionStorage, 'setItem');
-		const spyRemove = spyOn(globalThis.sessionStorage, 'removeItem');
+		const spySet = vi.spyOn(globalThis.sessionStorage, 'setItem');
+		const spyRemove = vi.spyOn(globalThis.sessionStorage, 'removeItem');
 
 		toast.flash({ type: 'success', message: 'Flash Success' });
 

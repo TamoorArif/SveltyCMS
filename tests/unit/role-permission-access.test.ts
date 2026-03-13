@@ -19,7 +19,6 @@
  * without needing a database connection or running server.
  */
 
-import { beforeEach, describe, expect, test } from 'bun:test';
 import {
 	getAllPermissions,
 	hasPermissionByAction,

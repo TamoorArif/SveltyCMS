@@ -21,14 +21,12 @@ import { CacheCategory, type CacheStore, type WarmCacheConfig, type PrefetchPatt
 // Re-export for convenience
 export { CacheCategory };
 
-// Safe import for test environment
-let browser = false;
-try {
-	const appEnv = await import('$app/environment');
-	browser = appEnv.browser;
-} catch {
-	browser = false;
-}
+// Environment detection
+// We use a combination of checks to be robust across SvelteKit and Vitest
+const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+// In Vitest, we can check for VITEST global or process.env.VITEST
+const isTest = typeof process !== 'undefined' && (process.env.VITEST === 'true' || !!(globalThis as any).vi);
+
 
 // Default constants
 export const SESSION_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -130,7 +128,7 @@ export class CacheService {
 			this.initPromise = (async () => {
 				try {
 					const config = getCacheConfig(force);
-					const isRedis = !browser && config.USE_REDIS;
+					const isRedis = !isBrowser && !isTest && config.USE_REDIS;
 
 					if (this.store) await this.store.disconnect();
 

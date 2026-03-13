@@ -11,7 +11,6 @@
  * - Audit logging
  */
 
-import { beforeEach, describe, expect, it } from 'bun:test';
 import { gdprService } from '@src/services/gdpr-service';
 
 // Access global mocks from setup.ts

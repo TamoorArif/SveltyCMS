@@ -1,25 +1,17 @@
 /**
- * @file tests/bun/hooks/setup.test.ts
+ * @file tests/unit/hooks/setup.test.ts
  * @description Comprehensive tests for handleSetup middleware with proper redirect validation
- *
- * Tests:
- * - Setup state detection
- * - Allowed routes during setup
- * - Redirect to setup
- * - API error handling
- * - Cache invalidation
- * - Production environment handling
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
 import { invalidateSetupCache } from '@utils/setup-check';
+import { handleSetup } from '@src/hooks/handle-setup';
 
 // Use global mockSetupCheck from tests/unit/setup.ts
 const mockSetupCheck = (globalThis as any).mockSetupCheck;
 
-// --- Mock SvelteKit (must include all exports used by transitive deps like handleApiError) ---
-mock.module('@sveltejs/kit', () => ({
+// --- Mock SvelteKit ---
+vi.mock('@sveltejs/kit', () => ({
 	redirect: (status: number, location: string) => {
 		throw { status, location, __isRedirect: true };
 	},
@@ -50,9 +42,9 @@ function createMockEvent(pathname: string): RequestEvent {
 			__setupLoginRedirectLogged: false
 		},
 		cookies: {
-			get: mock(() => null),
-			set: mock(() => ({})),
-			delete: mock(() => ({}))
+			get: vi.fn(() => null),
+			set: vi.fn(() => ({})),
+			delete: vi.fn(() => ({}))
 		}
 	} as unknown as RequestEvent;
 }
@@ -72,15 +64,13 @@ function expectRedirect(err: unknown, expectedStatus: number, expectedLocation: 
 	expect(e.location).toBe(expectedLocation);
 }
 
-import { handleSetup } from '@src/hooks/handle-setup';
-
 describe('handleSetup Middleware', () => {
-	let mockResolve: ReturnType<typeof mock>;
+	let mockResolve: ReturnType<typeof vi.fn>;
 	let mockResponse: Response;
 
 	beforeEach(async () => {
 		mockResponse = createMockResponse();
-		mockResolve = mock(() => Promise.resolve(mockResponse));
+		mockResolve = vi.fn(() => Promise.resolve(mockResponse));
 		mockSetupCheck.setSetupComplete(true);
 		invalidateSetupCache();
 	});
@@ -101,7 +91,6 @@ describe('handleSetup Middleware', () => {
 		});
 
 		it('detects when config values are empty', async () => {
-			// Set mockConfigExists to false to simulate incomplete setup
 			mockSetupCheck.setSetupComplete(false);
 
 			const event = createMockEvent('/dashboard');
@@ -126,9 +115,6 @@ describe('handleSetup Middleware', () => {
 	// Allowed Routes During Setup
 	// ---------------------------------------------------------------------
 	describe('Allowed Routes During Setup', () => {
-		// Routes allowed by isAllowedDuringSetup():
-		// - /setup, /api/system/*
-		// - ASSET_REGEX: /_app/*, /static/*, /favicon.ico, *.js, *.css, etc.
 		const allowed = ['/setup', '/setup/database', '/_app/immutable/chunks/index.js', '/static/logo.png', '/api/system/version', '/favicon.ico'];
 		beforeEach(() => {
 			mockSetupCheck.setSetupComplete(false);
@@ -141,7 +127,6 @@ describe('handleSetup Middleware', () => {
 			});
 		}
 
-		// Routes NOT allowed during setup (should redirect to /setup)
 		const notAllowed = ['/', '/health', '/.well-known/security.txt'];
 		for (const path of notAllowed) {
 			it(`redirects ${path} to /setup during incomplete setup`, async () => {
@@ -164,7 +149,6 @@ describe('handleSetup Middleware', () => {
 			mockSetupCheck.setSetupComplete(false);
 		});
 
-		// Non-API routes redirect to /setup
 		const nonApiRoutes = ['/dashboard', '/login'];
 		for (const route of nonApiRoutes) {
 			it(`redirects ${route} to /setup`, async () => {
@@ -178,7 +162,6 @@ describe('handleSetup Middleware', () => {
 			});
 		}
 
-		// API routes return 503 error Response via handleApiError
 		it('returns 503 for /api/collections during setup', async () => {
 			const event = createMockEvent('/api/collections');
 			const response = await handleSetup({ event, resolve: mockResolve });
@@ -196,14 +179,11 @@ describe('handleSetup Middleware', () => {
 
 		it('redirects /setup to / when setup complete', async () => {
 			const event = createMockEvent('/setup');
-			// Force the cached value in event.locals to avoid test pollution across the suite
 			event.locals.__setupConfigExists = true;
 			try {
 				await handleSetup({ event, resolve: mockResolve });
-				// If we get here, it means no redirect was thrown
 				expect(true).toBe(false);
 			} catch (err) {
-				// The actual implementation redirects to '/' not '/login'
 				expectRedirect(err, 302, '/');
 			}
 		});

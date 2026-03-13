@@ -26,7 +26,7 @@
 
 <p align="center">
   <a href="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/github-code-scanning/codeql"><img alt="CodeQL" src="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/github-code-scanning/codeql/badge.svg"></a>
-  <a href="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/playwright.yml"><img alt="Playwright Tests" src="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/playwright.yml/badge.svg"></a>
+  <a href="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/ci.yml"><img alt="CI Pipeline" src="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/auto-release.yaml"><img alt="Auto Release" src="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/auto-release.yaml/badge.svg"></a>
 </p>
 
@@ -36,8 +36,7 @@
 
 This SveltyCMS headless CMS provides a powerful backend based on a modern [SvelteKit 2 / Svelte 5](https://svelte.dev) framework. Being designed to be database agnostic, we fully support **MongoDB**, **PostgreSQL**, **SQLite**, and **MariaDB/MySQL** (via [Drizzle ORM](https://drizzle.dev)).
 
-- [x] **PostgreSQL Support**: Full adapter implementation; core CRUD and Auth modules operational. Verified production-ready.
-      You can define Content Collections in two ways: in code or via the GUI-based collection builder. Full TypeScript support and a rich widget library make it straightforward to build custom data structures.
+You can define Content Collections in two ways: in code or via the GUI-based collection builder. Full TypeScript support and a rich widget library make it straightforward to build custom data structures.
 
 All widget fields support localization, validation using [Valibot](https://valibot.dev), and access control.
 

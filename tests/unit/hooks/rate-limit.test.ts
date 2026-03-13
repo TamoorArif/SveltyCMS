@@ -15,7 +15,6 @@
  * - Rate limit response
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { handleRateLimit } from '@src/hooks/handle-rate-limit';
 import type { RequestEvent } from '@sveltejs/kit';
 

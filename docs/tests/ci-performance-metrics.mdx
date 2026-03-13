@@ -1,0 +1,31 @@
+---
+path: 'docs/tests/ci-performance-metrics.mdx'
+title: 'CI/CD Performance & Bundle Size Analysis'
+description: 'Documentation on monitoring bundle sizes and other performance metrics.'
+author: 'SveltyCMS Team'
+created: '2025-12-16'
+updated: '2026-03-13'
+tags:
+  - 'testing'
+  - 'performance'
+  - 'ci-cd'
+---
+
+# Bundle Size Analysis & Performance Metrics
+
+We actively monitor our application bundle size to prevent performance regressions during the CI/CD build process. Keeping the bundle lean ensures optimal performance, particularly affecting Time to Interactive (TTI) and First Contentful Paint (FCP).
+
+## Running Analysis Locally
+
+To check the build performance locally:
+
+```bash
+bun run build:stats
+```
+
+This generates detailed reports including:
+
+- Size of each chunk (raw, gzipped, brotli).
+- Comparison with the previous build size.
+- Warnings reported if predefined performance budgets are exceeded.
+- An exported `bundle-report.json` designed for automated CI consumption.

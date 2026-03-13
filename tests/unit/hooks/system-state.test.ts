@@ -11,7 +11,6 @@
  *
  * Note: Mocks are set up in preload.ts using globalThis for controllable state.
  */
-import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { RequestEvent } from '@sveltejs/kit';
 import { resetSystemState, setSystemState, updateServiceHealth, type ServiceName } from '@src/stores/system/state';
 

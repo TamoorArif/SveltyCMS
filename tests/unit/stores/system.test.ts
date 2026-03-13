@@ -10,7 +10,6 @@
  * - Error handling
  */
 
-import { beforeEach, describe, expect, it } from 'bun:test';
 
 import {
 	getSystemState,

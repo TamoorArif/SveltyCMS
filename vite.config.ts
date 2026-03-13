@@ -15,14 +15,18 @@ import { existsSync, promises as fs } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { platform } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { compile } from './src/utils/compilation/compile';
-import { isSetupComplete } from './src/utils/setup-check';
+import { isSetupComplete } from './src/utils/is-setup-complete';
 import { securityCheckPlugin } from './src/utils/vite-plugin-security-check';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Cross-platform open URL function (replaces 'open' package)
 function openUrl(url: string) {
@@ -43,14 +47,15 @@ function openUrl(url: string) {
  * This allows local tests to use an isolated configuration without modifying the production config.
  */
 function testConfigAliasPlugin(): Plugin {
+	// Optimization: NO-OP if not in TEST_MODE, avoiding resolveId overhead
+	if (process.env.TEST_MODE !== 'true') {
+		return { name: 'test-config-alias' };
+	}
+
 	return {
 		name: 'test-config-alias',
 		enforce: 'pre',
 		resolveId(id) {
-			if (process.env.TEST_MODE !== 'true') {
-				return;
-			}
-
 			// Check for direct import or alias
 			if (id === '@config/private' || id.endsWith('config/private.ts')) {
 				const cwd = process.cwd();
@@ -65,8 +70,10 @@ function testConfigAliasPlugin(): Plugin {
 	};
 }
 
+
+
 /**
- * Vite plugin that provides a fallback for @config/private and @config/private.test when the file doesn't exist
+ * Plugin that provides a fallback for @config/private and @config/private.test when the file doesn't exist
  * This allows builds to succeed in fresh clones without committing sensitive credentials
  */
 function privateConfigFallbackPlugin(): Plugin {
@@ -74,49 +81,40 @@ function privateConfigFallbackPlugin(): Plugin {
 	const virtualTestModuleId = '@config/private.test';
 	const resolvedVirtualModuleId = `\0${virtualModuleId}`;
 	const resolvedVirtualTestModuleId = `\0${virtualTestModuleId}`;
+	
+	// Cache resolution results to avoid repeated filesystem checks (Rolldown optimization)
+	const resolutionCache = new Map<string, string | null>();
 
 	return {
 		name: 'private-config-fallback',
 		enforce: 'pre',
 		resolveId(id) {
+			if (id === virtualModuleId) return resolvedVirtualModuleId;
+			if (id === virtualTestModuleId) return resolvedVirtualTestModuleId;
+			
+			// Quick exit for non-config modules
+			if (!id.includes('config/private')) return null;
+
+			// Return cached result if available
+			if (resolutionCache.has(id)) return resolutionCache.get(id);
+
 			const cwd = process.cwd();
 			const normalizedId = id.replace(/\\/g, '/');
+			let result: string | null = null;
 
-			// Define all possible variations of the private config path
-			const privatePaths = [
-				virtualModuleId,
-				path.join(cwd, 'config/private').replace(/\\/g, '/'),
-				path.join(cwd, 'config/private.ts').replace(/\\/g, '/'),
-				'@config/private'
-			];
-
-			const testPaths = [
-				virtualTestModuleId,
-				path.join(cwd, 'config/private.test').replace(/\\/g, '/'),
-				path.join(cwd, 'config/private.test.ts').replace(/\\/g, '/'),
-				'@config/private.test'
-			];
-
-			if (privatePaths.some((p) => normalizedId === p || normalizedId.endsWith('config/private') || normalizedId.endsWith('config/private.ts'))) {
-				// Check if actual file exists
+			// Check for production config
+			if (normalizedId.endsWith('config/private') || normalizedId.endsWith('config/private.ts')) {
 				const prodPath = path.resolve(cwd, 'config/private.ts');
-				if (existsSync(prodPath)) {
-					return null; // Let Vite handle it normally
-				}
-				// File doesn't exist, use virtual module
-				return resolvedVirtualModuleId;
+				result = existsSync(prodPath) ? null : resolvedVirtualModuleId;
 			}
-			if (
-				testPaths.some((p) => normalizedId === p || normalizedId.endsWith('config/private.test') || normalizedId.endsWith('config/private.test.ts'))
-			) {
-				// Check if actual file exists
+			// Check for test config
+			else if (normalizedId.endsWith('config/private.test') || normalizedId.endsWith('config/private.test.ts')) {
 				const testPath = path.resolve(cwd, 'config/private.test.ts');
-				if (existsSync(testPath)) {
-					return null; // Let Vite handle it normally
-				}
-				// File doesn't exist, use virtual module
-				return resolvedVirtualTestModuleId;
+				result = existsSync(testPath) ? null : resolvedVirtualTestModuleId;
 			}
+			
+			resolutionCache.set(id, result);
+			return result;
 		},
 		load(id) {
 			if (id === resolvedVirtualModuleId || id === resolvedVirtualTestModuleId) {
@@ -501,7 +499,8 @@ export default defineConfig((): UserConfig => {
 				outdir: './src/paraglide'
 			}),
 			tailwindcss()
-		],
+		].filter(Boolean),
+
 		server: {
 			fs: {
 				allow: ['static', '.'],
@@ -535,17 +534,17 @@ export default defineConfig((): UserConfig => {
 			external: ['bun:sqlite', 'bun:test', 'redis']
 		},
 		resolve: {
-			alias: {
-				'@root': path.resolve(CWD, './'),
-				'@src': path.resolve(CWD, './src'),
-				'@components': path.resolve(CWD, './src/components'),
-				'@content': path.resolve(CWD, './src/content'),
-				'@databases': path.resolve(CWD, './src/databases'),
-				'@config': path.resolve(CWD, 'config'),
-				'@utils': path.resolve(CWD, './src/utils'),
-				'@stores': path.resolve(CWD, './src/stores'),
-				'@widgets': path.resolve(CWD, './src/widgets')
-			}
+			alias: [
+				{ find: '@root', replacement: path.resolve(CWD, './') },
+				{ find: '@src', replacement: path.resolve(CWD, './src') },
+				{ find: '@components', replacement: path.resolve(CWD, './src/components') },
+				{ find: '@content', replacement: path.resolve(CWD, './src/content') },
+				{ find: '@databases', replacement: path.resolve(CWD, './src/databases') },
+				{ find: '@config', replacement: path.resolve(CWD, 'config') },
+				{ find: '@utils', replacement: path.resolve(CWD, './src/utils') },
+				{ find: '@stores', replacement: path.resolve(CWD, './src/stores') },
+				{ find: '@widgets', replacement: path.resolve(CWD, './src/widgets') }
+			]
 		},
 		define: {
 			__FRESH_INSTALL__: false, // Default, may be overridden by setupWizardPlugin

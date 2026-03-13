@@ -9,13 +9,12 @@
  * - Required field handling
  */
 
-import { describe, expect, it, mock } from 'bun:test';
 import RepeaterWidget from '@widgets/core/repeater';
 import { parse } from 'valibot';
 
 // Mock dependencies
 // Mock Svelte store
-mock.module('@stores/widgetStore.svelte', () => ({
+vi.mock('@stores/widgetStore.svelte', () => ({
 	widgets: {
 		widgetFunctions: {},
 		widgets: {}

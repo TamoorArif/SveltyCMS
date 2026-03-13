@@ -12,7 +12,6 @@
  * - Edge cases
  */
 
-import { beforeEach, describe, expect, it } from 'bun:test';
 import { LoadingStore, loadingOperations } from '@src/stores/loading-store.svelte';
 
 describe('Loading Store - Basic Operations', () => {

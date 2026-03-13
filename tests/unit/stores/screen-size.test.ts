@@ -11,7 +11,6 @@
  * - Enum values
  */
 
-import { describe, expect, it } from 'bun:test';
 import { getScreenSize, ScreenSize } from '@src/utils/screen-size';
 
 describe('Screen Size Store - Size Detection', () => {

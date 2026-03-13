@@ -10,7 +10,6 @@
  * - Webhook alerting tests
  */
 
-import { describe, expect, it } from 'bun:test';
 
 // We test the utility functions by importing the service directly
 // The service is a singleton, so we test via its public API

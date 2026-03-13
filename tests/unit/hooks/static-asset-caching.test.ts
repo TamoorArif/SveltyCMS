@@ -12,7 +12,6 @@
  * - Query parameter handling
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { handleStaticAssetCaching, isStaticAsset, STATIC_ASSET_REGEX } from '@src/hooks/handle-static-asset-caching';
 import type { RequestEvent } from '@sveltejs/kit';
 

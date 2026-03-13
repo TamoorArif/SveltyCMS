@@ -1,0 +1,65 @@
+---
+path: 'docs/tests/rbac-testing.mdx'
+title: 'Role-Based Access Control (RBAC) Testing'
+description: 'SveltyCMS role-based access control permission enforcement testing details.'
+author: 'SveltyCMS Team'
+created: '2025-12-16'
+updated: '2026-03-13'
+tags:
+  - 'testing'
+  - 'rbac'
+  - 'security'
+---
+
+# Role-Based Access Control (RBAC) Testing
+
+## Overview
+
+SveltyCMS implements comprehensive RBAC testing to ensure proper permission enforcement across all user roles.
+
+**File**: `tests/e2e/role-based-access.spec.ts`
+
+## Test Scenarios
+
+### 1. Admin Role (Full Access)
+
+Tests that admin users can:
+
+- ✅ Access all system settings (`/config/systemsetting`)
+- ✅ Manage users (`/config/user`)
+- ✅ Configure access management (`/config/accessManagement`)
+- ✅ Create invitation tokens (Email Token button visible)
+
+### 2. Developer Role (Limited Access)
+
+Tests that developer users:
+
+- ✅ CAN access system configuration
+- ✅ CAN access development tools and APIs
+- ❌ CANNOT manage users
+- ❌ CANNOT access user management pages
+
+**Expected Behavior**: Redirect or 403 Forbidden when accessing `/config/user`
+
+### 3. Editor Role (Content Only)
+
+Tests that editor users:
+
+- ✅ CAN access collections (`/collection`)
+- ✅ CAN create and edit content
+- ❌ CANNOT access system settings
+- ❌ CANNOT manage users
+- ❌ CANNOT access access management
+
+**Expected Behavior**: Redirect or 403 Forbidden for all config pages
+
+## Permission Matrix
+
+| Feature            | Admin | Developer | Editor |
+| :----------------- | :---- | :-------- | :----- |
+| System Settings    | ✅    | ✅        | ❌     |
+| User Management    | ✅    | ❌        | ❌     |
+| Access Management  | ✅    | ❌        | ❌     |
+| API Tools          | ✅    | ✅        | ❌     |
+| Content Management | ✅    | ✅        | ✅     |
+| Media Library      | ✅    | ✅        | ✅     |

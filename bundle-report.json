@@ -1,1635 +1,1715 @@
 {
-  "timestamp": "2026-03-11T13:46:18.320Z",
+  "timestamp": "2026-03-13T13:46:32.274Z",
   "stats": {
-    "totalSize": 3492107,
-    "totalGzip": 1098430,
-    "totalBrotli": 941697,
-    "jsCount": 200,
-    "cssCount": 37,
+    "totalSize": 3511253,
+    "totalGzip": 1108597,
+    "totalBrotli": 951739,
+    "jsCount": 222,
+    "cssCount": 38,
     "files": [
       {
-        "name": "C2zeR9R6.js",
+        "name": "B1x4T3Fa2.js",
         "ext": ".js",
-        "size": 415089,
-        "gzipSize": 130523,
-        "brotliSize": 110940,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C2zeR9R6.js"
+        "size": 416461,
+        "gzipSize": 131080,
+        "brotliSize": 111462,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B1x4T3Fa2.js"
       },
       {
-        "name": "0.BJwNp4JE.css",
+        "name": "0.ByqyAjVG.css",
         "ext": ".css",
-        "size": 321716,
-        "gzipSize": 37180,
-        "brotliSize": 28314,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/0.BJwNp4JE.css"
+        "size": 321730,
+        "gzipSize": 37137,
+        "brotliSize": 28318,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/0.ByqyAjVG.css"
       },
       {
-        "name": "28.BO4BwOSY.js",
+        "name": "28.B8OheFvb.js",
         "ext": ".js",
-        "size": 180957,
-        "gzipSize": 46986,
-        "brotliSize": 37941,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/28.BO4BwOSY.js"
+        "size": 181380,
+        "gzipSize": 46843,
+        "brotliSize": 37912,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/28.B8OheFvb.js"
       },
       {
-        "name": "BY8ZfGaA.js",
+        "name": "Ba26gCw_.js",
         "ext": ".js",
-        "size": 164797,
-        "gzipSize": 57681,
-        "brotliSize": 50413,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BY8ZfGaA.js"
+        "size": 164687,
+        "gzipSize": 57599,
+        "brotliSize": 50342,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Ba26gCw_.js"
       },
       {
-        "name": "DDSEA6ei.js",
+        "name": "DjgnxJ-y.js",
         "ext": ".js",
-        "size": 135232,
-        "gzipSize": 41901,
+        "size": 141248,
+        "gzipSize": 49795,
+        "brotliSize": 44032,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DjgnxJ-y.js"
+      },
+      {
+        "name": "C_weiI7p.js",
+        "ext": ".js",
+        "size": 135230,
+        "gzipSize": 41899,
         "brotliSize": 32795,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DDSEA6ei.js"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C_weiI7p.js"
       },
       {
-        "name": "QsUkG3Af.js",
+        "name": "2.csaeMRwS.js",
         "ext": ".js",
-        "size": 134040,
-        "gzipSize": 47443,
-        "brotliSize": 41988,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/QsUkG3Af.js"
+        "size": 100633,
+        "gzipSize": 32748,
+        "brotliSize": 27466,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/2.csaeMRwS.js"
       },
       {
-        "name": "AgZd98MB.js",
+        "name": "BqdIOR0q2.js",
         "ext": ".js",
-        "size": 109434,
-        "gzipSize": 31480,
-        "brotliSize": 27785,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/AgZd98MB.js"
+        "size": 100486,
+        "gzipSize": 28455,
+        "brotliSize": 25071,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BqdIOR0q2.js"
       },
       {
-        "name": "2.Zo-2dFwN.js",
+        "name": "8.B2ABmQJA.js",
         "ext": ".js",
-        "size": 100677,
-        "gzipSize": 32870,
-        "brotliSize": 27557,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/2.Zo-2dFwN.js"
+        "size": 80347,
+        "gzipSize": 26601,
+        "brotliSize": 22552,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/8.B2ABmQJA.js"
       },
       {
-        "name": "CdJa2g-T.js",
+        "name": "24.DpNwDw4t.js",
         "ext": ".js",
-        "size": 80920,
-        "gzipSize": 27347,
-        "brotliSize": 23166,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CdJa2g-T.js"
+        "size": 77156,
+        "gzipSize": 23889,
+        "brotliSize": 20543,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/24.DpNwDw4t.js"
       },
       {
-        "name": "24.Bth91k4K.js",
+        "name": "26.CNRBPFSc.js",
         "ext": ".js",
-        "size": 77231,
-        "gzipSize": 23977,
-        "brotliSize": 20574,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/24.Bth91k4K.js"
+        "size": 73107,
+        "gzipSize": 22913,
+        "brotliSize": 19350,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/26.CNRBPFSc.js"
       },
       {
-        "name": "26.DZQYnquW.js",
+        "name": "Q059Edxf2.js",
         "ext": ".js",
-        "size": 73401,
-        "gzipSize": 22980,
-        "brotliSize": 19408,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/26.DZQYnquW.js"
+        "size": 71111,
+        "gzipSize": 21396,
+        "brotliSize": 18214,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Q059Edxf2.js"
       },
       {
-        "name": "ixkxSvBM.js",
+        "name": "22.CbV88afe.js",
         "ext": ".js",
-        "size": 72003,
-        "gzipSize": 21562,
-        "brotliSize": 18333,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ixkxSvBM.js"
+        "size": 60432,
+        "gzipSize": 17852,
+        "brotliSize": 15482,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/22.CbV88afe.js"
       },
       {
-        "name": "22.DzILYjxO.js",
+        "name": "D2Gy8GFo.js",
         "ext": ".js",
-        "size": 60573,
-        "gzipSize": 17969,
-        "brotliSize": 15525,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/22.DzILYjxO.js"
+        "size": 57941,
+        "gzipSize": 18595,
+        "brotliSize": 16399,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D2Gy8GFo.js"
       },
       {
-        "name": "BvhdwQ28.js",
+        "name": "14.CbbuKECN.js",
         "ext": ".js",
-        "size": 56812,
-        "gzipSize": 18288,
-        "brotliSize": 16170,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BvhdwQ28.js"
+        "size": 53562,
+        "gzipSize": 16635,
+        "brotliSize": 14402,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/14.CbbuKECN.js"
       },
       {
-        "name": "14.D-wsu3Yy.js",
+        "name": "0.Ct6Fh6Ng.js",
         "ext": ".js",
-        "size": 53621,
-        "gzipSize": 16665,
-        "brotliSize": 14388,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/14.D-wsu3Yy.js"
+        "size": 48228,
+        "gzipSize": 15427,
+        "brotliSize": 13668,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/0.Ct6Fh6Ng.js"
       },
       {
-        "name": "DvzIaFgd.js",
+        "name": "DX_dRBTN.js",
         "ext": ".js",
-        "size": 50685,
-        "gzipSize": 14216,
-        "brotliSize": 12396,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DvzIaFgd.js"
+        "size": 45918,
+        "gzipSize": 13462,
+        "brotliSize": 11782,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DX_dRBTN.js"
       },
       {
-        "name": "0.CicKJMfv.js",
+        "name": "13.iIBpVS_l.js",
         "ext": ".js",
-        "size": 46340,
-        "gzipSize": 14911,
-        "brotliSize": 13188,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/0.CicKJMfv.js"
+        "size": 44477,
+        "gzipSize": 14678,
+        "brotliSize": 12970,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/13.iIBpVS_l.js"
       },
       {
-        "name": "13.CC63TStf.js",
+        "name": "18.Cia9Ikct.js",
         "ext": ".js",
-        "size": 44697,
-        "gzipSize": 14818,
-        "brotliSize": 13056,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/13.CC63TStf.js"
+        "size": 44151,
+        "gzipSize": 11968,
+        "brotliSize": 9995,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/18.Cia9Ikct.js"
       },
       {
-        "name": "18.CdE1R4y0.js",
+        "name": "CFZF37u9.js",
         "ext": ".js",
-        "size": 44416,
-        "gzipSize": 12008,
-        "brotliSize": 10004,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/18.CdE1R4y0.js"
+        "size": 43449,
+        "gzipSize": 15233,
+        "brotliSize": 13791,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CFZF37u9.js"
       },
       {
-        "name": "DG3-bM8z.js",
+        "name": "10.CzNmYX03.js",
         "ext": ".js",
-        "size": 42935,
-        "gzipSize": 15052,
-        "brotliSize": 13602,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DG3-bM8z.js"
+        "size": 40155,
+        "gzipSize": 13344,
+        "brotliSize": 11557,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/10.CzNmYX03.js"
       },
       {
-        "name": "10.Cc2ejcfJ.js",
+        "name": "C9E7W4vJ.js",
         "ext": ".js",
-        "size": 39553,
-        "gzipSize": 13245,
-        "brotliSize": 11469,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/10.Cc2ejcfJ.js"
+        "size": 39306,
+        "gzipSize": 8967,
+        "brotliSize": 7878,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C9E7W4vJ.js"
       },
       {
-        "name": "CExJQJop.js",
+        "name": "QgwPcg6Q.js",
         "ext": ".js",
-        "size": 39294,
-        "gzipSize": 9064,
-        "brotliSize": 7933,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CExJQJop.js"
+        "size": 36288,
+        "gzipSize": 10034,
+        "brotliSize": 9027,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/QgwPcg6Q.js"
       },
       {
-        "name": "D4WTI95l.js",
+        "name": "qg6_MP5z.js",
         "ext": ".js",
-        "size": 34524,
-        "gzipSize": 9208,
-        "brotliSize": 8263,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D4WTI95l.js"
+        "size": 35961,
+        "gzipSize": 13933,
+        "brotliSize": 12658,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/qg6_MP5z.js"
       },
       {
-        "name": "12.Ch5C7yYz.js",
+        "name": "12.BWIsP3us.js",
         "ext": ".js",
-        "size": 33864,
-        "gzipSize": 9520,
-        "brotliSize": 8211,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/12.Ch5C7yYz.js"
+        "size": 33770,
+        "gzipSize": 9485,
+        "brotliSize": 8213,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/12.BWIsP3us.js"
       },
       {
-        "name": "Be5Gz9K8.js",
+        "name": "15.C5-7N-RJ.js",
         "ext": ".js",
-        "size": 31065,
-        "gzipSize": 12178,
-        "brotliSize": 11052,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Be5Gz9K8.js"
+        "size": 30453,
+        "gzipSize": 9540,
+        "brotliSize": 8063,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/15.C5-7N-RJ.js"
       },
       {
-        "name": "15.CD-9Kzvs.js",
+        "name": "2Um75jsI.js",
         "ext": ".js",
-        "size": 30382,
-        "gzipSize": 9513,
-        "brotliSize": 8021,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/15.CD-9Kzvs.js"
+        "size": 27985,
+        "gzipSize": 10191,
+        "brotliSize": 9199,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/2Um75jsI.js"
       },
       {
-        "name": "BajmAzXK.js",
+        "name": "DvZrKrDm.js",
         "ext": ".js",
-        "size": 27935,
-        "gzipSize": 10174,
-        "brotliSize": 9159,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BajmAzXK.js"
+        "size": 27533,
+        "gzipSize": 8636,
+        "brotliSize": 7608,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DvZrKrDm.js"
       },
       {
-        "name": "DVeJx293.js",
+        "name": "x8HuxvMu.js",
         "ext": ".js",
-        "size": 27096,
-        "gzipSize": 8438,
-        "brotliSize": 7437,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DVeJx293.js"
+        "size": 27091,
+        "gzipSize": 8779,
+        "brotliSize": 7880,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/x8HuxvMu.js"
       },
       {
-        "name": "Bn7meWy7.js",
+        "name": "DhwXhvZp2.js",
         "ext": ".js",
-        "size": 26484,
-        "gzipSize": 8543,
-        "brotliSize": 7651,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Bn7meWy7.js"
+        "size": 26295,
+        "gzipSize": 8282,
+        "brotliSize": 7255,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DhwXhvZp2.js"
       },
       {
-        "name": "CPcsbTWB.js",
+        "name": "20.Bqi35L5J.js",
         "ext": ".js",
-        "size": 26318,
-        "gzipSize": 8258,
-        "brotliSize": 7212,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CPcsbTWB.js"
+        "size": 25804,
+        "gzipSize": 8968,
+        "brotliSize": 7783,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/20.Bqi35L5J.js"
       },
       {
-        "name": "BuGVofVN.js",
+        "name": "DsS_xtZn2.js",
         "ext": ".js",
-        "size": 26157,
-        "gzipSize": 10208,
-        "brotliSize": 9301,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BuGVofVN.js"
+        "size": 24166,
+        "gzipSize": 8755,
+        "brotliSize": 7675,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DsS_xtZn2.js"
       },
       {
-        "name": "20.C-mgIUOb.js",
+        "name": "BbFO-aIi.js",
         "ext": ".js",
-        "size": 25561,
-        "gzipSize": 8922,
-        "brotliSize": 7731,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/20.C-mgIUOb.js"
+        "size": 23215,
+        "gzipSize": 8926,
+        "brotliSize": 8001,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BbFO-aIi.js"
       },
       {
-        "name": "BMDaIoty.js",
+        "name": "DtbUA5m92.js",
         "ext": ".js",
-        "size": 24053,
-        "gzipSize": 8764,
-        "brotliSize": 7696,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BMDaIoty.js"
+        "size": 22134,
+        "gzipSize": 8284,
+        "brotliSize": 7243,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DtbUA5m92.js"
       },
       {
-        "name": "RzkLNuoh.js",
+        "name": "CBCk63iX.js",
         "ext": ".js",
-        "size": 23091,
-        "gzipSize": 8844,
-        "brotliSize": 7949,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/RzkLNuoh.js"
+        "size": 22114,
+        "gzipSize": 8314,
+        "brotliSize": 7583,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CBCk63iX.js"
       },
       {
-        "name": "NUIipCfE.js",
+        "name": "DRea_P772.js",
         "ext": ".js",
-        "size": 22189,
-        "gzipSize": 8269,
-        "brotliSize": 7247,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/NUIipCfE.js"
+        "size": 20995,
+        "gzipSize": 6794,
+        "brotliSize": 5896,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DRea_P772.js"
       },
       {
-        "name": "DEgKtASi.js",
+        "name": "BjyzSvIS.js",
         "ext": ".js",
-        "size": 22180,
-        "gzipSize": 8327,
-        "brotliSize": 7588,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DEgKtASi.js"
-      },
-      {
-        "name": "DZfPp7XF.js",
-        "ext": ".js",
-        "size": 21413,
-        "gzipSize": 6818,
-        "brotliSize": 6136,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DZfPp7XF.js"
-      },
-      {
-        "name": "2-KJXyGz.js",
-        "ext": ".js",
-        "size": 21090,
-        "gzipSize": 6821,
-        "brotliSize": 5906,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/2-KJXyGz.js"
-      },
-      {
-        "name": "CYMSC4Bx.js",
-        "ext": ".js",
-        "size": 20005,
+        "size": 20000,
         "gzipSize": 6897,
-        "brotliSize": 6042,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CYMSC4Bx.js"
+        "brotliSize": 6065,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BjyzSvIS.js"
       },
       {
-        "name": "BXrkqoCY.js",
+        "name": "Dv5ruPOm2.js",
         "ext": ".js",
-        "size": 19288,
-        "gzipSize": 6407,
-        "brotliSize": 5587,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BXrkqoCY.js"
+        "size": 19302,
+        "gzipSize": 6409,
+        "brotliSize": 5565,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dv5ruPOm2.js"
       },
       {
-        "name": "image-editor-modal.BsYcze6P.css",
+        "name": "CjCDllBT.js",
+        "ext": ".js",
+        "size": 16867,
+        "gzipSize": 6137,
+        "brotliSize": 5395,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CjCDllBT.js"
+      },
+      {
+        "name": "image-editor-modal.fR4I8OPI.css",
         "ext": ".css",
-        "size": 16819,
-        "gzipSize": 2717,
+        "size": 16371,
+        "gzipSize": 2728,
         "brotliSize": 2373,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/image-editor-modal.BsYcze6P.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/image-editor-modal.fR4I8OPI.css"
       },
       {
-        "name": "_8olI0ji.js",
+        "name": "DDweukjQ.js",
         "ext": ".js",
-        "size": 16216,
-        "gzipSize": 4797,
-        "brotliSize": 4126,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/_8olI0ji.js"
+        "size": 15768,
+        "gzipSize": 6453,
+        "brotliSize": 5870,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DDweukjQ.js"
       },
       {
-        "name": "D3RfdK-o.js",
+        "name": "BMCmsp_P2.js",
         "ext": ".js",
-        "size": 15627,
-        "gzipSize": 4481,
-        "brotliSize": 3794,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D3RfdK-o.js"
+        "size": 15134,
+        "gzipSize": 4681,
+        "brotliSize": 4101,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BMCmsp_P2.js"
       },
       {
-        "name": "DUNyjqbE.js",
+        "name": "C7nK0rOh2.js",
         "ext": ".js",
-        "size": 15612,
-        "gzipSize": 4496,
-        "brotliSize": 3853,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DUNyjqbE.js"
+        "size": 14665,
+        "gzipSize": 4375,
+        "brotliSize": 3751,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C7nK0rOh2.js"
       },
       {
-        "name": "CcBihfag.js",
+        "name": "3DksMsoD.js",
         "ext": ".js",
-        "size": 14669,
-        "gzipSize": 5213,
-        "brotliSize": 4507,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CcBihfag.js"
+        "size": 14660,
+        "gzipSize": 4180,
+        "brotliSize": 3415,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/3DksMsoD.js"
       },
       {
-        "name": "qqNhEtD7.js",
+        "name": "C0QaxH6V.js",
         "ext": ".js",
-        "size": 14664,
-        "gzipSize": 4182,
-        "brotliSize": 3413,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/qqNhEtD7.js"
+        "size": 14546,
+        "gzipSize": 4388,
+        "brotliSize": 3832,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C0QaxH6V.js"
       },
       {
-        "name": "DZpaiKlZ.js",
+        "name": "D3GHGaeb.js",
         "ext": ".js",
-        "size": 13129,
-        "gzipSize": 4959,
-        "brotliSize": 4311,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DZpaiKlZ.js"
+        "size": 14385,
+        "gzipSize": 4755,
+        "brotliSize": 4317,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D3GHGaeb.js"
       },
       {
-        "name": "BKh-ZSqW.js",
+        "name": "DjNXZ0yk.js",
         "ext": ".js",
-        "size": 12845,
-        "gzipSize": 4279,
-        "brotliSize": 3851,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BKh-ZSqW.js"
+        "size": 13804,
+        "gzipSize": 4668,
+        "brotliSize": 4197,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DjNXZ0yk.js"
       },
       {
-        "name": "11.qfqz5aGx.js",
+        "name": "MZzeoN_L2.js",
         "ext": ".js",
-        "size": 12441,
-        "gzipSize": 4330,
-        "brotliSize": 3760,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/11.qfqz5aGx.js"
+        "size": 13199,
+        "gzipSize": 4989,
+        "brotliSize": 4375,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/MZzeoN_L2.js"
       },
       {
-        "name": "Dmv9lg8C.js",
+        "name": "11.r_gfH9ei.js",
         "ext": ".js",
-        "size": 12423,
-        "gzipSize": 5046,
-        "brotliSize": 4354,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dmv9lg8C.js"
+        "size": 12472,
+        "gzipSize": 4344,
+        "brotliSize": 3776,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/11.r_gfH9ei.js"
       },
       {
-        "name": "BiEg66Ag.js",
+        "name": "EeNd-PC42.js",
         "ext": ".js",
-        "size": 12360,
-        "gzipSize": 3254,
-        "brotliSize": 2899,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BiEg66Ag.js"
+        "size": 12407,
+        "gzipSize": 5032,
+        "brotliSize": 4342,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/EeNd-PC42.js"
       },
       {
-        "name": "17.Vm0VIKHV.js",
+        "name": "DHJcHPF5.js",
         "ext": ".js",
-        "size": 11781,
-        "gzipSize": 4711,
-        "brotliSize": 4030,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/17.Vm0VIKHV.js"
+        "size": 12354,
+        "gzipSize": 3251,
+        "brotliSize": 2902,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DHJcHPF5.js"
       },
       {
-        "name": "C_QQepte.js",
+        "name": "17.CTG8oJWc.js",
         "ext": ".js",
-        "size": 11284,
-        "gzipSize": 4442,
-        "brotliSize": 3850,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C_QQepte.js"
+        "size": 11792,
+        "gzipSize": 4705,
+        "brotliSize": 4037,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/17.CTG8oJWc.js"
       },
       {
-        "name": "app.DB6Mp_X5.js",
+        "name": "app.BGUVQz0C.js",
         "ext": ".js",
-        "size": 11005,
-        "gzipSize": 3789,
-        "brotliSize": 3245,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/entry/app.DB6Mp_X5.js"
+        "size": 11685,
+        "gzipSize": 3940,
+        "brotliSize": 3426,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/entry/app.BGUVQz0C.js"
       },
       {
-        "name": "D7xKS4P5.js",
+        "name": "CzmdmPSD.js",
+        "ext": ".js",
+        "size": 11256,
+        "gzipSize": 4433,
+        "brotliSize": 3833,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CzmdmPSD.js"
+      },
+      {
+        "name": "BMVRuaHq.js",
         "ext": ".js",
         "size": 10823,
-        "gzipSize": 3244,
-        "brotliSize": 2709,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D7xKS4P5.js"
+        "gzipSize": 3812,
+        "brotliSize": 3455,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BMVRuaHq.js"
       },
       {
-        "name": "21.DWq_y0N0.js",
+        "name": "DrA-iosw.js",
         "ext": ".js",
-        "size": 10503,
-        "gzipSize": 3876,
-        "brotliSize": 3470,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/21.DWq_y0N0.js"
+        "size": 10820,
+        "gzipSize": 3240,
+        "brotliSize": 2708,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DrA-iosw.js"
       },
       {
-        "name": "DxHQle3i.js",
+        "name": "21.DHdCiaa-.js",
         "ext": ".js",
-        "size": 10221,
-        "gzipSize": 3314,
-        "brotliSize": 2795,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DxHQle3i.js"
+        "size": 10497,
+        "gzipSize": 3862,
+        "brotliSize": 3462,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/21.DHdCiaa-.js"
       },
       {
-        "name": "vendor-svelte.OfG2PKWt.css",
+        "name": "Cjlm329M2.js",
+        "ext": ".js",
+        "size": 10228,
+        "gzipSize": 3311,
+        "brotliSize": 2808,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Cjlm329M2.js"
+      },
+      {
+        "name": "vendor-svelte.CR7-3tIv.css",
         "ext": ".css",
-        "size": 9999,
-        "gzipSize": 2329,
-        "brotliSize": 2045,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/vendor-svelte.OfG2PKWt.css"
+        "size": 9802,
+        "gzipSize": 2265,
+        "brotliSize": 1986,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/vendor-svelte.CR7-3tIv.css"
       },
       {
-        "name": "9PCiGyfo.js",
+        "name": "BcxhTJJ82.js",
         "ext": ".js",
-        "size": 9750,
-        "gzipSize": 3919,
-        "brotliSize": 3317,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/9PCiGyfo.js"
+        "size": 9740,
+        "gzipSize": 3915,
+        "brotliSize": 3302,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BcxhTJJ82.js"
       },
       {
-        "name": "19.GwJdLB8L.js",
+        "name": "19.BgnfkpxG.js",
         "ext": ".js",
-        "size": 9491,
-        "gzipSize": 3651,
-        "brotliSize": 3134,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/19.GwJdLB8L.js"
+        "size": 9520,
+        "gzipSize": 3656,
+        "brotliSize": 3157,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/19.BgnfkpxG.js"
       },
       {
-        "name": "CnxZPPA2.js",
+        "name": "DBWhBLPm2.js",
         "ext": ".js",
-        "size": 9292,
-        "gzipSize": 3661,
-        "brotliSize": 3188,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CnxZPPA2.js"
+        "size": 9356,
+        "gzipSize": 3673,
+        "brotliSize": 3201,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DBWhBLPm2.js"
       },
       {
-        "name": "BNVLMFS8.js",
+        "name": "qgskt7Eg2.js",
         "ext": ".js",
-        "size": 9290,
-        "gzipSize": 4023,
-        "brotliSize": 3527,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BNVLMFS8.js"
+        "size": 9273,
+        "gzipSize": 4007,
+        "brotliSize": 3523,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/qgskt7Eg2.js"
       },
       {
-        "name": "DP2li64G.js",
+        "name": "CgrpfruD.js",
         "ext": ".js",
-        "size": 9142,
-        "gzipSize": 3335,
-        "brotliSize": 2893,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DP2li64G.js"
+        "size": 9272,
+        "gzipSize": 3642,
+        "brotliSize": 3161,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CgrpfruD.js"
       },
       {
-        "name": "Sh08nd04.js",
+        "name": "ChsWUB3j.js",
         "ext": ".js",
-        "size": 9026,
-        "gzipSize": 3880,
-        "brotliSize": 3340,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Sh08nd04.js"
+        "size": 9137,
+        "gzipSize": 3930,
+        "brotliSize": 3378,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ChsWUB3j.js"
       },
       {
-        "name": "C-YDVNZn.js",
+        "name": "ORkApmNq.js",
         "ext": ".js",
-        "size": 8705,
-        "gzipSize": 3046,
-        "brotliSize": 2692,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C-YDVNZn.js"
+        "size": 9133,
+        "gzipSize": 3333,
+        "brotliSize": 2887,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ORkApmNq.js"
       },
       {
-        "name": "CAfPoXjd.js",
+        "name": "CqU7tPRp.js",
         "ext": ".js",
-        "size": 8648,
-        "gzipSize": 3133,
-        "brotliSize": 2835,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CAfPoXjd.js"
+        "size": 8749,
+        "gzipSize": 3051,
+        "brotliSize": 2686,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CqU7tPRp.js"
       },
       {
-        "name": "yGT_qtMb.js",
+        "name": "1Gy7OihR.js",
         "ext": ".js",
-        "size": 8540,
-        "gzipSize": 3381,
-        "brotliSize": 2966,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/yGT_qtMb.js"
+        "size": 8731,
+        "gzipSize": 3198,
+        "brotliSize": 2889,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/1Gy7OihR.js"
       },
       {
-        "name": "BqTXfPNk.js",
+        "name": "DKeljzet.js",
         "ext": ".js",
-        "size": 8196,
-        "gzipSize": 2940,
-        "brotliSize": 2660,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BqTXfPNk.js"
+        "size": 8541,
+        "gzipSize": 3373,
+        "brotliSize": 2958,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DKeljzet.js"
       },
       {
-        "name": "m_OMQyEL.js",
+        "name": "Pj8N-Wmu2.js",
         "ext": ".js",
-        "size": 7818,
-        "gzipSize": 2824,
-        "brotliSize": 2323,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/m_OMQyEL.js"
+        "size": 7828,
+        "gzipSize": 2833,
+        "brotliSize": 2330,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Pj8N-Wmu2.js"
       },
       {
-        "name": "16.BM9885ta.js",
+        "name": "16.DZqBJ4m-.js",
         "ext": ".js",
-        "size": 7748,
-        "gzipSize": 3337,
-        "brotliSize": 2897,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/16.BM9885ta.js"
+        "size": 7792,
+        "gzipSize": 3351,
+        "brotliSize": 2924,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/16.DZqBJ4m-.js"
       },
       {
-        "name": "BrxajXOi.js",
+        "name": "Cr7xt8cx.js",
         "ext": ".js",
-        "size": 7612,
-        "gzipSize": 3196,
-        "brotliSize": 2783,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BrxajXOi.js"
+        "size": 7254,
+        "gzipSize": 2959,
+        "brotliSize": 2571,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Cr7xt8cx.js"
       },
       {
-        "name": "CD5QOWeF.js",
+        "name": "9.knt_x848.js",
         "ext": ".js",
-        "size": 7258,
-        "gzipSize": 2970,
-        "brotliSize": 2605,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CD5QOWeF.js"
+        "size": 7154,
+        "gzipSize": 2256,
+        "brotliSize": 1944,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/9.knt_x848.js"
       },
       {
-        "name": "9.DvtblZmb.js",
+        "name": "4bjbeVpX2.js",
         "ext": ".js",
-        "size": 7106,
-        "gzipSize": 2245,
-        "brotliSize": 1914,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/9.DvtblZmb.js"
+        "size": 6986,
+        "gzipSize": 2726,
+        "brotliSize": 2432,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/4bjbeVpX2.js"
       },
       {
-        "name": "CZywp9d6.js",
+        "name": "BhTW1ll1.js",
         "ext": ".js",
-        "size": 6978,
-        "gzipSize": 2757,
-        "brotliSize": 2377,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CZywp9d6.js"
+        "size": 6950,
+        "gzipSize": 2743,
+        "brotliSize": 2382,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BhTW1ll1.js"
       },
       {
-        "name": "cKK4jr-u.js",
+        "name": "ybFG9tWo.js",
         "ext": ".js",
-        "size": 6857,
-        "gzipSize": 2659,
-        "brotliSize": 2357,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/cKK4jr-u.js"
+        "size": 6923,
+        "gzipSize": 2478,
+        "brotliSize": 2214,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ybFG9tWo.js"
       },
       {
-        "name": "DJfdMXGl.js",
+        "name": "BUgvLXSj2.js",
         "ext": ".js",
-        "size": 6189,
-        "gzipSize": 2783,
-        "brotliSize": 2361,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DJfdMXGl.js"
+        "size": 6157,
+        "gzipSize": 2774,
+        "brotliSize": 2364,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BUgvLXSj2.js"
       },
       {
-        "name": "CYkPPkje.js",
+        "name": "DnfD5eik.js",
         "ext": ".js",
-        "size": 6124,
-        "gzipSize": 2451,
-        "brotliSize": 2136,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CYkPPkje.js"
-      },
-      {
-        "name": "ClMiawxk.js",
-        "ext": ".js",
-        "size": 6043,
-        "gzipSize": 2169,
-        "brotliSize": 1935,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ClMiawxk.js"
-      },
-      {
-        "name": "B2isMHZY.js",
-        "ext": ".js",
-        "size": 5963,
+        "size": 6152,
         "gzipSize": 2467,
-        "brotliSize": 2108,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B2isMHZY.js"
+        "brotliSize": 2156,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DnfD5eik.js"
       },
       {
-        "name": "BL7nlfYF.js",
+        "name": "BHTmtTfO.js",
         "ext": ".js",
-        "size": 5736,
-        "gzipSize": 2363,
-        "brotliSize": 2031,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BL7nlfYF.js"
+        "size": 6082,
+        "gzipSize": 2182,
+        "brotliSize": 1942,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BHTmtTfO.js"
       },
       {
-        "name": "DkyuM_Ej.js",
+        "name": "DsyvnWdg2.js",
         "ext": ".js",
-        "size": 5655,
-        "gzipSize": 1916,
-        "brotliSize": 1635,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DkyuM_Ej.js"
+        "size": 5961,
+        "gzipSize": 2469,
+        "brotliSize": 2124,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DsyvnWdg2.js"
       },
       {
-        "name": "kIH8mhId.js",
+        "name": "CWTnVWAD2.js",
         "ext": ".js",
-        "size": 5567,
+        "size": 5755,
+        "gzipSize": 2457,
+        "brotliSize": 2111,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CWTnVWAD2.js"
+      },
+      {
+        "name": "CIJ_A2v92.js",
+        "ext": ".js",
+        "size": 5744,
+        "gzipSize": 2376,
+        "brotliSize": 2039,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CIJ_A2v92.js"
+      },
+      {
+        "name": "Q1Ha_R0g.js",
+        "ext": ".js",
+        "size": 5658,
+        "gzipSize": 1909,
+        "brotliSize": 1639,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Q1Ha_R0g.js"
+      },
+      {
+        "name": "Cc4nvya5.js",
+        "ext": ".js",
+        "size": 5568,
         "gzipSize": 2317,
-        "brotliSize": 1953,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/kIH8mhId.js"
+        "brotliSize": 1942,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Cc4nvya5.js"
       },
       {
-        "name": "CAupVOOI.js",
+        "name": "CdMuo-nO.js",
         "ext": ".js",
-        "size": 5276,
-        "gzipSize": 1802,
-        "brotliSize": 1568,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CAupVOOI.js"
+        "size": 5330,
+        "gzipSize": 1807,
+        "brotliSize": 1584,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CdMuo-nO.js"
       },
       {
-        "name": "BLQfCUps.js",
+        "name": "CKH5cyfc.js",
         "ext": ".js",
-        "size": 5266,
-        "gzipSize": 2115,
-        "brotliSize": 1826,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BLQfCUps.js"
+        "size": 5262,
+        "gzipSize": 2114,
+        "brotliSize": 1825,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CKH5cyfc.js"
       },
       {
-        "name": "n8mMaHoz.js",
+        "name": "CwJUM9Zs2.js",
         "ext": ".js",
-        "size": 5193,
-        "gzipSize": 2066,
-        "brotliSize": 1566,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/n8mMaHoz.js"
+        "size": 5192,
+        "gzipSize": 2068,
+        "brotliSize": 1567,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CwJUM9Zs2.js"
       },
       {
-        "name": "D5IAQ8o4.js",
+        "name": "DYvHm58u.js",
         "ext": ".js",
-        "size": 5089,
-        "gzipSize": 2459,
-        "brotliSize": 2104,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D5IAQ8o4.js"
+        "size": 5082,
+        "gzipSize": 2457,
+        "brotliSize": 2119,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DYvHm58u.js"
       },
       {
-        "name": "D3C92NYm.js",
+        "name": "CH7xRKbE.js",
         "ext": ".js",
-        "size": 4979,
-        "gzipSize": 1964,
-        "brotliSize": 1698,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D3C92NYm.js"
+        "size": 5006,
+        "gzipSize": 1952,
+        "brotliSize": 1688,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CH7xRKbE.js"
       },
       {
-        "name": "BoBznioJ.js",
+        "name": "AOROuiU8.js",
         "ext": ".js",
-        "size": 4912,
-        "gzipSize": 1777,
-        "brotliSize": 1505,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BoBznioJ.js"
+        "size": 4911,
+        "gzipSize": 1776,
+        "brotliSize": 1509,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/AOROuiU8.js"
       },
       {
-        "name": "hrBYBhyG.js",
+        "name": "DqAwyuUI.js",
         "ext": ".js",
-        "size": 4815,
+        "size": 4797,
         "gzipSize": 2026,
-        "brotliSize": 1763,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/hrBYBhyG.js"
+        "brotliSize": 1765,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DqAwyuUI.js"
       },
       {
-        "name": "BvFzLOLp.js",
+        "name": "ESIZ-qnZ.js",
         "ext": ".js",
-        "size": 4742,
-        "gzipSize": 2165,
-        "brotliSize": 1854,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BvFzLOLp.js"
+        "size": 4739,
+        "gzipSize": 2166,
+        "brotliSize": 1867,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ESIZ-qnZ.js"
       },
       {
-        "name": "1.CEQANtkG.js",
+        "name": "1.Bfz0cfDE.js",
         "ext": ".js",
-        "size": 4679,
-        "gzipSize": 2193,
-        "brotliSize": 1916,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/1.CEQANtkG.js"
+        "size": 4678,
+        "gzipSize": 2181,
+        "brotliSize": 1904,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/1.Bfz0cfDE.js"
       },
       {
-        "name": "3.DjRG4RCQ.js",
+        "name": "3.ClIVNaBl.js",
         "ext": ".js",
-        "size": 4677,
-        "gzipSize": 2189,
-        "brotliSize": 1919,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/3.DjRG4RCQ.js"
+        "size": 4676,
+        "gzipSize": 2178,
+        "brotliSize": 1908,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/3.ClIVNaBl.js"
       },
       {
-        "name": "4.DAtPQ8Y9.js",
+        "name": "4.CBKaUmLj.js",
         "ext": ".js",
-        "size": 4677,
-        "gzipSize": 2191,
-        "brotliSize": 1912,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/4.DAtPQ8Y9.js"
+        "size": 4676,
+        "gzipSize": 2181,
+        "brotliSize": 1923,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/4.CBKaUmLj.js"
       },
       {
-        "name": "D-35wti-.js",
+        "name": "Dd9i4g6R.js",
         "ext": ".js",
-        "size": 4647,
-        "gzipSize": 1965,
-        "brotliSize": 1687,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D-35wti-.js"
+        "size": 4659,
+        "gzipSize": 1972,
+        "brotliSize": 1682,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dd9i4g6R.js"
       },
       {
-        "name": "CkeDTPv6.js",
+        "name": "Cl3gRTUo2.js",
         "ext": ".js",
-        "size": 4616,
-        "gzipSize": 2220,
-        "brotliSize": 1964,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CkeDTPv6.js"
+        "size": 4623,
+        "gzipSize": 2217,
+        "brotliSize": 1957,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Cl3gRTUo2.js"
       },
       {
-        "name": "BuOYEIY7.js",
+        "name": "RWGOiZga.js",
         "ext": ".js",
-        "size": 4591,
-        "gzipSize": 2171,
-        "brotliSize": 1868,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BuOYEIY7.js"
+        "size": 4612,
+        "gzipSize": 1805,
+        "brotliSize": 1584,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/RWGOiZga.js"
       },
       {
-        "name": "CXZTVxko.js",
+        "name": "D25FZzQc.js",
         "ext": ".js",
-        "size": 4496,
-        "gzipSize": 1763,
-        "brotliSize": 1560,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CXZTVxko.js"
+        "size": 4593,
+        "gzipSize": 2168,
+        "brotliSize": 1867,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D25FZzQc.js"
       },
       {
-        "name": "CvFxDCp7.js",
+        "name": "Dsy2zvhH2.js",
         "ext": ".js",
-        "size": 4450,
-        "gzipSize": 2021,
-        "brotliSize": 1768,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CvFxDCp7.js"
+        "size": 4443,
+        "gzipSize": 2026,
+        "brotliSize": 1752,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dsy2zvhH2.js"
       },
       {
-        "name": "CDVWKt93.js",
+        "name": "Bx3ab-8T.js",
+        "ext": ".js",
+        "size": 4338,
+        "gzipSize": 1945,
+        "brotliSize": 1693,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Bx3ab-8T.js"
+      },
+      {
+        "name": "gxpYGwXL.js",
         "ext": ".js",
         "size": 4323,
-        "gzipSize": 1935,
-        "brotliSize": 1691,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CDVWKt93.js"
+        "gzipSize": 2014,
+        "brotliSize": 1710,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/gxpYGwXL.js"
       },
       {
-        "name": "1k_V7Qk7.js",
+        "name": "DrwYRhM4.js",
         "ext": ".js",
-        "size": 4304,
-        "gzipSize": 2002,
-        "brotliSize": 1702,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/1k_V7Qk7.js"
+        "size": 4224,
+        "gzipSize": 1996,
+        "brotliSize": 1722,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DrwYRhM4.js"
       },
       {
-        "name": "CT1201E5.js",
+        "name": "BjJbfCVp.js",
         "ext": ".js",
-        "size": 4199,
-        "gzipSize": 1978,
-        "brotliSize": 1708,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CT1201E5.js"
+        "size": 4024,
+        "gzipSize": 1851,
+        "brotliSize": 1595,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BjJbfCVp.js"
       },
       {
-        "name": "HUeokNd3.js",
+        "name": "Bmib6_9B.js",
         "ext": ".js",
-        "size": 4020,
-        "gzipSize": 1850,
-        "brotliSize": 1606,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/HUeokNd3.js"
+        "size": 3769,
+        "gzipSize": 1774,
+        "brotliSize": 1458,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Bmib6_9B.js"
       },
       {
-        "name": "BXAcWgCC.js",
+        "name": "Bg1GWt8c.js",
         "ext": ".js",
-        "size": 3892,
-        "gzipSize": 1517,
-        "brotliSize": 1327,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BXAcWgCC.js"
+        "size": 3683,
+        "gzipSize": 1762,
+        "brotliSize": 1537,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Bg1GWt8c.js"
       },
       {
-        "name": "qBt7Utsq.js",
+        "name": "BTZI5pgW.js",
         "ext": ".js",
-        "size": 3764,
-        "gzipSize": 1776,
-        "brotliSize": 1463,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/qBt7Utsq.js"
+        "size": 3650,
+        "gzipSize": 1280,
+        "brotliSize": 1136,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BTZI5pgW.js"
       },
       {
-        "name": "D5wchPRM.js",
+        "name": "BESX8wBQ.js",
         "ext": ".js",
-        "size": 3736,
-        "gzipSize": 1746,
-        "brotliSize": 1516,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D5wchPRM.js"
+        "size": 3621,
+        "gzipSize": 1440,
+        "brotliSize": 1239,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BESX8wBQ.js"
       },
       {
-        "name": "DDf1bYvZ.js",
+        "name": "DPXk5xu_.js",
         "ext": ".js",
-        "size": 3687,
-        "gzipSize": 1765,
-        "brotliSize": 1536,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DDf1bYvZ.js"
+        "size": 3595,
+        "gzipSize": 1132,
+        "brotliSize": 991,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DPXk5xu_.js"
       },
       {
-        "name": "B3Ph3WW3.js",
+        "name": "Ct3HSPTo.js",
         "ext": ".js",
-        "size": 3507,
-        "gzipSize": 1113,
-        "brotliSize": 976,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B3Ph3WW3.js"
-      },
-      {
-        "name": "DrB3p15O.js",
-        "ext": ".js",
-        "size": 3500,
-        "gzipSize": 1541,
-        "brotliSize": 1332,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DrB3p15O.js"
-      },
-      {
-        "name": "Dp7jo39e.js",
-        "ext": ".js",
-        "size": 3455,
-        "gzipSize": 1499,
-        "brotliSize": 1302,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dp7jo39e.js"
-      },
-      {
-        "name": "CKyEQOb0.js",
-        "ext": ".js",
-        "size": 3443,
-        "gzipSize": 1653,
-        "brotliSize": 1414,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CKyEQOb0.js"
-      },
-      {
-        "name": "5Q3YD_KG.js",
-        "ext": ".js",
-        "size": 3437,
-        "gzipSize": 1178,
-        "brotliSize": 1042,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/5Q3YD_KG.js"
-      },
-      {
-        "name": "6.DWvCrB5M.js",
-        "ext": ".js",
-        "size": 3437,
-        "gzipSize": 1589,
-        "brotliSize": 1343,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/6.DWvCrB5M.js"
-      },
-      {
-        "name": "CpWxczM7.js",
-        "ext": ".js",
-        "size": 3267,
-        "gzipSize": 1547,
-        "brotliSize": 1352,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CpWxczM7.js"
-      },
-      {
-        "name": "6YHmhXB4.js",
-        "ext": ".js",
-        "size": 3127,
-        "gzipSize": 1553,
-        "brotliSize": 1356,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/6YHmhXB4.js"
-      },
-      {
-        "name": "CJV7_VRO.js",
-        "ext": ".js",
-        "size": 3079,
-        "gzipSize": 1499,
-        "brotliSize": 1274,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CJV7_VRO.js"
-      },
-      {
-        "name": "DETBRG-S.js",
-        "ext": ".js",
-        "size": 3027,
+        "size": 3579,
         "gzipSize": 1443,
-        "brotliSize": 1296,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DETBRG-S.js"
+        "brotliSize": 1223,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Ct3HSPTo.js"
       },
       {
-        "name": "27._AoLPRm-.js",
+        "name": "CpxLzxrP.js",
         "ext": ".js",
-        "size": 2970,
-        "gzipSize": 1577,
-        "brotliSize": 1367,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/27._AoLPRm-.js"
+        "size": 3493,
+        "gzipSize": 1543,
+        "brotliSize": 1346,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CpxLzxrP.js"
       },
       {
-        "name": "Cj8Np5Pq.js",
+        "name": "B0kIMpnY.js",
         "ext": ".js",
-        "size": 2968,
-        "gzipSize": 1491,
-        "brotliSize": 1288,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Cj8Np5Pq.js"
+        "size": 3449,
+        "gzipSize": 1496,
+        "brotliSize": 1317,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B0kIMpnY.js"
       },
       {
-        "name": "B2MObQ07.js",
+        "name": "6.UiJrI5m3.js",
         "ext": ".js",
-        "size": 2953,
-        "gzipSize": 1466,
-        "brotliSize": 1313,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B2MObQ07.js"
+        "size": 3442,
+        "gzipSize": 1590,
+        "brotliSize": 1334,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/6.UiJrI5m3.js"
       },
       {
-        "name": "BhWkgPuc.js",
+        "name": "uLM6_aXe2.js",
         "ext": ".js",
-        "size": 2845,
-        "gzipSize": 1362,
-        "brotliSize": 1193,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BhWkgPuc.js"
+        "size": 3440,
+        "gzipSize": 1647,
+        "brotliSize": 1425,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/uLM6_aXe2.js"
       },
       {
-        "name": "DV3Rkxcj.js",
+        "name": "9qAmRHjB.js",
         "ext": ".js",
-        "size": 2767,
-        "gzipSize": 994,
-        "brotliSize": 842,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DV3Rkxcj.js"
+        "size": 3276,
+        "gzipSize": 1546,
+        "brotliSize": 1349,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/9qAmRHjB.js"
       },
       {
-        "name": "BXIedMpt.js",
+        "name": "D3Tt6j1H2.js",
         "ext": ".js",
-        "size": 2744,
-        "gzipSize": 1517,
-        "brotliSize": 1331,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BXIedMpt.js"
+        "size": 3275,
+        "gzipSize": 1581,
+        "brotliSize": 1353,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D3Tt6j1H2.js"
       },
       {
-        "name": "TQ0ChQYx.js",
+        "name": "DsoJk8xW.js",
+        "ext": ".js",
+        "size": 3275,
+        "gzipSize": 1386,
+        "brotliSize": 1211,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DsoJk8xW.js"
+      },
+      {
+        "name": "JCOnM0VE.js",
+        "ext": ".js",
+        "size": 3131,
+        "gzipSize": 1553,
+        "brotliSize": 1371,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/JCOnM0VE.js"
+      },
+      {
+        "name": "hf7RCRSO.js",
+        "ext": ".js",
+        "size": 3117,
+        "gzipSize": 1508,
+        "brotliSize": 1365,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/hf7RCRSO.js"
+      },
+      {
+        "name": "27.BACLQilV.js",
+        "ext": ".js",
+        "size": 3045,
+        "gzipSize": 1590,
+        "brotliSize": 1375,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/27.BACLQilV.js"
+      },
+      {
+        "name": "C3Hee7c8.js",
+        "ext": ".js",
+        "size": 2965,
+        "gzipSize": 1483,
+        "brotliSize": 1274,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C3Hee7c8.js"
+      },
+      {
+        "name": "BXnhkHZA2.js",
+        "ext": ".js",
+        "size": 2930,
+        "gzipSize": 1393,
+        "brotliSize": 1205,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BXnhkHZA2.js"
+      },
+      {
+        "name": "CN8mMUDN.js",
+        "ext": ".js",
+        "size": 2815,
+        "gzipSize": 1399,
+        "brotliSize": 1258,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CN8mMUDN.js"
+      },
+      {
+        "name": "DCbKb56o2.js",
+        "ext": ".js",
+        "size": 2788,
+        "gzipSize": 1273,
+        "brotliSize": 1113,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DCbKb56o2.js"
+      },
+      {
+        "name": "Ou6crvgF.js",
+        "ext": ".js",
+        "size": 2770,
+        "gzipSize": 985,
+        "brotliSize": 860,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Ou6crvgF.js"
+      },
+      {
+        "name": "CGVdfMVy.js",
         "ext": ".js",
         "size": 2742,
-        "gzipSize": 1330,
-        "brotliSize": 1107,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/TQ0ChQYx.js"
+        "gzipSize": 1506,
+        "brotliSize": 1328,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CGVdfMVy.js"
       },
       {
-        "name": "lHza4bSd.js",
+        "name": "23.BQr7biqi.js",
         "ext": ".js",
-        "size": 2633,
-        "gzipSize": 1079,
-        "brotliSize": 913,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/lHza4bSd.js"
+        "size": 2660,
+        "gzipSize": 1147,
+        "brotliSize": 983,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/23.BQr7biqi.js"
       },
       {
-        "name": "23.RDaA0WLy.js",
+        "name": "DASRNzPZ.js",
         "ext": ".js",
-        "size": 2626,
-        "gzipSize": 1141,
-        "brotliSize": 963,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/23.RDaA0WLy.js"
+        "size": 2618,
+        "gzipSize": 1067,
+        "brotliSize": 904,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DASRNzPZ.js"
       },
       {
-        "name": "DKKvgyGS.js",
+        "name": "_4hHMG3C.js",
         "ext": ".js",
-        "size": 2602,
-        "gzipSize": 1184,
-        "brotliSize": 1043,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DKKvgyGS.js"
-      },
-      {
-        "name": "TJIjQqs-.js",
-        "ext": ".js",
-        "size": 2599,
+        "size": 2608,
         "gzipSize": 1344,
-        "brotliSize": 1184,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/TJIjQqs-.js"
+        "brotliSize": 1183,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/_4hHMG3C.js"
       },
       {
-        "name": "D-o6hRko.js",
+        "name": "CmUTiBo_.js",
         "ext": ".js",
-        "size": 2493,
-        "gzipSize": 1369,
-        "brotliSize": 1174,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D-o6hRko.js"
+        "size": 2568,
+        "gzipSize": 1178,
+        "brotliSize": 1047,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CmUTiBo_.js"
       },
       {
-        "name": "aIWTIolC.js",
+        "name": "DaOHI3zf2.js",
         "ext": ".js",
-        "size": 2426,
-        "gzipSize": 1172,
-        "brotliSize": 1048,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/aIWTIolC.js"
+        "size": 2497,
+        "gzipSize": 1364,
+        "brotliSize": 1164,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DaOHI3zf2.js"
       },
       {
-        "name": "DJRtGGnA.js",
+        "name": "ByAaJnb2.js",
         "ext": ".js",
-        "size": 2389,
-        "gzipSize": 975,
-        "brotliSize": 823,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DJRtGGnA.js"
+        "size": 2461,
+        "gzipSize": 1194,
+        "brotliSize": 1065,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ByAaJnb2.js"
       },
       {
-        "name": "DhAc-Gdq.js",
+        "name": "Zfr9EWkA2.js",
         "ext": ".js",
-        "size": 2381,
-        "gzipSize": 1268,
+        "size": 2395,
+        "gzipSize": 1269,
         "brotliSize": 1092,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DhAc-Gdq.js"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Zfr9EWkA2.js"
       },
       {
-        "name": "13.CbR53sQZ.css",
+        "name": "BbXGaV41.js",
+        "ext": ".js",
+        "size": 2388,
+        "gzipSize": 963,
+        "brotliSize": 820,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BbXGaV41.js"
+      },
+      {
+        "name": "Dd6tVeJK.js",
+        "ext": ".js",
+        "size": 2337,
+        "gzipSize": 1250,
+        "brotliSize": 1090,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dd6tVeJK.js"
+      },
+      {
+        "name": "13.GbdR358i.css",
         "ext": ".css",
-        "size": 2357,
-        "gzipSize": 803,
-        "brotliSize": 662,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/13.CbR53sQZ.css"
-      },
-      {
-        "name": "q-QMLZ44.js",
-        "ext": ".js",
-        "size": 2327,
-        "gzipSize": 1015,
-        "brotliSize": 888,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/q-QMLZ44.js"
-      },
-      {
-        "name": "DohNyggl.js",
-        "ext": ".js",
         "size": 2325,
-        "gzipSize": 1249,
-        "brotliSize": 1087,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DohNyggl.js"
+        "gzipSize": 808,
+        "brotliSize": 674,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/13.GbdR358i.css"
       },
       {
-        "name": "D8gClHiT.js",
+        "name": "BYJW92xZ2.js",
         "ext": ".js",
-        "size": 2236,
-        "gzipSize": 1209,
-        "brotliSize": 1023,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D8gClHiT.js"
+        "size": 2279,
+        "gzipSize": 994,
+        "brotliSize": 869,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BYJW92xZ2.js"
       },
       {
-        "name": "DEWRTmrx.js",
+        "name": "D47NUi0q.js",
+        "ext": ".js",
+        "size": 2250,
+        "gzipSize": 1213,
+        "brotliSize": 1042,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D47NUi0q.js"
+      },
+      {
+        "name": "TSTLsL2w.js",
         "ext": ".js",
         "size": 2209,
-        "gzipSize": 1006,
-        "brotliSize": 845,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DEWRTmrx.js"
+        "gzipSize": 1005,
+        "brotliSize": 849,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/TSTLsL2w.js"
       },
       {
-        "name": "DoRvHeG1.js",
+        "name": "B62UZ-Pm.js",
         "ext": ".js",
-        "size": 2161,
-        "gzipSize": 936,
-        "brotliSize": 801,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DoRvHeG1.js"
+        "size": 2184,
+        "gzipSize": 1057,
+        "brotliSize": 933,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B62UZ-Pm.js"
       },
       {
-        "name": "G7SLuuH2.js",
+        "name": "BnV0XUcU.js",
         "ext": ".js",
-        "size": 2120,
-        "gzipSize": 1147,
-        "brotliSize": 981,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/G7SLuuH2.js"
+        "size": 2166,
+        "gzipSize": 1032,
+        "brotliSize": 938,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BnV0XUcU.js"
       },
       {
-        "name": "BU_n8DbV.js",
+        "name": "cOAWaDai.js",
         "ext": ".js",
-        "size": 2116,
-        "gzipSize": 881,
-        "brotliSize": 759,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BU_n8DbV.js"
+        "size": 2158,
+        "gzipSize": 939,
+        "brotliSize": 774,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/cOAWaDai.js"
       },
       {
-        "name": "ByhVxfSd.js",
+        "name": "DLtJ4xIs2.js",
         "ext": ".js",
-        "size": 2093,
-        "gzipSize": 1151,
-        "brotliSize": 994,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ByhVxfSd.js"
+        "size": 2133,
+        "gzipSize": 1148,
+        "brotliSize": 991,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DLtJ4xIs2.js"
       },
       {
-        "name": "CBAQwfUV.js",
+        "name": "l-OhMiGm2.js",
         "ext": ".js",
-        "size": 2088,
-        "gzipSize": 1033,
-        "brotliSize": 911,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CBAQwfUV.js"
+        "size": 2115,
+        "gzipSize": 882,
+        "brotliSize": 762,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/l-OhMiGm2.js"
       },
       {
-        "name": "CtpdFbMz.js",
+        "name": "C4UvgwuZ2.js",
         "ext": ".js",
-        "size": 2073,
-        "gzipSize": 1142,
-        "brotliSize": 992,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CtpdFbMz.js"
+        "size": 2111,
+        "gzipSize": 1154,
+        "brotliSize": 1006,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C4UvgwuZ2.js"
       },
       {
-        "name": "2.C06XKGly.css",
+        "name": "CLhqN-wy.js",
+        "ext": ".js",
+        "size": 2101,
+        "gzipSize": 1035,
+        "brotliSize": 908,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CLhqN-wy.js"
+      },
+      {
+        "name": "Dv16g7gF2.js",
+        "ext": ".js",
+        "size": 2078,
+        "gzipSize": 1140,
+        "brotliSize": 993,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dv16g7gF2.js"
+      },
+      {
+        "name": "2.BQePOFWw.css",
         "ext": ".css",
-        "size": 2047,
-        "gzipSize": 468,
-        "brotliSize": 385,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/2.C06XKGly.css"
+        "size": 2032,
+        "gzipSize": 469,
+        "brotliSize": 389,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/2.BQePOFWw.css"
       },
       {
-        "name": "DRb5U3ql.js",
+        "name": "d2XaWFPe.js",
         "ext": ".js",
-        "size": 2011,
-        "gzipSize": 1022,
-        "brotliSize": 870,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DRb5U3ql.js"
+        "size": 2024,
+        "gzipSize": 1026,
+        "brotliSize": 897,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/d2XaWFPe.js"
       },
       {
-        "name": "PcUeXc8H.js",
+        "name": "DraJDpdG2.js",
         "ext": ".js",
-        "size": 1940,
-        "gzipSize": 765,
-        "brotliSize": 662,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/PcUeXc8H.js"
+        "size": 1911,
+        "gzipSize": 1054,
+        "brotliSize": 937,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DraJDpdG2.js"
       },
       {
-        "name": "DODHB5cW.js",
+        "name": "Ncxiafcw2.js",
         "ext": ".js",
-        "size": 1901,
-        "gzipSize": 1055,
-        "brotliSize": 915,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DODHB5cW.js"
+        "size": 1911,
+        "gzipSize": 763,
+        "brotliSize": 657,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Ncxiafcw2.js"
       },
       {
-        "name": "1aMbbNxI.js",
+        "name": "C-EzhSF82.js",
         "ext": ".js",
-        "size": 1808,
-        "gzipSize": 899,
-        "brotliSize": 777,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/1aMbbNxI.js"
+        "size": 1809,
+        "gzipSize": 901,
+        "brotliSize": 776,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C-EzhSF82.js"
       },
       {
-        "name": "C_azEorK.js",
+        "name": "Qqe-O0-i.js",
         "ext": ".js",
-        "size": 1777,
-        "gzipSize": 872,
-        "brotliSize": 751,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C_azEorK.js"
+        "size": 1767,
+        "gzipSize": 866,
+        "brotliSize": 752,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Qqe-O0-i.js"
       },
       {
-        "name": "26.DLMBqQGH.css",
-        "ext": ".css",
-        "size": 1752,
-        "gzipSize": 495,
-        "brotliSize": 423,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/26.DLMBqQGH.css"
-      },
-      {
-        "name": "BYGU3yQa.js",
+        "name": "CxftKpAk.js",
         "ext": ".js",
         "size": 1740,
-        "gzipSize": 760,
-        "brotliSize": 664,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BYGU3yQa.js"
+        "gzipSize": 757,
+        "brotliSize": 672,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CxftKpAk.js"
       },
       {
-        "name": "BsJrDWE3.js",
+        "name": "CaMJutFQ.js",
         "ext": ".js",
-        "size": 1714,
-        "gzipSize": 935,
-        "brotliSize": 815,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BsJrDWE3.js"
+        "size": 1722,
+        "gzipSize": 934,
+        "brotliSize": 820,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CaMJutFQ.js"
       },
       {
-        "name": "CIk6rftQ.js",
-        "ext": ".js",
-        "size": 1695,
-        "gzipSize": 893,
-        "brotliSize": 794,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CIk6rftQ.js"
+        "name": "26.LrfIPsWm.css",
+        "ext": ".css",
+        "size": 1684,
+        "gzipSize": 476,
+        "brotliSize": 404,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/26.LrfIPsWm.css"
       },
       {
-        "name": "DycDnEL3.js",
+        "name": "CCdV0-uN.js",
         "ext": ".js",
-        "size": 1669,
-        "gzipSize": 833,
-        "brotliSize": 697,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DycDnEL3.js"
+        "size": 1649,
+        "gzipSize": 722,
+        "brotliSize": 614,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CCdV0-uN.js"
       },
       {
-        "name": "BfxONUjp.js",
+        "name": "Bs-h09Iz2.js",
         "ext": ".js",
-        "size": 1614,
-        "gzipSize": 982,
-        "brotliSize": 856,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BfxONUjp.js"
+        "size": 1622,
+        "gzipSize": 984,
+        "brotliSize": 858,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Bs-h09Iz2.js"
       },
       {
-        "name": "CIKxwiBI.js",
+        "name": "D-Yww4Jg.js",
         "ext": ".js",
-        "size": 1571,
-        "gzipSize": 880,
-        "brotliSize": 754,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CIKxwiBI.js"
+        "size": 1581,
+        "gzipSize": 876,
+        "brotliSize": 775,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D-Yww4Jg.js"
       },
       {
-        "name": "C22L596L.js",
+        "name": "DqF0KV80.js",
         "ext": ".js",
-        "size": 1526,
-        "gzipSize": 597,
-        "brotliSize": 506,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C22L596L.js"
+        "size": 1538,
+        "gzipSize": 617,
+        "brotliSize": 531,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DqF0KV80.js"
       },
       {
-        "name": "CRtXFcbt.js",
+        "name": "dYAy4VSZ.js",
         "ext": ".js",
-        "size": 1460,
-        "gzipSize": 724,
-        "brotliSize": 642,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CRtXFcbt.js"
+        "size": 1491,
+        "gzipSize": 777,
+        "brotliSize": 675,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/dYAy4VSZ.js"
       },
       {
-        "name": "25.DSZMXyXA.js",
+        "name": "D9k6BEul.js",
         "ext": ".js",
-        "size": 1389,
-        "gzipSize": 800,
-        "brotliSize": 709,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/25.DSZMXyXA.js"
+        "size": 1466,
+        "gzipSize": 726,
+        "brotliSize": 640,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D9k6BEul.js"
       },
       {
-        "name": "DHB6stqf.js",
+        "name": "25.Cwupinnt.js",
         "ext": ".js",
-        "size": 1330,
-        "gzipSize": 584,
-        "brotliSize": 513,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DHB6stqf.js"
+        "size": 1400,
+        "gzipSize": 796,
+        "brotliSize": 696,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/25.Cwupinnt.js"
       },
       {
-        "name": "CMsMPtVc.js",
+        "name": "BHCT4vM7.js",
         "ext": ".js",
-        "size": 1262,
-        "gzipSize": 490,
-        "brotliSize": 407,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CMsMPtVc.js"
+        "size": 1343,
+        "gzipSize": 575,
+        "brotliSize": 509,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BHCT4vM7.js"
       },
       {
-        "name": "C6v2M2-c.js",
+        "name": "DmkM1rvr.js",
         "ext": ".js",
-        "size": 1235,
-        "gzipSize": 763,
-        "brotliSize": 638,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C6v2M2-c.js"
+        "size": 1331,
+        "gzipSize": 788,
+        "brotliSize": 692,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DmkM1rvr.js"
       },
       {
-        "name": "DCx2ZSlh.js",
+        "name": "DOS79mKA2.js",
         "ext": ".js",
-        "size": 1229,
-        "gzipSize": 692,
-        "brotliSize": 607,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DCx2ZSlh.js"
+        "size": 1261,
+        "gzipSize": 493,
+        "brotliSize": 408,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DOS79mKA2.js"
       },
       {
-        "name": "CJjR4ZIF.js",
+        "name": "DJtF9vgo2.js",
         "ext": ".js",
-        "size": 1158,
-        "gzipSize": 621,
-        "brotliSize": 560,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CJjR4ZIF.js"
+        "size": 1246,
+        "gzipSize": 690,
+        "brotliSize": 629,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DJtF9vgo2.js"
       },
       {
-        "name": "BcILQ-Rq.js",
+        "name": "D2_Rny3E2.js",
         "ext": ".js",
-        "size": 1094,
-        "gzipSize": 638,
-        "brotliSize": 557,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BcILQ-Rq.js"
+        "size": 1242,
+        "gzipSize": 766,
+        "brotliSize": 656,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D2_Rny3E2.js"
       },
       {
-        "name": "CGQ6zLBy.js",
+        "name": "CXyxYqeB.js",
         "ext": ".js",
-        "size": 1087,
+        "size": 1230,
+        "gzipSize": 713,
+        "brotliSize": 595,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CXyxYqeB.js"
+      },
+      {
+        "name": "oa2dJ-SX.js",
+        "ext": ".js",
+        "size": 1167,
+        "gzipSize": 618,
+        "brotliSize": 541,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/oa2dJ-SX.js"
+      },
+      {
+        "name": "DLRqV_H4.js",
+        "ext": ".js",
+        "size": 1100,
+        "gzipSize": 641,
+        "brotliSize": 575,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DLRqV_H4.js"
+      },
+      {
+        "name": "B3suoN70.js",
+        "ext": ".js",
+        "size": 1099,
+        "gzipSize": 609,
+        "brotliSize": 538,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B3suoN70.js"
+      },
+      {
+        "name": "BIAOUvk4.js",
+        "ext": ".js",
+        "size": 1090,
         "gzipSize": 573,
-        "brotliSize": 466,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CGQ6zLBy.js"
+        "brotliSize": 465,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BIAOUvk4.js"
       },
       {
-        "name": "CHanRUNC.js",
+        "name": "AUR-3KPn.js",
+        "ext": ".js",
+        "size": 1047,
+        "gzipSize": 511,
+        "brotliSize": 423,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/AUR-3KPn.js"
+      },
+      {
+        "name": "DGwGvKj-.js",
         "ext": ".js",
         "size": 1036,
-        "gzipSize": 506,
-        "brotliSize": 416,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CHanRUNC.js"
+        "gzipSize": 617,
+        "brotliSize": 546,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DGwGvKj-.js"
       },
       {
-        "name": "CRtL5e1q.js",
+        "name": "DXPgh_n5.js",
         "ext": ".js",
-        "size": 1034,
-        "gzipSize": 621,
-        "brotliSize": 557,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CRtL5e1q.js"
+        "size": 895,
+        "gzipSize": 589,
+        "brotliSize": 521,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DXPgh_n5.js"
       },
       {
-        "name": "EwEgHOG0.js",
+        "name": "BQrS3RjR.js",
         "ext": ".js",
-        "size": 947,
-        "gzipSize": 525,
-        "brotliSize": 458,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/EwEgHOG0.js"
+        "size": 871,
+        "gzipSize": 426,
+        "brotliSize": 366,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BQrS3RjR.js"
       },
       {
-        "name": "BjBhRnxI.js",
+        "name": "DGAIsnlB.js",
         "ext": ".js",
-        "size": 886,
-        "gzipSize": 588,
-        "brotliSize": 537,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BjBhRnxI.js"
+        "size": 871,
+        "gzipSize": 552,
+        "brotliSize": 468,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DGAIsnlB.js"
       },
       {
-        "name": "DqJZEyQN.js",
+        "name": "C5hZTyat.js",
         "ext": ".js",
-        "size": 861,
-        "gzipSize": 558,
-        "brotliSize": 462,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DqJZEyQN.js"
-      },
-      {
-        "name": "us8GAiEB.js",
-        "ext": ".js",
-        "size": 822,
+        "size": 826,
         "gzipSize": 580,
-        "brotliSize": 491,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/us8GAiEB.js"
+        "brotliSize": 500,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C5hZTyat.js"
       },
       {
-        "name": "DMaWFxkF.js",
+        "name": "Dgmp6anK2.js",
         "ext": ".js",
-        "size": 821,
-        "gzipSize": 559,
-        "brotliSize": 498,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DMaWFxkF.js"
+        "size": 824,
+        "gzipSize": 553,
+        "brotliSize": 493,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Dgmp6anK2.js"
       },
       {
-        "name": "BpZ58wMW.js",
+        "name": "BSFFGODP2.js",
         "ext": ".js",
-        "size": 804,
-        "gzipSize": 537,
-        "brotliSize": 457,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BpZ58wMW.js"
+        "size": 811,
+        "gzipSize": 545,
+        "brotliSize": 470,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BSFFGODP2.js"
       },
       {
-        "name": "D8fnXPk2.js",
+        "name": "bSM52vYn.js",
         "ext": ".js",
-        "size": 781,
-        "gzipSize": 536,
-        "brotliSize": 449,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D8fnXPk2.js"
+        "size": 801,
+        "gzipSize": 361,
+        "brotliSize": 309,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/bSM52vYn.js"
       },
       {
-        "name": "D47dve_d.js",
+        "name": "C4vWIdfW.js",
         "ext": ".js",
-        "size": 766,
-        "gzipSize": 445,
-        "brotliSize": 387,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D47dve_d.js"
+        "size": 796,
+        "gzipSize": 540,
+        "brotliSize": 460,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C4vWIdfW.js"
       },
       {
-        "name": "CfyBLH92.js",
+        "name": "D8Q_EslP.js",
         "ext": ".js",
-        "size": 759,
+        "size": 774,
+        "gzipSize": 443,
+        "brotliSize": 388,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D8Q_EslP.js"
+      },
+      {
+        "name": "ftrW1tME2.js",
+        "ext": ".js",
+        "size": 768,
         "gzipSize": 529,
-        "brotliSize": 464,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CfyBLH92.js"
+        "brotliSize": 472,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ftrW1tME2.js"
       },
       {
-        "name": "NI6xmgUV.js",
+        "name": "CsyRQn3X.js",
         "ext": ".js",
-        "size": 754,
+        "size": 763,
         "gzipSize": 506,
-        "brotliSize": 441,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/NI6xmgUV.js"
+        "brotliSize": 447,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CsyRQn3X.js"
       },
       {
-        "name": "BBfNneBU.js",
+        "name": "CWg-xiZl.js",
         "ext": ".js",
         "size": 739,
-        "gzipSize": 435,
-        "brotliSize": 386,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BBfNneBU.js"
+        "gzipSize": 436,
+        "brotliSize": 390,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CWg-xiZl.js"
       },
       {
-        "name": "DaEfjfzk.js",
+        "name": "DKrZ2VP9.js",
         "ext": ".js",
-        "size": 676,
-        "gzipSize": 458,
-        "brotliSize": 389,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DaEfjfzk.js"
+        "size": 667,
+        "gzipSize": 453,
+        "brotliSize": 383,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DKrZ2VP9.js"
       },
       {
-        "name": "8.VwPmpkGW.css",
+        "name": "color-selector.BnaNSq23.css",
         "ext": ".css",
-        "size": 669,
-        "gzipSize": 292,
-        "brotliSize": 240,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/8.VwPmpkGW.css"
+        "size": 641,
+        "gzipSize": 352,
+        "brotliSize": 259,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/color-selector.BnaNSq23.css"
       },
       {
-        "name": "color-selector.Deq_gQTS.css",
-        "ext": ".css",
-        "size": 637,
-        "gzipSize": 347,
-        "brotliSize": 269,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/color-selector.Deq_gQTS.css"
-      },
-      {
-        "name": "CbzMM2aX.js",
+        "name": "CWn8hBFk2.js",
         "ext": ".js",
-        "size": 608,
-        "gzipSize": 426,
-        "brotliSize": 392,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CbzMM2aX.js"
+        "size": 619,
+        "gzipSize": 430,
+        "brotliSize": 376,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CWn8hBFk2.js"
       },
       {
-        "name": "2ouBKqla.js",
+        "name": "CUckReyp.js",
         "ext": ".js",
-        "size": 606,
-        "gzipSize": 424,
-        "brotliSize": 401,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/2ouBKqla.js"
+        "size": 617,
+        "gzipSize": 436,
+        "brotliSize": 380,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CUckReyp.js"
       },
       {
-        "name": "BXkAM_zz.js",
+        "name": "P6mQomcD2.js",
         "ext": ".js",
-        "size": 548,
-        "gzipSize": 392,
-        "brotliSize": 337,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BXkAM_zz.js"
+        "size": 603,
+        "gzipSize": 418,
+        "brotliSize": 379,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/P6mQomcD2.js"
       },
       {
-        "name": "GoeMZhnq.js",
+        "name": "C6PZ8cnC.js",
         "ext": ".js",
-        "size": 517,
-        "gzipSize": 378,
-        "brotliSize": 320,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/GoeMZhnq.js"
+        "size": 539,
+        "gzipSize": 311,
+        "brotliSize": 282,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C6PZ8cnC.js"
       },
       {
-        "name": "D1dbVS5Y.js",
+        "name": "B9G56fiT2.js",
         "ext": ".js",
-        "size": 514,
-        "gzipSize": 379,
-        "brotliSize": 360,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D1dbVS5Y.js"
+        "size": 528,
+        "gzipSize": 382,
+        "brotliSize": 336,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B9G56fiT2.js"
       },
       {
-        "name": "DS1lqjs8.js",
+        "name": "BCViYVrm.js",
         "ext": ".js",
-        "size": 484,
-        "gzipSize": 361,
-        "brotliSize": 314,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DS1lqjs8.js"
+        "size": 527,
+        "gzipSize": 376,
+        "brotliSize": 324,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BCViYVrm.js"
       },
       {
-        "name": "DaU16Oq1.js",
+        "name": "QyY9kmX4.js",
         "ext": ".js",
-        "size": 480,
-        "gzipSize": 340,
-        "brotliSize": 296,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DaU16Oq1.js"
+        "size": 497,
+        "gzipSize": 362,
+        "brotliSize": 318,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/QyY9kmX4.js"
       },
       {
-        "name": "CJ649lSz.js",
+        "name": "DZNVM9X22.js",
         "ext": ".js",
-        "size": 478,
-        "gzipSize": 356,
-        "brotliSize": 311,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CJ649lSz.js"
+        "size": 491,
+        "gzipSize": 344,
+        "brotliSize": 302,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DZNVM9X22.js"
       },
       {
-        "name": "CzvyhLkg.js",
+        "name": "BfealClg.js",
         "ext": ".js",
-        "size": 461,
-        "gzipSize": 338,
-        "brotliSize": 311,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CzvyhLkg.js"
-      },
-      {
-        "name": "ULThajGJ.js",
-        "ext": ".js",
-        "size": 460,
-        "gzipSize": 342,
+        "size": 482,
+        "gzipSize": 350,
         "brotliSize": 308,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/ULThajGJ.js"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BfealClg.js"
       },
       {
-        "name": "BjeMFdEd.js",
+        "name": "BetlmQR9.js",
         "ext": ".js",
-        "size": 417,
-        "gzipSize": 281,
-        "brotliSize": 250,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BjeMFdEd.js"
+        "size": 471,
+        "gzipSize": 339,
+        "brotliSize": 290,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BetlmQR9.js"
       },
       {
-        "name": "DxEeqSB5.js",
+        "name": "CS5151-7.js",
+        "ext": ".js",
+        "size": 464,
+        "gzipSize": 342,
+        "brotliSize": 314,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CS5151-7.js"
+      },
+      {
+        "name": "8.Cinf78r_.css",
+        "ext": ".css",
+        "size": 445,
+        "gzipSize": 172,
+        "brotliSize": 128,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/8.Cinf78r_.css"
+      },
+      {
+        "name": "bK4nbcyE.js",
+        "ext": ".js",
+        "size": 410,
+        "gzipSize": 276,
+        "brotliSize": 247,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/bK4nbcyE.js"
+      },
+      {
+        "name": "CiufwIng2.js",
         "ext": ".js",
         "size": 393,
-        "gzipSize": 279,
-        "brotliSize": 240,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DxEeqSB5.js"
+        "gzipSize": 285,
+        "brotliSize": 249,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CiufwIng2.js"
       },
       {
-        "name": "entry-actions.ClcLTGVH.css",
-        "ext": ".css",
-        "size": 357,
-        "gzipSize": 200,
-        "brotliSize": 155,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/entry-actions.ClcLTGVH.css"
-      },
-      {
-        "name": "CpuWC-iu.js",
+        "name": "B_2qYG4-.js",
         "ext": ".js",
-        "size": 355,
-        "gzipSize": 224,
-        "brotliSize": 188,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CpuWC-iu.js"
-      },
-      {
-        "name": "DhCrl6r8.js",
-        "ext": ".js",
-        "size": 353,
-        "gzipSize": 260,
-        "brotliSize": 209,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DhCrl6r8.js"
-      },
-      {
-        "name": "20.CkmNBco3.css",
-        "ext": ".css",
-        "size": 339,
-        "gzipSize": 233,
+        "size": 359,
+        "gzipSize": 228,
         "brotliSize": 191,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/20.CkmNBco3.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B_2qYG4-.js"
       },
       {
-        "name": "khwCfJ7g.js",
-        "ext": ".js",
-        "size": 334,
-        "gzipSize": 252,
-        "brotliSize": 219,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/khwCfJ7g.js"
-      },
-      {
-        "name": "BLXsR4iZ.js",
-        "ext": ".js",
-        "size": 327,
-        "gzipSize": 198,
-        "brotliSize": 168,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BLXsR4iZ.js"
-      },
-      {
-        "name": "BDVK27a7.js",
-        "ext": ".js",
-        "size": 321,
-        "gzipSize": 193,
-        "brotliSize": 165,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BDVK27a7.js"
-      },
-      {
-        "name": "14.GkD40ypk.css",
+        "name": "entry-actions.CzsZckYe.css",
         "ext": ".css",
-        "size": 300,
-        "gzipSize": 168,
-        "brotliSize": 126,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/14.GkD40ypk.css"
+        "size": 358,
+        "gzipSize": 200,
+        "brotliSize": 157,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/entry-actions.CzsZckYe.css"
       },
       {
-        "name": "iiZPrIFk.js",
+        "name": "6WLAj1t4.js",
+        "ext": ".js",
+        "size": 354,
+        "gzipSize": 261,
+        "brotliSize": 211,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/6WLAj1t4.js"
+      },
+      {
+        "name": "B-5tBGHT.js",
+        "ext": ".js",
+        "size": 336,
+        "gzipSize": 253,
+        "brotliSize": 223,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B-5tBGHT.js"
+      },
+      {
+        "name": "20.C1R-wCtI.css",
+        "ext": ".css",
+        "size": 335,
+        "gzipSize": 230,
+        "brotliSize": 184,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/20.C1R-wCtI.css"
+      },
+      {
+        "name": "BEQV_qo22.js",
+        "ext": ".js",
+        "size": 326,
+        "gzipSize": 199,
+        "brotliSize": 174,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BEQV_qo22.js"
+      },
+      {
+        "name": "D-zhWzjk.js",
+        "ext": ".js",
+        "size": 325,
+        "gzipSize": 196,
+        "brotliSize": 164,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D-zhWzjk.js"
+      },
+      {
+        "name": "P0eFlQ2A2.js",
+        "ext": ".js",
+        "size": 303,
+        "gzipSize": 253,
+        "brotliSize": 186,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/P0eFlQ2A2.js"
+      },
+      {
+        "name": "C9Ze_BYI.js",
         "ext": ".js",
         "size": 299,
-        "gzipSize": 250,
-        "brotliSize": 206,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/iiZPrIFk.js"
+        "gzipSize": 252,
+        "brotliSize": 211,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C9Ze_BYI.js"
       },
       {
-        "name": "SxnckWUh.js",
-        "ext": ".js",
-        "size": 294,
-        "gzipSize": 245,
-        "brotliSize": 179,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/SxnckWUh.js"
+        "name": "14.CVDwEO14.css",
+        "ext": ".css",
+        "size": 293,
+        "gzipSize": 166,
+        "brotliSize": 125,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/14.CVDwEO14.css"
       },
       {
         "name": "10.D8mkVN-V.css",
@@ -1640,12 +1720,12 @@
         "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/10.D8mkVN-V.css"
       },
       {
-        "name": "seo-analysis-panel.CUM_WVQl.css",
+        "name": "seo-analysis-panel.CfYwrgJI.css",
         "ext": ".css",
-        "size": 248,
-        "gzipSize": 139,
-        "brotliSize": 96,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/seo-analysis-panel.CUM_WVQl.css"
+        "size": 240,
+        "gzipSize": 136,
+        "brotliSize": 98,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/seo-analysis-panel.CfYwrgJI.css"
       },
       {
         "name": "description-input.BD1-EfnV.css",
@@ -1664,148 +1744,196 @@
         "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/title-input.DZnxF4jY.css"
       },
       {
-        "name": "1.Ci6fRiQR.css",
+        "name": "B9-yxM20.js",
+        "ext": ".js",
+        "size": 235,
+        "gzipSize": 216,
+        "brotliSize": 163,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/B9-yxM20.js"
+      },
+      {
+        "name": "1.CDAI1NLx.css",
+        "ext": ".css",
+        "size": 229,
+        "gzipSize": 140,
+        "brotliSize": 111,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/1.CDAI1NLx.css"
+      },
+      {
+        "name": "DXH7xlpk2.js",
+        "ext": ".js",
+        "size": 228,
+        "gzipSize": 198,
+        "brotliSize": 173,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DXH7xlpk2.js"
+      },
+      {
+        "name": "3.vUeBIQGX.css",
         "ext": ".css",
         "size": 227,
-        "gzipSize": 140,
-        "brotliSize": 110,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/1.Ci6fRiQR.css"
-      },
-      {
-        "name": "3.Bk6F93c5.css",
-        "ext": ".css",
-        "size": 225,
-        "gzipSize": 137,
-        "brotliSize": 111,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/3.Bk6F93c5.css"
-      },
-      {
-        "name": "4.Dud-XsId.css",
-        "ext": ".css",
-        "size": 225,
         "gzipSize": 138,
-        "brotliSize": 103,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/4.Dud-XsId.css"
+        "brotliSize": 110,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/3.vUeBIQGX.css"
       },
       {
-        "name": "input.CH1S31oH.css",
+        "name": "4.rZPG0ehz.css",
+        "ext": ".css",
+        "size": 227,
+        "gzipSize": 139,
+        "brotliSize": 104,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/4.rZPG0ehz.css"
+      },
+      {
+        "name": "BBZjb1C2.js",
+        "ext": ".js",
+        "size": 222,
+        "gzipSize": 202,
+        "brotliSize": 166,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BBZjb1C2.js"
+      },
+      {
+        "name": "widget-loader.f9LmZvWC.css",
+        "ext": ".css",
+        "size": 217,
+        "gzipSize": 164,
+        "brotliSize": 141,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/widget-loader.f9LmZvWC.css"
+      },
+      {
+        "name": "input.G80uo2PJ.css",
         "ext": ".css",
         "size": 189,
-        "gzipSize": 144,
-        "brotliSize": 122,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.CH1S31oH.css"
+        "gzipSize": 143,
+        "brotliSize": 118,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.G80uo2PJ.css"
       },
       {
-        "name": "missing-widget.B9exNm4z.css",
+        "name": "missing-widget.DCTtfCGJ.css",
         "ext": ".css",
         "size": 187,
-        "gzipSize": 143,
-        "brotliSize": 112,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/missing-widget.B9exNm4z.css"
+        "gzipSize": 141,
+        "brotliSize": 113,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/missing-widget.DCTtfCGJ.css"
       },
       {
-        "name": "GLyUOKNE.js",
+        "name": "DiSOSlya.js",
         "ext": ".js",
         "size": 184,
-        "gzipSize": 176,
-        "brotliSize": 157,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/GLyUOKNE.js"
+        "gzipSize": 177,
+        "brotliSize": 151,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DiSOSlya.js"
       },
       {
-        "name": "BN6srqix.js",
+        "name": "C1vXftA5.js",
         "ext": ".js",
         "size": 183,
-        "gzipSize": 177,
-        "brotliSize": 156,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BN6srqix.js"
+        "gzipSize": 178,
+        "brotliSize": 180,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C1vXftA5.js"
       },
       {
-        "name": "modal-utils.DHIpgSrv.css",
+        "name": "CXWQq9Ad.js",
+        "ext": ".js",
+        "size": 183,
+        "gzipSize": 151,
+        "brotliSize": 124,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CXWQq9Ad.js"
+      },
+      {
+        "name": "sanitize.DHIpgSrv.css",
         "ext": ".css",
         "size": 182,
         "gzipSize": 135,
         "brotliSize": 91,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/modal-utils.DHIpgSrv.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/sanitize.DHIpgSrv.css"
       },
       {
-        "name": "BJjEbSFN.js",
+        "name": "YWO16b1j.js",
         "ext": ".js",
         "size": 175,
-        "gzipSize": 171,
-        "brotliSize": 158,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BJjEbSFN.js"
+        "gzipSize": 170,
+        "brotliSize": 152,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/YWO16b1j.js"
       },
       {
-        "name": "C63dhqTy.js",
-        "ext": ".js",
-        "size": 175,
-        "gzipSize": 169,
-        "brotliSize": 169,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/C63dhqTy.js"
-      },
-      {
-        "name": "display.BZdBpc3h.css",
+        "name": "display.Car5XUml.css",
         "ext": ".css",
         "size": 174,
-        "gzipSize": 149,
+        "gzipSize": 150,
         "brotliSize": 110,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.BZdBpc3h.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.Car5XUml.css"
       },
       {
-        "name": "DQWV7C1z.js",
+        "name": "Exa1Fmch2.js",
         "ext": ".js",
-        "size": 172,
-        "gzipSize": 171,
-        "brotliSize": 150,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DQWV7C1z.js"
+        "size": 171,
+        "gzipSize": 169,
+        "brotliSize": 153,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/Exa1Fmch2.js"
       },
       {
-        "name": "image-description.CGRWgU23.css",
+        "name": "BNfFS0JJ2.js",
+        "ext": ".js",
+        "size": 168,
+        "gzipSize": 168,
+        "brotliSize": 142,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BNfFS0JJ2.js"
+      },
+      {
+        "name": "image-description.bFre7OOE.css",
         "ext": ".css",
         "size": 166,
-        "gzipSize": 146,
-        "brotliSize": 101,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/image-description.CGRWgU23.css"
+        "gzipSize": 145,
+        "brotliSize": 102,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/image-description.bFre7OOE.css"
       },
       {
-        "name": "start.CCV63ZGf.js",
+        "name": "CNIQzge3.js",
         "ext": ".js",
-        "size": 161,
-        "gzipSize": 147,
-        "brotliSize": 117,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/entry/start.CCV63ZGf.js"
+        "size": 164,
+        "gzipSize": 160,
+        "brotliSize": 126,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CNIQzge3.js"
       },
       {
-        "name": "input.B7XUMU6t.css",
+        "name": "input.V1P8qG5b.css",
         "ext": ".css",
         "size": 159,
         "gzipSize": 125,
-        "brotliSize": 102,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.B7XUMU6t.css"
+        "brotliSize": 98,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.V1P8qG5b.css"
       },
       {
-        "name": "menu-item-editor-modal.C53HDVM0.css",
+        "name": "input.DAUn9cqK.css",
         "ext": ".css",
-        "size": 155,
+        "size": 152,
         "gzipSize": 140,
-        "brotliSize": 95,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/menu-item-editor-modal.C53HDVM0.css"
+        "brotliSize": 98,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.DAUn9cqK.css"
       },
       {
-        "name": "input.C_6ooN18.css",
+        "name": "menu-item-editor-modal.CVmgCx6U.css",
         "ext": ".css",
         "size": 149,
-        "gzipSize": 139,
-        "brotliSize": 92,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/input.C_6ooN18.css"
+        "gzipSize": 138,
+        "brotliSize": 94,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/menu-item-editor-modal.CVmgCx6U.css"
       },
       {
-        "name": "VtiX-ma4.js",
+        "name": "start.DCNK0Y7K.js",
         "ext": ".js",
         "size": 113,
-        "gzipSize": 115,
-        "brotliSize": 110,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/VtiX-ma4.js"
+        "gzipSize": 107,
+        "brotliSize": 116,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/entry/start.DCNK0Y7K.js"
+      },
+      {
+        "name": "BQ-ZVZK3.js",
+        "ext": ".js",
+        "size": 111,
+        "gzipSize": 113,
+        "brotliSize": 115,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BQ-ZVZK3.js"
       },
       {
         "name": "display.EzTFB8FO.css",
@@ -1816,36 +1944,52 @@
         "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.EzTFB8FO.css"
       },
       {
-        "name": "8.DfrB7uap.js",
-        "ext": ".js",
-        "size": 105,
-        "gzipSize": 120,
-        "brotliSize": 94,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/nodes/8.DfrB7uap.js"
-      },
-      {
-        "name": "display.BDZmxL35.css",
+        "name": "display.CxvMVaf6.css",
         "ext": ".css",
         "size": 101,
-        "gzipSize": 107,
-        "brotliSize": 77,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.BDZmxL35.css"
+        "gzipSize": 108,
+        "brotliSize": 82,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.CxvMVaf6.css"
       },
       {
-        "name": "display.DhFJwXq7.css",
+        "name": "display.C6ft3ZYA.css",
         "ext": ".css",
         "size": 100,
         "gzipSize": 108,
         "brotliSize": 78,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.DhFJwXq7.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/display.C6ft3ZYA.css"
       },
       {
-        "name": "import-export-manager.Dkq-3Szs.css",
+        "name": "BFtzJJ_5.js",
+        "ext": ".js",
+        "size": 85,
+        "gzipSize": 94,
+        "brotliSize": 89,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BFtzJJ_5.js"
+      },
+      {
+        "name": "import-export-manager.ZcBW6n_t.css",
         "ext": ".css",
         "size": 83,
         "gzipSize": 97,
         "brotliSize": 74,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/import-export-manager.Dkq-3Szs.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/import-export-manager.ZcBW6n_t.css"
+      },
+      {
+        "name": "BRNkNKBT.js",
+        "ext": ".js",
+        "size": 81,
+        "gzipSize": 89,
+        "brotliSize": 75,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BRNkNKBT.js"
+      },
+      {
+        "name": "DxbQT3hJ2.js",
+        "ext": ".js",
+        "size": 79,
+        "gzipSize": 88,
+        "brotliSize": 71,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DxbQT3hJ2.js"
       },
       {
         "name": "toggles.BO9Z-rfs.css",
@@ -1888,12 +2032,12 @@
         "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/media-grid.CiErp8IE.css"
       },
       {
-        "name": "22.BCNpj66t.css",
+        "name": "22.D7TWpGdm.css",
         "ext": ".css",
         "size": 43,
         "gzipSize": 61,
         "brotliSize": 47,
-        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/22.BCNpj66t.css"
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/22.D7TWpGdm.css"
       },
       {
         "name": "drop-down.DQp3hotf.css",
@@ -1902,16 +2046,56 @@
         "gzipSize": 63,
         "brotliSize": 47,
         "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/assets/drop-down.DQp3hotf.css"
+      },
+      {
+        "name": "BuWCw59O.js",
+        "ext": ".js",
+        "size": 0,
+        "gzipSize": 20,
+        "brotliSize": 1,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/BuWCw59O.js"
+      },
+      {
+        "name": "CjjuWOrk.js",
+        "ext": ".js",
+        "size": 0,
+        "gzipSize": 20,
+        "brotliSize": 1,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CjjuWOrk.js"
+      },
+      {
+        "name": "CrZa9SPm2.js",
+        "ext": ".js",
+        "size": 0,
+        "gzipSize": 20,
+        "brotliSize": 1,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/CrZa9SPm2.js"
+      },
+      {
+        "name": "D7eGXt4w2.js",
+        "ext": ".js",
+        "size": 0,
+        "gzipSize": 20,
+        "brotliSize": 1,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/D7eGXt4w2.js"
+      },
+      {
+        "name": "DN8c2bQd.js",
+        "ext": ".js",
+        "size": 0,
+        "gzipSize": 20,
+        "brotliSize": 1,
+        "path": "/var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/.svelte-kit/output/client/_app/immutable/chunks/DN8c2bQd.js"
       }
     ],
-    "buildTime": 42821.302102,
-    "clientModules": 438,
-    "serverModules": 939
+    "buildTime": 12208.911651999999,
+    "clientModules": 472,
+    "serverModules": 1039
   },
   "violations": [
     {
-      "name": "C2zeR9R6.js",
-      "size": 415089
+      "name": "B1x4T3Fa2.js",
+      "size": 416461
     }
   ],
   "pass": true

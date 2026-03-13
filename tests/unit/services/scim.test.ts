@@ -9,7 +9,6 @@
  * - Bearer token validation tests
  */
 
-import { describe, expect, it } from 'bun:test';
 import { applyScimPatchOps, buildScimGroup, buildScimListResponse, buildScimUser, matchesScimFilter, parseScimFilter } from '@utils/scim-utils';
 
 // ============================================================================

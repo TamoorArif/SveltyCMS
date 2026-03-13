@@ -10,7 +10,6 @@
  * - Widget activation/deactivation
  */
 
-import { beforeEach, describe, expect, test } from 'bun:test';
 import type { WidgetConfig } from '@widgets/widget-factory';
 import { createWidget } from '@widgets/widget-factory';
 

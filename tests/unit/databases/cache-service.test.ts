@@ -1,21 +1,13 @@
 /**
  * @file tests/unit/databases/cache-service.test.ts
  * @description Whitebox unit tests for CacheService enhancements
- *
- * Tests:
- * - Tenant-prefixed key generation
- * - Tenant-prefixed tag generation
- * - Debouncing for bulk invalidations (clearByTags)
- * - Memoization of generateKey
  */
 
-import { describe, expect, it, beforeEach, mock, spyOn } from 'bun:test';
 import { CacheService } from '@src/databases/cache/cache-service';
-const cacheService = CacheService.getInstance();
 
 // Mock settings-service specifically for these tests
-mock.module('@src/services/settings-service', () => ({
-	getPrivateSettingSync: mock((key: string) => {
+vi.mock('@src/services/settings-service', () => ({
+	getPrivateSettingSync: vi.fn((key: string) => {
 		if (key === 'MULTI_TENANT') return (globalThis as any).__mockMultiTenant ?? false;
 		if (key.startsWith('CACHE_TTL_')) return 300;
 		return null;
@@ -26,7 +18,7 @@ describe('CacheService (Whitebox)', () => {
 	let service: any;
 
 	beforeEach(async () => {
-		service = cacheService;
+		service = CacheService.getInstance();
 		await service.initialize(true); // Force re-init to ensure clean state
 		(globalThis as any).__mockMultiTenant = false;
 		// Clear memoization cache
@@ -53,7 +45,7 @@ describe('CacheService (Whitebox)', () => {
 		});
 
 		it('should memoize generated keys', () => {
-			const spy = spyOn(service.keyCache, 'set');
+			const spy = vi.spyOn(service.keyCache, 'set');
 			service.generateKey('cached-key');
 			service.generateKey('cached-key'); // Second call should be from cache
 
@@ -82,7 +74,7 @@ describe('CacheService (Whitebox)', () => {
 
 	describe('clearByTags (Debouncing)', () => {
 		it('should debounce multiple calls to clearByTags with the same tags', async () => {
-			const storeSpy = spyOn(service.store, 'clearByTags');
+			const storeSpy = vi.spyOn(service.store, 'clearByTags');
 
 			// Call multiple times rapidly
 			service.clearByTags(['shared-tag']);
@@ -98,7 +90,7 @@ describe('CacheService (Whitebox)', () => {
 		});
 
 		it('should execute immediately for different tag sets', async () => {
-			const storeSpy = spyOn(service.store, 'clearByTags');
+			const storeSpy = vi.spyOn(service.store, 'clearByTags');
 
 			service.clearByTags(['tag-a']);
 			service.clearByTags(['tag-b']);

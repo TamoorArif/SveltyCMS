@@ -9,7 +9,6 @@
  * - Script tag sanitization
  */
 
-import { describe, expect, it } from 'bun:test';
 import RichTextWidget from '@widgets/core/rich-text';
 import { safeParse } from 'valibot';
 

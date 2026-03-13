@@ -15,7 +15,6 @@
  * - Error handling
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { User } from '@src/databases/auth/types';
 import { handleApiRequests } from '@src/hooks/handle-api-requests';
 import type { RequestEvent } from '@sveltejs/kit';

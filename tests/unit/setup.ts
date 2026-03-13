@@ -1,12 +1,48 @@
-import { mock } from 'bun:test';
+// 0. GLOBALS HELPER
+const setGlobal = (name: string, value: any) => {
+	Object.defineProperty(globalThis, name, {
+		value,
+		writable: true,
+		configurable: true,
+		enumerable: true
+	});
+};
+
+// detect environment
+const isBun = typeof Bun !== 'undefined';
 
 /**
- * MASTER UNIT TEST SETUP - VERSION 7.2 (STABILIZED RUNES)
- * Optimized for Svelte 5 runes in unit tests without a compiler.
- * Fixed primitive state handling to avoid Proxy-to-boolean comparison failures.
+ * MASTER UNIT TEST SETUP - VERSION 8.1 (AGNOSTIC RUNES)
+ * Supports both Bun Test and Vitest.
  */
 
-// 1. MODULE MOCKING (Hoisted by Bun)
+// 1. MODULE MOCKING (Hoisted by Bun and Vitest)
+let mock: any;
+let vitest: any;
+
+if (isBun) {
+	// Bun environment
+	const bunTest = await import(/* @vite-ignore */ 'bun' + ':test');
+	mock = bunTest.mock;
+	if (!globalThis.mock) setGlobal('mock', bunTest.mock);
+	if (!globalThis.spyOn) setGlobal('spyOn', bunTest.spyOn);
+	if (!globalThis.vi) setGlobal('vi', { fn: bunTest.mock, spyOn: bunTest.spyOn });
+	if (!globalThis.describe) setGlobal('describe', bunTest.describe);
+	if (!globalThis.test) setGlobal('test', bunTest.test);
+	if (!globalThis.it) setGlobal('it', bunTest.it);
+	if (!globalThis.expect) setGlobal('expect', bunTest.expect);
+	if (!globalThis.beforeEach) setGlobal('beforeEach', bunTest.beforeEach);
+	if (!globalThis.afterEach) setGlobal('afterEach', bunTest.afterEach);
+	if (!globalThis.beforeAll) setGlobal('beforeAll', bunTest.beforeAll);
+	if (!globalThis.afterAll) setGlobal('afterAll', bunTest.afterAll);
+} else {
+	// Node/Vitest environment - Vitest handles globals via config
+	const vitestModule = await import('vitest');
+	vitest = vitestModule;
+	mock = vitestModule.vi.fn;
+	if (!globalThis.mock) setGlobal('mock', vitestModule.vi.fn);
+}
+
 const mockLogger = {
 	fatal: mock(() => {}),
 	error: mock(() => {}),
@@ -18,22 +54,31 @@ const mockLogger = {
 	dump: mock(() => {})
 };
 
-mock.module('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
-mock.module('@utils/logger.server', () => ({ logger: mockLogger, default: mockLogger }));
+// Helper for cross-runner module mocking
+const moduleMock = (path: string, factory: () => any) => {
+	if (isBun) {
+		mock.module(path, factory);
+	} else if (vitest?.vi) {
+		vitest.vi.mock(path, factory);
+	}
+};
 
-mock.module('$app/environment', () => ({
+moduleMock('@utils/logger', () => ({ logger: mockLogger, default: mockLogger }));
+moduleMock('@utils/logger.server', () => ({ logger: mockLogger, default: mockLogger }));
+
+moduleMock('$app/environment', () => ({
 	browser: true,
 	dev: true,
 	building: false,
 	version: '1.0.0'
 }));
 
-mock.module('svelte/reactivity', () => ({
+moduleMock('svelte/reactivity', () => ({
 	SvelteMap: Map,
 	SvelteSet: Set
 }));
 
-mock.module('$app/navigation', () => ({
+moduleMock('$app/navigation', () => ({
 	goto: mock(() => Promise.resolve()),
 	invalidate: mock(() => Promise.resolve()),
 	invalidateAll: mock(() => Promise.resolve()),
@@ -41,7 +86,7 @@ mock.module('$app/navigation', () => ({
 	beforeNavigate: mock(() => {})
 }));
 
-mock.module('$app/forms', () => ({
+moduleMock('$app/forms', () => ({
 	applyAction: mock(() => Promise.resolve()),
 	enhance: mock(() => {}),
 	deserialize: mock((v: any) => {
@@ -53,15 +98,15 @@ mock.module('$app/forms', () => ({
 	})
 }));
 
-mock.module('$app/paths', () => ({ base: '', assets: '' }));
+moduleMock('$app/paths', () => ({ base: '', assets: '' }));
 
-mock.module('$app/state', () => ({
+moduleMock('$app/state', () => ({
 	page: {
 		url: new URL('http://localhost')
 	}
 }));
 
-mock.module('sveltekit-rate-limiter/server', () => ({
+moduleMock('sveltekit-rate-limiter/server', () => ({
 	RateLimiter: class {
 		check = mock(() => Promise.resolve({ success: true }));
 		isLimited = mock(() => Promise.resolve(false));
@@ -71,15 +116,6 @@ mock.module('sveltekit-rate-limiter/server', () => ({
 }));
 
 // 2. ENVIRONMENT GLOBALS
-const setGlobal = (name: string, value: any) => {
-	Object.defineProperty(globalThis, name, {
-		value,
-		writable: true,
-		configurable: true,
-		enumerable: true
-	});
-};
-
 setGlobal('browser', true);
 setGlobal('dev', true);
 setGlobal('building', false);
@@ -209,9 +245,9 @@ const svelteCommon = {
 	createContext: () => [() => ({}), (v: any) => v]
 };
 
-mock.module('svelte', () => svelteCommon);
-mock.module('svelte/server', () => svelteCommon);
-mock.module('svelte/internal', () => ({
+moduleMock('svelte', () => svelteCommon);
+moduleMock('svelte/server', () => svelteCommon);
+moduleMock('svelte/internal', () => ({
 	noop: () => {},
 	safe_not_equal: () => true,
 	subscribe: () => () => {},
@@ -362,7 +398,7 @@ const wrapError = (error: any, message = 'An unexpected error occurred', status 
 	return new AppError(finalMessage, status, 'INTERNAL_ERROR', error);
 };
 
-mock.module('@src/utils/error-handling', () => ({
+moduleMock('@src/utils/error-handling', () => ({
 	AppError,
 	isAppError,
 	isHttpError,
@@ -406,7 +442,7 @@ const metricsMock = {
 	destroy: mock(() => {})
 };
 setGlobal('metricsService', metricsMock);
-mock.module('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
+moduleMock('@src/services/metrics-service', () => ({ metricsService: metricsMock, default: metricsMock, cleanupMetrics: mock(() => {}) }));
 
 const cacheMock = {
 	get: mock(async () => null),
@@ -420,7 +456,7 @@ const cacheMock = {
 	getInstance: () => cacheMock
 };
 setGlobal('cacheService', cacheMock);
-mock.module('@src/databases/cache-service', () => ({
+moduleMock('@src/databases/cache-service', () => ({
 	cacheService: cacheMock,
 	default: cacheMock,
 	CacheCategory: { SESSION: 'session', USER: 'user', API: 'api' },
@@ -455,7 +491,7 @@ const settingsMock = {
 	getAllSettings: mock(async () => ({ public: {}, private: {} })),
 	getUntypedSetting: mock(async () => undefined)
 };
-mock.module('@src/services/settings-service', () => settingsMock);
+moduleMock('@src/services/settings-service', () => settingsMock);
 
 const mockAuditLog = { log: mock(() => Promise.resolve()), getLogs: mock(() => Promise.resolve([])) };
 const mockDbAdapter = {
@@ -493,11 +529,11 @@ const dbMock = {
 	initializeOnRequest: mock(() => Promise.resolve()),
 	dbInitPromise: Promise.resolve()
 };
-mock.module('@src/databases/db', () => dbMock);
-mock.module('@databases/db', () => dbMock);
+moduleMock('@src/databases/db', () => dbMock);
+moduleMock('@databases/db', () => dbMock);
 setGlobal('auth', dbMock.auth);
 
-mock.module('@src/services/audit/audit-log-service', () => ({ auditLogService: mockAuditLog, default: mockAuditLog }));
+moduleMock('@src/services/audit/audit-log-service', () => ({ auditLogService: mockAuditLog, default: mockAuditLog }));
 
 const mockEventBus = {
 	on: mock(() => {}),
@@ -507,7 +543,7 @@ const mockEventBus = {
 	removeAllListeners: mock(() => {})
 };
 setGlobal('mockEventBus', mockEventBus);
-mock.module('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
+moduleMock('@src/services/automation/event-bus', () => ({ eventBus: mockEventBus, default: mockEventBus }));
 
 let isSetupCompleteValue = true;
 const mockSetupCheck = {
@@ -518,17 +554,17 @@ const mockSetupCheck = {
 		isSetupCompleteValue = val;
 	})
 };
-mock.module('@utils/setup-check', () => mockSetupCheck);
+moduleMock('@utils/setup-check', () => mockSetupCheck);
 setGlobal('mockSetupCheck', mockSetupCheck);
 
-mock.module('@src/widgets/scanner', () => ({
+moduleMock('@src/widgets/scanner', () => ({
 	coreModules: {},
 	customModules: {},
 	allWidgetModules: {},
 	getWidgetNameFromPath: (path: string) => path.split('/').at(-2) || null
 }));
 
-mock.module('@boxyhq/saml-jackson', () => ({
+moduleMock('@boxyhq/saml-jackson', () => ({
 	default: mock(() =>
 		Promise.resolve({
 			oauthController: {
@@ -541,5 +577,7 @@ mock.module('@boxyhq/saml-jackson', () => ({
 	)
 }));
 
-console.log('✅ Master Test Setup Loaded - Version 7.2 (STABILIZED RUNES)');
+console.log('✅ Master Test Setup Loaded - Version 8.1 (AGNOSTIC RUNES)');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
+
+export {};

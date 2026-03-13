@@ -12,7 +12,6 @@
  * - Redirect to setup when no roles
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { Role, User } from '@src/databases/auth/types';
 import { handleAuthorization, invalidateUserCountCache } from '@src/hooks/handle-authorization';
 import type { RequestEvent } from '@sveltejs/kit';

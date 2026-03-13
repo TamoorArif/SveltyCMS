@@ -8,7 +8,6 @@
  * - Import path transformation
  */
 
-import { describe, expect, it } from 'bun:test';
 import { addJsExtensionTransformer, schemaTenantIdTransformer, schemaUuidTransformer } from '@src/utils/compilation/transformers';
 import * as ts from 'typescript';
 

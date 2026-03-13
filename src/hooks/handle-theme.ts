@@ -13,10 +13,11 @@ import { getSystemState } from '@src/stores/system/state';
 import type { Handle } from '@sveltejs/kit';
 import { logger } from '@utils/logger.server';
 
-// Get the singleton ThemeManager instance
-const themeManager = ThemeManager.getInstance();
 
 export const handleTheme: Handle = async ({ event, resolve }) => {
+	// Get the singleton ThemeManager instance inside the handle function to pick up mocks/runtime state correctly
+	const themeManager = ThemeManager.getInstance();
+
 	// 1. Read the theme preference cookie
 	const themePreference = event.cookies.get('theme') as 'system' | 'light' | 'dark' | undefined;
 

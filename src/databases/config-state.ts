@@ -42,7 +42,7 @@ export async function loadPrivateConfig(forceReload = false) {
 					logger.debug('TEST_MODE: config/private.test.ts not found');
 					return null;
 				}
-				const configURL = pathToFileURL(configPath).href;
+				const configURL = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
 				module = await import(/* @vite-ignore */ configURL);
 			} else {
 				// STRICT SAFETY: Never allow loading live config if NODE_ENV is 'test'
@@ -58,7 +58,7 @@ export async function loadPrivateConfig(forceReload = false) {
 					const { pathToFileURL } = await import('node:url');
 					const configPath = pathUtil.resolve(process.cwd(), 'config', 'private.ts');
 					// We must cast it to any because the dynamic import path is unknown at compile time
-					const configURL = pathToFileURL(configPath).href;
+					const configURL = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
 					module = await import(/* @vite-ignore */ configURL);
 				} catch (err: unknown) {
 					logger.debug('Could not load config/private: ' + (err instanceof Error ? err.message : String(err)));

@@ -3,7 +3,6 @@
  * @description Unit tests for the Database Resilience (Retry/Circuit Breaker) logic
  */
 
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { getDatabaseResilience, resetDatabaseResilience } from '@src/databases/database-resilience';
 
 describe('DatabaseResilience', () => {

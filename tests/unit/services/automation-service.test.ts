@@ -8,7 +8,6 @@
  * - Execution Logic
  */
 
-import { beforeEach, describe, expect, it } from 'bun:test';
 import { automationService } from '@src/services/automation/automation-service';
 
 // Access global mocks from setup.ts
