@@ -45,6 +45,7 @@ declare global {
 			degradedServices?: string[]; // List of unhealthy services (populated by handleSystemState in DEGRADED state)
 			getSession: () => Promise<import('@auth/core/types').Session | null>;
 			hasManageUsersPermission: boolean; // True when user is admin OR has "manage user" permission
+			hasAdminPermission: boolean; // True when user is admin
 			isAdmin: boolean; // True when user's role has admin privileges
 			// Authorization flags
 			isFirstUser: boolean; // True when no users exist in database (setup flow)

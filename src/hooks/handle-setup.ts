@@ -101,8 +101,9 @@ export const handleSetup: Handle = async ({ event, resolve }) => {
 		// --- Step 3: Handle Complete Setup ---
 		// If setup is complete, BLOCK ALL access to /setup routes (including localized ones).
 		// This prevents unauthenticated setup actions from being called after initialization.
+		// EXCEPTION: Allow in TEST_MODE for automated testing of the wizard logic.
 		const isSetupRoute = pathname.startsWith('/setup') || /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/setup/.test(pathname);
-		if (isSetupRoute) {
+		if (isSetupRoute && process.env.TEST_MODE !== 'true') {
 			// Special Case: Allow the finalization action to proceed
 			// This handles the transition where config exists but setup is just finishing.
 			if (event.request.method === 'POST' && event.url.search.includes('/completeSetup')) {

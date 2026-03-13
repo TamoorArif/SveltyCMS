@@ -24,10 +24,6 @@ describe('SAML Authentication Service', () => {
 	afterEach(() => {
 		(globalThis as any).privateEnv = originalEnv;
 	});
-	beforeEach(() => {
-		// Reset the cached instance so each test gets a fresh Jackson init
-		// by clearing the module-level cache in saml-auth.ts
-	});
 
 	it('should initialize Jackson with correct database connection string derived from config', async () => {
 		// The preload setup.ts sets privateEnv.DB_TYPE = 'mongodb' by default.

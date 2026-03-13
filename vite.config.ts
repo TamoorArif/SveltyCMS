@@ -70,8 +70,6 @@ function testConfigAliasPlugin(): Plugin {
 	};
 }
 
-
-
 /**
  * Plugin that provides a fallback for @config/private and @config/private.test when the file doesn't exist
  * This allows builds to succeed in fresh clones without committing sensitive credentials
@@ -81,7 +79,7 @@ function privateConfigFallbackPlugin(): Plugin {
 	const virtualTestModuleId = '@config/private.test';
 	const resolvedVirtualModuleId = `\0${virtualModuleId}`;
 	const resolvedVirtualTestModuleId = `\0${virtualTestModuleId}`;
-	
+
 	// Cache resolution results to avoid repeated filesystem checks (Rolldown optimization)
 	const resolutionCache = new Map<string, string | null>();
 
@@ -91,7 +89,10 @@ function privateConfigFallbackPlugin(): Plugin {
 		resolveId(id) {
 			if (id === virtualModuleId) return resolvedVirtualModuleId;
 			if (id === virtualTestModuleId) return resolvedVirtualTestModuleId;
-			
+
+			// Optimization: Quick bail out for internal Vite modules and third party dependencies
+			if (id.startsWith('\0') || id.includes('node_modules')) return null;
+
 			// Quick exit for non-config modules
 			if (!id.includes('config/private')) return null;
 
@@ -112,7 +113,7 @@ function privateConfigFallbackPlugin(): Plugin {
 				const testPath = path.resolve(cwd, 'config/private.test.ts');
 				result = existsSync(testPath) ? null : resolvedVirtualTestModuleId;
 			}
-			
+
 			resolutionCache.set(id, result);
 			return result;
 		},

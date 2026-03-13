@@ -13,7 +13,6 @@ import { getSystemState } from '@src/stores/system/state';
 import type { Handle } from '@sveltejs/kit';
 import { logger } from '@utils/logger.server';
 
-
 export const handleTheme: Handle = async ({ event, resolve }) => {
 	// Get the singleton ThemeManager instance inside the handle function to pick up mocks/runtime state correctly
 	const themeManager = ThemeManager.getInstance();

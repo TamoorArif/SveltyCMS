@@ -14,7 +14,6 @@
  * @coverage ~60 tests
  */
 
-
 // Mock json-render catalog must be declared BEFORE importing widget-factory
 vi.mock('@src/services/json-render/catalog', () => ({
 	registerForJsonRender: vi.fn()

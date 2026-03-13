@@ -10,7 +10,6 @@
  * - Error handling
  */
 
-
 import {
 	getSystemState,
 	isServiceHealthy,

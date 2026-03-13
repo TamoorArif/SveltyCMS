@@ -1,3 +1,22 @@
+/**
+ * @file tests/unit/setup.ts
+ * @description
+ * SveltyCMS Master Unit Test Setup.
+ *
+ * This module orchestrates the testing environment for both Bun Test and Vitest,
+ * providing:
+ * - Cross-runner global shims (describe, test, expect, etc.)
+ * - Extensive module mocking (SvelteKit, Svelte 5 runes, database adapters, services)
+ * - Browser/DOM environment simulation (localStorage, window, document)
+ * - Application-level error and utility mocks
+ *
+ * ### Features:
+ * - dual Bun/Node environment detection
+ * - Svelte 5 rune emulation ($state, $derived, $effect)
+ * - centralized service mocking (Metrics, Cache, Settings, AuditLog)
+ * - database agnostic adapter mocks
+ */
+
 // 0. GLOBALS HELPER
 const setGlobal = (name: string, value: any) => {
 	Object.defineProperty(globalThis, name, {
@@ -526,7 +545,8 @@ const dbMock = {
 	}),
 	loadPrivateConfig: mock(() => Promise.resolve((globalThis as any).privateEnv || (globalThis as any).__privateEnv || { DB_TYPE: 'mongodb' })),
 	clearPrivateConfigCache: mock(() => {}),
-	initializeOnRequest: mock(() => Promise.resolve()),
+	initializeWithConfig: mock(() => Promise.resolve({ status: 'success' })),
+	initConnection: mock(() => Promise.resolve()),
 	dbInitPromise: Promise.resolve()
 };
 moduleMock('@src/databases/db', () => dbMock);

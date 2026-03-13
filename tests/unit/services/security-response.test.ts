@@ -10,7 +10,6 @@
  * - Webhook alerting tests
  */
 
-
 // We test the utility functions by importing the service directly
 // The service is a singleton, so we test via its public API
 

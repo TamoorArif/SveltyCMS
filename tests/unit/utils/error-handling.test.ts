@@ -10,7 +10,6 @@
  * - Integration
  */
 
-
 let APP_ERROR: any;
 let getErrorMessage: any;
 let isAppError: any;

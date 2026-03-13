@@ -7,7 +7,7 @@ import { AIService } from '@src/services/ai-service';
 
 // Mock settings-service
 vi.mock('@src/services/settings-service', () => ({
-	getPrivateSetting: vi.fn((key) => {
+	getPrivateSetting: vi.fn((key: string) => {
 		if (key === 'USE_REMOTE_AI_KNOWLEDGE') return Promise.resolve(true);
 		if (key === 'USE_AI_TAGGING') return Promise.resolve(true);
 		if (key === 'AI_MODEL_VISION') return Promise.resolve('llava:latest');
@@ -19,24 +19,24 @@ vi.mock('@src/services/settings-service', () => ({
 
 // Mock ollama
 vi.mock('ollama', () => {
-    const mockFn = vi.fn((params: any) => {
-        if (params?.format === 'json') {
-            return Promise.resolve({ message: { content: '{"root":"mock", "elements":{}}' } });
-        }
-        return Promise.resolve({ message: { content: 'AI response' } });
-    });
-    const mockGenerate = vi.fn(() => Promise.resolve({ response: 'tag1, tag2, tag3' }));
+	const mockFn = vi.fn((params: any) => {
+		if (params?.format === 'json') {
+			return Promise.resolve({ message: { content: '{"root":"mock", "elements":{}}' } });
+		}
+		return Promise.resolve({ message: { content: 'AI response' } });
+	});
+	const mockGenerate = vi.fn(() => Promise.resolve({ response: 'tag1, tag2, tag3' }));
 
-    return {
-        default: {
-            generate: mockGenerate,
-            chat: mockFn
-        },
-        Ollama: class {
-            generate = mockGenerate;
-            chat = mockFn;
-        }
-    };
+	return {
+		default: {
+			generate: mockGenerate,
+			chat: mockFn
+		},
+		Ollama: class {
+			generate = mockGenerate;
+			chat = mockFn;
+		}
+	};
 });
 
 // Mock fetch globally
@@ -44,19 +44,19 @@ const originalFetch = global.fetch;
 
 describe('AIService', () => {
 	let aiService: AIService;
-    let mockFetch: any;
+	let mockFetch: any;
 
 	beforeAll(() => {
-        mockFetch = vi.fn(() =>
-            Promise.resolve({
-                ok: true,
-                headers: new Headers(),
-                json: () =>
-                    Promise.resolve({
-                        results: [{ source: 'docs', text: 'relevant context' }]
-                    })
-            })
-        );
+		mockFetch = vi.fn(() =>
+			Promise.resolve({
+				ok: true,
+				headers: new Headers(),
+				json: () =>
+					Promise.resolve({
+						results: [{ source: 'docs', text: 'relevant context' }]
+					})
+			})
+		);
 		global.fetch = mockFetch;
 	});
 

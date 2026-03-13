@@ -27,7 +27,6 @@ const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'u
 // In Vitest, we can check for VITEST global or process.env.VITEST
 const isTest = typeof process !== 'undefined' && (process.env.VITEST === 'true' || !!(globalThis as any).vi);
 
-
 // Default constants
 export const SESSION_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 export const USER_PERM_CACHE_TTL_MS = 60 * 1000;

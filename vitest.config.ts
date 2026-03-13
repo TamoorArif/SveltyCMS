@@ -20,13 +20,13 @@ export default defineConfig({
 			'@stores': path.resolve(__dirname, './src/stores'),
 			'@widgets': path.resolve(__dirname, './src/widgets'),
 			'@root': path.resolve(__dirname, './'),
-			'$paraglide': path.resolve(__dirname, './src/paraglide'),
+			$paraglide: path.resolve(__dirname, './src/paraglide'),
 			'$app/environment': path.resolve(__dirname, './tests/unit/mocks/$app/environment.ts'),
 			'$app/navigation': path.resolve(__dirname, './tests/unit/mocks/$app/navigation.ts'),
 			'$app/state': path.resolve(__dirname, './tests/unit/mocks/$app/state.ts'),
 			'$app/paths': path.resolve(__dirname, './tests/unit/mocks/$app/paths.ts'),
 			'$app/forms': path.resolve(__dirname, './tests/unit/mocks/$app/forms.ts'),
-			'sveltekit-rate-limiter/server': path.resolve(__dirname, 'node_modules/sveltekit-rate-limiter/dist/server/index.js'),
+			'sveltekit-rate-limiter/server': path.resolve(__dirname, 'node_modules/sveltekit-rate-limiter/dist/server/index.js')
 		}
 	},
 	test: {
