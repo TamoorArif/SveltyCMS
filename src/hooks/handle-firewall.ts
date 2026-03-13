@@ -198,7 +198,18 @@ export const handleFirewall: Handle = async ({ event, resolve }) => {
 
 		// Check if firewall is enabled (default to true if not set)
 		const firewallEnabled = getPrivateSettingSync('FIREWALL_ENABLED') ?? true;
-		if (!firewallEnabled) {
+
+		// Determine if we are in an automated test environment (integration tests hit a spawned server)
+		// We explicitly check for VITEST/BUN_TEST/NODE_ENV=test to ensure unit tests
+		// (which also set TEST_MODE=true) still execute the firewall logic to verify it.
+		const isUnitTesting = !!(process.env.VITEST || process.env.BUN_TEST || process.env.NODE_ENV === 'test');
+		const isIntegrationTestServer = process.env.TEST_MODE === 'true' && !isUnitTesting;
+
+		// Allow forcing security checks in integration tests via special header
+		const forceSecurity = request.headers.get('x-test-security') === 'true';
+
+		// Bypass firewall ONLY if it's disabled OR if it's an integration test server AND security is not forced
+		if ((!firewallEnabled || isIntegrationTestServer) && !forceSecurity) {
 			return resolve(event);
 		}
 

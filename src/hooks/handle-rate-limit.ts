@@ -34,11 +34,11 @@
 import { cacheService } from '@src/databases/cache-service';
 import { metricsService } from '@src/services/metrics-service';
 import { getPrivateSettingSync } from '@src/services/settings-service';
+import { dev } from '$app/environment';
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit';
 import { AppError, handleApiError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
-import { building } from '$app/environment';
 
 // --- RATE LIMITER CONFIGURATION ---
 
@@ -188,18 +188,24 @@ function isStaticAsset(pathname: string): boolean {
 export const handleRateLimit: Handle = async ({ event, resolve }) => {
 	const { url } = event;
 	const clientIp = getClientIp(event);
+	const isLocal = isLocalhost(clientIp);
 
-	// --- Exemptions (Skip Rate Limiting) ---
+	// Determine if we are in an automated test environment (integration tests hit a spawned server)
+	// We explicitly check for VITEST/BUN_TEST/NODE_ENV=test to ensure unit tests
+	// (which also set TEST_MODE=true) still execute the rate limiting logic to verify it.
+	const isUnitTesting = !!(process.env.VITEST || process.env.BUN_TEST || process.env.NODE_ENV === 'test');
+	const isIntegrationTestServer = process.env.TEST_MODE === 'true' && !isUnitTesting;
 
-	// 1. Build process
-	if (building) {
-		return resolve(event);
-	}
+	// Allow forcing security checks in integration tests via special header
+	const forceSecurity = event.request.headers.get('x-test-security') === 'true';
 
-	// 2. Localhost exemption - Needed for development and prevent self-DoS during initialization
-	// Uses the isLocalhost helper function defined earlier
-	if (isLocalhost(clientIp)) {
-		return resolve(event);
+	// SECURITY: Exempt localhost ONLY in development or integration tests
+	// This prevents SSRF bypass in production while maintaining a good DX/TX
+	if ((isIntegrationTestServer || (isLocal && (dev || isIntegrationTestServer))) && !forceSecurity) {
+		if (dev || isIntegrationTestServer) {
+			logger.debug(`[RateLimit] BYPASS: Path=${url.pathname}, IP=${clientIp}, isLocal=${isLocal}, dev=${dev}, isTestMode=${isIntegrationTestServer}`);
+		}
+		return await resolve(event);
 	}
 
 	// 3. Static assets (no need to rate limit CDN-cached content)

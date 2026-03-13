@@ -53,7 +53,7 @@ export class PreferencesModule {
 					updatedAt: now
 				})
 				.onConflictDoUpdate({
-					target: schema.systemPreferences.key,
+					target: [schema.systemPreferences.key, schema.systemPreferences.tenantId],
 					set: { value, updatedAt: now }
 				});
 		}, 'SET_PREFERENCE_FAILED');

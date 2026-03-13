@@ -49,6 +49,7 @@ declare global {
 			isAdmin: boolean; // True when user's role has admin privileges
 			// Authorization flags
 			isFirstUser: boolean; // True when no users exist in database (setup flow)
+			language: string; // Current request language (from URL or cookie)
 			permissions: string[]; // Array of user permissions
 			// Data loaded by authorization hook
 			roles: Role[]; // Using imported Role type

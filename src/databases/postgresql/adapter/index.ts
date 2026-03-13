@@ -183,13 +183,16 @@ export class PostgreSQLAdapter extends AdapterCore implements IDBAdapter {
 
 	public async clearDatabase(): Promise<DatabaseResult<void>> {
 		return this.wrap(async () => {
-			if (!this.db) {
+			if (!this.db || !this.sql) {
 				throw new Error('Not connected');
 			}
 			// PostgreSQL cleanup: DROP SCHEMA public CASCADE and recreate it
 			await this.db.execute(sql`DROP SCHEMA IF EXISTS public CASCADE;`);
 			await this.db.execute(sql`CREATE SCHEMA public;`);
 			await this.db.execute(sql`GRANT ALL ON SCHEMA public TO public;`);
+
+			// CRITICAL: Re-run migrations to recreate the schema
+			await runMigrations(this.sql);
 		}, 'CLEAR_DATABASE_FAILED');
 	}
 

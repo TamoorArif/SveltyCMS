@@ -13,8 +13,13 @@
  */
 
 import type { Role, User } from '@src/databases/auth/types';
-import { handleAuthorization, invalidateUserCountCache } from '@src/hooks/handle-authorization';
+import { handleAuthorization, invalidateUserCountCache, invalidateRolesCache } from '@src/hooks/handle-authorization';
 import type { RequestEvent } from '@sveltejs/kit';
+
+/**
+ * HELPER: Access global mocks
+ */
+const getAuthMock = () => (globalThis as any).mockDbAdapter?.auth;
 
 const mockUser: User = {
 	_id: 'user123',
@@ -32,10 +37,15 @@ const mockAdminRole: Role = {
 };
 
 // Reset state before each test
-beforeEach(() => {
-	(globalThis as any).__mockUserCount = 1;
-	(globalThis as any).__mockRoles = [mockAdminRole];
-	invalidateUserCountCache();
+beforeEach(async () => {
+	const authMock = getAuthMock();
+	if (authMock) {
+		authMock.getUserCount.mockImplementation(() => Promise.resolve(1));
+		authMock.getAllRoles.mockImplementation(() => Promise.resolve([mockAdminRole]));
+	}
+	(globalThis as any).privateEnv = undefined; // Clear settings overrides
+	await invalidateUserCountCache();
+	await invalidateRolesCache();
 });
 
 function createMockEvent(pathname: string, user?: User, roles?: Role[]): RequestEvent {
@@ -48,7 +58,7 @@ function createMockEvent(pathname: string, user?: User, roles?: Role[]): Request
 			user: user || null,
 			roles: roles || [],
 			permissions: user?.permissions || [],
-			isFirstUser: false,
+			isFirstUser: undefined as any,
 			isAdmin: false,
 			hasManageUsersPermission: false,
 			allUsers: [],
@@ -181,6 +191,11 @@ describe('handleAuthorization Middleware', () => {
 
 	describe('User Count Caching', () => {
 		it('should cache user count', async () => {
+			const authMock = getAuthMock();
+			if (authMock) {
+				authMock.getUserCount.mockImplementation(() => Promise.resolve(10));
+			}
+			await invalidateUserCountCache();
 			const event = createMockEvent('/dashboard', mockUser);
 			await handleAuthorization({ event, resolve: mockResolve });
 
@@ -189,14 +204,28 @@ describe('handleAuthorization Middleware', () => {
 		});
 
 		it('should detect first user (count = 0)', async () => {
-			(globalThis as any).__mockUserCount = 0;
+			const authMock = getAuthMock();
+			if (authMock) {
+				authMock.getUserCount.mockImplementation(() => Promise.resolve(0));
+				authMock.getAllRoles.mockImplementation(() => Promise.resolve([]));
+			}
+			await invalidateUserCountCache();
+			await invalidateRolesCache();
+
 			const event = createMockEvent('/dashboard');
 			try {
 				await handleAuthorization({ event, resolve: mockResolve });
+				// If it doesn't throw, it's an error because we expect redirect to setup
+				throw new Error('Should have redirected to /setup');
 			} catch (err: any) {
 				// isFirstUser set when userCount === 0
 				expect(event.locals.isFirstUser).toBe(true);
-				expect(err).toBeDefined(); // expects redirect
+				expect(err).toBeDefined();
+				// Check that it's a redirect to /setup
+				if (err && typeof err === 'object' && 'status' in err) {
+					expect(err.status).toBe(302);
+					expect(err.location).toBe('/setup');
+				}
 			}
 		});
 	});
@@ -221,7 +250,10 @@ describe('handleAuthorization Middleware', () => {
 
 	describe('Redirect to Setup When No Roles', () => {
 		it('should redirect to /setup when no roles found', async () => {
-			(globalThis as any).__mockRoles = [];
+			const authMock = getAuthMock();
+			if (authMock) {
+				authMock.getAllRoles.mockImplementation(() => Promise.resolve([]));
+			}
 			const event = createMockEvent('/dashboard');
 
 			try {

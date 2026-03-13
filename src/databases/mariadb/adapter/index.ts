@@ -207,6 +207,10 @@ export class MariaDBAdapter extends AdapterCore implements IDBAdapter {
 				}
 				await this.pool.query('SET FOREIGN_KEY_CHECKS = 1');
 			}
+
+			// CRITICAL: Re-run migrations to recreate the schema
+			const { runMigrations } = await import('../migrations');
+			await runMigrations(this.pool);
 		}, 'CLEAR_DATABASE_FAILED');
 	}
 

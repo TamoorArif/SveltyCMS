@@ -26,7 +26,6 @@ import { SESSION_COOKIE_NAME } from '@src/databases/auth/constants';
 import type { User } from '@src/databases/auth/types';
 import { cacheService, SESSION_CACHE_TTL_MS } from '@src/databases/cache-service';
 import { auth, dbAdapter } from '@src/databases/db';
-import { seedDemoTenant } from '@src/routes/setup/seed';
 import { metricsService } from '@src/services/metrics-service';
 import { getSystemState } from '@src/stores/system/state';
 import type { Handle, RequestEvent } from '@sveltejs/kit';
@@ -453,6 +452,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
 
 						// --- Trigger Tenant Seeding Here ---
 						try {
+							const { seedDemoTenant } = await import('@src/routes/setup/seed');
 							await seedDemoTenant(dbAdapter, tenantId);
 							logger.info(`✅ New demo tenant ${tenantId} seeded successfully.`);
 						} catch (e) {

@@ -61,36 +61,38 @@ function isOAuthRoute(pathname: string): boolean {
 
 /** Get cached user count with fallback */
 async function getCachedUserCount(tenantId?: string | null, multiTenant?: boolean): Promise<number> {
+	let userCount: number;
 	const now = Date.now();
-	if (userCountCache && now - userCountCache.timestamp < USER_COUNT_CACHE_TTL_MS) {
-		return userCountCache.count;
+
+	// 1. Check in-memory cache (disabled in tests for isolation)
+	if (!process.env.BUN_TEST && userCountCache && now - userCountCache.timestamp < USER_COUNT_CACHE_TTL_MS) {
+		userCount = userCountCache.count;
+	} else {
+		// 2. Check distributed cache
+		try {
+			const cached = await cacheService.get<{ count: number; timestamp: number }>('userCount', tenantId);
+			if (cached && now - cached.timestamp < USER_COUNT_CACHE_TTL_MS) {
+				userCountCache = cached; // Update in-memory cache from distributed cache
+				userCount = cached.count;
+			} else {
+				// 3. Fetch from database if not in any cache or expired
+				if (!auth) {
+					return -1; // Database adapter not initialized
+				}
+				const filter = multiTenant && tenantId ? { tenantId } : {};
+				const bypassOpts = !tenantId ? { bypassTenantCheck: true } : undefined;
+				userCount = await auth.getUserCount(filter, bypassOpts);
+				const cacheData = { count: userCount, timestamp: now };
+				userCountCache = cacheData; // Update in-memory cache
+				await cacheService.set('userCount', cacheData, USER_COUNT_CACHE_TTL_S, tenantId); // Update distributed cache
+			}
+		} catch (err) {
+			logger.warn(`User count cache or query failed: ${err instanceof Error ? err.message : String(err)}`);
+			return -1; // Error fetching from cache or DB
+		}
 	}
 
-	try {
-		const cached = await cacheService.get<{ count: number; timestamp: number }>('userCount', tenantId);
-		if (cached && now - cached.timestamp < USER_COUNT_CACHE_TTL_MS) {
-			userCountCache = cached;
-			return cached.count;
-		}
-	} catch {
-		// ignore cache errors
-	}
-
-	try {
-		if (!auth) {
-			return -1;
-		}
-		const filter = multiTenant && tenantId ? { tenantId } : {};
-		const bypassOpts = !tenantId ? { bypassTenantCheck: true } : undefined;
-		const count = await auth.getUserCount(filter, bypassOpts);
-		const cacheData = { count, timestamp: now };
-		userCountCache = cacheData;
-		await cacheService.set('userCount', cacheData, USER_COUNT_CACHE_TTL_S, tenantId);
-		return count;
-	} catch (err) {
-		logger.warn(`User count query failed: ${err instanceof Error ? err.message : String(err)}`);
-		return -1;
-	}
+	return userCount;
 }
 
 /**
@@ -134,11 +136,11 @@ async function getCachedRoles(tenantId?: string | null): Promise<Role[]> {
 export const handleAuthorization: Handle = async ({ event, resolve }) => {
 	const { url, locals, request } = event;
 	const { user } = locals;
+	const pathname = url.pathname;
 
 	// Dynamic imports for settings to avoid circular dependencies in hooks
 	const { getPrivateSettingSync } = await import('@src/services/settings-service');
 
-	const pathname = url.pathname;
 	const isApi = pathname.startsWith('/api/');
 	const isPublic = isPublicRoute(pathname, request.method, process.env.TEST_MODE);
 
@@ -157,15 +159,21 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
 	if (isPublic) {
 		locals.isAdmin = false;
 		locals.hasManageUsersPermission = false;
-		locals.isFirstUser = false;
+		locals.isFirstUser = undefined as any;
 		return resolve(event);
 	}
 
 	// --- Check if first user (for setup flow) ---
 	const multiTenant = getPrivateSettingSync('MULTI_TENANT');
-	const userCount = await getCachedUserCount(locals.tenantId, !!multiTenant);
-	locals.isFirstUser = userCount === 0;
 
+	// 2. USER COUNT CHECK (First User detection)
+	if (process.env.BUN_TEST && pathname === '/dashboard') {
+		throw new Error(`[DEBUG] REACHED_USER_COUNT_CHECK: isFirstUser=${locals.isFirstUser}, type=${typeof locals.isFirstUser}`);
+	}
+	if (locals.isFirstUser === undefined) {
+		const userCount = await getCachedUserCount(locals.tenantId, !!multiTenant);
+		locals.isFirstUser = userCount === 0;
+	}
 	// --- Load cached roles (database-only) ---
 	const rolesData = await getCachedRoles(locals.tenantId);
 	locals.roles = rolesData;
@@ -250,15 +258,23 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
 
 // --- CACHE INVALIDATION UTILITIES ---
 
-export function invalidateUserCountCache(tenantId?: string | null): void {
+export async function invalidateUserCountCache(tenantId?: string | null): Promise<void> {
 	userCountCache = null;
-	cacheService.delete('userCount', tenantId).catch((err) => logger.error(`Failed to invalidate user count: ${err.message}`));
-	logger.debug('User count cache invalidated');
+	try {
+		await cacheService.delete('userCount', tenantId);
+		logger.debug('User count cache invalidated');
+	} catch (err: any) {
+		logger.error(`Failed to invalidate user count: ${err.message}`);
+	}
 }
 
-export function invalidateRolesCache(tenantId?: string | null): void {
+export async function invalidateRolesCache(tenantId?: string | null): Promise<void> {
 	const key = tenantId || 'global';
 	rolesCache.delete(key);
-	cacheService.delete(`roles:${key}`, tenantId).catch((err) => logger.error(`Failed to invalidate roles cache: ${err.message}`));
-	logger.debug(`Roles cache invalidated (tenant: ${tenantId || 'global'})`);
+	try {
+		await cacheService.delete(`roles:${key}`, tenantId);
+		logger.debug(`Roles cache invalidated (tenant: ${tenantId || 'global'})`);
+	} catch (err: any) {
+		logger.error(`Failed to invalidate roles cache: ${err.message}`);
+	}
 }

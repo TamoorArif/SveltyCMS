@@ -43,9 +43,30 @@ if (isBun) {
 	// Bun environment
 	const bunTest = await import(/* @vite-ignore */ 'bun' + ':test');
 	mock = bunTest.mock;
-	if (!globalThis.mock) setGlobal('mock', bunTest.mock);
-	if (!globalThis.spyOn) setGlobal('spyOn', bunTest.spyOn);
-	if (!globalThis.vi) setGlobal('vi', { fn: bunTest.mock, spyOn: bunTest.spyOn });
+	// Force set vi for cross-runner compatibility
+	const spies: any[] = [];
+	const viShim = {
+		fn: bunTest.mock,
+		spyOn: (obj: any, method: string) => {
+			const spy = bunTest.spyOn(obj, method);
+			spies.push(spy);
+			return spy;
+		},
+		mock: bunTest.mock.module,
+		unmock: (_path: string) => {},
+		clearAllMocks: () => {
+			for (const spy of spies) spy.mockClear();
+		},
+		restoreAllMocks: () => {
+			for (const spy of spies) spy.mockRestore();
+			spies.length = 0;
+		},
+		resetAllMocks: () => {
+			for (const spy of spies) spy.mockReset();
+		}
+	};
+	(globalThis as any).vi = viShim;
+	if (!(globalThis as any).mock) (globalThis as any).mock = bunTest.mock;
 	if (!globalThis.describe) setGlobal('describe', bunTest.describe);
 	if (!globalThis.test) setGlobal('test', bunTest.test);
 	if (!globalThis.it) setGlobal('it', bunTest.it);
@@ -518,7 +539,10 @@ const mockDbAdapter = {
 		getUserById: mock((id: string) => Promise.resolve({ success: true, data: { _id: id } })),
 		updateUserAttributes: mock(() => Promise.resolve({ success: true })),
 		getAllUsers: mock(() => Promise.resolve({ success: true, data: [] })),
-		getUserCount: mock(() => Promise.resolve((globalThis as any).__mockUserCount ?? 10)),
+		getUserCount: mock(() => {
+			const count = (globalThis as any).__mockUserCount ?? 10;
+			return Promise.resolve(count);
+		}),
 		getAllRoles: mock(() => Promise.resolve((globalThis as any).__mockRoles ?? [{ _id: 'admin', isAdmin: true, name: 'Admin' }])),
 		ensureAuth: mock(() => Promise.resolve())
 	},
@@ -597,7 +621,49 @@ moduleMock('@boxyhq/saml-jackson', () => ({
 	)
 }));
 
-console.log('✅ Master Test Setup Loaded - Version 8.1 (AGNOSTIC RUNES)');
+// --- GLOBAL STATE RESET ---
+// This ensures that tests don't pollute each other via globalThis or module-level shared state
+if (typeof (globalThis as any).beforeEach !== 'undefined') {
+	(globalThis as any).beforeEach(async () => {
+		// Reset environment overrides
+		(globalThis as any).privateEnv = undefined;
+		(globalThis as any).__privateEnv = undefined;
+
+		// Reset common internal mock state
+		(globalThis as any).__mockUserCount = undefined;
+		(globalThis as any).__mockRoles = undefined;
+
+		// Reset metrics and cache mocks if available
+		if ((globalThis as any).metricsService && (globalThis as any).metricsService.reset) {
+			(globalThis as any).metricsService.reset();
+		}
+		if ((globalThis as any).cacheService) {
+			const cs = (globalThis as any).cacheService;
+			if (cs.get && cs.get.mockReset) {
+				cs.get.mockReset();
+				cs.get.mockImplementation(async () => null);
+			}
+			if (cs.set && cs.set.mockReset) cs.set.mockReset();
+			if (cs.delete && cs.delete.mockReset) cs.delete.mockReset();
+		}
+
+		// Invalidate authorization caches to prevent state leak in hooks
+		try {
+			const { invalidateUserCountCache, invalidateRolesCache } = await import('@src/hooks/handle-authorization');
+			await invalidateUserCountCache();
+			await invalidateRolesCache();
+		} catch (e) {
+			// Ignore if not available in current test context
+		}
+
+		// Restore all spies/mocks if vishim is active
+		if ((globalThis as any).vi && (globalThis as any).vi.restoreAllMocks) {
+			(globalThis as any).vi.restoreAllMocks();
+		}
+	});
+}
+
+console.log('✅ Master Test Setup Loaded - (AGNOSTIC RUNES + AUTO-RESET)');
 console.log('Diagnostic - browser:', (globalThis as any).browser);
 
 export {};

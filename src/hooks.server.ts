@@ -121,11 +121,12 @@ const middleware: Handle[] = [
 	// 2. System state validation (enterprise gatekeeper with metrics)
 	handleSystemState,
 
-	// 3. Rate limiting (early protection against abuse)
-	handleRateLimit,
-
-	// 4. Application firewall (detect threats Nginx/CDN can't catch)
+	// 3. Application firewall (detect threats Nginx/CDN can't catch)
+	// Priority: Firewall before rate limit to block known bots/threats early
 	handleFirewall,
+
+	// 4. Rate limiting (protection against abuse)
+	handleRateLimit,
 
 	// 5. Setup completion enforcement (installation gate with tracking)
 	handleSetup,
@@ -171,6 +172,13 @@ const middleware: Handle[] = [
 				if (url.pathname !== '/dashboard') {
 					logger.info(`[hooks.server] No collections found for tenant: ${locals.tenantId}. Redirecting to dashboard.`);
 					throw redirect(302, '/dashboard');
+				}
+			} else if (url.pathname === '/') {
+				// If collections exist and user is at root, redirect to first collection
+				const firstUrl = await contentManager.getFirstCollectionRedirectUrl(locals.language || 'en', locals.tenantId);
+				if (firstUrl) {
+					logger.info(`[hooks.server] Redirecting to first collection: ${firstUrl}`);
+					throw redirect(302, firstUrl);
 				}
 			}
 		}

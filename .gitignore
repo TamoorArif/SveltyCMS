@@ -28,6 +28,8 @@ media/*
 mediaFolder/
 .compiledCollections/*
 .compiledCollections
+bundle-report.json
+.bundle-history.json
 
 logs/*
 *.pid

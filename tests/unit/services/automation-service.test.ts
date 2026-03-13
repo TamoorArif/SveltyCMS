@@ -9,6 +9,8 @@
  */
 
 import { automationService } from '@src/services/automation/automation-service';
+import { TokenRegistry } from '@src/services/token/engine';
+import * as TokenEngine from '@src/services/token/engine';
 
 // Access global mocks from setup.ts
 const mockDbAdapter = (globalThis as any).mockDbAdapter;
@@ -16,13 +18,37 @@ const mockEventBus = (globalThis as any).mockEventBus;
 
 describe('AutomationService', () => {
 	beforeEach(() => {
-		mockDbAdapter.system.preferences.get.mockClear();
+		// Mock Token Engine to avoid heavy dependencies and timeouts
+		vi.spyOn(TokenRegistry, 'resolve').mockResolvedValue('');
+		vi.spyOn(TokenRegistry, 'getTokens').mockReturnValue({
+			collection: [],
+			entry: [],
+			user: [],
+			site: [],
+			system: [],
+			recentlyUsed: []
+		});
+		vi.spyOn(TokenRegistry, 'clearCache').mockImplementation(() => {});
+
+		// Use type assertion to silence "always defined" warning if necessary, or just call it
+		const replaceTokensSpy = TokenEngine.replaceTokens as any;
+		if (replaceTokensSpy) {
+			vi.spyOn(TokenEngine, 'replaceTokens').mockImplementation((t) => Promise.resolve(t));
+		}
+
+		// Use spyOn for common database mocks to allow restoreAllMocks to work correctly
+		vi.spyOn(mockDbAdapter.auth, 'getUserCount').mockResolvedValue(10);
+
 		mockDbAdapter.system.preferences.set.mockClear();
 		mockDbAdapter.crud.update.mockClear();
 		mockEventBus.on.mockClear();
 		automationService.invalidateCache();
 		// Reset initialized state for testing
 		(automationService as any).initialized = false;
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	describe('init', () => {

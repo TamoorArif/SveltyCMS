@@ -139,7 +139,12 @@ export async function seedRoles(dbAdapter: DatabaseAdapter, tenantId?: string | 
 			} catch (error) {
 				// Skip if role already exists (duplicate key error)
 				const errorMessage = error instanceof Error ? error.message : String(error);
-				if (errorMessage.includes('duplicate') || errorMessage.includes('E11000') || errorMessage.includes('ER_DUP_ENTRY')) {
+				if (
+					errorMessage.includes('duplicate') ||
+					errorMessage.includes('E11000') ||
+					errorMessage.includes('ER_DUP_ENTRY') ||
+					errorMessage.includes('UNIQUE constraint failed')
+				) {
 					logger.debug(`ℹ️  Role "${role.name}" already exists${tenantId ? ` for tenant ${tenantId}` : ''}, skipping`);
 				} else {
 					logger.error(`Failed to seed role "${role.name}"${tenantId ? ` for tenant ${tenantId}` : ''}:`, error);
@@ -494,8 +499,15 @@ export async function initSystemFast(
 
 		// Reload settings immediately
 		invalidateSettingsCache();
-		const { loadSettingsFromDB } = await import('@src/databases/db');
-		await loadSettingsFromDB();
+		const dbModule = await import('@src/databases/db');
+		const loadSettings = dbModule.loadSettingsFromDB;
+
+		if (typeof loadSettings === 'function') {
+			await loadSettings();
+		} else {
+			logger.warn('loadSettingsFromDB not found in db module (likely circular dependency during initialization)');
+			// Fallback: the next request will trigger a cache load anyway
+		}
 
 		// NEW: Pre-register collection models viaContentManager
 		// This creates the database tables/collections pre-emptively

@@ -5,7 +5,7 @@
     "": {
       "name": "sveltycms",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.1008.0",
+        "@aws-sdk/client-s3": "^3.1009.0",
         "@boxyhq/saml-jackson": "^1.52.2",
         "@floating-ui/dom": "^1.7.6",
         "@googlemaps/js-api-loader": "^2.0.2",
@@ -52,7 +52,7 @@
         "isomorphic-dompurify": "^3.3.0",
         "jsdom": "^28.1.0",
         "json-render-svelte": "^0.6.1",
-        "lru-cache": "^11.2.6",
+        "lru-cache": "^11.2.7",
         "mime-types": "^3.0.2",
         "node-os-utils": "^2.0.1",
         "nodemailer": "^8.0.2",
@@ -71,7 +71,7 @@
         "ws": "^8.19.0",
       },
       "devDependencies": {
-        "@biomejs/biome": "^2.4.6",
+        "@biomejs/biome": "^2.4.7",
         "@iconify/svelte": "^5.2.1",
         "@playwright/test": "^1.58.2",
         "@semantic-release/changelog": "^6.0.3",
@@ -124,7 +124,7 @@
         "wait-on": "^9.0.4",
       },
       "optionalDependencies": {
-        "better-sqlite3": "^11.8.1",
+        "better-sqlite3": "^11.10.0",
         "mariadb": "^3.5.2",
         "mongoose": "^9.3.0",
         "mysql2": "^3.19.1",

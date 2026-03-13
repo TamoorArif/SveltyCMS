@@ -34,7 +34,9 @@ describe('Security Enhancements Verification', () => {
 		// HeadlessChrome is in ADVANCED_BOT_PATTERNS
 		const res = await fetch(`${BASE_URL}/`, {
 			headers: {
-				'User-Agent': 'HeadlessChrome'
+				'User-Agent': 'HeadlessChrome',
+				// Support for bypassing test-mode exemption in hooks
+				'X-Test-Security': 'true'
 			}
 		});
 		expect(res.status).toBe(403);
@@ -48,14 +50,16 @@ describe('Security Enhancements Verification', () => {
 
 		// authLimiter is 10 req/min per IP.
 		// We need to make > 10 requests.
-		// NOTE: No bypass header - rate limiting should work for all IPs
 		let blocked = false;
 		for (let i = 0; i < 15; i++) {
 			const res = await fetch(`${BASE_URL}/api/auth/login`, {
 				method: 'POST',
-				body: JSON.stringify({ email: 'test@example.com', password: 'wrong' }),
+				body: JSON.stringify({ email: `test-${i}@example.com`, password: 'wrong' }),
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					'X-Test-Security': 'true',
+					Origin: BASE_URL,
+					Referer: `${BASE_URL}/`
 				}
 			});
 			if (res.status === 429) {
@@ -64,7 +68,7 @@ describe('Security Enhancements Verification', () => {
 			}
 		}
 		expect(blocked).toBe(true);
-	});
+	}, 20000); // Higher timeout for many requests
 
 	it('should have stricter CSP headers in production', async () => {
 		if (!serverAvailable) {

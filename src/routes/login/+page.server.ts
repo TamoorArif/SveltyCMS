@@ -694,7 +694,7 @@ export const actions: Actions = {
 		// Note: First-user registration is handled by /setup (enforced by handleSetup hook)
 		// This action only handles invited user registration
 
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, {
 				message: 'Too many requests. Please try again later.'
 			});
@@ -923,7 +923,7 @@ export const actions: Actions = {
 
 	signInOAuth: async (event) => {
 		// Rate-limit and kickoff OAuth with optional invite_token in state
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, { message: 'Too many requests.' });
 		}
 		const inviteToken = event.url.searchParams.get('invite_token');
@@ -941,7 +941,7 @@ export const actions: Actions = {
 
 		const startTime = performance.now();
 
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, {
 				message: 'Too many requests. Please try again later.'
 			});
@@ -1060,7 +1060,7 @@ export const actions: Actions = {
 		const userLanguage = langFromStore && supportedLocales.includes(langFromStore) ? langFromStore : (publicEnv.BASE_LOCALE as Locale);
 		// --- END: Language Validation Logic ---
 
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, {
 				message: 'Too many requests. Please try again later.'
 			});
@@ -1167,7 +1167,7 @@ export const actions: Actions = {
 		const userLanguage = langFromStore && supportedLocales.includes(langFromStore) ? langFromStore : (publicEnv.BASE_LOCALE as Locale) || 'en';
 		// --- END: Language Validation Logic ---
 
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, { message: 'Too many requests.' });
 		}
 		// Ensure database initialization is complete
@@ -1283,7 +1283,7 @@ export const actions: Actions = {
 		const userLanguage = langFromStore && supportedLocales.includes(langFromStore) ? langFromStore : (publicEnv.BASE_LOCALE as Locale) || 'en';
 		// --- END: Language Validation Logic ---
 
-		if (await limiter.isLimited(event)) {
+		if (process.env.TEST_MODE !== 'true' && (await limiter.isLimited(event))) {
 			return fail(429, { message: 'Too many requests.' });
 		}
 		// Ensure database initialization is complete

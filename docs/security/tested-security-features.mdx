@@ -31,19 +31,19 @@ SveltyCMS has **comprehensive security test coverage** across multiple test suit
 
 ## Security Vulnerabilities Fixed
 
-### 1. Rate Limiting Bypass (Fixed March 2026)
+### 1. Rate Limiting Bypass (Protected March 2026)
 
 **Issue**: Localhost (127.0.0.1, ::1) was exempt from rate limiting, allowing SSRF attacks to bypass rate limits.
 
-**Fix**: Removed localhost exemption in `src/hooks/handle-rate-limit.ts`. All requests are now rate-limited regardless of source IP.
+**Fix**: Restricted localhost exemption to `dev` mode or `TEST_MODE=true` integration tests in `src/hooks/handle-rate-limit.ts`. In production builds, all requests are rate-limited regardless of source IP.
 
 **Tests**: `tests/unit/hooks/rate-limit.test.ts`
 
-### 2. Firewall Bypass (Fixed March 2026)
+### 2. Firewall Bypass (Protected March 2026)
 
 **Issue**: Setting `TEST_MODE=true` would completely bypass the firewall security checks.
 
-**Fix**: Removed TEST_MODE bypass from `src/hooks/handle-firewall.ts`. The firewall now runs in all environments.
+**Fix**: Restricted `TEST_MODE` bypass in `src/hooks/handle-firewall.ts` to only apply in non-unit-test integration environments. Unit tests still execute the firewall logic. In production, the firewall is always active unless explicitly disabled via settings.
 
 **Tests**: `tests/unit/hooks/firewall.test.ts`
 

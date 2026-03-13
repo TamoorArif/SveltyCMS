@@ -8,7 +8,7 @@
  * - Session expiration handling
  */
 
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'vitest';
 
 // Mock database adapter for testing lockout logic
 // In production, these would test against real DB adapters

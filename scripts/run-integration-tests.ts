@@ -5,14 +5,18 @@
  * Uses /api/testing for state management. No internal imports allowed.
  */
 
-import { spawn } from 'node:child_process';
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { existsSync, readdirSync, statSync, unlinkSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, relative } from 'node:path';
 
-const rootDir = join(import.meta.dir, '..');
-const API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
+let API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
+const pkgManager = (globalThis as any).process?.env?.npm_execpath || 'bun';
 
-let previewProcess: ReturnType<typeof spawn> | null = null;
+let previewProcess: ChildProcess | null = null;
 
 async function cleanup(exitCode = 0) {
 	console.log('\n🧹 Cleaning up test environment...');
@@ -29,33 +33,30 @@ async function main() {
 	try {
 		console.log('🚀 Starting Black-Box Integration Suite...');
 
-		// 1. Build & Start Server (Handled by CI normally, but support local run)
-		const isAlreadyRunning = await checkServer();
-		if (isAlreadyRunning) {
-			console.log('✅ Server already running at', API_BASE_URL);
-		} else {
-			console.log('📦 Starting preview server with TEST_MODE=true...');
-			previewProcess = spawn('bun', ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
-				cwd: rootDir,
-				stdio: 'inherit',
-				shell: true,
-				env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
-			});
-			await waitForServer();
+		// 0. Clean up stale config
+		const privateTestPath = join(rootDir, 'config', 'private.test.ts');
+		if (existsSync(privateTestPath)) {
+			console.log('🧹 Removing stale private.test.ts...');
+			unlinkSync(privateTestPath);
 		}
+
+		// 1. Build & Start Server (Initial startup in setup mode)
+		console.log('📦 Starting preview server for initial setup...');
+		await startPreviewServer();
 
 		// 1.5. Run Fast System Setup (Direct API calls, no browser)
 		console.log('⚙️ Running Fast System Setup to configure system...');
+		const dbType = (globalThis as any).process?.env?.DB_TYPE || 'sqlite';
+		console.log(`📡 DB_TYPE: ${dbType}`);
+
 		const setupResult = await new Promise<number>((resolve) => {
-			const setupProc = spawn('bun', ['run', 'scripts/setup-system.ts'], {
+			const setupProc = spawn(pkgManager, ['run', 'scripts/setup-system.ts'], {
 				cwd: rootDir,
 				stdio: 'inherit',
 				shell: true,
 				env: {
 					...(globalThis as any).process?.env,
-					DB_TYPE: (globalThis as any).process?.env?.DB_TYPE || 'mongodb',
-					DB_HOST: (globalThis as any).process?.env?.DB_HOST || 'localhost',
-					DB_NAME: (globalThis as any).process?.env?.DB_NAME || 'sveltycms_test',
+					DB_TYPE: dbType,
 					TEST_MODE: 'true',
 					API_BASE_URL
 				}
@@ -72,22 +73,7 @@ async function main() {
 
 		// 1.6. RESTART SERVER to pick up new config/private.test.ts (CRITICAL for Black-Box)
 		console.log('🔄 Restarting preview server to apply new configuration...');
-		if (previewProcess) {
-			previewProcess.kill('SIGTERM');
-			// Wait for it to definitely release the port
-			await new Promise((r) => setTimeout(r, 5000));
-		}
-
-		console.log('📦 Re-starting preview server with NEW configuration...');
-		previewProcess = spawn('bun', ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
-			cwd: rootDir,
-			stdio: 'inherit',
-			shell: true,
-			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
-		});
-		await waitForServer();
-		// Additional safety sleep after health check passes
-		await new Promise((r) => setTimeout(r, 2000));
+		await startPreviewServer(); // restartPreviewServer logic integrated into startPreviewServer
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests
@@ -146,6 +132,59 @@ async function main() {
 	}
 }
 
+async function startPreviewServer() {
+	if (previewProcess) {
+		console.log('🛑 Killing existing preview process...');
+		previewProcess.kill('SIGTERM');
+		await new Promise((r) => setTimeout(r, 3000));
+	}
+
+	return new Promise<void>((resolve, reject) => {
+		console.log('📦 Spawning preview server...');
+		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
+			cwd: rootDir,
+			stdio: ['ignore', 'pipe', 'inherit'],
+			shell: true,
+			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
+		});
+
+		let resolved = false;
+		const timeout = setTimeout(() => {
+			if (!resolved) {
+				reject(new Error('Timeout waiting for preview server port detection'));
+			}
+		}, 60000);
+
+		previewProcess.stdout?.on('data', (data) => {
+			const output = data.toString();
+			process.stdout.write(output); // Forward to terminal
+
+			const urlMatch = output.match(/http:\/\/127\.0\.0\.1:(\d+)/);
+			if (urlMatch) {
+				const port = urlMatch[1];
+				API_BASE_URL = `http://127.0.0.1:${port}`;
+				console.log(`📡 Detected server running at: ${API_BASE_URL}`);
+				clearTimeout(timeout);
+				resolved = true;
+				// Wait for health check to pass
+				waitForServer().then(resolve).catch(reject);
+			}
+		});
+
+		previewProcess.on('error', (err) => {
+			console.error('❌ Failed to start preview process:', err);
+			reject(err);
+		});
+
+		previewProcess.on('close', (code) => {
+			if (!resolved) {
+				console.error(`❌ Preview process exited with code ${code}`);
+				reject(new Error(`Preview process exited with code ${code}`));
+			}
+		});
+	});
+}
+
 async function checkServer() {
 	try {
 		const res = await fetch(`${API_BASE_URL}/api/system/health`);
@@ -156,18 +195,14 @@ async function checkServer() {
 }
 
 async function waitForServer() {
-	console.log(`⏳ Waiting for server at ${API_BASE_URL}...`);
-	for (let i = 0; i < 60; i++) {
-		if (i % 10 === 0 && i > 0) {
-			console.log(`...still waiting (${i}s)`);
-		}
+	console.log(`⏳ Waiting for server health check at ${API_BASE_URL}...`);
+	for (let i = 0; i < 30; i++) {
 		if (await checkServer()) {
-			console.log('✅ Server is up and healthy!');
 			return;
 		}
 		await new Promise((r) => setTimeout(r, 1000));
 	}
-	throw new Error('Server timeout');
+	throw new Error('Server health check timeout');
 }
 
 async function resetAndSeed() {
@@ -176,7 +211,10 @@ async function resetAndSeed() {
 		const resetRes = await fetch(`${API_BASE_URL}/api/testing`, {
 			method: 'POST',
 			body: JSON.stringify({ action: 'reset' }),
-			headers: { 'Content-Type': 'application/json' }
+			headers: {
+				'Content-Type': 'application/json',
+				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
+			}
 		});
 		if (!resetRes.ok) {
 			console.error(`❌ Reset failed: ${resetRes.status} ${resetRes.statusText}`);
@@ -189,7 +227,10 @@ async function resetAndSeed() {
 		const seedRes = await fetch(`${API_BASE_URL}/api/testing`, {
 			method: 'POST',
 			body: JSON.stringify({ action: 'seed' }),
-			headers: { 'Content-Type': 'application/json' }
+			headers: {
+				'Content-Type': 'application/json',
+				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
+			}
 		});
 		if (!seedRes.ok) {
 			console.error(`❌ Seed failed: ${seedRes.status} ${seedRes.statusText}`);
@@ -207,7 +248,7 @@ async function resetAndSeed() {
 
 function runTest(file: string): Promise<number> {
 	return new Promise((resolve) => {
-		const proc = spawn('bun', ['test', file], {
+		const proc = spawn(pkgManager, ['test', file], {
 			cwd: rootDir,
 			stdio: 'inherit',
 			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', API_BASE_URL }

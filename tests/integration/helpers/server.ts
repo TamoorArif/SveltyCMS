@@ -49,3 +49,35 @@ export async function waitForServer(timeoutMs = 60_000): Promise<void> {
 
 	throw new Error(`Server at ${baseUrl} did not start within ${timeoutMs}ms`);
 }
+/**
+ * Safely performs a fetch, returning null instead of crashing when the server is unreachable.
+ * Automatically adds the Origin header to bypass CSRF protection.
+ */
+export async function safeFetch(url: string, init?: RequestInit): Promise<Response> {
+	const API_BASE_URL = getApiBaseUrl();
+	const headers = new Headers(init?.headers || {});
+
+	// Ensure Origin header is present to satisfy CSRF protection in hooks
+	if (!headers.has('Origin')) {
+		headers.set('Origin', API_BASE_URL);
+	}
+
+	try {
+		const resp = await fetch(url, { ...init, headers });
+		if (!resp) {
+			throw new Error(`Server at ${url} returned an undefined response. Is the preview server running?`);
+		}
+		// Hardening: Verify that the response has a headers property (Mock detection)
+		if (!resp.headers) {
+			throw new Error(
+				`Server at ${url} returned a response without headers. This usually indicates a global fetch mock has leaked from a unit test (e.g., ai-service.test.ts).`
+			);
+		}
+		return resp;
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to reach server at ${url}. Integration tests require a running preview server (bun run test:integration). Error: ${message}`
+		);
+	}
+}
