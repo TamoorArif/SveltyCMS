@@ -5,7 +5,7 @@
  * Directly calls SvelteKit Server Actions to configure database and admin.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:4173';
@@ -139,8 +139,15 @@ async function main() {
 		console.log('✅ Setup completed successfully! 🎉');
 
 		// 4. Verification
+		const configDir = join(rootDir, 'config');
+		// Ensure config directory exists (may not exist in fresh CI clones)
+		if (!existsSync(configDir)) {
+			mkdirSync(configDir, { recursive: true });
+			console.log('✅ Created config directory.');
+		}
+
 		const configName = process.env.TEST_MODE === 'true' ? 'private.test.ts' : 'private.ts';
-		const configPath = join(rootDir, 'config', configName);
+		const configPath = join(configDir, configName);
 		if (existsSync(configPath)) {
 			console.log(`✅ Verified: ${configName} was created.`);
 		} else {
