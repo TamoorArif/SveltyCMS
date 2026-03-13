@@ -53,7 +53,10 @@ describe('handleRateLimit Middleware', () => {
 	});
 
 	describe('Localhost Exemption', () => {
-		it('should bypass rate limiting for localhost (127.0.0.1)', async () => {
+		// NOTE: Localhost exemption was removed as a security vulnerability
+		// localhost requests should now be rate-limited like any other IP
+		// to prevent SSRF-based rate-limit bypass attacks
+		it('should apply rate limiting to localhost (127.0.0.1)', async () => {
 			const event = createMockEvent('/api/collections', 'GET', {
 				'x-forwarded-for': '127.0.0.1'
 			});
@@ -63,7 +66,7 @@ describe('handleRateLimit Middleware', () => {
 			expect(mockResolve).toHaveBeenCalledTimes(1);
 		});
 
-		it('should bypass rate limiting for localhost (::1)', async () => {
+		it('should apply rate limiting to localhost (::1)', async () => {
 			const event = createMockEvent('/api/collections', 'GET', {
 				'x-forwarded-for': '::1'
 			});
@@ -72,7 +75,7 @@ describe('handleRateLimit Middleware', () => {
 			expect(response).toBe(mockResponse);
 		});
 
-		it('should bypass rate limiting for 192.168.x.x private networks', async () => {
+		it('should apply rate limiting to private networks (192.168.x.x)', async () => {
 			const event = createMockEvent('/api/collections', 'GET', {
 				'x-forwarded-for': '192.168.1.100'
 			});

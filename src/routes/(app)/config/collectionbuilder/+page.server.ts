@@ -41,12 +41,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// Fetch the initial content structure directly from database for organizational work
 		const contentStructure = await contentManager.getContentStructureFromDatabase('flat', tenantId);
 
-		// Serialize ObjectIds to strings for client-side usage
-		const serializedStructure = contentStructure.map((node) => ({
-			...node,
-			_id: node._id.toString(),
-			...(node.parentId ? { parentId: node.parentId.toString() } : {})
-		}));
+		// Serialize and sanitize structures for client-side usage
+		const serializedStructure = contentStructure.map((node) => {
+			// Deep clone and strip non-serializable properties (like validationSchema functions)
+			const sanitizedNode = JSON.parse(JSON.stringify(node));
+
+			return {
+				...sanitizedNode,
+				_id: sanitizedNode._id.toString(),
+				...(sanitizedNode.parentId ? { parentId: sanitizedNode.parentId.toString() } : {})
+			};
+		});
 
 		// Return user data with proper admin status and the content structure
 		const { _id, ...rest } = user;

@@ -120,7 +120,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
 		tenantId: locals.tenantId ?? null,
 		darkMode: locals.darkMode ?? false,
 		navigationStructure,
-		contentNodes,
+		contentNodes: contentNodes ? JSON.parse(JSON.stringify(contentNodes)) : [],
 		contentVersion,
 		// Pass public settings to client for store initialization
 		settings: {

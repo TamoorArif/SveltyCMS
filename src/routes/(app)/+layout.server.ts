@@ -100,7 +100,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 		return {
 			theme: theme || DEFAULT_THEME,
 			// Streamed data (Promises)
-			contentStructure: contentPromise.then(([structure]) => structure),
+			contentStructure: contentPromise.then(([structure]) => (structure ? JSON.parse(JSON.stringify(structure)) : structure)),
 			user: freshUser,
 			totalUsers,
 			aiEnabled,

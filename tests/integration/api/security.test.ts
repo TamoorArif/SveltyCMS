@@ -48,14 +48,14 @@ describe('Security Enhancements Verification', () => {
 
 		// authLimiter is 10 req/min per IP.
 		// We need to make > 10 requests.
+		// NOTE: No bypass header - rate limiting should work for all IPs
 		let blocked = false;
 		for (let i = 0; i < 15; i++) {
 			const res = await fetch(`${BASE_URL}/api/auth/login`, {
 				method: 'POST',
 				body: JSON.stringify({ email: 'test@example.com', password: 'wrong' }),
 				headers: {
-					'Content-Type': 'application/json',
-					'x-test-rate-limit-bypass-localhost': 'true'
+					'Content-Type': 'application/json'
 				}
 			});
 			if (res.status === 429) {

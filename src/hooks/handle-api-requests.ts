@@ -245,6 +245,10 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 
 		if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && response.ok && !isWarmCache) {
 			try {
+				// Skip cache invalidation if user is null (e.g., after logout)
+				if (!locals.user?._id) {
+					return response;
+				}
 				const patternToInvalidate = `api:${locals.user._id}:/api/${apiEndpoint}`;
 				await cacheService.clearByPattern(`${patternToInvalidate}*`, locals.tenantId);
 

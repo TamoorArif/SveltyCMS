@@ -32,6 +32,7 @@ import { tick } from 'svelte';
 import { flip } from 'svelte/animate';
 import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS } from 'svelte-dnd-action';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { screen } from '@src/stores/screen-size-store.svelte.ts';
 // Components
 import TreeViewNode from './tree-view-node.svelte';
 
@@ -1071,7 +1072,7 @@ const flipDurationMs = 200;
 			{#if item.children?.length > 0 || item.nodeType === 'category'}
 				<div
 					class="dnd-zone nested-zone mt-2"
-					style="margin-left: {Math.min(level + 1, 6) * 0.75}rem; padding-left: 0.5rem; border-left: 2px solid rgb(var(--color-surface-300));"
+					style="margin-left: {screen.isDesktop ? Math.min(level + 1, 6) * 0.75 : 0.4}rem; padding-left: 0.5rem; border-left: 2px solid rgb(var(--color-surface-300));"
 					use:dndzone={{
 						items: item.children || [],
 						flipDurationMs,

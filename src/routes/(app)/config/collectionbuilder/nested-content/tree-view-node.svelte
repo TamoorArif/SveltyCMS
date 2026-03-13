@@ -155,10 +155,10 @@ function handleKeyDown(e: KeyboardEvent) {
 	<!-- Icon -->
 	<div class="relative"><iconify-icon {icon} width="24" class={iconClass} aria-hidden="true"></iconify-icon></div>
 
-	<!-- Name & Badge: min width so category/collection names are not squeezed -->
-	<div class="flex flex-col gap-1 min-w-[300px] sm:min-w-[500px] shrink-0">
+	<!-- Name & Badge: flexible width for responsiveness -->
+	<div class="flex flex-1 flex-col gap-1 min-w-0">
 		<div class="flex items-center gap-1 sm:gap-2 flex-wrap">
-			<span class="font-bold text-sm sm:text-base leading-none truncate max-w-[280px] sm:max-w-[380px]" title={name}>{name}</span>
+			<span class="font-bold text-sm sm:text-base leading-none truncate max-w-[150px] sm:max-w-[380px]" title={name}>{name}</span>
 			{#if isCategory}
 				<span
 					class="badge font-semibold bg-tertiary-500 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-sm uppercase shadow-sm"
@@ -172,26 +172,23 @@ function handleKeyDown(e: KeyboardEvent) {
 					Collection
 				</span>
 			{/if}
+
+			<!-- Slug - Hidden on mobile to save space -->
+			{#if item.slug}
+				<span class="hidden sm:inline-block badge bg-surface-500 dark:bg-surface-600 text-white px-2 py-1 rounded font-mono text-[10px] shadow-sm ml-auto opacity-80" aria-label="URL slug">
+					{item.slug}
+				</span>
+			{/if}
 		</div>
 	</div>
 
-	<!-- Description: wider max so more text is visible before truncation -->
+	<!-- Description: hidden on small screens -->
 	{#if screen.isDesktop && item.description}
-		<div class="flex-1 px-4 min-w-[320px] sm:min-w-[400px] flex justify-start">
-			<span class="italic text-sm opacity-70 truncate w-full max-w-[640px] sm:max-w-[800px] md:max-w-[1200px] text-left" title={item.description}>
+		<div class="flex-1 px-4 min-w-0 hidden md:flex justify-start">
+			<span class="italic text-sm opacity-70 truncate w-full max-w-[640px] md:max-w-[1200px] text-left" title={item.description}>
 				{item.description}
 			</span>
 		</div>
-	{/if}
-
-	<!-- Spacer to push slug and actions to the right -->
-	<div class="flex-1 min-w-0"></div>
-
-	<!-- Slug -->
-	{#if item.slug}
-		<span class="badge bg-surface-500 dark:bg-surface-600 text-white px-2 py-1 rounded font-mono text-xs shadow-sm mr-2" aria-label="URL slug">
-			{item.slug}
-		</span>
 	{/if}
 
 	<!-- Action Buttons -->

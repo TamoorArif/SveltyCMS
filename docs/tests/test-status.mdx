@@ -18,59 +18,61 @@ tags:
 # SveltyCMS Test Suite Status
 
 > **Last Updated:** March 13, 2026
-> **Total Tests:** ~1032+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (693 unit tests across 51 suites)
+> **Total Tests:** ~1070+ (Unit + Integration + E2E)
+> **Overall Pass Rate:** 100% (730 unit tests across 53 suites)
 
 ## Executive Summary
 
 The testing suite has been fully migrated to **Vitest 4.1.0** (Vite 8) and optimized for **Enterprise-grade reliability** in both local and CI (Linux) environments. Recent efforts have stabilized global state management (resolved rune loops), fixed module resolution for SvelteKit aliases, and hardened security hooks.
 
-- **Unit Tests:** 693 tests across 51 suites (Passing - 100%)
+- **Unit Tests:** 730 tests across 53 suites (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
 - **E2E Tests:** Critical flows (Setup, RBAC, Redirection) fully automated and verified.
 
 ### Test Coverage by Category
 
-| Category                   | Status       | Pass Rate | Tests   |
-| -------------------------- | ------------ | --------- | ------- |
-| **Server Hooks**           | ✅ Excellent | 100%      | 287/287 |
-| **API - User**             | ✅ Complete  | 100%      | 47/47   |
-| **API - GraphQL**          | ✅ Complete  | 100%      | 21/21   |
-| **API - Token**            | ✅ Complete  | 100%      | 12/12   |
-| **Setup Actions**          | ✅ Complete  | 100%      | 20/20   |
-| **API - Collections**      | ✅ Complete  | 100%      | 19/19   |
-| **API - Dashboard**        | ✅ Complete  | 100%      | 48/48   |
-| **API - 2FA**              | ✅ Complete  | 100%      | 28/28   |
-| **API - Security**         | ✅ Complete  | 100%      | 33/33   |
-| **API - Widgets**          | ✅ Complete  | 100%      | 30/30   |
-| **API - Settings**         | ✅ Complete  | 100%      | 31/31   |
-| **API - Theme**            | ✅ Complete  | 100%      | 24/24   |
-| **API - Miscellaneous**    | ✅ Complete  | 100%      | 36/36   |
-| **Media & DAM**            | ✅ Excellent | 100%      | 34/34   |
-| **GDPR Service**           | ✅ Excellent | 100%      | 4/4     |
-| **AI Service**             | ✅ Excellent | 100%      | 5/5     |
-| **SAML Auth Service**      | ✅ Excellent | 100%      | 3/3     |
-| **Telemetry Service**      | ✅ Excellent | 100%      | 4/4     |
-| **Automation Service**     | ✅ Excellent | 100%      | 6/6     |
-| **Security Service (ASR)** | ✅ Excellent | 100%      | 34/34   |
-| **Plugin Sandbox**         | ✅ Excellent | 100%      | 7/7     |
-| **Security Utils**         | ✅ Excellent | 100%      | 14/14   |
-| **Widget Validation**      | ✅ Excellent | 100%      | 43/43   |
-| **AST Transformers**       | ✅ Excellent | 100%      | 10/10   |
-| **Database Resilience**    | ✅ Excellent | 100%      | 7/7     |
-| **Cache System**           | ✅ Excellent | 100%      | 26/26   |
-| **UI Store & Logic**       | ✅ Excellent | 100%      | 15/15   |
-| **Content Utils**          | ✅ Excellent | 100%      | 6/6     |
-| **Setup Utils**            | ✅ Excellent | 100%      | 25/25   |
-| **Collection Builder**     | ✅ Excellent | 100%      | 7/7     |
-| **Live Preview Utils**     | ✅ Excellent | 100%      | 3/3     |
-| **Token System**           | ✅ Excellent | 100%      | 11/11   |
-| **Repeater Widget**        | ✅ Excellent | 100%      | 5/5     |
-| **Price Widget**           | ✅ Excellent | 100%      | 5/5     |
+| Category                    | Status       | Pass Rate | Tests   |
+| --------------------------- | ------------ | --------- | ------- |
+| **Server Hooks**            | ✅ Excellent | 100%      | 287/287 |
+| **API - User**              | ✅ Complete  | 100%      | 47/47   |
+| **API - GraphQL**           | ✅ Complete  | 100%      | 21/21   |
+| **API - Token**             | ✅ Complete  | 100%      | 12/12   |
+| **Setup Actions**           | ✅ Complete  | 100%      | 20/20   |
+| **API - Collections**       | ✅ Complete  | 100%      | 19/19   |
+| **API - Dashboard**         | ✅ Complete  | 100%      | 48/48   |
+| **API - 2FA**               | ✅ Complete  | 100%      | 28/28   |
+| **API - Security**          | ✅ Complete  | 100%      | 33/33   |
+| **API - Widgets**           | ✅ Complete  | 100%      | 30/30   |
+| **API - Settings**          | ✅ Complete  | 100%      | 31/31   |
+| **API - Theme**             | ✅ Complete  | 100%      | 24/24   |
+| **API - Miscellaneous**     | ✅ Complete  | 100%      | 36/36   |
+| **Media & DAM**             | ✅ Excellent | 100%      | 34/34   |
+| **GDPR Service**            | ✅ Excellent | 100%      | 4/4     |
+| **AI Service**              | ✅ Excellent | 100%      | 5/5     |
+| **SAML Auth Service**       | ✅ Excellent | 100%      | 3/3     |
+| **Telemetry Service**       | ✅ Excellent | 100%      | 4/4     |
+| **Automation Service**      | ✅ Excellent | 100%      | 6/6     |
+| **Security Service (ASR)**  | ✅ Excellent | 100%      | 34/34   |
+| **Plugin Sandbox**          | ✅ Excellent | 100%      | 7/7     |
+| **Security Utils**          | ✅ Excellent | 100%      | 14/14   |
+| **Encryption & Crypto**     | ✅ Excellent | 100%      | 14/14   |
+| **Auth & Lockout Security** | ✅ Excellent | 100%      | 23/23   |
+| **Widget Validation**       | ✅ Excellent | 100%      | 43/43   |
+| **AST Transformers**        | ✅ Excellent | 100%      | 10/10   |
+| **Database Resilience**     | ✅ Excellent | 100%      | 7/7     |
+| **Cache System**            | ✅ Excellent | 100%      | 26/26   |
+| **UI Store & Logic**        | ✅ Excellent | 100%      | 15/15   |
+| **Content Utils**           | ✅ Excellent | 100%      | 6/6     |
+| **Setup Utils**             | ✅ Excellent | 100%      | 25/25   |
+| **Collection Builder**      | ✅ Excellent | 100%      | 7/7     |
+| **Live Preview Utils**      | ✅ Excellent | 100%      | 3/3     |
+| **Token System**            | ✅ Excellent | 100%      | 11/11   |
+| **Repeater Widget**         | ✅ Excellent | 100%      | 5/5     |
+| **Price Widget**            | ✅ Excellent | 100%      | 5/5     |
 
 ---
 
-## ✅ Passing Tests (717)
+## ✅ Passing Tests (754)
 
 ### 1. Multi-Database Support 🔌
 

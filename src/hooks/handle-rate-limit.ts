@@ -196,9 +196,9 @@ export const handleRateLimit: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	// 2. Localhost during development OR production
-	const bypassLocalhost = event.request.headers.get('x-test-rate-limit-bypass-localhost') === 'true';
-	if (isLocalhost(clientIp) && !bypassLocalhost) {
+	// 2. Localhost exemption - Needed for development and prevent self-DoS during initialization
+	// Uses the isLocalhost helper function defined earlier
+	if (isLocalhost(clientIp)) {
 		return resolve(event);
 	}
 

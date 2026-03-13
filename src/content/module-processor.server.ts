@@ -14,7 +14,7 @@ import type { Schema } from './types';
  */
 export async function processModule(content: string): Promise<{ schema?: Schema } | null> {
 	try {
-		// Support both 'export const schema =' and 'export default'
+		// Support both 'export const schema =', 'export default <name>' (variable reference), and 'export default {' (inline object)
 		const schemaMatch = content.match(/export\s+const\s+schema\s*=\s*/);
 		const defaultMatch = content.match(/export\s+default\s+/);
 
@@ -25,54 +25,37 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 		}
 
 		const startIdx = match.index! + match[0].length;
-		// Find the schema object by brace matching (so semicolons in strings don't truncate)
-		const firstBrace = content.indexOf('{', startIdx);
-		let endIdx: number;
-		if (firstBrace === -1) {
-			const semi = content.indexOf(';', startIdx);
-			endIdx = semi === -1 ? content.length : semi;
-		} else {
-			endIdx = content.length;
-			let depth = 0;
-			let inString: string | null = null;
-			for (let i = firstBrace; i < content.length; i++) {
-				const c = content[i];
-				if (inString) {
-					if (c === inString && content[i - 1] !== '\\') inString = null;
-					continue;
-				}
-				if (c === '"' || c === "'" || c === '`') {
-					inString = c;
-					continue;
-				}
-				if (c === '{') depth++;
-				else if (c === '}') {
-					depth--;
-					if (depth === 0) {
-						endIdx = i + 1;
-						break;
-					}
-				}
-			}
-		}
+		let schemaContent = '';
 
-		let schemaContent = content.substring(startIdx, endIdx).trim();
-		if (!schemaContent || schemaContent === '') {
-			logger.warn('Could not extract schema content');
-			return null;
-		}
+		// Check if what follows the export is a variable name (like 'Authors') or an object literal
+		const potentialVarName = content.substring(startIdx, startIdx + 50).trim();
+		if (/^[a-zA-Z_$][a-zA-Z0-9_$]*;?$/.test(potentialVarName.replace(/;$/, ''))) {
+			// It's a variable reference (e.g., 'export default Authors;')
+			// Extract the variable name
+			const varName = potentialVarName.replace(/;$/, '').trim();
+			logger.debug(`Found default export reference: ${varName}`);
 
-		// If the extracted content is a variable name (like 'Clients'), we need to find its definition.
-		if (/^[a-zA-Z0-9_]+$/.test(schemaContent)) {
-			const varName = schemaContent;
-			const varMatch = content.match(new RegExp(`(?:const|let|var)\\s+${varName}\\s*=\\s*`));
-			if (varMatch) {
-				const varStartIdx = varMatch.index! + varMatch[0].length;
+			// Find the variable definition in the content
+			// Handle TypeScript: const Authors: Schema = {...} or JavaScript: const Authors = {...}
+			const varDefMatch = content.match(new RegExp(`(?:const|let|var|function)\\s+${varName}(?::[^,=]*)?\\s*[=:]\\s*`));
+			if (varDefMatch) {
+				const varStartIdx = varDefMatch.index! + varDefMatch[0].length;
 				let braceCount = 0;
 				let vEndIdx = varStartIdx;
+				let foundStart = false;
+
 				for (let i = varStartIdx; i < content.length; i++) {
-					if (content[i] === '{') braceCount++;
-					if (content[i] === '}') {
+					const c = content[i];
+					if (!foundStart) {
+						if (c === '{') {
+							foundStart = true;
+							braceCount = 1;
+							vEndIdx = i + 1;
+						}
+						continue;
+					}
+					if (c === '{') braceCount++;
+					else if (c === '}') {
 						braceCount--;
 						if (braceCount === 0) {
 							vEndIdx = i + 1;
@@ -81,24 +64,94 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 					}
 				}
 				schemaContent = content.substring(varStartIdx, vEndIdx);
+				logger.debug(`Extracted schema object for ${varName}: ${schemaContent.substring(0, 80)}...`);
+			} else {
+				logger.warn(`Could not find definition for variable: ${varName}`);
+				return null;
 			}
+		} else {
+			// It's an inline object (e.g., 'export default {')
+			// Find the schema object by brace matching
+			const firstBrace = content.indexOf('{', startIdx);
+			let endIdx: number;
+			if (firstBrace === -1) {
+				const semi = content.indexOf(';', startIdx);
+				endIdx = semi === -1 ? content.length : semi;
+			} else {
+				endIdx = content.length;
+				let depth = 0;
+				let inString: string | null = null;
+				for (let i = firstBrace; i < content.length; i++) {
+					const c = content[i];
+					if (inString) {
+						if (c === inString && content[i - 1] !== '\\') inString = null;
+						continue;
+					}
+					if (c === '"' || c === "'" || c === '`') {
+						inString = c;
+						continue;
+					}
+					if (c === '{') depth++;
+					else if (c === '}') {
+						depth--;
+						if (depth === 0) {
+							endIdx = i + 1;
+							break;
+						}
+					}
+				}
+			}
+
+			schemaContent = content.substring(startIdx, endIdx).trim();
+		}
+
+		if (!schemaContent || schemaContent === '') {
+			logger.warn('Could not extract schema content');
+			return null;
 		}
 
 		const widgetsMap = widgetRegistryService.getAllWidgets();
 		const widgetsObject = Object.fromEntries(widgetsMap.entries());
 
+		// Create a case-insensitive proxy for widgets to handle things like widgets.Seo vs widgets.SEO
+		const widgetsProxy = new Proxy(widgetsObject, {
+			get(target, prop) {
+				if (typeof prop !== 'string') return undefined;
+
+				// Try exact match first
+				if (prop in target) return target[prop];
+
+				// Case-insensitive lookup
+				const lowerProp = prop.toLowerCase();
+				const entry = Object.entries(target).find(([key]) => key.toLowerCase() === lowerProp);
+
+				if (entry) {
+					logger.debug(`Mapped missing widget "${prop}" to "${entry[0]}" via case-insensitive proxy`);
+					return entry[1];
+				}
+
+				return undefined;
+			}
+		});
+
 		// Ensure globalThis.widgets is available for the module evaluation
 		const globalObj = globalThis as any;
 		const originalWidgets = globalObj.widgets;
-		globalObj.widgets = widgetsObject;
+		globalObj.widgets = widgetsProxy;
 
 		let result: any = null;
 		try {
+			logger.debug(`Executing module function...`);
 			const moduleContent = `return (function() { const widgets = globalThis.widgets; return ${schemaContent}; })();`;
 			const moduleFunc = new Function(moduleContent);
 			result = moduleFunc();
+			logger.debug(`Module evaluation complete. Result type: ${typeof result}, keys: ${result ? Object.keys(result).join(', ') : 'none'}`);
 
-			if (result && typeof result === 'object' && 'fields' in result && '_id' in result) {
+			if (result && typeof result === 'object' && 'fields' in result) {
+				// Ensure _id is present (either from code or generated)
+				if (!result._id) {
+					result._id = (result.name || 'unknown').toLowerCase();
+				}
 				return { schema: result as Schema };
 			}
 		} finally {

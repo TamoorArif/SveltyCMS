@@ -539,6 +539,12 @@ async function initializeSystem(forceReload = false, skipSetupCheck = false, awa
 						await widgets.initialize(undefined, dbAdapter!);
 						updateServiceHealth('widgets', 'healthy', 'Widget store initialized');
 					})().catch((e) => logger.warn('Widget init failed:', e)),
+					// Also initialize WidgetRegistryService (used by module processor for collection schemas)
+					(async () => {
+						const { widgetRegistryService } = await import('@src/services/widget-registry-service');
+						await widgetRegistryService.initialize();
+						logger.info('WidgetRegistryService initialized during startup');
+					})().catch((e) => logger.warn('WidgetRegistryService init failed:', e)),
 					(async () => {
 						updateServiceHealth('cache', 'healthy', 'System cache warmed up');
 					})()

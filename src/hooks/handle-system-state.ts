@@ -19,6 +19,32 @@ import { logger } from '@utils/logger.server';
 import { isSetupComplete } from '@utils/setup-check';
 import { STATIC_ASSET_REGEX } from './handle-static-asset-caching';
 
+// Color helper for state values
+function colorState(state: string): string {
+	const colors: Record<string, string> = {
+		IDLE: '\x1b[90m', // Gray
+		INITIALIZING: '\x1b[33m', // Yellow
+		WARMING: '\x1b[33m', // Yellow
+		WARMED: '\x1b[36m', // Cyan
+		READY: '\x1b[32m', // Green
+		DEGRADED: '\x1b[31m', // Red
+		FAILED: '\x1b[31m', // Red
+		SETUP: '\x1b[35m', // Magenta
+		pending: '\x1b[33m', // Yellow
+		'in-progress': '\x1b[33m', // Yellow
+		complete: '\x1b[32m', // Green
+		failed: '\x1b[31m' // Red
+	};
+	const color = colors[state] || '\x1b[0m';
+	const reset = '\x1b[0m';
+	return `${color}${state}${reset}`;
+}
+
+// Color helper for paths
+function colorPath(path: string): string {
+	return `\x1b[33m${path}\x1b[0m`; // Yellow
+}
+
 // Track initialization state more robustly
 let initializationState: 'pending' | 'in-progress' | 'complete' | 'failed' = 'pending';
 let initError: Error | null = null;
@@ -53,7 +79,7 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 	if (!isHealthCheck) {
 		const requestType = event.isDataRequest ? 'API' : 'PAGE';
 		logger.debug(
-			`[handleSystemState] ${event.request.method} ${pathname}${event.url.search} [${requestType}], state: ${systemState.overallState}, initState: ${initializationState}`
+			`[handleSystemState] ${event.request.method} ${colorPath(pathname)}${event.url.search} [${requestType}], state: ${colorState(systemState.overallState)}, initState: ${colorState(initializationState)}`
 		);
 	}
 

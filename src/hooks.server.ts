@@ -156,9 +156,11 @@ const middleware: Handle[] = [
 		// Skip redirect for API, static assets, and config/builder routes
 		const isApi = url.pathname.startsWith('/api');
 		const isConfig = url.pathname.startsWith('/config');
+		const isUser = url.pathname.startsWith('/user');
+		const isDashboard = url.pathname.startsWith('/dashboard');
 		const isLogin = url.pathname.includes('/login');
 
-		if (locals.user && !isApi && !isConfig && !isLogin) {
+		if (locals.user && !isApi && !isConfig && !isUser && !isDashboard && !isLogin) {
 			const collections = contentManager.getCollections(locals.tenantId);
 			if (collections.length === 0) {
 				// Admins go to collection builder, others to dashboard

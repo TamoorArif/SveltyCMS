@@ -299,7 +299,7 @@ async function handleSessionRotation(event: RequestEvent, user: User, oldSession
 
 	// Rate limit check
 	if (rotationRateLimiter && (await rotationRateLimiter.isLimited(event))) {
-		logger.debug(`Session rotation rate limited for session ${oldSessionId.substring(0, 8)}...`);
+		logger.trace(`Session rotation rate limited for session ${oldSessionId.substring(0, 8)}...`);
 		return;
 	}
 
@@ -519,7 +519,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
 					if (isTestMode || !(await rotationRateLimiter.isLimited(event))) {
 						await handleSessionRotation(event, user, sessionId);
 					} else {
-						logger.debug(`Session rotation rate limited for session ${sessionId.substring(0, 8)}...`);
+						logger.trace(`Session rotation rate limited for session ${sessionId.substring(0, 8)}...`);
 					}
 				} catch (rotationError) {
 					// Rotation errors are already handled in handleSessionRotation

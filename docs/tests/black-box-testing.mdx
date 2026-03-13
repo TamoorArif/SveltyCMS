@@ -87,3 +87,12 @@ Black-box tests now explicitly verify the "Smart Onboarding" redirection flow:
 
 > [!IMPORTANT]
 > **Safety Protocol**: Black-Box tests MUST use `config/private.test.ts`. The system includes hard-coded safety logic in `db.ts` that will terminate execution if a test attempt is detected against a production database.
+
+> [!IMPORTANT]
+> **No Backdoor Policy**: SveltyCMS has a zero-backdoor policy for security. Integration tests do NOT bypass authentication via:
+>
+> - ❌ API keys or bearer tokens
+> - ❌ Test-only bypass headers (e.g., `x-test-token`)
+> - ❌ Hardcoded credentials
+>
+> Tests authenticate like real users by calling `/api/auth/login` with seeded test credentials. This ensures the entire authentication and authorization pipeline is tested end-to-end.

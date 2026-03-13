@@ -62,7 +62,7 @@ const SEO_VALIDATION_SCHEMA = object({
 
 // Create the widget definition using the factory.
 const SeoWidget = createWidget({
-	Name: 'SEO',
+	Name: 'Seo',
 	Icon: 'tabler:seo',
 	Description: widget_seo_description(),
 	inputComponentPath: '/src/widgets/custom/Seo/input.svelte',

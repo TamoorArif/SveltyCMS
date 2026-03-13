@@ -547,18 +547,36 @@ $effect(() => {
 });
 </script>
 
-<PageTitle name={collection_pagetitle()} icon="fluent-mdl2:build-definition" showBackButton={true} backUrl="/config" />
+{#snippet saveButton(isHeader = false)}
+	<button
+		onclick={handleSave}
+		class="btn flex items-center gap-1 {isHeader ? 'btn-sm sm:btn-md preset-filled-primary-500' : 'preset-filled-primary-500'}"
+		disabled={isLoading || Object.keys(nodesToSave).length === 0}
+		title={Object.keys(nodesToSave).length === 0 ? 'No changes to save' : 'Save changes'}
+	>
+		{#if isLoading}
+			<iconify-icon icon="mdi:loading" width={isHeader ? '18' : '24'} class="animate-spin"></iconify-icon>
+		{:else}
+			<iconify-icon icon="mdi:content-save" width={isHeader ? '18' : '24'}></iconify-icon>
+		{/if}
+		<span>{button_save()}</span>
+	</button>
+{/snippet}
+
+<PageTitle name={collection_pagetitle()} icon="fluent-mdl2:build-definition" showBackButton={true} backUrl="/config">
+	{@render saveButton(true)}
+</PageTitle>
 
 {#if currentConfig.length > 0}
 	<div class="mb-4 flex flex-wrap gap-2 px-4" in:fade={{ duration: 300 }}>
-		<button onclick={() => modalAddCategory()} class="preset-filled-tertiary-500 btn flex items-center gap-1" disabled={isLoading}>
-			<iconify-icon icon="mdi:folder-plus" width="24"></iconify-icon>
-			<span class="hidden sm:inline">{collection_addcategory()}</span>
+		<button onclick={() => modalAddCategory()} class="group btn-lg rounded-full preset-filled-tertiary-500" disabled={isLoading}>
+			<iconify-icon icon="mdi:folder-plus" width="24" class="transition-transform group-hover:scale-110"></iconify-icon>
+			<span>{collection_addcategory()}</span>
 		</button>
 
-		<button onclick={handleAddCollectionClick} class="preset-filled-surface-500 btn flex items-center gap-1 rounded" disabled={isLoading}>
-			<iconify-icon icon="ic:round-plus" width="24"></iconify-icon>
-			<span class="hidden sm:inline">{collection_add()}</span>
+		<button onclick={handleAddCollectionClick} class="group btn-lg rounded-full preset-filled-primary-500" disabled={isLoading}>
+			<iconify-icon icon="ic:round-plus" width="24" class="transition-transform group-hover:rotate-90"></iconify-icon>
+			<span>{collection_add()}</span>
 		</button>
 
 		{#if selectedCategoryId}
@@ -574,18 +592,9 @@ $effect(() => {
 			</button>
 		{/if}
 
-		<button
-			onclick={handleSave}
-			class="preset-filled-primary-500 btn flex items-center gap-1"
-			disabled={isLoading || Object.keys(nodesToSave).length === 0}
-		>
-			{#if isLoading}
-				<iconify-icon icon="mdi:loading" width="24" class="animate-spin"></iconify-icon>
-			{:else}
-				<iconify-icon icon="mdi:content-save" width="24"></iconify-icon>
-			{/if}
-			<span>{button_save()}</span>
-		</button>
+		<div class="hidden sm:block">
+			{@render saveButton()}
+		</div>
 	</div>
 
 	<div class="max-h-[calc(100vh-120px)] overflow-auto p-4">

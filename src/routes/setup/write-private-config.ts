@@ -79,6 +79,10 @@ export const privateEnv = {
 `;
 
 	try {
+		// Ensure config directory exists before writing the file
+		const configDir = path.resolve(process.cwd(), 'config');
+		await fs.mkdir(configDir, { recursive: true });
+
 		await fs.writeFile(privateConfigPath, privateConfigContent, 'utf-8');
 
 		// Validate written file to ensure integrity

@@ -192,10 +192,9 @@ export const handleFirewall: Handle = async ({ event, resolve }) => {
 	const search = url.search.toLowerCase();
 
 	try {
-		// Bypass firewall in TEST_MODE except for unit tests
-		if (process.env.TEST_MODE === 'true' && !request.headers.get('x-test-request')) {
-			return await resolve(event);
-		}
+		// SECURITY: Never bypass firewall based on TEST_MODE in production
+		// TEST_MODE should only affect automated testing, not production security
+		// The firewall is critical for blocking attacks
 
 		// Check if firewall is enabled (default to true if not set)
 		const firewallEnabled = getPrivateSettingSync('FIREWALL_ENABLED') ?? true;

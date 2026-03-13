@@ -217,22 +217,28 @@ function modalConfirm(): void {
 					</button>
 				</div>
 				<!-- User ID -->
-				<div class="gradient-secondary badge mt-1 w-full max-w-xs text-white">
+				<div class="gradient-secondary badge mt-1 w-full max-w-xs text-white text-center">
 					{userpage_user_id()}<span class="ml-2 font-bold">{user?._id || 'N/A'}</span>
 				</div>
 				<!-- Role -->
-				<div class="gradient-tertiary badge w-full max-w-xs text-white">{role()}:<span class="ml-2 font-bold">{user?.role || 'N/A'}</span></div>
+				<div class="gradient-tertiary badge w-full max-w-xs text-white text-center">
+					{role()}:<span class="ml-2 font-bold">{user?.role || 'N/A'}</span>
+				</div>
 				<!-- Tenant ID -->
 				{#if isMultiTenant && user?.tenantId}
-					<div class="gradient-warning badge w-full max-w-xs text-white">Tenant ID:<span class="ml-2">{user?.tenantId || 'N/A'}</span></div>
+					<div class="gradient-warning badge w-full max-w-xs text-white text-center">
+						Tenant ID:<span class="ml-2">{user?.tenantId || 'N/A'}</span>
+					</div>
 				{/if}
 				<!-- Two-Factor Authentication Status -->
 				{#if is2FAEnabledGlobal}
 					<button
 						onclick={open2FAModal}
-						class="btn {user?.is2FAEnabled ? 'preset-tonal-success' : 'preset-tonal-error'} btn-sm w-full max-w-xs border border-surface-500/20"
+						class="btn {user?.is2FAEnabled
+							? 'preset-tonal-success'
+							: 'preset-tonal-error'} btn-sm w-full max-w-xs border border-surface-500/20 text-center"
 					>
-						<div class="flex w-full items-center justify-between py-1">
+						<div class="flex w-full items-center justify-center gap-2 py-1">
 							<div class="flex items-center gap-2">
 								<iconify-icon icon="mdi:shield-lock" width={20} class="text-error-500"></iconify-icon>
 								<span class="text-sm font-bold">Two-Factor Auth</span>
@@ -250,7 +256,7 @@ function modalConfirm(): void {
 				{/if}
 
 				<!-- Collaboration Settings -->
-				<div class="card p-4 w-full max-w-xs space-y-1 bg-surface-200-700-token border border-surface-500 shadow-sm">
+				<div class="card p-4 w-full max-w-xs space-y-1 bg-surface-200-700-token border border-surface-500/30 shadow-sm rounded">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-2">
 							<iconify-icon icon="mdi:forum" class="text-primary-500" width={18}></iconify-icon>
@@ -310,7 +316,7 @@ function modalConfirm(): void {
 					</div>
 					<input bind:value={password} name="password" type="password" autocomplete="current-password" disabled class="input" />
 
-					<div class="mt-4 flex flex-col gap-2">
+					<div class="mt-4 flex flex-col gap-2 items-center">
 						<!-- Edit Modal Button -->
 						<button onclick={modalUserForm} aria-label={userpage_edit_usersetting()} class="gradient-tertiary btn w-full max-w-sm text-white">
 							<iconify-icon icon="bi:pencil-fill" width={24}></iconify-icon>
@@ -330,10 +336,15 @@ function modalConfirm(): void {
 
 						<!-- Delete Modal Button -->
 						{#if isFirstUser}
-							<button onclick={modalConfirm} aria-label={button_delete()} class="gradient-error btn w-full max-w-sm text-white">
-								<iconify-icon icon="bi:trash3-fill" width={24}></iconify-icon>
-								{button_delete()}
-							</button>
+							<div class="w-full max-w-sm mt-2 p-3 rounded-container-token bg-warning-500/10 border border-warning-500/30 text-center">
+								<p class="text-xs text-warning-700-soft-token mb-2">
+									Warning: This action cannot be undone. Deleting your account will remove all your data permanently.
+								</p>
+								<button onclick={modalConfirm} aria-label={button_delete()} class="gradient-error btn w-full text-white">
+									<iconify-icon icon="bi:trash3-fill" width={24}></iconify-icon>
+									{button_delete()}
+								</button>
+							</div>
 						{/if}
 					</div>
 				</form>
