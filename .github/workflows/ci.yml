@@ -189,7 +189,44 @@ jobs:
             build
 
   # ------------------------------------------------
-  # 4. DB tests
+  # 4. DB tests (SQLite)
+  # ------------------------------------------------
+
+  db-tests-sqlite:
+    name: 🧪 DB (sqlite)
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-meta
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: build-output
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            .bun-cache
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
+
+      - name: Run SQLite tests
+        env:
+          DB_TYPE: sqlite
+          DB_NAME: sveltycms_test
+          TEST_MODE: true
+        run: bun run scripts/run-integration-tests.ts
+
+  # ------------------------------------------------
+  # 5. DB tests (other)
   # ------------------------------------------------
 
   db-tests:
@@ -266,7 +303,7 @@ jobs:
         run: bun run scripts/run-integration-tests.ts
 
   # ------------------------------------------------
-  # 5. E2E tests
+  # 6. E2E tests (playwright shard)
   # ------------------------------------------------
 
   e2e:

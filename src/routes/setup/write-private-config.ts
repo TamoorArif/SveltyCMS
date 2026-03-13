@@ -120,6 +120,11 @@ export async function updatePrivateConfigMode(modes: { demoMode?: boolean; multi
 
 	try {
 		logger.debug('DEBUG: [updatePrivateConfigMode] CALLED with:', JSON.stringify(modes));
+
+		// Ensure config directory exists before writing the file
+		const configDir = path.resolve(process.cwd(), 'config');
+		await fs.mkdir(configDir, { recursive: true });
+
 		let content = await fs.readFile(privateConfigPath, 'utf-8');
 		logger.debug('DEBUG: [updatePrivateConfigMode] READ content length:', content.length);
 		let modified = false;

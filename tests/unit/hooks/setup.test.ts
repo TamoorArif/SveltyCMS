@@ -181,13 +181,23 @@ describe('handleSetup Middleware', () => {
 		});
 
 		it('redirects /setup to / when setup complete', async () => {
-			const event = createMockEvent('/setup');
-			event.locals.__setupConfigExists = true;
+			// Disable TEST_MODE so the redirect logic actually runs (CI sets TEST_MODE=true globally)
+			const originalTestMode = process.env.TEST_MODE;
+			process.env.TEST_MODE = undefined;
 			try {
-				await handleSetup({ event, resolve: mockResolve });
-				expect(true).toBe(false);
-			} catch (err) {
-				expectRedirect(err, 302, '/');
+				const event = createMockEvent('/setup');
+				event.locals.__setupConfigExists = true;
+				try {
+					await handleSetup({ event, resolve: mockResolve });
+					expect(true).toBe(false);
+				} catch (err) {
+					expectRedirect(err, 302, '/');
+				}
+			} finally {
+				// Restore TEST_MODE
+				if (originalTestMode !== undefined) {
+					process.env.TEST_MODE = originalTestMode;
+				}
 			}
 		});
 	});
