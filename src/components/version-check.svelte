@@ -57,7 +57,7 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
 
 // State - use publicEnv directly instead of page.data
-const pkg = $derived(publicEnv?.PKG_VERSION || '0.0.0');
+const pkg = $derived(publicEnv?.PKG_VERSION && publicEnv.PKG_VERSION !== '0.0.0' ? publicEnv.PKG_VERSION : '---');
 let githubVersion = $state('');
 let badgeVariant = $state<'variant-filled' | 'variant-soft' | 'variant-outline' | 'variant-glass'>('variant-filled');
 let badgeColor = $state('bg-primary-500 text-white');
@@ -85,7 +85,18 @@ const versionStatus = $derived<VersionStatus>({
 
 // Transparent mode styling - check pathname defensively
 const isLoginRoute = $derived(browser ? window.location.pathname.startsWith('/login') : false);
-const effectiveTransparent = $derived(transparent || isLoginRoute);
+const isSetupRoute = $derived(browser ? window.location.pathname.startsWith('/setup') : false);
+
+// Only auto-transparent on specific routes if NOT explicitly overridden or in compact mode
+const effectiveTransparent = $derived(transparent || (!compact && (isLoginRoute || isSetupRoute)));
+
+const positioningClasses = $derived.by(() => {
+	if (!effectiveTransparent) return '';
+	// Setup wizard uses a corner position to avoid overlapping with navigation
+	if (isSetupRoute) return 'fixed bottom-4 right-4 z-50';
+	// Default to bottom center
+	return 'absolute bottom-5 left-1/2 -translate-x-1/2 transform';
+});
 
 const transparentClasses = $derived.by(() => {
 	if (badgeColor.includes('success')) {
@@ -285,7 +296,7 @@ const statusAriaLabel = $derived.by(() => {
 			target="_blank"
 			rel="noopener noreferrer"
 			class={effectiveTransparent
-				? `absolute bottom-5 left-1/2 flex -translate-x-1/2 transform items-center justify-between w-28 gap-2 rounded-full ${transparentClasses} px-4 py-1 text-sm font-bold transition-opacity duration-300 hover:opacity-90  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`
+				? `${positioningClasses} flex items-center justify-between w-28 gap-2 rounded-full ${transparentClasses} px-4 py-1 text-sm font-bold transition-opacity duration-300 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`
 				: compact
 					? `inline-flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80 focus:opacity-80 badge ${badgeVariant} ${badgeColor} rounded-full px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500`
 					: `inline-flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80 focus:opacity-80 badge ${badgeVariant} ${badgeColor} rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500`}
