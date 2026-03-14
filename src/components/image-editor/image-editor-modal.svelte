@@ -4,6 +4,7 @@
 A reusable modal that wraps the main Image Editor.
 -->
 <script lang="ts">
+import { registerHotkey } from '@src/utils/hotkeys';
 import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
 // biome-ignore lint/style/useImportType: Used as value in bind:this
 import Editor from './editor.svelte';
@@ -141,27 +142,23 @@ function handleCancelClick() {
 	}
 }
 
-function handleKeyDown(e: KeyboardEvent) {
-	const cmdOrCtrl = e.metaKey || e.ctrlKey;
-
-	// Ctrl/Cmd+S: Save
-	if (cmdOrCtrl && e.key === 's') {
-		e.preventDefault();
-		editorComponent?.handleSave();
-	}
-
-	// Escape: Close or exit tool
-	// Note: The template-level onkeydown for the modal container also handles this,
-	// but having it here ensures it's caught even if focus is inside the specific element
-	if (e.key === 'Escape') {
-		e.preventDefault();
-		handleCancelClick();
-	}
-}
-
 onMount(() => {
-	window.addEventListener('keydown', handleKeyDown);
-	return () => window.removeEventListener('keydown', handleKeyDown);
+	registerHotkey(
+		'mod+s',
+		() => {
+			if (image) editorComponent?.handleSave();
+		},
+		'Save edited image'
+	);
+
+	registerHotkey(
+		'escape',
+		() => {
+			if (image) handleCancelClick();
+		},
+		'Cancel/Exit image editor',
+		false
+	);
 });
 
 $effect(() => {

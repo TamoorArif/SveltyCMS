@@ -202,6 +202,17 @@ export async function getSetupDatabaseAdapter(
 				throw new Error(`Database connection failed: ${connectResult.error?.message}`);
 			}
 
+			// VERIFICATION PROBE: Ensure we can actually execute a query
+			try {
+				await dbAdapter.crud.count('system_content_structure', {});
+			} catch (probeErr: any) {
+				const msg = probeErr.message.toLowerCase();
+				if (msg.includes('access denied') || msg.includes('authentication') || msg.includes('unauthorized')) {
+					throw new Error(`Authentication failed: ${probeErr.message}`);
+				}
+				// Other errors (like table not found) are acceptable at this stage
+			}
+
 			break;
 		}
 		case 'postgresql': {
@@ -228,6 +239,17 @@ export async function getSetupDatabaseAdapter(
 			if (!connectResult.success) {
 				logger.error(`PostgreSQL connection failed: ${connectResult.error?.message}`, { correlationId });
 				throw new Error(`Database connection failed: ${connectResult.error?.message}`);
+			}
+
+			// VERIFICATION PROBE: Ensure we can actually execute a query
+			try {
+				await dbAdapter.crud.count('system_content_structure', {});
+			} catch (probeErr: any) {
+				const msg = probeErr.message.toLowerCase();
+				if (msg.includes('password authentication failed') || msg.includes('unauthorized') || msg.includes('permission denied')) {
+					throw new Error(`Authentication failed: ${probeErr.message}`);
+				}
+				// Other errors (like table not found) are acceptable at this stage
 			}
 
 			break;

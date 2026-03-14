@@ -5,9 +5,8 @@
 Replaces the ModalWidgetForm, providing a full-screen or focused editor experience with a Setup-like stepper.
 -->
 
-<script lang="ts">
-// Stores
-
+import { registerHotkey } from '@src/utils/hotkeys';
+import { onMount } from 'svelte';
 import Stepper from '@src/components/system/stepper.svelte';
 import * as m from '@src/paraglide/messages';
 import { button_cancel, button_delete, button_next, button_previous, button_save } from '@src/paraglide/messages';
@@ -92,6 +91,24 @@ function handleDelete() {
 		onCancel(); // Return to list
 	}
 }
+
+onMount(() => {
+	registerHotkey('mod+s', () => {
+		handleSave();
+	}, 'Save widget configuration');
+
+	registerHotkey('mod+enter', () => {
+		handleNext();
+	}, 'Next step / Finish');
+
+	registerHotkey('escape', () => {
+		handleBack();
+	}, 'Back / Cancel', false);
+
+	registerHotkey('delete', () => {
+		handleDelete();
+	}, 'Delete widget');
+});
 </script>
 
 <div class="flex h-full w-full gap-6">
@@ -136,16 +153,16 @@ function handleDelete() {
 
 		<!-- Footer Actions -->
 		<div class="flex items-center justify-between border-t border-surface-200 p-4 dark:text-surface-50">
-			<button type="button" onclick={handleDelete} class="preset-outlined-error-500 btn">
+			<button type="button" onclick={handleDelete} class="preset-outlined-error-500 btn" aria-keyshortcuts="Delete">
 				<iconify-icon icon="mdi:delete" width={24}></iconify-icon>
 				<span>{button_delete()}</span>
 			</button>
 
 			<div class="flex gap-2">
-				<button type="button" onclick={handleBack} class="preset-outlined-secondary-500 btn">
+				<button type="button" onclick={handleBack} class="preset-outlined-secondary-500 btn" aria-keyshortcuts="Escape">
 					{currentStep === 0 ? button_cancel() : button_previous()}
 				</button>
-				<button type="button" onclick={handleNext} class="preset-filled-primary-500 btn">
+				<button type="button" onclick={handleNext} class="preset-filled-primary-500 btn" aria-keyshortcuts="mod+enter">
 					{currentStep === steps.length - 1 ? button_save() : button_next()}
 				</button>
 			</div>

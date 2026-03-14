@@ -15,7 +15,8 @@ and rule-of-thirds grid overlay.
 />
 -->
 
-<script lang="ts">
+import { registerHotkey } from '@src/utils/hotkeys';
+import { onMount } from 'svelte';
 import type { MediaImage } from '@utils/media/media-models';
 import { fade, scale } from 'svelte/transition';
 
@@ -96,11 +97,27 @@ function handleKeyDown(e: KeyboardEvent) {
 			focalPoint.y = Math.min(100, focalPoint.y + step);
 			e.preventDefault();
 			break;
-		case 'Escape':
-			handleClose();
-			break;
 	}
 }
+
+onMount(() => {
+	registerHotkey(
+		'mod+s',
+		() => {
+			if (show) handleSave();
+		},
+		'Save focal point'
+	);
+
+	registerHotkey(
+		'escape',
+		() => {
+			if (show) handleClose();
+		},
+		'Cancel focal point adjustment',
+		false
+	);
+});
 
 function handleSave() {
 	onSave(focalPoint);
@@ -152,7 +169,7 @@ const imageUrl = $derived(media.thumbnails?.md?.url || media.thumbnails?.sm?.url
 					<iconify-icon icon="mdi:crosshairs-gps" width="24" class="text-primary-500"></iconify-icon>
 					Set Focal Point
 				</h3>
-				<button onclick={handleClose} class="btn-icon preset-outlined-surface-500" aria-label="Close">
+				<button onclick={handleClose} class="btn-icon preset-outlined-surface-500" aria-label="Close (Escape)" aria-keyshortcuts="Escape">
 					<iconify-icon icon="mdi:close" width="20"></iconify-icon>
 				</button>
 			</header>
@@ -219,8 +236,8 @@ const imageUrl = $derived(media.thumbnails?.md?.url || media.thumbnails?.sm?.url
 				</div>
 
 				<div class="flex gap-2">
-					<button onclick={handleClose} class="btn preset-outlined-surface-500">Cancel</button>
-					<button onclick={handleSave} class="btn preset-filled-primary-500">
+					<button onclick={handleClose} class="btn preset-outlined-surface-500" aria-keyshortcuts="Escape">Cancel</button>
+					<button onclick={handleSave} class="btn preset-filled-primary-500" aria-keyshortcuts="mod+s">
 						<iconify-icon icon="mdi:check" width="18"></iconify-icon>
 						<span>Save</span>
 					</button>
