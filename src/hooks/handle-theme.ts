@@ -14,6 +14,13 @@ import type { Handle } from '@sveltejs/kit';
 import { logger } from '@utils/logger.server';
 
 export const handleTheme: Handle = async ({ event, resolve }) => {
+	const { url } = event;
+
+	// Skip for API routes - performance fast-path
+	if (url.pathname.startsWith('/api/')) {
+		return resolve(event);
+	}
+
 	// Get the singleton ThemeManager instance inside the handle function to pick up mocks/runtime state correctly
 	const themeManager = ThemeManager.getInstance();
 

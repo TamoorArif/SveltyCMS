@@ -1,23 +1,24 @@
 ---
 path: 'docs/tests/security-testing.mdx'
 title: 'Security Testing'
-description: 'Comprehensive security testing for SveltyCMS including encryption, authentication, session management, and access control.'
+description: 'Comprehensive security testing for SveltyCMS including encryption, authentication, signed preview tokens, and access control.'
 author: 'SveltyCMS Team'
 created: '2026-03-13'
-updated: '2026-03-13'
+updated: '2026-03-14'
 tags:
   - 'testing'
   - 'security'
   - 'encryption'
   - 'authentication'
   - 'authorization'
+  - 'preview'
 ---
 
 # Security Testing
 
-**Last Updated:** March 13, 2026
+**Last Updated:** March 14, 2026
 
-SveltyCMS implements rigorous security testing to ensure the highest level of protection for user data and system integrity. All security tests follow the **no-backdoor policy** - tests must pass through real security guards without any mocked permission checks or test bypass mechanisms.
+SveltyCMS implements rigorous security testing to ensure the highest level of protection. All security tests follow the **no-backdoor policy** - tests must pass through real security guards.
 
 ## Test Categories
 
@@ -27,21 +28,23 @@ SveltyCMS implements rigorous security testing to ensure the highest level of pr
 | -------------------------- | ----- | ---------- |
 | AES-256-GCM Encryption     | 14    | ✅ Passing |
 | Key Derivation (Argon2id)  | 6     | ✅ Passing |
-| Data Encryption/Decryption | 8     | ✅ Passing |
+| Preview HMAC (SHA-256)     | 4     | ✅ Passing |
 
 **Test Files:**
+- [`tests/unit/utils/crypto.test.ts`](../../tests/unit/utils/crypto.test.ts)
+- [`tests/unit/utils/preview-verification.test.ts`](../../tests/unit/utils/preview-verification.test.ts)
 
-- [`tests/unit/utils/crypto.test.ts`](../../tests/unit/utils/crypto.test.ts) - Core crypto functionality
+### 2. Preview Security (Enterprise Handshake)
+
+We verify the integrity of the Live Preview handshake to prevent unauthorized access to draft content.
 
 **Coverage:**
+- ✅ **Signed Tokens**: Verification of HMAC-SHA256 signatures using `PREVIEW_SECRET`.
+- ✅ **Temporal Expiry**: Hard rejection of tokens older than the 30-minute window.
+- ✅ **Identity Binding**: Ensuring tokens are bound to specific `entryId` and `userId`.
+- ✅ **Handshake Origin**: Validation of `postMessage` origins in the preview iframe.
 
-- AES-256-GCM encryption/decryption
-- Key derivation from passwords using Argon2id
-- IV/nonce generation and validation
-- Cipher text authentication
-- Key stretching and salting
-
-### 2. Authentication & Authorization
+### 3. Authentication & Authorization
 
 | Test Suite         | Tests | Status     |
 | ------------------ | ----- | ---------- |
@@ -49,74 +52,29 @@ SveltyCMS implements rigorous security testing to ensure the highest level of pr
 | Session Management | 13    | ✅ Passing |
 | RBAC Enforcement   | 33    | ✅ Passing |
 
-**Test Files:**
-
-- [`tests/unit/auth-lockout.test.ts`](../../tests/unit/auth-lockout.test.ts) - Auth security features
-
-**Coverage:**
-
-- Account blocking/unblocking
-- Lockout duration enforcement
-- Session expiration validation
-- Session extension on activity
-- Failed attempt tracking
-- Security event logging
-
-### 3. No Backdoor Policy
-
-All security tests adhere to strict no-backdoor principles:
-
-- ✅ **No test API keys** - Tests use real authentication flows
-- ✅ **No bypass headers** - All requests go through standard auth
-- ✅ **No mocked permissions** - RBAC tested with real role checks
-- ✅ **No shortcuts** - Encryption tested with real key derivation
-
 ## Running Security Tests
 
 ```bash
-# Run all security tests
+# Run cryptography and preview verification tests
 bun test tests/unit/utils/crypto.test.ts
-bun test tests/unit/auth-lockout.test.ts
+bun test tests/unit/utils/preview-verification.test.ts
 
-# Run security tests with coverage
-bun test --coverage tests/unit/security/
-
-# Integration security tests (requires running server)
-bun run test:integration --grep "security"
+# Run auth security tests
+npm run test:unit -- auth-lockout
 ```
-
-## Security Test Architecture
-
-### White-Box Testing (Unit)
-
-Security unit tests verify:
-
-- Cryptographic primitives work correctly
-- Authentication logic handles edge cases
-- Session management enforces policies
-- Input validation rejects malicious data
-
-### Black-Box Testing (Integration)
-
-Security integration tests verify:
-
-- API endpoints enforce authentication
-- RBAC blocks unauthorized access
-- Rate limiting prevents brute force
-- Firewalls filter malicious requests
 
 ## Test Results
 
 | Category            | Tests  | Pass Rate |
 | ------------------- | ------ | --------- |
 | Encryption & Crypto | 14     | 100%      |
+| Preview Security    | 4      | 100%      |
 | Account Lockout     | 10     | 100%      |
 | Session Timeout     | 13     | 100%      |
-| **Total Security**  | **37** | **100%**  |
+| **Total Security**  | **41** | **100%**  |
 
 ## Related Documentation
 
 - [Security Overview](../security/index.mdx)
-- [Tested Security Features](../security/tested-security-features.mdx)
-- [Authentication System](../architecture/authentication-system.mdx)
+- [Live Preview Architecture](../guides/live-preview-architecture.mdx)
 - [Testing Strategy](./testing-strategy.mdx)

@@ -34,6 +34,7 @@ export default defineConfig({
 		environment: 'jsdom',
 		setupFiles: [path.resolve(__dirname, 'tests/unit/setup.ts')],
 		include: ['tests/unit/**/*.test.ts'],
+		exclude: ['**/*.bun.ts'],
 		server: {
 			deps: {
 				inline: [/@sveltejs\/kit/, /sveltekit-rate-limiter/]

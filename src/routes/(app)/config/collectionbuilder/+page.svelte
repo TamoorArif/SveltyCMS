@@ -58,11 +58,15 @@ import { onMount } from 'svelte';
 import { page } from '$app/state';
 
 onMount(() => {
-	registerHotkey('mod+s', () => {
-		if (!isLoading && Object.keys(nodesToSave).length > 0) {
-			handleSave();
-		}
-	}, 'Save collection structure');
+	registerHotkey(
+		'mod+s',
+		() => {
+			if (!isLoading && Object.keys(nodesToSave).length > 0) {
+				handleSave();
+			}
+		},
+		'Save collection structure'
+	);
 });
 
 import ModalCategory from './nested-content/modal-category.svelte';

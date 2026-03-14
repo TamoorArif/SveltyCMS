@@ -48,6 +48,16 @@ export function advancedSearch(files: MediaBase[], criteria: SearchCriteria): Se
 	const matched: string[] = [];
 	const result: MediaBase[] = [];
 
+	// O(N) pre-calculation for duplicates
+	const hashCounts = new Map<string, number>();
+	if (criteria.showDuplicatesOnly) {
+		for (const f of files) {
+			if (f.hash) {
+				hashCounts.set(f.hash, (hashCounts.get(f.hash) ?? 0) + 1);
+			}
+		}
+	}
+
 	for (const file of files) {
 		let ok = true;
 
@@ -132,8 +142,8 @@ export function advancedSearch(files: MediaBase[], criteria: SearchCriteria): Se
 		}
 
 		if (criteria.showDuplicatesOnly) {
-			const dupCount = files.filter((f) => f.hash === file.hash).length;
-			ok &&= dupCount > 1;
+			const count = hashCounts.get(file.hash) ?? 0;
+			ok &&= count > 1;
 		}
 
 		if (criteria.dominantColor) {

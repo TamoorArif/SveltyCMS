@@ -341,7 +341,57 @@ $effect(() => {
 
 // --- 7. PLUGIN SLOTS ---
 const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
+
+// VISUAL EDITING: Focus field triggered from Live Preview
+$effect(() => {
+	const handleFocusField = (e: any) => {
+		const fieldName = e.detail?.fieldName;
+		if (!fieldName) return;
+
+		logger.info(`[Visual Editing] Focusing field: ${fieldName}`);
+
+		// 1. Switch to Edit Tab (value "0")
+		localTabSet = '0';
+
+		// 2. Wait for DOM update, then scroll to field
+		setTimeout(() => {
+			// Find the element by ID (which is the field name) or data-field-name
+			const el = document.getElementById(fieldName) || document.querySelector(`[data-field-name="${fieldName}"]`);
+			if (el) {
+				// Scroll the container or window
+				el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+				// Apply highlight effect
+				el.classList.add('svelty-highlight-pulse');
+				setTimeout(() => el.classList.remove('svelty-highlight-pulse'), 2000);
+
+				// Focus the input if possible
+				if (el instanceof HTMLElement) el.focus();
+			}
+		}, 100);
+	};
+
+	document.addEventListener('svelty:focus-field', handleFocusField);
+	return () => document.removeEventListener('svelty:focus-field', handleFocusField);
+});
 </script>
+
+<style>
+	/* Global highlight animation for visual editing */
+	:global(.svelty-highlight-pulse) {
+		outline: 3px solid #ff3e00 !important;
+		outline-offset: 4px;
+		border-radius: 4px;
+		transition: outline 0.2s ease-in-out;
+		animation: pulse-bg 1s ease-in-out 2;
+	}
+
+	@keyframes pulse-bg {
+		0% { background-color: transparent; }
+		50% { background-color: rgba(255, 62, 0, 0.1); }
+		100% { background-color: transparent; }
+	}
+</style>
 
 <h1 class="sr-only">{collection.value?.name ? `Edit ${collection.value.name} Entry` : 'Edit Entry'}</h1>
 

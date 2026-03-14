@@ -50,6 +50,7 @@ import { isSearchVisible } from '@utils/global-search-index';
 import { getTextDirection } from '@utils/utils';
 import { onMount, untrack } from 'svelte';
 import { registerHotkey } from '@src/utils/hotkeys';
+import CommandBar from '@src/components/command-bar.svelte';
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from '$app/navigation';
 import { page } from '$app/state';
@@ -211,9 +212,9 @@ onMount(() => {
 	registerHotkey(
 		'mod+k',
 		() => {
-			isSearchVisible.update((visible) => !visible);
+			ui.isCommandBarVisible = !ui.isCommandBarVisible;
 		},
-		'Open global search / command palette'
+		'Open command palette (AI-powered)'
 	);
 
 	registerHotkey(
@@ -227,9 +228,10 @@ onMount(() => {
 	registerHotkey(
 		'escape',
 		() => {
+			ui.isCommandBarVisible = false;
 			isSearchVisible.set(false);
 		},
-		'Close Overlays/Search',
+		'Close Overlays/Command Palette',
 		false
 	);
 });
@@ -278,6 +280,10 @@ afterNavigate(() => {
 	<div class="relative h-lvh w-full">
 		{#if $isSearchVisible}
 			<SearchComponent />
+		{/if}
+
+		{#if ui.isCommandBarVisible}
+			<CommandBar />
 		{/if}
 
 		<div class="flex h-lvh flex-col overflow-hidden">

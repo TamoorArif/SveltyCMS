@@ -15,6 +15,7 @@ and rule-of-thirds grid overlay.
 />
 -->
 
+<script lang="ts">
 import { registerHotkey } from '@src/utils/hotkeys';
 import { onMount } from 'svelte';
 import type { MediaImage } from '@utils/media/media-models';

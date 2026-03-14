@@ -25,7 +25,8 @@ function createMockEvent(pathname: string, protocol = 'https:'): RequestEvent {
 
 	return {
 		url,
-		request: new Request(url.toString())
+		request: new Request(url.toString()),
+		locals: {}
 	} as RequestEvent;
 }
 

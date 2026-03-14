@@ -145,9 +145,28 @@ function getItemLabel(itemData: Record<string, any>, index: number) {
 
 let collapsedItems = $state<Record<string, boolean>>({});
 
+import { onMount } from 'svelte';
+
 function toggleCollapse(id: string) {
 	collapsedItems[id] = !collapsedItems[id];
 }
+
+onMount(() => {
+	const handleMessage = (event: MessageEvent) => {
+		if (event.data?.type === 'svelty:block:reorder' && event.data?.fieldName === (field.db_fieldName || getFieldName(field))) {
+			const { fromIndex, toIndex } = event.data;
+			if (fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
+				const newItems = [...items];
+				const [movedItem] = newItems.splice(fromIndex, 1);
+				newItems.splice(toIndex, 0, movedItem);
+				items = newItems;
+				updateValue();
+			}
+		}
+	};
+	window.addEventListener('message', handleMessage);
+	return () => window.removeEventListener('message', handleMessage);
+});
 </script>
 
 <div class="w-full space-y-2">
@@ -161,6 +180,8 @@ function toggleCollapse(id: string) {
 			<div
 				class="rounded-container-token border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-800"
 				animate:flip={{ duration: 300 }}
+				data-block-id={item.id}
+				data-index={index}
 			>
 				<!-- Header / Handle -->
 				<header class="flex items-center justify-between border-b border-surface-200 p-2 dark:border-surface-700">

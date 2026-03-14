@@ -23,6 +23,7 @@
 
 <script lang="ts">
 import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Icon from '@iconify/svelte';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { app, validationStore } from '@src/stores/store.svelte';
 import { getFieldName } from '@src/utils/utils';
@@ -85,6 +86,35 @@ let fieldName = $derived(getFieldName(field));
 let validationError = $derived(validationStore.getError(fieldName));
 let isValidating = $state(false);
 let isTouched = $state(false);
+let translateLoading = $state(false);
+
+async function translateValue() {
+	const sourceLang = ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase();
+	const sourceText = (value as Record<string, string>)?.[sourceLang];
+
+	if (!sourceText || sourceLang === LANGUAGE) return;
+
+	translateLoading = true;
+	try {
+		const response = await fetch('/api/ai/enrich', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				text: sourceText,
+				action: 'translate',
+				language: LANGUAGE
+			})
+		});
+		const data = await response.json();
+		if (data.result) {
+			updateValue(data.result);
+		}
+	} catch (err) {
+		logger.error('[AI Translation] Error:', err);
+	} finally {
+		translateLoading = false;
+	}
+}
 
 // ✨ SECURITY ENHANCEMENT: Prevent homograph attacks
 function sanitizeInput(input: string): string {
@@ -272,6 +302,23 @@ export const WidgetData = async () => value;
 				aria-required={field?.required}
 				data-testid="text-input"
 			/>
+
+			<!-- AI Translation Button -->
+			{#if field.translated && LANGUAGE !== ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase()}
+				<button
+					type="button"
+					class="flex items-center px-2 hover:bg-surface-100 dark:hover:bg-surface-800 border-l border-surface-400 dark:border-surface-600"
+					onclick={translateValue}
+					disabled={translateLoading}
+					title="Translate from Default Language via AI"
+				>
+					{#if translateLoading}
+						<Icon icon="mdi:loading" class="animate-spin text-tertiary-500" />
+					{:else}
+						<Icon icon="mdi:translate" class="text-tertiary-500 dark:text-primary-500" />
+					{/if}
+				</button>
+			{/if}
 
 			<!-- suffix and count -->
 			{#if field?.suffix || field?.count || field?.minLength || field?.maxLength}

@@ -1,7 +1,6 @@
 /**
  * @file src/routes/api/settings/public/+server.ts
- * @description API endpoint to get all public settings.
- * This is used by the client to fetch updated settings when the version changes.
+ * @description API endpoint to get all public settings with performance telemetry.
  */
 
 import { dbAdapter } from '@src/databases/db';
@@ -10,24 +9,23 @@ import { defaultPublicSettings } from '@src/routes/setup/seed';
 import { json } from '@sveltejs/kit';
 
 export const GET = async () => {
+	const startTime = performance.now();
+
 	// 1. Get list of public keys from our definitions
-	// Use a Set for faster lookup if we had many keys, but array is fine here
 	const publicKeys = settingsGroups
 		.flatMap((g) => g.fields)
 		.filter((f) => f.category === 'public')
 		.map((f) => f.key);
 
-	// 2. Initialize with defaults (fast in-memory operation)
-	// We create a base object with all default values appropriately typed
+	// 2. Initialize with defaults
 	const publicSettings: Record<string, unknown> = {};
-
-	// Create a map of defaults for O(1) access during merge if needed,
-	// but mostly we just populate the initial state.
 	for (const setting of defaultPublicSettings) {
 		if (publicKeys.includes(setting.key)) {
 			publicSettings[setting.key] = setting.value;
 		}
 	}
+
+	let dbExecutionTime = 0;
 
 	// 3. If DB is available, fetch overrides in a single batch query
 	if (dbAdapter?.system.preferences) {
@@ -35,24 +33,15 @@ export const GET = async () => {
 			const dbResult = await dbAdapter.system.preferences.getMany(publicKeys);
 
 			if (dbResult.success && dbResult.data) {
+				dbExecutionTime = dbResult.meta?.executionTime || 0;
 				for (const key of publicKeys) {
 					const dbEntry = dbResult.data[key];
 					if (dbEntry !== undefined) {
-						// Handle wrapped values (legacy or metadata-rich format) vs raw values
-						// SveltyCMS sometimes stores settings as { value: ..., category: ... }
 						const val = dbEntry !== null && typeof dbEntry === 'object' && 'value' in dbEntry ? (dbEntry as { value: unknown }).value : dbEntry;
 
-						// Debug logging for languages
-						if (key === 'AVAILABLE_CONTENT_LANGUAGES') {
-							console.log('[SettingsAPI] Found languages in DB:', val);
-						}
-
-						// Type safety check for arrays (like languages) to ensure we don't return malformed data
 						if (key === 'AVAILABLE_CONTENT_LANGUAGES' || key === 'LOCALES') {
 							if (Array.isArray(val)) {
 								publicSettings[key] = val;
-							} else {
-								console.warn(`[SettingsAPI] Expected array for ${key} but got:`, typeof val);
 							}
 						} else {
 							publicSettings[key] = val;
@@ -61,16 +50,26 @@ export const GET = async () => {
 				}
 			}
 		} catch (error) {
-			// Fail gracefully - user gets defaults if DB fails
 			console.error('[SettingsAPI] Failed to fetch overrides:', error);
 		}
 	}
 
-	// 4. Return JSON response
-	// setting cache-control to ensure freshness while avoiding hammering
-	return json(publicSettings, {
-		headers: {
-			'Cache-Control': 'public, max-age=30' // Cache for 30s
+	const totalDuration = performance.now() - startTime;
+
+	// 4. Return JSON response with telemetry metadata
+	return json(
+		{
+			success: true,
+			data: publicSettings,
+			meta: {
+				executionTime: dbExecutionTime,
+				totalTime: totalDuration
+			}
+		},
+		{
+			headers: {
+				'Cache-Control': 'public, max-age=30'
+			}
 		}
-	});
+	);
 };

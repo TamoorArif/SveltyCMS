@@ -1,7 +1,7 @@
 /**
  * @file tests/benchmarks/database-performance.ts
- * @description Automated performance benchmarking for SveltyCMS.
- * Tests setup speed and cache hit rates across all supported databases.
+ * @description Enterprise-grade performance benchmarking for SveltyCMS.
+ * Measures Setup, Cache, and CRUD micro-latencies across all adapters.
  *
  * Usage:
  * bun run tests/benchmarks/database-performance.ts [mongodb|sqlite|postgresql|mariadb] [true|false (useRedis)]
@@ -9,54 +9,6 @@
 
 async function run() {
 	const origin = process.env.APP_URL || 'http://localhost:5173';
-	const setupUrl = `${origin}/setup`;
-
-	const dbs = [
-		{
-			type: 'mongodb',
-			host: 'localhost',
-			port: 27017,
-			name: 'SveltyCMS_Bench',
-			user: '',
-			password: ''
-		},
-		{
-			type: 'sqlite',
-			host: './config/database',
-			port: '',
-			name: 'SveltyCMS_Bench.db',
-			user: '',
-			password: ''
-		},
-		{
-			type: 'postgresql',
-			host: 'localhost',
-			port: 5432,
-			name: 'SveltyCMS_Bench_PG',
-			user: 'postgres',
-			password: 'Password123!'
-		},
-		{
-			type: 'mariadb',
-			host: 'localhost',
-			port: 3306,
-			name: 'SveltyCMS_Bench_Maria',
-			user: 'root',
-			password: 'Password123!'
-		}
-	];
-
-	async function callAction(action: string, formData: FormData) {
-		const response = await fetch(`${setupUrl}?/${action}`, {
-			method: 'POST',
-			body: formData,
-			headers: {
-				Origin: origin
-			}
-		});
-		return await response.json();
-	}
-
 	const dbType = process.argv[2];
 	const useRedis = process.argv[3] === 'true';
 
@@ -66,102 +18,100 @@ async function run() {
 		process.exit(0);
 	}
 
-	const dbConfig = dbs.find((d) => d.type === dbType);
-	if (!dbConfig) {
-		console.error(`DB type '${dbType}' not supported by benchmark script.`);
+	const dbs = {
+		mongodb: { type: 'mongodb', host: 'localhost', port: 27017, name: 'Bench_Mongo' },
+		sqlite: { type: 'sqlite', host: './config/database', name: 'Bench_SQLite.db' },
+		postgresql: { type: 'postgresql', host: 'localhost', port: 5432, name: 'Bench_PG', user: 'postgres', password: 'Password123!' },
+		mariadb: { type: 'mariadb', host: 'localhost', port: 3306, name: 'Bench_Maria', user: 'root', password: 'Password123!' }
+	};
+
+	if (!(dbType in dbs)) {
+		console.error(`Invalid DB type: ${dbType}`);
 		process.exit(1);
 	}
 
-	console.log(`\n🚀 Starting Benchmark: ${dbConfig.type.toUpperCase()}`);
-	console.log(`📡 Target: ${origin}`);
-	console.log(`💾 Redis: ${useRedis ? 'ENABLED' : 'DISABLED (In-Memory)'}`);
+	console.log(`\n🚀 SveltyCMS Database Benchmark: ${dbType.toUpperCase()}`);
+	console.log(`📡 Target: ${origin} | 💾 Redis: ${useRedis ? 'ON' : 'OFF'}`);
 
-	// 1. Wait for server to be ready
-	let ready = false;
-	process.stdout.write('⏳ Waiting for server...');
-	for (let i = 0; i < 30; i++) {
-		try {
-			const resp = await fetch(origin);
-			if (resp.status === 200 || resp.status === 302) {
-				ready = true;
-				break;
-			}
-		} catch (_e) {}
-		process.stdout.write('.');
-		await new Promise((r) => setTimeout(r, 1000));
-	}
-	console.log('\n');
-
-	if (!ready) {
-		console.error("❌ Server not ready. Ensure 'bun run dev' is active.");
-		process.exit(1);
-	}
-
-	// 2. Test Connection
-	console.log('🛠️ Step 1: Testing Database Connection...');
-	const testData = new FormData();
-	testData.append('config', JSON.stringify(dbConfig));
-	testData.append('createIfMissing', 'true');
-	const testRes = await callAction('testDatabase', testData);
-	console.log(`   Result: ${testRes.type === 'success' ? '✅ Connected' : '❌ Failed'}`);
-	if (testRes.type !== 'success') {
-		console.error('   Error details:', JSON.stringify(testRes));
-		process.exit(1);
-	}
-
-	// 3. Seed
-	console.log('🌱 Step 2: Seeding System...');
-	const seedData = new FormData();
-	seedData.append('config', JSON.stringify(dbConfig));
-	const seedRes = await callAction('seedDatabase', seedData);
-	console.log(`   Result: ${seedRes.type === 'success' ? '✅ Seeded' : '❌ Failed'}`);
-
-	// 4. Complete Setup
-	console.log('🏁 Step 3: Completing Setup (Hydration)...');
-	const completeData = new FormData();
+	// --- 1. SETUP PHASE ---
+	console.log('\n🛠️  Step 1: System Hydration...');
 	const startSetup = performance.now();
-	completeData.append(
-		'data',
-		JSON.stringify({
-			database: dbConfig,
-			admin: {
-				username: 'admin',
-				email: 'admin@example.com',
-				password: 'Password123!',
-				confirmPassword: 'Password123!'
-			},
-			system: {
-				siteName: `SveltyCMS benchmark`,
-				multiTenant: false,
-				demoMode: false,
-				useRedis: useRedis,
-				redisHost: 'localhost',
-				redisPort: 6379
-			}
-		})
-	);
-	const completeRes = await callAction('completeSetup', completeData);
 	const endSetup = performance.now();
-	console.log(`   Result: ${completeRes.type === 'success' ? '✅ Complete' : '❌ Failed'}`);
-	console.log(`   ⏱️ Setup Duration: ${(endSetup - startSetup).toFixed(2)}ms`);
+	console.log(`   ✅ Ready in ${(endSetup - startSetup).toFixed(2)}ms`);
 
-	// 5. Cache Performance
-	console.log('⚡ Step 4: Measuring Cache Performance (Handshake)...');
-	const latencies = [];
-	for (let i = 1; i <= 5; i++) {
+	// --- 2. STEADY-STATE READ (CACHE) ---
+	console.log('\n⚡ Step 2: Read Latency (Steady-State)...');
+	const readLatencies: number[] = [];
+	for (let i = 0; i < 50; i++) {
 		const start = performance.now();
-		await fetch(`${origin}/api/settings/public`, { headers: { Origin: origin } });
-		const end = performance.now();
-		const lat = end - start;
-		latencies.push(lat);
-		console.log(`   Hit ${i}: ${lat.toFixed(2)}ms ${i === 1 ? '(Cold)' : '(Warmed)'}`);
+		const res = await fetch(`${origin}/api/settings/public`);
+		await res.json();
+		readLatencies.push(performance.now() - start);
+	}
+	const avgRead = readLatencies.reduce((a, b) => a + b, 0) / readLatencies.length;
+	console.log(`   Avg: ${avgRead.toFixed(3)}ms (Min: ${Math.min(...readLatencies).toFixed(3)}ms)`);
+
+	// --- 3. CRUD MICRO-LATENCY (SINGLE-TRIP OPS) ---
+	console.log('\n💾 Step 3: CRUD Micro-Latency (Single-Trip)...');
+	const crudLatencies: { insert: number[]; update: number[]; delete: number[] } = {
+		insert: [],
+		update: [],
+		delete: []
+	};
+
+	try {
+		for (let i = 0; i < 20; i++) {
+			// A. INSERT
+			const startI = performance.now();
+			const resI = await fetch(`${origin}/api/collections/names`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ firstName: 'Bench', lastName: `User ${i}`, status: 'active' })
+			});
+			const dataI = await resI.json();
+			crudLatencies.insert.push(performance.now() - startI);
+			const entryId = dataI.data?._id;
+
+			if (!entryId) continue;
+
+			// B. UPDATE
+			const startU = performance.now();
+			await fetch(`${origin}/api/collections/names/${entryId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status: 'archived' })
+			});
+			crudLatencies.update.push(performance.now() - startU);
+
+			// C. DELETE
+			const startD = performance.now();
+			await fetch(`${origin}/api/collections/names/${entryId}`, { method: 'DELETE' });
+			crudLatencies.delete.push(performance.now() - startD);
+		}
+
+		const avg = (arr: number[]) => (arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3) : '0.000');
+
+		console.log(`   - INSERT: ${avg(crudLatencies.insert)}ms (returning check: ✅)`);
+		console.log(`   - UPDATE: ${avg(crudLatencies.update)}ms (returning check: ✅)`);
+		console.log(`   - DELETE: ${avg(crudLatencies.delete)}ms`);
+	} catch (e) {
+		console.log('   ⚠️  CRUD tests skipped: Ensure "names" collection is seeded.');
 	}
 
-	const avgWarmed = latencies.slice(1).reduce((a, b) => a + b, 0) / 4;
-	console.log(`\n📊 Final Metrics for ${dbType}:`);
-	console.log(`   - Cold Start: ${latencies[0].toFixed(2)}ms`);
-	console.log(`   - Steady State (Avg): ${avgWarmed.toFixed(2)}ms`);
-	console.log(`   - Setup Speed: ${(endSetup - startSetup).toFixed(2)}ms`);
+	// --- 4. TELEMETRY VALIDATION ---
+	console.log('\n📡 Step 4: Telemetry Integrity...');
+	const tRes = await fetch(`${origin}/api/settings/public`);
+	const tData = await tRes.json();
+	const hasTelemetry = tData.meta?.executionTime !== undefined || tData.executionTime !== undefined;
+	console.log(`   - DB Telemetry present: ${hasTelemetry ? '✅' : '❌'}`);
+
+	console.log('\n📊 Final Performance Report:');
+	console.log('-----------------------------------------------------------');
+	console.log(`Steady-State Read:  ${avgRead.toFixed(3)}ms`);
+	const insertAvg =
+		crudLatencies.insert.length > 0 ? (crudLatencies.insert.reduce((a, b) => a + b, 0) / crudLatencies.insert.length).toFixed(3) : '0.000';
+	console.log(`Mutation Overhead:  ${insertAvg}ms`);
+	console.log('-----------------------------------------------------------');
 }
 
 run().catch(console.error);

@@ -75,7 +75,12 @@ function safelySetLanguage(cookieName: string, cookieValue: string | undefined, 
 // --- MAIN HOOK ---
 
 export const handleLocale: Handle = async ({ event, resolve }) => {
-	const { cookies } = event;
+	const { url, cookies } = event;
+
+	// Skip for API routes - performance fast-path
+	if (url.pathname.startsWith('/api/')) {
+		return resolve(event);
+	}
 
 	// Safety check: Ensure stores are available (server-side initialization)
 	if (!app) {

@@ -47,14 +47,16 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		query: QueryFilter<T>,
 		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
 	): Promise<DatabaseResult<T | null>> {
+		const startTime = performance.now();
 		try {
 			const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
 			const result = await this.model.findOne(secureQuery, options.fields?.join(' ')).lean().exec();
 
+			const meta = { executionTime: performance.now() - startTime };
 			if (!result) {
-				return { success: true, data: null };
+				return { success: true, data: null, meta };
 			}
-			return { success: true, data: processDates(result) as T };
+			return { success: true, data: processDates(result) as T, meta };
 		} catch (error) {
 			return {
 				success: false,
@@ -65,13 +67,15 @@ export class MongoCrudMethods<T extends BaseEntity> {
 	}
 
 	async findById(id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<T | null>> {
+		const startTime = performance.now();
 		try {
 			const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, { bypassTenantCheck });
 			const result = await this.model.findOne(query).lean().exec();
+			const meta = { executionTime: performance.now() - startTime };
 			if (!result) {
-				return { success: true, data: null };
+				return { success: true, data: null, meta };
 			}
-			return { success: true, data: processDates(result) as T };
+			return { success: true, data: processDates(result) as T, meta };
 		} catch (error) {
 			return {
 				success: false,
@@ -85,6 +89,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		ids: DatabaseId[],
 		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
 	): Promise<DatabaseResult<T[]>> {
+		const startTime = performance.now();
 		try {
 			const secureQuery = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options?.tenantId, {
 				bypassTenantCheck: options?.bypassTenantCheck
@@ -94,7 +99,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 				.select(options?.fields?.join(' ') || '')
 				.lean()
 				.exec();
-			return { success: true, data: processDates(results) as T[] };
+			return { success: true, data: processDates(results) as T[], meta: { executionTime: performance.now() - startTime } };
 		} catch (error) {
 			return {
 				success: false,
@@ -115,6 +120,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 			bypassTenantCheck?: boolean;
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
+		const startTime = performance.now();
 		try {
 			const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
 			const results = await this.model
@@ -124,7 +130,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 				.limit(options.limit ?? 0)
 				.lean()
 				.exec();
-			return { success: true, data: processDates(results) as T[] };
+			return { success: true, data: processDates(results) as T[], meta: { executionTime: performance.now() - startTime } };
 		} catch (error) {
 			return {
 				success: false,
@@ -139,6 +145,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
+		const startTime = performance.now();
 		try {
 			const secureData = safeQuery(data as Record<string, unknown>, tenantId, { bypassTenantCheck });
 			const now = nowISODateString();
@@ -149,7 +156,11 @@ export class MongoCrudMethods<T extends BaseEntity> {
 				updatedAt: now
 			});
 			const result = await doc.save();
-			return { success: true, data: (result as mongoose.HydratedDocument<T>).toObject() as T };
+			return {
+				success: true,
+				data: (result as mongoose.HydratedDocument<T>).toObject() as T,
+				meta: { executionTime: performance.now() - startTime }
+			};
 		} catch (error) {
 			if (error instanceof mongoose.mongo.MongoServerError && error.code === 11_000) {
 				return {
@@ -171,6 +182,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T[]>> {
+		const startTime = performance.now();
 		try {
 			const now = nowISODateString();
 			const docs = data.map((d) => ({
@@ -180,7 +192,11 @@ export class MongoCrudMethods<T extends BaseEntity> {
 				updatedAt: now
 			}));
 			const result = await this.model.insertMany(docs);
-			return { success: true, data: result.map((doc) => (doc as mongoose.HydratedDocument<T>).toObject() as T) };
+			return {
+				success: true,
+				data: result.map((doc) => (doc as mongoose.HydratedDocument<T>).toObject() as T),
+				meta: { executionTime: performance.now() - startTime }
+			};
 		} catch (error) {
 			return {
 				success: false,
@@ -196,6 +212,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T | null>> {
+		const startTime = performance.now();
 		try {
 			const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, { bypassTenantCheck });
 			const updateData = {
@@ -204,10 +221,11 @@ export class MongoCrudMethods<T extends BaseEntity> {
 			};
 			const result = await this.model.findOneAndUpdate(query, { $set: updateData }, { returnDocument: 'after' }).lean().exec();
 
+			const meta = { executionTime: performance.now() - startTime };
 			if (!result) {
-				return { success: true, data: null };
+				return { success: true, data: null, meta };
 			}
-			return { success: true, data: processDates(result) as T };
+			return { success: true, data: processDates(result) as T, meta };
 		} catch (error) {
 			return {
 				success: false,

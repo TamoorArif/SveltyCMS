@@ -183,11 +183,15 @@ function openSchedule() {
 }
 
 onMount(() => {
-	registerHotkey('mod+s', () => {
-		if (isFormValid && canWrite) {
-			save();
-		}
-	}, 'Save entry');
+	registerHotkey(
+		'mod+s',
+		() => {
+			if (isFormValid && canWrite) {
+				save();
+			}
+		},
+		'Save entry'
+	);
 });
 
 async function save() {

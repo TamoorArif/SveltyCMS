@@ -91,11 +91,9 @@ export function analyze(files: MediaBase[]): Breakdown {
 
 	// Percentages
 	const addPct = (obj: Record<string, any>) => {
+		if (totalSize <= 0) return;
 		for (const k in obj) {
-			if (!Object.hasOwn(obj, k)) {
-				continue;
-			}
-			obj[k].pct = totalSize ? (obj[k].size / totalSize) * 100 : 0;
+			obj[k].pct = (obj[k].size / totalSize) * 100;
 		}
 	};
 	addPct(byType);

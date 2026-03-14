@@ -60,10 +60,11 @@ graph TB
 
 SveltyCMS implements a "Smart Saving" strategy that outperforms traditional client-side editors:
 
-1.  **Instruction Set**: Edits (crop, rotate, filters) are stored as a JSON instruction object.
-2.  **Zero-Loss Quality**: Instead of exporting a lossy blob from the browser, the editor sends these instructions to the server.
-3.  **Sharp.js Pipeline**: The server applies the transformations to the **original, uncompressed asset** using the high-performance Sharp.js library.
-4.  **Non-Destructive**: The original file remains untouched; edited versions are saved as linked variants with their own version history.
+1.  **Direct Entry**: From the Media Gallery, click the **Edit** icon on any image thumbnail to launch the editor instantly with that asset pre-loaded.
+2.  **Instruction Set**: Edits (crop, rotate, filters) are stored as a JSON instruction object.
+3.  **Zero-Loss Quality**: Instead of exporting a lossy blob from the browser, the editor sends these instructions to the server.
+4.  **Sharp.js Pipeline**: The server applies the transformations to the **original, uncompressed asset** using the high-performance Sharp.js library.
+5.  **Non-Destructive**: The original file remains untouched; edited versions are saved as linked variants with their own version history.
 
 ---
 

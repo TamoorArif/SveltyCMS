@@ -5,6 +5,7 @@
 Replaces the ModalWidgetForm, providing a full-screen or focused editor experience with a Setup-like stepper.
 -->
 
+<script lang="ts">
 import { registerHotkey } from '@src/utils/hotkeys';
 import { onMount } from 'svelte';
 import Stepper from '@src/components/system/stepper.svelte';
@@ -93,21 +94,38 @@ function handleDelete() {
 }
 
 onMount(() => {
-	registerHotkey('mod+s', () => {
-		handleSave();
-	}, 'Save widget configuration');
+	registerHotkey(
+		'mod+s',
+		() => {
+			handleSave();
+		},
+		'Save widget configuration'
+	);
 
-	registerHotkey('mod+enter', () => {
-		handleNext();
-	}, 'Next step / Finish');
+	registerHotkey(
+		'mod+enter',
+		() => {
+			handleNext();
+		},
+		'Next step / Finish'
+	);
 
-	registerHotkey('escape', () => {
-		handleBack();
-	}, 'Back / Cancel', false);
+	registerHotkey(
+		'escape',
+		() => {
+			handleBack();
+		},
+		'Back / Cancel',
+		false
+	);
 
-	registerHotkey('delete', () => {
-		handleDelete();
-	}, 'Delete widget');
+	registerHotkey(
+		'delete',
+		() => {
+			handleDelete();
+		},
+		'Delete widget'
+	);
 });
 </script>
 

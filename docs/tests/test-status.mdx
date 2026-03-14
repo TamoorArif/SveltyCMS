@@ -6,7 +6,7 @@ order: 2
 icon: 'mdi:chart-box'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-03-13'
+updated: '2026-03-14'
 tags:
   - 'testing'
   - 'status'
@@ -17,150 +17,71 @@ tags:
 
 # SveltyCMS Test Suite Status
 
-> **Last Updated:** March 13, 2026
+> **Last Updated:** March 14, 2026
 > **Total Tests:** ~1070+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (725 unit tests across 53 suites)
+> **Overall Pass Rate:** 100% (732 unit tests across 54 suites)
 
 ## Executive Summary
 
-The testing suite has been fully migrated to **Vitest 4.1.0** (Vite 8) and optimized for **Enterprise-grade reliability** in both local and CI (Linux) environments. Recent efforts have stabilized global state management (resolved rune loops), fixed module resolution for SvelteKit aliases, and hardened security hooks.
+The testing suite has been fully optimized for **Enterprise-grade reliability**. Recent enhancements include **Database Micro-Telemetry validation**, **Signed Preview Token verification**, and **Non-blocking Audit Logging** coverage.
 
-- **Unit Tests:** 725 tests across 53 suites (Passing - 100%)
+- **Unit Tests:** 732 tests across 54 suites (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
-- **E2E Tests:** Critical flows (Setup, RBAC, Redirection) fully automated and verified.
+- **E2E Tests:** Critical flows (Setup, RBAC, Redirection) verified.
 
 ### Test Coverage by Category
 
 | Category                    | Status       | Pass Rate | Tests   |
 | --------------------------- | ------------ | --------- | ------- |
-| **Server Hooks**            | ✅ Excellent | 100%      | 287/287 |
-| **API - User**              | ✅ Complete  | 100%      | 47/47   |
-| **API - GraphQL**           | ✅ Complete  | 100%      | 21/21   |
-| **API - Token**             | ✅ Complete  | 100%      | 12/12   |
-| **Setup Actions**           | ✅ Complete  | 100%      | 20/20   |
+| **Server Hooks (Latencies)**| ✅ Excellent | 100%      | 287/287 |
+| **Preview Token System**    | ✅ NEW       | 100%      | 4/4     |
+| **Database Micro-Telemetry**| ✅ NEW       | 100%      | 8/8     |
 | **API - Collections**       | ✅ Complete  | 100%      | 19/19   |
-| **API - Dashboard**         | ✅ Complete  | 100%      | 48/48   |
-| **API - 2FA**               | ✅ Complete  | 100%      | 28/28   |
-| **API - Security**          | ✅ Complete  | 100%      | 33/33   |
-| **API - Widgets**           | ✅ Complete  | 100%      | 30/30   |
-| **API - Settings**          | ✅ Complete  | 100%      | 31/31   |
-| **API - Theme**             | ✅ Complete  | 100%      | 24/24   |
-| **API - Miscellaneous**     | ✅ Complete  | 100%      | 36/36   |
-| **Media & DAM**             | ✅ Excellent | 100%      | 34/34   |
-| **GDPR Service**            | ✅ Excellent | 100%      | 4/4     |
-| **AI Service**              | ✅ Excellent | 100%      | 5/5     |
-| **SAML Auth Service**       | ✅ Excellent | 100%      | 3/3     |
-| **Telemetry Service**       | ✅ Excellent | 100%      | 4/4     |
-| **Automation Service**      | ✅ Excellent | 100%      | 6/6     |
+| **API - User**              | ✅ Complete  | 100%      | 47/47   |
+| **Media & DAM (AI)**        | ✅ Excellent | 100%      | 34/34   |
 | **Security Service (ASR)**  | ✅ Excellent | 100%      | 34/34   |
-| **Plugin Sandbox**          | ✅ Excellent | 100%      | 7/7     |
-| **Security Utils**          | ✅ Excellent | 100%      | 14/14   |
 | **Encryption & Crypto**     | ✅ Excellent | 100%      | 14/14   |
 | **Auth & Lockout Security** | ✅ Excellent | 100%      | 23/23   |
 | **Widget Validation**       | ✅ Excellent | 100%      | 43/43   |
-| **AST Transformers**        | ✅ Excellent | 100%      | 10/10   |
-| **Database Resilience**     | ✅ Excellent | 100%      | 7/7     |
-| **Cache System**            | ✅ Excellent | 100%      | 26/26   |
-| **UI Store & Logic**        | ✅ Excellent | 100%      | 15/15   |
-| **Content Utils**           | ✅ Excellent | 100%      | 6/6     |
-| **Setup Utils**             | ✅ Excellent | 100%      | 25/25   |
-| **Collection Builder**      | ✅ Excellent | 100%      | 7/7     |
-| **Live Preview Utils**      | ✅ Excellent | 100%      | 3/3     |
-| **Token System**            | ✅ Excellent | 100%      | 11/11   |
-| **Repeater Widget**         | ✅ Excellent | 100%      | 5/5     |
-| **Price Widget**            | ✅ Excellent | 100%      | 5/5     |
 
 ---
 
-## ✅ Passing Tests (754)
+## ✅ Passing Tests (Latest Wins)
 
-### 1. Multi-Database Support 🔌
+### 1. Multi-Database Micro-Telemetry 🔌
+All 4 database adapters are now verified to return `executionTime` in microseconds:
+- ✅ **MongoDB**: Mongoose `returnDocument` telemetry verified.
+- ✅ **SQL (PG/Maria/SQLite)**: Drizzle `.returning()` telemetry verified.
 
-All core features are verified to work seamlessly across our supported database stack:
+### 2. Secure Preview Handshake (4/4) 🔒
+Verified the short-lived HMAC-SHA256 token lifecycle:
+- ✅ **Decryption**: Correct decoding of base64url tokens.
+- ✅ **Expiration**: Rejection of tokens older than 30 minutes.
+- ✅ **Binding**: Rejection of tokens swapped between different entries.
 
-- ✅ **MongoDB**: Local instances and Atlas (SRV) clusters.
-- ✅ **SQLite**: In-process database for lightweight deployments (via Drizzle).
-- ✅ **MariaDB**: High-performance relational storage (via Drizzle).
-- ✅ **PostgreSQL**: Enterprise relational storage (via Drizzle).
-
-### 2. Server Hooks Middleware (53/53) 🔒
-
-**Files:**
-
-- `tests/unit/hooks/` (Passing - 100%)
-- `tests/unit/databases/database-resilience.test.ts` (7 tests)
-- `tests/unit/databases/cache-service.test.ts` (9 tests)
-
-**Firewall and Security Hardening:**
-
-- ✅ TEST_MODE Isolation: Firewall logic is now explicitly verified via `x-test-request` headers.
-- ✅ Pattern Detection: Robust detection of SQLi, XSS, and Administrative enumeration.
-
-### 3. Smart Onboarding & Redirection 🚀
-
-**Coverage:**
-
-- ✅ **Empty CMS Logic**: Admins are automatically redirected to `/config/collectionbuilder` if no collections exist.
-- ✅ **Error Recovery**: Graceful fallback to `/` ensures a resilient user experience during initialization failures.
-- ✅ **UI Synchronization**: Sidebars and headers are correctly persisted across error states.
-
----
-
-### Unit Test Architecture (Vitest 4.1.0)
-
-Our unit tests leverage **Vitest** for native Svelte 5 rune support and fast execution:
-
-- **Dedicated Vitest Config**: `vitest.config.ts` manages all aliases (`@widgets`, `@services`, `$paraglide`).
-- **SvelteKit Mocks**: Specialized mock files in `tests/unit/mocks/$app/` simulate the SvelteKit environment without the full runtime overhead.
-- **Rune Stabilization**: Fixed recursive update loops in `UIStore` by moving to granular property updates.
-- **Isomorphic Mocking**: `tests/unit/setup.ts` provides a consistent environment for both Browser and Node-based logic.
-
-### Automated CI/CD
-
-Our GitHub Actions pipeline is 100% synchronized with the local environment:
-
-- **Vite 8 Compatibility**: Optimized for the latest Vite ecosystem.
-- **Timer Stabilization**: `TEST_MODE` now bypasses non-deterministic timers in `LoadingStore` and `ToastStore` for synchronous reliability.
-- **Matrix Testing**: Integration and E2E tests are executed against all supported databases (MongoDB, MariaDB, PostgreSQL, SQLite).
+### 3. Non-Blocking Audit Trails 🚀
+- ✅ **Latency Tracking**: Audit logs now capture `durationMs` for all mutations.
+- ✅ **Async Offloading**: Verified that audit logging does not block API responses.
 
 ---
 
 ## 🚀 Running Tests
 
 ### Unit Tests
-
 ```bash
-bun run test:unit
+npm run test:unit
 ```
 
-### Integration Tests
-
+### Preview Verification Tests (Bun)
 ```bash
-bun run test:integration
+bun test tests/unit/utils/preview-verification.test.ts
 ```
 
-### E2E Tests
-
+### Performance Benchmarks
 ```bash
-bun x playwright test
+bun run tests/benchmarks/hooks-performance.ts
 ```
 
-### All Tests
-
-```bash
-bun run test:all
-```
-
-## CI Workflow & Data Isolation (Latest)
-
-We have transitioned to a **Pure Black-Box** CI strategy to ensure 100% data isolation and environment parity:
-
-- **No Fake Configs**: Manual creation of `private.test.ts` in CI is removed.
-- **Native Setup**: CI jobs now run `scripts/setup-system.ts` against a live server to generate real test configurations.
-- **Cache-Busting Imports**: Dynamic imports of configuration files now use a timestamp query parameter to ensure in-process reinitialization picks up disk changes immediately.
-- **Server Resilience**: E2E jobs include explicit server restarts and health checks after setup to guarantee a fresh, verified state.
-- **Unit Isolation**: Unit tests remain 100% isolated via in-memory mocks, completely decoupled from the physical filesystem.
-
-Last Updated: 2026-03-13
+Last Updated: 2026-03-14
 Current Unit Pass Rate: 100%
-Current Browser/E2E Strategy: Native Setup
+Current State: Enterprise Optimized

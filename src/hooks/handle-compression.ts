@@ -18,6 +18,7 @@
 import { promisify } from 'node:util';
 import * as zlib from 'node:zlib';
 import type { Handle } from '@sveltejs/kit';
+import { STATIC_ASSET_REGEX } from './handle-static-asset-caching';
 
 const gzip = promisify(zlib.gzip);
 const brotli = promisify(zlib.brotliCompress);
@@ -36,6 +37,13 @@ const COMPRESSIBLE_TYPES = [
 ];
 
 export const handleCompression: Handle = async ({ event, resolve }) => {
+	const pathname = event.url.pathname;
+
+	// Skip compression for static assets (already immutable + CDN cached)
+	if (STATIC_ASSET_REGEX.test(pathname)) {
+		return resolve(event);
+	}
+
 	const response = await resolve(event);
 
 	// Skip if already compressed or body is empty/stream

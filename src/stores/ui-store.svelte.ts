@@ -57,6 +57,7 @@ class UIStore {
 	manualOverrideActive = $state(false);
 	headerShowMore = $state(false);
 	isSearchVisible = $state(false);
+	isCommandBarVisible = $state(false);
 	userPreferred = $state<UIVisibility>('collapsed');
 
 	// Internal state

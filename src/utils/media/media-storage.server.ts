@@ -38,6 +38,9 @@ const MEDIA_ROOT = getPublicSettingSync('MEDIA_FOLDER') ?? 'mediaFolder';
 
 /** Save buffer to storage (local or cloud) */
 export async function saveFile(buffer: Buffer, relPath: string): Promise<string> {
+	if (relPath.includes('..')) {
+		throw new Error('Invalid path: Potential traversal attack');
+	}
 	if (isCloud()) {
 		await upload(buffer, relPath);
 		return getUrl(relPath);
@@ -76,6 +79,13 @@ export async function deleteFile(url: string): Promise<void> {
 	}
 	rel = rel.replace(/^\/+/, '');
 
+	// Path Traversal Protection
+	if (rel.includes('..')) {
+		const { logger } = await import('@utils/logger.server');
+		logger.error('Attempted path traversal delete blocked', { path: rel });
+		return;
+	}
+
 	const fs = await import('node:fs/promises');
 	const full = path.join(process.cwd(), MEDIA_ROOT, rel);
 	await fs.unlink(full).catch(() => {}); // best effort
@@ -89,6 +99,7 @@ export const saveResizedImages = saveResized;
 
 /** Check if file exists */
 export async function fileExists(rel: string): Promise<boolean> {
+	if (rel.includes('..')) return false;
 	if (isCloud()) {
 		return await exists(rel);
 	}
@@ -104,6 +115,9 @@ export async function fileExists(rel: string): Promise<boolean> {
 
 /** Get file buffer */
 export async function getFile(rel: string): Promise<Buffer> {
+	if (rel.includes('..')) {
+		throw new Error('Invalid path: Potential traversal attack');
+	}
 	if (isCloud()) {
 		throw new Error('getFile not implemented for cloud');
 	}

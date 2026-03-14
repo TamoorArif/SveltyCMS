@@ -131,7 +131,12 @@ export const PATCH = apiHandler(async ({ locals, params, request }) => {
 	}
 
 	const duration = performance.now() - startTime;
-	return json({ success: true, data: result.data, performance: { duration } });
+	return json({
+		success: true,
+		data: result.data,
+		meta: result.meta,
+		performance: { duration }
+	});
 });
 
 // DELETE: Removes an entry

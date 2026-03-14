@@ -151,6 +151,7 @@ export const POST = apiHandler(async ({ locals, params, request }) => {
 	const responseData = {
 		success: true,
 		data: result.data,
+		meta: result.meta,
 		performance: { duration }
 	};
 

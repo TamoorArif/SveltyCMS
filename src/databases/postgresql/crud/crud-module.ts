@@ -24,72 +24,90 @@ export class CrudModule {
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
+		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
 	): Promise<DatabaseResult<T | null>> {
-		return this.core.wrap(async () => {
-			const secureQuery = safeQuery(query, options?.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const results = await this.db
-				.select()
-				.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where)
-				.limit(1);
-			if (results.length === 0) {
-				return null;
-			}
-			return utils.convertDatesToISO(results[0]) as T;
-		}, 'CRUD_FIND_ONE_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const results = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where)
+					.limit(1);
+				if (results.length === 0) {
+					return null;
+				}
+				return utils.convertDatesToISO(results[0]) as T;
+			}, 'CRUD_FIND_ONE_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async findMany<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options?: {
+		options: {
 			limit?: number;
 			offset?: number;
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
-		}
+		} = {}
 	): Promise<DatabaseResult<T[]>> {
-		return this.core.wrap(async () => {
-			const secureQuery = safeQuery(query, options?.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			let q = this.db
-				.select()
-				.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where)
-				.$dynamic();
-			if (options?.limit) {
-				q = q.limit(options.limit);
-			}
-			if (options?.offset) {
-				q = q.offset(options.offset);
-			}
-			const results = await q;
-			return utils.convertArrayDatesToISO(results) as T[];
-		}, 'CRUD_FIND_MANY_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				let q = this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where)
+					.$dynamic();
+				if (options.limit) {
+					q = q.limit(options.limit);
+				}
+				if (options.offset) {
+					q = q.offset(options.offset);
+				}
+				const results = await q;
+				return utils.convertArrayDatesToISO(results) as T[];
+			}, 'CRUD_FIND_MANY_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
+		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
 	): Promise<DatabaseResult<T[]>> {
-		return this.core.wrap(async () => {
-			const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options?.tenantId, {
-				bypassTenantCheck: options?.bypassTenantCheck
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck
+				});
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const results = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where);
+				return utils.convertArrayDatesToISO(results) as T[];
+			}, 'CRUD_FIND_BY_IDS_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
 			});
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const results = await this.db
-				.select()
-				.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where);
-			return utils.convertArrayDatesToISO(results) as T[];
-		}, 'CRUD_FIND_BY_IDS_FAILED');
 	}
 
 	async insert<T extends BaseEntity>(
@@ -98,23 +116,29 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
-		return this.core.wrap(async () => {
-			const table = this.core.getTable(collection);
-			const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
-			const now = new Date(nowISODateString());
-			const values = {
-				...data,
-				_id: id,
-				tenantId: tenantId || (data as any).tenantId,
-				createdAt: now,
-				updatedAt: now
-			};
-			const [result] = await this.db
-				.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.values(values as unknown as Record<string, unknown>)
-				.returning();
-			return utils.convertDatesToISO(result as Record<string, unknown>) as T;
-		}, 'CRUD_INSERT_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const table = this.core.getTable(collection);
+				const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
+				const now = new Date(nowISODateString());
+				const values = {
+					...data,
+					_id: id,
+					tenantId: tenantId || (data as any).tenantId,
+					createdAt: now,
+					updatedAt: now
+				};
+				const [result] = await this.db
+					.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.values(values as unknown as Record<string, unknown>)
+					.returning();
+				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
+			}, 'CRUD_INSERT_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async update<T extends BaseEntity>(
@@ -124,27 +148,39 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
-		return this.core.wrap(async () => {
-			const secureQuery = safeQuery({ _id: id } as unknown as QueryFilter<T>, tenantId, { bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const now = new Date(nowISODateString());
-			const [result] = await this.db
-				.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
-				.where(where)
-				.returning();
-			return utils.convertDatesToISO(result as Record<string, unknown>) as T;
-		}, 'CRUD_UPDATE_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const secureQuery = safeQuery({ _id: id } as unknown as QueryFilter<T>, tenantId, { bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const now = new Date(nowISODateString());
+				const [result] = await this.db
+					.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+					.where(where)
+					.returning();
+				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
+			}, 'CRUD_UPDATE_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
-		return this.core.wrap(async () => {
-			const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, { bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			await this.db.delete(table as unknown as import('drizzle-orm/pg-core').PgTable).where(where);
-		}, 'CRUD_DELETE_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, { bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				await this.db.delete(table as unknown as import('drizzle-orm/pg-core').PgTable).where(where);
+			}, 'CRUD_DELETE_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async upsert<T extends BaseEntity>(
@@ -154,34 +190,40 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T>> {
-		return this.core.wrap(async () => {
-			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const existing = await this.db
-				.select()
-				.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where)
-				.limit(1);
-			if (existing.length > 0) {
-				const res = await this.update<T>(
-					collection,
-					(existing[0] as unknown as { _id: string })._id as unknown as DatabaseId,
-					data as Partial<T>,
-					tenantId,
-					bypassTenantCheck
-				);
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const existing = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where)
+					.limit(1);
+				if (existing.length > 0) {
+					const res = await this.update<T>(
+						collection,
+						(existing[0] as any)._id as unknown as DatabaseId,
+						data as Partial<T>,
+						tenantId,
+						bypassTenantCheck
+					);
+					if (!res.success) {
+						throw res.error;
+					}
+					return res.data;
+				}
+				const res = await this.insert<T>(collection, data, tenantId, bypassTenantCheck);
 				if (!res.success) {
 					throw res.error;
 				}
 				return res.data;
-			}
-			const res = await this.insert<T>(collection, data, tenantId, bypassTenantCheck);
-			if (!res.success) {
-				throw res.error;
-			}
-			return res.data;
-		}, 'CRUD_UPSERT_FAILED');
+			}, 'CRUD_UPSERT_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async count<T extends BaseEntity>(
@@ -190,16 +232,22 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<number>> {
-		return this.core.wrap(async () => {
-			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
-			const table = this.core.getTable(collection);
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const [result] = await this.db
-				.select({ count: count() })
-				.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where);
-			return Number((result as { count: number }).count);
-		}, 'CRUD_COUNT_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const table = this.core.getTable(collection);
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const [result] = await this.db
+					.select({ count: count() })
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where);
+				return Number((result as any).count);
+			}, 'CRUD_COUNT_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async exists<T extends BaseEntity>(
@@ -208,13 +256,19 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<boolean>> {
-		return this.core.wrap(async () => {
-			const res = await this.count(collection, query, tenantId, bypassTenantCheck);
-			if (!res.success) {
-				throw res.error;
-			}
-			return (res.data ?? 0) > 0;
-		}, 'CRUD_EXISTS_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const res = await this.count(collection, query, tenantId, bypassTenantCheck);
+				if (!res.success) {
+					throw res.error;
+				}
+				return (res.data ?? 0) > 0;
+			}, 'CRUD_EXISTS_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async insertMany<T extends BaseEntity>(
@@ -223,25 +277,31 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<T[]>> {
-		return this.core.wrap(async () => {
-			if (data.length === 0) {
-				return [];
-			}
-			const table = this.core.getTable(collection);
-			const now = new Date(nowISODateString());
-			const values = data.map((d) => ({
-				...d,
-				_id: utils.generateId() as DatabaseId,
-				tenantId: tenantId || (d as any).tenantId,
-				createdAt: now,
-				updatedAt: now
-			}));
-			const results = await this.db
-				.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.values(values as unknown as Record<string, unknown>[])
-				.returning();
-			return utils.convertArrayDatesToISO(results) as unknown as T[];
-		}, 'CRUD_INSERT_MANY_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				if (data.length === 0) {
+					return [];
+				}
+				const table = this.core.getTable(collection);
+				const now = new Date(nowISODateString());
+				const values = data.map((d) => ({
+					...d,
+					_id: utils.generateId() as DatabaseId,
+					tenantId: tenantId || (d as any).tenantId,
+					createdAt: now,
+					updatedAt: now
+				}));
+				const results = await this.db
+					.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.values(values as unknown as Record<string, unknown>[])
+					.returning();
+				return utils.convertArrayDatesToISO(results) as unknown as T[];
+			}, 'CRUD_INSERT_MANY_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async updateMany<T extends BaseEntity>(
@@ -251,18 +311,24 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ modifiedCount: number }>> {
-		return this.core.wrap(async () => {
-			const table = this.core.getTable(collection);
-			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const now = new Date(nowISODateString());
-			const results = await this.db
-				.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
-				.where(where)
-				.returning();
-			return { modifiedCount: results.length };
-		}, 'CRUD_UPDATE_MANY_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const table = this.core.getTable(collection);
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const now = new Date(nowISODateString());
+				const results = await this.db
+					.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+					.where(where)
+					.returning();
+				return { modifiedCount: results.length };
+			}, 'CRUD_UPDATE_MANY_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async deleteMany(
@@ -271,16 +337,22 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ deletedCount: number }>> {
-		return this.core.wrap(async () => {
-			const table = this.core.getTable(collection);
-			const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
-			const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-			const results = await this.db
-				.delete(table as unknown as import('drizzle-orm/pg-core').PgTable)
-				.where(where)
-				.returning();
-			return { deletedCount: results.length };
-		}, 'CRUD_DELETE_MANY_FAILED');
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				const table = this.core.getTable(collection);
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const results = await this.db
+					.delete(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(where)
+					.returning();
+				return { deletedCount: results.length };
+			}, 'CRUD_DELETE_MANY_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async upsertMany<T extends BaseEntity>(
@@ -292,21 +364,27 @@ export class CrudModule {
 		tenantId?: string | null | null,
 		bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<{ upsertedCount: number; modifiedCount: number }>> {
-		return this.core.wrap(async () => {
-			let upsertedCount = 0;
-			let modifiedCount = 0;
-			for (const item of items) {
-				const existing = await this.findOne(collection, item.query, { tenantId, bypassTenantCheck });
-				if (existing.success && existing.data) {
-					await this.update(collection, existing.data._id, item.data as Partial<T>, tenantId, bypassTenantCheck);
-					modifiedCount++;
-				} else {
-					await this.insert(collection, item.data, tenantId, bypassTenantCheck);
-					upsertedCount++;
+		const startTime = performance.now();
+		return this.core
+			.wrap(async () => {
+				let upsertedCount = 0;
+				let modifiedCount = 0;
+				for (const item of items) {
+					const existing = await this.findOne(collection, item.query, { tenantId, bypassTenantCheck });
+					if (existing.success && existing.data) {
+						await this.update(collection, (existing.data as any)._id, item.data as Partial<T>, tenantId, bypassTenantCheck);
+						modifiedCount++;
+					} else {
+						await this.insert(collection, item.data, tenantId, bypassTenantCheck);
+						upsertedCount++;
+					}
 				}
-			}
-			return { upsertedCount, modifiedCount };
-		}, 'CRUD_UPSERT_MANY_FAILED');
+				return { upsertedCount, modifiedCount };
+			}, 'CRUD_UPSERT_MANY_FAILED')
+			.then((res) => {
+				if (res.success) res.meta = { executionTime: performance.now() - startTime };
+				return res;
+			});
 	}
 
 	async aggregate<R = unknown>(

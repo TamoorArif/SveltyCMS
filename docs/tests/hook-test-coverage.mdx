@@ -33,6 +33,17 @@ Complete test coverage for all 11 SvelteKit middleware hooks in the SveltyCMS sy
 | addSecurityHeaders       | 38      | ✅ Complete | `tests/unit/hooks/security-headers.test.ts`     |
 | **Total**                | **287** | **100%**    | 12 files                                        |
 
+## Performance Benchmarks
+
+In addition to correctness, all hooks are benchmarked for execution overhead using `tests/benchmarks/hooks-performance.ts`.
+
+| Metric                     | Value    | Target (2026) |
+| -------------------------- | -------- | ------------- |
+| Static Regex Check Latency | 0.125 µs | < 0.200 µs    |
+| API Fast-path Skip Latency | 0.048 µs | < 0.100 µs    |
+| Compression Guard Latency  | 0.062 µs | < 0.100 µs    |
+| Total API Hook Overhead    | 0.150 ms | < 0.500 ms    |
+
 ## Middleware Sequence
 
 The hooks run in this specific order:

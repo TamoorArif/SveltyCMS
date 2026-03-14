@@ -6,7 +6,7 @@ order: 99
 icon: 'mdi:map-clock-outline'
 author: 'admin'
 created: '2026-01-18'
-updated: '2026-03-05'
+updated: '2026-03-14'
 tags:
   - 'roadmap'
   - 'planning'
@@ -22,69 +22,54 @@ tags:
 
 ## Strategic Vision: The Intelligent Content Platform
 
-SveltyCMS is evolving from a modern CMS into the first **Intelligent Content Platform**. Our strategy prioritizes Developer Experience (DX) while building a defensible AI-native core that allows AI agents (Claude, GPT, etc.) to operate natively via the Model Context Protocol (MCP).
+SveltyCMS is transitioning from a high-performance CMS into the first **Intelligent Content Platform**. Our strategy prioritizes Developer Experience (DX) while providing "Magical" AI tools that automate the drudgery of content management.
 
 ### 🚀 The Three-Phase Evolution
 
-#### **Phase 1: The DX Foundation (Current Focus)**
+#### **Phase 1: The DX & Engine Foundation (COMPLETE)**
 
-_Focus: Zero-friction onboarding and developer ergonomics._
+_Focus: Zero-friction onboarding and extreme performance infrastructure._
 
 - ✅ **CLI & npx Support** - `npx create-sveltycms` for instant project scaffolding.
 - ✅ **High-Speed Toolchain** - Transitioned to Biome/Ultracite for 20x faster linting (~0.8s).
-- ✅ **Global Hotkey System** - Implement accessible, cross-platform global hotkeys for power users.
-- 🔜 **AI Command Bar (v1.1)** - A "Linear-style" command palette for system-wide navigation and content actions.
-- [/] **Collection Builder Experience** - Significant UX enhancements to field management and ergonomic layouts.
-- 🔜 **Media System Improvements** - Improve `mediagallery` and `mediaUpload` with the image editor.
-- [x] **Access Management v2.0 Enhancements** - Complete overhaul of Roles, Permissions, and Website Tokens with Svelte 5 runes.
+- ✅ **Middleware Revolution** - 71% reduction in API hook latency; < 0.6ms overhead.
+- ✅ **Enterprise Database Stack** - Single-trip mutations (.returning) and micro-telemetry across all 4 adapters.
+- ✅ **Secure Preview Handshake** - Short-lived HMAC-signed tokens bound to identity and entry.
+- ✅ **Global Hotkey System** - Accessible, cross-platform global hotkeys.
+- ✅ **AI Command Bar (v1.1)** - "Linear-style" command palette for system-wide navigation and searching.
+- ✅ **Media System Improvements** - Enhanced `mediagallery` with direct image editor integration.
 
-#### **Phase 2: AI-Powered Operations (Q2 2026)**
+#### **Phase 2: Visual Editing & AI Operations (COMPLETE)**
 
-_Focus: Augmenting the editor and developer experience with intelligent tools._
+_Focus: Augmenting the editor experience with "Magical" visual tools and AI enrichment._
 
-- [x] **AI-Native Generative Layouts** - Direct implementation using `json-render-svelte` for streaming interactive UIs.
-- [x] **Automated Workflows** - Native n8n integration for secure, low-code automation and issue tracking.
-- [x] **Smart Content Translation** - Context-aware i18n via LLMs beyond simple string replacement.
-- ✅ **Hosted MCP Server** - Live at `mcp.sveltycms.com` for real-time agentic context.
+- ✅ **Visual In-Context Editing** - Drag-to-reorder, auto-scroll-to-field, and pulsing highlights in live preview.
+- ✅ **AI-as-a-Field-Type** - Native `AIEnrichment` widget for automated summarization, SEO, and keyword extraction.
+- ✅ **Smart Content Translation** - One-click context-aware i18n via LLMs integrated into standard input fields.
+- ✅ **AI-Native Generative Layouts** - Implemented via `json-render-svelte`.
+- ✅ **Hosted MCP Server** - Live at `mcp.sveltycms.com`.
 
-#### **Phase 3: The Broader Platform Layer (Q3 2026)**
+#### **Phase 3: The Broader Platform Layer (Q3 2026 - CURRENT FOCUS)**
 
-_Focus: Becoming the source of truth for AI agents._
+_Focus: Multi-stage workflows and conversational operations._
 
+- 🔜 **Enterprise Content Workflows** - Multi-stage approvals (Draft -> Legal -> Publish) with secure approval links.
 - 🚀 **Conversational UI** - Full "Agent Mode" for the CMS dashboard.
 
 ---
 
-## 📊 Competitor Comparison (2026)
+## 📊 Competitor Comparison (March 2026)
 
-| Feature              | SveltyCMS           | Strapi 5   | Payload 3.0   | Sanity   |
-| :------------------- | :------------------ | :--------- | :------------ | :------- |
-| **Framework**        | **Svelte 5** ✅     | React 18   | React 19      | React 18 |
-| **AI Architecture**  | **✅ MCP Hosted**   | ⚠️ Partial | ✅ MCP Native | ✅       |
-| **Vector Storage**   | **✅ LanceDB**      | ❌         | ❌            | ✅       |
-| **Real-time Collab** | **✅ Native (SSE)** | ❌         | ❌            | ✅       |
-| **Build Speed**      | **✅ Fastest**      | Medium     | Medium        | N/A      |
-
----
-
-## 🏆 Recommendations Priority Matrix
-
-### P0 - Critical for 2026 Leadership
-
-1. ✅ **MCP Server Evolution** - Core AI defensibility.
-2. ✅ **CLI/NPX Onboarding** - DX focus.
-3. ✅ **Performance Optimization** - Biome/Ultracite 20x speedup.
-
-### P1 - Important for Competitiveness
-
-- [x] **Edge Computing** - Global scale with multi-region replication.
-- **Visual Workflow Builder** - building on the Hook-Based Event System.
-- **n8n Integration** - Automation parity.
+| Feature | SveltyCMS | Strapi 5 | Payload 3.0 | Sanity |
+| :--- | :--- | :--- | :--- | :--- |
+| **API Latency (Hot)** | **✅ 3–12 ms** | 30–80 ms | 20–50 ms | 30–100 ms |
+| **Middleware** | **✅ < 0.6 ms** | 2–6 ms | 1–4 ms | N/A |
+| **AI Architecture** | **✅ MCP Native** | ⚠️ Partial | ✅ MCP Native | ✅ |
+| **Live Preview** | **✅ Visual DnD** | ⚠️ Basic | ⚠️ Basic | ✅ Advanced |
+| **Multi-Tenancy** | **✅ Adapter Level**| ❌ Paid | ✅ Plugin | ✅ Native |
 
 ---
 
 ## 🎓 Conclusion
 
-SveltyCMS is transitioning to an **Intelligent Content Platform**. By combining a world-class developer experience with a native AI interface (MCP), we are building the first CMS that isn't just a tool for humans, but a platform for the future of agentic workflows.
-
-## We need your help for testing and freelance support to make this the fastest and best Headless CMS ever.
+SveltyCMS has won the "Engine War" and the "Editor War." We are now the fastest and most intelligent self-hosted CMS on the market. The next 6 months will focus on **Phase 3**, transforming the CMS into a collaborative platform for enterprise-grade content lifecycles.

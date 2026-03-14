@@ -199,6 +199,29 @@ ${contextRules}`;
 			return null;
 		}
 	}
+
+	/**
+	 * Generic text processing for enrichment
+	 */
+	public async process(prompt: string, text: string): Promise<string> {
+		try {
+			const ollamaUrl = await getPrivateSetting('OLLAMA_URL');
+			const chatModel = (await getPrivateSetting('AI_MODEL_CHAT')) || 'ministral-3:latest';
+			const localOllama = ollamaUrl ? new (await import('ollama')).Ollama({ host: ollamaUrl }) : ollama;
+
+			const response = await localOllama.chat({
+				model: chatModel,
+				messages: [
+					{ role: 'system', content: prompt },
+					{ role: 'user', content: text }
+				]
+			});
+			return response.message.content;
+		} catch (err) {
+			console.error('AI Process Error:', err);
+			throw new Error('AI processing failed. Check Ollama connection.');
+		}
+	}
 }
 
 export const aiService = AIService.getInstance();

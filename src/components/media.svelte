@@ -34,6 +34,7 @@ Advanced media gallery with search, thumbnails, grid/list views, and selection.
 -->
 
 <script lang="ts">
+import { goto } from '$app/navigation';
 import { mediagallery_nomedia } from '@src/paraglide/messages';
 import { logger } from '@utils/logger';
 import type { MediaImage } from '@utils/media/media-models';
@@ -230,6 +231,13 @@ function handleSearch(): void {
 	}, DEBOUNCE_MS);
 }
 
+// Navigate to Image Editor
+function goToEditor(event: Event, file: MediaImage): void {
+	event.stopPropagation();
+	event.preventDefault();
+	goto(`/imageEditor?src=${encodeURIComponent(file.url)}`);
+}
+
 // Lifecycle
 onMount(() => {
 	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -396,6 +404,19 @@ onDestroy(() => {
 						>
 							<iconify-icon icon={isInfoShown(index) ? 'mdi:information-off' : 'mdi:information'} width="20" class="text-primary-500"></iconify-icon>
 						</button>
+
+						<!-- Image Editor Button -->
+						{#if file.type?.startsWith('image/')}
+							<button
+								onclick={(e) => goToEditor(e, file)}
+								aria-label={`Edit ${file.filename} in Image Editor`}
+								class="btn-sm m-1 p-1 hover:bg-surface-600"
+								type="button"
+							>
+								<iconify-icon icon="mdi:image-edit" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+							</button>
+						{/if}
+
 						<p class="flex-1 truncate pr-2 text-center text-sm text-white" title={file.filename}>{file.filename}</p>
 					</div>
 
