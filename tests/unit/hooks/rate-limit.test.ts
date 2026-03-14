@@ -1,6 +1,6 @@
 /**
- * @file tests/bun/hooks/rate-limit.test.ts
- * @description Comprehensive tests for handleRateLimit middleware
+ * @file tests/unit/hooks/rate-limit.test.ts
+ * @description Comprehensive tests for handleRateLimit middleware. Includes localhost bypass and static asset exemptions.
  *
  * Tests:
  * - Localhost exemption
@@ -53,10 +53,7 @@ describe('handleRateLimit Middleware', () => {
 	});
 
 	describe('Localhost Exemption', () => {
-		// NOTE: Localhost exemption was removed as a security vulnerability
-		// localhost requests should now be rate-limited like any other IP
-		// to prevent SSRF-based rate-limit bypass attacks
-		it('should apply rate limiting to localhost (127.0.0.1)', async () => {
+		it('should bypass rate limiting for localhost (127.0.0.1)', async () => {
 			const event = createMockEvent('/api/collections', 'GET', {
 				'x-forwarded-for': '127.0.0.1'
 			});
@@ -66,7 +63,7 @@ describe('handleRateLimit Middleware', () => {
 			expect(mockResolve).toHaveBeenCalledTimes(1);
 		});
 
-		it('should apply rate limiting to localhost (::1)', async () => {
+		it('should bypass rate limiting for localhost (::1)', async () => {
 			const event = createMockEvent('/api/collections', 'GET', {
 				'x-forwarded-for': '::1'
 			});

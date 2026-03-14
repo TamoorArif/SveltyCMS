@@ -29,8 +29,9 @@
  * @prerequisite Runs after rate limiting, before authentication
  */
 
+import { dev } from '$app/environment';
 import { metricsService } from '@src/services/metrics-service';
-import { getPrivateSettingSync } from '@src/services/settings-service';
+import { getPrivateSettingSync, getPublicSettingSync } from '@src/services/settings-service';
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 import { AppError, handleApiError } from '@utils/error-handling';
@@ -103,8 +104,18 @@ function isTrustedOrigin(event: RequestEvent): boolean {
 	const host = event.url.host;
 	const protocol = event.url.protocol;
 
+	// Get configured trusted host
+	const trustedHost = dev ? getPublicSettingSync('HOST_DEV') : getPublicSettingSync('HOST_PROD');
+
 	// 1. Check Origin header (most reliable)
 	if (origin) {
+		// If we have a configured trusted host, we MUST match it
+		if (trustedHost) {
+			const expectedOrigin = `${protocol}//${trustedHost}`;
+			return origin === expectedOrigin;
+		}
+
+		// Fallback to self-referential check if host setting not yet loaded/available
 		const expectedOrigin = `${protocol}//${host}`;
 		return origin === expectedOrigin;
 	}
@@ -113,6 +124,9 @@ function isTrustedOrigin(event: RequestEvent): boolean {
 	if (referer) {
 		try {
 			const refererUrl = new URL(referer);
+			if (trustedHost) {
+				return refererUrl.host === trustedHost && refererUrl.protocol === protocol;
+			}
 			return refererUrl.host === host && refererUrl.protocol === protocol;
 		} catch {
 			return false;

@@ -199,9 +199,9 @@ export const handleRateLimit: Handle = async ({ event, resolve }) => {
 	// Allow forcing security checks in integration tests via special header
 	const forceSecurity = event.request.headers.get('x-test-security') === 'true';
 
-	// SECURITY: Exempt localhost ONLY in development or integration tests
-	// This prevents SSRF bypass in production while maintaining a good DX/TX
-	if ((isIntegrationTestServer || (isLocal && (dev || isIntegrationTestServer))) && !forceSecurity) {
+	// SECURITY: Exempt localhost by default to allow local testing of built artifacts.
+	// We only enforce limits on localhost if specifically requested via header.
+	if (isLocal && !forceSecurity) {
 		if (dev || isIntegrationTestServer) {
 			logger.debug(`[RateLimit] BYPASS: Path=${url.pathname}, IP=${clientIp}, isLocal=${isLocal}, dev=${dev}, isTestMode=${isIntegrationTestServer}`);
 		}

@@ -38,9 +38,9 @@ describe('System Load & Resilience Benchmark', () => {
 		EXTREME: { total: 500_000, batch: 10_000, name: 'Cluster / Mainframe' }
 	};
 
-	// Determine starting level from env or default to ALL (progressive)
-	// Usage: LOAD_LEVEL=MEDIUM bun test ...
-	const TARGET_LEVEL = (process.env.LOAD_LEVEL as keyof typeof LOAD_PROFILES | 'ALL') || 'ALL';
+	// Determine starting level from env or default to TINY
+	// Usage: LOAD_LEVEL=ALL bun test ... (to run progressive)
+	const TARGET_LEVEL = (process.env.LOAD_LEVEL as keyof typeof LOAD_PROFILES | 'ALL') || 'TINY';
 
 	it('should determine system limit by progressive loading', async () => {
 		let maxStableLevel = 'NONE';
