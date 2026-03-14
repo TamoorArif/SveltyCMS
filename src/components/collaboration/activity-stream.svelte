@@ -10,8 +10,9 @@ with the AI collaboration assistant.
 <script lang="ts">
 import { collaboration } from '@src/stores/collaboration-store.svelte';
 import { screen } from '@src/stores/screen-size-store.svelte';
+import { registerHotkey } from '@src/utils/hotkeys';
 import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { tick } from 'svelte';
+import { onMount, tick } from 'svelte';
 import { slide } from 'svelte/transition';
 import { page } from '$app/state';
 
@@ -29,6 +30,28 @@ const aiEmptyText = $derived(
 
 let newMessage = $state('');
 let scrollContainer: HTMLDivElement | undefined = $state(undefined);
+let inputEl: HTMLInputElement | undefined = $state(undefined);
+
+// --- Hotkeys ---
+onMount(() => {
+	// Focus input when chat tab is opened via hotkey or click
+	registerHotkey(
+		'mod+j',
+		() => {
+			if (collaboration.activeTab === 'chat' && inputEl) {
+				inputEl.focus();
+			} else {
+				collaboration.activeTab = 'chat';
+				tick().then(() => inputEl?.focus());
+			}
+		},
+		'Focus AI Chat'
+	);
+
+	// Tab switching
+	registerHotkey('alt+1', () => (collaboration.activeTab = 'activity'), 'Switch to Activity Tab');
+	registerHotkey('alt+2', () => (collaboration.activeTab = 'chat'), 'Switch to Chat Tab');
+});
 
 // Auto-scroll to bottom of chat
 $effect(() => {
@@ -211,6 +234,7 @@ function getEventIcon(event: string) {
 		<div transition:slide|local class="p-4 bg-surface-200-700-token border-t border-surface-500/30 shrink-0">
 			<form class="flex gap-2" onsubmit={handleSendMessage}>
 				<input
+					bind:this={inputEl}
 					type="text"
 					placeholder="Ask AI via MCP Knowledge Core..."
 					class="flex-1 bg-surface-500/10 border border-surface-500/30 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"

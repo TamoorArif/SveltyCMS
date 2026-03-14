@@ -95,7 +95,13 @@ onMount(() => {
 </script>
 
 <!-- Page Title and Back Button -->
-<PageTitle name="Config Sync & Backup" icon="mdi:sync-circle" showBackButton={true} backUrl="/config" />
+<PageTitle
+	name="Config Sync & Backup"
+	icon="mdi:sync-circle"
+	showBackButton={true}
+	backUrl="/config"
+	helpUrl="/docs/architecture/configuration-management"
+/>
 
 <div class="wrapper">
 	<!-- Description -->

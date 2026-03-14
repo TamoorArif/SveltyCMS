@@ -193,7 +193,13 @@ function modalConfirm(): void {
 </script>
 
 <!-- Page Title with Back Button -->
-<PageTitle name={userpage_title()} icon="mdi:account-circle" showBackButton={true} backUrl="/config" />
+<PageTitle
+	name={userpage_title()}
+	icon="mdi:account-circle"
+	showBackButton={true}
+	backUrl="/config"
+	helpUrl="/docs/architecture/user-management-overview"
+/>
 
 <div class="max-h-[calc(100vh-65px)] overflow-auto">
 	<h2 class="sr-only">Profile Information</h2>

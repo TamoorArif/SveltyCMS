@@ -4,7 +4,7 @@
  *
  * This endpoint handles POST requests to create a new user. It is a direct,
  * admin-only action and does not send an invitation email. For inviting users
- * to register themselves, use the `createToken` endpoint.
+ * to register themselves, use the `create-token` endpoint.
  *
  * Features:
  * - **Defense in Depth**: Specific permission check to ensure only authorized admins can create users.

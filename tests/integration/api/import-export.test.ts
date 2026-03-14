@@ -13,7 +13,7 @@
  * - /api/collections/[collectionId]/export
  * - /api/export
  * - /api/export/full
- * - /api/systemsetting/export
+ * - /api/system-settings/export
  * TODO: Update tests to match actual API structure
  */
 

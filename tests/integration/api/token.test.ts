@@ -28,11 +28,11 @@ describe('Token API Endpoints', () => {
 		authCookie = await prepareAuthenticatedContext();
 	});
 
-	describe('POST /api/token/createToken', () => {
+	describe('POST /api/token/create-token', () => {
 		it('should create an invitation token with valid admin authentication', async () => {
 			// Use unique email that doesn't exist in the system
 			const uniqueEmail = `invite-test-${Date.now()}@example.com`;
-			const response = await fetch(`${API_BASE_URL}/api/token/createToken`, {
+			const response = await fetch(`${API_BASE_URL}/api/token/create-token`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ describe('Token API Endpoints', () => {
 		});
 
 		it('should reject token creation without authentication', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/token/createToken`, {
+			const response = await fetch(`${API_BASE_URL}/api/token/create-token`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -66,7 +66,7 @@ describe('Token API Endpoints', () => {
 		});
 
 		it('should reject token creation for an invalid email format', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/token/createToken`, {
+			const response = await fetch(`${API_BASE_URL}/api/token/create-token`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', Cookie: authCookie },
 				body: JSON.stringify({
@@ -87,7 +87,7 @@ describe('Token API Endpoints', () => {
 		// Before each test in this block, create a fresh invitation token with unique email
 		beforeEach(async () => {
 			tokenEmail = `validate-test-${Date.now()}@example.com`;
-			const createResponse = await fetch(`${API_BASE_URL}/api/token/createToken`, {
+			const createResponse = await fetch(`${API_BASE_URL}/api/token/create-token`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', Cookie: authCookie },
 				body: JSON.stringify({
@@ -142,7 +142,7 @@ describe('Token API Endpoints', () => {
 		it('should list all tokens with admin authentication', async () => {
 			// Create a token to ensure the list is not empty
 			const uniqueEmail = `list-test-${Date.now()}@example.com`;
-			await fetch(`${API_BASE_URL}/api/token/createToken`, {
+			await fetch(`${API_BASE_URL}/api/token/create-token`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', Cookie: authCookie },
 				body: JSON.stringify({
@@ -187,9 +187,9 @@ describe('Token API Endpoints', () => {
 		});
 	});
 
-	describe('GET /api/getTokensProvided', () => {
+	describe('GET /api/get-tokens-provided', () => {
 		it('should get tokens provided info with admin authentication', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/getTokensProvided`, {
+			const response = await fetch(`${API_BASE_URL}/api/get-tokens-provided`, {
 				headers: { Cookie: authCookie }
 			});
 
@@ -202,7 +202,7 @@ describe('Token API Endpoints', () => {
 		});
 
 		it('should reject the request without authentication', async () => {
-			const response = await fetch(`${API_BASE_URL}/api/getTokensProvided`);
+			const response = await fetch(`${API_BASE_URL}/api/get-tokens-provided`);
 			// Returns 401 or 403 depending on auth state
 			expect(response.status).toBeGreaterThanOrEqual(401);
 			expect(response.status).toBeLessThanOrEqual(403);

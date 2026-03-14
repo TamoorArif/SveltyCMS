@@ -15,6 +15,8 @@ export interface Adjustments {
 	temperature: number;
 	tint?: number; // Green/Magenta
 	vibrance: number;
+	grayscale: number;
+	sepia: number;
 }
 
 export const DEFAULT_ADJUSTMENTS: Adjustments = {
@@ -28,7 +30,9 @@ export const DEFAULT_ADJUSTMENTS: Adjustments = {
 	clarity: 0,
 	vibrance: 0,
 	tint: 0,
-	sharpness: 0
+	sharpness: 0,
+	grayscale: 0,
+	sepia: 0
 };
 
 export interface AdjustmentConfig {
@@ -159,6 +163,26 @@ export const ADJUSTMENT_CONFIGS: AdjustmentConfig[] = [
 		step: 1,
 		category: 'detail',
 		description: 'Edge definition'
+	},
+	{
+		key: 'grayscale',
+		label: 'Grayscale',
+		icon: 'mdi:format-color-grey',
+		min: 0,
+		max: 100,
+		step: 1,
+		category: 'color',
+		description: 'Remove color information'
+	},
+	{
+		key: 'sepia',
+		label: 'Sepia',
+		icon: 'mdi:history',
+		min: 0,
+		max: 100,
+		step: 1,
+		category: 'color',
+		description: 'Apply warm reddish-brown tone'
 	}
 ];
 

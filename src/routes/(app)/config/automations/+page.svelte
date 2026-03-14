@@ -260,7 +260,13 @@ function timeAgo(dateStr?: string): string {
 onMount(loadFlows);
 </script>
 
-<PageTitle name="Automations" icon="mdi:robot-outline" showBackButton={true} backUrl="/config" />
+<PageTitle
+	name="Automations"
+	icon="mdi:robot-outline"
+	showBackButton={true}
+	backUrl="/config"
+	helpUrl="/docs/guides/automation-system"
+/>
 
 <div class="wrapper p-4">
 	<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">

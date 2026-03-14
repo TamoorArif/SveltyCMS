@@ -1,5 +1,5 @@
 /**
- * @file src/services/media-service.server.ts
+ * @file src/utils/media/media-service.server.ts
  * @description Provides a service class for media operations.
  *
  * ### Features
@@ -37,7 +37,7 @@ import mime from 'mime-types';
 const execAsync = promisify(exec);
 
 // Types
-import type { BaseEntity, ISODateString } from '@src/content/types';
+import type { ISODateString } from '@src/content/types';
 import type { Role, User } from '@src/databases/auth/types';
 // Media Cache
 import { cacheService } from '@src/databases/cache-service';
@@ -70,9 +70,6 @@ export class MediaService {
 	private initialized = false;
 	// Define your allowed types regex
 	private readonly mimeTypePattern = /^(image|video|audio)\/(jpeg|png|gif|svg\+xml|webp|mp4|webm|ogg|mpeg)|(application\/pdf)$/;
-
-	// Watermark Cache (In-memory)
-	private static watermarkCache = new Map<string, Buffer>();
 
 	constructor(db: IDBAdapter) {
 		this.db = db;
@@ -127,20 +124,13 @@ export class MediaService {
 			// Apply watermark if options are provided and it's an image
 			if (watermarkOptions && mimeType.startsWith('image/')) {
 				try {
-					const watermarkKey = `${watermarkOptions.url}:${watermarkOptions.scale}:${watermarkOptions.position}`;
-					let watermarkBuffer = MediaService.watermarkCache.get(watermarkKey);
-
-					if (!watermarkBuffer) {
-						const watermarkImagePath = Path.join(process.cwd(), 'static', watermarkOptions.url);
-						watermarkBuffer = await sharp(watermarkImagePath)
-							.resize({
-								width: Math.floor((await sharp(imageBuffer).metadata()).width! * (watermarkOptions.scale / 100))
-							})
-							.png()
-							.toBuffer();
-						MediaService.watermarkCache.set(watermarkKey, watermarkBuffer);
-						logger.debug('[MediaService] Watermark buffer cached', { url: watermarkOptions.url });
-					}
+					const watermarkImagePath = Path.join(process.cwd(), 'static', watermarkOptions.url);
+					const watermarkBuffer = await sharp(watermarkImagePath)
+						.resize({
+							width: Math.floor((await sharp(imageBuffer).metadata()).width! * (watermarkOptions.scale / 100))
+						})
+						.png()
+						.toBuffer();
 
 					imageBuffer = await sharp(imageBuffer)
 						.composite([
@@ -186,19 +176,19 @@ export class MediaService {
 
 			if (isImage && ext !== 'svg') {
 				// Don't resize SVGs
-				const resizeStart = performance.now();
+				logger.debug('Processing image variants', { fileName, mimeType });
+				// saveResizedImages signature: (buffer, hash, baseName, ext, baseDir)
 				resizedImages = await saveResizedImages(imageBuffer, hash, sanitizedFileName, ext, basePath);
-				const resizeDuration = (performance.now() - resizeStart).toFixed(2);
-				logger.debug(`[MediaTelemetry] Image variants generated in ${resizeDuration}ms`, { fileName });
 			}
 
-			const totalDuration = (performance.now() - startTime).toFixed(2);
 			logger.info('File upload completed', {
 				fileName,
 				url: publicUrl,
+				relativePath,
 				fileSize: imageBuffer.length,
+				isImage,
 				resizedVariants: Object.keys(resizedImages),
-				durationMs: totalDuration
+				totalProcessingTime: performance.now() - startTime
 			});
 
 			return {

@@ -1,5 +1,5 @@
 /**
- * @file src/routes/(app)/config/systemsetting/settingsGroups.ts
+ * @file src/routes/(app)/config/system-settings/settings-groups.ts
  * @description Configuration groups for System Settings UI
  * Smart organization of all dynamic CMS settings with fine-grained permission control
  */

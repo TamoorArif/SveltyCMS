@@ -10,6 +10,7 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 import { collaboration } from '@src/stores/collaboration-store.svelte';
 import { screen } from '@src/stores/screen-size-store.svelte';
 import { ui } from '@src/stores/ui-store.svelte';
+import { registerHotkey } from '@src/utils/hotkeys';
 import { onMount } from 'svelte';
 import { fade, scale } from 'svelte/transition';
 import { browser } from '$app/environment';
@@ -24,6 +25,25 @@ const isRtcEnabled = $derived(user?.preferences?.rtc?.enabled ?? true);
 // Show chat if RTC is enabled AND (either multiple users OR AI is available)
 const shouldShowChat = $derived(isRtcEnabled && (totalUsers > 1 || aiEnabled));
 const isOpen = $derived(ui.state.chatPanel !== 'hidden');
+
+// --- Hotkeys ---
+onMount(() => {
+	loadPosition();
+
+	// Register global toggle for AI Assistant / Collaboration
+	// Using Mod+J (Standard for AI sidebars in many modern apps)
+	registerHotkey('mod+j', () => collaboration.togglePanel(), 'Toggle AI Assistant');
+
+	// Allow Escape to close the panel if it's open
+	registerHotkey(
+		'escape',
+		() => {
+			if (isOpen) collaboration.togglePanel();
+		},
+		'Close AI Assistant',
+		false
+	); // preventDefault=false to let other escapes work
+});
 
 // Constants for desktop layout
 const DESKTOP_PANEL_WIDTH = 350;

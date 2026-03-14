@@ -7,7 +7,7 @@
  */
 
 import { dbAdapter } from '@src/databases/db';
-import { getSettingGroup } from '@src/routes/(app)/config/systemsetting/settings-groups';
+import { getSettingGroup } from '@src/routes/(app)/config/system-settings/settings-groups';
 import { invalidateSettingsCache } from '@src/services/settings-service';
 import { setRestartNeeded } from '@src/utils/server/restart-required';
 import { updateVersion } from '@src/utils/server/settings-version';

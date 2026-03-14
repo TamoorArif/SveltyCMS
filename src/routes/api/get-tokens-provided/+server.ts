@@ -1,5 +1,5 @@
 /**
- * @file src/routes/api/getTokensProvided/+server.ts
+ * @file src/routes/api/get-tokens-provided/+server.ts
  * @description API endpoint for checking the availability of external service tokens.
  *
  * This module provides functionality to:
@@ -11,7 +11,7 @@
  * - Logging of token availability status
  *
  * Usage:
- * GET /api/getTokensProvided
+ * GET /api/get-tokens-provided
  * Returns: JSON object with boolean values for each service token
  * Requires: Admin authentication or system permissions
  */

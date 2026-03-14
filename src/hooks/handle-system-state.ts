@@ -10,7 +10,7 @@
  */
 
 import { dev } from '$app/environment';
-import { dbInitPromise } from '@src/databases/db';
+import { dbInitPromise, getPrivateEnv } from '@src/databases/db';
 import { metricsService } from '@src/services/metrics-service';
 import { getSystemState, isSystemReady } from '@src/stores/system/state';
 import type { SystemState } from '@src/stores/system/types';
@@ -56,6 +56,13 @@ function isTrustedHost(event: RequestEvent): boolean {
 
 	// Always trust localhost/loopback
 	if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+		return true;
+	}
+
+	// Dynamic check for Demo Mode - allow any host to reach bootstrap routes
+	// (Setup check happens in handleSetup anyway)
+	const config = getPrivateEnv();
+	if (config?.DEMO === true || process.env.SVELTYCMS_DEMO === 'true') {
 		return true;
 	}
 

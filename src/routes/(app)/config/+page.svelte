@@ -119,7 +119,7 @@ const configItems = [
 	},
 	{
 		id: 'settings',
-		href: '/config/systemsetting',
+		href: '/config/system-settings',
 		label: 'Settings',
 		icon: 'uil:setting',
 		iconColor: 'text-secondary-500',

@@ -257,13 +257,20 @@ class CollaborationStore {
 		}
 
 		try {
+			// Extract last few messages for context (max 10)
+			const history = this.aiHistory.slice(-10).map((m) => ({
+				role: m.role,
+				content: m.content
+			}));
+
 			const res = await fetch('/api/chat', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					content,
 					room: this.currentRoom,
-					tab: this.activeTab
+					tab: this.activeTab,
+					history
 				})
 			});
 

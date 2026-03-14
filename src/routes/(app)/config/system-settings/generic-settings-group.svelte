@@ -1,5 +1,6 @@
 <!--
-@file  src/routes/(app)/config/systemsetting/GenericSettingsGroup.svelte
+@file  src/routes/(app)/config/system-settings/generic-settings-group.svelte
+
 @component
 **Generic component for rendering any settings group**
 

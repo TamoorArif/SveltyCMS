@@ -4,7 +4,7 @@
  */
 
 import { dbAdapter } from '@src/databases/db';
-import { settingsGroups } from '@src/routes/(app)/config/systemsetting/settings-groups';
+import { settingsGroups } from '@src/routes/(app)/config/system-settings/settings-groups';
 import { defaultPublicSettings } from '@src/routes/setup/seed';
 import { json } from '@sveltejs/kit';
 

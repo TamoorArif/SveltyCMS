@@ -59,7 +59,7 @@ const currentPath = $derived(page.url.pathname);
 
 // Check if we're in special modes
 const isMediaMode = $derived(currentPath.includes('/mediagallery'));
-const isSettingsMode = $derived(currentPath.includes('/config/systemsetting'));
+const isSettingsMode = $derived(currentPath.includes('/config/system-settings'));
 
 // Language state
 let languageTag = $state(getLocale() as string);

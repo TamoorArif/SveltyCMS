@@ -37,7 +37,7 @@ The Token API provides endpoints for managing user invitation tokens. These toke
 
 | Method   | Endpoint                 | Description                             | Auth Required |
 | -------- | ------------------------ | --------------------------------------- | ------------- |
-| `POST`   | `/api/token/createToken` | Create new invitation token             | ✅ Admin      |
+| `POST`   | `/api/token/create-token` | Create new invitation token             | ✅ Admin      |
 | `GET`    | `/api/token`             | List all tokens                         | ✅ Admin      |
 | `PUT`    | `/api/token/[tokenID]`   | Update token details                    | ✅ Admin      |
 | `DELETE` | `/api/token/[tokenID]`   | Delete a token                          | ✅ Admin      |
@@ -52,7 +52,7 @@ Creates a new invitation token and optionally sends an email invitation.
 ### Endpoint
 
 ```
-POST /api/token/createToken
+POST /api/token/create-token
 ```
 
 ### Request Body
@@ -163,7 +163,7 @@ POST /api/token/createToken
 #### cURL
 
 ```bash
-curl -X POST https://cms.example.com/api/token/createToken \
+curl -X POST https://cms.example.com/api/token/create-token \
   -H "Content-Type: application/json" \
   -H "Cookie: session=your-session-cookie" \
   -d '{
@@ -176,7 +176,7 @@ curl -X POST https://cms.example.com/api/token/createToken \
 #### JavaScript (Fetch)
 
 ```javascript
-const response = await fetch('/api/token/createToken', {
+const response = await fetch('/api/token/create-token', {
 	method: 'POST',
 	headers: {
 		'Content-Type': 'application/json'
@@ -731,7 +731,7 @@ if (!emailRegex.test(email)) {
 Handle all response types:
 
 ```javascript
-const result = await fetch('/api/token/createToken', {
+const result = await fetch('/api/token/create-token', {
 	method: 'POST',
 	body: JSON.stringify(tokenData)
 }).then((res) => res.json());

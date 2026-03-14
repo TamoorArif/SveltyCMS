@@ -55,6 +55,7 @@ interface Props {
 	backUrl?: string;
 	children?: import('svelte').Snippet; // For action buttons
 	highlight?: string;
+	helpUrl?: string; // Documentation URL
 	icon?: string;
 	iconColor?: string;
 	iconSize?: string;
@@ -67,6 +68,7 @@ interface Props {
 const {
 	name,
 	highlight = '',
+	helpUrl = '',
 	icon,
 	iconColor = 'text-tertiary-500 dark:text-primary-500',
 	iconSize = '32',
@@ -134,6 +136,20 @@ function handleBackClick(event: Event) {
 					<span class={i % 2 === 1 ? 'font-semibold text-tertiary-500 dark:text-primary-500' : ''}> {part} </span>
 				{/each}
 			</span>
+
+			{#if helpUrl}
+				<SystemTooltip title="Open documentation">
+					<a
+						href={helpUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="ml-2 text-surface-500 hover:text-primary-500 transition-all hover:scale-110 flex items-center justify-center"
+						aria-label="View documentation"
+					>
+						<iconify-icon icon="mdi:help-circle-outline" width="20"></iconify-icon>
+					</a>
+				</SystemTooltip>
+			{/if}
 
 			<span class="sr-only absolute inset-0 overflow-hidden whitespace-normal"> {name} </span>
 		</h1>

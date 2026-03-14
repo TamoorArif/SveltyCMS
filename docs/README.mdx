@@ -80,7 +80,9 @@ SveltyCMS is designed to outperform competitors like Payload CMS, Strapi, and Di
 | **Multi-Tenancy** | Native (tenantId isolation)         | Core/free vs. enterprise-gated in Strapi/Contentful.     |
 | **SCIM 2.0**      | Native endpoints (RFC 7644)         | Automated provisioning vs. manual/enterprise in others.  |
 | **Audit Logs**    | Crypto-chained (SHA-256)            | Compliance-ready vs. basic/manual in competitors.        |
-| **Accessibility** | WCAG 2.2 AA / ATAG 2.0              | Full support vs. partial in Payload/Strapi.              |
+| **Accessibility** | WCAG 3.0 Functional Perf            | High-precision hotkeys vs. basic ARIA in rivals.         |
+| **Media Engine**  | Sharp.js + ffmpeg + AI              | Transcoding & Batch Editing vs. simple uploads.          |
+| **Workflows**     | Visual FSM Editor                   | Drag-and-drop state machines vs. linear status dropdowns. |
 
 ## 🚀 Quick Start
 
@@ -90,7 +92,7 @@ SveltyCMS is designed to outperform competitors like Payload CMS, Strapi, and Di
 1. 🌐 Access your CMS URL
 2. 🔑 Log in securely
 3. 📝 Start creating content
-4. 🛡️ Enjoy built-in security
+4. 🪄 Use AI & Batch tools to automate workflows
 ```
 
 ### For Developers (Technical Setup)
@@ -107,14 +109,17 @@ bun run dev  # CLI installer launches automatically
 
 ## 🔧 Key Features & Security
 
-- **🎨 Modern Interface**: Built with SvelteKit and Tailwind CSS
+- **🎨 Modern Interface**: Built with Svelte 5 (Runes) and Tailwind CSS v4
 - **🚀 Automated Setup**: CLI installer handles all configuration
-- **🔐 Security First**: JWT + OAuth with granular permissions
-- **📱 Responsive**: Works seamlessly on all devices
-- **🌍 i18n Ready**: Multi-language support built-in
-- **⚡ Performance**: Optimized for speed and efficiency
-- **🔄 Reactive Content**: Real-time updates with versioning
-- **🧩 Extensible**: Custom widgets, themes, and plugins
+- **🔐 Security First**: JWT + OAuth with granular permissions and Signed Preview Tokens
+- **📱 Responsive**: Virtualized grids for 10,000+ assets
+- **🌍 i18n Ready**: Paraglide-compiled, zero-runtime multi-language support
+- **⚡ Performance**: Sub-1ms API hot-paths with dual-layer caching
+- **🔄 Reactive Content**: Real-time updates with versioning and SSE stream
+- **🧩 Extensible**: 3-Pillar Widget Architecture and Enterprise Plugin Slots
+- **🎬 Media Hub**: Advanced Video Transcoding (HLS/MP4) and Multi-Image Batch Editing
+- **🤖 AI Driven**: Local Ollama RAG integration and Hosted MCP Context Server
+- **⛓️ Workflows**: Visual Finite State Machine (FSM) engine for content lifecycles
 
 ## 📖 Essential Documentation
 
@@ -213,7 +218,7 @@ SveltyCMS uses a **modern, database-driven approach** for all configuration:
 - ✅ 75+ settings across 13 groups (General, Email, Security, Cache, etc.)
 - ✅ Real-time updates without server restart
 - ✅ Role-based access control
-- ✅ Admin GUI at `/config/systemsetting`
+- ✅ Admin GUI at `/config/system-settings`
 - ✅ RESTful API: `/api/settings/[group]`
 
 #### Static Config (Minimal)

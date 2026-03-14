@@ -578,7 +578,13 @@ $effect(() => {
 	</button>
 {/snippet}
 
-<PageTitle name={collection_pagetitle()} icon="fluent-mdl2:build-definition" showBackButton={true} backUrl="/config">
+<PageTitle
+	name={collection_pagetitle()}
+	icon="fluent-mdl2:build-definition"
+	showBackButton={true}
+	backUrl="/config"
+	helpUrl="/docs/guides/development/collection-builder"
+>
 	{@render saveButton(true)}
 </PageTitle>
 

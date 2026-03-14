@@ -47,10 +47,15 @@ Unlike standard CMS platforms that use simple keyword matching, SveltyCMS featur
 
 ### 3. Enterprise DAM Engine
 
+- **Adaptive Transcoding Hub**: Multi-resolution pipeline for video assets.
+  - **HLS Adaptive Bitrate**: Automatically generates `.m3u8` master playlists and chunked TS files.
+  - **Multi-Res MP4**: Generates 1080p, 720p, 480p, and 360p versions for fallback compatibility.
+  - **Background Processing**: Offloads heavy `ffmpeg` tasks to ensure UI responsiveness.
+- **Batch Image Processor**: Professional-grade bulk manipulation.
+  - **Sharp.js Filters**: Apply Vivid, B&W, Sepia, and HDR filters to 100+ images simultaneously.
+  - **Bulk Transformation**: Resize, rotate, and convert formats in one operation.
+  - **Non-Destructive Variants**: Generates linked variants while preserving original uncompressed assets.
 - **Deep Metadata Extraction**: Automatically parses **EXIF, IPTC, and XMP** data into searchable database fields (Camera model, Software, etc.).
-- **Asset Versioning**: Full version history for every media item. Edits and replacements are tracked, allowing for rollbacks and variant management.
-- **Hash-Based De-duplication**: Prevents redundant storage by checking file content hashes (SHA-256) before upload.
-- **Advanced Search**: Filter by 18+ criteria including EXIF data, dominant color, and camera model.
 
 ---
 
@@ -87,6 +92,20 @@ To provide a premium experience, SveltyCMS automatically generates image preview
 > ```
 >
 > If these tools are missing, the system will gracefully fall back to displaying the standard PDF icon. `sharp` is used for all other image transformations but does not support PDF rendering by default.
+
+---
+
+## ⌨️ Accessibility & Navigation
+
+The Media Gallery supports a high-efficiency workflow through specialized keyboard shortcuts and WCAG 3.0 focus management.
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Mod + F` | **Focus Search**: Instantly jump to the global search input. |
+| `Mod + A` | **Select All**: Select every asset in the current filtered view. |
+| `Delete` | **Bulk Removal**: Trigger a confirmation to delete all selected assets. |
+| `Escape` | **Clear**: Deselect all items or clear the search query. |
+| `Tab` | **Grid Navigation**: Move focus between asset thumbnails sequentially. |
 
 ---
 

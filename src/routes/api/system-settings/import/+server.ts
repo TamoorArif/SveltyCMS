@@ -1,5 +1,5 @@
 /**
- * @file src/routes/api/systemsetting/import/+server.ts
+ * @file src/routes/api/system-settings/import/+server.ts
  * @description Handles system settings import requests.
  */
 

@@ -1,13 +1,8 @@
 <!-- 
-@files src/routes/(app)/config/collectionbuilder/[...contentTypes]/tabs/CollectionWidget/ModalWidgetForm.svelte
-@component
-**The ModalWidgetForm component is used to display and manage the form for the selected widget in the CollectionWidget component** 
-It handles widget configuration, permissions, and specific options.
--->
-
+ @file src/routes/(app)/config/collectionbuilder/[action]/[...contentPath]/tabs/collection-widget/modal-widget-form.svelte
+ @component Modal form for configuring a single widget/field
+ -->
 <script lang="ts">
-// Stores
-
 import { Tabs } from '@skeletonlabs/skeleton-svelte';
 import { button_cancel, button_delete, button_save, system_permission } from '@src/paraglide/messages';
 import { collectionValue, setCollectionValue, targetWidget } from '@src/stores/collection-store.svelte';
@@ -114,11 +109,29 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 	<div class="hidden"></div>
 
 	<footer class="flex justify-between pt-4 border-t border-surface-500/20">
-		<!-- Delete Button -->
-		<button type="button" onclick={deleteWidget} aria-label="Delete" class="preset-filled-error-500 btn">
-			<iconify-icon icon="icomoon-free:bin" width={24}></iconify-icon>
-			<span class="hidden sm:block">{button_delete()}</span>
-		</button>
+		<div class="flex gap-2">
+			<!-- Delete Button -->
+			<button type="button" onclick={deleteWidget} aria-label="Delete" class="preset-filled-error-500 btn">
+				<iconify-icon icon="icomoon-free:bin" width={24}></iconify-icon>
+				<span class="hidden sm:block">{button_delete()}</span>
+			</button>
+
+			<!-- Duplicate Button -->
+			<button
+				type="button"
+				onclick={() => {
+					if (response) {
+						response({ ...targetWidget.value, __duplicate: true });
+					}
+					modalState.close();
+				}}
+				aria-label="Duplicate"
+				class="preset-filled-tertiary-500 btn"
+			>
+				<iconify-icon icon="mdi:content-copy" width={24}></iconify-icon>
+				<span class="hidden sm:block">Duplicate</span>
+			</button>
+		</div>
 
 		<!-- Cancel & Save Buttons -->
 		<div class="flex justify-between gap-4">

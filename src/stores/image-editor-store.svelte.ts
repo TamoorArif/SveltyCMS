@@ -1,16 +1,5 @@
 /**
  * @file src/stores/image-editor-store.svelte.ts
- * @description Manages the image editor
- *
- * This provides functionality to:
- * - Undo and redo actions in the image editor
- * - Add edit actions to the image editor
- * - Track image editor state
- * - Update image editor state reactively
- */
-
-/**
- * @file src/stores/image-editor-store.svelte.ts
  * @description Manages the image editor state and history
  */
 

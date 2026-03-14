@@ -121,6 +121,22 @@ The Collection Builder UI (`src/components/Collections.svelte`) uses a **Reactiv
 - **Render**: The UI renders the hierarchical tree based on this computed logical structure.
 - **Interaction**: Drag-and-drop operations do **not** mutate the tree structure directly. Instead, they emit updates to the flat list (e.g., `updateNode(id, { parentId: newParent })`), which triggers a server save and a reactive re-render.
 
+## ⌨️ Keyboard-Driven UX
+
+The Collection Builder is designed for rapid iteration using a unified hotkey system.
+
+### Standard Controls
+- `Mod + S`: Save the entire collection and trigger database reconciliation.
+- `Escape`: Cancel current operation or exit the builder shell.
+
+### BuzzForm (Visual Canvas)
+- `Delete`: Instantly remove the selected field from the canvas.
+- `Mod + D`: Duplicate the selected field, automatically generating a unique `db_fieldName`.
+
+### Widget Editor (Multi-Step)
+- `Mod + Enter`: Advance to the next configuration step or "Finish" the widget.
+- `Escape`: Navigate back to the previous step.
+
 ## Failure Scenarios & Recovery
 
 | Scenario                    | Handling                                                                                                                                   |

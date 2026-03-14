@@ -86,17 +86,17 @@ export const forgotFormSchema = object({
 export const resetFormSchema = pipe(
 	object({
 		password: passwordSchema,
-		confirm_password: confirmPasswordSchema,
+		confirmPassword: confirmPasswordSchema,
 		token: tokenSchema,
 		email: emailSchema
 	}),
 	forward(
 		partialCheck(
-			[['password'], ['confirm_password']],
-			(input) => input.password === input.confirm_password,
+			[['password'], ['confirmPassword']],
+			(input) => input.password === input.confirmPassword,
 			'The passwords do not match. Please ensure both fields are identical.'
 		),
-		['confirm_password']
+		['confirmPassword']
 	)
 );
 
@@ -106,10 +106,10 @@ export const signUpFormSchema = pipe(
 		username: usernameSchema,
 		email: emailSchema,
 		password: passwordSchema,
-		confirm_password: confirmPasswordSchema,
+		confirmPassword: confirmPasswordSchema,
 		token: optional(nullable(string()))
 	}),
-	check((input) => input.password === input.confirm_password, 'The passwords do not match. Please ensure both fields are identical.')
+	check((input) => input.password === input.confirmPassword, 'The passwords do not match. Please ensure both fields are identical.')
 );
 
 // Google OAuth Token Schema
@@ -126,9 +126,9 @@ export const addUserTokenSchema = object({
 
 // Change Password Form Schema
 export const changePasswordSchema = object({
-	old_password: string(),
+	oldPassword: string(),
 	password: passwordSchema,
-	confirm_password: string()
+	confirmPassword: string()
 });
 
 // Widget Email Schema
@@ -145,7 +145,7 @@ export const addUserSchema = object({
 // Edit User Schema
 export const editUserSchema = pipe(
 	object({
-		user_id: string(),
+		userId: string(),
 		username: usernameSchema,
 		email: emailSchema,
 		role: optional(string()),

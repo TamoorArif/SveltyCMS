@@ -48,10 +48,10 @@ interface Props {
 	token?: string;
 	// Allow passing user/roles as props for flexibility/testing
 	user?: any;
-	user_id?: string;
+	userId?: string;
 }
 
-let { token = '', user_id = '', email = '', role = 'admin', expires = '', user = page.data.user, roles = page.data.roles, close }: Props = $props();
+let { token = '', userId = '', email = '', role = 'admin', expires = '', user = page.data.user, roles = page.data.roles, close }: Props = $props();
 
 // Form Data with format conversion
 function convertLegacyFormat(expires: string): string {
@@ -84,7 +84,7 @@ function convertLegacyFormat(expires: string): string {
 
 const tokenForm = new Form(
 	{
-		user_id: '',
+		userId: '',
 		email: '',
 		token: '',
 		role: 'admin',
@@ -94,7 +94,7 @@ const tokenForm = new Form(
 );
 
 $effect(() => {
-	tokenForm.data.user_id = user_id;
+	tokenForm.data.userId = userId;
 	tokenForm.data.email = email;
 	tokenForm.data.token = token;
 	tokenForm.data.role = role || 'admin';
@@ -112,7 +112,7 @@ async function onFormSubmit(event: SubmitEvent): Promise<void> {
 
 	try {
 		const isEditMode = !!tokenForm.data.token;
-		const endpoint = isEditMode ? `/api/token/${tokenForm.data.token}` : '/api/token/createToken';
+		const endpoint = isEditMode ? `/api/token/${tokenForm.data.token}` : '/api/token/create-token';
 		const method = isEditMode ? 'PUT' : 'POST';
 
 		const body = isEditMode

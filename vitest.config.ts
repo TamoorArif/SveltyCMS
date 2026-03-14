@@ -34,10 +34,22 @@ export default defineConfig({
 		environment: 'jsdom',
 		setupFiles: [path.resolve(__dirname, 'tests/unit/setup.ts')],
 		include: ['tests/unit/**/*.test.ts'],
-		exclude: ['**/*.bun.ts'],
+		exclude: ['**/*.bun.ts', 'node_modules', '.svelte-kit'],
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'json', 'html'],
+			include: ['src/**/*.ts', 'src/**/*.svelte'],
+			exclude: ['src/paraglide/**', 'src/**/*.d.ts']
+		},
+		pool: 'threads',
+		poolOptions: {
+			threads: {
+				singleThread: false
+			}
+		},
 		server: {
 			deps: {
-				inline: [/@sveltejs\/kit/, /sveltekit-rate-limiter/]
+				inline: [/@sveltejs\/kit/, /sveltekit-rate-limiter/, /@skeletonlabs\/skeleton-svelte/]
 			}
 		}
 	}

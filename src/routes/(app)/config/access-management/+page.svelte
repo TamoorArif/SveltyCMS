@@ -116,7 +116,13 @@ beforeNavigate(({ cancel }) => {
 </script>
 
 <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-	<PageTitle name="Access Management" icon="mdi:account-key" showBackButton={true} backUrl="/config" />
+	<PageTitle
+		name="Access Management"
+		icon="mdi:account-key"
+		showBackButton={true}
+		backUrl="/config"
+		helpUrl="/docs/guides/configuration/access-management"
+	/>
 
 	<div class="mt-2 flex items-center justify-center gap-4 lg:mt-0 lg:justify-end">
 		<button

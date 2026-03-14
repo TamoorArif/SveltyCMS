@@ -75,7 +75,7 @@ const welcomeSteps = $state<WelcomeStep[]>([
 		description: 'Configure your site settings, themes, and system preferences to match your needs.',
 		icon: 'mdi:cog',
 		action: 'Open Settings',
-		actionUrl: '/config/systemsetting',
+		actionUrl: '/config/system-settings',
 		completed: false
 	}
 ]);

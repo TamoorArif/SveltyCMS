@@ -547,7 +547,13 @@ onMount(() => {
 
 <main bind:this={mainContainerEl} class="relative overflow-y-auto overflow-x-hidden" style="touch-action: pan-y;">
 	<header class="mb-2 flex items-center justify-between gap-2 border-b border-surface-200 p-2 dark:text-surface-50">
-		<PageTitle name="Dashboard" icon="bi:bar-chart-line" showBackButton={true} backUrl="/config" />
+		<PageTitle
+			name="Dashboard"
+			icon="bi:bar-chart-line"
+			showBackButton={true}
+			backUrl="/config"
+			helpUrl="/docs/architecture/dashboard-system"
+		/>
 		<div class="flex items-center gap-2">
 			<!-- Generate AI Dashboard Button -->
 			<button

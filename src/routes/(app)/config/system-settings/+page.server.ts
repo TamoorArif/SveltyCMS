@@ -1,5 +1,5 @@
 /**
- * @file src/routes/(app)/config/systemsetting/+page.server.ts
+ * @file src/routes/(app)/config/system-settings/+page.server.ts
  * @description Server-side logic for System Settings page authentication and authorization.
  *
  * Handles user authentication and role-based access control for the System Settings page.

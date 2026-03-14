@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const plugins = await Promise.all(
 		allPlugins.map(async (p) => {
 			let missingConfig = false;
-			const configUrl = '/config/systemsetting';
+			const configUrl = '/config/system-settings';
 
 			// Check persisted state
 			const state = await pluginRegistry.getPluginState(p.metadata.id, tenantId);

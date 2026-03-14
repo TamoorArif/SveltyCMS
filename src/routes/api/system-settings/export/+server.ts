@@ -1,5 +1,5 @@
 /**
- * @file src/routes/api/systemsetting/export/+server.ts
+ * @file src/routes/api/system-settings/export/+server.ts
  * @description Handles system settings export requests.
  */
 

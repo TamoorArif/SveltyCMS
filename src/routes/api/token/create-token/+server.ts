@@ -1,5 +1,5 @@
 /**
- * @file: src/routes/api/user/createToken/+server.ts
+ * @file: src/routes/api/token/create-token/+server.ts
  * @description: API endpoint for creating user registration tokens and sending invitation emails
  *
  * Features:
@@ -103,7 +103,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 
 		// Use dbAdapter directly for invite tokens since the user doesn't exist yet
 		const tokenResult = await dbAdapter.auth.createToken({
-			user_id: userId,
+			userId,
 			email: validatedData.email.toLowerCase(), // Use the provided email directly
 			expires: expires.toISOString() as ISODateString,
 			type,
@@ -223,7 +223,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 				issues: Array<{ message: string }>;
 			};
 			const issues = valiError.issues.map((issue) => issue.message).join(', ');
-			logger.warn('Invalid input for createToken API:', { issues });
+			logger.warn('Invalid input for create-token API:', { issues });
 			throw new AppError(`Invalid input: ${issues}`, 400, 'VALIDATION_ERROR');
 		}
 
@@ -231,7 +231,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 		const status = httpError.status || 500;
 		const message = httpError.body?.message || 'An unexpected error occurred.';
 
-		logger.error('Error in createToken API:', {
+		logger.error('Error in create-token API:', {
 			error: message,
 			stack: err instanceof Error ? err.stack : undefined,
 			status

@@ -7,8 +7,8 @@
  * - PUT /api/settings/[group] - Update settings group
  * - GET /api/settings/public - Get public settings
  * - GET /api/settings/public/stream - Stream public settings (SSE)
- * - POST /api/systemsetting/export - Export system settings
- * - POST /api/systemsetting/import - Import system settings
+ * - POST /api/system-settings/export - Export system settings
+ * - POST /api/system-settings/import - Import system settings
  * - GET /api/systemPreferences - Get user preferences
  * - PUT /api/systemPreferences - Update user preferences
  */
@@ -238,7 +238,7 @@ describe('Settings API - Public Settings Stream', () => {
 
 describe('Settings API - Export System Settings', () => {
 	it('should export all system settings', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/export`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/export`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -258,7 +258,7 @@ describe('Settings API - Export System Settings', () => {
 	});
 
 	it('should require admin authentication for export', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/export`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/export`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({})
@@ -268,7 +268,7 @@ describe('Settings API - Export System Settings', () => {
 	});
 
 	it('should include all setting groups in export', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/export`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/export`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -286,7 +286,7 @@ describe('Settings API - Export System Settings', () => {
 	});
 
 	it('should sanitize sensitive data in export', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/export`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/export`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -329,7 +329,7 @@ describe('Settings API - Import System Settings', () => {
 			}
 		};
 
-		const response = await fetch(`${BASE_URL}/api/systemsetting/import`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/import`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -347,7 +347,7 @@ describe('Settings API - Import System Settings', () => {
 	});
 
 	it('should validate imported settings structure', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/import`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/import`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -366,7 +366,7 @@ describe('Settings API - Import System Settings', () => {
 	});
 
 	it('should require admin authentication for import', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/import`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/import`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({})
@@ -376,7 +376,7 @@ describe('Settings API - Import System Settings', () => {
 	});
 
 	it('should merge with existing settings safely', async () => {
-		const response = await fetch(`${BASE_URL}/api/systemsetting/import`, {
+		const response = await fetch(`${BASE_URL}/api/system-settings/import`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

@@ -6,36 +6,36 @@ order: 10
 icon: 'mdi:sitemap'
 author: 'admin'
 created: '2026-02-16'
-updated: '2026-02-16'
+updated: '2026-03-14'
 tags:
   - 'architecture'
   - 'media'
   - 'dam'
-  - 'backend'
+  - 'svelte5'
 ---
 
 # Media System Architecture
 
-The SveltyCMS Media system is designed as a high-performance, decoupled engine capable of handling enterprise-grade Digital Asset Management (DAM) needs. It separates storage concerns from processing logic and UI rendering.
+The SveltyCMS Media system is a decoupled, high-performance engine optimized for Svelte 5 and Sharp.js. It balances enterprise-grade Digital Asset Management (DAM) requirements with a seamless, accessible user experience.
 
 ---
 
 ## 🏗️ Layered Architecture
 
-The system follows a strict 3-layer architecture to ensure database and storage agnosticism.
+The system follows a strict 3-layer architecture to ensure storage and framework portability.
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
+    subgraph "Client Layer (Svelte 5 Runes)"
         UI[Media Gallery UI]
         UW[MediaUpload Widget]
         VGRID[virtual-media-grid.svelte]
-        TAG[tag-editor-modal.svelte]
+        EDITOR[ImageEditor Shell]
     end
 
     subgraph "API Layer (src/routes/api/media)"
         API1[GET /]
-        API2[POST /process]
+        API2[POST /edit]
         API3[POST /ai-tag]
         API4[GET /transform]
     end
@@ -55,62 +55,54 @@ graph TB
 
     UI --> VGRID
     VGRID --> API1
+    UI --> EDITOR
+    EDITOR --> API2
     API2 --> MS
     MS --> MPS
     MS --> MST
     MST --> CS
     MS --> DB
     CS --> STORE
-    MPS --> AIS
 ```
 
 ---
 
-## 📁 Key Components & File Structure
+## ⌨️ Accessibility & Hotkeys
 
-The "Media Engine" is consolidated within `src/utils/media/` for maximum modularity.
+The Media System implements **WCAG 3.0 Functional Performance** principles via a centralized hotkey manager.
 
-### 1. Core Engine
-
-- **`mediaService.server.ts`**: The main entry point for all media business logic. Orchestrates uploads, versions, and metadata persistence.
-- **`mediaProcessing.server.ts`**: Handles technical analysis using Sharp.js. Extracts EXIF, IPTC, and XMP data and generates content hashes (SHA-256).
-- **`mediaStorage.server.ts`**: Abstraction layer for filesystem and cloud storage operations. Handles image resizing and path sanitization.
-
-### 2. Implementation Modules
-
-- **`cloudStorage.ts`**: Adapter for S3, Cloudflare R2, and Cloudinary.
-- **`mediaModels.ts`**: Centralized TypeScript interfaces for `MediaItem`, `MediaMetadata`, and `ResizedImage`.
-- **`advancedSearch.ts`**: Specialized logic for filtering media by complex criteria (camera model, dominant color, size ranges).
+| Shortcut | Action | Scope |
+| :--- | :--- | :--- |
+| `Mod + F` | Focus Search | Gallery |
+| `Mod + A` | Select All | Gallery / Widget |
+| `Mod + O` | Open Library | MediaUpload Widget |
+| `Delete` | Bulk Delete | Gallery (Selected) |
+| `Escape` | Clear Filters | Gallery / Editor |
+| `Mod + Z` | Undo Edit | ImageEditor |
 
 ---
 
-## 📤 Processing Pipeline
+## 📤 Processing Pipeline (Modernized)
 
-When a file is uploaded (via `POST /api/media/process`), it follows this sequence:
+When a file is processed (via `POST /api/media/edit` or `saveMedia`), it follows this sequence:
 
-1.  **Binary Validation**: Inspects the buffer using `file-type` to detect the true MIME type, bypassing extension-only spoofing.
-2.  **Deduplication**: Generates a 20-character SHA-256 hash. If the hash exists in the database, the upload is cancelled to save storage.
-3.  **Metadata Extraction**:
-    - Full technical metadata (dimensions, format, color space).
-    - Deep DAM metadata (EXIF/IPTC/XMP) for photography assets.
-4.  **Transformation**:
-    - Generates standard thumbnails (`sm`: 600px, `md`: 900px, `lg`: 1200px).
-    - Converts to modern formats (WebP/AVIF) if configured in system settings.
-5.  **Persistence**: Saves the `MediaItem` document to the primary database and caches the result for sub-millisecond retrieval.
-
----
-
-## 🖼️ Document Processing
-
-For non-image assets like PDFs, the system uses a hybrid approach:
-
-- **ImageMagick/Ghostscript**: Used as a fallback to render a high-quality JPG preview of the first page.
-- **Graceful Degradation**: If system tools are missing, the system automatically reverts to a lightweight SVG/Icon representation.
+1.  **Binary Validation**: Uses `file-type` for deep buffer inspection to prevent extension spoofing.
+2.  **Deduplication**: Generates SHA-256 content hashes. Existing assets are reused to prevent storage bloat.
+3.  **Metadata & AI**:
+    - Technical metadata extraction (EXIF/IPTC).
+    - **AI Auto-Tagging**: Local Ollama models generate descriptive badges.
+    - **Focal Point**: Persistent X/Y coordinates for smart cropping.
+4.  **Transformation (Sharp.js & ffmpeg)**:
+    - **Adaptive Transcoding Hub**: Multi-resolution HLS/MP4 pipeline for video assets.
+    - **Batch Processing**: Parallelized Sharp.js filter application (Vivid, B&W, etc.).
+    - Generates multi-scale image variants (`sm`, `md`, `lg`).
+    - Supports `new` (versioning) vs `overwrite` (destructive) save behaviors.
+5.  **Persistence**: Scoped by `tenantId` and `collectionName` for isolated DAM organization.
 
 ---
 
-## 📡 Performance Optimizations
+## 🖼️ Responsive Rendering
 
-1.  **Virtual Grid**: UI renders only visible items using a virtual list, maintaining 60FPS even with galleries of 10,000+ assets.
-2.  **Transform Proxy**: Image transformations are handled via a dedicated endpoint (`/api/media/transform`) which supports edge caching.
-3.  **Lazy Service Loading**: Heavy processing dependencies (like `sharp` and `file-type`) are imported dynamically within the service to reduce initial server startup time.
+1.  **Virtualization**: Large galleries (100+ items) use `VirtualMediaGrid.svelte` to render only visible assets, maintaining 60FPS.
+2.  **Blur-up Thumbnails**: Low-resolution placeholders are served while Sharp.js variants load.
+3.  **Edge-Ready Proxy**: `/api/media/transform` supports on-the-fly resizing with aggressive CDN caching headers.

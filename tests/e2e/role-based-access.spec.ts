@@ -78,8 +78,8 @@ test.describe('Role-Based Access Control', () => {
 		await loginAsAdmin(page);
 
 		// System Settings (admin only)
-		await page.goto('/config/systemsetting');
-		await expect(page).toHaveURL(/systemsetting/, { timeout: 10_000 });
+		await page.goto('/config/system-settings');
+		await expect(page).toHaveURL(/system-settings/, { timeout: 10_000 });
 		await expect(page.getByText(/system settings/i).first()).toBeVisible({
 			timeout: 10_000
 		});
@@ -105,8 +105,8 @@ test.describe('Role-Based Access Control', () => {
 		await login(page, USERS.developer);
 
 		// Developer CAN access system configuration
-		await page.goto('/config/systemsetting');
-		await expect(page).toHaveURL(/\/config\/systemsetting/, { timeout: 5000 });
+		await page.goto('/config/system-settings');
+		await expect(page).toHaveURL(/\/config\/system-settings/, { timeout: 5000 });
 		await expect(page.getByText(/system settings/i)).toBeVisible();
 
 		// Developer CAN access main config area
@@ -141,14 +141,14 @@ test.describe('Role-Based Access Control', () => {
 		await expect(page).toHaveURL(/\/collection/, { timeout: 5000 });
 
 		// Editor CANNOT access system settings
-		await page.goto('/config/systemsetting');
+		await page.goto('/config/system-settings');
 
 		await page.waitForLoadState('networkidle');
 		const settingsUrl = page.url();
 		const settingsBody = await page.textContent('body');
 
 		const isBlockedFromSettings =
-			!settingsUrl.includes('/config/systemsetting') ||
+			!settingsUrl.includes('/config/system-settings') ||
 			settingsBody?.toLowerCase().includes('forbidden') ||
 			settingsBody?.toLowerCase().includes('unauthorized') ||
 			settingsBody?.toLowerCase().includes('access denied');

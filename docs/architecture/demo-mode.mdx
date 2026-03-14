@@ -25,13 +25,17 @@ Demo Mode is a specialized configuration of the Multi-Tenancy system designed to
 - **Ephemeral Sessions**: Tenants and their data are automatically deleted after a configurable expiration time (default: 60 minutes).
 - **Isolation**: Each demo user sees only their own data.
 
-## Implementation
+### 1. Project Setup (Clone & Link)
 
-1.  **Project Setup (Clone & Link)**:
-    - Clone your `next` branch: `git clone -b next <repo>`
-    - Run setup: `bun install && bun run dev`
-    - Setup Wizard: Connect to your **existing Demo Database**.
-    - **Important**: Manually set `MULTI_TENANT: true` in `config/private.ts` (requires restart).
+- Clone your `next` branch: `git clone -b next <repo>`
+- Run setup: `bun install && bun run dev`
+- Setup Wizard: Connect to your **existing Demo Database**.
+- **Important**: Manually set `MULTI_TENANT: true` and `DEMO: true` in `config/private.ts` (requires restart).
+
+### Bypassing Host Validation (March 2026)
+
+In March 2026, the `handleSystemState` hook was optimized to allow bootstrap routes (like `/setup`) from any host when `DEMO: true` is active. This ensures that live demo environments on dynamic URLs (e.g., Vercel, Netlify) do not trigger 403 Forbidden errors before the system is fully initialized.
+
 
 ### Enabling Demo Mode
 

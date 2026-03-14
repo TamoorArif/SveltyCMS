@@ -132,7 +132,7 @@ function toggleEvent(event: string) {
 onMount(loadWebhooks);
 </script>
 
-<PageTitle name="Webhooks" icon="mdi:webhook" showBackButton={true} backUrl="/config" />
+<PageTitle name="Webhooks" icon="mdi:webhook" showBackButton={true} backUrl="/config" helpUrl="/docs/api/Webhooks" />
 
 <div class="wrapper p-4">
 	<div class="flex items-center justify-between mb-6">

@@ -1,5 +1,5 @@
 <!--
-@file src/routes/(app)/config/systemsetting/+page.svelte
+@file src/routes/(app)/config/system-settings/+page.svelte
 @component
 **System Settings page with tabbed interface**
 All dynamic CMS settings organized into logical groups
@@ -95,7 +95,13 @@ onMount(() => {
 });
 </script>
 
-<PageTitle name="Dynamic System Settings" icon="mdi:cog" showBackButton={true} backUrl="/config" />
+<PageTitle
+	name="Dynamic System Settings"
+	icon="mdi:cog"
+	showBackButton={true}
+	backUrl="/config"
+	helpUrl="/docs/guides/configuration/system-settings"
+/>
 
 <p class="mb-6 px-2 text-surface-600 dark:text-surface-300">
 	These are critical system settings loaded dynamically from the database. Most changes take effect immediately, though settings marked with "Restart
