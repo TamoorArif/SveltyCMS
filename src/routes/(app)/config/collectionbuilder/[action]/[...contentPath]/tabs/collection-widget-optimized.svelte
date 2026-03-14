@@ -350,7 +350,7 @@ function addQuickWidget(key: string) {
 			use:dndzone={{ items, flipDurationMs, zoneTabIndex: -1 }}
 			onconsider={handleDndConsider}
 			onfinalize={handleDndFinalize}
-			class="min-h-[200px] space-y-3"
+			class="min-h-50 space-y-3"
 		>
 			{#each items as item (item.id)}
 				<div animate:flip={{ duration: flipDurationMs }} class="group relative">

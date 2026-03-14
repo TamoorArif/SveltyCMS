@@ -44,9 +44,11 @@ import {
 import { storeListboxValue } from '@src/stores/store.svelte';
 import { logger } from '@utils/logger';
 import { toast } from '@src/stores/toast.svelte.ts';
-import { onDestroy, onMount } from 'svelte';
+import { onMount } from 'svelte';
 import { quintOut } from 'svelte/easing';
 import { scale } from 'svelte/transition';
+
+import { registerHotkey } from '@src/utils/hotkeys';
 
 // --- Types ---
 type ActionType = 'create' | 'publish' | 'unpublish' | 'draft' | 'schedule' | 'clone' | 'delete';
@@ -59,7 +61,6 @@ interface ActionConfig {
 	label: string;
 	requiresSelection: boolean;
 	shortcut?: string;
-	shortcutKey?: string;
 	textColor: string;
 	type: ActionType;
 }
@@ -103,8 +104,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-tertiary',
 		icon: 'ic:round-plus',
 		textColor: 'text-white',
-		shortcut: 'Alt+N',
-		shortcutKey: 'n',
+		shortcut: 'mod+n',
 		requiresSelection: false,
 		dangerLevel: 'low'
 	},
@@ -114,8 +114,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-primary',
 		icon: 'bi:hand-thumbs-up-fill',
 		textColor: 'text-white',
-		shortcut: 'Alt+P',
-		shortcutKey: 'p',
+		shortcut: 'mod+enter',
 		requiresSelection: true,
 		dangerLevel: 'medium'
 	},
@@ -125,8 +124,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-warning',
 		icon: 'bi:pause-circle',
 		textColor: 'text-black',
-		shortcut: 'Alt+U',
-		shortcutKey: 'u',
+		shortcut: 'mod+u',
 		requiresSelection: true,
 		dangerLevel: 'medium'
 	},
@@ -136,8 +134,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-secondary',
 		icon: 'ic:baseline-edit-note',
 		textColor: 'text-white',
-		shortcut: 'Alt+D',
-		shortcutKey: 'd',
+		shortcut: 'mod+s',
 		requiresSelection: true,
 		dangerLevel: 'low'
 	},
@@ -156,6 +153,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-secondary',
 		icon: 'ic:round-content-copy',
 		textColor: 'text-white',
+		shortcut: 'mod+d',
 		requiresSelection: true,
 		dangerLevel: 'low'
 	},
@@ -165,8 +163,7 @@ const ACTION_CONFIGS: ActionConfig[] = [
 		gradient: 'gradient-error',
 		icon: 'ic:round-delete-forever',
 		textColor: 'text-white',
-		shortcut: 'Alt+Del',
-		shortcutKey: 'Delete',
+		shortcut: 'delete',
 		requiresSelection: true,
 		dangerLevel: 'high'
 	}
@@ -180,8 +177,6 @@ let hoveredAction = $state<ActionType | null>(null);
 let isProcessing = $state(false);
 
 // Dropdown keyboard navigation
-let focusedIndex = $state(0);
-let menuItemRefs = $state<HTMLButtonElement[]>([]);
 
 // Connection Awareness
 let isSlowConnection = $state(false);
@@ -313,75 +308,23 @@ $effect(() => {
 	};
 });
 
-// --- Keyboard Shortcuts ---
-function handleKeyDown(e: KeyboardEvent) {
-	// Dropdown navigation when open
-	if (isDropdownOpen) {
-		switch (e.key) {
-			case 'Escape':
-				e.preventDefault();
-				isDropdownOpen = false;
-				return;
-			case 'ArrowDown':
-				e.preventDefault();
-				focusedIndex = Math.min(focusedIndex + 1, availableActions.length - 1);
-				menuItemRefs[focusedIndex]?.focus();
-				return;
-			case 'ArrowUp':
-				e.preventDefault();
-				focusedIndex = Math.max(focusedIndex - 1, 0);
-				menuItemRefs[focusedIndex]?.focus();
-				return;
-			case 'Home':
-				e.preventDefault();
-				focusedIndex = 0;
-				menuItemRefs[0]?.focus();
-				return;
-			case 'End':
-				e.preventDefault();
-				focusedIndex = availableActions.length - 1;
-				menuItemRefs[focusedIndex]?.focus();
-				return;
-			case 'Enter':
-			case ' ': {
-				e.preventDefault();
-				const action = availableActions[focusedIndex];
-				if (action && !(action.requiresSelection && !hasSelections)) {
-					handleAction(action.type);
-				}
-				return;
-			}
-		}
-	}
-
-	// Global shortcuts with Alt key
-	if (!e.altKey) {
-		return;
-	}
-
-	const matchedConfig = ACTION_CONFIGS.find((config) => {
-		if (!config.shortcutKey) {
-			return false;
-		}
-		return e.key.toLowerCase() === config.shortcutKey.toLowerCase() || e.key === config.shortcutKey;
-	});
-
-	if (matchedConfig) {
-		e.preventDefault();
-		if (matchedConfig.requiresSelection && !hasSelections) {
-			logger.debug(`[MultiButton] Keyboard shortcut ${matchedConfig.shortcut} requires selection`);
-			return;
-		}
-		handleAction(matchedConfig.type);
-	}
-}
-
 onMount(() => {
-	window.addEventListener('keydown', handleKeyDown);
-});
-
-onDestroy(() => {
-	window.removeEventListener('keydown', handleKeyDown);
+	ACTION_CONFIGS.forEach((config) => {
+		if (config.shortcut) {
+			registerHotkey(
+				config.shortcut,
+				() => {
+					if (isDropdownOpen) return; // let dropdown handle keys if open
+					if (config.requiresSelection && !hasSelections) {
+						logger.debug(`[MultiButton] Keyboard shortcut ${config.shortcut} requires selection`);
+						return;
+					}
+					handleAction(config.type);
+				},
+				`Trigger action: ${config.label}`
+			);
+		}
+	});
 });
 
 // --- Action Handlers ---
@@ -495,6 +438,7 @@ function handleMainButtonClick() {
 					rounded-l-full rounded-r-none px-6 flex items-center gap-2 border-r border-white
 					disabled:opacity-50 disabled:cursor-not-allowed"
 				aria-label={dynamicLabel}
+				aria-keyshortcuts={currentConfig.shortcut || undefined}
 				aria-busy={isProcessing}
 			>
 				{#if isProcessing}
@@ -562,6 +506,7 @@ function handleMainButtonClick() {
 										role="menuitem"
 										class="group/item relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-white transition-all duration-200 hover:bg-white/5"
 										aria-label="{config.label} {config.shortcut ? `(${config.shortcut})` : ''}"
+										aria-keyshortcuts={config.shortcut || undefined}
 									>
 										<!-- Icon -->
 										<div

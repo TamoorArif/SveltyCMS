@@ -43,9 +43,9 @@ function getJacksonDBConnection(): string {
 		case 'mariadb':
 			return `mysql://${authPart}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`;
 		case 'mongodb':
-			return `mongodb://${authPart}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}${hasAuth ? '?authSource=admin' : ''}`;
+			return `mongodb://${authPart}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`;
 		case 'mongodb+srv':
-			return `mongodb+srv://${authPart}${config.DB_HOST}/${config.DB_NAME}?retryWrites=true&w=majority`;
+			return `mongodb+srv://${authPart}${config.DB_HOST}/${config.DB_NAME}?retryWrites=true&w=majority${hasAuth ? '&authSource=admin' : ''}`;
 		// Note: SQLite isn't natively supported out of the box in the same string format by Jackson right now unless wrapping,
 		// but SveltyCMS primarily uses Postgres, Mongo, and MariaDB for prod.
 		default:

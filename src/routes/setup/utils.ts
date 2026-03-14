@@ -142,9 +142,10 @@ export async function getSetupDatabaseAdapter(
 					connectionOptions.pass = config.password;
 				}
 
-				// Default authSource to 'admin' when user is provided
-				const authSource = 'admin';
-				connectionOptions.authSource = authSource;
+				// Only default authSource to 'admin' for MongoDB Atlas (SRV) connections
+				if (connectionString.startsWith('mongodb+srv://')) {
+					connectionOptions.authSource = 'admin';
+				}
 			}
 
 			try {
@@ -163,7 +164,8 @@ export async function getSetupDatabaseAdapter(
 					logger.info('✅ Authentication verification probe successful', { correlationId });
 				} catch (probeErr: any) {
 					logger.warn(`⚠️ Auth probe warning (non-fatal if DB is empty): ${probeErr.message}`, { correlationId });
-					if (probeErr.message.toLowerCase().includes('authentication') || probeErr.message.toLowerCase().includes('unauthorized')) {
+					const msg = probeErr.message.toLowerCase();
+					if (msg.includes('authentication') || msg.includes('unauthorized') || msg.includes('auth') || msg.includes('credentials')) {
 						throw new Error(`Authentication failed: ${probeErr.message}`);
 					}
 				}

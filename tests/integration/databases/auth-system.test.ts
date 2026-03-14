@@ -57,7 +57,7 @@ describe('Auth System Functional Tests', () => {
 		let connectionString = `mongodb://${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
 
 		if (privateEnv.DB_USER && privateEnv.DB_PASSWORD) {
-			connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}?authSource=admin`;
+			connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
 		}
 
 		// Use shorter timeouts for tests

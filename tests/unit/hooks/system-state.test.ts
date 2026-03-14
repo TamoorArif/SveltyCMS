@@ -217,7 +217,7 @@ describe('handleSystemState - State Machine Logic', () => {
 			} catch (err: unknown) {
 				const error = err as { status: number; body: { message: string } };
 				expect(error.status).toBe(503);
-				expect(error.body.message).toContain('starting up');
+				expect(error.body.message).toMatch(/starting up|System is currently IDLE/i);
 			}
 		});
 

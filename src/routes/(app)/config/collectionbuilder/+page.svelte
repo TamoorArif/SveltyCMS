@@ -53,7 +53,17 @@ import { modalState } from '@utils/modal-state.svelte';
 import { showConfirm } from '@utils/modal-utils';
 import { deserialize } from '$app/forms';
 import { afterNavigate, goto, invalidate } from '$app/navigation';
+import { registerHotkey } from '@src/utils/hotkeys';
+import { onMount } from 'svelte';
 import { page } from '$app/state';
+
+onMount(() => {
+	registerHotkey('mod+s', () => {
+		if (!isLoading && Object.keys(nodesToSave).length > 0) {
+			handleSave();
+		}
+	}, 'Save collection structure');
+});
 
 import ModalCategory from './nested-content/modal-category.svelte';
 import ModalPreset from './nested-content/modal-preset.svelte';
@@ -553,6 +563,7 @@ $effect(() => {
 		class="btn flex items-center gap-1 {isHeader ? 'btn-sm sm:btn-md preset-filled-primary-500' : 'preset-filled-primary-500'}"
 		disabled={isLoading || Object.keys(nodesToSave).length === 0}
 		title={Object.keys(nodesToSave).length === 0 ? 'No changes to save' : 'Save changes'}
+		aria-keyshortcuts="mod+s"
 	>
 		{#if isLoading}
 			<iconify-icon icon="mdi:loading" width={isHeader ? '18' : '24'} class="animate-spin"></iconify-icon>

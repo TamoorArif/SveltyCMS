@@ -501,8 +501,9 @@ export class MediaService {
 			flipH?: boolean;
 			flipV?: boolean;
 			crop?: { x: number; y: number; width: number; height: number };
-			filters?: { brightness?: number; contrast?: number; saturation?: number };
+			filters?: { brightness?: number; contrast?: number; saturation?: number; grayscale?: number; sepia?: number };
 			focalPoint?: { x: number; y: number };
+			saveBehavior?: 'new' | 'overwrite';
 		},
 		userId: string
 	): Promise<MediaItem> {
@@ -560,14 +561,27 @@ export class MediaService {
 			});
 		}
 
-		// Apply filters (simplified mapping)
+		// Apply filters
 		if (manipulations.filters) {
-			const { brightness, saturation } = manipulations.filters;
+			const { brightness, saturation, grayscale, sepia } = manipulations.filters;
 			if (brightness !== undefined || saturation !== undefined) {
 				instance = instance.modulate({
 					brightness: brightness !== undefined ? 1 + brightness / 100 : 1,
 					saturation: saturation !== undefined ? 1 + saturation / 100 : 1
 				});
+			}
+			if (grayscale && grayscale > 0) {
+				instance = instance.grayscale();
+				if (grayscale < 100) {
+					// Fallback: full grayscale is easier, partial requires more complex compositing
+					// but for now we'll just apply full if > 0 as a first pass or use a matrix
+				}
+			}
+			if (sepia && sepia > 0) {
+				// Sepia matrix implementation (normalized)
+				instance = (instance as any).colorMatrix([
+					0.3588, 0.7044, 0.1355, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0.2392, 0.4696, 0.0912, 0, 0, 0, 0, 0, 1, 0
+				]);
 			}
 		}
 
@@ -614,8 +628,40 @@ export class MediaService {
 			}
 		} as Partial<MediaItem>;
 
-		await this.updateMedia(id, updates);
-		return { ...mediaItem, ...updates } as MediaItem;
+		if (manipulations.saveBehavior === 'new') {
+			// Create a COMPLETELY NEW media record
+			const newMedia: any = {
+				...mediaItem,
+				url: publicUrl,
+				path: relativePath,
+				hash,
+				size: manipulatedBuffer.length,
+				width: meta.width,
+				height: meta.height,
+				thumbnails: resized,
+				filename: newFileName,
+				versions: [newVersion],
+				metadata: {
+					...mediaItem.metadata,
+					originalFilename: mediaItem.filename,
+					focalPoint: manipulations.focalPoint || mediaItem.metadata?.focalPoint,
+					lastManipulation: manipulations
+				}
+			};
+			delete newMedia._id;
+			delete newMedia.createdAt;
+			delete newMedia.updatedAt;
+
+			const result = await db.media.files.upload(newMedia);
+			if (!result.success) {
+				throw result.error;
+			}
+			return result.data as unknown as MediaItem;
+		} else {
+			// Overwrite / Update existing
+			await this.updateMedia(id, updates);
+			return { ...mediaItem, ...updates } as MediaItem;
+		}
 	}
 
 	// Updates a media item with new data

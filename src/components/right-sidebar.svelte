@@ -12,6 +12,8 @@
 -->
 
 <script lang="ts">
+import { registerHotkey } from '@src/utils/hotkeys';
+import { onMount } from 'svelte';
 // Components
 import Toggles from '@src/components/system/inputs/toggles.svelte';
 import { StatusTypes } from '@src/content/types';
@@ -180,6 +182,14 @@ function openSchedule() {
 	});
 }
 
+onMount(() => {
+	registerHotkey('mod+s', () => {
+		if (isFormValid && canWrite) {
+			save();
+		}
+	}, 'Save entry');
+});
+
 async function save() {
 	if (!isFormValid) {
 		toast.warning(validation_fix_before_save());
@@ -245,6 +255,7 @@ async function save() {
 					class:opacity-50={!isFormValid || !canWrite}
 					class:cursor-not-allowed={!isFormValid || !canWrite}
 					aria-label="Save"
+					aria-keyshortcuts="mod+s"
 					title={!isFormValid ? 'Fix validation errors before saving' : 'Save changes'}
 				>
 					<iconify-icon icon="material-symbols:save" width="20"></iconify-icon>

@@ -48,6 +48,7 @@ export interface ImageEditorState {
 
 	// Image specific properties
 	crop: { x: number; y: number; width: number; height: number } | null;
+	currentAspectRatio: number | null;
 	currentHistoryIndex: number;
 	editHistory: EditAction[];
 	error?: string | null;
@@ -95,6 +96,7 @@ function createImageEditorStore() {
 		translateY: 0,
 
 		crop: null,
+		currentAspectRatio: null,
 		focalPoint: { x: 0.5, y: 0.5 },
 		filters: {},
 		annotations: [],
@@ -177,6 +179,7 @@ function createImageEditorStore() {
 			translateX: state.translateX,
 			translateY: state.translateY,
 			crop: $state.snapshot(state.crop),
+			currentAspectRatio: state.currentAspectRatio,
 			focalPoint: $state.snapshot(state.focalPoint),
 			filters: $state.snapshot(state.filters),
 			annotations: $state.snapshot(state.annotations),
@@ -199,6 +202,7 @@ function createImageEditorStore() {
 			state.translateX = snapshot.translateX ?? 0;
 			state.translateY = snapshot.translateY ?? 0;
 			state.crop = snapshot.crop ?? null;
+			state.currentAspectRatio = snapshot.currentAspectRatio ?? null;
 			state.focalPoint = snapshot.focalPoint ?? { x: 0.5, y: 0.5 };
 			state.filters = snapshot.filters ?? {};
 			state.annotations = snapshot.annotations ?? [];
@@ -264,6 +268,7 @@ function createImageEditorStore() {
 		state.translateX = 0;
 		state.translateY = 0;
 		state.crop = null;
+		state.currentAspectRatio = null;
 		state.filters = {};
 		state.activeState = '';
 		state.stateHistory = [];

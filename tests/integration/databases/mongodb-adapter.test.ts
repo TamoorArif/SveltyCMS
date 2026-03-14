@@ -48,7 +48,7 @@ describe('MongoDB Adapter Functional Tests', () => {
 		let connectionString = `mongodb://${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
 
 		if (privateEnv.DB_USER && privateEnv.DB_PASSWORD) {
-			connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}?authSource=admin`;
+			connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
 		} else {
 			// Fallback for CI or local environments where auth might be different or not needed for the test DB
 			// but we still prefer explicit auth if vars are present.

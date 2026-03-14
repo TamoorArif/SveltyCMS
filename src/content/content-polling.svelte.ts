@@ -28,7 +28,15 @@ export const contentPolling = {
 	 * Only executes in the browser.
 	 */
 	start(intervalMs = 10000) {
-		if (pollingInterval || !browser) return;
+		if (!browser) return;
+
+		// Skip polling on setup or login routes
+		if (window.location.pathname.startsWith('/setup') || window.location.pathname.startsWith('/login')) {
+			this.stop();
+			return;
+		}
+
+		if (pollingInterval) return;
 
 		logger.info('📡 Starting content version polling');
 

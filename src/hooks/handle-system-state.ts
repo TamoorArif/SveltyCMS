@@ -1,5 +1,5 @@
 /**
- * @file src\hooks\handle-system-state.ts
+ * @file src/hooks/handle-system-state.ts
  * @description Middleware that acts as a gatekeeper, blocking or allowing requests based on the system's operational state.
  *
  * ### Features
@@ -9,15 +9,70 @@
  * - Prevents setup routes from returning before initialization
  */
 
+import { dev } from '$app/environment';
 import { dbInitPromise } from '@src/databases/db';
+import { metricsService } from '@src/services/metrics-service';
 import { getSystemState, isSystemReady } from '@src/stores/system/state';
 import type { SystemState } from '@src/stores/system/types';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 import { AppError, handleApiError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 import { isSetupComplete } from '@utils/setup-check';
 import { STATIC_ASSET_REGEX } from './handle-static-asset-caching';
+
+// --- HELPERS ---
+
+/**
+ * Checks if a route is part of the core bootstrap process (setup, login, system APIs).
+ */
+function isBootstrapRoute(pathname: string): boolean {
+	const bootstrapPaths = [
+		'/setup',
+		'/login',
+		'/api/auth', // ✨ Allow authentication (login/logout/session)
+		'/api/system',
+		'/api/debug',
+		'/api/settings/public',
+		'/api/content/version',
+		'/api/dashboard/health', // ✨ Allow dashboard health checks
+		'/_',
+		'/static',
+		'/assets',
+		'/.well-known',
+		'/favicon.ico'
+	];
+
+	const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
+
+	return bootstrapPaths.some((prefix) => pathname.startsWith(prefix)) || pathname === '/' || isLocalizedSetup;
+}
+
+/**
+ * Validates if the request is coming from a trusted host during bootstrap/restricted states.
+ */
+function isTrustedHost(event: RequestEvent): boolean {
+	const { host } = event.url;
+
+	// Always trust localhost/loopback
+	if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+		return true;
+	}
+
+	// Use environment variables for strict host validation during bootstrap
+	// We avoid DB settings here as they might not be loaded yet
+	const hostDev = process.env.HOST_DEV;
+	const hostProd = process.env.HOST_PROD;
+
+	const trustedHost = dev ? hostDev : hostProd;
+
+	if (trustedHost && host === trustedHost) {
+		return true;
+	}
+
+	// If no host is configured yet, we only allowed localhost (fail-safe)
+	return false;
+}
 
 // Color helper for state values
 function colorState(state: string): string {
@@ -222,53 +277,33 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 			// If 'complete', continue to route checks below
 		}
 
-		// --- Phase 2: Allow Setup Routes (AFTER initialization attempt) ---
-		if (systemState.overallState === 'IDLE') {
-			const allowedPaths = [
-				'/setup',
-				'/api/system/health',
-				'/api/dashboard/health',
-				'/login',
-				'/static',
-				'/assets',
-				'/favicon.ico',
-				'/.well-known',
-				'/_',
-				'/api/system/version',
-				'/api/system', // Allow unified system API
-				'/api/debug', // Allow debug endpoints
-				'/api/settings/public' // ✨ Allow public settings for setup UI
-			];
-			const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
-			const isAllowedRoute = allowedPaths.some((prefix) => pathname.startsWith(prefix)) || pathname === '/' || isLocalizedSetup;
-
-			if (isAllowedRoute) {
-				logger.trace(`Allowing request to ${pathname} during IDLE (setup mode) state.`);
-				return await resolve(event);
+		// --- Phase 2: Handle Bootstrap Routes (Restricted States) ---
+		// These routes are allowed during IDLE, INITIALIZING, or SETUP if host is trusted.
+		if (isBootstrapRoute(pathname)) {
+			// SECURITY: Enforce host validation for bootstrap routes during restricted states
+			if (!isTrustedHost(event)) {
+				metricsService.incrementSecurityViolations();
+				logger.warn(
+					`Untrusted host ${colorPath(event.url.host)} attempted bootstrap access to ${colorPath(pathname)} during state: ${colorState(systemState.overallState)}`
+				);
+				throw new AppError('Forbidden: Access from untrusted host blocked.', 403, 'UNTRUSTED_HOST');
 			}
+
+			// Special handling for root redirect in SETUP mode
+			if (pathname === '/' && systemState.overallState === 'SETUP') {
+				logger.info('System in SETUP mode. Redirecting root to /setup');
+				return new Response(null, {
+					status: 302,
+					headers: { Location: '/setup' }
+				});
+			}
+
+			logger.trace(`Allowing bootstrap request to ${pathname} during ${systemState.overallState} state.`);
+			return await resolve(event);
 		}
 
 		// --- State: INITIALIZING ---
 		if (systemState.overallState === 'INITIALIZING') {
-			const allowedPaths = [
-				'/api/system/health',
-				'/api/dashboard/health',
-				'/setup',
-				'/login',
-				'/.well-known',
-				'/_',
-				'/api/system/version',
-				'/api/system', // Allow unified system API during initialization
-				'/api/debug'
-			];
-			const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
-			const isAllowedRoute = allowedPaths.some((prefix) => pathname.startsWith(prefix)) || (!setupComplete && pathname === '/') || isLocalizedSetup;
-
-			if (isAllowedRoute) {
-				logger.trace(`Allowing request to ${pathname} during INITIALIZING state.`);
-				return await resolve(event);
-			}
-
 			// Wait for initialization to complete with timeout
 			logger.debug(`Request to ${pathname} waiting for initialization to complete...`);
 			try {
@@ -287,57 +322,31 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 			}
 		}
 
-		// --- State: SETUP ---
-		if (systemState.overallState === 'SETUP') {
-			const allowedPaths = ['/setup', '/api/system', '/login', '/static', '/assets', '/.well-known', '/_', '/api/debug'];
-			const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
-			const isAllowedRoute = allowedPaths.some((prefix) => pathname.startsWith(prefix)) || pathname === '/' || isLocalizedSetup;
-
-			if (isAllowedRoute) {
-				// If root is requested in SETUP mode, redirect to setup wizard
-				if (pathname === '/') {
-					logger.info('System in SETUP mode. Redirecting root to /setup');
-					return new Response(null, {
-						status: 302,
-						headers: { Location: '/setup' }
-					});
-				}
-				logger.trace(`Allowing request to ${pathname} during SETUP state.`);
-				return await resolve(event);
+		// --- Phase 4: Handle Restricted States ---
+		// If we reached here, it means it's NOT a bootstrap route (already resolved above).
+		const restrictedStates: SystemState[] = ['IDLE', 'INITIALIZING', 'SETUP', 'MAINTENANCE', 'FAILED'];
+		if (restrictedStates.includes(systemState.overallState as any)) {
+			if (systemState.overallState === 'SETUP') {
+				logger.warn(`Request to ${pathname} blocked: System is in SETUP mode.`);
+				throw new AppError('System is in Setup Mode. Please complete configuration.', 503, 'SYSTEM_SETUP_MODE');
+			}
+			if (systemState.overallState === 'MAINTENANCE') {
+				logger.warn(`Request to ${pathname} blocked: System is in MAINTENANCE mode.`);
+				throw new AppError('System is currently under maintenance. Please try again later.', 503, 'SYSTEM_MAINTENANCE');
 			}
 
-			logger.warn(`Request to ${pathname} blocked: System is in SETUP mode.`);
-			throw new AppError('System is in Setup Mode. Please complete configuration.', 503, 'SYSTEM_SETUP_MODE');
+			logger.warn(`Request to ${pathname} blocked: System is currently ${systemState.overallState}.`);
+			throw new AppError(`Service Unavailable: System is currently ${systemState.overallState}.`, 503, 'SYSTEM_RESTRICTED');
 		}
 
-		// --- State: MAINTENANCE ---
-		if (systemState.overallState === 'MAINTENANCE') {
-			// Allow health checks and admin login
-			const allowedPaths = ['/api/system/health', '/api/dashboard/health', '/login', '/api/auth/login'];
-			if (allowedPaths.some((prefix) => pathname.startsWith(prefix))) {
-				return await resolve(event);
-			}
-
-			logger.warn(`Request to ${pathname} blocked: System is in MAINTENANCE mode.`);
-			throw new AppError('System is currently under maintenance. Please try again later.', 503, 'SYSTEM_MAINTENANCE');
-		}
-
-		// --- State: Final Ready Check ---
+		// --- State: Final Ready Check (Warming Phase) ---
 		const isNowReady =
 			systemState.overallState === 'READY' ||
 			systemState.overallState === 'DEGRADED' ||
 			systemState.overallState === 'WARMING' ||
-			systemState.overallState === 'WARMED' ||
-			(systemState.overallState as SystemState) === 'SETUP';
+			systemState.overallState === 'WARMED';
+
 		if (!isNowReady) {
-			const allowedPaths = ['/api/system/health', '/api/dashboard/health', '/setup', '/api/system/version', '/api/system', '/api/debug'];
-			const isAllowedRoute = allowedPaths.some((prefix) => pathname.startsWith(prefix));
-
-			if (isAllowedRoute) {
-				logger.trace(`Allowing request to ${pathname} during ${systemState.overallState} state.`);
-				return await resolve(event);
-			}
-
 			// Reduce log noise for well-known/devtools requests
 			if (pathname.startsWith('/.well-known/') || pathname.includes('devtools')) {
 				logger.trace(`Request to ${pathname} blocked: System is currently ${systemState.overallState}.`);
@@ -348,14 +357,16 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 		}
 
 		// --- State: READY or DEGRADED ---
-		if (systemState.overallState === 'DEGRADED') {
-			const degradedServices = Object.entries(systemState.services)
-				.filter(([, s]) => s.status === 'unhealthy')
-				.map(([name]) => name);
+		if (systemState.overallState === 'READY' || systemState.overallState === 'DEGRADED') {
+			if (systemState.overallState === 'DEGRADED') {
+				const degradedServices = Object.entries(systemState.services)
+					.filter(([, s]) => s.status === 'unhealthy')
+					.map(([name]) => name);
 
-			if (degradedServices.length > 0) {
-				event.locals.degradedServices = degradedServices;
-				logger.warn(`Request to ${pathname} is proceeding in a DEGRADED state. Unhealthy services: ${degradedServices.join(', ')}`);
+				if (degradedServices.length > 0) {
+					event.locals.degradedServices = degradedServices;
+					logger.warn(`Request to ${pathname} is proceeding in a DEGRADED state. Unhealthy services: ${degradedServices.join(', ')}`);
+				}
 			}
 		}
 

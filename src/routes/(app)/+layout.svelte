@@ -48,7 +48,8 @@ import { Portal } from '@skeletonlabs/skeleton-svelte';
 // Utils
 import { isSearchVisible } from '@utils/global-search-index';
 import { getTextDirection } from '@utils/utils';
-import { onDestroy, onMount, untrack } from 'svelte';
+import { onMount, untrack } from 'svelte';
+import { registerHotkey } from '@src/utils/hotkeys';
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from '$app/navigation';
 import { page } from '$app/state';
@@ -169,14 +170,6 @@ $effect(() => {
 // EVENT HANDLERS
 // =============================================
 
-// Global keyboard shortcuts handler
-function handleKeyDown(event: KeyboardEvent): void {
-	if (event.altKey && event.key === 's') {
-		event.preventDefault();
-		isSearchVisible.update((visible) => !visible);
-	}
-}
-
 // Initialize avatar from user data
 function initializeUserAvatar(user: User | null): void {
 	console.log('[AppLayout] initializeUserAvatar for user:', user?.username || 'Guest');
@@ -214,7 +207,31 @@ onMount(() => {
 	widgets.initialize();
 	initializeDarkMode(data.theme as any);
 	initializeUserAvatar(data.user);
-	window.addEventListener('keydown', handleKeyDown);
+
+	registerHotkey(
+		'mod+k',
+		() => {
+			isSearchVisible.update((visible) => !visible);
+		},
+		'Open global search / command palette'
+	);
+
+	registerHotkey(
+		'mod+s',
+		() => {
+			window.dispatchEvent(new CustomEvent('global-save-request'));
+		},
+		'Save (global)'
+	);
+
+	registerHotkey(
+		'escape',
+		() => {
+			isSearchVisible.set(false);
+		},
+		'Close Overlays/Search',
+		false
+	);
 });
 
 beforeNavigate(({ from, to }) => {
@@ -230,10 +247,6 @@ afterNavigate(() => {
 			globalLoadingStore.stopLoading(loadingOperations.navigation);
 		}
 	}, 100);
-});
-
-onDestroy(() => {
-	window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
 
@@ -276,7 +289,7 @@ onDestroy(() => {
 				{#if ui.state.leftSidebar !== 'hidden'}
 					<aside
 						class="max-h-dvh {ui.state.leftSidebar === 'full'
-							? 'w-[220px]'
+							? 'w-55'
 							: 'w-fit'} relative border-r bg-white px-2! text-center dark:border-surface-500 dark:bg-linear-to-r dark:from-surface-700 dark:to-surface-900"
 						aria-label="Left sidebar navigation"
 					>
@@ -302,7 +315,7 @@ onDestroy(() => {
 
 				{#if ui.state.rightSidebar !== 'hidden'}
 					<aside
-						class="max-h-dvh w-[220px] border-l bg-white bg-linear-to-r dark:border-surface-500 dark:from-surface-700 dark:to-surface-900"
+						class="max-h-dvh w-55 border-l bg-white bg-linear-to-r dark:border-surface-500 dark:from-surface-700 dark:to-surface-900"
 						aria-label="Right sidebar"
 					>
 						<RightSidebar />
