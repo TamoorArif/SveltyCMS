@@ -1064,6 +1064,45 @@ export class MediaService {
 		throw new Error(`Unsupported media type: ${mimeType}`);
 	}
 
+	/**
+	 * Processes multiple images in bulk with specific filters
+	 */
+	public async batchProcessImages(
+		ids: string[],
+		options: {
+			filters: { brightness?: number; contrast?: number; saturation?: number; grayscale?: number; sepia?: number };
+			saveBehavior: 'new' | 'overwrite';
+		},
+		userId: string
+	): Promise<MediaItem[]> {
+		this.ensureInitialized();
+		const results: MediaItem[] = [];
+
+		logger.info(`Starting batch processing for ${ids.length} items`, { userId, options });
+
+		// Process in parallel with concurrency limit if needed, but for now direct parallel
+		const promises = ids.map((id) =>
+			this.manipulateMedia(
+				id,
+				{
+					filters: options.filters,
+					saveBehavior: options.saveBehavior
+				},
+				userId
+			).catch((err) => {
+				logger.error(`Batch item ${id} failed:`, err);
+				return null;
+			})
+		);
+
+		const processed = await Promise.all(promises);
+		for (const item of processed) {
+			if (item) results.push(item);
+		}
+
+		return results;
+	}
+
 	public async saveRemoteMedia(url: string, userId: string, access: MediaAccess, basePath = 'global'): Promise<MediaItem> {
 		const response = await fetch(url);
 		if (!response.ok) {

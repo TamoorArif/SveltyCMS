@@ -77,6 +77,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				break;
 			case 'delete':
 				break;
+			case 'batch':
+				break;
 			default:
 				throw error(400, `Unsupported process type: ${processType}`);
 		} // Authentication is handled by hooks.server.ts - user presence confirms access // Initializemedia-service
@@ -173,6 +175,23 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				// deleteMedia only takes one parameter
 				await mediaService.deleteMedia(mediaId);
 				result = { success: true };
+				break;
+			}
+			case 'batch': {
+				const mediaIdsString = formData.get('mediaIds') as string;
+				const optionsString = formData.get('options') as string;
+
+				if (!mediaIdsString || !optionsString) {
+					return json({ success: false, error: 'Missing batch parameters' }, { status: 400 });
+				}
+
+				const mediaIds = JSON.parse(mediaIdsString);
+				const options = JSON.parse(optionsString);
+
+				if (!user) throw error(401, 'User not authenticated');
+
+				const processedItems = await mediaService.batchProcessImages(mediaIds, options, user._id.toString());
+				result = { success: true, data: processedItems };
 				break;
 			}
 			default:
