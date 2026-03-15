@@ -45,7 +45,8 @@ export class AuthModule {
 			...converted,
 			roleIds: finalRoleIds,
 			role: finalRoleIds.length > 0 ? finalRoleIds[0] : 'user',
-			permissions: (converted as { permissions?: string[] }).permissions || []
+			isRegistered: !!dbUser.isRegistered,
+			permissions: (dbUser as unknown as { permissions?: string[] }).permissions || []
 		} as User;
 	}
 
@@ -84,6 +85,7 @@ export class AuthModule {
 				lastName: userData.lastName || null,
 				avatar: userData.avatar || null,
 				roleIds: [],
+				isRegistered: userData.isRegistered || false,
 				tenantId: userData.tenantId || null,
 				_id: id,
 				createdAt: now,

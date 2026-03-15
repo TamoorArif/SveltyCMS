@@ -38,6 +38,7 @@ export const authUsers = mysqlTable(
 		lastName: varchar('lastName', { length: 255 }),
 		avatar: text('avatar'),
 		roleIds: json('roleIds').$type<string[]>().notNull().default([]),
+		isRegistered: boolean('isRegistered').notNull().default(false),
 		tenantId: tenantField(),
 		...timestamps
 	},

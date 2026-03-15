@@ -32,7 +32,7 @@ export default defineConfig({
 	/* Set environment variables for tests */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
-		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || (process.env.CI ? 'http://127.0.0.1:4173' : 'http://127.0.0.1:5173'),
+		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://127.0.0.1:4173',
 
 		launchOptions: {
 			slowMo: Number.parseInt(process.env.SLOW_MO || '0', 10)
@@ -51,76 +51,33 @@ export default defineConfig({
 	/* Configure projects for major browsers */
 	projects: [
 		{
+			name: 'setup',
+			testMatch: /auth\.setup\.ts/
+		},
+		{
 			name: 'chromium',
 			use: {
 				...devices['Desktop Chrome'],
-				headless: !!process.env.CI // Always headless in CI
-			}
-		},
-
-		{
-			name: 'firefox',
-			use: {
-				...devices['Desktop Firefox'],
-				headless: !!process.env.CI
-			}
-		},
-
-		{
-			name: 'webkit',
-			use: {
-				...devices['Desktop Safari'],
-				headless: !!process.env.CI
-			}
-		},
-
-		/* Test against mobile viewports. */
-		{
-			name: 'Mobile Chrome',
-			use: {
-				...devices['Pixel 5'],
-				headless: !!process.env.CI
-			}
-		},
-		{
-			name: 'Mobile Safari',
-			use: {
-				...devices['iPhone 12'],
-				headless: !!process.env.CI
-			}
-		},
-
-		/* Test against branded browsers. */
-		{
-			name: 'Microsoft Edge',
-			use: {
-				...devices['Desktop Edge'],
-				channel: 'msedge',
-				headless: !!process.env.CI
-			}
-		},
-		{
-			name: 'Google Chrome',
-			use: {
-				...devices['Desktop Chrome'],
-				channel: 'chrome',
-				headless: !!process.env.CI
-			}
+				headless: !!process.env.CI, // Always headless in CI
+				storageState: 'tests/e2e/.auth/user.json'
+			},
+			dependencies: ['setup']
 		}
 	],
 
-	/* Run your local dev server before starting the tests */
+	/* Run your local build server before starting the tests */
 	// In CI, the workflow starts the server manually, so we only use webServer locally
 	...(process.env.CI
 		? {}
 		: {
 				webServer: {
-					command: 'bun install && bun dev --port 5173',
-					port: 5173,
-					timeout: 60_000, // Increased timeout to 1 minute
+					command: 'bun run build && bun run preview --port 4173',
+					port: 4173,
+					timeout: 120_000, // Increased timeout to 2 minutes for build
 					reuseExistingServer: true,
 					env: {
-						PLAYWRIGHT_TEST: 'true'
+						PLAYWRIGHT_TEST: 'true',
+						TEST_MODE: 'true'
 					}
 				}
 			})

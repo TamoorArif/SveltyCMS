@@ -50,6 +50,7 @@ async function createTablesIfNotExist(connection: mysql.Pool): Promise<void> {
 			lastName VARCHAR(255),
 			avatar TEXT,
 			roleIds JSON NOT NULL,
+			isRegistered BOOLEAN NOT NULL DEFAULT FALSE,
 			tenantId VARCHAR(36),
 			createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -333,6 +334,13 @@ async function createTablesIfNotExist(connection: mysql.Pool): Promise<void> {
 
 	for (const query of queries) {
 		await connection.query(query);
+	}
+
+	// Add isRegistered column if it doesn't exist (for existing databases)
+	try {
+		await connection.query(`ALTER TABLE auth_users ADD COLUMN isRegistered BOOLEAN NOT NULL DEFAULT FALSE`);
+	} catch (_e) {
+		// Column already exists or other error we can ignore
 	}
 
 	logger.info('All tables created/verified');

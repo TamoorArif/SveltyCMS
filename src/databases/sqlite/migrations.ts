@@ -43,11 +43,19 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 				lastName TEXT,
 				avatar TEXT,
 				roleIds TEXT DEFAULT '[]',
+				isRegistered INTEGER DEFAULT 0,
 				tenantId TEXT,
 				createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
 				updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
 			)
 		`);
+
+		// Add isRegistered column if it doesn't exist (for existing databases)
+		try {
+			execute(`ALTER TABLE auth_users ADD COLUMN isRegistered INTEGER DEFAULT 0`);
+		} catch (_e) {
+			// Column already exists or table doesn't exist yet
+		}
 
 		// Auth Sessions
 		execute(`

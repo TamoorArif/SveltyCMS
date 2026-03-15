@@ -39,6 +39,7 @@ function handleKeyDown(event: KeyboardEvent) {
 		onkeydown={handleKeyDown}
 		role="button"
 		aria-label="Go to Sign In"
+		data-testid="signin-icon"
 		tabindex={disabled ? -1 : 0}
 		class="flex cursor-pointer flex-col items-center"
 	>

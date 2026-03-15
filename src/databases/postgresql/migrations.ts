@@ -58,6 +58,7 @@ async function createTablesIfNotExist(sql: postgres.Sql): Promise<void> {
 			"lastName" VARCHAR(255),
 			"avatar" TEXT,
 			"roleIds" JSONB NOT NULL DEFAULT '[]',
+			"isRegistered" BOOLEAN NOT NULL DEFAULT FALSE,
 			"tenantId" VARCHAR(36),
 			"createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			"updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -369,6 +370,13 @@ async function createTablesIfNotExist(sql: postgres.Sql): Promise<void> {
 
 	for (const query of queries) {
 		await sql.unsafe(query);
+	}
+
+	// Add isRegistered column if it doesn't exist (for existing databases)
+	try {
+		await sql.unsafe(`ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS "isRegistered" BOOLEAN NOT NULL DEFAULT FALSE`);
+	} catch (_e) {
+		// Ignore error
 	}
 
 	logger.info('All PostgreSQL tables created/verified');

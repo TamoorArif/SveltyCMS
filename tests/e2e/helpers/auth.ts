@@ -20,6 +20,12 @@ export const ADMIN_CREDENTIALS = {
  * @param waitForUrl - URL pattern to wait for after login (default: Collections/Names page)
  */
 export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
+	// Inject session storage to bypass the welcome modal and cookie consent before navigation
+	await page.addInitScript(() => {
+		window.sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
+		window.localStorage.setItem('sveltycms_consent', JSON.stringify({ responded: true, necessary: true, analytics: false, marketing: false }));
+	});
+
 	// First, try to logout if already logged in
 	await logout(page);
 
@@ -33,13 +39,30 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
 	}
 
 	// Check if we're on the login selection page (SIGN IN / SIGN UP buttons)
+	// Try data-testid first, then fallback to previous locators
+	const signInIcon = page.getByTestId('signin-icon');
 	const signInButton = page.locator('div[role="button"]:has-text("SIGN IN"), p:has-text("Sign In")').first();
-	const signInVisible = await signInButton.isVisible({ timeout: 5000 }).catch(() => false);
 
-	if (signInVisible) {
-		console.log('[Auth] Clicking SIGN IN button...');
+	const signInIconVisible = await signInIcon.isVisible({ timeout: 2000 }).catch(() => false);
+	const signInButtonVisible = !signInIconVisible && (await signInButton.isVisible({ timeout: 2000 }).catch(() => false));
+
+	if (signInIconVisible) {
+		console.log('[Auth] Clicking SIGN IN icon...');
+		await signInIcon.click();
+		await page.waitForTimeout(1000);
+	} else if (signInButtonVisible) {
+		console.log('[Auth] Clicking SIGN IN button (fallback)...');
 		await signInButton.click();
 		await page.waitForTimeout(1000);
+	} else {
+		// If neither is visible, we might already be on the form, or on the SIGN UP only page (First User)
+		const signUpIcon = page.getByTestId('signup-icon');
+		if (await signUpIcon.isVisible()) {
+			console.log('[Auth] WARNING: Only SIGN UP icon visible. DB might not be seeded or isFirstUser=true.');
+			// In first user mode, we'll try to click signup and fill it, but expect error later
+			await signUpIcon.click();
+			await page.waitForTimeout(1000);
+		}
 	}
 
 	// Wait for login form to be visible - use data-testid
@@ -99,6 +122,7 @@ export async function logout(page: Page) {
 
 		// Look for logout button or menu - try multiple selectors
 		const logoutSelectors = [
+			'[data-testid="sign-out-button"]',
 			'button:has-text("Logout")',
 			'button:has-text("Sign out")',
 			'button:has-text("Log out")',

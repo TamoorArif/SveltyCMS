@@ -63,11 +63,14 @@ export async function POST({ request }: RequestEvent) {
 
 			case 'seed': {
 				// Initialize default roles, settings and themes
-				const { seedRoles, seedDefaultTheme, seedSettings } = await import('@src/routes/setup/seed');
+				const { seedRoles, seedDefaultTheme, seedSettings, seedCollectionsForSetup } = await import('@src/routes/setup/seed');
 
 				await seedSettings(currentDbAdapter);
 				await seedDefaultTheme(currentDbAdapter);
 				await seedRoles(currentDbAdapter);
+
+				// Also seed collections so the CMS isn't "empty" (prevents redirects to builder)
+				await seedCollectionsForSetup(currentDbAdapter);
 
 				// Seed Admin User
 				const adminEmail = body.email || 'admin@test.com';
@@ -80,7 +83,8 @@ export async function POST({ request }: RequestEvent) {
 						email: adminEmail,
 						password: adminPassword,
 						username: 'admin',
-						role: 'admin'
+						role: 'admin',
+						isRegistered: true
 					});
 				}
 
@@ -100,7 +104,8 @@ export async function POST({ request }: RequestEvent) {
 					email,
 					password,
 					username: username || email.split('@')[0],
-					role
+					role,
+					isRegistered: true
 				});
 				return json({
 					success: true,

@@ -55,6 +55,7 @@ export const defaultRoles: Role[] = [
 			'collections:update',
 			'collections:create',
 			'content:builder',
+			'config:collectionbuilder',
 			'config:widgetManagement'
 		],
 		icon: 'material-symbols:code',

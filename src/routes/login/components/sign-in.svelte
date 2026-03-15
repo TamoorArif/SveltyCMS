@@ -495,8 +495,8 @@ $effect(() => {
 					<FloatingPaths position={-1} background="white" />
 				</div>
 			{/if}
-			<div class="absolute left-1/2 top-[20%] hidden -translate-x-1/2 -translate-y-1/2 transform xl:block"><SveltyCMSLogoFull /></div>
-			<div class="z-0 mx-auto mb-[5%] mt-[15%] w-full overflow-y-auto rounded-md bg-white/0 p-6 backdrop-blur lg:w-4/5" class:hide={active !== 0}>
+			<div class="absolute left-1/2 top-[20%] z-20 hidden -translate-x-1/2 -translate-y-1/2 transform xl:block"><SveltyCMSLogoFull /></div>
+			<div class="relative z-10 mx-auto mb-[5%] mt-[15%] w-full overflow-y-auto rounded-md bg-white/0 p-6 backdrop-blur lg:w-4/5" class:hide={active !== 0}>
 				<div class="flex flex-row gap-2">
 					<SveltyCMSLogo className="w-14" fill="red" />
 

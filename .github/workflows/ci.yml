@@ -124,6 +124,19 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
+      
+      - name: Run System Setup (Real Black-Box)
+        env:
+          DB_TYPE: sqlite
+          TEST_MODE: true
+        run: |
+          # Start server in background
+          bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
+          # Wait for server health
+          bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
+          # Run system setup via API
+          bun run scripts/setup-system.ts
+          
       - run: bun run check
 
   unit-vitest:
@@ -411,15 +424,17 @@ jobs:
     needs: [db-tests]
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: mongo:7
-        ports:
-          - 27017:27017
-
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: workspace-meta
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: build-output
 
       - uses: actions/cache@v5
         with:
@@ -430,12 +445,21 @@ jobs:
 
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
 
-      - name: Create mock config/private.ts
+      - name: Run System Setup (Black-Box)
+        env:
+          DB_TYPE: sqlite
+          TEST_MODE: true
         run: |
-          mkdir -p config
-          echo "export const privateEnv = { DB_TYPE: 'mongodb', DB_HOST: '127.0.0.1', DB_NAME: 'bench_test' };" > config/private.ts
+          # Start server in background
+          bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
+          # Wait for server health
+          bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
+          # Run system setup via API
+          bun run scripts/setup-system.ts
 
       - name: Run Hooks Benchmark
+        env:
+          TEST_MODE: true
         run: |
           echo "### ⚡ Middleware Hooks Performance" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
@@ -443,8 +467,11 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Run Database Benchmark
+        env:
+          TEST_MODE: true
         run: |
           echo "### 💾 Raw Database Performance" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          bun run tests/benchmarks/database-performance.ts >> $GITHUB_STEP_SUMMARY
+          # Run the new agnostic benchmark
+          bun x vitest run -c vitest.benchmark.config.ts >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
