@@ -30,11 +30,13 @@ $effect(() => {
 
 function onAspectChange(ratio: number | null) {
 	const current = imageEditorStore.state.crop;
+	if (!current) return;
 	imageEditorStore.updateCrop({ ...current, aspectRatio: ratio });
 }
 
 function onCropShapeChange(shape: CropShape) {
 	const current = imageEditorStore.state.crop;
+	if (!current) return;
 	imageEditorStore.updateCrop({ ...current, shape });
 }
 </script>
@@ -47,7 +49,7 @@ function onCropShapeChange(shape: CropShape) {
 			{#each ASPECT_RATIO_PRESETS as preset}
 				<button
 					class="flex flex-col items-center gap-1 rounded-lg border border-surface-700 bg-surface-800 p-2 transition-all hover:border-primary-500 hover:bg-surface-700
-                        {imageEditorStore.state.crop.aspectRatio === preset.value ? 'border-primary-500 bg-primary-500/10' : ''}"
+                        {imageEditorStore.state.crop?.aspectRatio === preset.value ? 'border-primary-500 bg-primary-500/10' : ''}"
 					onclick={() => onAspectChange(preset.value)}
 					title={preset.description}
 				>
@@ -70,7 +72,7 @@ function onCropShapeChange(shape: CropShape) {
 		<div class="flex gap-2">
 			<button
 				class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-surface-700 bg-surface-800 p-2 transition-all hover:border-primary-500
-                    {imageEditorStore.state.crop.shape === 'rect' ? 'border-primary-500 bg-primary-500/10' : ''}"
+                    {imageEditorStore.state.crop?.shape === 'rect' ? 'border-primary-500 bg-primary-500/10' : ''}"
 				onclick={() => onCropShapeChange('rect')}
 			>
 				<iconify-icon icon="mdi:rectangle-outline" width="20"></iconify-icon>
@@ -78,7 +80,7 @@ function onCropShapeChange(shape: CropShape) {
 			</button>
 			<button
 				class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-surface-700 bg-surface-800 p-2 transition-all hover:border-primary-500
-                    {imageEditorStore.state.crop.shape === 'circle' ? 'border-primary-500 bg-primary-500/10' : ''}"
+                    {imageEditorStore.state.crop?.shape === 'circle' ? 'border-primary-500 bg-primary-500/10' : ''}"
 				onclick={() => onCropShapeChange('circle')}
 			>
 				<iconify-icon icon="mdi:circle-outline" width="20"></iconify-icon>

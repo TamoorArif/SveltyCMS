@@ -5,7 +5,7 @@
 <script lang="ts">
 import { toast } from '@src/stores/toast.svelte.ts';
 import { logger } from '@utils/logger';
-import { fade, slide } from 'svelte/transition';
+import { slide } from 'svelte/transition';
 
 interface Props {
 	video: { _id: string; filename: string; url: string };
@@ -70,7 +70,7 @@ function toggleResolution(res: string) {
 			</h2>
 			<p class="text-xs opacity-50 font-mono mt-1">{video.filename}</p>
 		</div>
-		<button class="btn-icon preset-tonal-surface" onclick={onClose}>
+		<button class="btn-icon preset-tonal-surface" onclick={onClose} aria-label="Close">
 			<iconify-icon icon="mdi:close" width="20"></iconify-icon>
 		</button>
 	</div>
@@ -78,7 +78,7 @@ function toggleResolution(res: string) {
 	<div class="grid grid-cols-2 gap-6">
 		<!-- Output Format -->
 		<div class="space-y-2">
-			<label class="label text-sm font-bold uppercase tracking-widest opacity-60">Output Format</label>
+			<span class="block text-sm font-bold uppercase tracking-widest opacity-60">Output Format</span>
 			<div class="flex gap-2">
 				<button 
 					class="btn flex-1 {format === 'hls' ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
@@ -97,8 +97,8 @@ function toggleResolution(res: string) {
 
 		<!-- Bitrate -->
 		<div class="space-y-2">
-			<label class="label text-sm font-bold uppercase tracking-widest opacity-60">Target Bitrate</label>
-			<select bind:value={bitrate} class="select">
+			<label for="target-bitrate" class="label text-sm font-bold uppercase tracking-widest opacity-60">Target Bitrate</label>
+			<select id="target-bitrate" bind:value={bitrate} class="select">
 				<option value="auto">Auto-Optimize</option>
 				<option value="high">High (8Mbps)</option>
 				<option value="medium">Medium (4Mbps)</option>
@@ -109,7 +109,7 @@ function toggleResolution(res: string) {
 
 	<!-- Resolutions -->
 	<div class="space-y-3">
-		<label class="label text-sm font-bold uppercase tracking-widest opacity-60">Resolutions to Generate</label>
+		<span class="block text-sm font-bold uppercase tracking-widest opacity-60">Resolutions to Generate</span>
 		<div class="flex flex-wrap gap-2">
 			{#each availableResolutions as res}
 				<button 

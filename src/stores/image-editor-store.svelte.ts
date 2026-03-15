@@ -36,7 +36,7 @@ export interface ImageEditorState {
 	blurRegions: any[];
 
 	// Image specific properties
-	crop: { x: number; y: number; width: number; height: number } | null;
+	crop: { x: number; y: number; width: number; height: number; shape?: 'rect' | 'circle'; aspectRatio?: number } | null;
 	currentAspectRatio: number | null;
 	currentHistoryIndex: number;
 	editHistory: EditAction[];
@@ -56,8 +56,11 @@ export interface ImageEditorState {
 	toolbarControls: ToolbarControls | null;
 	translateX: number;
 	translateY: number;
+	pan: { x: number; y: number };
+	canvasSize: { width: number; height: number };
 	watermarks: any[];
 	zoom: number;
+	saveBehavior: 'new' | 'overwrite';
 }
 
 // Create image editor store
@@ -83,15 +86,24 @@ function createImageEditorStore() {
 		flipV: false,
 		translateX: 0,
 		translateY: 0,
-
+		pan: { x: 0, y: 0 },
+		canvasSize: { width: 0, height: 0 },
 		crop: null,
 		currentAspectRatio: null,
 		focalPoint: { x: 0.5, y: 0.5 },
-		filters: {},
+		filters: {
+			brightness: 0,
+			contrast: 0,
+			saturation: 0,
+			grayscale: 0,
+			sepia: 0,
+			temperature: 0
+		},
 		annotations: [],
 
 		blurRegions: [],
-		watermarks: []
+		watermarks: [],
+		saveBehavior: 'new'
 	});
 
 	// Constants
@@ -257,11 +269,6 @@ function createImageEditorStore() {
 		state.translateX = 0;
 		state.translateY = 0;
 		state.crop = null;
-		state.currentAspectRatio = null;
-		state.filters = {};
-		state.activeState = '';
-		state.stateHistory = [];
-		state.currentHistoryIndex = -1;
 	}
 
 	function switchTool(tool: string) {
@@ -277,6 +284,25 @@ function createImageEditorStore() {
 		if (newState === '') {
 			setToolbarControls(null);
 		}
+	}
+
+	function rotate(degrees: number) {
+		state.rotation = (state.rotation + degrees) % 360;
+		takeSnapshot();
+	}
+
+	function flipH() {
+		state.flipH = !state.flipH;
+		takeSnapshot();
+	}
+
+	function flipV() {
+		state.flipV = !state.flipV;
+		takeSnapshot();
+	}
+
+	function updateZoom(delta: number) {
+		state.zoom = Math.max(0.1, Math.min(5, state.zoom + delta));
 	}
 
 	return {
@@ -315,7 +341,45 @@ function createImageEditorStore() {
 		redoState,
 		setSaveEditedImage,
 		handleUndo: () => undoState(),
-		handleRedo: () => redoState()
+		handleRedo: () => redoState(),
+		updateCrop: (newCrop: any) => {
+			state.crop = newCrop;
+		},
+		get adjustments() {
+			return state.filters;
+		},
+		get activeToolId() {
+			return state.activeState;
+		},
+		set activeToolId(value: string) {
+			setActiveState(value);
+		},
+		setActiveTool: (toolId: string) => switchTool(toolId),
+		rotate,
+		flipH,
+		flipV,
+		updateZoom,
+		saveHistory: takeSnapshot,
+		get canUndo() {
+			return canUndoState;
+		},
+		get canRedo() {
+			return canRedoState;
+		},
+		undo: () => undoState(),
+		redo: () => redoState(),
+		get saveBehavior() {
+			return state.saveBehavior;
+		},
+		set saveBehavior(value: 'new' | 'overwrite') {
+			state.saveBehavior = value;
+		},
+		get imageElement() {
+			return state.imageElement;
+		},
+		set imageElement(value: HTMLImageElement | null) {
+			state.imageElement = value;
+		}
 	};
 }
 

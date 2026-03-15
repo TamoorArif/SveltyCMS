@@ -68,9 +68,9 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
 		return false;
 	}
 
-	// 1.5. Smart Test Mode Bypass: 
+	// 1.5. Smart Test Mode Bypass:
 	// In test mode, we only bypass the DB check if the config exists.
-	// This avoids blocking API calls during integration tests when the DB is 
+	// This avoids blocking API calls during integration tests when the DB is
 	// temporarily empty (e.g. after a reset but before a seed).
 	const isTestMode = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.TEST_MODE === 'true';
 	if (isTestMode) {

@@ -5,7 +5,7 @@
 <script lang="ts">
 import { toast } from '@src/stores/toast.svelte.ts';
 import { logger } from '@utils/logger';
-import { fade, slide } from 'svelte/transition';
+import { slide } from 'svelte/transition';
 import type { SvelteSet } from 'svelte/reactivity';
 
 interface Props {
@@ -19,7 +19,6 @@ let operation = $state<'filter' | 'resize' | 'watermark'>('filter');
 let filterPreset = $state('vivid');
 let width = $state(1200);
 let isProcessing = $state(false);
-let processedCount = $state(0);
 
 const presets = [
 	{ id: 'vivid', label: 'Vivid' },
@@ -30,7 +29,6 @@ const presets = [
 
 async function runBatch() {
 	isProcessing = true;
-	processedCount = 0;
 
 	const ids = Array.from(selectedIds);
 
@@ -75,7 +73,7 @@ async function runBatch() {
 					<p class="text-xs opacity-50 uppercase tracking-widest font-mono">Sharp.js Multi-Asset Engine</p>
 				</div>
 			</div>
-			<button class="btn-icon preset-tonal-surface" onclick={onClose}>
+			<button class="btn-icon preset-tonal-surface" onclick={onClose} aria-label="Close">
 				<iconify-icon icon="mdi:close" width="20"></iconify-icon>
 			</button>
 		</div>
@@ -83,7 +81,7 @@ async function runBatch() {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 			<!-- Step 1: Operation -->
 			<div class="space-y-3">
-				<label class="label text-[10px] font-bold uppercase tracking-widest opacity-60">1. Select Action</label>
+				<span class="block text-[10px] font-bold uppercase tracking-widest opacity-60">1. Select Action</span>
 				<div class="flex flex-col gap-2">
 					<button 
 						class="btn btn-sm justify-start gap-2 {operation === 'filter' ? 'preset-filled-primary-500' : 'preset-tonal-surface'}"
@@ -104,9 +102,9 @@ async function runBatch() {
 
 			<!-- Step 2: Params -->
 			<div class="space-y-3 border-x border-surface-200 dark:border-surface-700 px-6">
-				<label class="label text-[10px] font-bold uppercase tracking-widest opacity-60">2. Configure</label>
+				<label for="batch-filter" class="label text-[10px] font-bold uppercase tracking-widest opacity-60">2. Configure</label>
 				{#if operation === 'filter'}
-					<select bind:value={filterPreset} class="select select-sm">
+					<select id="batch-filter" bind:value={filterPreset} class="select select-sm">
 						{#each presets as p}
 							<option value={p.id}>{p.label}</option>
 						{/each}
@@ -114,7 +112,7 @@ async function runBatch() {
 				{:else}
 					<div class="input-group input-group-sm">
 						<span class="input-group-shim">Width</span>
-						<input type="number" bind:value={width} class="input" />
+						<input id="batch-width" type="number" bind:value={width} class="input" />
 						<span class="input-group-shim">px</span>
 					</div>
 				{/if}

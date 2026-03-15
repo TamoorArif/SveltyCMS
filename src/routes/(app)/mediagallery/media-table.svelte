@@ -9,12 +9,8 @@ Features:
 -->
 
 <script lang="ts">
-import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import TableIcons from '@src/components/system/table/table-icons.svelte';
 import TablePagination from '@src/components/system/table/table-pagination.svelte';
-import { logger } from '@utils/logger';
-import type { MediaBase, MediaImage, MediaTypeEnum } from '@utils/media/media-models';
+import type { MediaBase, MediaImage } from '@utils/media/media-models';
 import { formatBytes } from '@utils/utils';
 import type { SvelteSet } from 'svelte/reactivity';
 
@@ -24,29 +20,15 @@ interface Props {
 	selectedFiles: SvelteSet<string>;
 	ondeleteImage?: (file: MediaBase | MediaImage) => void;
 	onEditImage?: (file: MediaImage) => void;
-	onUpdateImage?: (file: MediaImage) => void;
-	tableSize?: 'tiny' | 'small' | 'medium' | 'large';
 }
 
-let {
-	filteredFiles = [],
-	tableSize = 'medium',
-	isSelectionMode = false,
-	selectedFiles = $bindable(),
-	ondeleteImage = () => {},
-	onEditImage = () => {},
-	onUpdateImage = () => {}
-}: Props = $props();
+let { filteredFiles = [], isSelectionMode = false, selectedFiles = $bindable(), ondeleteImage = () => {}, onEditImage = () => {} }: Props = $props();
 
 // Pagination
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
 const pagesCount = $derived(Math.ceil(filteredFiles.length / rowsPerPage) || 1);
 const paginatedFiles = $derived(filteredFiles.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage));
-
-// Sorting
-let sortColumn = $state('filename');
-let sortOrder = $state(1);
 
 function toggleSelection(file: MediaBase | MediaImage) {
 	const fileId = file._id?.toString() || file.filename;
@@ -97,7 +79,6 @@ function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
 						onclick={() => handleRowClick(file)}
 						onkeydown={(e) => handleKeyDown(e, file)}
 						tabindex="0"
-						role="row"
 						aria-selected={isSelected}
 					>
 						<td class="text-center p-4">
@@ -159,8 +140,8 @@ function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
 			bind:rowsPerPage 
 			{pagesCount} 
 			totalItems={filteredFiles.length}
-			onUpdatePage={(p) => currentPage = p}
-			onUpdateRowsPerPage={(r) => { rowsPerPage = r; currentPage = 1; }}
+			onUpdatePage={(p: number) => currentPage = p}
+			onUpdateRowsPerPage={(r: number) => { rowsPerPage = r; currentPage = 1; }}
 		/>
 	</div>
 </div>

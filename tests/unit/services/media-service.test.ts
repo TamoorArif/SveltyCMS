@@ -1,13 +1,5 @@
-/**
- * @file tests/unit/services/media-service.test.ts
- * @description Whitebox unit tests for MediaService (2026).
- * Focuses on internal logic for transcoding, batch processing, and transformations.
- */
-
-import { describe, it, expect, beforeEach, vi, mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MediaService } from '@src/utils/media/media-service.server';
-import { dbAdapter } from '@src/databases/db';
-import sharp from 'sharp';
 
 // Mock dependencies
 vi.mock('sharp', () => ({
@@ -22,22 +14,7 @@ vi.mock('sharp', () => ({
 	}))
 }));
 
-vi.mock('@src/databases/db', () => ({
-	dbAdapter: {
-		crud: {
-			findOne: vi.fn(),
-			update: vi.fn()
-		},
-		media: {
-			files: {
-				upload: vi.fn()
-			}
-		},
-		auth: {
-			createToken: vi.fn()
-		}
-	}
-}));
+const mockDbAdapter = (globalThis as any).mockDbAdapter;
 
 vi.mock('@utils/logger.server', () => ({
 	logger: {
@@ -54,7 +31,7 @@ describe('MediaService (Whitebox)', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mediaService = new MediaService(dbAdapter as any);
+		mediaService = new MediaService(mockDbAdapter as any);
 	});
 
 	describe('Batch Processing Logic', () => {
@@ -65,7 +42,7 @@ describe('MediaService (Whitebox)', () => {
 			];
 
 			// Setup findOne mock
-			(dbAdapter.crud.findOne as any)
+			(mockDbAdapter.crud.findOne as any)
 				.mockResolvedValueOnce({ success: true, data: mockItems[0] })
 				.mockResolvedValueOnce({ success: true, data: mockItems[1] });
 
@@ -89,7 +66,7 @@ describe('MediaService (Whitebox)', () => {
 		});
 
 		it('should handle partial failures in batch processing', async () => {
-			(dbAdapter.crud.findOne as any)
+			(mockDbAdapter.crud.findOne as any)
 				.mockResolvedValueOnce({ success: true, data: { _id: 'id1', type: 'image', filename: 'test1.jpg', path: 'path1' } })
 				.mockResolvedValueOnce({ success: false, error: 'Not found' });
 
@@ -107,16 +84,16 @@ describe('MediaService (Whitebox)', () => {
 
 	describe('Transformation Utilities', () => {
 		it('should determine correct media type from mime', () => {
-			// @ts-ignore - accessing private for whitebox testing
+			// @ts-expect-error - accessing private for whitebox testing
 			expect(mediaService.getMediaType('image/jpeg')).toBe('image');
-			// @ts-ignore
+			// @ts-expect-error
 			expect(mediaService.getMediaType('video/mp4')).toBe('video');
-			// @ts-ignore
+			// @ts-expect-error
 			expect(mediaService.getMediaType('application/pdf')).toBe('document');
 		});
 
 		it('should fallback to document for unknown application/ types', () => {
-			// @ts-ignore
+			// @ts-expect-error
 			expect(mediaService.getMediaType('application/x-executable')).toBe('document');
 		});
 	});

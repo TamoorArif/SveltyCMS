@@ -6,8 +6,7 @@
  */
 
 import { exec } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs';
-import os from 'node:os';
+import { existsSync, mkdirSync } from 'node:fs';
 import Path from 'node:path';
 import { promisify } from 'node:util';
 import { dbAdapter } from '@src/databases/db';
@@ -92,7 +91,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const relativeTranscodePath = Path.relative(Path.join(process.cwd(), MEDIA_ROOT), outputDir);
 		await mediaService.updateMedia(mediaId, {
 			metadata: {
-				...mediaItem.metadata,
+				...(mediaItem.metadata || {}),
 				transcoded: true,
 				transcodePath: relativeTranscodePath,
 				masterPlaylist: Path.join(relativeTranscodePath, 'master.m3u8')

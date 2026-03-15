@@ -5,29 +5,35 @@
 <script lang="ts">
 import { Canvas, Layer, type Render } from 'svelte-canvas';
 import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { onMount } from 'svelte';
+import { onMount, type Snippet } from 'svelte';
+
+interface Props {
+	children?: Snippet;
+}
+
+let { children }: Props = $props();
 
 let container: HTMLDivElement | undefined = $state();
-let canvasSize = $derived(imageEditorStore.canvasSize);
+let canvasSize = $derived(imageEditorStore.state.canvasSize);
 
 // Rendering logic
 const render: Render = ({ context, width, height }) => {
 	const state = imageEditorStore.state;
-	const img = imageEditorStore.imageElement;
+	const img = state.imageElement;
 
 	if (!img) return;
 
 	context.clearRect(0, 0, width, height);
 
 	// Apply Adjustments (Filters)
-	const adj = state.adjustments;
+	const adj = state.filters;
 	const filters = [
-		`brightness(${100 + adj.brightness}%)`,
-		`contrast(${100 + adj.contrast}%)`,
-		`saturate(${100 + adj.saturation}%)`,
-		`grayscale(${adj.grayscale}%)`,
-		`sepia(${adj.sepia}%)`,
-		`hue-rotate(${adj.temperature}deg)`
+		`brightness(${100 + (adj.brightness || 0)}%)`,
+		`contrast(${100 + (adj.contrast || 0)}%)`,
+		`saturate(${100 + (adj.saturation || 0)}%)`,
+		`grayscale(${adj.grayscale || 0}%)`,
+		`sepia(${adj.sepia || 0}%)`,
+		`hue-rotate(${adj.temperature || 0}deg)`
 	].join(' ');
 
 	context.filter = filters;
@@ -52,7 +58,7 @@ onMount(() => {
 	const observer = new ResizeObserver((entries) => {
 		const entry = entries[0];
 		if (entry) {
-			imageEditorStore.canvasSize = {
+			imageEditorStore.state.canvasSize = {
 				width: entry.contentRect.width,
 				height: entry.contentRect.height
 			};
@@ -71,7 +77,9 @@ onMount(() => {
 
 	<!-- Interaction Overlay (Handled by tools) -->
 	<div class="absolute inset-0 pointer-events-none">
-		<slot />
+		{#if children}
+			{@render children()}
+		{/if}
 	</div>
 </div>
 

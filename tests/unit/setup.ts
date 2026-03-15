@@ -553,7 +553,11 @@ const mockDbAdapter = {
 			getMany: mock(() => Promise.resolve({ success: true, data: {} }))
 		}
 	},
-	crud: { update: mock(() => Promise.resolve({ success: true })) }
+	crud: {
+		update: mock(() => Promise.resolve({ success: true })),
+		findOne: mock(() => Promise.resolve({ success: true, data: null })),
+		delete: mock(() => Promise.resolve({ success: true }))
+	}
 };
 setGlobal('mockAuditLog', mockAuditLog);
 setGlobal('mockDbAdapter', mockDbAdapter);

@@ -4,11 +4,11 @@
  -->
 <script lang="ts">
 import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { fade, slide } from 'svelte/transition';
+import { slide } from 'svelte/transition';
 import { editorWidgets } from './widgets/registry';
 
 const activeToolId = $derived(imageEditorStore.activeToolId);
-const toolbarControls = $derived(activeToolId ? editorWidgets[activeToolId] : null);
+const toolbarControls = $derived(activeToolId ? editorWidgets.find((w) => w.key === activeToolId) : null);
 
 function handleToolToggle(toolId: string) {
 	if (imageEditorStore.activeToolId === toolId) {
@@ -26,11 +26,12 @@ function handleToolToggle(toolId: string) {
 		<div class="flex flex-col border-b border-surface-700 bg-surface-800/50 backdrop-blur-md" transition:slide={{ axis: 'y', duration: 250 }}>
 			<div class="flex items-center justify-between px-4 py-2 border-b border-surface-700/50">
 				<span class="text-xs font-bold uppercase tracking-widest text-primary-500">
-					{toolbarControls.label} Options
+					{toolbarControls.title} Options
 				</span>
 				<button
 					class="btn-icon btn-icon-sm preset-ghost-surface hover:preset-filled-surface"
 					onclick={() => imageEditorStore.cancelActiveTool()}
+					aria-label="Cancel tool"
 				>
 					<iconify-icon icon="mdi:close" width="16"></iconify-icon>
 				</button>
@@ -75,14 +76,14 @@ function handleToolToggle(toolId: string) {
 
 		<!-- Center: Tool Selector (Scrollable on mobile) -->
 		<div class="flex items-center gap-1 sm:gap-2 px-4 overflow-x-auto no-scrollbar">
-			{#each Object.entries(editorWidgets) as [id, widget]}
+			{#each editorWidgets as widget}
 				<button
 					class="flex flex-col items-center justify-center min-w-[64px] sm:min-w-[80px] h-14 sm:h-16 rounded-xl transition-all duration-200
-                        {activeToolId === id ? 'bg-primary-500 text-white shadow-lg' : 'text-surface-400 hover:bg-surface-800 hover:text-white'}"
-					onclick={() => handleToolToggle(id)}
+                        {activeToolId === widget.key ? 'bg-primary-500 text-white shadow-lg' : 'text-surface-400 hover:bg-surface-800 hover:text-white'}"
+					onclick={() => handleToolToggle(widget.key)}
 				>
 					<iconify-icon icon={widget.icon} width="24"></iconify-icon>
-					<span class="text-[10px] sm:text-xs font-medium mt-1">{widget.label}</span>
+					<span class="text-[10px] sm:text-xs font-medium mt-1">{widget.title}</span>
 				</button>
 			{/each}
 		</div>

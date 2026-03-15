@@ -4,7 +4,7 @@
  -->
 <script lang="ts">
 import { toast } from '@src/stores/toast.svelte.ts';
-import { fade, slide } from 'svelte/transition';
+import { fade } from 'svelte/transition';
 
 interface State {
 	id: string;
@@ -84,9 +84,12 @@ function removeTransition(id: string) {
 			<div class="flex flex-wrap gap-12 justify-center items-start">
 				{#each states as state (state.id)}
 					<div 
+						role="button"
+						tabindex="0"
 						class="w-48 bg-white dark:bg-surface-800 rounded-xl shadow-lg border-2 transition-all p-4 relative
                             {selectedNodeId === state.id ? 'border-primary-500 ring-4 ring-primary-500/10 scale-105' : 'border-surface-200 dark:border-surface-700'}"
 						onclick={() => selectedNodeId = state.id}
+						onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectedNodeId = state.id; }}
 					>
 						{#if state.isInitial}
 							<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[8px] px-2 py-0.5 rounded-full font-bold uppercase">Initial</span>
@@ -120,12 +123,12 @@ function removeTransition(id: string) {
 				{#if node}
 					<div class="space-y-6" in:fade>
 						<div class="space-y-2">
-							<label class="label text-xs font-bold">State Name</label>
-							<input bind:value={node.label} class="input input-sm" />
+							<label for="state-name" class="label text-xs font-bold">State Name</label>
+							<input id="state-name" bind:value={node.label} class="input input-sm" />
 						</div>
 						<div class="space-y-2">
-							<label class="label text-xs font-bold">Accent Color</label>
-							<input type="color" bind:value={node.color} class="w-full h-10 rounded-lg cursor-pointer border-none" />
+							<label for="accent-color" class="label text-xs font-bold">Accent Color</label>
+							<input id="accent-color" type="color" bind:value={node.color} class="w-full h-10 rounded-lg cursor-pointer border-none" />
 						</div>
 						<div class="flex items-center gap-4">
 							<label class="flex items-center gap-2 text-xs font-bold">

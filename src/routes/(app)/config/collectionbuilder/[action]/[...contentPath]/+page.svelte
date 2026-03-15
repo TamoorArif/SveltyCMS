@@ -6,7 +6,7 @@
 import PageTitle from '@src/components/page-title.svelte';
 import type { FieldInstance, Schema } from '@src/content/types';
 import type { User } from '@src/databases/auth/types';
-import { button_cancel, button_delete, button_save } from '@src/paraglide/messages';
+import { button_delete, button_save } from '@src/paraglide/messages';
 import { collection, setCollection } from '@src/stores/collection-store.svelte';
 import { useContent } from '@src/content/content-context.svelte';
 import { validationStore } from '@src/stores/store.svelte.ts';
@@ -129,7 +129,9 @@ afterNavigate(() => {
 	<div class="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
 		<div class="mx-auto max-w-5xl space-y-12">
 			<section id="general-info" class="rounded-xl border border-surface-200-800 p-6 shadow-sm">
-				<CollectionForm data={collection.value} handlePageTitleUpdate={(t: string) => collection.value && (collection.value.name = t)} />
+				{#if collection.value}
+					<CollectionForm data={collection.value} handlePageTitleUpdate={(t: string) => collection.value && (collection.value.name = t)} />
+				{/if}
 			</section>
 			<section id="fields-config" class="rounded-xl border border-surface-200-800 p-6 shadow-sm">
 				<CollectionWidgetOptimized fields={(collection.value?.fields as FieldInstance[]) || []} />

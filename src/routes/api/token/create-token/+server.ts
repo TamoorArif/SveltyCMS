@@ -103,7 +103,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 
 		// Use dbAdapter directly for invite tokens since the user doesn't exist yet
 		const tokenResult = await dbAdapter.auth.createToken({
-			userId,
+			user_id: userId,
 			email: validatedData.email.toLowerCase(), // Use the provided email directly
 			expires: expires.toISOString() as ISODateString,
 			type,
@@ -227,7 +227,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 			throw new AppError(`Invalid input: ${issues}`, 400, 'VALIDATION_ERROR');
 		}
 
-		const httpError = err as HttpError;
+		const httpError = err as unknown as HttpError;
 		const status = httpError.status || 500;
 		const message = httpError.body?.message || 'An unexpected error occurred.';
 

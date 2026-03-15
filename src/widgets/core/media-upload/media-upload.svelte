@@ -11,31 +11,15 @@ Features:
 <script lang="ts">
 import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
 import FileInput from '@src/components/system/inputs/file-input.svelte';
-import type { ISODateString } from '@src/content/types';
-import {
-	widget_ImageUpload_LastModified,
-	widget_ImageUpload_Name,
-	widget_ImageUpload_Size,
-	widget_ImageUpload_Type,
-	widget_ImageUpload_Uploaded
-} from '@src/paraglide/messages';
-import { collectionValue } from '@src/stores/collection-store.svelte.ts';
-import { validationStore } from '@src/stores/store.svelte.ts';
-import { isoDateStringToDate } from '@utils/date-utils';
-import { logger } from '@utils/logger';
 import { updateMediaMetadata } from '@utils/media/api';
-import type { MediaImage, WatermarkOptions } from '@utils/media/media-models';
-import { convertTimestampToDateString, getFieldName } from '@utils/utils';
+import type { MediaImage } from '@utils/media/media-models';
+import { convertTimestampToDateString } from '@utils/utils';
 import { modalState } from '@utils/modal-state.svelte';
 import { mediaUrl } from '@utils/media/media-utils';
 
 let isFlipped = $state(false);
-let validationError = $state<string | null>(null);
-let showEditor = $state(false);
 
-let { field, value = $bindable<File | MediaImage | undefined>(), collectionName, tenantId } = $props();
-
-const watermarkPreset = $derived((field as Record<string, unknown>).watermark as WatermarkOptions | undefined);
+let { field, value = $bindable<File | MediaImage | undefined>() } = $props();
 
 async function handleEdit() {
 	if (!value || value instanceof File) return;
@@ -95,17 +79,22 @@ async function saveFocalPoint() {
 		await updateMediaMetadata(value._id, { focalPoint });
 	}
 }
+
+$effect(() => {
+	if (isDraggingFocalPoint) {
+		window.addEventListener('mousemove', handleFocalPointDrag);
+		window.addEventListener('mouseup', saveFocalPoint);
+		return () => {
+			window.removeEventListener('mousemove', handleFocalPointDrag);
+			window.removeEventListener('mouseup', saveFocalPoint);
+		};
+	}
+});
 </script>
 
-<div 
-	class="relative mb-4 group min-h-[100px]"
-	onmousemove={handleFocalPointDrag}
-	onmouseup={saveFocalPoint}
-	role="region"
-	aria-label="Media upload widget"
->
+<div class="relative mb-4 group min-h-[100px]">
 	{#if !value}
-		<FileInput bind:value bind:multiple={field.multiupload} />
+		<FileInput bind:value bind:multiple={field.multiupload} onChange={undefined} />
 	{:else}
 		<div class="flex w-full flex-col border-2 border-dashed border-surface-600 bg-surface-50 dark:bg-surface-800 rounded-xl overflow-hidden shadow-sm transition-all hover:border-primary-500/50">
 			<div class="flex items-center justify-between p-3 border-b border-surface-200 dark:border-surface-700 bg-surface-100/50 dark:bg-surface-900/50">
@@ -142,8 +131,6 @@ async function saveFocalPoint() {
 					</div>
 				{:else}
 					<div class="flex-1 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-						<span class="opacity-50 uppercase tracking-tighter">Type</span>
-						<span class="font-bold text-primary-500">{(value as any).mimeType || 'Unknown'}</span>
 						<span class="opacity-50 uppercase tracking-tighter">Uploaded</span>
 						<span class="font-mono">{convertTimestampToDateString(new Date().getTime())}</span>
 					</div>

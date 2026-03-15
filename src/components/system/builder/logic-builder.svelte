@@ -3,8 +3,7 @@
 @component Visual Conditional Logic Builder
  -->
 <script lang="ts">
-import { collections } from '@src/stores/collection-store.svelte';
-import { fade, slide } from 'svelte/transition';
+import { slide } from 'svelte/transition';
 
 interface Rule {
 	id: string;
@@ -18,9 +17,11 @@ interface LogicGroup {
 	rules: (Rule | LogicGroup)[];
 }
 
-let { value = $bindable<LogicGroup | null>(), fields = [] } = $props<{
+import LogicBuilder from './logic-builder.svelte';
+
+let { value = $bindable<any>(), fields = [] } = $props<{
 	fields: any[];
-	value: LogicGroup | null;
+	value: any;
 }>();
 
 // Initialize if empty
@@ -92,7 +93,7 @@ function toggleGroupType(group: LogicGroup) {
 					{#if 'type' in rule}
 						<!-- Recursive Group -->
 						<div class="ml-6 border-l-2 border-primary-500/30 pl-4">
-							<svelte:self bind:value={value.rules[i]} {fields} />
+							<LogicBuilder bind:value={value.rules[i] as any} {fields} />
 						</div>
 					{:else}
 						<!-- Single Rule -->
@@ -111,7 +112,7 @@ function toggleGroupType(group: LogicGroup) {
 
 							<input type="text" bind:value={rule.value} class="input input-sm flex-1 min-w-[100px]" placeholder="Value..." />
 
-							<button class="btn-icon btn-icon-sm text-error-500 hover:bg-error-500/10" onclick={() => removeRule(value!, i)}>
+							<button class="btn-icon btn-icon-sm text-error-500 hover:bg-error-500/10" onclick={() => removeRule(value!, i)} aria-label="Remove Rule">
 								<iconify-icon icon="mdi:close" width="18"></iconify-icon>
 							</button>
 						</div>

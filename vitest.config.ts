@@ -42,10 +42,9 @@ export default defineConfig({
 			exclude: ['src/paraglide/**', 'src/**/*.d.ts']
 		},
 		pool: 'threads',
-		poolOptions: {
-			threads: {
-				singleThread: false
-			}
+		// @ts-expect-error - Vitest 4 top-level pool options
+		threads: {
+			singleThread: false
 		},
 		server: {
 			deps: {

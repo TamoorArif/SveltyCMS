@@ -11,10 +11,10 @@ Features:
 <script lang="ts">
 import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
 import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import type { MediaBase, MediaImage, MediaVideo } from '@utils/media/media-models';
+import type { MediaBase, MediaImage } from '@utils/media/media-models';
 import { formatBytes } from '@utils/utils';
-import { SvelteMap, type SvelteSet } from 'svelte/reactivity';
-import { scale, fade } from 'svelte/transition';
+import type { SvelteSet } from 'svelte/reactivity';
+import { scale } from 'svelte/transition';
 
 interface Props {
 	filteredFiles?: (MediaBase | MediaImage)[];

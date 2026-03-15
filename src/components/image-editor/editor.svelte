@@ -5,7 +5,7 @@
 <script lang="ts">
 import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
 import { onMount, onDestroy } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+import { fade } from 'svelte/transition';
 import { registerHotkey } from '@src/utils/hotkeys';
 import Canvas from './editor-canvas.svelte';
 import Toolbar from './editor-toolbar.svelte';
@@ -38,7 +38,7 @@ onMount(async () => {
 			y: 0,
 			width: img.width,
 			height: img.height,
-			aspectRatio: null,
+			aspectRatio: undefined,
 			shape: 'rect'
 		};
 		imageEditorStore.saveHistory();
@@ -67,7 +67,7 @@ async function handleSave() {
 		file,
 		mediaId: image._id,
 		operations: {
-			adjustments: $state.snapshot(imageEditorStore.state.adjustments),
+			adjustments: $state.snapshot(imageEditorStore.state.filters),
 			crop: $state.snapshot(imageEditorStore.state.crop),
 			rotation: imageEditorStore.state.rotation,
 			flipH: imageEditorStore.state.flipH,
@@ -96,7 +96,7 @@ async function handleSave() {
 	<div class="relative flex-1">
 		<Canvas>
 			{#if imageEditorStore.activeToolId}
-				{@const ToolComponent = editorWidgets[imageEditorStore.activeToolId]?.component}
+				{@const ToolComponent = editorWidgets.find((w) => w.key === imageEditorStore.activeToolId)?.tool}
 				{#if ToolComponent}
 					<ToolComponent onCancel={() => imageEditorStore.cancelActiveTool()} />
 				{/if}

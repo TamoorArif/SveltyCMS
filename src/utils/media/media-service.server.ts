@@ -37,7 +37,7 @@ import mime from 'mime-types';
 const execAsync = promisify(exec);
 
 // Types
-import type { ISODateString } from '@src/content/types';
+import type { BaseEntity, ISODateString } from '@src/content/types';
 import type { Role, User } from '@src/databases/auth/types';
 // Media Cache
 import { cacheService } from '@src/databases/cache-service';

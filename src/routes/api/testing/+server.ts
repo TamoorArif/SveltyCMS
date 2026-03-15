@@ -52,13 +52,13 @@ export async function POST({ request }: RequestEvent) {
 
 			case 'get-user-count': {
 				const countResult = await currentAuth.getUserCount();
-				return json({ success: true, count: countResult.data });
+				return json({ success: true, count: countResult });
 			}
 
 			case 'get-user': {
-				const { email } = body;
+				const email = body.email;
 				const userResult = await currentAuth.getUserByEmail({ email });
-				return json({ success: true, user: userResult.data });
+				return json({ success: true, user: userResult });
 			}
 
 			case 'seed': {
@@ -75,7 +75,7 @@ export async function POST({ request }: RequestEvent) {
 
 				// Check if already exists
 				const userResult = await currentAuth.getUserByEmail({ email: adminEmail });
-				if (!userResult.success || !userResult.data) {
+				if (!userResult) {
 					await currentAuth.createUser({
 						email: adminEmail,
 						password: adminPassword,

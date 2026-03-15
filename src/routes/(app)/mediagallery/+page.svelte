@@ -4,49 +4,33 @@
 **Enhanced Media Gallery Page**
 Features:
 - Global Hotkeys via src/utils/hotkeys.ts
-- WCAG 3.0 Functional Performance focus
-- Improved ImageEditor integration
 -->
 
 <script lang="ts">
-import ModalPrompt from '@components/modal-prompt.svelte';
-import Breadcrumb from '@src/components/breadcrumb.svelte';
+import { onMount } from 'svelte';
+import type { PageData } from './$types';
+import MediaGrid from './media-grid.svelte';
+import MediaTable from './media-table.svelte';
+import VirtualMediaGrid from './virtual-media-grid.svelte';
+import { mediaUrl } from '@utils/media/media-utils';
 import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
 import PageTitle from '@src/components/page-title.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import type { SystemVirtualFolder } from '@src/databases/db-interface';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
 import { toast } from '@src/stores/toast.svelte.ts';
-import { toggleUIElement } from '@src/stores/ui-store.svelte.ts';
 import { logger } from '@utils/logger';
 import { type MediaBase, type MediaImage, MediaTypeEnum } from '@utils/media/media-models';
 import { modalState } from '@utils/modal-state.svelte';
 import { showConfirm } from '@utils/modal-utils';
 import { registerHotkey } from '@src/utils/hotkeys';
 import { SvelteSet } from 'svelte/reactivity';
-import { onMount, tick } from 'svelte';
-import { goto } from '$app/navigation';
-import type { PageData } from './$types';
-import AdvancedSearchModal from './advanced-search-modal.svelte';
-import MediaGrid from './media-grid.svelte';
-import MediaTable from './media-table.svelte';
-import VirtualMediaGrid from './virtual-media-grid.svelte';
-import { mediaUrl } from '@utils/media/media-utils';
 
 let { data }: { data: PageData } = $props();
 
 // State
-let files = $state<(MediaBase | MediaImage)[]>([]);
-let allSystemVirtualFolders = $state<any[]>([]);
-let currentSystemVirtualFolder = $state<SystemVirtualFolder | null>(null);
-let breadcrumb = $state<string[]>([]);
+let files = $state<Array<MediaBase | MediaImage>>([]);
 let globalSearchValue = $state('');
 let selectedMediaType = $state<'All' | MediaTypeEnum>('All');
 let view = $state<'grid' | 'table'>('grid');
 let gridSize = $state<'tiny' | 'small' | 'medium' | 'large'>('small');
-let tableSize = $state<'tiny' | 'small' | 'medium' | 'large'>('small');
-let isLoading = $state(false);
 let selectedFiles = $state(new SvelteSet<string>());
 let isSelectionMode = $state(false);
 
@@ -110,8 +94,7 @@ onMount(() => {
 	);
 
 	// Initial data hydration
-	if (data?.systemVirtualFolders) allSystemVirtualFolders = data.systemVirtualFolders;
-	if (data?.media) files = data.media;
+	if (data?.media) files = data.media as unknown as (MediaBase | MediaImage)[];
 });
 
 async function handleEditImage(file: any) {
@@ -161,18 +144,6 @@ async function handleBulkDelete(filesToDelete: (MediaBase | MediaImage)[]) {
 			toast.success('Batch delete complete');
 		}
 	});
-}
-
-async function openSystemVirtualFolder(folderId: string | null) {
-	globalLoadingStore.startLoading(loadingOperations.dataFetch);
-	const targetId = folderId || 'root';
-	const response = await fetch(`/api/systemVirtualFolder/${targetId}`);
-	const result = await response.json();
-	if (result.success) {
-		files = result.data.contents.files;
-		currentSystemVirtualFolder = result.data.currentFolder;
-	}
-	globalLoadingStore.stopLoading(loadingOperations.dataFetch);
 }
 </script>
 
@@ -249,7 +220,6 @@ async function openSystemVirtualFolder(folderId: string | null) {
 		{:else}
 			<MediaTable 
 				filteredFiles={filteredFiles} 
-				{tableSize}
 				{isSelectionMode}
 				bind:selectedFiles={selectedFiles}
 				onEditImage={handleEditImage}

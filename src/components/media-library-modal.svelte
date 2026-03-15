@@ -130,7 +130,7 @@ function handleClose() {
 						<button class="btn preset-filled-primary-500 mt-4" onclick={fetchMedia}>Retry</button>
 					</div>
 				{:else}
-					<MediaGrid bind:filteredFiles={files} bind:selectedFiles isSelectionMode={true} gridSize="small" />
+					<MediaGrid filteredFiles={files} bind:selectedFiles isSelectionMode={true} gridSize="small" />
 				{/if}
 			{:else if activeTab === 'remote'}
 				<RemoteUpload

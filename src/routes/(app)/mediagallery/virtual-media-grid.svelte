@@ -9,10 +9,9 @@ Features:
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
 import type { MediaBase, MediaImage } from '@utils/media/media-models';
 import { formatBytes } from '@utils/utils';
-import { onMount, tick } from 'svelte';
+import { onMount } from 'svelte';
 import type { SvelteSet } from 'svelte/reactivity';
 
 interface Props {
@@ -20,18 +19,10 @@ interface Props {
 	gridSize?: 'tiny' | 'small' | 'medium' | 'large';
 	isSelectionMode?: boolean;
 	selectedFiles: SvelteSet<string>;
-	ondeleteImage?: (file: MediaBase | MediaImage) => void;
 	onEditImage?: (file: MediaImage) => void;
 }
 
-let {
-	filteredFiles = [],
-	gridSize = 'medium',
-	isSelectionMode = false,
-	selectedFiles = $bindable(),
-	ondeleteImage = () => {},
-	onEditImage = () => {}
-}: Props = $props();
+let { filteredFiles = [], gridSize = 'medium', isSelectionMode = false, selectedFiles = $bindable(), onEditImage = () => {} }: Props = $props();
 
 // Virtual scrolling state
 let container: HTMLDivElement | undefined = $state();
@@ -132,6 +123,7 @@ onMount(() => {
 							<button 
 								onclick={(e) => { e.stopPropagation(); onEditImage(file as MediaImage); }}
 								class="btn-icon btn-icon-sm bg-white/90 dark:bg-surface-800/90 shadow-sm"
+								aria-label="Edit {file.filename}"
 							>
 								<iconify-icon icon="mdi:pencil" width={16}></iconify-icon>
 							</button>
