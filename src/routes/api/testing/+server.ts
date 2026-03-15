@@ -8,15 +8,25 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 
 // Security Guard
-function checkTestMode() {
+function checkTestMode(event: RequestEvent) {
 	if (process.env.TEST_MODE !== 'true') {
 		throw new Error('FORBIDDEN: Test endpoints only available in TEST_MODE');
 	}
+
+	const clientAddress = event.getClientAddress?.() || '';
+	const isLocal = clientAddress === '127.0.0.1' || clientAddress === '::1' || event.url.hostname === 'localhost';
+	const testSecret = event.request.headers.get('x-test-secret');
+	const masterSecret = process.env.TEST_API_SECRET;
+
+	if (!isLocal || !masterSecret || testSecret !== masterSecret) {
+		throw new Error('FORBIDDEN: Unauthorized access attempt');
+	}
 }
 
-export async function POST({ request }: RequestEvent) {
+export async function POST(event: RequestEvent) {
+	const { request } = event;
 	try {
-		checkTestMode();
+		checkTestMode(event);
 
 		// In TEST_MODE, the middleware (handleSystemState) bypasses initialization.
 		// We must ensure the database is initialized before proceeding.
@@ -120,6 +130,33 @@ export async function POST({ request }: RequestEvent) {
 				const { invalidateSetupCache } = await import('@src/utils/setup-check');
 				invalidateSetupCache(false, true);
 				return json({ success: true, message: 'System marked as setup in-memory' });
+			}
+
+			case 'cleanup': {
+				const { type, email, tenantId } = body;
+				if (type === 'user' && email) {
+					// Wipe a specific user
+					const userResult = await currentAuth.getUserByEmail({ email, tenantId });
+					if (userResult) {
+						await currentAuth.deleteUser(userResult._id, tenantId);
+						return json({ success: true, message: `User ${email} deleted` });
+					}
+					return json({ success: true, message: 'User not found, nothing to delete' });
+				}
+
+				if (type === 'all-data') {
+					// Clear database but keep settings/roles if possible
+					// clearDatabase usually drops everything
+					await currentDbAdapter.clearDatabase();
+
+					// Re-initialize to restore basic system state
+					if (currentDbAdapter.ensureSystem) await currentDbAdapter.ensureSystem();
+					if (currentDbAdapter.ensureAuth) await currentDbAdapter.ensureAuth();
+
+					return json({ success: true, message: 'Data cleared and system re-initialized' });
+				}
+
+				return json({ error: 'Invalid cleanup type' }, { status: 400 });
 			}
 
 			default:

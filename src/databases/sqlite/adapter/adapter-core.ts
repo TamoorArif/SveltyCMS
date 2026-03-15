@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@src/utils/logger';
+import { testWorkerContext } from '@src/utils/test-worker-context';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
@@ -31,14 +32,34 @@ interface SQLiteClient {
 }
 
 export class AdapterCore {
-	public db!: SQLiteDB;
-	public sqlite!: SQLiteClient;
+	private _db!: SQLiteDB;
+	private _sqlite!: SQLiteClient;
+	private connections = new Map<string, { db: SQLiteDB; sqlite: SQLiteClient }>();
+
 	public crud!: import('../crud/crud-module').CrudModule;
 	public batch!: import('../operations/batch-module').BatchModule;
 	public collectionRegistry = new Map<string, CollectionModel>();
 	public dynamicTables = new Map<string, any>();
 	protected isConnectedBoolean = false;
-	protected config: unknown;
+	protected config: any;
+
+	public get db(): SQLiteDB {
+		const workerIndex = testWorkerContext.getStore();
+		if (workerIndex && process.env.TEST_MODE === 'true') {
+			const conn = this.connections.get(workerIndex);
+			if (conn) return conn.db;
+		}
+		return this._db;
+	}
+
+	public get sqlite(): SQLiteClient {
+		const workerIndex = testWorkerContext.getStore();
+		if (workerIndex && process.env.TEST_MODE === 'true') {
+			const conn = this.connections.get(workerIndex);
+			if (conn) return conn.sqlite;
+		}
+		return this._sqlite;
+	}
 
 	public getDrizzle(): SQLiteDB {
 		return this.db;
@@ -46,6 +67,62 @@ export class AdapterCore {
 
 	public getClient(): SQLiteClient {
 		return this.sqlite;
+	}
+
+	/**
+	 * Initializes a separate SQLite database file for a specific test worker.
+	 * This ensures total isolation and avoids locking issues in parallel E2E tests.
+	 */
+	public async initWorkerConnection(index: string): Promise<void> {
+		if (this.connections.has(index)) {
+			return;
+		}
+
+		try {
+			const path = await import('node:path');
+			const baseDbPath = typeof this.config === 'string' ? this.config : this.config.connectionString || this.config.filename || 'cms.db';
+			const ext = path.extname(baseDbPath);
+			const base = baseDbPath.slice(0, -ext.length);
+			const workerDbPath = `${base}_worker${index}${ext}`;
+			const dbPathResolved = path.resolve(process.cwd(), workerDbPath);
+
+			logger.info(`[AdapterCore] Initializing worker database: ${workerDbPath}`);
+
+			let sqlite: SQLiteClient;
+			let db: SQLiteDB;
+
+			const isBun = typeof Bun !== 'undefined';
+			if (isBun) {
+				const bunSqlite = 'bun:sqlite';
+				const { Database } = await import(/* @vite-ignore */ bunSqlite);
+				sqlite = new Database(dbPathResolved) as SQLiteClient;
+				const drizzleModule = 'drizzle-orm/bun-sqlite';
+				const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
+				db = drizzle(sqlite as unknown, { schema }) as unknown as SQLiteDB;
+
+				// Optimized WAL mode for worker
+				sqlite.exec('PRAGMA journal_mode = WAL;');
+				sqlite.exec('PRAGMA busy_timeout = 5000;');
+			} else {
+				const betterSqliteModule = 'better-sqlite3';
+				const DATABASE = (await import(/* @vite-ignore */ betterSqliteModule)).default;
+				sqlite = new DATABASE(dbPathResolved) as unknown as SQLiteClient;
+				const drizzleModule = 'drizzle-orm/better-sqlite3';
+				const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
+				db = drizzle(sqlite as unknown, { schema }) as unknown as SQLiteDB;
+				sqlite.exec('PRAGMA journal_mode = WAL');
+				sqlite.exec('PRAGMA busy_timeout = 5000');
+			}
+
+			// Run migrations on the worker database
+			const { runMigrations } = await import('../migrations');
+			await runMigrations(sqlite);
+
+			this.connections.set(index, { db, sqlite });
+		} catch (err) {
+			logger.error(`Failed to initialize worker connection ${index}:`, err);
+			throw err;
+		}
 	}
 
 	public isConnected(): boolean {
@@ -75,36 +152,36 @@ export class AdapterCore {
 				// and Vite's build time analysis warnings
 				const bunSqlite = 'bun:sqlite';
 				const { Database } = await import(/* @vite-ignore */ bunSqlite);
-				this.sqlite = new Database(dbPathResolved) as SQLiteClient;
+				this._sqlite = new Database(dbPathResolved) as SQLiteClient;
 				const drizzleModule = 'drizzle-orm/bun-sqlite';
 				const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
-				this.db = drizzle(this.sqlite as unknown, { schema }) as unknown as SQLiteDB;
+				this._db = drizzle(this._sqlite as unknown, { schema }) as unknown as SQLiteDB;
 
 				// WAL mode for better performance/concurrency
-				this.sqlite.exec('PRAGMA journal_mode = WAL;');
-				this.sqlite.exec('PRAGMA synchronous = NORMAL;');
-				this.sqlite.exec('PRAGMA cache_size = -8000;');
-				this.sqlite.exec('PRAGMA mmap_size = 268435456;');
-				this.sqlite.exec('PRAGMA busy_timeout = 5000;');
-				this.sqlite.exec('PRAGMA temp_store = memory;');
-				this.sqlite.exec('PRAGMA foreign_keys = ON;');
+				this._sqlite.exec('PRAGMA journal_mode = WAL;');
+				this._sqlite.exec('PRAGMA synchronous = NORMAL;');
+				this._sqlite.exec('PRAGMA cache_size = -8000;');
+				this._sqlite.exec('PRAGMA mmap_size = 268435456;');
+				this._sqlite.exec('PRAGMA busy_timeout = 5000;');
+				this._sqlite.exec('PRAGMA temp_store = memory;');
+				this._sqlite.exec('PRAGMA foreign_keys = ON;');
 			} else {
 				// Fallback to better-sqlite3 in Node.js (Vite dev)
 				const betterSqliteModule = 'better-sqlite3';
 				const DATABASE = (await import(/* @vite-ignore */ betterSqliteModule)).default;
-				this.sqlite = new DATABASE(dbPathResolved) as unknown as SQLiteClient;
+				this._sqlite = new DATABASE(dbPathResolved) as unknown as SQLiteClient;
 				const drizzleModule = 'drizzle-orm/better-sqlite3';
 				const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
-				this.db = drizzle(this.sqlite as unknown, { schema }) as unknown as SQLiteDB;
+				this._db = drizzle(this._sqlite as unknown, { schema }) as unknown as SQLiteDB;
 
 				// WAL mode
-				this.sqlite.exec('PRAGMA journal_mode = WAL');
-				this.sqlite.exec('PRAGMA synchronous = NORMAL');
-				this.sqlite.exec('PRAGMA cache_size = -8000');
-				this.sqlite.exec('PRAGMA mmap_size = 268435456');
-				this.sqlite.exec('PRAGMA busy_timeout = 5000');
-				this.sqlite.exec('PRAGMA temp_store = memory');
-				this.sqlite.exec('PRAGMA foreign_keys = ON');
+				this._sqlite.exec('PRAGMA journal_mode = WAL');
+				this._sqlite.exec('PRAGMA synchronous = NORMAL');
+				this._sqlite.exec('PRAGMA cache_size = -8000');
+				this._sqlite.exec('PRAGMA mmap_size = 268435456');
+				this._sqlite.exec('PRAGMA busy_timeout = 5000');
+				this._sqlite.exec('PRAGMA temp_store = memory');
+				this._sqlite.exec('PRAGMA foreign_keys = ON');
 			}
 
 			this.isConnectedBoolean = true;
@@ -121,9 +198,13 @@ export class AdapterCore {
 
 	public async disconnect(): Promise<DatabaseResult<void>> {
 		try {
-			if (this.sqlite) {
-				this.sqlite.close();
+			if (this._sqlite) {
+				this._sqlite.close();
 			}
+			for (const conn of this.connections.values()) {
+				conn.sqlite.close();
+			}
+			this.connections.clear();
 			this.isConnectedBoolean = false;
 			return { success: true, data: undefined };
 		} catch (error) {

@@ -4,7 +4,7 @@ title: 'Black-Box Testing Architecture'
 description: 'SveltyCMS strategic shift to 100% black-box integration testing for maximum security and database agnosticism.'
 author: 'SveltyCMS Team'
 created: '2026-02-15'
-updated: '2026-03-06'
+updated: '2026-03-15'
 tags:
   - 'testing'
   - 'architecture'
@@ -50,6 +50,14 @@ To allow automated tests to manage state without internal imports, we expose a s
 **Endpoint**: `/api/testing`  
 **Guard**: Strictly enabled ONLY when `TEST_MODE=true` environment variable is set.
 
+### 🔒 Triple-Lock Security Guard
+
+To ensure this powerful endpoint never becomes a liability, it is protected by three layers of security:
+
+1.  **Build-Time Stripping**: The testing API is physically excluded from production builds. The code literally does not exist in the final artifact.
+2.  **Cryptographic Handshake**: Requires a `x-test-secret` header matching a unique UUID generated dynamically for each test run.
+3.  **Network Lock**: Strictly refuses any request not originating from `127.0.0.1` or `::1`.
+
 ### Available Actions
 
 | Action           | Description                                                              |
@@ -59,6 +67,7 @@ To allow automated tests to manage state without internal imports, we expose a s
 | `create-user`    | Idempotently creates test users with specific roles (Editor, Developer). |
 | `get-user`       | Fetches a user by email for state verification.                          |
 | `get-user-count` | Returns the total number of registered users.                            |
+| `cleanup`        | Surgically wipes specific users or data without resetting the system.    |
 
 ---
 
@@ -66,7 +75,7 @@ To allow automated tests to manage state without internal imports, we expose a s
 
 1. **Build**: `bun run build` generates the production bundle.
 2. **Preview**: `TEST_MODE=true bun run vite preview --port 4173` starts the server.
-3. **Orchestrate**: Test helper calls `/api/testing` to prepare the database.
+3. **Orchestrate**: Test helper calls `/api/testing` (with secure handshake) to prepare the database.
 4. **Login**: Test helper calls `/api/auth/login` to obtain a session cookie.
 5. **Execute**: Bun/Playwright performs HTTP requests against the live endpoints.
 6. **Verify**: Assertions are made on JSON responses and HTTP status codes.
@@ -76,7 +85,7 @@ To allow automated tests to manage state without internal imports, we expose a s
 Every core endpoint is now triply-verified:
 
 - **Admin**: Verifies functionality.
-- **Restricted Role**: Verifies `403 Forbidden` (RBAC enforcement).
+- **Restricted Role**: Verifies `403 Forbidden` (RBAC enforcement) and redirection to `/forbidden`.
 - **Public**: Verifies `401 Unauthorized` (Auth enforcement).
 
 ### 🔄 2026 Redirection Logic
@@ -98,4 +107,4 @@ Black-box tests now explicitly verify the "Smart Onboarding" redirection flow:
 > - ❌ Test-only bypass headers (e.g., `x-test-token`)
 > - ❌ Hardcoded credentials
 >
-> Tests authenticate like real users by calling `/api/auth/login` with seeded test credentials. This ensures the entire authentication and authorization pipeline is tested end-to-end.
+> Tests authenticate like real users by calling `/api/auth/login` with seeded test credentials. The `/api/testing` endpoint is used only for state orchestration and is removed in production builds.

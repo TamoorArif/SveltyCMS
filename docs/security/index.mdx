@@ -6,7 +6,7 @@ order: 1
 icon: 'mdi:shield-lock'
 author: 'admin'
 created: '2025-11-14'
-updated: '2025-11-14'
+updated: '2026-03-15'
 tags:
   - 'security'
   - 'documentation'
@@ -205,19 +205,21 @@ SveltyCMS security architecture includes:
 
 ## 🛡️ No Backdoor Policy
 
-SveltyCMS is designed with a **zero-backdoor philosophy** to ensure maximum security. This means:
+SveltyCMS is designed with a **zero-backdoor philosophy**. Our testing infrastructure is physically isolated from production to ensure maximum security.
 
-### 🔒 No Test Backdoors
+### 🔒 Physical Isolation (Triple-Lock)
 
-- **No API Keys/Bearer Tokens for Testing**: Integration tests cannot bypass authentication via API keys or tokens
-- **No Test-Only Bypass Headers**: There are no special headers (like `x-test-token`) that skip authentication
-- **No Hardcoded Test Credentials**: Production and test environments use completely separate configurations
+To prevent accidental exposure or exploitation of testing features, we employ a "Triple-Lock" system:
+
+1.  **Build-Time Stripping**: Our Vite build process physically removes all testing routes (`/api/testing`) and isolation hooks from production artifacts using a custom plugin. If it's not in the build, it literally does not exist in production.
+2.  **Cryptographic Handshake**: Any testing feature requires a `x-test-secret` header matching a high-entropy UUID generated dynamically per-test-run.
+3.  **Network Lockdown**: Testing utilities strictly refuse requests not originating from `127.0.0.1` or `::1`.
 
 ### 🧪 Secure Testing Approach
 
 Our integration tests authenticate like real users:
 
-1. **Setup Phase**: Tests use the `/api/testing` endpoint (only enabled in `TEST_MODE`) to:
+1. **Setup Phase**: Tests use the `/api/testing` endpoint (strictly guarded by the Triple-Lock) to:
    - Reset the test database
    - Seed default data (roles, themes, settings)
    - Create a test admin user
@@ -229,14 +231,14 @@ Our integration tests authenticate like real users:
    await postAction('login', { email: 'admin@test.com', password: 'Test123!' });
    ```
 
-3. **Test Phase**: Authenticated requests proceed normally through the security middleware
+3. **Test Phase**: Authenticated requests proceed normally through the security middleware. Every request includes the `x-test-worker-index` for database isolation and the `x-test-secret` for the cryptographic handshake.
 
 ### ✅ Why This Matters
 
-- **Prevents Accidental Backdoors**: No code paths that could be exploited
-- **Tests Real Security**: Authentication and authorization are tested end-to-end
-- **Compliance Ready**: Audit logs show real user-like behavior
-- **No Secrets in Code**: Test credentials are generated at runtime, never committed
+- **Zero Attack Surface**: Production servers don't even contain the testing code paths.
+- **Tests Real Security**: Authentication and authorization are tested end-to-end exactly as users experience them.
+- **Compliance Ready**: Audit logs show real user-like behavior, not bypasses.
+- **No Secrets in Code**: Test secrets are generated at runtime and never persisted.
 
 ### 📖 Related Documentation
 
@@ -503,6 +505,6 @@ For security-related questions or to report vulnerabilities:
 
 ---
 
-**Last Updated**: November 14, 2025  
+**Last Updated**: March 15, 2026  
 **Security Review Status**: ✅ All Critical Components Reviewed  
-**Next Review**: Quarterly (February 2026)
+**Next Review**: Quarterly (June 2026)

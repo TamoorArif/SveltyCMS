@@ -20,6 +20,7 @@ import { building } from '$app/environment';
 // --- Core middleware ---
 import { handleStaticAssetCaching } from './hooks/handle-static-asset-caching';
 import { handleCompression } from './hooks/handle-compression';
+import { handleTestIsolation } from './hooks/handle-test-isolation';
 import { handleSystemState } from './hooks/handle-system-state';
 import { handleFirewall } from './hooks/handle-firewall';
 import { handleRateLimit } from './hooks/handle-rate-limit';
@@ -78,9 +79,10 @@ if (!building) {
 // --- Updated middleware sequence (security headers FIRST) ---
 const middleware: Handle[] = [
 	addSecurityHeaders, // 1. MUST be first → headers on ALL responses, including errors
-	handleStaticAssetCaching, // 2. highest hit-rate early exit
-	handleCompression, // 3. streaming-safe after static
-	handleSystemState, // 4. readiness gate
+	handleTestIsolation, // ✨ 2. Establish test context (PER-WORKER isolation)
+	handleStaticAssetCaching, // 3. highest hit-rate early exit
+	handleCompression, // 4. streaming-safe after static
+	handleSystemState, // 5. readiness gate
 	handleFirewall, // 5. threat detection
 	handleRateLimit, // 6. abuse prevention
 	handleSetup, // 7. setup gate

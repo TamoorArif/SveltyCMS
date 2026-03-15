@@ -6,7 +6,7 @@ order: 4
 icon: 'mdi:database-check'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-03-06'
+updated: '2026-03-15'
 tags:
   - 'testing'
   - 'database'
@@ -19,13 +19,13 @@ tags:
 
 ## Overview
 
-SveltyCMS uses a **database-agnostic architecture** via the `IDBAdapter` interface. In 2026, we standardized on a **SQLite-First** local testing strategy and strict **Network Consistency (127.0.0.1)** to ensure 100% deterministic results across all environments.
+SveltyCMS uses a **database-agnostic architecture** via the `IDBAdapter` interface. In 2026, we enhanced our strategy with **Parallel Worker Isolation** and **Triple-Lock Security** to ensure high performance and zero production risk.
 
 This guide covers:
 
 - **SQLite (Default)**: Primary driver for unit and integration tests.
-- **MongoDB / Postgres / MariaDB**: Verified via CI matrix testing.
-- **Strict Isolation**: How we protect production data.
+- **Parallel Worker Isolation**: How we run concurrent tests without database locks.
+- **Strict Isolation**: How we protect production data from test interference.
 - **Network Standardization**: Why we use `127.0.0.1` exclusively for testing.
 
 ## The SQLite-First Strategy (2026)
@@ -36,7 +36,19 @@ Previously, local testing required a running MongoDB instance, which often led t
 
 1. **Zero Latency**: No network overhead; tests run in milliseconds.
 2. **Zero Config**: No Docker or local Mongo service required.
-3. **Deterministic**: Every test run starts with a fresh file-based database (`sveltycms_test.db`).
+3. **Deterministic**: Every test run starts with a fresh database.
+
+---
+
+## ⚡ Parallel Worker Isolation
+
+To maximize performance, SveltyCMS supports parallel E2E testing using a **Database-per-Worker** strategy.
+
+### How it Works:
+
+1.  **Header-Based Routing**: Playwright workers include an `x-test-worker-index` header in every request.
+2.  **Dynamic Connection Map**: The SQLite adapter maintains a map of worker-specific connections.
+3.  **Isolated Files**: Each worker operates on its own dedicated file (e.g., `cms_worker1.db`), eliminating "Database is locked" errors and allowing 4+ concurrent workers.
 
 ---
 
@@ -49,21 +61,21 @@ SveltyCMS enforces a hard boundary between production and testing:
 1. **TEST_MODE**: Automatically enabled during `bun run test:*`.
 2. **Config Redirect**: The system is hard-coded to look for `config/private.test.ts` when testing.
 3. **Safety Guard**: `src/databases/db.ts` will throw a fatal error if it detects `config/private.ts` (Live) being loaded while in test mode.
-4. **Network Lock**: Standardization on `127.0.0.1` prevents IPv6 auto-resolution (common on macOS/Windows) from mismatched port binding.
+4. **Triple-Lock Security**: Testing routes are physically removed from production builds and require a cryptographic handshake for activation.
 
 ### Database Test Sequence
 
 ```mermaid
 sequenceDiagram
-    participant Runner as Bun Test Runner
+    participant Runner as Playwright Worker
     participant Server as Preview Server
-    participant DB as SQLite (test.db)
+    participant DB as SQLite (worker_X.db)
 
-    Runner->>Server: GET /api/testing/reset
-    Server->>DB: Delete test.db file
-    Runner->>Server: POST /api/testing/seed
+    Runner->>Server: POST /api/testing (Action: reset, Header: index=X, secret=UUID)
+    Server->>DB: Delete/Recreate worker_X.db
+    Runner->>Server: POST /api/testing (Action: seed, Header: index=X)
     Server->>DB: Initialize schema & Insert Admin
-    Note over Runner,DB: Execute Black-Box Tests
+    Note over Runner,DB: Execute Isolated Parallel Tests
 ```
 
 ---
@@ -85,10 +97,9 @@ sequenceDiagram
 - ✅ Session rotation on privilege change.
 - ✅ Automatic cleanup of expired sessions.
 
-#### 3. Database Module Integrity
+#### 3. Atomic Authentication
 
-- ✅ **ensureCollections**: All adapter tests must call `await db.ensureCollections()` to guarantee schema synchronization before execution.
-- ✅ **Micro-Telemetry**: Verification that adapters return `executionTime` in microseconds.
+- ✅ **Clean Slate**: Every test starts with `page.context().clearCookies()` and `localStorage.clear()` to prevent Admin -> Restricted role session bleed.
 
 ---
 
@@ -102,14 +113,12 @@ This is the recommended way to test locally:
 bun run test:integration
 ```
 
-The script will automatically set `DB_TYPE=sqlite` and run the suite against `127.0.0.1:4173`.
+### 2. Parallel E2E Testing
 
-### 2. Testing Other Adapters
-
-To verify MongoDB or PostgreSQL locally:
+Run the full browser suite with 4 workers:
 
 ```bash
-DB_TYPE=mongodb DB_HOST=127.0.0.1 bun run test:integration
+npx playwright test --workers=4
 ```
 
 ---
@@ -118,8 +127,8 @@ DB_TYPE=mongodb DB_HOST=127.0.0.1 bun run test:integration
 
 ### "UNIQUE constraint failed: roles._id"
 
-This usually happens if multiple Playwright workers try to seed the database at once.
-**Fix**: `playwright.config.ts` is configured with `workers: 1` for setup-related tests.
+This usually happens if multiple workers share the same database file.
+**Fix**: Ensure your request includes the `x-test-worker-index` and `x-test-secret` headers.
 
 ### "Database connection failed"
 
@@ -132,3 +141,4 @@ Ensure your `config/private.test.ts` has the correct credentials. Always use `12
 - [Test Status Report](./test-status.mdx)
 - [Testing Index](./index.mdx)
 - [API Testing](./api-testing.mdx)
+- [Black-Box Testing Architecture](./black-box-testing.mdx)

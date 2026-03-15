@@ -20,6 +20,14 @@ export const ADMIN_CREDENTIALS = {
  * @param waitForUrl - URL pattern to wait for after login (default: Collections/Names page)
  */
 export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
+	// Atomic Auth: Clear all previous session state to prevent session bleed
+	console.log('[Auth] Clearing cookies and localStorage for atomic login...');
+	await page.context().clearCookies();
+	await page.evaluate(() => {
+		localStorage.clear();
+		sessionStorage.clear();
+	});
+
 	// Inject session storage to bypass the welcome modal and cookie consent before navigation
 	await page.addInitScript(() => {
 		window.sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');

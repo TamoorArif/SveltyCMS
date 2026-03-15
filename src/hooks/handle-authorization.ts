@@ -36,6 +36,7 @@ function isPublicRoute(pathname: string, method: string | undefined, testMode: s
 		'/register',
 		'/forgot-password',
 		'/setup',
+		'/forbidden',
 		'/api/system/version',
 		'/api/user/login',
 		'/api/settings/public',
@@ -237,7 +238,19 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
 			logger.trace('OAuth route detected, passing through');
 		}
 
-		return await resolve(event);
+		const response = await resolve(event);
+
+		// Intercept 403 Forbidden responses and redirect to the dedicated /forbidden page
+		// Only for non-API requests and authenticated users
+		if (response.status === 403 && !isApi && user) {
+			logger.warn(`Redirecting authenticated user ${user._id} to /forbidden (was 403 on ${pathname})`);
+			return new Response(null, {
+				status: 302,
+				headers: { location: '/forbidden' }
+			});
+		}
+
+		return response;
 	} catch (err) {
 		if (isApi) {
 			return handleApiError(err, event);

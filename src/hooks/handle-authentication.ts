@@ -474,6 +474,13 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
 				tenantId = getTenantIdFromHostname(url.hostname, !!multiTenant);
 			}
 
+			// ✨ ISOLATION: In TEST_MODE, prefer worker-specific tenantId for database isolation
+			const workerIndex = event.request.headers.get('x-test-worker-index');
+			if (process.env.TEST_MODE === 'true' && workerIndex) {
+				tenantId = `test-worker-${workerIndex}`;
+				logger.debug(`[Auth] Using isolated test-worker tenant: ${tenantId}`);
+			}
+
 			if (!tenantId) {
 				logger.error(`Tenant not found for hostname: ${url.hostname}`);
 				throw new AppError(`Tenant not found for hostname: ${url.hostname}`, 404, 'TENANT_NOT_FOUND');

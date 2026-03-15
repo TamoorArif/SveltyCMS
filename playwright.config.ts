@@ -4,6 +4,10 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+
+// ✨ Generate a unique secret for this test run to prevent backdoors
+const TEST_API_SECRET = process.env.TEST_API_SECRET || randomUUID();
 
 // See https://playwright.dev/docs/test-configuration.
 export default defineConfig({
@@ -24,8 +28,12 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	/* Retry on CI only */
 	retries: process.env.CI ? 1 : 0,
-	/* Disable parallelism to avoid DB race conditions in setup tests */
-	workers: 1,
+	/*
+	 * ✨ Database-per-Worker Strategy:
+	 * Enable parallelism. Each worker will use a unique SQLite file
+	 * (e.g. cms_worker1.db) triggered by the x-test-worker-index header.
+	 */
+	workers: process.env.CI ? 4 : undefined,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: [['html'], [process.env.CI ? 'github' : 'list']],
 
@@ -33,6 +41,12 @@ export default defineConfig({
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://127.0.0.1:4173',
+
+		/* ✨ ISOLATION: Pass worker index and secure token to the server */
+		extraHTTPHeaders: {
+			'x-test-worker-index': process.env.TEST_WORKER_INDEX || '0',
+			'x-test-secret': TEST_API_SECRET
+		},
 
 		launchOptions: {
 			slowMo: Number.parseInt(process.env.SLOW_MO || '0', 10)
@@ -77,7 +91,9 @@ export default defineConfig({
 					reuseExistingServer: true,
 					env: {
 						PLAYWRIGHT_TEST: 'true',
-						TEST_MODE: 'true'
+						TEST_MODE: 'true',
+						MULTI_TENANT: 'true',
+						TEST_API_SECRET: TEST_API_SECRET
 					}
 				}
 			})

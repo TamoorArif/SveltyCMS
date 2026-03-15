@@ -43,6 +43,36 @@ function openUrl(url: string) {
 }
 
 /**
+ * Plugin to physically remove test-only routes and logic from production builds.
+ * This ensures that even if a server is misconfigured with TEST_MODE=true,
+ * the code literally does not exist in the production artifact.
+ */
+function testBackdoorStripperPlugin(): Plugin {
+	return {
+		name: 'test-backdoor-stripper',
+		enforce: 'pre',
+		resolveId(id, importer, options) {
+			// If we are building for production, intercept test-only modules
+			if (process.env.NODE_ENV === 'production' && !process.env.TEST_MODE) {
+				const normalizedId = id.replace(/\\/g, '/');
+				if (normalizedId.includes('src/routes/api/testing') || normalizedId.includes('src/hooks/handle-test-isolation')) {
+					log.warn(`[Stripper] Physically removing test module from production build: ${id}`);
+					return '\0virtual:test-noop';
+				}
+			}
+			return null;
+		},
+		load(id) {
+			if (id === '\0virtual:test-noop') {
+				// Return a safe no-op for the stripper
+				return 'export const POST = () => new Response("Not Found", { status: 404 }); export const handleTestIsolation = ({ event, resolve }) => resolve(event); export default {};';
+			}
+			return null;
+		}
+	};
+}
+
+/**
  * Plugin to alias @config/private to config/private.test.ts when running in TEST_MODE.
  * This allows local tests to use an isolated configuration without modifying the production config.
  */
@@ -487,6 +517,7 @@ export default defineConfig((): UserConfig => {
 
 	return {
 		plugins: [
+			testBackdoorStripperPlugin(),
 			testConfigAliasPlugin(),
 			privateConfigFallbackPlugin(),
 			stubServerModulesPlugin(),

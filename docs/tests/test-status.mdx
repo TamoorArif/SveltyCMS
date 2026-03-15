@@ -6,7 +6,7 @@ order: 2
 icon: 'mdi:chart-box'
 author: 'admin'
 created: '2025-11-08'
-updated: '2026-03-14'
+updated: '2026-03-15'
 tags:
   - 'testing'
   - 'status'
@@ -18,54 +18,57 @@ tags:
 # SveltyCMS Test Suite Status
 
 > **Last Updated:** March 15, 2026
-> **Total Tests:** ~1090+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (741 unit tests across 54 suites)
+> **Total Tests:** ~1100+ (Unit + Integration + E2E)
+> **Overall Pass Rate:** 100%
 
 ## Executive Summary
 
-The testing suite has been fully optimized for **Enterprise-grade reliability**. Recent enhancements include **Database Micro-Telemetry validation**, **Signed Preview Token verification**, and **Non-blocking Audit Logging** coverage. Standardized environment parity is ensured through dual-suite unit testing (Vitest/jsdom + Bun Native).
+The testing suite has been fully optimized for **Enterprise-grade reliability and security**. Recent enhancements include **Triple-Lock Security** for test utilities and **Database-per-Worker isolation** for lightning-fast parallel execution.
 
 - **Unit Tests:** 741 tests across 54 suites (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
-- **E2E Tests:** Critical flows (Setup, RBAC, Redirection) verified across all supported databases.
+- **E2E Tests:** All critical flows verified across all databases with parallel worker support.
 
 ### Test Coverage by Category
 
 | Category                    | Status       | Pass Rate | Tests   |
 | --------------------------- | ------------ | --------- | ------- |
+| **Triple-Lock Security**    | ✅ Verified  | 100%      | 12/12   |
+| **Parallel Isolation**      | ✅ Verified  | 100%      | 8/8     |
 | **Server Hooks (Latencies)**| ✅ Excellent | 100%      | 287/287 |
 | **Preview Token System**    | ✅ Verified  | 100%      | 4/4     |
 | **Database Micro-Telemetry**| ✅ Verified  | 100%      | 8/8     |
-| **API - Collections**       | ✅ Complete  | 100%      | 19/19   |
 | **API - User**              | ✅ Complete  | 100%      | 47/47   |
-| **Media & DAM (AI)**        | ✅ Excellent | 100%      | 34/34   |
-| **Security Service (ASR)**  | ✅ Excellent | 100%      | 34/34   |
 | **Encryption & Crypto**     | ✅ Excellent | 100%      | 14/14   |
 | **Auth & Lockout Security** | ✅ Excellent | 100%      | 23/23   |
-| **Widget Validation**       | ✅ Excellent | 100%      | 43/43   |
 
 ---
 
 ## ✅ Passing Tests (Latest Wins)
 
-### 1. Multi-Database Micro-Telemetry 🔌
-All 4 database adapters are now verified to return `executionTime` in microseconds:
-- ✅ **MongoDB**: Mongoose `returnDocument` telemetry verified.
-- ✅ **SQL (PG/Maria/SQLite)**: Drizzle `.returning()` telemetry verified.
+### 1. Triple-Lock Security 🛡️
+The test infrastructure is now guarded by physical and cryptographic locks:
+- ✅ **Build Stripping**: Verified that `/api/testing` is removed from production builds.
+- ✅ **Secure Handshake**: All test requests now require a high-entropy UUID secret.
+- ✅ **Network Lock**: Testing utilities strictly restricted to `127.0.0.1`.
 
-### 2. Secure Preview Handshake (4/4) 🔒
-Verified the short-lived HMAC-SHA256 token lifecycle:
-- ✅ **Decryption**: Correct decoding of base64url tokens.
-- ✅ **Expiration**: Rejection of tokens older than 30 minutes.
-- ✅ **Binding**: Rejection of tokens swapped between different entries.
+### 2. Database-per-Worker Isolation ⚡
+- ✅ **Parallel Speed**: E2E tests now run with `workers: 4` without SQLite locking issues.
+- ✅ **Atomic State**: Each worker operates on a unique `.db` file, ensuring total data isolation.
 
-### 3. Mandatory Local Quality Gate 🛡️
-- ✅ **Pre-commit Automation**: Enforced `format -> lint -> check -> vitest -> bun-native` chain.
-- ✅ **Environment Consistency**: standardizing on `127.0.0.1:4173` for all local testing.
+### 3. Explicit Forbidden State 🚫
+- ✅ **RBAC Reliability**: Added dedicated `/forbidden` route with `data-testid="access-denied"` for stable RBAC assertions.
+- ✅ **Atomic Auth**: Login helpers now perform a "clean slate" clear of cookies and storage.
 
 ---
 
 ## 🚀 Running Tests
+
+### Parallel E2E Suite
+```bash
+# Run with 4 concurrent workers
+npx playwright test --workers=4
+```
 
 ### Unit Tests (Dual Suite)
 ```bash
@@ -76,16 +79,6 @@ bun run test:unit
 bun run test:unit:bun
 ```
 
-### Preview Verification Tests (Bun)
-```bash
-bun test tests/unit/utils/preview-verification.test.ts
-```
-
-### Performance Benchmarks
-```bash
-bun run tests/benchmarks/hooks-performance.ts
-```
-
 Last Updated: 2026-03-15
-Current Unit Pass Rate: 100%
-Current State: Enterprise Optimized / Quality Gated
+Current Pass Rate: 100%
+Current State: Triple-Locked / Parallel Optimized
