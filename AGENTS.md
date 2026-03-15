@@ -56,7 +56,7 @@ To stay ahead: Implement cleaner features (e.g., isomorphic plugins > Payload's 
 ## Technical Standards
 
 - **Modern Stack**: Latest TypeScript (^5.9.3), Node.js (>=24), Svelte 5 (^5.46.4), Vite 7 (^7.3.1), Bun (3-4x faster runtime)
-- **Code Quality**: Ensure 100% CI parity by running `bun run lint && bun run check && bun run test` before every push. This performs comprehensive linting (ESLint/Biome), type checking (svelte-check), and executes all 600+ unit tests.
+- **Code Quality**: Ensure 100% CI parity by running `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` before every push. This performs comprehensive formatting (Biome), linting (ESLint/Biome), type checking (svelte-check), and executes all 741+ unit tests in both Vitest (exhaustive jsdom) and Bun (fast native).
 
 | Category          | Convention           | Examples                                                 |
 | :---------------- | :------------------- | :------------------------------------------------------- |
@@ -244,19 +244,20 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 
 | Category      | Command                                         | Description                                                |
 | ------------- | ----------------------------------------------- | ---------------------------------------------------------- |
-| Daily Dev     | `bun run dev`                                   | Dev server (auto-setup wizard)                             |
-|               | `bun run build`                                 | Production build                                           |
-|               | `bun run preview`                               | Preview on localhost:4173                                  |
-| Code Quality  | `bun run check`                                 | Type checking                                              |
-|               | `bun run lint`                                  | Hybrid Lint (Biome + ESLint)                               |
-|               | `bun run format`                                | Fast Format (Biome)                                        |
-| Testing       | `bun run test:unit`                             | Unit tests                                                 |
-|               | `bun run test:integration`                      | Integration (DB required)                                  |
-|               | `bun run test:e2e`                              | E2E (Playwright)                                           |
-| DB Operations | `bun run db:push`                               | Push schema changes (Drizzle)                              |
-| i18n          | `bun run paraglide`                             | Compile messages                                           |
-| Diagnostics   | `bun run check:mongodb`                         | Test MongoDB connection                                    |
-| **CI Parity** | `bun run lint && bun run check && bun run test` | **Recommended before push** (performs full local CI check) |
+| Daily Dev     | `bun run dev`                                                                                   | Dev server (auto-setup wizard)                             |
+|               | `bun run build`                                                                                 | Production build                                           |
+|               | `bun run preview`                                                                               | Preview on 127.0.0.1:4173                                  |
+| Code Quality  | `bun run check`                                                                                 | Type checking                                              |
+|               | `bun run lint`                                                                                  | Hybrid Lint (Biome + ESLint)                               |
+|               | `bun run format`                                                                                | Fast Format (Biome)                                        |
+| Testing       | `bun run test:unit`                                                                             | Unit tests (Vitest/jsdom)                                  |
+|               | `bun run test:unit:bun`                                                                         | Unit tests (Bun Native)                                    |
+|               | `bun run test:integration`                                                                      | Integration (DB required)                                  |
+|               | `bun run test:e2e`                                                                              | E2E (Playwright)                                           |
+| DB Operations | `bun run db:push`                                                                               | Push schema changes (Drizzle)                              |
+| i18n          | `bun run paraglide`                                                                             | Compile messages                                           |
+| Diagnostics   | `bun run check:mongodb`                                                                         | Test MongoDB connection                                    |
+| **CI Parity** | `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` | **Mandatory before commit** (performs full local CI check) |
 
 ## Architecture Overview
 
@@ -332,7 +333,9 @@ Svelte 5 runes: `$state()` for state, `$derived()` for computations, `$effect()`
 7.  **Robust Path Aliases**: Always use standard path aliases (`@src`, `@widgets`, `@utils`, etc.) instead of fragile relative paths like `../../../src/...`. Ensure aliases are synchronized via `bun x svelte-kit sync` before running checks.
 8.  **DB Seeding**: Safety checks prevent accidental production seeding.
 9.  **TS Errors**: Run `bun x svelte-kit sync` to regenerate types.
-10. **Competitor Parity**: Use runes for lighter UIs vs. React hydration.
+10. **OS-Aware Commands (CRITICAL)**: Always check the operating system before issuing shell commands. On Windows (PowerShell), NEVER use `&&` for chaining commands. Use `;` instead, or issue commands separately.
+    - ✅ Windows: `bun install; bun run dev`
+    - ✅ Linux/macOS: `bun install && bun run dev`
 
 ## Key Files Reference
 
@@ -365,7 +368,7 @@ Svelte 5 runes: `$state()` for state, `$derived()` for computations, `$effect()`
 
 - Branches: `next` (dev), `main` (stable).
 - Commits: Conventional (`feat:`, `fix:`, `docs:`); include `Co-Authored-By: <agent>`.
-- Pre-commit: `bun run lint && bun run check && bun run test` (100% CI parity).
+- Pre-commit: `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` (100% CI parity).
 
 ---
 

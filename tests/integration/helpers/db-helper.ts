@@ -26,19 +26,30 @@ export async function dropDatabase(): Promise<void> {
  * Gets a user by email via the API.
  */
 export async function getUser(email: string): Promise<Record<string, unknown> | null> {
-	// This would require an admin API endpoint to fetch users
-	// For now, return null as placeholder
-	console.log(`getUser called for: ${email}`);
-	return null;
+	const response = await fetch(`${API_BASE_URL}/api/testing`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'get-user', email })
+	});
+
+	if (!response.ok) return null;
+	const result = await response.json();
+	return result.user || null;
 }
 
 /**
  * Gets the count of users in the database.
  */
 export async function getUserCount(): Promise<number> {
-	// This would require an admin API endpoint to count users
-	// For now, return 0 as placeholder
-	return 0;
+	const response = await fetch(`${API_BASE_URL}/api/testing`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'get-user-count' })
+	});
+
+	if (!response.ok) return 0;
+	const result = await response.json();
+	return result.count || 0;
 }
 
 /**

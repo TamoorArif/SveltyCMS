@@ -25,6 +25,7 @@ By removing "backdoor" imports like `dbAdapter` or `Auth` from tests, we guarant
 - **No Side-Loading**: Tests cannot bypass security hooks or permission guards.
 - **Authentic RBAC**: Authentication is performed via real API calls (`/api/auth/login`), verifying the entire security handshake.
 - **Production Parity**: Tests run against a production-built `preview` server, catching SSR and build-specific issues that unit tests miss.
+- **Network Consistency**: Standardization on **`127.0.0.1:4173`** for all local testing avoids IPv6/IPv4 resolution inconsistencies across different OS environments.
 
 ### 2. 🧪 100% Database Agnosticism
 
@@ -51,18 +52,20 @@ To allow automated tests to manage state without internal imports, we expose a s
 
 ### Available Actions
 
-| Action        | Description                                                              |
-| :------------ | :----------------------------------------------------------------------- |
-| `reset`       | Wipes the database (clears all collections/tables).                      |
-| `seed`        | Initializes default roles, permissions, and an Admin user.               |
-| `create-user` | Idempotently creates test users with specific roles (Editor, Developer). |
+| Action           | Description                                                              |
+| :--------------- | :----------------------------------------------------------------------- |
+| `reset`          | Wipes the database (clears all collections/tables).                      |
+| `seed`           | Initializes default roles, permissions, and an Admin user.               |
+| `create-user`    | Idempotently creates test users with specific roles (Editor, Developer). |
+| `get-user`       | Fetches a user by email for state verification.                          |
+| `get-user-count` | Returns the total number of registered users.                            |
 
 ---
 
 ## Test Execution Flow
 
 1. **Build**: `bun run build` generates the production bundle.
-2. **Preview**: `TEST_MODE=true bun run vite preview` starts the server.
+2. **Preview**: `TEST_MODE=true bun run vite preview --port 4173` starts the server.
 3. **Orchestrate**: Test helper calls `/api/testing` to prepare the database.
 4. **Login**: Test helper calls `/api/auth/login` to obtain a session cookie.
 5. **Execute**: Bun/Playwright performs HTTP requests against the live endpoints.

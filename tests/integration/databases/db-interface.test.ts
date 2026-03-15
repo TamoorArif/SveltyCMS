@@ -286,34 +286,34 @@ describe('Database Interface Contract Tests', () => {
 
 	describe('Theme Management Interface', () => {
 		it('should implement theme operations', () => {
-			expect(typeof db?.themes?.getActive).toBe('function');
-			expect(typeof db?.themes?.setDefault).toBe('function');
-			expect(typeof db?.themes?.install).toBe('function');
-			expect(typeof db?.themes?.uninstall).toBe('function');
-			expect(typeof db?.themes?.update).toBe('function');
-			expect(typeof db?.themes?.getAllThemes).toBe('function');
+			expect(typeof db?.system?.themes?.getActive).toBe('function');
+			expect(typeof db?.system?.themes?.setDefault).toBe('function');
+			expect(typeof db?.system?.themes?.install).toBe('function');
+			expect(typeof db?.system?.themes?.uninstall).toBe('function');
+			expect(typeof db?.system?.themes?.update).toBe('function');
+			expect(typeof db?.system?.themes?.getAllThemes).toBe('function');
 		});
 	});
 
 	describe('Widget Management Interface', () => {
 		it('should implement widget operations', () => {
-			expect(typeof db?.widgets?.register).toBe('function');
-			expect(typeof db?.widgets?.findAll).toBe('function');
-			expect(typeof db?.widgets?.getActiveWidgets).toBe('function');
-			expect(typeof db?.widgets?.activate).toBe('function');
-			expect(typeof db?.widgets?.deactivate).toBe('function');
-			expect(typeof db?.widgets?.update).toBe('function');
+			expect(typeof db?.system?.widgets?.register).toBe('function');
+			expect(typeof db?.system?.widgets?.findAll).toBe('function');
+			expect(typeof db?.system?.widgets?.getActiveWidgets).toBe('function');
+			expect(typeof db?.system?.widgets?.activate).toBe('function');
+			expect(typeof db?.system?.widgets?.deactivate).toBe('function');
+			expect(typeof db?.system?.widgets?.update).toBe('function');
 		});
 	});
 
 	describe('System Preferences Interface', () => {
 		it('should implement preference operations', () => {
-			expect(typeof db?.systemPreferences?.get).toBe('function');
-			expect(typeof db?.systemPreferences?.getMany).toBe('function');
-			expect(typeof db?.systemPreferences?.set).toBe('function');
-			expect(typeof db?.systemPreferences?.setMany).toBe('function');
-			expect(typeof db?.systemPreferences?.delete).toBe('function');
-			expect(typeof db?.systemPreferences?.clear).toBe('function');
+			expect(typeof db?.system?.preferences?.get).toBe('function');
+			expect(typeof db?.system?.preferences?.getMany).toBe('function');
+			expect(typeof db?.system?.preferences?.set).toBe('function');
+			expect(typeof db?.system?.preferences?.setMany).toBe('function');
+			expect(typeof db?.system?.preferences?.delete).toBe('function');
+			expect(typeof db?.system?.preferences?.clear).toBe('function');
 		});
 	});
 
@@ -336,19 +336,19 @@ describe('Database Interface Contract Tests', () => {
 
 	describe('Performance Monitoring Interface', () => {
 		it('should implement performance methods', () => {
-			expect(typeof db?.performance?.getMetrics).toBe('function');
-			expect(typeof db?.performance?.clearMetrics).toBe('function');
-			expect(typeof db?.performance?.enableProfiling).toBe('function');
-			expect(typeof db?.performance?.getSlowQueries).toBe('function');
+			expect(typeof db?.monitoring?.performance?.getMetrics).toBe('function');
+			expect(typeof db?.monitoring?.performance?.clearMetrics).toBe('function');
+			expect(typeof db?.monitoring?.performance?.enableProfiling).toBe('function');
+			expect(typeof db?.monitoring?.performance?.getSlowQueries).toBe('function');
 		});
 	});
 
 	describe('Cache Integration Interface', () => {
 		it('should implement cache methods', () => {
-			expect(typeof db?.cache?.get).toBe('function');
-			expect(typeof db?.cache?.set).toBe('function');
-			expect(typeof db?.cache?.delete).toBe('function');
-			expect(typeof db?.cache?.clear).toBe('function');
+			expect(typeof db?.monitoring?.cache?.get).toBe('function');
+			expect(typeof db?.monitoring?.cache?.set).toBe('function');
+			expect(typeof db?.monitoring?.cache?.delete).toBe('function');
+			expect(typeof db?.monitoring?.cache?.clear).toBe('function');
 		});
 	});
 });

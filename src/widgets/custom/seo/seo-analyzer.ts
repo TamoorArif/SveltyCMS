@@ -290,7 +290,7 @@ export class SeoAnalyzer {
 		const imageCount = (content.match(/<img[^>]*>/gi) || []).length;
 		const imagesWithoutAlt = (content.match(/<img(?![^>]*alt=)[^>]*>/gi) || []).length;
 
-		const internalLinks = (content.match(/<a[^>]*href=["'][^"']*(?:localhost|your-domain)[^"']*["'][^>]*>/gi) || []).length;
+		const internalLinks = (content.match(/<a[^>]*href=["'][^"']*(?:127.0.0.1|your-domain)[^"']*["'][^>]*>/gi) || []).length;
 		const externalLinks = (content.match(/<a[^>]*href=["'](?:https?:\/\/)[^"']*["'][^>]*>/gi) || []).length - internalLinks;
 		const nofollowLinks = (content.match(/<a[^>]*rel=["'][^"']*nofollow[^"']*["'][^>]*>/gi) || []).length;
 

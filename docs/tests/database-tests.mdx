@@ -19,13 +19,14 @@ tags:
 
 ## Overview
 
-SveltyCMS uses a **database-agnostic architecture** via the `IDBAdapter` interface. In 2026, we standardized on a **SQLite-First** local testing strategy to ensure 100% deterministic results across all environments (Windows, SSH, CI).
+SveltyCMS uses a **database-agnostic architecture** via the `IDBAdapter` interface. In 2026, we standardized on a **SQLite-First** local testing strategy and strict **Network Consistency (127.0.0.1)** to ensure 100% deterministic results across all environments.
 
 This guide covers:
 
 - **SQLite (Default)**: Primary driver for unit and integration tests.
 - **MongoDB / Postgres / MariaDB**: Verified via CI matrix testing.
 - **Strict Isolation**: How we protect production data.
+- **Network Standardization**: Why we use `127.0.0.1` exclusively for testing.
 
 ## The SQLite-First Strategy (2026)
 
@@ -48,6 +49,7 @@ SveltyCMS enforces a hard boundary between production and testing:
 1. **TEST_MODE**: Automatically enabled during `bun run test:*`.
 2. **Config Redirect**: The system is hard-coded to look for `config/private.test.ts` when testing.
 3. **Safety Guard**: `src/databases/db.ts` will throw a fatal error if it detects `config/private.ts` (Live) being loaded while in test mode.
+4. **Network Lock**: Standardization on `127.0.0.1` prevents IPv6 auto-resolution (common on macOS/Windows) from mismatched port binding.
 
 ### Database Test Sequence
 
@@ -83,10 +85,10 @@ sequenceDiagram
 - ✅ Session rotation on privilege change.
 - ✅ Automatic cleanup of expired sessions.
 
-#### 3. SAML 2.0 / Enterprise SSO
+#### 3. Database Module Integrity
 
-- ✅ Verified via BoxyHQ Jackson.
-- ✅ Tests mock connection strings and IdP redirects.
+- ✅ **ensureCollections**: All adapter tests must call `await db.ensureCollections()` to guarantee schema synchronization before execution.
+- ✅ **Micro-Telemetry**: Verification that adapters return `executionTime` in microseconds.
 
 ---
 
@@ -100,28 +102,28 @@ This is the recommended way to test locally:
 bun run test:integration
 ```
 
-The script will automatically set `DB_TYPE=sqlite` and run the suite.
+The script will automatically set `DB_TYPE=sqlite` and run the suite against `127.0.0.1:4173`.
 
 ### 2. Testing Other Adapters
 
 To verify MongoDB or PostgreSQL locally:
 
 ```bash
-DB_TYPE=mongodb DB_HOST=localhost bun run test:integration
+DB_TYPE=mongodb DB_HOST=127.0.0.1 bun run test:integration
 ```
 
 ---
 
 ## Troubleshooting
 
-### "UNIQUE constraint failed: roles.\_id"
+### "UNIQUE constraint failed: roles._id"
 
 This usually happens if multiple Playwright workers try to seed the database at once.
-**Fix**: I updated `playwright.config.ts` to use `workers: 1` for setup-related tests.
+**Fix**: `playwright.config.ts` is configured with `workers: 1` for setup-related tests.
 
 ### "Database connection failed"
 
-Ensure your `config/private.test.ts` has the correct credentials. If using SQLite, ensure the process has write permissions to the project root.
+Ensure your `config/private.test.ts` has the correct credentials. Always use `127.0.0.1` instead of `localhost` to avoid IPv6 resolution issues.
 
 ---
 

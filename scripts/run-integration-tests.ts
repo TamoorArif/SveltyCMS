@@ -21,7 +21,16 @@ let previewProcess: ChildProcess | null = null;
 async function cleanup(exitCode = 0) {
 	console.log('\n🧹 Cleaning up test environment...');
 	if (previewProcess) {
-		previewProcess.kill('SIGTERM');
+		if (process.platform === 'win32') {
+			try {
+				// Force kill the process tree on Windows
+				spawn('taskkill', ['/F', '/T', '/PID', previewProcess.pid?.toString() || ''], { stdio: 'ignore' });
+			} catch (e) {
+				previewProcess.kill('SIGTERM');
+			}
+		} else {
+			previewProcess.kill('SIGTERM');
+		}
 	}
 	process.exit(exitCode);
 }
@@ -135,41 +144,43 @@ async function main() {
 async function startPreviewServer() {
 	if (previewProcess) {
 		console.log('🛑 Killing existing preview process...');
-		previewProcess.kill('SIGTERM');
-		await new Promise((r) => setTimeout(r, 3000));
+		if (process.platform === 'win32') {
+			spawn('taskkill', ['/F', '/T', '/PID', previewProcess.pid?.toString() || ''], { stdio: 'ignore' });
+		} else {
+			previewProcess.kill('SIGTERM');
+		}
+		// Increase delay for OS to release port
+		await new Promise((r) => setTimeout(r, 5000));
 	}
 
 	return new Promise<void>((resolve, reject) => {
-		console.log('📦 Spawning preview server...');
+		console.log('📦 Spawning preview server (127.0.0.1:4173)...');
 		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
 			cwd: rootDir,
-			stdio: ['ignore', 'pipe', 'inherit'],
+			stdio: ['ignore', 'inherit', 'inherit'], // No pipe needed for stdout if we poll
 			shell: true,
 			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
 		});
 
+		API_BASE_URL = 'http://127.0.0.1:4173';
+
 		let resolved = false;
 		const timeout = setTimeout(() => {
 			if (!resolved) {
-				reject(new Error('Timeout waiting for preview server port detection'));
+				reject(new Error('Timeout waiting for preview server health check'));
 			}
 		}, 60000);
 
-		previewProcess.stdout?.on('data', (data) => {
-			const output = data.toString();
-			process.stdout.write(output); // Forward to terminal
-
-			const urlMatch = output.match(/http:\/\/127\.0\.0\.1:(\d+)/);
-			if (urlMatch) {
-				const port = urlMatch[1];
-				API_BASE_URL = `http://127.0.0.1:${port}`;
-				console.log(`📡 Detected server running at: ${API_BASE_URL}`);
+		// Poll for readiness
+		waitForServer()
+			.then(() => {
 				clearTimeout(timeout);
 				resolved = true;
-				// Wait for health check to pass
-				waitForServer().then(resolve).catch(reject);
-			}
-		});
+				resolve();
+			})
+			.catch((err) => {
+				if (!resolved) reject(err);
+			});
 
 		previewProcess.on('error', (err) => {
 			console.error('❌ Failed to start preview process:', err);
@@ -177,7 +188,7 @@ async function startPreviewServer() {
 		});
 
 		previewProcess.on('close', (code) => {
-			if (!resolved) {
+			if (!resolved && code !== null) {
 				console.error(`❌ Preview process exited with code ${code}`);
 				reject(new Error(`Preview process exited with code ${code}`));
 			}

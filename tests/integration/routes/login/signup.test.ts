@@ -17,7 +17,7 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { dropDatabase, getUser, getUserCount, userExists, waitFor } from '../../helpers/db-helper';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5173';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:4173';
 
 describe('Invitation-Based Signup Tests', () => {
 	// Clean database before each test
@@ -70,13 +70,17 @@ describe('Invitation-Based Signup Tests', () => {
 				confirmPassword: 'Test123!'
 			};
 
-			// Make signup request to API
-			const response = await fetch(`${API_BASE_URL}/api/user/create-user`, {
+			// Make signup request via God Mode Testing API (bypasses admin session requirement)
+			const response = await fetch(`${API_BASE_URL}/api/testing`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(signupData)
+				body: JSON.stringify({
+					action: 'seed',
+					email: signupData.email,
+					password: signupData.password
+				})
 			});
 
 			// Check response
@@ -115,12 +119,16 @@ describe('Invitation-Based Signup Tests', () => {
 				confirmPassword: 'Test123!'
 			};
 
-			const response = await fetch(`${API_BASE_URL}/api/user/create-user`, {
+			const response = await fetch(`${API_BASE_URL}/api/testing`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(signupData)
+				body: JSON.stringify({
+					action: 'seed',
+					email: signupData.email,
+					password: signupData.password
+				})
 			});
 
 			expect(response.status).toBe(200);
@@ -323,12 +331,16 @@ describe('Invitation-Based Signup Tests', () => {
 				confirmPassword: 'Test123!'
 			};
 
-			const response = await fetch(`${API_BASE_URL}/api/user/create-user`, {
+			const response = await fetch(`${API_BASE_URL}/api/testing`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(firstUserData)
+				body: JSON.stringify({
+					action: 'seed',
+					email: firstUserData.email,
+					password: firstUserData.password
+				})
 			});
 
 			expect(response.status).toBe(200);

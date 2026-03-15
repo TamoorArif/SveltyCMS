@@ -11,117 +11,113 @@ import sharp from 'sharp';
 
 // Mock dependencies
 vi.mock('sharp', () => ({
-    default: vi.fn(() => ({
-        metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000, format: 'jpg' }),
-        rotate: vi.fn().mockReturnThis(),
-        flop: vi.fn().mockReturnThis(),
-        flip: vi.fn().mockReturnThis(),
-        extract: vi.fn().mockReturnThis(),
-        modulate: vi.fn().mockReturnThis(),
-        toBuffer: vi.fn().mockResolvedValue(Buffer.from('mock-buffer')),
-    }))
+	default: vi.fn(() => ({
+		metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000, format: 'jpg' }),
+		rotate: vi.fn().mockReturnThis(),
+		flop: vi.fn().mockReturnThis(),
+		flip: vi.fn().mockReturnThis(),
+		extract: vi.fn().mockReturnThis(),
+		modulate: vi.fn().mockReturnThis(),
+		toBuffer: vi.fn().mockResolvedValue(Buffer.from('mock-buffer'))
+	}))
 }));
 
 vi.mock('@src/databases/db', () => ({
-    dbAdapter: {
-        crud: {
-            findOne: vi.fn(),
-            update: vi.fn(),
-        },
-        media: {
-            files: {
-                upload: vi.fn(),
-            }
-        },
-        auth: {
-            createToken: vi.fn(),
-        }
-    }
+	dbAdapter: {
+		crud: {
+			findOne: vi.fn(),
+			update: vi.fn()
+		},
+		media: {
+			files: {
+				upload: vi.fn()
+			}
+		},
+		auth: {
+			createToken: vi.fn()
+		}
+	}
 }));
 
 vi.mock('@utils/logger.server', () => ({
-    logger: {
-        info: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-        warn: vi.fn(),
-        trace: vi.fn(),
-    }
+	logger: {
+		info: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
+		warn: vi.fn(),
+		trace: vi.fn()
+	}
 }));
 
 describe('MediaService (Whitebox)', () => {
-    let mediaService: MediaService;
+	let mediaService: MediaService;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mediaService = new MediaService(dbAdapter as any);
-    });
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mediaService = new MediaService(dbAdapter as any);
+	});
 
-    describe('Batch Processing Logic', () => {
-        it('should process multiple images in parallel', async () => {
-            const mockItems = [
-                { _id: 'id1', type: 'image', filename: 'test1.jpg', path: 'global/test1.jpg' },
-                { _id: 'id2', type: 'image', filename: 'test2.jpg', path: 'global/test2.jpg' }
-            ];
+	describe('Batch Processing Logic', () => {
+		it('should process multiple images in parallel', async () => {
+			const mockItems = [
+				{ _id: 'id1', type: 'image', filename: 'test1.jpg', path: 'global/test1.jpg' },
+				{ _id: 'id2', type: 'image', filename: 'test2.jpg', path: 'global/test2.jpg' }
+			];
 
-            // Setup findOne mock
-            (dbAdapter.crud.findOne as any)
-                .mockResolvedValueOnce({ success: true, data: mockItems[0] })
-                .mockResolvedValueOnce({ success: true, data: mockItems[1] });
+			// Setup findOne mock
+			(dbAdapter.crud.findOne as any)
+				.mockResolvedValueOnce({ success: true, data: mockItems[0] })
+				.mockResolvedValueOnce({ success: true, data: mockItems[1] });
 
-            // Mock manipulation logic (since manipulateMedia reads files)
-            vi.spyOn(mediaService as any, 'manipulateMedia').mockImplementation(async (id) => ({
-                _id: id,
-                success: true
-            }));
+			// Mock manipulation logic (since manipulateMedia reads files)
+			vi.spyOn(mediaService as any, 'manipulateMedia').mockImplementation(async (id) => ({
+				_id: id,
+				success: true
+			}));
 
-            const results = await mediaService.batchProcessImages(
-                ['id1', 'id2'],
-                {
-                    filters: { brightness: 20 },
-                    saveBehavior: 'overwrite'
-                },
-                'user-123'
-            );
+			const results = await mediaService.batchProcessImages(
+				['id1', 'id2'],
+				{
+					filters: { brightness: 20 },
+					saveBehavior: 'overwrite'
+				},
+				'user-123'
+			);
 
-            expect(results).toHaveLength(2);
-            expect(mediaService.manipulateMedia).toHaveBeenCalledTimes(2);
-        });
+			expect(results).toHaveLength(2);
+			expect(mediaService.manipulateMedia).toHaveBeenCalledTimes(2);
+		});
 
-        it('should handle partial failures in batch processing', async () => {
-            (dbAdapter.crud.findOne as any)
-                .mockResolvedValueOnce({ success: true, data: { _id: 'id1', type: 'image', filename: 'test1.jpg', path: 'path1' } })
-                .mockResolvedValueOnce({ success: false, error: 'Not found' });
+		it('should handle partial failures in batch processing', async () => {
+			(dbAdapter.crud.findOne as any)
+				.mockResolvedValueOnce({ success: true, data: { _id: 'id1', type: 'image', filename: 'test1.jpg', path: 'path1' } })
+				.mockResolvedValueOnce({ success: false, error: 'Not found' });
 
-            vi.spyOn(mediaService as any, 'manipulateMedia').mockImplementation(async (id) => {
-                if (id === 'id2') throw new Error('Failed');
-                return { _id: id } as any;
-            });
+			vi.spyOn(mediaService as any, 'manipulateMedia').mockImplementation(async (id) => {
+				if (id === 'id2') throw new Error('Failed');
+				return { _id: id } as any;
+			});
 
-            const results = await mediaService.batchProcessImages(
-                ['id1', 'id2'],
-                { filters: {}, saveBehavior: 'new' },
-                'user-123'
-            );
+			const results = await mediaService.batchProcessImages(['id1', 'id2'], { filters: {}, saveBehavior: 'new' }, 'user-123');
 
-            expect(results).toHaveLength(1);
-            expect(results[0]._id).toBe('id1');
-        });
-    });
+			expect(results).toHaveLength(1);
+			expect(results[0]._id).toBe('id1');
+		});
+	});
 
-    describe('Transformation Utilities', () => {
-        it('should determine correct media type from mime', () => {
-            // @ts-ignore - accessing private for whitebox testing
-            expect(mediaService.getMediaType('image/jpeg')).toBe('image');
-            // @ts-ignore
-            expect(mediaService.getMediaType('video/mp4')).toBe('video');
-            // @ts-ignore
-            expect(mediaService.getMediaType('application/pdf')).toBe('document');
-        });
+	describe('Transformation Utilities', () => {
+		it('should determine correct media type from mime', () => {
+			// @ts-ignore - accessing private for whitebox testing
+			expect(mediaService.getMediaType('image/jpeg')).toBe('image');
+			// @ts-ignore
+			expect(mediaService.getMediaType('video/mp4')).toBe('video');
+			// @ts-ignore
+			expect(mediaService.getMediaType('application/pdf')).toBe('document');
+		});
 
-        it('should fallback to document for unknown application/ types', () => {
-            // @ts-ignore
-            expect(mediaService.getMediaType('application/x-executable')).toBe('document');
-        });
-    });
+		it('should fallback to document for unknown application/ types', () => {
+			// @ts-ignore
+			expect(mediaService.getMediaType('application/x-executable')).toBe('document');
+		});
+	});
 });

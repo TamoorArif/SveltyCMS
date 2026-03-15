@@ -206,6 +206,9 @@ describe('MongoDB Adapter Functional Tests', () => {
 			await db.crud.insert(testCollection, doc1);
 			await db.crud.insert(testCollection, doc2);
 
+			// Ensure QueryBuilder infra is ready
+			await db.ensureCollections();
+
 			// Query using queryBuilder
 			const qb = db.queryBuilder(testCollection);
 			const result = await qb.where('status', 'active').execute();

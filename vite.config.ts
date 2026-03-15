@@ -123,7 +123,7 @@ function privateConfigFallbackPlugin(): Plugin {
 				return `
 export const privateEnv = {
 	DB_TYPE: process.env.DB_TYPE || '',
-	DB_HOST: process.env.DB_HOST || 'localhost',
+	DB_HOST: process.env.DB_HOST || '127.0.0.1',
 	DB_PORT: parseInt(process.env.DB_PORT || '27017'),
 	DB_NAME: process.env.DB_NAME || 'sveltycms',
 	DB_USER: process.env.DB_USER || '',
@@ -414,7 +414,7 @@ function sveltyCmsPlugin(): Plugin {
 						setTimeout(() => {
 							const address = server.httpServer?.address();
 							const resolvedPort = typeof address === 'object' && address ? address.port : 5173;
-							const setupUrl = `http://localhost:${resolvedPort}/setup`;
+							const setupUrl = `http://127.0.0.1:${resolvedPort}/setup`;
 							log.info(`Opening setup wizard: ${setupUrl}`);
 							openUrl(setupUrl);
 						}, 1000);

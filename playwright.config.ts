@@ -23,7 +23,7 @@ export default defineConfig({
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !!process.env.CI,
 	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 0,
+	retries: process.env.CI ? 1 : 0,
 	/* Disable parallelism to avoid DB race conditions in setup tests */
 	workers: 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -32,7 +32,7 @@ export default defineConfig({
 	/* Set environment variables for tests */
 	use: {
 		/* Base URL to use in actions like `await page.goto('/')`. */
-		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || (process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173'),
+		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || (process.env.CI ? 'http://127.0.0.1:4173' : 'http://127.0.0.1:5173'),
 
 		launchOptions: {
 			slowMo: Number.parseInt(process.env.SLOW_MO || '0', 10)

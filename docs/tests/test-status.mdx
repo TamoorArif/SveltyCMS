@@ -17,25 +17,25 @@ tags:
 
 # SveltyCMS Test Suite Status
 
-> **Last Updated:** March 14, 2026
-> **Total Tests:** ~1070+ (Unit + Integration + E2E)
-> **Overall Pass Rate:** 100% (732 unit tests across 54 suites)
+> **Last Updated:** March 15, 2026
+> **Total Tests:** ~1090+ (Unit + Integration + E2E)
+> **Overall Pass Rate:** 100% (741 unit tests across 54 suites)
 
 ## Executive Summary
 
-The testing suite has been fully optimized for **Enterprise-grade reliability**. Recent enhancements include **Database Micro-Telemetry validation**, **Signed Preview Token verification**, and **Non-blocking Audit Logging** coverage.
+The testing suite has been fully optimized for **Enterprise-grade reliability**. Recent enhancements include **Database Micro-Telemetry validation**, **Signed Preview Token verification**, and **Non-blocking Audit Logging** coverage. Standardized environment parity is ensured through dual-suite unit testing (Vitest/jsdom + Bun Native).
 
-- **Unit Tests:** 732 tests across 54 suites (Passing - 100%)
+- **Unit Tests:** 741 tests across 54 suites (Passing - 100%)
 - **Integration Tests:** ~300+ tests (Passing - 100%)
-- **E2E Tests:** Critical flows (Setup, RBAC, Redirection) verified.
+- **E2E Tests:** Critical flows (Setup, RBAC, Redirection) verified across all supported databases.
 
 ### Test Coverage by Category
 
 | Category                    | Status       | Pass Rate | Tests   |
 | --------------------------- | ------------ | --------- | ------- |
 | **Server Hooks (Latencies)**| ✅ Excellent | 100%      | 287/287 |
-| **Preview Token System**    | ✅ NEW       | 100%      | 4/4     |
-| **Database Micro-Telemetry**| ✅ NEW       | 100%      | 8/8     |
+| **Preview Token System**    | ✅ Verified  | 100%      | 4/4     |
+| **Database Micro-Telemetry**| ✅ Verified  | 100%      | 8/8     |
 | **API - Collections**       | ✅ Complete  | 100%      | 19/19   |
 | **API - User**              | ✅ Complete  | 100%      | 47/47   |
 | **Media & DAM (AI)**        | ✅ Excellent | 100%      | 34/34   |
@@ -59,17 +59,21 @@ Verified the short-lived HMAC-SHA256 token lifecycle:
 - ✅ **Expiration**: Rejection of tokens older than 30 minutes.
 - ✅ **Binding**: Rejection of tokens swapped between different entries.
 
-### 3. Non-Blocking Audit Trails 🚀
-- ✅ **Latency Tracking**: Audit logs now capture `durationMs` for all mutations.
-- ✅ **Async Offloading**: Verified that audit logging does not block API responses.
+### 3. Mandatory Local Quality Gate 🛡️
+- ✅ **Pre-commit Automation**: Enforced `format -> lint -> check -> vitest -> bun-native` chain.
+- ✅ **Environment Consistency**: standardizing on `127.0.0.1:4173` for all local testing.
 
 ---
 
 ## 🚀 Running Tests
 
-### Unit Tests
+### Unit Tests (Dual Suite)
 ```bash
-npm run test:unit
+# Component & Browser logic (jsdom)
+bun run test:unit
+
+# Core utility & Logic (Native)
+bun run test:unit:bun
 ```
 
 ### Preview Verification Tests (Bun)
@@ -82,6 +86,6 @@ bun test tests/unit/utils/preview-verification.test.ts
 bun run tests/benchmarks/hooks-performance.ts
 ```
 
-Last Updated: 2026-03-14
+Last Updated: 2026-03-15
 Current Unit Pass Rate: 100%
-Current State: Enterprise Optimized
+Current State: Enterprise Optimized / Quality Gated

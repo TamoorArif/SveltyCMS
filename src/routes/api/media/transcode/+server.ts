@@ -40,7 +40,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		const mediaService = new MediaService(dbAdapter);
-		
+
 		// 1. Get original media item
 		const mediaResult = await dbAdapter.crud.findOne<MediaItem>('media', {
 			_id: mediaId as any
@@ -59,7 +59,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const MEDIA_ROOT = getPublicSettingSync('MEDIA_FOLDER') ?? 'mediaFolder';
 		const inputPath = Path.join(process.cwd(), MEDIA_ROOT, mediaItem.path);
 		const outputDir = Path.join(process.cwd(), MEDIA_ROOT, Path.dirname(mediaItem.path), 'transcoded', mediaId);
-		
+
 		if (!existsSync(outputDir)) {
 			mkdirSync(outputDir, { recursive: true });
 		}
@@ -106,7 +106,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				masterPlaylist: `/files/${relativeTranscodePath}/master.m3u8`
 			}
 		});
-
 	} catch (err) {
 		const message = `Transcoding failed: ${err instanceof Error ? err.message : String(err)}`;
 		logger.error(message, { tenantId });

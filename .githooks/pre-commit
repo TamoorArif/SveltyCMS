@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+echo "🔍 Running pre-commit checks (Native Git Hook)..."
+
+# 0. Format (Biome)
+echo "✨ Formatting..."
+bun run format || exit 1
+
+# 1. Lint (Biome)
+echo "⚡ Linting..."
+bun run lint || exit 1
+
+# 2. Type Check (Svelte Check)
+echo "✅ Type Checking..."
+bun run check || exit 1
+
+# 3. Unit Tests (Exhaustive Vitest/jsdom)
+echo "🧪 Testing (Vitest/jsdom)..."
+bun run test:unit || exit 1
+
+# 4. Unit Tests (Fast Bun)
+echo "🧪 Testing (Bun Native)..."
+bun run test:unit:bun || exit 1
+
+echo "✨ Pre-commit checks passed!"

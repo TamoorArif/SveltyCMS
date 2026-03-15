@@ -50,6 +50,17 @@ export async function POST({ request }: RequestEvent) {
 				return json({ success: true, message: 'Database cleared' });
 			}
 
+			case 'get-user-count': {
+				const countResult = await currentAuth.getUserCount();
+				return json({ success: true, count: countResult.data });
+			}
+
+			case 'get-user': {
+				const { email } = body;
+				const userResult = await currentAuth.getUserByEmail({ email });
+				return json({ success: true, user: userResult.data });
+			}
+
 			case 'seed': {
 				// Initialize default roles, settings and themes
 				const { seedRoles, seedDefaultTheme, seedSettings } = await import('@src/routes/setup/seed');
@@ -63,8 +74,8 @@ export async function POST({ request }: RequestEvent) {
 				const adminPassword = body.password || 'Test123!';
 
 				// Check if already exists
-				const existing = await currentAuth.getUserByEmail({ email: adminEmail });
-				if (!existing) {
+				const userResult = await currentAuth.getUserByEmail({ email: adminEmail });
+				if (!userResult.success || !userResult.data) {
 					await currentAuth.createUser({
 						email: adminEmail,
 						password: adminPassword,
