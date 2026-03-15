@@ -102,14 +102,14 @@ export const resetFormSchema = pipe(
 
 // Sign Up User Form Schema
 export const signUpFormSchema = pipe(
-	strictObject({
+	object({
 		username: usernameSchema,
 		email: emailSchema,
 		password: passwordSchema,
-		confirmPassword: confirmPasswordSchema,
+		confirm_password: confirmPasswordSchema,
 		token: optional(nullable(string()))
 	}),
-	check((input) => input.password === input.confirmPassword, 'The passwords do not match. Please ensure both fields are identical.')
+	check((input) => input.password === input.confirm_password, 'The passwords do not match. Please ensure both fields are identical.')
 );
 
 // Google OAuth Token Schema

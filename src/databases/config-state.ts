@@ -190,7 +190,8 @@ export function getDatabaseConnectionString(): string {
 
 	switch (type) {
 		case 'mongodb': {
-			return `mongodb://${authPart}${host}:${port}/${name}`;
+			const authParam = user ? `?authSource=admin` : '';
+			return `mongodb://${authPart}${host}:${port}/${name}${authParam}`;
 		}
 		case 'mongodb+srv': {
 			// mongodb+srv (Atlas) often requires authSource=admin

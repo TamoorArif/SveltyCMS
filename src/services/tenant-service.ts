@@ -16,7 +16,7 @@ import { logger } from '@utils/logger';
 // Default quotas for new tenants
 const DEFAULT_QUOTAS: TenantQuota = {
 	maxUsers: 5,
-	maxStorageBytes: 100 * 1024 * 1024, // 100MB
+	maxStorageBytes: 25 * 1024 * 1024, // 25MB limit for Demo Mode
 	maxCollections: 10,
 	maxApiRequestsPerMonth: 10_000
 };

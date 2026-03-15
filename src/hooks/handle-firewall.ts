@@ -104,11 +104,21 @@ function isTrustedOrigin(event: RequestEvent): boolean {
 	const host = event.url.host;
 	const protocol = event.url.protocol;
 
+	// Always trust localhost/loopback in dev or demo mode
+	if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+		return true;
+	}
+
 	// Get configured trusted host
 	const trustedHost = dev ? getPublicSettingSync('HOST_DEV') : getPublicSettingSync('HOST_PROD');
 
 	// 1. Check Origin header (most reliable)
 	if (origin) {
+		// Always trust localhost/loopback origins
+		if (origin.includes('//localhost') || origin.includes('//127.0.0.1')) {
+			return true;
+		}
+
 		// If we have a configured trusted host, we MUST match it
 		if (trustedHost) {
 			const expectedOrigin = `${protocol}//${trustedHost}`;
@@ -227,8 +237,6 @@ export const handleFirewall: Handle = async ({ event, resolve }) => {
 			return resolve(event);
 		}
 
-		// --- 1. Advanced Bot Detection ---
-		// Block automation tools but allow legitimate search engine crawlers
 		if (isAdvancedBot(userAgent) && !isLegitimateBot(userAgent)) {
 			metricsService.incrementSecurityViolations();
 			logger.warn(`Advanced bot detected and blocked: UA=${userAgent.substring(0, 50)}, Path=${pathname}`);

@@ -6,21 +6,11 @@
  * all incoming server requests. The architecture emphasizes security, observability,
  * and performance with unified metrics collection and automated threat detection.
  *
- * 1. Static asset caching          → highest hit rate, immutable headers
- * 2. Compression                   → after static check → streaming safe
- * 3. System state validation       → early 503 if not ready
- * 4. Application firewall          → block bad patterns early
- * 5. Rate limiting                 → prevent abuse
- * 6. Setup completion enforcement  → installation gate
- * 7. Language preferences          → i18n (skips /api)
- * 8. Theme management              → SSR dark mode (skips /api)
- * 9. Authentication                → session + rotation
- * 10. Authorization                → roles & permissions
- * 11. Content initialization       → tenant content + fresh install redirects
- * 12. API request handling         → cache + invalidation
- * 13. Token resolution             → RBAC-aware body processing
- * 14. Security headers + CSP       → defense in depth
+ * Updated 2026-03-15:
+ * - Moved addSecurityHeaders to TOP of sequence → ensures headers on ALL responses,
+ *   including errors thrown by earlier middlewares (rate-limit 429, firewall blocks, etc.)
  */
+
 import { metricsService } from '@src/services/metrics-service';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -77,7 +67,7 @@ if (!building) {
 				() => {
 					telemetryService.checkUpdateStatus().catch((err) => logger.error('Periodic telemetry check failed', err));
 				},
-				1000 * 60 * 60 * 12
+				1000 * 60 * 60 * 12 // 12 hours
 			);
 		});
 	});
@@ -85,29 +75,30 @@ if (!building) {
 	logger.info('✅ DB module loaded. System will initialize on first request via handleSystemState.');
 }
 
-// --- Updated middleware sequence ---
+// --- Updated middleware sequence (security headers FIRST) ---
 const middleware: Handle[] = [
-	handleStaticAssetCaching, // 1. highest hit-rate early exit
-	handleCompression, // 2. now streaming-safe (after static check)
-	handleSystemState, // 3. readiness gate
-	handleFirewall, // 4. threat detection
-	handleRateLimit, // 5. abuse prevention
-	handleSetup, // 6. setup gate
-	handleLocale, // 7. i18n
-	handleTheme, // 8. SSR theme
-	handleAuthentication, // 9. identity
-	handleAuthorization, // 10. permissions
-	handleContentInitialization, // 11. content + redirects
-	handleApiRequests, // 12. API caching
-	handleAuditLogging, // 12.5. Mutation Audit Trails (Asynchronous)
-	handleTokenResolution, // 13. token processing
-	addSecurityHeaders // 14. headers + CSP
+	addSecurityHeaders, // 1. MUST be first → headers on ALL responses, including errors
+	handleStaticAssetCaching, // 2. highest hit-rate early exit
+	handleCompression, // 3. streaming-safe after static
+	handleSystemState, // 4. readiness gate
+	handleFirewall, // 5. threat detection
+	handleRateLimit, // 6. abuse prevention
+	handleSetup, // 7. setup gate
+	handleLocale, // 8. i18n
+	handleTheme, // 9. SSR theme
+	handleAuthentication, // 10. identity
+	handleAuthorization, // 11. permissions
+	handleContentInitialization, // 12. content + redirects
+	handleApiRequests, // 13. API caching
+	handleAuditLogging, // 14. async audit trails
+	handleTokenResolution // 15. token processing
 ];
 
 export const handle: Handle = sequence(...middleware);
 
 // --- Utility Functions for External Use ---
 export const getHealthMetrics = () => metricsService.getReport();
+
 export {
 	clearAllSessionCaches,
 	clearSessionRefreshAttempt,

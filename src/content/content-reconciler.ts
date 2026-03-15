@@ -14,7 +14,11 @@ import type { IDBAdapter } from '@src/databases/db-interface';
 
 // Sub-module imports (server-side only, imported dynamically below)
 
-const getDbAdapter = async () => (await import('@src/databases/db')).dbAdapter;
+const getDbAdapter = async () => {
+	const { dbInitPromise, dbAdapter } = await import('@src/databases/db');
+	await dbInitPromise;
+	return dbAdapter;
+};
 const normalizeId = (id: string) => id.replace(/-/g, '');
 
 /**

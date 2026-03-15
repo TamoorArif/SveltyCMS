@@ -138,7 +138,9 @@ export const actions: Actions = {
 			const { compile } = await import('@utils/compilation/compile');
 
 			const presetDir = resolve(process.cwd(), 'src', 'presets', presetId);
-			const targetDir = resolve(process.cwd(), 'config', 'collections');
+			const targetDir = locals.tenantId
+				? resolve(process.cwd(), 'config', locals.tenantId, 'collections')
+				: resolve(process.cwd(), 'config', 'collections');
 
 			if (!existsSync(presetDir)) {
 				return fail(404, { message: 'Preset directory not found' });

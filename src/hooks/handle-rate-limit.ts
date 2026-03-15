@@ -43,22 +43,19 @@ import { RateLimiter } from 'sveltekit-rate-limiter/server';
 // --- RATE LIMITER CONFIGURATION ---
 
 /**
- * Custom store plugin for distributed rate limiting using Redis/Database.
- * Enables shared rate limiting across clustered deployments.
+ * Factory that creates an isolated distributed store with its own namespace prefix.
+ * Prevents cross-limiter key contamination (critical security fix).
  */
-const distributedStore = {
-	/**
-	 * Gets the current count for a rate limit key
-	 */
+const createDistributedStore = (namespace: string) => ({
 	async get(key: string): Promise<number | undefined> {
 		try {
-			const data = await cacheService.get<{ count: number; expires: number }>(`ratelimit:${key}`);
+			const data = await cacheService.get<{ count: number; expires: number }>(`ratelimit:${namespace}:${key}`);
 			if (data && data.expires > Date.now()) {
 				return data.count;
 			}
 			return undefined;
 		} catch (err) {
-			logger.warn(`Distributed rate limit store GET failed: ${err instanceof Error ? err.message : String(err)}`);
+			logger.warn(`Rate limit GET failed [${namespace}]: ${err instanceof Error ? err.message : String(err)}`);
 			return undefined;
 		}
 	},
@@ -67,46 +64,35 @@ const distributedStore = {
 		return (await this.get(key)) !== undefined;
 	},
 
-	// Adds/sets a value in the store (required by sveltekit-rate-limiter)
 	async add(key: string, ttlSeconds: number): Promise<number> {
-		try {
-			if (await this.has(key)) {
-				return this.increment(key, ttlSeconds);
-			}
-			const expires = Date.now() + ttlSeconds * 1000;
-			await cacheService.set(`ratelimit:${key}`, { count: 1, expires }, ttlSeconds);
-			return 1;
-		} catch (err) {
-			logger.error(`Distributed rate limit store ADD failed: ${err instanceof Error ? err.message : String(err)}`);
-			return 0;
-		}
+		// Delegate to increment to avoid race condition between has() → set()
+		return this.increment(key, ttlSeconds);
 	},
 
-	// Increments the counter for a rate limit key
 	async increment(key: string, ttlSeconds: number): Promise<number> {
 		try {
-			const existing = await this.get(key);
-			const newCount = (existing || 0) + 1;
+			const existing = (await this.get(key)) ?? 0;
+			const newCount = existing + 1;
 			const expires = Date.now() + ttlSeconds * 1000;
 
-			await cacheService.set(`ratelimit:${key}`, { count: newCount, expires }, ttlSeconds);
-			console.log(`[RateLimit] INC ${key}: ${newCount}`);
+			await cacheService.set(`ratelimit:${namespace}:${key}`, { count: newCount, expires }, ttlSeconds);
 			return newCount;
 		} catch (err) {
-			logger.error(`Distributed rate limit store INCREMENT failed: ${err instanceof Error ? err.message : String(err)}`);
-			return 1; // Fail open to prevent blocking all traffic
+			logger.error(`Rate limit INCREMENT failed [${namespace}]: ${err instanceof Error ? err.message : String(err)}`);
+			return 1; // Fail open – better than blocking legitimate traffic
 		}
 	},
+
 	async clear(): Promise<void> {
 		try {
-			await cacheService.delete('ratelimit:*'); // Clear all rate limit keys
+			await cacheService.delete(`ratelimit:${namespace}:*`);
 		} catch (err) {
-			logger.error(`Distributed rate limit store CLEAR failed: ${err instanceof Error ? err.message : String(err)}`);
+			logger.error(`Rate limit CLEAR failed [${namespace}]: ${err instanceof Error ? err.message : String(err)}`);
 		}
 	}
-};
+});
 
-/** General limiter for all non-API routes with distributed store support */
+/** General limiter – non-API routes */
 const generalLimiter = new RateLimiter({
 	IP: [500, 'm'],
 	IPUA: [500, 'm'],
@@ -116,37 +102,32 @@ const generalLimiter = new RateLimiter({
 		rate: [500, 'm'],
 		preflight: true
 	},
-	// Enable distributed store if Redis is available
-	store: cacheService ? distributedStore : undefined
+	store: cacheService ? createDistributedStore('general') : undefined
 });
 
-/** Stricter limiter for API routes with distributed store support */
+/** API limiter – stricter on IP+UA */
 const apiLimiter = new RateLimiter({
 	IP: [500, 'm'],
 	IPUA: [200, 'm'],
-	// Enable distributed store if Redis is available
-	store: cacheService ? distributedStore : undefined
+	store: cacheService ? createDistributedStore('api') : undefined
 });
 
-/** Stricter limiter for Auth routes (brute force protection) */
+/** Auth limiter – brute-force protection */
 const authLimiter = new RateLimiter({
-	IP: [10, 'm'], // 10 requests per minute per IP
-	IPUA: [5, 'm'], // 5 requests per minute per IP+UA
-	store: cacheService ? distributedStore : undefined
+	IP: [10, 'm'],
+	IPUA: [5, 'm'],
+	store: cacheService ? createDistributedStore('auth') : undefined
 });
 
 // --- UTILITY FUNCTIONS ---
 
-/** Extracts client IP from request headers or environment */
 function getClientIp(event: RequestEvent): string {
 	try {
 		const address = event.getClientAddress();
 		if (address) {
 			return address;
 		}
-	} catch {
-		// Fallback to proxy headers
-	}
+	} catch {}
 
 	const forwarded = event.request.headers.get('x-forwarded-for');
 	if (forwarded) {
@@ -161,15 +142,10 @@ function getClientIp(event: RequestEvent): string {
 	return '127.0.0.1';
 }
 
-/** Determines if an IP is localhost */
 function isLocalhost(ip: string): boolean {
 	return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 }
 
-/**
- * Checks if a pathname points to a static asset that should bypass rate limiting.
- * Static assets are typically cached by CDNs and don't need rate limiting.
- */
 const STATIC_EXTENSIONS = /\.(js|css|map|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$/;
 
 function isStaticAsset(pathname: string): boolean {
@@ -190,31 +166,19 @@ export const handleRateLimit: Handle = async ({ event, resolve }) => {
 	const clientIp = getClientIp(event);
 	const isLocal = isLocalhost(clientIp);
 
-	// Determine if we are in an automated test environment (integration tests hit a spawned server)
-	// We explicitly check for VITEST/BUN_TEST/NODE_ENV=test to ensure unit tests
-	// (which also set TEST_MODE=true) still execute the rate limiting logic to verify it.
 	const isUnitTesting = !!(process.env.VITEST || process.env.BUN_TEST || process.env.NODE_ENV === 'test');
 	const isIntegrationTestServer = process.env.TEST_MODE === 'true' && !isUnitTesting;
-
-	// Allow forcing security checks in integration tests via special header
 	const forceSecurity = event.request.headers.get('x-test-security') === 'true';
 
-	// SECURITY: Exempt localhost by default to allow local testing of built artifacts.
-	// We only enforce limits on localhost if specifically requested via header.
-	if (isLocal && !forceSecurity) {
-		if (dev || isIntegrationTestServer) {
-			logger.debug(`[RateLimit] BYPASS: Path=${url.pathname}, IP=${clientIp}, isLocal=${isLocal}, dev=${dev}, isTestMode=${isIntegrationTestServer}`);
-		}
+	if (isLocal && !forceSecurity && (dev || isIntegrationTestServer)) {
 		return await resolve(event);
 	}
 
-	// 3. Static assets (no need to rate limit CDN-cached content)
 	if (isStaticAsset(url.pathname)) {
-		return resolve(event);
+		return await resolve(event);
 	}
 
 	try {
-		// --- Apply Rate Limiting ---
 		let limiter = generalLimiter;
 
 		if (url.pathname.startsWith('/api/auth') || url.pathname === '/api/user/login') {
@@ -223,33 +187,27 @@ export const handleRateLimit: Handle = async ({ event, resolve }) => {
 			limiter = apiLimiter;
 		}
 
-		// Relax rate limiting significantly for setup wizard to prevent false positives
-		// during the multiple validation checks and DB tests
+		// Relax for setup wizard
 		if (url.pathname.startsWith('/setup') || url.pathname.includes('setup')) {
-			return resolve(event);
+			return await resolve(event);
 		}
 
 		if (await limiter.isLimited(event)) {
 			metricsService.incrementRateLimitViolations();
 
 			logger.warn(
-				`Rate limit exceeded for IP: ${clientIp}, ` +
-					`endpoint: ${url.pathname}, ` +
-					`UA: ${event.request.headers.get('user-agent')?.substring(0, 50) || 'unknown'}`
+				`Rate limit exceeded | IP: ${clientIp} | Path: ${url.pathname} | UA: ${event.request.headers.get('user-agent')?.substring(0, 50) || 'unknown'}`
 			);
 
-			// Unified Error: Throw AppError instead of SvelteKit error
 			throw new AppError('Too Many Requests. Please slow down and try again later.', 429, 'RATE_LIMIT_EXCEEDED');
 		}
 
 		return await resolve(event);
 	} catch (err) {
-		// Use unified error handling for API routes
 		if (url.pathname.startsWith('/api/')) {
 			return handleApiError(err, event);
 		}
 
-		// For UI routes, convert AppError back to SvelteKit error to show proper error page
 		if (err instanceof AppError) {
 			throw error(err.status, err.message);
 		}

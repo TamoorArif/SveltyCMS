@@ -96,7 +96,8 @@ const contentStructureSchema = new Schema<ContentStructureDocument>(
 		timestamps: true,
 		collection: 'system_content_structure',
 		discriminatorKey: 'nodeType', // Use nodeType to differentiate between category and collection
-		_id: false // Disable Mongoose auto-ObjectId generation since we use UUID strings
+		_id: false, // Disable Mongoose auto-ObjectId generation since we use UUID strings
+		bufferCommands: false
 	}
 );
 

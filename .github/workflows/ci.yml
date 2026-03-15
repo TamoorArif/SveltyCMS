@@ -23,6 +23,7 @@ permissions:
 env:
   BUN_CACHE_DIR: .bun-cache
   NODE_OPTIONS: '--no-warnings --no-deprecation'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ------------------------------------------------
@@ -338,7 +339,7 @@ jobs:
 
   e2e:
     name: 🎭 E2E (shard ${{ matrix.shard }})
-    needs: build
+    needs: [bootstrap, build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -385,13 +386,13 @@ jobs:
         run: |
           # Start server in background
           bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
-          
+
           # Wait for server health
           bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
-          
+
           # Run system setup via API
           bun run scripts/setup-system.ts
-          
+
           # Run Playwright tests
           bun x playwright test --project=chromium --shard=${{ matrix.shard }}/3
 
@@ -400,3 +401,50 @@ jobs:
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report
+
+  # ------------------------------------------------
+  # 7. Performance Benchmarks
+  # ------------------------------------------------
+
+  benchmarks:
+    name: 📊 Benchmarks
+    needs: [db-tests]
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            .bun-cache
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
+
+      - name: Create mock config/private.ts
+        run: |
+          mkdir -p config
+          echo "export const privateEnv = { DB_TYPE: 'mongodb', DB_HOST: '127.0.0.1', DB_NAME: 'bench_test' };" > config/private.ts
+
+      - name: Run Hooks Benchmark
+        run: |
+          echo "### ⚡ Middleware Hooks Performance" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          bun run tests/benchmarks/hooks-performance.ts >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Run Database Benchmark
+        run: |
+          echo "### 💾 Raw Database Performance" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          bun run tests/benchmarks/database-performance.ts >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

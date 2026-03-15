@@ -1,117 +1,173 @@
 /**
  * @file tests/benchmarks/database-performance.ts
- * @description Enterprise-grade performance benchmarking for SveltyCMS.
- * Measures Setup, Cache, and CRUD micro-latencies across all adapters.
- *
- * Usage:
- * bun run tests/benchmarks/database-performance.ts [mongodb|sqlite|postgresql|mariadb] [true|false (useRedis)]
+ * @description Factual performance benchmarking for SveltyCMS.
+ * Measures raw MongoDB driver latencies using connection data from config/private.ts.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { performance } from 'node:perf_hooks';
+import mongoose from 'mongoose';
+import { privateEnv } from '../../config/private';
+
+const ITERATIONS = 100;
+const REGRESSION_THRESHOLD = 0.15; // 15%
+const RESULTS_DIR = path.join(process.cwd(), 'tests/benchmarks/results');
+let sink = 0;
+
 async function run() {
-	const origin = process.env.APP_URL || 'http://localhost:5173';
-	const dbType = process.argv[2];
-	const useRedis = process.argv[3] === 'true';
+	const args = process.argv.slice(2);
+	const updateBaseline = args.includes('--update-baseline');
 
-	if (!dbType) {
-		console.log('Usage: bun run tests/benchmarks/database-performance.ts <dbType> <useRedis>');
-		console.log('Available DBs: mongodb, sqlite, postgresql, mariadb');
-		process.exit(0);
-	}
+	console.log(`\n🚀 SveltyCMS Database Benchmark – ${new Date().toISOString()}`);
 
-	const dbs = {
-		mongodb: { type: 'mongodb', host: 'localhost', port: 27017, name: 'Bench_Mongo' },
-		sqlite: { type: 'sqlite', host: './config/database', name: 'Bench_SQLite.db' },
-		postgresql: { type: 'postgresql', host: 'localhost', port: 5432, name: 'Bench_PG', user: 'postgres', password: 'Password123!' },
-		mariadb: { type: 'mariadb', host: 'localhost', port: 3306, name: 'Bench_Maria', user: 'root', password: 'Password123!' }
-	};
+	const dbType = (privateEnv as any).DB_TYPE || 'mongodb';
+	const dbName = (privateEnv as any).DB_NAME || 'SveltyCMS';
+	const host = (privateEnv as any).DB_HOST || '127.0.0.1';
+	const port = (privateEnv as any).DB_PORT || 27017;
+	const user = (privateEnv as any).DB_USER;
+	const pass = (privateEnv as any).DB_PASSWORD;
 
-	if (!(dbType in dbs)) {
-		console.error(`Invalid DB type: ${dbType}`);
-		process.exit(1);
-	}
+	const baselineFile = path.join(RESULTS_DIR, `baseline-${dbType}-raw.json`);
 
-	console.log(`\n🚀 SveltyCMS Database Benchmark: ${dbType.toUpperCase()}`);
-	console.log(`📡 Target: ${origin} | 💾 Redis: ${useRedis ? 'ON' : 'OFF'}`);
+	console.log(`📡 Connecting to ${dbType.toUpperCase()}...`);
+	console.log(`📂 DB: ${dbName} | Host: ${host}:${port}`);
 
-	// --- 1. SETUP PHASE ---
-	console.log('\n🛠️  Step 1: System Hydration...');
-	const startSetup = performance.now();
-	const endSetup = performance.now();
-	console.log(`   ✅ Ready in ${(endSetup - startSetup).toFixed(2)}ms`);
-
-	// --- 2. STEADY-STATE READ (CACHE) ---
-	console.log('\n⚡ Step 2: Read Latency (Steady-State)...');
-	const readLatencies: number[] = [];
-	for (let i = 0; i < 50; i++) {
-		const start = performance.now();
-		const res = await fetch(`${origin}/api/settings/public`);
-		await res.json();
-		readLatencies.push(performance.now() - start);
-	}
-	const avgRead = readLatencies.reduce((a, b) => a + b, 0) / readLatencies.length;
-	console.log(`   Avg: ${avgRead.toFixed(3)}ms (Min: ${Math.min(...readLatencies).toFixed(3)}ms)`);
-
-	// --- 3. CRUD MICRO-LATENCY (SINGLE-TRIP OPS) ---
-	console.log('\n💾 Step 3: CRUD Micro-Latency (Single-Trip)...');
-	const crudLatencies: { insert: number[]; update: number[]; delete: number[] } = {
-		insert: [],
-		update: [],
-		delete: []
-	};
+	const userEnc = user ? encodeURIComponent(user) : '';
+	const passEnc = pass ? encodeURIComponent(pass) : '';
+	const authPart = userEnc ? `${userEnc}${passEnc ? `:${passEnc}` : ''}@` : '';
+	const authParam = user ? `?authSource=admin` : '';
+	const connectionString = `mongodb://${authPart}${host}:${port}/${dbName}${authParam}`;
 
 	try {
+		await mongoose.connect(connectionString, {
+			maxPoolSize: 10,
+			serverSelectionTimeoutMS: 5000
+		});
+		console.log('✅ Connected.\n');
+
+		// Define a simple benchmark schema
+		const BenchSchema = new mongoose.Schema(
+			{
+				firstName: String,
+				lastName: String,
+				status: String,
+				benchmarkId: { type: String, index: true }
+			},
+			{ timestamps: true }
+		);
+
+		const BenchModel = mongoose.model('benchmarks_raw', BenchSchema);
+
+		// --- 1. WARMUP ---
+		console.log('🔥 Warming up...');
 		for (let i = 0; i < 20; i++) {
-			// A. INSERT
-			const startI = performance.now();
-			const resI = await fetch(`${origin}/api/collections/names`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ firstName: 'Bench', lastName: `User ${i}`, status: 'active' })
-			});
-			const dataI = await resI.json();
-			crudLatencies.insert.push(performance.now() - startI);
-			const entryId = dataI.data?._id;
-
-			if (!entryId) continue;
-
-			// B. UPDATE
-			const startU = performance.now();
-			await fetch(`${origin}/api/collections/names/${entryId}`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ status: 'archived' })
-			});
-			crudLatencies.update.push(performance.now() - startU);
-
-			// C. DELETE
-			const startD = performance.now();
-			await fetch(`${origin}/api/collections/names/${entryId}`, { method: 'DELETE' });
-			crudLatencies.delete.push(performance.now() - startD);
+			const doc = await BenchModel.create({ firstName: 'Warm', lastName: 'Up', status: 'warm' });
+			await BenchModel.findById(doc._id);
+			await BenchModel.deleteOne({ _id: doc._id });
 		}
 
-		const avg = (arr: number[]) => (arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3) : '0.000');
+		// --- 2. BENCHMARK ---
+		console.log(`💾 Measuring CRUD Micro-Latencies (${ITERATIONS} iterations)...`);
 
-		console.log(`   - INSERT: ${avg(crudLatencies.insert)}ms (returning check: ✅)`);
-		console.log(`   - UPDATE: ${avg(crudLatencies.update)}ms (returning check: ✅)`);
-		console.log(`   - DELETE: ${avg(crudLatencies.delete)}ms`);
-	} catch (e) {
-		console.log('   ⚠️  CRUD tests skipped: Ensure "names" collection is seeded.');
+		const metrics = {
+			insert: [] as number[],
+			read: [] as number[],
+			update: [] as number[],
+			delete: [] as number[]
+		};
+
+		for (let i = 0; i < ITERATIONS; i++) {
+			const benchmarkId = `bench-${Date.now()}-${i}`;
+
+			// INSERT
+			const s1 = performance.now();
+			const doc = await BenchModel.create({
+				firstName: 'Bench',
+				lastName: `User ${i}`,
+				status: 'active',
+				benchmarkId
+			});
+			metrics.insert.push(performance.now() - s1);
+
+			// READ (by ID)
+			const s2 = performance.now();
+			const found = await BenchModel.findById(doc._id);
+			metrics.read.push(performance.now() - s2);
+			sink ^= found ? 1 : 0;
+
+			// UPDATE
+			const s3 = performance.now();
+			await BenchModel.updateOne({ _id: doc._id }, { status: 'archived' });
+			metrics.update.push(performance.now() - s3);
+
+			// DELETE
+			const s4 = performance.now();
+			await BenchModel.deleteOne({ _id: doc._id });
+			metrics.delete.push(performance.now() - s4);
+		}
+
+		const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+		const results = {
+			insert: avg(metrics.insert),
+			read: avg(metrics.read),
+			update: avg(metrics.update),
+			delete: avg(metrics.delete)
+		};
+
+		console.log('\n📊 Average Raw Driver Latencies:');
+		console.log('-----------------------------------------------------------');
+		console.log(`MongoDB Insert : ${results.insert.toFixed(3)} ms`);
+		console.log(`MongoDB Read   : ${results.read.toFixed(3)} ms`);
+		console.log(`MongoDB Update : ${results.update.toFixed(3)} ms`);
+		console.log(`MongoDB Delete : ${results.delete.toFixed(3)} ms`);
+		console.log('-----------------------------------------------------------');
+
+		// --- 3. REGRESSION DETECTION ---
+		let baseline = null;
+		try {
+			baseline = JSON.parse(await fs.readFile(baselineFile, 'utf8'));
+		} catch (e) {}
+
+		if (baseline) {
+			console.log('\n📉 vs Baseline:');
+			const check = (name: string, cur: number, base: number) => {
+				const diff = (cur - base) / base;
+				const indicator = diff > REGRESSION_THRESHOLD ? '🔴 REGRESSION' : diff < -REGRESSION_THRESHOLD ? '🟢 IMPROVEMENT' : '⚪ STABLE';
+				console.log(`${name.padEnd(15)}: ${cur.toFixed(3)}ms vs ${base.toFixed(3)}ms | [${indicator}] (${(diff * 100).toFixed(1)}%)`);
+			};
+			check('Insert', results.insert, baseline.metrics.insert);
+			check('Read', results.read, baseline.metrics.read);
+			check('Update', results.update, baseline.metrics.update);
+			check('Delete', results.delete, baseline.metrics.delete);
+		}
+
+		if (updateBaseline) {
+			await fs.mkdir(RESULTS_DIR, { recursive: true });
+			await fs.writeFile(
+				baselineFile,
+				JSON.stringify(
+					{
+						date: new Date().toISOString(),
+						dbType,
+						metrics: results
+					},
+					null,
+					2
+				)
+			);
+			console.log(`\n💾 Baseline updated: ${baselineFile}`);
+		}
+
+		// cleanup
+		await BenchModel.deleteMany({ benchmarkId: { $exists: true } });
+
+		console.log('\n✅ Benchmark complete.');
+		process.exit(0);
+	} catch (err) {
+		console.error('\n❌ Benchmark Failed:', err);
+		process.exit(1);
 	}
-
-	// --- 4. TELEMETRY VALIDATION ---
-	console.log('\n📡 Step 4: Telemetry Integrity...');
-	const tRes = await fetch(`${origin}/api/settings/public`);
-	const tData = await tRes.json();
-	const hasTelemetry = tData.meta?.executionTime !== undefined || tData.executionTime !== undefined;
-	console.log(`   - DB Telemetry present: ${hasTelemetry ? '✅' : '❌'}`);
-
-	console.log('\n📊 Final Performance Report:');
-	console.log('-----------------------------------------------------------');
-	console.log(`Steady-State Read:  ${avgRead.toFixed(3)}ms`);
-	const insertAvg =
-		crudLatencies.insert.length > 0 ? (crudLatencies.insert.reduce((a, b) => a + b, 0) / crudLatencies.insert.length).toFixed(3) : '0.000';
-	console.log(`Mutation Overhead:  ${insertAvg}ms`);
-	console.log('-----------------------------------------------------------');
 }
 
-run().catch(console.error);
+run();

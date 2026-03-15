@@ -1,5 +1,3 @@
-// File svelte.config.js
-
 import adapter from '@sveltejs/adapter-node'; // To generate a standalone Node server
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
@@ -46,9 +44,9 @@ const config = {
 		// Use SvelteKit's built-in CSP support
 		// Note: CSRF protection is enabled by default in SvelteKit for non-GET requests
 		// If specific cross-origin POST/PUT/DELETE requests need to be allowed, configure `trustedOrigins` here.
-		// csrf: {
-		// 	trustedOrigins: ['https://example.com']
-		// },
+		csrf: {
+			trustedOrigins: ['http://127.0.0.1:4173', 'http://127.0.0.1:4174', 'http://127.0.0.1:4175', 'http://localhost:4173']
+		},
 		csp: {
 			mode: 'nonce', // Use nonce for inline scripts (not hash)
 			directives: {

@@ -301,6 +301,20 @@ export class MediaService {
 				safeFileName = `${safeFileName}.${extension}`;
 			}
 
+			// 1. Quota Enforcement (CRITICAL: 25MB for Demo/Guest)
+			if (basePath && basePath !== 'global') {
+				try {
+					const { tenantService: ts } = await import('@src/services/tenant-service');
+					await ts.checkQuota(basePath, 'maxStorageBytes', file.size);
+				} catch (quotaError) {
+					logger.warn(`Storage quota exceeded for tenant ${basePath}`, {
+						fileSize: file.size,
+						error: quotaError
+					});
+					throw quotaError; // Propagate quota error (403)
+				}
+			}
+
 			// First upload the file and get basic file info
 			const { url, path, hash, resized } = await this.uploadFile(buffer, safeFileName, mimeType, userId, basePath, watermarkOptions);
 
@@ -424,6 +438,17 @@ export class MediaService {
 			if (!result.success) {
 				throw result.error;
 			}
+
+			// 2. Increment usage upon successful DB record creation
+			if (basePath && basePath !== 'global') {
+				try {
+					const { tenantService: ts } = await import('@src/services/tenant-service');
+					await ts.incrementUsage(basePath, 'maxStorageBytes', file.size);
+				} catch (incError) {
+					logger.error(`Failed to increment storage usage for tenant ${basePath}`, incError);
+				}
+			}
+
 			const savedMedia = result.data as unknown as MediaItem;
 			const mediaId = savedMedia._id;
 
