@@ -17,7 +17,7 @@ import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 import { tokenTarget } from '@src/services/token/token-target';
 // Stores
 import { app } from '@src/stores/store.svelte';
-import type { Editor } from '@tiptap/core';
+// import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
 import { showModal } from '@utils/modal-utils';
 // Svelte
 import { onMount } from 'svelte';
@@ -54,7 +54,7 @@ $effect(() => {
 	}
 });
 
-let editor: Editor | null = $state(null);
+let editor: any | null = $state(null);
 let element: HTMLDivElement;
 let createEditor: any = $state(null);
 
@@ -427,7 +427,9 @@ function handleScroll() {
 
 onMount(() => {
 	(async () => {
-		const module = await import('./tiptap');
+		// baffle-step: use variable to prevent static analysis during SSR
+		const tiptapPath = './tiptap';
+		const module = await import(tiptapPath);
 		createEditor = module.createEditor;
 
 		let initialContent = '';
@@ -437,7 +439,7 @@ onMount(() => {
 			initialContent = (value as RichTextData)?.content || '';
 		}
 
-		editor = createEditor(element, initialContent, lang, {
+		editor = await createEditor(element, initialContent, lang, {
 			aiEnabled: !!field.aiEnabled
 		});
 

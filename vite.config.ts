@@ -42,24 +42,40 @@ function openUrl(url: string) {
 	exec(cmd);
 }
 
-/**
- * Plugin to physically remove test-only routes and logic from production builds.
- * This ensures that even if a server is misconfigured with TEST_MODE=true,
- * the code literally does not exist in the production artifact.
- */
 function testBackdoorStripperPlugin(): Plugin {
 	return {
 		name: 'test-backdoor-stripper',
 		enforce: 'pre',
 		resolveId(id, importer, options) {
-			// If we are building for production, intercept test-only modules
+			const normalizedId = id.replace(/\\/g, '/');
+
+			if (options?.ssr) {
+				if (id.includes('tiptap') || id.includes('prosemirror') || normalizedId.includes('tiptap') || normalizedId.includes('prosemirror')) {
+					return `\0virtual:ssr-stub:${id}`;
+				}
+			}
+
+			// CRITICAL: We MUST NOT intercept files that SvelteKit expects to find in src/routes/
+			// during its manifest generation phase, otherwise the build fails.
+			// We only strip them if they are imported as modules elsewhere.
+			if (normalizedId.includes('src/routes/api/testing') && options?.ssr) {
+				return null;
+			}
+
 			if (process.env.NODE_ENV === 'production' && !process.env.TEST_MODE) {
-				const normalizedId = id.replace(/\\/g, '/');
 				if (normalizedId.includes('src/routes/api/testing') || normalizedId.includes('src/hooks/handle-test-isolation')) {
 					log.warn(`[Stripper] Physically removing test module from production build: ${id}`);
 					return '\0virtual:test-noop';
 				}
 			}
+
+			// Stub Tiptap and Prosemirror during SSR builds to prevent resolution errors
+			if (options?.ssr) {
+				if (id.startsWith('@tiptap/') || id.startsWith('prosemirror-') || id.includes('tiptap.client')) {
+					return `\0virtual:ssr-stub:${id}`;
+				}
+			}
+
 			return null;
 		},
 		load(id) {
@@ -67,6 +83,34 @@ function testBackdoorStripperPlugin(): Plugin {
 				// Return a safe no-op for the stripper
 				return 'export const POST = () => new Response("Not Found", { status: 404 }); export const handleTestIsolation = ({ event, resolve }) => resolve(event); export default {};';
 			}
+
+			if (id.startsWith('\0virtual:ssr-stub:')) {
+				// Return a proxy-based no-op for SSR stubs to handle any named export
+				return `
+					export const createEditor = () => ({});
+					export const Editor = class {};
+					export const Extension = { create: () => ({}) };
+					const noop = () => ({});
+					const proxy = new Proxy({}, { get: () => noop });
+					export default proxy;
+					export const Image = noop;
+					export const TextStyle = noop;
+					export const StarterKit = noop;
+					export const Table = noop;
+					export const TableRow = noop;
+					export const TableHeader = noop;
+					export const TableCell = noop;
+					export const TextAlign = noop;
+					export const Underline = noop;
+					export const Youtube = noop;
+					export const CharacterCount = noop;
+					export const Color = noop;
+					export const FontFamily = noop;
+					export const Link = noop;
+					export const Placeholder = noop;
+				`;
+			}
+
 			return null;
 		}
 	};

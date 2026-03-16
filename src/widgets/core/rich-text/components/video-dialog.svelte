@@ -10,12 +10,12 @@
 
 <script lang="ts">
 import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import type { Editor } from '@tiptap/core';
+// import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
 import { onMount } from 'svelte';
 import { fade } from 'svelte/transition';
 
 interface Props {
-	editor: Editor | null;
+	editor: any | null; // Changed from Editor to any
 	show?: boolean;
 }
 
