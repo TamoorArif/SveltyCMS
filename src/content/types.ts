@@ -201,8 +201,20 @@ export interface FieldInstance {
 	[key: string]: unknown;
 }
 
+/**
+ * Enterprise "Smart Join" Field (Inverse Relationship)
+ * Dynamically queries another collection based on a foreign key referencing this record.
+ */
+export interface JoinField {
+	collection: string; // The collection to join (e.g., 'comments')
+	on: string; // The field in the target collection that references this record (e.g., 'post')
+	where?: Record<string, unknown>; // Additional filters
+	sort?: string; // Field to sort by
+	limit?: number; // Max items to fetch
+}
+
 // Field definition
-export type FieldDefinition = unknown | WidgetPlaceholder;
+export type FieldDefinition = unknown | WidgetPlaceholder | JoinField;
 
 // ContentTypes is now dynamic, based on collectionSchemas
 

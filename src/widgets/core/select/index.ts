@@ -33,7 +33,9 @@ const SelectWidget = createWidget<SelectProps>({
 	Description: widget_radio_description(), // Reusing radio description for now
 
 	// Define paths to the dedicated Svelte components.
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/select/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/select/display.svelte',
 
 	// Assign the dynamic validation schema.

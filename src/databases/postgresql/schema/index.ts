@@ -297,6 +297,28 @@ export const systemPreferences = pgTable(
 	})
 );
 
+// Background Jobs Table
+export const sveltyJobs = pgTable(
+	'svelty_jobs',
+	{
+		_id: varchar('_id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+		taskType: varchar('taskType', { length: 255 }).notNull(),
+		payload: jsonb('payload').notNull(),
+		status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, running, completed, failed
+		attempts: integer('attempts').notNull().default(0),
+		maxAttempts: integer('maxAttempts').notNull().default(3),
+		nextRunAt: timestamp('nextRunAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+		lastError: text('lastError'),
+		tenantId: tenantField(),
+		...timestamps
+	},
+	(table) => ({
+		statusIdx: index('svelty_jobs_status_idx').on(table.status),
+		nextRunIdx: index('svelty_jobs_next_run_idx').on(table.nextRunAt),
+		tenantIdx: index('svelty_jobs_tenant_idx').on(table.tenantId)
+	})
+);
+
 // Website Tokens Table
 export const websiteTokens = pgTable(
 	'website_tokens',
@@ -423,6 +445,7 @@ export const schema = {
 	mediaItems,
 	systemVirtualFolders,
 	systemPreferences,
+	sveltyJobs,
 	websiteTokens,
 	pluginPagespeedResults,
 	pluginStates,

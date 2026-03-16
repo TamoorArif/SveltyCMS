@@ -29,6 +29,7 @@ import { handleLocale } from './hooks/handle-locale';
 import { handleTheme } from './hooks/handle-theme';
 import { handleAuthentication } from './hooks/handle-authentication';
 import { handleAuthorization } from './hooks/handle-authorization';
+import { handleLocalSdk } from './hooks/handle-local-sdk';
 import { handleContentInitialization } from './hooks/handle-content-initialization';
 import { handleApiRequests } from './hooks/handle-api-requests';
 import { handleAuditLogging } from './hooks/handle-audit-logging';
@@ -90,10 +91,11 @@ const middleware: Handle[] = [
 	handleTheme, // 9. SSR theme
 	handleAuthentication, // 10. identity
 	handleAuthorization, // 11. permissions
-	handleContentInitialization, // 12. content + redirects
-	handleApiRequests, // 13. API caching
-	handleAuditLogging, // 14. async audit trails
-	handleTokenResolution // 15. token processing
+	handleLocalSdk, // 12. native server-side SDK injection
+	handleContentInitialization, // 13. content + redirects
+	handleApiRequests, // 14. API caching
+	handleAuditLogging, // 15. async audit trails
+	handleTokenResolution // 16. token processing
 ];
 
 export const handle: Handle = sequence(...middleware);

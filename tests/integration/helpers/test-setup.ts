@@ -8,6 +8,7 @@
 import { getApiBaseUrl, safeFetch } from './server';
 
 const API_BASE_URL = getApiBaseUrl();
+const TEST_API_SECRET = (globalThis as any).process?.env?.TEST_API_SECRET || '';
 
 /**
  * Test fixtures for reusing test data across tests
@@ -62,6 +63,7 @@ export async function cleanupTestDatabase(): Promise<void> {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
+			'x-test-secret': TEST_API_SECRET,
 			Origin: API_BASE_URL
 		},
 		body: JSON.stringify({ action: 'reset' })
@@ -86,6 +88,7 @@ export async function prepareAuthenticatedContext(): Promise<string> {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
+			'x-test-secret': TEST_API_SECRET,
 			Origin: API_BASE_URL
 		},
 		body: JSON.stringify({

@@ -307,12 +307,12 @@ function validateInput() {
 sequenceDiagram
     participant F as fields
     participant WL as widget-loader
-    participant I as import.meta.glob
-    participant W as Widget
+    participant CL as ComponentLoader (import)
+    participant W as Widget Component
 
     F->>WL: Render field
-    WL->>I: Load widget module
-    I-->>WL: Widget component
+    WL->>CL: Execute dynamic import()
+    CL-->>WL: Resolve Svelte Component
     WL->>W: Mount with props
     W->>F: bind:value updates
 ```

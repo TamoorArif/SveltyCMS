@@ -23,14 +23,14 @@ export default TextStyle.extend({
 			...this.parent?.(),
 			fontSize: {
 				default: null,
-				parseHTML: (element) => {
+				parseHTML: (element: any) => {
 					const fontSize = element.style.fontSize;
 					if (!fontSize) {
 						return null;
 					}
 					return fontSize.replace(/px$/, '');
 				},
-				renderHTML: (attributes) => {
+				renderHTML: (attributes: any) => {
 					if (!attributes.fontSize) {
 						return {};
 					}
@@ -51,7 +51,7 @@ export default TextStyle.extend({
 			...this.parent?.(),
 			setFontSize:
 				(fontSize: string) =>
-				({ chain }) => {
+				({ chain }: any) => {
 					// SECURITY: Sanitize font-size to prevent CSS injection
 					// Only allow numeric values with px/em/rem/% units
 					const size = String(fontSize);
@@ -60,7 +60,7 @@ export default TextStyle.extend({
 				},
 			unsetFontSize:
 				() =>
-				({ chain }) => {
+				({ chain }: any) => {
 					return chain().focus().setMark(this.name, { fontSize: null }).removeEmptyTextStyle().run();
 				}
 		};

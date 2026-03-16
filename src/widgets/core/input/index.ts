@@ -77,7 +77,9 @@ const InputWidget = createWidget<InputProps>({
 	Name: 'Input',
 	Icon: 'mdi:form-textbox',
 	Description: widget_text_description(),
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/input/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/input/display.svelte',
 
 	validationSchema: createValidationSchema,

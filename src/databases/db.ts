@@ -23,23 +23,9 @@ import { building } from '$app/environment';
 import { cacheService } from './cache-service';
 
 // Handle private config that might not exist during setup
-import {
-	clearPrivateConfigCache as clearPrivateConfigCacheFromState,
-	getDatabaseConnectionString,
-	getPrivateEnv as getPrivateEnvFromState,
-	loadPrivateConfig as loadPrivateConfigFromState,
-	privateEnv,
-	setPrivateEnv as setPrivateEnvFromState
-} from './config-state';
+import { clearPrivateConfigCache, getDatabaseConnectionString, getPrivateEnv, loadPrivateConfig, privateEnv, setPrivateEnv } from './config-state';
 
-// Re-export for compatibility
-export const getPrivateEnv = getPrivateEnvFromState;
-export const loadPrivateConfig = loadPrivateConfigFromState;
-export const clearPrivateConfigCache = clearPrivateConfigCacheFromState;
-export const setPrivateEnv = setPrivateEnvFromState;
-
-// Note: privateEnv variable is imported but is read-only.
-// We use the getter fn or the imported variable directly.
+export { clearPrivateConfigCache, getDatabaseConnectionString, getPrivateEnv, loadPrivateConfig, privateEnv, setPrivateEnv };
 
 // Function to reset initialization state for self-healing (retries)
 export function resetDbInitPromise() {

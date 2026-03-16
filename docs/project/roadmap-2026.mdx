@@ -32,6 +32,7 @@ _Focus: Zero-friction onboarding and extreme performance infrastructure._
 
 - ✅ **CLI & npx Support** - `npx create-sveltycms` for instant project scaffolding.
 - ✅ **High-Speed Toolchain** - Transitioned to Biome/Ultracite for 20x faster linting (~0.8s).
+- ✅ **Widget Component Refactor** - Migrated from brittle string paths to type-safe `ComponentLoader` closures. Achieved perfect tree-shaking and IDE refactoring safety.
 - ✅ **Middleware Revolution** - 71% reduction in API hook latency; < 0.6ms overhead.
 - ✅ **Enterprise Database Stack** - Single-trip mutations (.returning) and micro-telemetry across all 4 adapters.
 - ✅ **Secure Preview Handshake** - Short-lived HMAC-signed tokens bound to identity and entry.
@@ -53,8 +54,12 @@ _Focus: Augmenting the editor experience with "Magical" visual tools and AI enri
 
 _Focus: Multi-stage workflows and conversational operations._
 
-- 🔜 **Enterprise Content Workflows** - Multi-stage approvals (Draft -> Legal -> Publish) with secure approval links.
+- ✅ **Enterprise Content Workflows** - Multi-stage approvals (Draft -> Legal -> Publish) with secure approval links.
 - 🚀 **Conversational UI** - Full "Agent Mode" for the CMS dashboard.
+- ✅ **Database-Backed Jobs Queue** - Offload heavy media/AI tasks into a robust `svelty_jobs` worker system.
+- ✅ **Virtual "Join" Fields** - Dynamic `select/populate` API with support for enterprise-grade **Inverse Smart Joins**.
+- ✅ **Formal Server-Side SDK** - Native `locals.cms` SDK for zero-latency, full-stack SvelteKit integration.
+- 🔜 **Multi-DB CI/CD Parity** - Automated PR testing across Mongo, Postgres, MySQL, and SQLite via Docker.
 
 ---
 

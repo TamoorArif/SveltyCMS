@@ -27,7 +27,7 @@
  */
 
 import { exec } from 'node:child_process';
-import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import Path from 'node:path';
 import { promisify } from 'node:util';
@@ -53,6 +53,7 @@ import { validateMediaFileServer } from '@src/utils/media/media-utils';
 import { AppError } from '@utils/error-handling';
 // System Logger
 import { logger } from '@utils/logger.server';
+import { jobQueue } from '@src/services/jobs/job-queue-service';
 import type { MediaAccess, MediaBase, MediaItem, MediaMetadata, MediaTypeEnum, ResizedImage, WatermarkOptions } from '@utils/media/media-models';
 import { MediaType as MediaTypeEnumValue } from '@utils/media/media-models';
 import sharp from 'sharp';
@@ -172,14 +173,10 @@ export class MediaService {
 
 			// Process image if it's an image type
 			const isImage = mimeType.startsWith('image/');
-			let resizedImages: Record<string, ResizedImage> = {};
+			const resizedImages: Record<string, ResizedImage> = {};
 
-			if (isImage && ext !== 'svg') {
-				// Don't resize SVGs
-				logger.debug('Processing image variants', { fileName, mimeType });
-				// saveResizedImages signature: (buffer, hash, baseName, ext, baseDir)
-				resizedImages = await saveResizedImages(imageBuffer, hash, sanitizedFileName, ext, basePath);
-			}
+			// NOTE: Resizing is now handled asynchronously via JobQueueService
+			// We skip it here to ensure sub-millisecond API response times.
 
 			logger.info('File upload completed', {
 				fileName,
@@ -187,7 +184,6 @@ export class MediaService {
 				relativePath,
 				fileSize: imageBuffer.length,
 				isImage,
-				resizedVariants: Object.keys(resizedImages),
 				totalProcessingTime: performance.now() - startTime
 			});
 
@@ -316,14 +312,13 @@ export class MediaService {
 			}
 
 			// First upload the file and get basic file info
-			const { url, path, hash, resized } = await this.uploadFile(buffer, safeFileName, mimeType, userId, basePath, watermarkOptions);
+			const { url, path, hash } = await this.uploadFile(buffer, safeFileName, mimeType, userId, basePath, watermarkOptions);
 
 			const isImage = mimeType.startsWith('image/');
 			const isVideo = mimeType.startsWith('video/');
 			let advancedMetadata: MediaMetadata = {};
 			let width: number | undefined;
 			let height: number | undefined;
-			let thumbnailBuffer: Buffer | null = null;
 
 			if (isImage && !mimeType.includes('svg')) {
 				try {
@@ -342,26 +337,10 @@ export class MediaService {
 					width = dimensions.width;
 					height = dimensions.height;
 					advancedMetadata = { width, height };
-
-					// Generate a real thumbnail image from the video
-					thumbnailBuffer = await this.captureVideoThumbnail(buffer);
 				} catch (vError) {
 					logger.error('Video processing failed', {
 						fileName: file.name,
 						error: vError
-					});
-				}
-			} else if (mimeType === 'application/pdf') {
-				try {
-					// Generate a thumbnail image from the first page of the PDF
-					thumbnailBuffer = await this.generatePdfThumbnail(buffer);
-					logger.info('PDF thumbnail generated successfully', {
-						fileName: file.name
-					});
-				} catch (pError) {
-					logger.error('PDF thumbnail generation failed', {
-						fileName: file.name,
-						error: pError
 					});
 				}
 			}
@@ -407,22 +386,8 @@ export class MediaService {
 				width,
 				height,
 				access,
-				thumbnails: resized || {}
+				thumbnails: {}
 			};
-
-			// If we have a video or PDF thumbnail, process it into resizing variants
-			if ((isVideo || mimeType === 'application/pdf') && thumbnailBuffer) {
-				try {
-					const { fileNameWithoutExt } = getSanitizedFileName(file.name);
-					const resizedThumbnails = await saveResizedImages(thumbnailBuffer, hash, fileNameWithoutExt, 'jpg', basePath);
-					media.thumbnails = { ...media.thumbnails, ...resizedThumbnails };
-				} catch (rError) {
-					logger.error('Failed to process thumbnail variants', {
-						fileName: file.name,
-						error: rError
-					});
-				}
-			}
 
 			// Create clean media object for database storage
 			const cleanMedia = this.createCleanMediaObject(media);
@@ -439,7 +404,23 @@ export class MediaService {
 				throw result.error;
 			}
 
-			// 2. Increment usage upon successful DB record creation
+			const savedMedia = result.data as unknown as MediaItem;
+
+			// 2. Dispatch background processing job
+			const isPdf = mimeType === 'application/pdf';
+			if ((isImage && !mimeType.includes('svg')) || isVideo || isPdf) {
+				logger.debug(`Dispatching background processing for media ${savedMedia._id}`);
+				await jobQueue.dispatch(
+					'process-media',
+					{
+						fileId: savedMedia._id as string,
+						basePath
+					},
+					basePath !== 'global' ? basePath : undefined
+				);
+			}
+
+			// 3. Increment usage upon successful DB record creation
 			if (basePath && basePath !== 'global') {
 				try {
 					const { tenantService: ts } = await import('@src/services/tenant-service');
@@ -449,7 +430,6 @@ export class MediaService {
 				}
 			}
 
-			const savedMedia = result.data as unknown as MediaItem;
 			const mediaId = savedMedia._id;
 
 			logger.debug('Media saved to database', {
@@ -992,72 +972,6 @@ export class MediaService {
 		} finally {
 			try {
 				unlinkSync(tempFile);
-			} catch {
-				/* ignore */
-			}
-		}
-	}
-
-	/**
-	 * Captures a thumbnail from a video at the 1s mark using ffmpeg
-	 */
-	private async captureVideoThumbnail(buffer: Buffer): Promise<Buffer | null> {
-		const tempInput = Path.join(os.tmpdir(), `ffmpeg-input-${Date.now()}.mp4`);
-		const tempOutput = Path.join(os.tmpdir(), `ffmpeg-output-${Date.now()}.jpg`);
-		try {
-			writeFileSync(tempInput, buffer);
-			// Capture frame at 1s mark
-			await execAsync(`ffmpeg -ss 00:00:01 -i "${tempInput}" -frames:v 1 -q:v 2 "${tempOutput}" -y`);
-			return readFileSync(tempOutput);
-		} catch (err) {
-			logger.error('Error capturing video thumbnail', { error: err });
-			return null;
-		} finally {
-			try {
-				if (os.platform() !== 'win32') {
-					if (tempInput) {
-						unlinkSync(tempInput);
-					}
-					if (tempOutput) {
-						unlinkSync(tempOutput);
-					}
-				}
-			} catch {
-				/* ignore */
-			}
-		}
-	}
-
-	/**
-	 * Generates a thumbnail from the first page of a PDF using ImageMagick
-	 */
-	private async generatePdfThumbnail(buffer: Buffer): Promise<Buffer | null> {
-		const tempInput = Path.join(os.tmpdir(), `pdf-input-${Date.now()}.pdf`);
-		const tempOutput = Path.join(os.tmpdir(), `pdf-output-${Date.now()}.jpg`);
-		try {
-			writeFileSync(tempInput, buffer);
-			// Use ImageMagick (magick) to extract the first page [0] at 150 DPI
-			// -background white -flatten handles transparency
-			await execAsync(`magick -density 150 "${tempInput}[0]" -background white -flatten -alpha remove -quality 90 "${tempOutput}"`);
-			return readFileSync(tempOutput);
-		} catch (err) {
-			const isMagickMissing = err instanceof Error && (err.message.includes('not found') || err.message.includes('not recognized'));
-			if (isMagickMissing) {
-				logger.warn('PDF thumbnail generation skipped: "magick" command not found. Install ImageMagick and Ghostscript to enable PDF previews.');
-			} else {
-				logger.error('Error generating PDF thumbnail', { error: err });
-			}
-			return null;
-		} finally {
-			try {
-				if (os.platform() !== 'win32') {
-					if (tempInput) {
-						unlinkSync(tempInput);
-					}
-					if (tempOutput) {
-						unlinkSync(tempOutput);
-					}
-				}
 			} catch {
 				/* ignore */
 			}

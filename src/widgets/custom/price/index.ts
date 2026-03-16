@@ -32,7 +32,9 @@ const PriceWidget = createWidget<PriceProps>({
 	Name: 'Price',
 	Icon: 'mdi:currency-usd',
 	Description: 'Price with currency support',
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/custom/price/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/custom/price/display.svelte',
 	validationSchema,
 

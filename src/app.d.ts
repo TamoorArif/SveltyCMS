@@ -38,6 +38,14 @@ declare global {
 			allTokens: Token[]; // Using imported Token type
 			allUsers: User[]; // Using imported User type
 			collections?: unknown; // Replace with your actual Collections type if available
+			cms?: {
+				find: (collection: string, options?: any) => Promise<import('@src/databases/db-interface').DatabaseResult<any[]>>;
+				findOne: (collection: string, options?: any) => Promise<import('@src/databases/db-interface').DatabaseResult<any | null>>;
+				create: (collection: string, data: any) => Promise<import('@src/databases/db-interface').DatabaseResult<any>>;
+				update: (collection: string, id: string, data: any) => Promise<import('@src/databases/db-interface').DatabaseResult<any>>;
+				delete: (collection: string, id: string) => Promise<import('@src/databases/db-interface').DatabaseResult<void>>;
+				db: import('@src/databases/db-interface').IDBAdapter;
+			};
 			cspNonce?: string; // CSP nonce for this request (managed by SvelteKit)
 			customCss: string; // The active theme's custom CSS
 			darkMode: boolean; // Dark mode preference from cookies

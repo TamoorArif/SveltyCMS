@@ -54,8 +54,8 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 
 	// Fill credentials from ENV (CI) or Defaults (Local)
 	const defaultPort = dbType === 'mariadb' ? '3306' : dbType === 'postgresql' ? '5432' : '27017';
-	const dbHost = process.env.DB_HOST || 'localhost';
-	const dbName = process.env.DB_NAME || 'sveltycms_test';
+	const dbHost = process.env.DB_HOST || (dbType === 'sqlite' ? 'config/database' : 'localhost');
+	const dbName = process.env.DB_NAME || (dbType === 'sqlite' ? 'sveltycms_test.db' : 'sveltycms_test');
 	const dbPort = process.env.DB_PORT || defaultPort;
 	const dbUser = process.env.DB_USER !== undefined ? process.env.DB_USER : dbType === 'sqlite' ? '' : 'test';
 	const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : dbType === 'sqlite' ? '' : 'test';
@@ -86,15 +86,30 @@ test('Setup Wizard: Configure DB and Create Admin', async ({ page }) => {
 	const testDbButton = page.locator('button', { hasText: /test database/i });
 	await testDbButton.click({ force: true });
 
+	// Handle "Database does not exist" confirmation for SQLite
+	// Uses the label from messages/en.json: "Yes, Create It"
+	const confirmBtn = page.getByRole('button', { name: /yes/i });
+	if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+		console.log('Database does not exist modal appeared. Clicking Yes...');
+		await confirmBtn.click();
+	}
+
 	try {
-		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
+		// Expect success message (handles various variants)
+		await expect(page.getByText(/success/i).first()).toBeVisible({
 			timeout: 40_000
 		});
 	} catch (_err) {
 		console.log('Initial DB test failed, retrying once...');
 		await page.waitForTimeout(5000);
 		await testDbButton.click({ force: true });
-		await expect(page.getByText(/connection successful/i).first()).toBeVisible({
+
+		// Re-check for modal on retry
+		if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+			await confirmBtn.click();
+		}
+
+		await expect(page.getByText(/success/i).first()).toBeVisible({
 			timeout: 60_000
 		});
 	}

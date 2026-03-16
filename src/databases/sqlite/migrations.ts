@@ -79,6 +79,8 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 				type TEXT NOT NULL,
 				expires INTEGER NOT NULL,
 				consumed INTEGER DEFAULT 0,
+				blocked INTEGER DEFAULT 0,
+				isRegistered INTEGER DEFAULT 0,
 				role TEXT,
 				username TEXT,
 				tenantId TEXT,

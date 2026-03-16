@@ -56,8 +56,13 @@ export async function POST(event: RequestEvent) {
 				await currentDbAdapter.clearDatabase();
 				// Invalidate setup cache so the server realizes the DB is now empty
 				const { invalidateSetupCache } = await import('@src/utils/setup-check');
-				invalidateSetupCache(true);
-				return json({ success: true, message: 'Database cleared' });
+				invalidateSetupCache(true, false); // forceStatus = false (Setup NOT complete)
+
+				// Clear all session caches to prevent session bleed
+				const { clearAllSessionCaches } = await import('@src/hooks/handle-authentication');
+				await clearAllSessionCaches();
+
+				return json({ success: true, message: 'Database cleared and caches invalidated' });
 			}
 
 			case 'get-user-count': {

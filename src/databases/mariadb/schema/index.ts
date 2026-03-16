@@ -298,6 +298,28 @@ export const systemPreferences = mysqlTable(
 	})
 );
 
+// Background Jobs Table
+export const sveltyJobs = mysqlTable(
+	'svelty_jobs',
+	{
+		_id: uuidPk(),
+		taskType: varchar('taskType', { length: 255 }).notNull(),
+		payload: json('payload').notNull(),
+		status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, running, completed, failed
+		attempts: int('attempts').notNull().default(0),
+		maxAttempts: int('maxAttempts').notNull().default(3),
+		nextRunAt: datetime('nextRunAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+		lastError: text('lastError'),
+		tenantId: tenantField(),
+		...timestamps
+	},
+	(table) => ({
+		statusIdx: index('job_status_idx').on(table.status),
+		nextRunIdx: index('job_next_run_idx').on(table.nextRunAt),
+		tenantIdx: index('tenant_idx').on(table.tenantId)
+	})
+);
+
 // Website Tokens Table
 export const websiteTokens = mysqlTable(
 	'website_tokens',
@@ -424,6 +446,7 @@ export const schema = {
 	mediaItems,
 	systemVirtualFolders,
 	systemPreferences,
+	sveltyJobs,
 	websiteTokens,
 	pluginPagespeedResults,
 	pluginStates,

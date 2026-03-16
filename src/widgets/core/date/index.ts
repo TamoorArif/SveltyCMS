@@ -51,7 +51,9 @@ const DateWidget = createWidget<DateProps>({
 	Description: widget_date_description(),
 
 	// Define paths to the dedicated Svelte components.
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/date/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/date/display.svelte',
 
 	// Assign the validation schema.

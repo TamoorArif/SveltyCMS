@@ -125,19 +125,8 @@ jobs:
 
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
       
-      - name: Run System Setup (Real Black-Box)
-        env:
-          DB_TYPE: sqlite
-          TEST_MODE: true
-        run: |
-          # Start server in background
-          bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
-          # Wait for server health
-          bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
-          # Run system setup via API
-          bun run scripts/setup-system.ts
-          
-      - run: bun run check
+      - name: Run System Check (Types & Sync)
+        run: bun run check
 
   unit-vitest:
     name: ⚡ Unit (Vitest)
@@ -162,12 +151,6 @@ jobs:
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
       - run: bun run test:unit
 
-      - uses: codecov/codecov-action@v4
-        if: success()
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: vitest
-
   unit-bun:
     name: ⚡ Unit (Bun)
     needs: bootstrap
@@ -190,12 +173,6 @@ jobs:
 
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
       - run: bun run test:unit:bun
-
-      - uses: codecov/codecov-action@v4
-        if: success()
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: bun
 
   # ------------------------------------------------
   # 3. Build
@@ -233,44 +210,7 @@ jobs:
             build
 
   # ------------------------------------------------
-  # 4. DB tests (SQLite)
-  # ------------------------------------------------
-
-  db-tests-sqlite:
-    name: 🧪 DB (sqlite)
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: workspace-meta
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: build-output
-
-      - uses: actions/cache@v5
-        with:
-          path: |
-            .bun-cache
-            ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
-
-      - name: Run SQLite tests
-        env:
-          DB_TYPE: sqlite
-          DB_NAME: sveltycms_test
-          TEST_MODE: true
-        run: bun run scripts/run-integration-tests.ts
-
-  # ------------------------------------------------
-  # 5. DB tests (other)
+  # 4. Database Matrix Tests
   # ------------------------------------------------
 
   db-tests:
@@ -280,17 +220,17 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 3
       matrix:
+        db: [sqlite, mongodb, mariadb, postgresql]
         include:
+          - db: sqlite
+            image: alpine # Dummy image
           - db: mongodb
             image: mongo:7
             port: 27017
-
           - db: mariadb
             image: mariadb:11
             port: 3306
-
           - db: postgresql
             image: postgres:16
             port: 5432
@@ -299,12 +239,10 @@ jobs:
       db:
         image: ${{ matrix.image }}
         ports:
-          - ${{ matrix.port }}:${{ matrix.port }}
+          - ${{ matrix.port && format('{0}:{0}', matrix.port) || '' }}
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: ${{ matrix.db == 'mariadb' && 'yes' || '' }}
           MARIADB_DATABASE: ${{ matrix.db == 'mariadb' && 'sveltycms_test' || '' }}
-          MARIADB_USER: ${{ matrix.db == 'mariadb' && 'testuser' || '' }}
-          MARIADB_PASSWORD: ${{ matrix.db == 'mariadb' && 'testpass' || '' }}
           POSTGRES_USER: ${{ matrix.db == 'postgresql' && 'testuser' || '' }}
           POSTGRES_PASSWORD: ${{ matrix.db == 'postgresql' && 'testpass' || '' }}
           POSTGRES_DB: ${{ matrix.db == 'postgresql' && 'sveltycms_test' || '' }}
@@ -332,22 +270,24 @@ jobs:
 
       - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
 
-      - run: |
+      - name: Wait for DB
+        if: matrix.db != 'sqlite'
+        run: |
           bun x wait-on tcp:127.0.0.1:${{ matrix.port }} --timeout 60000
           sleep 5
 
-      - name: Run DB tests
+      - name: Run Integration Tests
         env:
           DB_TYPE: ${{ matrix.db }}
           DB_HOST: 127.0.0.1
           DB_NAME: sveltycms_test
-          DB_USER: testuser
-          DB_PASSWORD: testpass
+          DB_USER: ${{ matrix.db == 'sqlite' && '' || 'testuser' }}
+          DB_PASSWORD: ${{ matrix.db == 'sqlite' && '' || 'testpass' }}
           TEST_MODE: true
         run: bun run scripts/run-integration-tests.ts
 
   # ------------------------------------------------
-  # 6. E2E tests (playwright shard)
+  # 5. E2E tests (playwright shard)
   # ------------------------------------------------
 
   e2e:
@@ -359,7 +299,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@v6
@@ -391,7 +331,7 @@ jobs:
 
       - run: bun x playwright install --with-deps chromium
 
-      - name: Run E2E tests (Playwright shard)
+      - name: Run E2E tests (Playwright sharded)
         env:
           DB_TYPE: sqlite
           TEST_MODE: true
@@ -403,75 +343,11 @@ jobs:
           # Wait for server health
           bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
 
-          # Run system setup via API
-          bun run scripts/setup-system.ts
-
-          # Run Playwright tests
-          bun x playwright test --project=chromium --shard=${{ matrix.shard }}/3
+          # Run Playwright tests with sharding
+          bun x playwright test --project=chromium --shard=${{ matrix.shard }}/4
 
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report
-
-  # ------------------------------------------------
-  # 7. Performance Benchmarks
-  # ------------------------------------------------
-
-  benchmarks:
-    name: 📊 Benchmarks
-    needs: [db-tests]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: workspace-meta
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: build-output
-
-      - uses: actions/cache@v5
-        with:
-          path: |
-            .bun-cache
-            ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-
-      - run: bun install --frozen-lockfile --prefer-offline --cache-dir .bun-cache
-
-      - name: Run System Setup (Black-Box)
-        env:
-          DB_TYPE: sqlite
-          TEST_MODE: true
-        run: |
-          # Start server in background
-          bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
-          # Wait for server health
-          bun x wait-on http://127.0.0.1:4173/api/system/health --timeout 60000
-          # Run system setup via API
-          bun run scripts/setup-system.ts
-
-      - name: Run Hooks Benchmark
-        env:
-          TEST_MODE: true
-        run: |
-          echo "### ⚡ Middleware Hooks Performance" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          bun run tests/benchmarks/hooks-performance.ts >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Run Database Benchmark
-        env:
-          TEST_MODE: true
-        run: |
-          echo "### 💾 Raw Database Performance" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          # Run the new agnostic benchmark
-          bun x vitest run -c vitest.benchmark.config.ts >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY

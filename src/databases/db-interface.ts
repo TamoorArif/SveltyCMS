@@ -329,6 +329,18 @@ export interface SystemVirtualFolder extends BaseEntity {
 	type: 'folder' | 'collection';
 }
 
+export interface Job extends BaseEntity {
+	_id: DatabaseId;
+	taskType: string;
+	payload: Record<string, unknown>;
+	status: 'pending' | 'running' | 'completed' | 'failed';
+	attempts: number;
+	maxAttempts: number;
+	nextRunAt: Date | ISODateString;
+	lastError?: string;
+	tenantId?: DatabaseId;
+}
+
 // ============================================================================
 // Query Builder Interface
 // ============================================================================
@@ -476,7 +488,12 @@ export interface ICrudAdapter {
 	findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
+		options?: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			populate?: string[];
+		}
 	): Promise<DatabaseResult<T[]>>;
 	findMany<T extends BaseEntity>(
 		collection: string,
@@ -488,12 +505,18 @@ export interface ICrudAdapter {
 			sort?: SortOption;
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
+			populate?: string[];
 		}
 	): Promise<DatabaseResult<T[]>>;
 	findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options?: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean }
+		options?: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			populate?: string[];
+		}
 	): Promise<DatabaseResult<T | null>>;
 	insert<T extends BaseEntity>(
 		collection: string,
@@ -665,6 +688,16 @@ export interface ISystemAdapter {
 		}): Promise<DatabaseResult<{ data: WebsiteToken[]; total: number }>>;
 		getByName(name: string): Promise<DatabaseResult<WebsiteToken | null>>;
 		delete(tokenId: DatabaseId): Promise<DatabaseResult<void>>;
+	};
+	jobs: {
+		create(job: EntityCreate<Job>): Promise<DatabaseResult<Job>>;
+		getById(jobId: DatabaseId): Promise<DatabaseResult<Job | null>>;
+		getNextReady(limit?: number, tenantId?: string | null): Promise<DatabaseResult<Job[]>>;
+		list(options?: PaginationOption & { status?: string; taskType?: string }): Promise<DatabaseResult<Job[]>>;
+		count(filter?: Record<string, unknown>): Promise<DatabaseResult<number>>;
+		update(jobId: DatabaseId, data: Partial<EntityCreate<Job>>): Promise<DatabaseResult<Job>>;
+		delete(jobId: DatabaseId): Promise<DatabaseResult<void>>;
+		cleanup(olderThan: Date): Promise<DatabaseResult<number>>;
 	};
 	widgets: {
 		setupWidgetModels(): Promise<void>;

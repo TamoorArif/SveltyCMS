@@ -11,14 +11,19 @@ const API_BASE_URL = getApiBaseUrl();
  * Drops the test database via the testing API.
  */
 export async function dropDatabase(): Promise<void> {
+	const secret = (globalThis as any).process?.env?.TEST_API_SECRET || '';
 	const response = await fetch(`${API_BASE_URL}/api/testing`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: {
+			'Content-Type': 'application/json',
+			'x-test-secret': secret
+		},
 		body: JSON.stringify({ action: 'reset' })
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to drop database');
+		const text = await response.text();
+		throw new Error(`Failed to drop database: ${response.status} ${text}`);
 	}
 }
 
@@ -26,9 +31,13 @@ export async function dropDatabase(): Promise<void> {
  * Gets a user by email via the API.
  */
 export async function getUser(email: string): Promise<Record<string, unknown> | null> {
+	const secret = (globalThis as any).process?.env?.TEST_API_SECRET || '';
 	const response = await fetch(`${API_BASE_URL}/api/testing`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: {
+			'Content-Type': 'application/json',
+			'x-test-secret': secret
+		},
 		body: JSON.stringify({ action: 'get-user', email })
 	});
 
@@ -41,9 +50,13 @@ export async function getUser(email: string): Promise<Record<string, unknown> | 
  * Gets the count of users in the database.
  */
 export async function getUserCount(): Promise<number> {
+	const secret = (globalThis as any).process?.env?.TEST_API_SECRET || '';
 	const response = await fetch(`${API_BASE_URL}/api/testing`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: {
+			'Content-Type': 'application/json',
+			'x-test-secret': secret
+		},
 		body: JSON.stringify({ action: 'get-user-count' })
 	});
 

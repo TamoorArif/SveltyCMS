@@ -9,12 +9,17 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 let API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
 const pkgManager = (globalThis as any).process?.env?.npm_execpath || 'bun';
+
+// ✨ Generate a unique secret for this test run
+const TEST_API_SECRET = randomUUID();
+process.env.TEST_API_SECRET = TEST_API_SECRET;
 
 let previewProcess: ChildProcess | null = null;
 
@@ -67,7 +72,8 @@ async function main() {
 					...(globalThis as any).process?.env,
 					DB_TYPE: dbType,
 					TEST_MODE: 'true',
-					API_BASE_URL
+					API_BASE_URL,
+					TEST_API_SECRET
 				}
 			});
 			setupProc.on('close', resolve);
@@ -159,7 +165,7 @@ async function startPreviewServer() {
 			cwd: rootDir,
 			stdio: ['ignore', 'inherit', 'inherit'], // No pipe needed for stdout if we poll
 			shell: true,
-			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true' }
+			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', TEST_API_SECRET }
 		});
 
 		API_BASE_URL = 'http://127.0.0.1:4173';
@@ -224,6 +230,7 @@ async function resetAndSeed() {
 			body: JSON.stringify({ action: 'reset' }),
 			headers: {
 				'Content-Type': 'application/json',
+				'x-test-secret': TEST_API_SECRET,
 				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
 			}
 		});
@@ -240,6 +247,7 @@ async function resetAndSeed() {
 			body: JSON.stringify({ action: 'seed' }),
 			headers: {
 				'Content-Type': 'application/json',
+				'x-test-secret': TEST_API_SECRET,
 				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
 			}
 		});
@@ -259,10 +267,16 @@ async function resetAndSeed() {
 
 function runTest(file: string): Promise<number> {
 	return new Promise((resolve) => {
-		const proc = spawn(pkgManager, ['test', file], {
+		const args = ['test'];
+		if (pkgManager.includes('bun')) {
+			args.push('--preload', './tests/unit/setup.ts');
+		}
+		args.push(file);
+
+		const proc = spawn(pkgManager, args, {
 			cwd: rootDir,
 			stdio: 'inherit',
-			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', API_BASE_URL }
+			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', API_BASE_URL, TEST_API_SECRET }
 		});
 		proc.on('close', (code) => resolve(code || 0));
 	});

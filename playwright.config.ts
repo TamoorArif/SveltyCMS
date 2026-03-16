@@ -5,9 +5,28 @@
 
 import { defineConfig, devices } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
-// ✨ Generate a unique secret for this test run to prevent backdoors
-const TEST_API_SECRET = process.env.TEST_API_SECRET || randomUUID();
+// Ensure .auth directory exists for secret sync
+const authDir = join(process.cwd(), 'tests/e2e/.auth');
+if (!existsSync(authDir)) {
+	mkdirSync(authDir, { recursive: true });
+}
+
+// ✨ Synchronization: Use a file to share the secret across all Playwright workers
+// This prevents 403 errors when workers re-evaluate the config file.
+const SECRET_FILE = join(authDir, 'test-secret.txt');
+let TEST_API_SECRET = process.env.TEST_API_SECRET;
+
+if (!TEST_API_SECRET) {
+	if (existsSync(SECRET_FILE)) {
+		TEST_API_SECRET = readFileSync(SECRET_FILE, 'utf-8').trim();
+	} else {
+		TEST_API_SECRET = randomUUID();
+		writeFileSync(SECRET_FILE, TEST_API_SECRET);
+	}
+}
 
 // See https://playwright.dev/docs/test-configuration.
 export default defineConfig({
@@ -65,17 +84,22 @@ export default defineConfig({
 	/* Configure projects for major browsers */
 	projects: [
 		{
-			name: 'setup',
-			testMatch: /auth\.setup\.ts/
+			name: 'wizard',
+			testMatch: /setup-wizard\.spec\.ts/
+		},
+		{
+			name: 'auth-setup',
+			testMatch: /auth\.setup\.ts/,
+			dependencies: ['wizard']
 		},
 		{
 			name: 'chromium',
 			use: {
 				...devices['Desktop Chrome'],
-				headless: !!process.env.CI, // Always headless in CI
-				storageState: 'tests/e2e/.auth/user.json'
+				headless: !!process.env.CI // Always headless in CI
 			},
-			dependencies: ['setup']
+			dependencies: ['auth-setup'],
+			testIgnore: [/setup-wizard\.spec\.ts/, /auth\.setup\.ts/]
 		}
 	],
 

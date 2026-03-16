@@ -224,6 +224,21 @@ const configItems = [
 			action: 'manage',
 			contextType: 'configuration'
 		}
+	},
+	{
+		id: 'queue',
+		href: '/config/queue',
+		label: 'Background Queue',
+		icon: 'mdi:queue-play-next',
+		iconColor: 'text-primary-600',
+		permission: {
+			contextId: 'config:queue',
+			name: 'Background Queue',
+			description: 'Monitor background jobs',
+			requiredRole: 'admin',
+			action: 'view',
+			contextType: 'system'
+		}
 	}
 ];
 </script>

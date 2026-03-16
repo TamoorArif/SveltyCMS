@@ -833,6 +833,48 @@ export class MongoDBAdapter implements IDBAdapter {
 					return this._wrapResult<void>(() => this._cachedSystemCore!.clear(s, u));
 				}
 			},
+			jobs: {
+				create: async (job) => {
+					const { JobModel } = await import('./models/job');
+					const doc = await JobModel.create(job);
+					return { success: true, data: doc.toObject() as any };
+				},
+				getById: async (id) => {
+					const { JobModel } = await import('./models/job');
+					const doc = await JobModel.findById(id).lean().exec();
+					return { success: true, data: doc as any };
+				},
+				getNextReady: async (limit, tenantId) => {
+					const { JobModel } = await import('./models/job');
+					return JobModel.getNextReady(limit, tenantId) as any;
+				},
+				list: async (options) => {
+					const { JobModel } = await import('./models/job');
+					return JobModel.list(options) as any;
+				},
+				count: async (filter) => {
+					const { JobModel } = await import('./models/job');
+					return JobModel.count(filter) as any;
+				},
+				update: async (id, data) => {
+					const { JobModel } = await import('./models/job');
+					const doc = await JobModel.findByIdAndUpdate(id, data, { new: true }).lean().exec();
+					return { success: true, data: doc as any };
+				},
+				delete: async (id) => {
+					const { JobModel } = await import('./models/job');
+					await JobModel.findByIdAndDelete(id).exec();
+					return { success: true, data: undefined };
+				},
+				cleanup: async (olderThan) => {
+					const { JobModel } = await import('./models/job');
+					const res = await JobModel.deleteMany({
+						status: { $in: ['completed', 'failed'] },
+						updatedAt: { $lt: olderThan.toISOString() }
+					}).exec();
+					return { success: true, data: res.deletedCount };
+				}
+			},
 			themes: {
 				setupThemeModels: async () => {},
 				getActive: async () => {

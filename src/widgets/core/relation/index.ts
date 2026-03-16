@@ -60,7 +60,9 @@ const RelationWidget = createWidget<RelationProps>({
 	Name: 'Relation',
 	Icon: 'mdi:relation-one-to-one',
 	Description: widget_relation_description(),
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/relation/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/relation/display.svelte',
 	validationSchema,
 

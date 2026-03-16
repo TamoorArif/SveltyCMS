@@ -38,7 +38,9 @@ const MegaMenuWidget = createWidget({
 	Description: widget_megaMenu_description(),
 
 	// Define paths to the dedicated Svelte components.
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/mega-menu/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/mega-menu/display.svelte',
 
 	// Assign the validation schema.

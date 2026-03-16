@@ -22,4 +22,8 @@ bun run test:unit || exit 1
 echo "🧪 Testing (Bun Native)..."
 bun run test:unit:bun || exit 1
 
+# 5. Integration Tests (API/Middleware)
+echo "🧪 Testing (Integration)..."
+bun run test:integration || exit 1
+
 echo "✨ Pre-commit checks passed!"

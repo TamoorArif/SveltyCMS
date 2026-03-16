@@ -46,9 +46,9 @@ export default createWidget({
 	Icon: 'mdi:star',
 	Description: 'A custom widget example',
 
-	// Component Paths
-	inputComponentPath: ' $args[0].Value.ToLower() ',
-	displayComponentPath: ' $args[0].Value.ToLower() ',
+	// 3-Pillar Component Loaders (Type-safe, Tree-shakeable)
+	inputComponent: () => import('./input.svelte'),
+	displayComponent: () => import('./display.svelte'),
 
 	// Validation Schema (Valibot)
 	validationSchema: (field) => {

@@ -108,8 +108,8 @@ export default createWidget({
 	Name: 'Rating',
 	Icon: 'mdi:star',
 	Description: '5-star rating widget',
-	inputComponentPath: ' $args[0].Value.ToLower() ',
-	displayComponentPath: ' $args[0].Value.ToLower() ',
+	inputComponent: () => import('./input.svelte'),
+	displayComponent: () => import('./display.svelte'),
 
 	// Validation
 	validationSchema: v.number([v.minValue(1), v.maxValue(5)]),

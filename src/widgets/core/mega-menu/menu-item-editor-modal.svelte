@@ -30,8 +30,11 @@ const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glo
 function getWidgetLoader(widgetName: string) {
 	if (!widgetName) return null;
 
+	// 0. Use the widget's own loader if available (fastest and most type-safe)
+	const fn = widgets.widgetFunctions[widgetName] as any;
+	if (fn?.__inputComponent) return fn.__inputComponent;
+
 	// 1. Try exact path from widget store
-	const fn = widgets.widgetFunctions[widgetName];
 	const storePath = (fn as any)?.componentPath || (fn as any)?.inputComponentPath;
 	if (storePath && storePath in modules) {
 		return modules[storePath];

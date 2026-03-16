@@ -67,8 +67,10 @@ export function createWidget<TProps extends WidgetProps>(config: WidgetConfig<TP
 	// 1. Create immutable widget definition
 	const widgetDefinition: WidgetDefinition = {
 		widgetId: config.Name,
-		Name: config.Name
-		// ... paths and schema
+		Name: config.Name,
+		inputComponent: config.inputComponent,
+		displayComponent: config.displayComponent
+		// ... validation and metadata
 	};
 
 	// 2. Return factory function for field instances

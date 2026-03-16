@@ -502,10 +502,12 @@ $effect(() => {
 									{@const widgetName = field.widget.Name}
 
 									<!-- --- PERFORMANCE FIX: ROBUST WIDGET FINDER --- -->
-									{@const loadedWidget = (() => {
-										// 1. Try exact path from widget store (fastest)
-										const storePath = widgetFunctions[widgetName]?.componentPath;
-										if (storePath && storePath in modules) return modules[storePath];
+									{@const loadedWidget =
+										field.widget.inputComponent ||
+										(() => {
+											// 1. Try exact path from widget store (fastest)
+											const storePath = widgetFunctions[widgetName]?.componentPath;
+											if (storePath && storePath in modules) return modules[storePath];
 
 										// 2. Try casing variations from store
 										const camelPath = widgetFunctions[widgetName.charAt(0).toLowerCase() + widgetName.slice(1)]?.componentPath;

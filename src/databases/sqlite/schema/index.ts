@@ -304,6 +304,28 @@ export const systemPreferences = sqliteTable(
 	})
 );
 
+// Background Jobs Table
+export const sveltyJobs = sqliteTable(
+	'svelty_jobs',
+	{
+		_id: uuidPk(),
+		taskType: text('taskType', { length: 255 }).notNull(),
+		payload: text('payload', { mode: 'json' }).notNull(),
+		status: text('status', { length: 50 }).notNull().default('pending'), // pending, running, completed, failed
+		attempts: integer('attempts').notNull().default(0),
+		maxAttempts: integer('maxAttempts').notNull().default(3),
+		nextRunAt: integer('nextRunAt', { mode: 'timestamp_ms' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+		lastError: text('lastError'),
+		tenantId: tenantField(),
+		...timestamps
+	},
+	(table) => ({
+		statusIdx: index('job_status_idx').on(table.status),
+		nextRunIdx: index('job_next_run_idx').on(table.nextRunAt),
+		tenantIdx: index('tenant_idx').on(table.tenantId)
+	})
+);
+
 // Website Tokens Table
 export const websiteTokens = sqliteTable(
 	'website_tokens',
@@ -428,6 +450,7 @@ export const schema = {
 	mediaItems,
 	systemVirtualFolders,
 	systemPreferences,
+	sveltyJobs,
 	websiteTokens,
 	pluginPagespeedResults,
 	pluginStates,

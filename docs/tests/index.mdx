@@ -44,6 +44,7 @@ bun run test:unit:bun
 # Run performance benchmarks
 bun run tests/benchmarks/hooks-performance.ts
 bun run tests/benchmarks/database-performance.ts sqlite false
+bun run tests/benchmarks/media-performance.ts
 ```
 
 ## Test Architecture & Isolation
@@ -89,6 +90,7 @@ graph TD
 ### 🚀 Performance Benchmarks
 - **Hooks Benchmark**: Measures micro-latency of the middleware chain (target < 0.6ms).
 - **Database Benchmark**: Measures CRUD micro-latency and telemetry integrity.
+- **Media Benchmark**: Measures upload block-time reduction via async job queue (target 99%+ reduction).
 
 ### 🎭 Playwright - End-to-End Tests
 - **Purpose**: Browser automation for critical user journeys.

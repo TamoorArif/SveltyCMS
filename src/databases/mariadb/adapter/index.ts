@@ -36,6 +36,7 @@ import { AuthModule } from '../modules/auth/auth-module';
 import { ContentModule } from '../modules/content/content-module';
 import { MediaModule } from '../modules/media/media-module';
 import { PreferencesModule } from '../modules/system/preferences-module';
+import { JobsModule } from '../modules/system/jobs-module';
 import { VirtualFoldersModule } from '../modules/system/virtual-folders-module';
 import { ThemesModule } from '../modules/themes/themes-module';
 import { WebsiteTokensModule } from '../modules/website/tokens-module';
@@ -78,6 +79,7 @@ export class MariaDBAdapter extends AdapterCore implements IDBAdapter {
 			themes: new ThemesModule(this),
 			widgets: new WidgetsModule(this),
 			websiteTokens: new WebsiteTokensModule(this),
+			jobs: new JobsModule(this),
 			tenants: {
 				create: async (tenant) =>
 					this.wrap(async () => {

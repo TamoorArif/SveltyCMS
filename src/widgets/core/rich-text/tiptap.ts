@@ -56,7 +56,7 @@ export function createEditor(element: HTMLElement, content: string, language: st
 				openOnClick: false
 			}),
 			Placeholder.configure({
-				placeholder: ({ node }) => {
+				placeholder: ({ node }: any) => {
 					if (node.type.name === 'heading') {
 						return 'Write a heading…';
 					}
@@ -87,7 +87,7 @@ export function createEditor(element: HTMLElement, content: string, language: st
 				name: 'Tab',
 				addKeyboardShortcuts() {
 					return {
-						Tab: ({ editor: e }) => e.commands.insertContent('\t')
+						Tab: ({ editor: e }: any) => e.commands.insertContent('\t')
 					};
 				}
 			})

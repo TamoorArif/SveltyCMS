@@ -36,6 +36,7 @@ export class AdapterCore {
 	private _sqlite!: SQLiteClient;
 	private connections = new Map<string, { db: SQLiteDB; sqlite: SQLiteClient }>();
 
+	public adapter!: import('../../db-interface').IDBAdapter;
 	public crud!: import('../crud/crud-module').CrudModule;
 	public batch!: import('../operations/batch-module').BatchModule;
 	public collectionRegistry = new Map<string, CollectionModel>();

@@ -64,10 +64,112 @@ export class CrudModule {
 		return { ...jsonBlob, ...rest };
 	}
 
+	/**
+	 * Resolves populated fields for a set of results.
+	 */
+	private async resolvePopulation<T extends BaseEntity>(
+		collection: string,
+		items: T[],
+		populate?: string[],
+		tenantId?: string | null | null
+	): Promise<T[]> {
+		if (!populate || populate.length === 0 || items.length === 0) {
+			return items;
+		}
+
+		const schemaResult = await this.core.adapter.collection.getSchema(collection);
+		if (!schemaResult.success || !schemaResult.data) {
+			return items;
+		}
+
+		const schema = schemaResult.data;
+		const populatedItems = [...items];
+
+		for (const fieldPath of populate) {
+			const field = schema.fields.find((f: any) => f.name === fieldPath) as any;
+			if (!field) continue;
+
+			// --- 1. Forward Relationship (Relation Field) ---
+			if (field.type === 'relation' && field.relation) {
+				const targetCollection = field.relation.collection;
+				const foreignKey = field.name;
+
+				// Extract unique IDs to fetch
+				const idsToFetch = new Set<string>();
+				for (const item of populatedItems) {
+					const val = (item as any)[foreignKey];
+					if (Array.isArray(val)) {
+						val.forEach((id) => id && idsToFetch.add(String(id)));
+					} else if (val) {
+						idsToFetch.add(String(val));
+					}
+				}
+
+				if (idsToFetch.size === 0) continue;
+
+				// Fetch related records in one batch
+				const relatedResult = await this.core.adapter.crud.findByIds(targetCollection, Array.from(idsToFetch) as any, {
+					tenantId,
+					bypassTenantCheck: false
+				});
+
+				if (relatedResult.success) {
+					const relatedMap = new Map(relatedResult.data.map((r: any) => [String(r._id), r]));
+
+					// Map them back to the original items
+					for (let i = 0; i < populatedItems.length; i++) {
+						const val = (populatedItems[i] as any)[foreignKey];
+						if (Array.isArray(val)) {
+							(populatedItems[i] as any)[foreignKey] = val.map((id) => relatedMap.get(String(id)) || id);
+						} else if (val) {
+							(populatedItems[i] as any)[foreignKey] = relatedMap.get(String(val)) || val;
+						}
+					}
+				}
+			}
+
+			// --- 2. Inverse Relationship (Smart Join Field) ---
+			else if (field.collection && field.on) {
+				const targetCollection = field.collection;
+				const foreignKeyInTarget = field.on;
+
+				// For each item, fetch related records that point to this item
+				// TODO: Optimization - Batch this by using $in query on the target collection
+				for (let i = 0; i < populatedItems.length; i++) {
+					const item = populatedItems[i];
+					const itemId = String(item._id);
+
+					const query = {
+						[foreignKeyInTarget]: itemId,
+						...(field.where || {})
+					} as any;
+
+					const relatedResult = await this.core.adapter.crud.findMany(targetCollection, query, {
+						limit: field.limit,
+						sort: field.sort ? { [field.sort]: 'asc' } : undefined,
+						tenantId,
+						bypassTenantCheck: false
+					});
+
+					if (relatedResult.success) {
+						(populatedItems[i] as any)[fieldPath] = relatedResult.data;
+					}
+				}
+			}
+		}
+
+		return populatedItems;
+	}
+
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			populate?: string[];
+		} = {}
 	): Promise<DatabaseResult<T | null>> {
 		const startTime = performance.now();
 		return this.core
@@ -86,7 +188,11 @@ export class CrudModule {
 					return null;
 				}
 				const row = utils.convertDatesToISO(results[0] as Record<string, unknown>);
-				return this.unpackData(row) as unknown as T;
+				const unpacked = this.unpackData(row) as unknown as T;
+
+				// Resolve population
+				const populated = await this.resolvePopulation(collection, [unpacked], options.populate, options.tenantId);
+				return populated[0] as T;
 			}, 'CRUD_FIND_ONE_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -103,6 +209,7 @@ export class CrudModule {
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
+			populate?: string[];
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
@@ -125,7 +232,10 @@ export class CrudModule {
 					q = q.offset(options.offset);
 				}
 				const results = await q;
-				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
+				const unpacked = utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
+
+				// Resolve population
+				return await this.resolvePopulation(collection, unpacked, options.populate, options.tenantId);
 			}, 'CRUD_FIND_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -136,7 +246,12 @@ export class CrudModule {
 	async findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			populate?: string[];
+		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
@@ -152,7 +267,10 @@ export class CrudModule {
 					.select()
 					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 					.where(where);
-				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
+				const unpacked = utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
+
+				// Resolve population
+				return await this.resolvePopulation(collection, unpacked, options.populate, options.tenantId);
 			}, 'CRUD_FIND_BY_IDS_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };

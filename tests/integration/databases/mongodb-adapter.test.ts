@@ -211,7 +211,7 @@ describe('MongoDB Adapter Functional Tests', () => {
 
 			// Query using queryBuilder
 			const qb = db.queryBuilder(testCollection);
-			const result = await qb.where('status', 'active').execute();
+			const result = await qb.where({ status: 'active' }).execute();
 			expect(result.success).toBe(true);
 			expect(Array.isArray(result.data)).toBe(true);
 			expect(result.data.length).toBeGreaterThanOrEqual(1);

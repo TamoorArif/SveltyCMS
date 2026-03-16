@@ -11,7 +11,7 @@
 
 import type { FieldInstance } from '@src/content/types';
 import { registerForJsonRender } from '@src/services/json-render/catalog';
-import type { WidgetDefinition, WidgetFactory } from '@widgets/types';
+import type { ComponentLoader, WidgetDefinition, WidgetFactory } from '@widgets/types';
 import type { BaseIssue, BaseSchema } from 'valibot';
 
 // A base constraint for widget-specific properties.
@@ -36,7 +36,10 @@ export interface WidgetConfig<TProps extends WidgetProps = WidgetProps> {
 	/** Type-safe default values for the widget's custom properties. */
 	defaults?: Partial<TProps>;
 
-	/** Path to the lightweight DISPLAY component for lists (e.g., EntryList.svelte). */
+	/** Dynamic loader for the DISPLAY component (3rd pillar) */
+	displayComponent?: ComponentLoader;
+
+	/** @deprecated Use displayComponent for type-safety and better tree-shaking */
 	displayComponentPath?: string;
 	GraphqlSchema?: (params: { field: unknown; label: string; collection: unknown; collectionNameMapping?: Map<string, string> }) => {
 		typeID: string | null;
@@ -51,7 +54,10 @@ export interface WidgetConfig<TProps extends WidgetProps = WidgetProps> {
 	getTranslatablePaths?: (basePath: string) => string[];
 	Icon?: string;
 
-	/** Path to the interactive INPUT component used in the editor (e.g., Fields.svelte). */
+	/** Dynamic loader for the INPUT component (2nd pillar) */
+	inputComponent?: ComponentLoader;
+
+	/** @deprecated Use inputComponent for type-safety and better tree-shaking */
 	inputComponentPath?: string;
 
 	/** Optional function to modify the request data on the server. */
@@ -92,7 +98,9 @@ export function createWidget<TProps extends WidgetProps = WidgetProps>(config: W
 		Name: config.Name,
 		Icon: config.Icon,
 		Description: config.Description,
+		inputComponent: config.inputComponent,
 		inputComponentPath: config.inputComponentPath || '',
+		displayComponent: config.displayComponent,
 		displayComponentPath: config.displayComponentPath || '',
 		// validationSchema may be a function or a static schema. Keep as-is so other systems can call it.
 		validationSchema: config.validationSchema as unknown as BaseSchema<unknown, unknown, BaseIssue<unknown>>,
@@ -169,7 +177,9 @@ export function createWidget<TProps extends WidgetProps = WidgetProps>(config: W
 	widgetFactoryFunction.GuiSchema = config.GuiSchema;
 	widgetFactoryFunction.GraphqlSchema = config.GraphqlSchema;
 	widgetFactoryFunction.aggregations = config.aggregations as WidgetDefinition['aggregations'];
+	widgetFactoryFunction.__inputComponent = config.inputComponent;
 	widgetFactoryFunction.__inputComponentPath = config.inputComponentPath || '';
+	widgetFactoryFunction.__displayComponent = config.displayComponent;
 	widgetFactoryFunction.__displayComponentPath = config.displayComponentPath || '';
 	widgetFactoryFunction.toString = () => '';
 

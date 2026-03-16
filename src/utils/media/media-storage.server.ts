@@ -11,13 +11,20 @@
  */
 
 import path from 'node:path';
+import os from 'node:os';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { writeFileSync, readFileSync, unlinkSync } from 'node:fs';
 import { getPublicSettingSync } from '@src/services/settings-service';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import mime from 'mime-types';
+import { logger } from '@utils/logger.server';
 
 import { exists, getConfig, getUrl, isCloud, remove, upload } from './cloud-storage';
 
 import type { ResizedImage } from './media-models';
+
+const execAsync = promisify(exec);
 
 // Image sizes
 // Image sizes
@@ -190,4 +197,70 @@ export async function saveAvatar(file: File, userId: string): Promise<string> {
 
 	const rel = `avatars/${userId}${ext}`;
 	return await saveFile(resized, rel);
+}
+
+/**
+ * Captures a thumbnail from a video at the 1s mark using ffmpeg
+ */
+export async function captureVideoThumbnail(buffer: Buffer): Promise<Buffer | null> {
+	const tempInput = path.join(os.tmpdir(), `ffmpeg-input-${Date.now()}.mp4`);
+	const tempOutput = path.join(os.tmpdir(), `ffmpeg-output-${Date.now()}.jpg`);
+	try {
+		writeFileSync(tempInput, buffer);
+		// Capture frame at 1s mark
+		await execAsync(`ffmpeg -ss 00:00:01 -i "${tempInput}" -frames:v 1 -q:v 2 "${tempOutput}" -y`);
+		return readFileSync(tempOutput);
+	} catch (err) {
+		logger.error('Error capturing video thumbnail', { error: err });
+		return null;
+	} finally {
+		try {
+			if (os.platform() !== 'win32') {
+				if (tempInput) {
+					unlinkSync(tempInput);
+				}
+				if (tempOutput) {
+					unlinkSync(tempOutput);
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+	}
+}
+
+/**
+ * Generates a thumbnail from the first page of a PDF using ImageMagick
+ */
+export async function generatePdfThumbnail(buffer: Buffer): Promise<Buffer | null> {
+	const tempInput = path.join(os.tmpdir(), `pdf-input-${Date.now()}.pdf`);
+	const tempOutput = path.join(os.tmpdir(), `pdf-output-${Date.now()}.jpg`);
+	try {
+		writeFileSync(tempInput, buffer);
+		// Use ImageMagick (magick) to extract the first page [0] at 150 DPI
+		// -background white -flatten handles transparency
+		await execAsync(`magick -density 150 "${tempInput}[0]" -background white -flatten -alpha remove -quality 90 "${tempOutput}"`);
+		return readFileSync(tempOutput);
+	} catch (err) {
+		const isMagickMissing = err instanceof Error && (err.message.includes('not found') || err.message.includes('not recognized'));
+		if (isMagickMissing) {
+			logger.warn('PDF thumbnail generation skipped: "magick" command not found. Install ImageMagick and Ghostscript to enable PDF previews.');
+		} else {
+			logger.error('Error generating PDF thumbnail', { error: err });
+		}
+		return null;
+	} finally {
+		try {
+			if (os.platform() !== 'win32') {
+				if (tempInput) {
+					unlinkSync(tempInput);
+				}
+				if (tempOutput) {
+					unlinkSync(tempOutput);
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+	}
 }

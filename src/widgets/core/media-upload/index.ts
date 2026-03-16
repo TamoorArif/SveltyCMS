@@ -48,7 +48,9 @@ const MediaWidget = createWidget<MediaProps>({
 	Name: 'MediaUpload',
 	Icon: 'mdi:image-multiple',
 	Description: widget_media_description(),
+	inputComponent: () => import('./input.svelte'),
 	inputComponentPath: '/src/widgets/core/media-upload/input.svelte',
+	displayComponent: () => import('./display.svelte'),
 	displayComponentPath: '/src/widgets/core/media-upload/display.svelte',
 	validationSchema: createValidationSchema,
 
