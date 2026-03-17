@@ -54,6 +54,7 @@ async function createTablesIfNotExist(sql: postgres.Sql): Promise<void> {
 			"password" VARCHAR(255),
 			"emailVerified" BOOLEAN NOT NULL DEFAULT FALSE,
 			"blocked" BOOLEAN NOT NULL DEFAULT FALSE,
+			"isAdmin" BOOLEAN NOT NULL DEFAULT FALSE,
 			"firstName" VARCHAR(255),
 			"lastName" VARCHAR(255),
 			"avatar" TEXT,

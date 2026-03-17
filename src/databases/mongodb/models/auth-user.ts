@@ -51,6 +51,8 @@ export const UserSchema = new Schema(
 		isRegistered: Boolean, // Registration status of the user, optional field
 		failedAttempts: { type: Number, default: 0 }, // Number of failed login attempts, optional field
 		blocked: Boolean, // Whether the user is blocked, optional field
+		isAdmin: Boolean, // Whether the user is an admin, optional field
+		emailVerified: Boolean, // Whether the user's email is verified, optional field
 		resetRequestedAt: { type: Date }, // Timestamp for when the user requested a password reset, optional field
 		resetToken: String, // Token for resetting the user's password, optional field
 		lockoutUntil: { type: Date }, // Timestamp for when the user is locked out, optional field
@@ -117,6 +119,12 @@ export class UserAdapter {
 		if (result.updatedAt) {
 			result.updatedAt = toISOString(result.updatedAt as string | number | Date);
 		}
+
+		// Ensure boolean fields are actually booleans (MongoDB can sometimes return undefined or null)
+		result.isRegistered = !!result.isRegistered;
+		result.blocked = !!result.blocked;
+		result.isAdmin = !!result.isAdmin;
+		result.emailVerified = !!result.emailVerified;
 
 		// Ensure permissions are strings
 		if (result.permissions && Array.isArray(result.permissions)) {

@@ -21,6 +21,7 @@ export interface User {
 	backupCodes?: string[]; // Array of hashed backup codes for 2FA recovery
 	blocked?: boolean; // Indicates if the user is blocked
 	email: string; // Email address of the user
+	emailVerified?: boolean; // Indicates if the user's email address has been verified
 	expiresAt?: ISODateString; // When the reset token expires (ISO date string)
 	failedAttempts?: number; // Tracks the number of consecutive failed login attempts
 	firstName?: string; // First name of the user

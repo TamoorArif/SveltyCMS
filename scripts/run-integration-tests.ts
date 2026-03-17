@@ -9,7 +9,6 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
-import { randomUUID } from 'node:crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,8 +16,8 @@ const rootDir = join(__dirname, '..');
 let API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
 const pkgManager = (globalThis as any).process?.env?.npm_execpath || 'bun';
 
-// ✨ Generate a unique secret for this test run
-const TEST_API_SECRET = randomUUID();
+// ✨ Use a fixed secret for this test run to ensure consistency across server restarts
+const TEST_API_SECRET = 'test-secret-123456789';
 process.env.TEST_API_SECRET = TEST_API_SECRET;
 
 let previewProcess: ChildProcess | null = null;
@@ -231,7 +230,7 @@ async function startPreviewServer() {
 			env: {
 				...process.env,
 				NODE_ENV: 'production',
-				DB_TYPE: 'sqlite',
+				DB_TYPE: process.env.DB_TYPE || 'sqlite',
 				TEST_MODE: 'true',
 				TEST_API_SECRET,
 				ORIGIN: 'http://127.0.0.1:4173'
@@ -346,7 +345,12 @@ function runTest(file: string): Promise<number> {
 		const proc = spawn(pkgManager, args, {
 			cwd: rootDir,
 			stdio: 'inherit',
-			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', API_BASE_URL, TEST_API_SECRET }
+			env: {
+				...(globalThis as any).process?.env,
+				TEST_MODE: 'true',
+				API_BASE_URL,
+				TEST_API_SECRET
+			}
 		});
 		proc.on('close', (code) => resolve(code || 0));
 	});

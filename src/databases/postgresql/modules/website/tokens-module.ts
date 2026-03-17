@@ -25,11 +25,14 @@ export class WebsiteTokensModule {
 		return this.core.wrap(async () => {
 			const id = utils.generateId();
 			const now = isoDateStringToDate(nowISODateString());
+			// Convert ISO string dates to Date objects for Drizzle timestamp columns
+			const expiresAt = token.expiresAt ? new Date(token.expiresAt as unknown as string) : null;
 			const [result] = await this.db
 				.insert(schema.websiteTokens)
 				.values({
 					...token,
 					_id: id,
+					expiresAt,
 					createdAt: now,
 					updatedAt: now
 				} as typeof schema.websiteTokens.$inferInsert)

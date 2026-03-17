@@ -288,16 +288,33 @@ export class TokenAdapter {
 
 	async deleteTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		try {
-			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
+			// Try matching by _id first
+			const idFilter: Record<string, unknown> = { _id: { $in: tokenIds } };
 			if (tenantId) {
-				filter.tenantId = tenantId;
+				idFilter.tenantId = tenantId;
 			}
-			const result = await this.TokenModel.deleteMany(filter as QueryFilter<TokenDocument>);
-			logger.info('Tokens deleted', {
-				deletedCount: result.deletedCount,
+			const idResult = await this.TokenModel.deleteMany(idFilter as QueryFilter<TokenDocument>);
+
+			if (idResult.deletedCount > 0) {
+				logger.info('Tokens deleted by ID', {
+					deletedCount: idResult.deletedCount,
+					token_ids: tokenIds
+				});
+				return { success: true, data: { deletedCount: idResult.deletedCount } };
+			}
+
+			// Fall back to matching by token value
+			const valueFilter: Record<string, unknown> = { token: { $in: tokenIds } };
+			if (tenantId) {
+				valueFilter.tenantId = tenantId;
+			}
+			const valueResult = await this.TokenModel.deleteMany(valueFilter as QueryFilter<TokenDocument>);
+
+			logger.info('Tokens deleted by value', {
+				deletedCount: valueResult.deletedCount,
 				token_ids: tokenIds
 			});
-			return { success: true, data: { deletedCount: result.deletedCount } };
+			return { success: true, data: { deletedCount: valueResult.deletedCount } };
 		} catch (err) {
 			const message = `Error in TokenAdapter.deleteTokens: ${err instanceof Error ? err.message : String(err)}`;
 			logger.error(message, { token_ids: tokenIds });
@@ -311,19 +328,37 @@ export class TokenAdapter {
 
 	async blockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
-			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
+			// Try matching by _id first
+			const idFilter: Record<string, unknown> = { _id: { $in: tokenIds } };
 			if (tenantId) {
-				filter.tenantId = tenantId;
+				idFilter.tenantId = tenantId;
 			}
-			// Set blocked status to true
-			const result = await this.TokenModel.updateMany(filter as QueryFilter<TokenDocument>, {
+			const idResult = await this.TokenModel.updateMany(idFilter as QueryFilter<TokenDocument>, {
 				blocked: true
 			});
-			logger.info('Tokens blocked', {
-				modifiedCount: result.modifiedCount,
+
+			if (idResult.modifiedCount > 0) {
+				logger.info('Tokens blocked by ID', {
+					modifiedCount: idResult.modifiedCount,
+					token_ids: tokenIds
+				});
+				return { success: true, data: { modifiedCount: idResult.modifiedCount } };
+			}
+
+			// Fall back to matching by token value
+			const valueFilter: Record<string, unknown> = { token: { $in: tokenIds } };
+			if (tenantId) {
+				valueFilter.tenantId = tenantId;
+			}
+			const valueResult = await this.TokenModel.updateMany(valueFilter as QueryFilter<TokenDocument>, {
+				blocked: true
+			});
+
+			logger.info('Tokens blocked by value', {
+				modifiedCount: valueResult.modifiedCount,
 				token_ids: tokenIds
 			});
-			return { success: true, data: { modifiedCount: result.modifiedCount } };
+			return { success: true, data: { modifiedCount: valueResult.modifiedCount } };
 		} catch (err) {
 			const message = `Error in TokenAdapter.blockTokens: ${err instanceof Error ? err.message : String(err)}`;
 			logger.error(message, { token_ids: tokenIds });
@@ -337,19 +372,37 @@ export class TokenAdapter {
 
 	async unblockTokens(tokenIds: string[], tenantId?: string | null): Promise<DatabaseResult<{ modifiedCount: number }>> {
 		try {
-			const filter: Record<string, unknown> = { token: { $in: tokenIds } };
+			// Try matching by _id first
+			const idFilter: Record<string, unknown> = { _id: { $in: tokenIds } };
 			if (tenantId) {
-				filter.tenantId = tenantId;
+				idFilter.tenantId = tenantId;
 			}
-			// Set blocked status to false to unblock
-			const result = await this.TokenModel.updateMany(filter as QueryFilter<TokenDocument>, {
+			const idResult = await this.TokenModel.updateMany(idFilter as QueryFilter<TokenDocument>, {
 				blocked: false
 			});
-			logger.info('Tokens unblocked', {
-				modifiedCount: result.modifiedCount,
+
+			if (idResult.modifiedCount > 0) {
+				logger.info('Tokens unblocked by ID', {
+					modifiedCount: idResult.modifiedCount,
+					token_ids: tokenIds
+				});
+				return { success: true, data: { modifiedCount: idResult.modifiedCount } };
+			}
+
+			// Fall back to matching by token value
+			const valueFilter: Record<string, unknown> = { token: { $in: tokenIds } };
+			if (tenantId) {
+				valueFilter.tenantId = tenantId;
+			}
+			const valueResult = await this.TokenModel.updateMany(valueFilter as QueryFilter<TokenDocument>, {
+				blocked: false
+			});
+
+			logger.info('Tokens unblocked by value', {
+				modifiedCount: valueResult.modifiedCount,
 				token_ids: tokenIds
 			});
-			return { success: true, data: { modifiedCount: result.modifiedCount } };
+			return { success: true, data: { modifiedCount: valueResult.modifiedCount } };
 		} catch (err) {
 			const message = `Error in TokenAdapter.unblockTokens: ${err instanceof Error ? err.message : String(err)}`;
 			logger.error(message, { token_ids: tokenIds });

@@ -57,6 +57,9 @@ export class AuthModule {
 			roleIds: finalRoleIds,
 			role: finalRoleIds.length > 0 ? finalRoleIds[0] : 'user',
 			isRegistered: !!dbUser.isRegistered,
+			blocked: !!dbUser.blocked,
+			isAdmin: !!dbUser.isAdmin,
+			emailVerified: !!dbUser.emailVerified,
 			permissions: (dbUser as unknown as { permissions?: string[] }).permissions || []
 		} as User;
 	}
@@ -89,6 +92,9 @@ export class AuthModule {
 				avatar: userData.avatar || null,
 				roleIds: [],
 				isRegistered: userData.isRegistered || false,
+				blocked: userData.blocked || false,
+				isAdmin: userData.isAdmin || false,
+				emailVerified: userData.emailVerified || false,
 				tenantId: userData.tenantId || null,
 				_id: id,
 				createdAt: now,

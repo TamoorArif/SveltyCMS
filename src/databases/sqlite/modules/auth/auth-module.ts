@@ -57,6 +57,8 @@ export class AuthModule implements IAuthAdapter {
 			role: finalRoleIds.length > 0 ? finalRoleIds[0] : 'user',
 			isAdmin: !!dbUser.isAdmin,
 			isRegistered: !!dbUser.isRegistered,
+			blocked: !!dbUser.blocked,
+			emailVerified: !!dbUser.emailVerified,
 			permissions: (user as unknown as { permissions?: string[] }).permissions || []
 		} as User;
 	}
@@ -98,6 +100,8 @@ export class AuthModule implements IAuthAdapter {
 				roleIds: roleIds,
 				isAdmin: userData.isAdmin || false,
 				isRegistered: userData.isRegistered || false,
+				blocked: userData.blocked || false,
+				emailVerified: userData.emailVerified || false,
 				tenantId: userData.tenantId || null,
 				_id: id,
 				createdAt: now,

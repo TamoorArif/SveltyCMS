@@ -46,6 +46,7 @@ async function createTablesIfNotExist(connection: mysql.Pool): Promise<void> {
 			password VARCHAR(255),
 			emailVerified BOOLEAN NOT NULL DEFAULT FALSE,
 			blocked BOOLEAN NOT NULL DEFAULT FALSE,
+			isAdmin BOOLEAN NOT NULL DEFAULT FALSE,
 			firstName VARCHAR(255),
 			lastName VARCHAR(255),
 			avatar TEXT,
@@ -272,7 +273,7 @@ async function createTablesIfNotExist(connection: mysql.Pool): Promise<void> {
 			name VARCHAR(255) NOT NULL,
 			token VARCHAR(255) NOT NULL,
 			createdBy VARCHAR(36) NOT NULL,
-			permissions JSON NOT NULL DEFAULT ('[]'),
+			permissions JSON NOT NULL,
 			expiresAt DATETIME,
 			tenantId VARCHAR(36),
 			createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -280,6 +281,22 @@ async function createTablesIfNotExist(connection: mysql.Pool): Promise<void> {
 			UNIQUE INDEX token_unique (token),
 			INDEX name_idx (name),
 			INDEX tenant_idx (tenantId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		// Tenants
+		`CREATE TABLE IF NOT EXISTS tenants (
+			_id VARCHAR(36) PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			ownerId VARCHAR(36) NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			plan VARCHAR(20) NOT NULL DEFAULT 'free',
+			quota JSON NOT NULL,
+			\`usage\` JSON NOT NULL,
+			settings JSON,
+			createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			INDEX tenant_name_idx (name),
+			INDEX tenant_owner_idx (ownerId)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
 		// Plugin: PageSpeed Results

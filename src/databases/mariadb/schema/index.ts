@@ -34,6 +34,7 @@ export const authUsers = mysqlTable(
 		password: varchar('password', { length: 255 }),
 		emailVerified: boolean('emailVerified').notNull().default(false),
 		blocked: boolean('blocked').notNull().default(false),
+		isAdmin: boolean('isAdmin').notNull().default(false),
 		firstName: varchar('firstName', { length: 255 }),
 		lastName: varchar('lastName', { length: 255 }),
 		avatar: text('avatar'),
