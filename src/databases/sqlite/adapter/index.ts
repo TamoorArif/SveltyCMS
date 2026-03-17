@@ -141,6 +141,10 @@ export class SQLiteAdapter extends AdapterCore implements IDBAdapter {
 	}
 
 	public async ensureAuth(): Promise<void> {
+		if (!this.db) {
+			logger.warn('[SQLiteAdapter] Cannot ensureAuth: Database not connected.');
+			return;
+		}
 		// Check if roles exist
 		const existingRoles = await this.db.select().from(schema.roles).limit(1);
 		if (existingRoles.length > 0) {

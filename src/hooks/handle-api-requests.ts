@@ -133,15 +133,17 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
 			logger.trace('Logout endpoint - bypassing permission checks');
 			// Proceed to resolve
 		} else {
-			if (!hasApiPermission(locals.user.role, apiEndpoint)) {
+			const isAdmin = locals.user.isAdmin === true || (locals.user as any).role === 'admin';
+			if (!hasApiPermission(locals.user.role, apiEndpoint, isAdmin)) {
 				logger.warn(
-					`User ${locals.user._id} (role: ${locals.user.role}, tenant: ${locals.tenantId || 'global'}) ` +
+					`User ${locals.user._id} (role: ${locals.user.role}, isAdmin: ${isAdmin}, tenant: ${locals.tenantId || 'global'}) ` +
 						`denied access to /api/${apiEndpoint} - insufficient permissions`
 				);
 				throw new AppError(`Forbidden: Your role (${locals.user.role}) does not have permission to access this API endpoint.`, 403, 'FORBIDDEN');
 			}
 			logger.trace(`User ${locals.user._id} granted access to /api/${apiEndpoint}`, {
 				role: locals.user.role,
+				isAdmin,
 				tenant: locals.tenantId || 'global'
 			});
 		}

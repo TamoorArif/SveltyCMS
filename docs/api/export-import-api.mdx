@@ -561,7 +561,7 @@ curl -X POST https://new.example.com/api/system-settings/import \
 curl -X GET https://staging.example.com/api/export/collection/posts > posts.json
 
 # Import to production
-curl -X POST https://production.example.com/api/importData \
+curl -X POST https://production.example.com/api/import-data \
   -d @posts.json
 ```
 
@@ -637,6 +637,6 @@ For implementation details, see:
 
 - `src/routes/api/system-settings/export/+server.ts` - Full export endpoint
 - `src/routes/api/system-settings/import/+server.ts` - Full import endpoint
-- `src/routes/api/importData/+server.ts` - Import endpoint
+- `src/routes/api/import-data/+server.ts` - Import endpoint
 - `src/utils/crypto.ts` - Encryption utilities
 - `src/databases/db-interface.ts` - Database adapter interface

@@ -43,6 +43,7 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 				lastName TEXT,
 				avatar TEXT,
 				roleIds TEXT DEFAULT '[]',
+				isAdmin INTEGER DEFAULT 0,
 				isRegistered INTEGER DEFAULT 0,
 				tenantId TEXT,
 				createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
@@ -50,12 +51,17 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 			)
 		`);
 
-		// Add isRegistered column if it doesn't exist (for existing databases)
-		try {
-			execute(`ALTER TABLE auth_users ADD COLUMN isRegistered INTEGER DEFAULT 0`);
-		} catch (_e) {
-			// Column already exists or table doesn't exist yet
-		}
+		// Helper to safely add columns
+		const addColumn = (table: string, col: string, type: string) => {
+			try {
+				execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+			} catch (_e) {
+				// Column already exists or table doesn't exist yet
+			}
+		};
+
+		addColumn('auth_users', 'isRegistered', 'INTEGER DEFAULT 0');
+		addColumn('auth_users', 'isAdmin', 'INTEGER DEFAULT 0');
 
 		// Auth Sessions
 		execute(`
@@ -252,12 +258,17 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 				_id TEXT PRIMARY KEY,
 				name TEXT NOT NULL,
 				token TEXT NOT NULL UNIQUE,
+				permissions TEXT DEFAULT '[]',
+				expiresAt INTEGER,
 				createdBy TEXT NOT NULL,
 				tenantId TEXT,
 				createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
 				updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
 			)
 		`);
+
+		addColumn('website_tokens', 'permissions', "TEXT DEFAULT '[]'");
+		addColumn('website_tokens', 'expiresAt', 'INTEGER');
 
 		// Plugin Pagespeed Results
 		execute(`
@@ -299,6 +310,32 @@ export async function runMigrations(db: unknown): Promise<{ success: boolean; er
 				version INTEGER NOT NULL,
 				tenantId TEXT,
 				appliedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
+				createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
+				updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+			)
+		`);
+
+		// Audit Logs
+		execute(`
+			CREATE TABLE IF NOT EXISTS audit_logs (
+				_id TEXT PRIMARY KEY,
+				action TEXT NOT NULL,
+				actorEmail TEXT,
+				actorId TEXT,
+				actorRole TEXT,
+				correlationId TEXT,
+				details TEXT DEFAULT '{}',
+				errorDetails TEXT,
+				eventType TEXT NOT NULL,
+				ipAddress TEXT,
+				result TEXT NOT NULL,
+				sessionId TEXT,
+				severity TEXT NOT NULL,
+				targetId TEXT,
+				targetType TEXT,
+				timestamp TEXT NOT NULL,
+				userAgent TEXT,
+				tenantId TEXT,
 				createdAt INTEGER DEFAULT (strftime('%s', 'now') * 1000),
 				updatedAt INTEGER DEFAULT (strftime('%s', 'now') * 1000)
 			)

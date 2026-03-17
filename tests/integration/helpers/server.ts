@@ -49,21 +49,27 @@ export async function waitForServer(timeoutMs = 60_000): Promise<void> {
 
 	throw new Error(`Server at ${baseUrl} did not start within ${timeoutMs}ms`);
 }
+
 /**
  * Safely performs a fetch, returning null instead of crashing when the server is unreachable.
  * Automatically adds the Origin header to bypass CSRF protection.
  */
 export async function safeFetch(url: string, init?: RequestInit): Promise<Response> {
-	const API_BASE_URL = getApiBaseUrl();
 	const headers = new Headers(init?.headers || {});
 
-	// Ensure Origin header is present to satisfy CSRF protection in hooks
+	// Ensure Origin and Referer headers are present to satisfy CSRF protection in hooks
+	// SvelteKit CSRF protection compares Origin with the host
 	if (!headers.has('Origin')) {
-		headers.set('Origin', API_BASE_URL);
+		headers.set('Origin', BASE_URL);
+	}
+	if (!headers.has('Referer')) {
+		headers.set('Referer', `${BASE_URL}/`);
 	}
 
 	try {
 		const resp = await fetch(url, { ...init, headers });
+
+		// Error handling for empty response
 		if (!resp) {
 			throw new Error(`Server at ${url} returned an undefined response. Is the preview server running?`);
 		}

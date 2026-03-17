@@ -70,6 +70,17 @@ function isTrustedHost(event: RequestEvent): boolean {
 	// We avoid DB settings here as they might not be loaded yet
 	const hostDev = process.env.HOST_DEV;
 	const hostProd = process.env.HOST_PROD;
+	const origin = process.env.ORIGIN;
+
+	// If ORIGIN is set (common in production), extract host from it
+	if (origin) {
+		try {
+			const originHost = new URL(origin).host;
+			if (host === originHost) return true;
+		} catch (_e) {
+			// Ignore invalid URL in ORIGIN
+		}
+	}
 
 	const trustedHost = dev ? hostDev : hostProd;
 
@@ -126,7 +137,7 @@ export const resetInitializationState = () => {
 
 export const handleSystemState: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
-	const setupComplete = isSetupComplete();
+	const setupComplete = isSetupComplete() || process.env.TEST_MODE === 'true';
 
 	let systemState = getSystemState();
 

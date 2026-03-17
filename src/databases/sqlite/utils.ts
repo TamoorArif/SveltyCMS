@@ -74,19 +74,46 @@ export function applyTenantFilter<T extends Record<string, unknown>>(
 }
 
 /**
- * Convert MySQL row dates to ISO strings
+ * Convert SQLite row dates to ISO strings and parse JSON fields.
  * This ensures all date fields are properly formatted as ISODateString
+ * and JSON fields are returned as objects/arrays.
  */
 export function convertDatesToISO<T extends Record<string, unknown>>(row: T): T {
+	if (!row) return row;
 	const result = { ...row };
+
+	const jsonFields = [
+		'permissions',
+		'roleIds',
+		'data',
+		'metadata',
+		'translations',
+		'config',
+		'instances',
+		'dependencies',
+		'payload',
+		'settings',
+		'quota',
+		'usage'
+	];
 
 	for (const key in result) {
 		if (!Object.hasOwn(result, key)) {
 			continue;
 		}
 		const value = result[key];
+
+		// Handle Dates
 		if (value instanceof Date) {
 			(result as Record<string, unknown>)[key] = value.toISOString() as ISODateString;
+		}
+		// Handle JSON strings from SQLite if Drizzle didn't parse them
+		else if (jsonFields.includes(key) && typeof value === 'string') {
+			try {
+				(result as Record<string, unknown>)[key] = JSON.parse(value);
+			} catch (_e) {
+				// Keep as string if not valid JSON
+			}
 		}
 	}
 

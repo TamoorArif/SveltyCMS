@@ -115,8 +115,8 @@ async function getCachedRoles(tenantId?: string | null): Promise<Role[]> {
 			return [];
 		}
 
-		const bypassOpts = !tenantId ? { bypassTenantCheck: true } : undefined;
-		const data = await auth.getAllRoles(tenantId, bypassOpts);
+		const bypassOpts = !tenantId || tenantId === 'global' ? { bypassTenantCheck: true } : undefined;
+		const data = await auth.getAllRoles(tenantId === 'global' ? undefined : tenantId, bypassOpts);
 		if (!data || data.length === 0) {
 			logger.debug('No roles found in database', { tenantId });
 			return [];

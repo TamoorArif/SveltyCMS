@@ -16,6 +16,16 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { logger } from '@utils/logger.server';
 import { building } from '$app/environment';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+
+// ESM Shims for legacy CJS compatibility in production build
+if (typeof globalThis.__filename === 'undefined') {
+	(globalThis as any).__filename = fileURLToPath(import.meta.url);
+}
+if (typeof globalThis.__dirname === 'undefined') {
+	(globalThis as any).__dirname = dirname((globalThis as any).__filename);
+}
 
 // --- Core middleware ---
 import { handleStaticAssetCaching } from './hooks/handle-static-asset-caching';

@@ -44,6 +44,7 @@ export const authUsers = sqliteTable(
 		lastName: text('lastName', { length: 255 }),
 		avatar: text('avatar'),
 		roleIds: text('roleIds', { mode: 'json' }).$type<string[]>().notNull().default([]),
+		isAdmin: integer('isAdmin', { mode: 'boolean' }).notNull().default(false),
 		isRegistered: integer('isRegistered', { mode: 'boolean' }).notNull().default(false),
 		tenantId: tenantField(),
 		...timestamps
@@ -333,6 +334,8 @@ export const websiteTokens = sqliteTable(
 		_id: uuidPk(),
 		name: text('name', { length: 255 }).notNull(),
 		token: text('token', { length: 255 }).notNull(),
+		permissions: text('permissions', { mode: 'json' }).$type<string[]>().notNull().default([]),
+		expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }),
 		createdBy: text('createdBy', { length: 36 }).notNull(),
 		tenantId: tenantField(),
 		...timestamps
@@ -436,6 +439,37 @@ export const tenants = sqliteTable(
 	})
 );
 
+// Audit Logs Table
+export const auditLogs = sqliteTable(
+	'audit_logs',
+	{
+		_id: uuidPk(),
+		action: text('action').notNull(),
+		actorEmail: text('actorEmail'),
+		actorId: text('actorId'),
+		actorRole: text('actorRole'),
+		correlationId: text('correlationId'),
+		details: text('details', { mode: 'json' }).notNull().default({}),
+		errorDetails: text('errorDetails'),
+		eventType: text('eventType').notNull(),
+		ipAddress: text('ipAddress'),
+		result: text('result').notNull(),
+		sessionId: text('sessionId'),
+		severity: text('severity').notNull(),
+		targetId: text('targetId'),
+		targetType: text('targetType'),
+		timestamp: text('timestamp').notNull(),
+		userAgent: text('userAgent'),
+		tenantId: tenantField(),
+		...timestamps
+	},
+	(table) => ({
+		actorIdx: index('audit_actor_idx').on(table.actorId),
+		typeIdx: index('audit_type_idx').on(table.eventType),
+		tenantIdx: index('audit_tenant_idx').on(table.tenantId)
+	})
+);
+
 // Export all tables as a schema object for Drizzle
 export const schema = {
 	authUsers,
@@ -455,5 +489,6 @@ export const schema = {
 	pluginPagespeedResults,
 	pluginStates,
 	pluginMigrations,
-	tenants
+	tenants,
+	auditLogs
 };

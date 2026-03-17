@@ -1,5 +1,5 @@
 /**
- * @file src/routes/api/sendMail/+server.ts
+ * @file src/routes/api/send-mail/+server.ts
  * @description API endpoint for rendering and sending emails using Svelte templates and Nodemailer.
  *
  * This module provides functionality to:
@@ -17,7 +17,7 @@
  * - Robust error handling and logging.
  *
  * Usage:
- * POST /api/sendMail
+ * POST /api/send-mail
  * Body (JSON):
  * {
  * "recipientEmail": "test@example.com",
@@ -48,7 +48,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
 	// SECURITY: Only allow internal calls or authenticated admins
 	if (!(isAuthorizedInternal || isAdmin)) {
-		logger.warn('Unauthorized attempt to access /api/sendMail', {
+		logger.warn('Unauthorized attempt to access /api/send-mail', {
 			userId: user?._id,
 			tenantId,
 			hasInternalKey: !!internalKey
@@ -57,9 +57,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
 	}
 
 	if (isAuthorizedInternal) {
-		logger.debug('Authorized internal API call to /api/sendMail', { tenantId });
+		logger.debug('Authorized internal API call to /api/send-mail', { tenantId });
 	} else {
-		logger.debug(`Admin '${user?.email}' calling /api/sendMail`, { tenantId });
+		logger.debug(`Admin '${user?.email}' calling /api/send-mail`, { tenantId });
 	}
 
 	let requestBody: {

@@ -117,7 +117,7 @@ Sends templated emails using Svelte components.
 #### Request
 
 ```http
-POST /api/sendMail
+POST /api/send-mail
 ```
 
 **Headers:**
@@ -207,7 +207,7 @@ Retrieves all system virtual folders for the current tenant.
 #### Request
 
 ```http
-GET /api/systemVirtualFolder
+GET /api/system-virtual-folder
 ```
 
 **Headers:**
@@ -261,7 +261,7 @@ Creates a new system virtual folder.
 #### Request
 
 ```http
-POST /api/systemVirtualFolder
+POST /api/system-virtual-folder
 ```
 
 **Headers:**
@@ -333,7 +333,7 @@ Retrieves a specific virtual folder with its contents (subfolders and files).
 #### Request
 
 ```http
-GET /api/systemVirtualFolder/[id]
+GET /api/system-virtual-folder/[id]
 ```
 
 **Path Parameters:**
@@ -403,7 +403,7 @@ Updates an existing virtual folder's name.
 #### Request
 
 ```http
-PATCH /api/systemVirtualFolder/[id]
+PATCH /api/system-virtual-folder/[id]
 ```
 
 **Headers:**
@@ -465,7 +465,7 @@ Deletes a virtual folder. Cannot delete folders with subfolders or media files.
 #### Request
 
 ```http
-DELETE /api/systemVirtualFolder/[id]
+DELETE /api/system-virtual-folder/[id]
 ```
 
 **Headers:**
@@ -511,7 +511,7 @@ Updates the order and/or parent of multiple folders.
 #### Request
 
 ```http
-PATCH /api/systemVirtualFolder
+PATCH /api/system-virtual-folder
 ```
 
 **Headers:**
@@ -862,7 +862,7 @@ Retrieves information about remote video URLs (YouTube, Vimeo, etc.).
 #### Request
 
 ```http
-POST /api/remoteVideo
+POST /api/remote-video
 ```
 
 **Headers:**
@@ -950,7 +950,7 @@ All endpoints fully support multi-tenancy:
 
 ```javascript
 // Send email
-await fetch('/api/sendMail', {
+await fetch('/api/send-mail', {
 	method: 'POST',
 	credentials: 'include',
 	headers: { 'Content-Type': 'application/json' },
@@ -963,7 +963,7 @@ await fetch('/api/sendMail', {
 });
 
 // Create system virtual folder
-await fetch('/api/systemVirtualFolder', {
+await fetch('/api/system-virtual-folder', {
 	method: 'POST',
 	credentials: 'include',
 	headers: { 'Content-Type': 'application/json' },
@@ -974,14 +974,14 @@ await fetch('/api/systemVirtualFolder', {
 });
 
 // Get folder contents (root level)
-const response = await fetch('/api/systemVirtualFolder/root', {
+const response = await fetch('/api/system-virtual-folder/root', {
 	credentials: 'include'
 });
 const { data } = await response.json();
 console.log(data.contents.folders, data.contents.files);
 
 // Update folder
-await fetch('/api/systemVirtualFolder/folder123', {
+await fetch('/api/system-virtual-folder/folder123', {
 	method: 'PATCH',
 	credentials: 'include',
 	headers: { 'Content-Type': 'application/json' },
@@ -991,7 +991,7 @@ await fetch('/api/systemVirtualFolder/folder123', {
 });
 
 // Reorder folders
-await fetch('/api/systemVirtualFolder', {
+await fetch('/api/system-virtual-folder', {
 	method: 'PATCH',
 	credentials: 'include',
 	headers: { 'Content-Type': 'application/json' },
@@ -1021,8 +1021,8 @@ await fetch('/api/systemVirtualFolder', {
 For implementation details, see:
 
 - `src/routes/api/permission/update/+server.ts` - Permission updates (database-backed roles)
-- `src/routes/api/sendMail/+server.ts` - Email sending
-- `src/routes/api/systemVirtualFolder/+server.ts` - Virtual folder management
-- `src/routes/api/systemVirtualFolder/[id]/+server.ts` - Individual folder operations
+- `src/routes/api/send-mail/+server.ts` - Email sending
+- `src/routes/api/system-virtual-folder/+server.ts` - Virtual folder management
+- `src/routes/api/system-virtual-folder/[id]/+server.ts` - Individual folder operations
 - `src/routes/api/content-structure/+server.ts` - Content structure
 - `src/routes/api/marketplace/widgets/+server.ts` - Marketplace

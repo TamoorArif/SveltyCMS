@@ -20,13 +20,13 @@ export const API_PERMISSIONS: Record<string, string[]> = {
 	'api:token': ['admin'], // Token management (user invitations)
 	'api:permission': ['admin'], // Permission management
 	'api:settings': ['admin'], // System settings (database-driven configuration)
-	'api:systemPreferences': ['admin'], // System preferences (user dashboard layout/sizes)
-	'api:systemsetting': ['admin'], // System settings export/import
-	'api:config_sync': ['admin'], // Configuration sync (import/export)
+	'api:system-preferences': ['admin'], // System preferences (user dashboard layout/sizes)
+	'api:system-settings': ['admin'], // System settings export/import
+	'api:config-sync': ['admin'], // Configuration sync (import/export)
 	'api:export': ['admin'], // Full system export
 	'api:import': ['admin'], // Full system import
-	'api:exportData': ['admin'], // Collection export
-	'api:importData': ['admin'], // Collection import
+	'api:export-data': ['admin'], // Collection export
+	'api:import-data': ['admin'], // Collection import
 	'api:system': ['admin', 'editor'], // System status (version, health)
 	'api:system/health': ['*'], // Public health check
 	'api:telemetry': ['admin', 'developer', 'editor'], // System telemetry
@@ -47,7 +47,7 @@ export const API_PERMISSIONS: Record<string, string[]> = {
 	// Content Management - Admin and Editor
 	'api:collections': ['admin', 'editor'], // Collection/content management
 	'api:media': ['admin', 'editor'], // Media management
-	'api:systemVirtualFolder': ['admin', 'editor'], // System virtual folders
+	'api:system-virtual-folder': ['admin', 'editor'], // System virtual folders
 
 	// Dashboard & Analytics - Admin and Editor
 	'api:dashboard': ['admin', 'editor'], // Dashboard data
@@ -76,8 +76,9 @@ export const API_PERMISSIONS: Record<string, string[]> = {
 	'api:marketplace': ['admin'], // Marketplace access
 
 	// Public/Semi-public endpoints (authenticated users)
+	'api:testing': ['*'], // Integration testing endpoints
 	'api:settings/public': ['*'], // Public system settings (version, etc.)
-	'api:sendMail': ['admin'], // Email sending (used internally, but needs auth)
+	'api:send-mail': ['admin'], // Email sending (used internally, but needs auth)
 	'api:get-tokens-provided': ['admin'] // Token information - admin only
 };
 
@@ -85,9 +86,15 @@ export const API_PERMISSIONS: Record<string, string[]> = {
  * Check if a user role has permission to access an API endpoint
  * @param userRole - The user's role
  * @param apiEndpoint - The API endpoint (e.g., 'token', 'user', 'collections')
+ * @param isAdmin - Whether the user is an admin
  * @returns boolean - true if access is allowed
  */
-export function hasApiPermission(userRole: string, apiEndpoint: string): boolean {
+export function hasApiPermission(userRole: string, apiEndpoint: string, isAdmin = false): boolean {
+	// Full access for administrators
+	if (isAdmin || userRole === 'admin') {
+		return true;
+	}
+
 	const allowedRoles = API_PERMISSIONS[`api:${apiEndpoint}`];
 
 	if (!allowedRoles) {

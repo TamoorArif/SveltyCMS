@@ -518,7 +518,7 @@ export async function notifyAdminsOfDatabaseFailure(error: DatabaseError, metric
 		const { getPrivateSettingSync } = await import('@src/services/settings-service');
 		const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
-		const response = await fetch('/api/sendMail', {
+		const response = await fetch('/api/send-mail', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

@@ -33,16 +33,9 @@ export class CollectionModule {
 			return model;
 		}
 
-		return {
-			findOne: async <R = unknown>(query: Record<string, unknown>) => {
-				const res = await this.crud.findOne<any>(id, query as import('../../db-interface').QueryFilter<Record<string, unknown>>);
-				return res.success ? (res.data as R) : null;
-			},
-			aggregate: async <R = unknown>(pipeline: Record<string, unknown>[]) => {
-				const res = await this.crud.aggregate<R>(id, pipeline);
-				return res.success ? res.data : [];
-			}
-		};
+		// Check if it exists as a physical table or dynamic collection
+		// In integration tests, we want to fail if it's not predefined
+		throw new Error(`Collection model not found: ${id}`);
 	}
 
 	async createModel(schemaData: Schema): Promise<void> {

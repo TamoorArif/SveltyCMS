@@ -54,7 +54,7 @@ const editTokenSchema = object({
  * Validates an invitation token - public endpoint for registration flow
  */
 export const GET = apiHandler(async ({ params }) => {
-	const tokenValue = params.tokenID;
+	const tokenValue = params.tokenId;
 	if (!tokenValue) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}
@@ -87,7 +87,7 @@ export const GET = apiHandler(async ({ params }) => {
 
 export const PUT = apiHandler(async ({ request, params, locals }) => {
 	const { user, tenantId } = locals;
-	const tokenId = params.tokenID;
+	const tokenId = params.tokenId;
 	if (!tokenId) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}
@@ -166,55 +166,72 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
 
 export const DELETE = apiHandler(async ({ params, locals }) => {
 	const { user, tenantId } = locals;
-	const tokenId = params.tokenID;
-	if (!tokenId) {
+	const tokenIdOrValue = params.tokenId;
+	if (!tokenIdOrValue) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}
-	// Authentication is handled by hooks.server.ts - user presence confirms access
+
+	if (!auth) {
+		throw new AppError('Auth service is not initialized', 500, 'AUTH_INIT_ERROR');
+	}
+
+	// First, try to find the token to get its real _id (since we might have received the value)
+	let targetId = tokenIdOrValue;
+	const tokenObj = await auth.getTokenByValue(tokenIdOrValue);
+	if (tokenObj) {
+		targetId = tokenObj._id;
+	}
 
 	// --- MULTI-TENANCY SECURITY CHECK ---
 	if (getPrivateSettingSync('MULTI_TENANT')) {
 		if (!tenantId) {
 			throw new AppError('Tenant could not be identified for this operation.', 500, 'TENANT_REQUIRED');
 		}
-		if (!auth) {
-			throw new AppError('Auth service is not initialized', 500, 'AUTH_INIT_ERROR');
-		}
-		const tokenToDelete = await auth.getTokenByValue(tokenId);
-		if (!tokenToDelete) {
-			logger.warn('Attempt to delete a non-existent token.', {
+		const tokenToDelete = tokenObj || (await auth.getTokenByValue(targetId));
+		if (!tokenToDelete || (tokenToDelete.tenantId && tokenToDelete.tenantId !== tenantId)) {
+			logger.warn('Attempt to delete a non-existent token or one from another tenant.', {
 				adminId: user?._id,
 				adminTenantId: tenantId,
-				targetTokenId: tokenId
+				targetTokenId: targetId
 			});
 			throw new AppError('Token not found.', 404, 'TOKEN_NOT_FOUND');
 		}
 	}
 
 	// Use database-agnostic interface if available, fallback to adapter
-	let deletedCount: number | undefined;
-	const maybeAuth: unknown = auth as unknown;
-	if (
-		maybeAuth &&
-		typeof maybeAuth === 'object' &&
-		'deleteTokens' in maybeAuth &&
-		typeof (maybeAuth as { deleteTokens: unknown }).deleteTokens === 'function'
-	) {
-		const result = await (maybeAuth as { deleteTokens: (ids: string[]) => unknown }).deleteTokens([tokenId]);
-		if (typeof result === 'number') {
-			deletedCount = result;
-		} else if (result && typeof result === 'object' && 'deletedCount' in result) {
-			deletedCount = (result as { deletedCount?: number }).deletedCount;
+	let deletedCount = 0;
+	try {
+		const maybeAuth: unknown = auth as unknown;
+		if (
+			maybeAuth &&
+			typeof maybeAuth === 'object' &&
+			'deleteTokens' in maybeAuth &&
+			typeof (maybeAuth as { deleteTokens: unknown }).deleteTokens === 'function'
+		) {
+			const result = await (maybeAuth as { deleteTokens: (ids: string[]) => unknown }).deleteTokens([targetId]);
+			if (typeof result === 'number') {
+				deletedCount = result;
+			} else if (result && typeof result === 'object') {
+				if ('deletedCount' in result) {
+					deletedCount = (result as { deletedCount: number }).deletedCount;
+				} else if ('success' in result && (result as { success: boolean }).success) {
+					deletedCount = 1; // Assume 1 if success is true
+				}
+			}
+		} else {
+			const { TokenAdapter } = await import('@src/databases/mongodb/models/auth-token');
+			const tokenAdapter = new TokenAdapter();
+			const result = await tokenAdapter.deleteTokens([targetId]);
+			if (result.success) {
+				deletedCount = result.data?.deletedCount || 1;
+			}
 		}
-	} else {
-		const { TokenAdapter } = await import('@src/databases/mongodb/models/auth-token');
-		const tokenAdapter = new TokenAdapter();
-		const result = await tokenAdapter.deleteTokens([tokenId]);
-		if (result.success && result.data) {
-			deletedCount = result.data.deletedCount;
-		}
+	} catch (error) {
+		logger.error('Error during token deletion execution:', error);
+		throw new AppError(`Execution error: ${error instanceof Error ? error.message : String(error)}`, 500, 'DELETE_EXECUTION_ERROR');
 	}
-	if (!deletedCount) {
+
+	if (deletedCount === 0) {
 		throw new AppError('Token not found', 404, 'TOKEN_NOT_FOUND');
 	}
 
@@ -223,7 +240,7 @@ export const DELETE = apiHandler(async ({ params, locals }) => {
 		logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 	});
 
-	logger.info(`Token ${tokenId} deleted successfully`, {
+	logger.info(`Token ${targetId} deleted successfully`, {
 		executedBy: user?._id,
 		tenantId
 	});

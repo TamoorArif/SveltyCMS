@@ -50,7 +50,7 @@ export const defaultRoles: Role[] = [
 			'api:userActivity',
 			'api:media',
 			'api:widgets',
-			'api:sendMail',
+			'api:send-mail',
 			'collections:read',
 			'collections:update',
 			'collections:create',

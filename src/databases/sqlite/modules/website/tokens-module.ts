@@ -1,6 +1,6 @@
 /**
- * @file src/databases/mariadb/modules/website/tokens-module.ts
- * @description Website tokens module for MariaDB
+ * @file src/databases/sqlite/modules/website/tokens-module.ts
+ * @description Website tokens module for SQLite
  *
  * Features:
  * - Create token
@@ -10,7 +10,6 @@
  * - Delete token
  */
 
-import { isoDateStringToDate, nowISODateString } from '@src/utils/date-utils';
 import { asc, desc, eq, sql } from 'drizzle-orm';
 import type { DatabaseId, DatabaseResult, WebsiteToken } from '../../../db-interface';
 import type { AdapterCore } from '../../adapter/adapter-core';
@@ -31,16 +30,23 @@ export class WebsiteTokensModule {
 	async create(token: Omit<WebsiteToken, '_id' | 'createdAt'>): Promise<DatabaseResult<WebsiteToken>> {
 		return this.core.wrap(async () => {
 			const id = utils.generateId();
-			const now = isoDateStringToDate(nowISODateString());
-			// expiresAt might be ISODateString in token object
-			const expiresAt = token.expiresAt ? isoDateStringToDate(token.expiresAt) : null;
-			await this.db.insert(schema.websiteTokens).values({
+			const now = new Date();
+
+			// Convert expiresAt to Date object if it's a string
+			let expiresAt = (token as any).expiresAt;
+			if (expiresAt && typeof expiresAt === 'string') {
+				expiresAt = new Date(expiresAt);
+			}
+
+			const insertData = {
 				...token,
 				_id: id,
 				expiresAt,
 				createdAt: now,
 				updatedAt: now
-			} as typeof schema.websiteTokens.$inferInsert);
+			};
+
+			await this.db.insert(schema.websiteTokens).values(insertData as typeof schema.websiteTokens.$inferInsert);
 			const [result] = await this.db.select().from(schema.websiteTokens).where(eq(schema.websiteTokens._id, id)).limit(1);
 			return utils.convertDatesToISO(result) as unknown as WebsiteToken;
 		}, 'CREATE_WEBSITE_TOKEN_FAILED');

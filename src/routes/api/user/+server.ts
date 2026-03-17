@@ -188,7 +188,7 @@ async function sendUserToken(origin: string, email: string, token: string, role:
 		const { getPrivateSettingSync } = await import('@src/services/settings-service');
 		const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
-		const response = await fetch(`${origin}/api/sendMail`, {
+		const response = await fetch(`${origin}/api/send-mail`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

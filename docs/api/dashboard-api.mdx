@@ -281,7 +281,7 @@ Retrieves currently active/online users.
 #### Request
 
 ```http
-GET /api/dashboard/online_user
+GET /api/dashboard/online-user
 ```
 
 **Query Parameters:**
@@ -330,7 +330,7 @@ Retrieves the most recently created/updated content.
 #### Request
 
 ```http
-GET /api/dashboard/last5Content
+GET /api/dashboard/last5-content
 ```
 
 **Query Parameters:**
@@ -663,7 +663,7 @@ When multi-tenant mode is enabled:
 **Tenant-Scoped Metrics:**
 
 ```http
-GET /api/dashboard/last5Content?tenantId=tenant-abc
+GET /api/dashboard/last5-content?tenantId=tenant-abc
 ```
 
 ---
@@ -788,14 +788,14 @@ const metrics = await metricsResponse.json();
 console.log('Uptime:', metrics.system.uptime);
 
 // Get online users
-const usersResponse = await fetch('/api/dashboard/online_user', {
+const usersResponse = await fetch('/api/dashboard/online-user', {
 	credentials: 'include'
 });
 const { onlineUsers, count } = await usersResponse.json();
 console.log(`${count} users online`);
 
 // Get recent content
-const contentResponse = await fetch('/api/dashboard/last5Content', {
+const contentResponse = await fetch('/api/dashboard/last5-content', {
 	credentials: 'include'
 });
 const { content } = await contentResponse.json();

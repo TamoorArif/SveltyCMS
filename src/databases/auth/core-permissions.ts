@@ -63,11 +63,11 @@ export const corePermissions: Permission[] = [
 
 	// SendMail resource permissions
 	{
-		_id: 'sendMail:write',
+		_id: 'send-mail:write',
 		name: 'Send Mail Access',
 		action: PermissionAction.WRITE,
 		type: PermissionType.SYSTEM,
-		contextId: 'sendMail'
+		contextId: 'send-mail'
 	},
 
 	// Permissions management resource permissions
@@ -312,7 +312,7 @@ export const corePermissions: Permission[] = [
 		description: 'Grants access to all API endpoints under /api/user/.'
 	},
 	{
-		_id: 'api:sendMail',
+		_id: 'api:send-mail',
 		name: 'Send Mail API Access',
 		action: PermissionAction.EXECUTE,
 		type: PermissionType.SYSTEM,

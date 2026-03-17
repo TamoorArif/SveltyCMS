@@ -17,7 +17,11 @@ export const GET: RequestHandler = async () => {
 
 			// Subscribe to settings changes
 			const unsubscribe = subscribeToSettingsChanges((version) => {
-				controller.enqueue(`data: ${JSON.stringify({ type: 'update', version })}\n\n`);
+				try {
+					controller.enqueue(`data: ${JSON.stringify({ type: 'update', version })}\n\n`);
+				} catch (_err) {
+					// Controller likely closed, subscription will be cleaned up by return function
+				}
 			});
 
 			// Keep connection alive with heartbeat every 30 seconds

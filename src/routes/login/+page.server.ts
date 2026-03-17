@@ -520,7 +520,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 					const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
 					try {
-						const mailResponse = await fetch('/api/sendMail', {
+						const mailResponse = await fetch('/api/send-mail', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
@@ -543,7 +543,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
 							});
 						}
 					} catch (emailError) {
-						logger.error('OAuth: Error fetching /api/sendMail for invited user', { email, error: emailError });
+						logger.error('OAuth: Error fetching /api/send-mail for invited user', { email, error: emailError });
 					}
 					return [newUser ?? null, false];
 				};
@@ -851,7 +851,7 @@ export const actions: Actions = {
 					hostLink: publicEnv.HOST_PROD || `https://${event.request.headers.get('host')}`,
 					sitename: publicEnv.SITE_NAME || 'SveltyCMS'
 				};
-				const mailResponse = await event.fetch('/api/sendMail', {
+				const mailResponse = await event.fetch('/api/send-mail', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -874,7 +874,7 @@ export const actions: Actions = {
 					});
 				}
 			} catch (emailError) {
-				logger.error('Error invoking /api/sendMail for invited user', {
+				logger.error('Error invoking /api/send-mail for invited user', {
 					email,
 					error: emailError
 				});
@@ -1220,7 +1220,7 @@ export const actions: Actions = {
 				const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
 				// Use SvelteKit's fetch for server-side API calls
-				const mailResponse = await event.fetch('/api/sendMail', {
+				const mailResponse = await event.fetch('/api/send-mail', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -1333,7 +1333,7 @@ export const actions: Actions = {
 					const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
 					// Use SvelteKit's fetch for server-side API calls
-					const mailResponse = await event.fetch('/api/sendMail', {
+					const mailResponse = await event.fetch('/api/send-mail', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
@@ -1356,7 +1356,7 @@ export const actions: Actions = {
 						});
 					}
 				} catch (emailError) {
-					logger.error('Error fetching /api/sendMail for password updated confirmation', { email, error: emailError });
+					logger.error('Error fetching /api/send-mail for password updated confirmation', { email, error: emailError });
 				}
 
 				// message(pwresetForm, 'Password reset successfully. You can now log in.');

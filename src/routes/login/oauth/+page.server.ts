@@ -54,7 +54,7 @@ async function sendWelcomeEmail(
 
 		const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
-		await fetchFn('/api/sendMail', {
+		await fetchFn('/api/send-mail', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

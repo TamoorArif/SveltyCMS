@@ -14,11 +14,26 @@ function checkTestMode(event: RequestEvent) {
 	}
 
 	const clientAddress = event.getClientAddress?.() || '';
-	const isLocal = clientAddress === '127.0.0.1' || clientAddress === '::1' || event.url.hostname === 'localhost';
+	const isLocal =
+		clientAddress === '127.0.0.1' ||
+		clientAddress === '::1' ||
+		clientAddress === '::ffff:127.0.0.1' ||
+		event.url.hostname === 'localhost' ||
+		event.url.hostname === '127.0.0.1';
 	const testSecret = event.request.headers.get('x-test-secret');
 	const masterSecret = process.env.TEST_API_SECRET;
 
 	if (!isLocal || !masterSecret || testSecret !== masterSecret) {
+		console.warn(`[API/Testing] Forbidden access: 
+			isLocal=${isLocal} (${clientAddress}), 
+			masterSecretSet=${!!masterSecret}, 
+			testSecretSet=${!!testSecret}, 
+			match=${testSecret === masterSecret}`);
+
+		if (testSecret !== masterSecret) {
+			console.warn(`[API/Testing] Secret mismatch. Received: "${testSecret?.substring(0, 4)}...", Expected: "${masterSecret?.substring(0, 4)}..."`);
+		}
+
 		throw new Error('FORBIDDEN: Unauthorized access attempt');
 	}
 }
@@ -99,6 +114,7 @@ export async function POST(event: RequestEvent) {
 						password: adminPassword,
 						username: 'admin',
 						role: 'admin',
+						isAdmin: true,
 						isRegistered: true
 					});
 				}
@@ -111,7 +127,7 @@ export async function POST(event: RequestEvent) {
 			}
 
 			case 'create-user': {
-				const { email, password, username, role } = body;
+				const { email, password, username, role, isAdmin } = body;
 				if (!(email && password && role)) {
 					return json({ error: 'Missing fields' }, { status: 400 });
 				}
@@ -120,6 +136,7 @@ export async function POST(event: RequestEvent) {
 					password,
 					username: username || email.split('@')[0],
 					role,
+					isAdmin: isAdmin === true || role === 'admin',
 					isRegistered: true
 				});
 				return json({

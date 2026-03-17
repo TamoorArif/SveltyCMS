@@ -16,7 +16,8 @@ export async function dropDatabase(): Promise<void> {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			'x-test-secret': secret
+			'x-test-secret': secret,
+			Origin: API_BASE_URL
 		},
 		body: JSON.stringify({ action: 'reset' })
 	});
@@ -36,7 +37,8 @@ export async function getUser(email: string): Promise<Record<string, unknown> | 
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			'x-test-secret': secret
+			'x-test-secret': secret,
+			Origin: API_BASE_URL
 		},
 		body: JSON.stringify({ action: 'get-user', email })
 	});
@@ -55,7 +57,8 @@ export async function getUserCount(): Promise<number> {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			'x-test-secret': secret
+			'x-test-secret': secret,
+			Origin: API_BASE_URL
 		},
 		body: JSON.stringify({ action: 'get-user-count' })
 	});

@@ -111,10 +111,13 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 			tenantId: tenantId || undefined
 		});
 
-		if (!(tokenResult.success && tokenResult.data)) {
+		// Check for success correctly based on DatabaseResult<string>
+		if (!tokenResult || !tokenResult.success || !tokenResult.data) {
+			const errorMsg = (!tokenResult?.success && tokenResult?.error?.message) || 'Unknown error';
 			logger.error('Failed to create token', {
 				email: validatedData.email,
-				tenantId
+				tenantId,
+				error: errorMsg
 			});
 			throw new AppError('Failed to create token.', 500, 'TOKEN_CREATION_FAILED');
 		}
@@ -132,7 +135,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 
 		const internalKey = getPrivateSettingSync('JWT_SECRET_KEY');
 
-		const emailResponse = await fetch(`${url.origin}/api/sendMail`, {
+		const emailResponse = await fetch(`${url.origin}/api/send-mail`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

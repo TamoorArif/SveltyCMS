@@ -15,36 +15,41 @@ describe('Database Interface Contract Tests', () => {
 	let db: any = null;
 
 	beforeAll(async () => {
-		// Import the REAL adapter implementation directly, bypassing the mocked 'db.ts'
-		const { MongoDBAdapter } = await import('../../../src/databases/mongodb/mongo-db-adapter');
 		// biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
 		// @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
 		const { privateEnv } = await import('../../../config/private.test');
 
-		if (!privateEnv?.DB_TYPE) {
-			console.warn('Skipping DB Interface tests: No private.test.ts or DB_TYPE found');
-			return;
+		const dbType = privateEnv?.DB_TYPE || process.env.DB_TYPE || 'sqlite';
+		console.log(`DB Interface Test: Testing adapter for ${dbType}...`);
+
+		if (dbType === 'mongodb') {
+			const { MongoDBAdapter } = await import('../../../src/databases/mongodb/mongo-db-adapter');
+			db = new MongoDBAdapter();
+			const host = privateEnv.DB_HOST || process.env.DB_HOST || '127.0.0.1';
+			const port = privateEnv.DB_PORT || process.env.DB_PORT || '27017';
+			const dbName = privateEnv.DB_NAME || process.env.DB_NAME || 'sveltycms_test';
+			const connectionString = `mongodb://${host}:${port}/${dbName}`;
+			await db.connect(connectionString);
+		} else if (dbType === 'mariadb') {
+			const { MariaDBAdapter } = await import('../../../src/databases/mariadb/mariadb-adapter');
+			db = new MariaDBAdapter();
+			await db.connect();
+		} else if (dbType === 'postgresql') {
+			const { PostgreSQLAdapter } = await import('../../../src/databases/postgresql/postgres-adapter');
+			db = new PostgreSQLAdapter();
+			await db.connect();
+		} else {
+			const { SQLiteAdapter } = await import('../../../src/databases/sqlite/adapter/index');
+			db = new SQLiteAdapter();
+			await db.connect();
 		}
 
-		db = new MongoDBAdapter();
-
-		const host = privateEnv.DB_HOST || process.env.DB_HOST || '127.0.0.1';
-		const port = privateEnv.DB_PORT || process.env.DB_PORT || '27017';
-		const dbName = privateEnv.DB_NAME || process.env.DB_NAME || 'sveltycms_test';
-
-		// Construct basic connection string for test
-		const connectionString = `mongodb://${host}:${port}/${dbName}`;
-
 		try {
-			await db.connect(connectionString);
-			console.log('DB Interface Test: Connected to', connectionString);
-
 			// CRITICAL: Initialize lazy-loaded features for interface testing
-			await Promise.all([db.ensureAuth(), db.ensureMedia(), db.ensureContent(), db.ensureSystem(), db.ensureMonitoring()]);
-			console.log('DB Interface Test: All features initialized');
+			await Promise.all([db.ensureAuth?.(), db.ensureMedia?.(), db.ensureContent?.(), db.ensureSystem?.(), db.ensureMonitoring?.()]);
+			console.log('DB Interface Test: All features initialized (if available)');
 		} catch (err) {
-			console.error('DB Interface Test Check: Failed to connect or initialize features', err);
-			// We don't throw here to allow tests to fail gracefully with "db not connected"
+			console.error('DB Interface Test Check: Failed to initialize features', err);
 		}
 	});
 
@@ -212,7 +217,7 @@ describe('Database Interface Contract Tests', () => {
 		it('should return QueryBuilder with required methods', async () => {
 			if (db?.queryBuilder) {
 				// Ensure collections are initialized before using queryBuilder
-				await db.ensureCollections();
+				await db.ensureCollections?.();
 				const builder = db.queryBuilder('test_collection');
 
 				// Filtering methods

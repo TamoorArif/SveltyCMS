@@ -47,7 +47,52 @@ async function main() {
 	try {
 		console.log('🚀 Starting Black-Box Integration Suite...');
 
-		// 0. Clean up stale config
+		const args = process.argv.slice(2);
+		const skipBuild = args.includes('--no-build');
+
+		// 0. Build check (if build is stale or missing)
+		if (!skipBuild) {
+			const buildPath = join(rootDir, 'build');
+			const srcPath = join(rootDir, 'src');
+			let needsBuild = !existsSync(buildPath);
+
+			if (!needsBuild) {
+				const buildTime = statSync(buildPath).mtimeMs;
+				const checkNewer = (dir: string): boolean => {
+					const items = readdirSync(dir);
+					for (const item of items) {
+						const fullPath = join(dir, item);
+						if (statSync(fullPath).isDirectory()) {
+							if (checkNewer(fullPath)) return true;
+						} else {
+							if (statSync(fullPath).mtimeMs > buildTime) return true;
+						}
+					}
+					return false;
+				};
+				needsBuild = checkNewer(srcPath);
+			}
+
+			if (needsBuild) {
+				console.log('🏗️ Detected changes in src/ or missing build. Rebuilding...');
+				const buildCode = await new Promise<number>((resolve) => {
+					const buildProc = spawn(pkgManager, ['run', 'build'], {
+						cwd: rootDir,
+						stdio: 'inherit',
+						shell: true
+					});
+					buildProc.on('close', resolve);
+				});
+				if (buildCode !== 0) {
+					console.error('❌ Build failed. Aborting tests.');
+					process.exit(1);
+				}
+			} else {
+				console.log('✅ Build is up to date. Skipping rebuild.');
+			}
+		}
+
+		// 0.5 Clean up stale config
 		const privateTestPath = join(rootDir, 'config', 'private.test.ts');
 		if (existsSync(privateTestPath)) {
 			console.log('🧹 Removing stale private.test.ts...');
@@ -92,11 +137,10 @@ async function main() {
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests
-		const args = process.argv.slice(2);
 		const filterArg = args.find((arg) => arg.startsWith('--filter='));
 		const dbFilter = filterArg ? filterArg.split('=')[1] : null;
 
-		const testFiles = args.filter((arg) => !arg.startsWith('--'));
+		const testFiles = args.filter((arg) => !arg.startsWith('--') && !arg.startsWith('filter='));
 		let filesToRun = testFiles.length > 0 ? testFiles : findTestFiles(join(rootDir, 'tests/integration'));
 
 		// 2.1. Filter files based on DB_TYPE if requested
@@ -116,7 +160,8 @@ async function main() {
 
 		console.log(`🧪 Running ${filesToRun.length} test files sequentially...`);
 
-		let failed = false;
+		const results: Array<{ file: string; success: boolean; code: number }> = [];
+
 		for (const file of filesToRun) {
 			const relPath = relative(rootDir, file);
 			console.log(`\n▶️  [TEST] ${relPath}`);
@@ -125,22 +170,39 @@ async function main() {
 			const setupOk = await resetAndSeed();
 			if (!setupOk) {
 				console.error('❌ Failed to reset/seed via API. Aborting.');
-				failed = true;
+				results.push({ file: relPath, success: false, code: -1 });
 				break;
 			}
 
 			// Run Bun test
 			const code = await runTest(file);
-			if (code !== 0) {
+			const success = code === 0;
+			results.push({ file: relPath, success, code });
+
+			if (!success) {
 				console.error(`❌ Failed: ${relPath}`);
-				failed = true;
-				// Continue to next test unless it's a critical failure
 			} else {
 				console.log(`✅ Passed: ${relPath}`);
 			}
 		}
 
-		cleanup(failed ? 1 : 0);
+		const failedCount = results.filter((r) => !r.success).length;
+		const successCount = results.length - failedCount;
+
+		console.log(`\n🏁 Total: ${results.length}, Success: ${successCount}, Errors: ${failedCount}`);
+
+		if (failedCount > 0) {
+			console.log('\n❌ FAILED TESTS SUMMARY:');
+			results
+				.filter((r) => !r.success)
+				.forEach((r) => {
+					console.log(`  - ${r.file} (Code: ${r.code})`);
+				});
+		} else if (results.length > 0) {
+			console.log('\n✅ ALL INTEGRATION TESTS PASSED!');
+		}
+
+		cleanup(failedCount > 0 ? 1 : 0);
 	} catch (error) {
 		console.error('❌ Runner Error:', error);
 		cleanup(1);
@@ -161,11 +223,19 @@ async function startPreviewServer() {
 
 	return new Promise<void>((resolve, reject) => {
 		console.log('📦 Spawning preview server (127.0.0.1:4173)...');
-		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', '4173', '--host', '127.0.0.1'], {
+		const logFd = require('node:fs').openSync(join(rootDir, 'preview.log'), 'a');
+		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', '4173', '--host', '127.0.0.1', '--strictPort'], {
 			cwd: rootDir,
-			stdio: ['ignore', 'inherit', 'inherit'], // No pipe needed for stdout if we poll
+			stdio: ['ignore', logFd, logFd],
 			shell: true,
-			env: { ...(globalThis as any).process?.env, TEST_MODE: 'true', TEST_API_SECRET }
+			env: {
+				...process.env,
+				NODE_ENV: 'production',
+				DB_TYPE: 'sqlite',
+				TEST_MODE: 'true',
+				TEST_API_SECRET,
+				ORIGIN: 'http://127.0.0.1:4173'
+			}
 		});
 
 		API_BASE_URL = 'http://127.0.0.1:4173';
