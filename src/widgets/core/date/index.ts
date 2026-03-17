@@ -34,14 +34,14 @@ interface AggregationField {
 
 // ParaglideJS
 import { widget_date_description } from '@src/paraglide/messages';
-import { isoDate, minLength, pipe, string, type InferInput as ValibotInput } from 'valibot';
+import { isoTimestamp, minLength, pipe, string, type InferInput as ValibotInput } from 'valibot';
 import type { DateProps } from './types';
 
 // Define the validation schema for the data this widget stores.
 const DATE_VALIDATION_SCHEMA = pipe(
 	string('A value is required.'), // This message shows if the value is not a string
 	minLength(1, 'This date is required.'), // This message shows for empty strings
-	isoDate('The date must be a valid ISO 8601 string.')
+	isoTimestamp('The date must be a valid ISO 8601 string.')
 );
 
 // Create the widget definition using the factory.

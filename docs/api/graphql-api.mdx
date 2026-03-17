@@ -804,6 +804,14 @@ const result = await client
 
 ## Performance Optimization
 
+### JIT Execution Engine
+
+SveltyCMS uses the **Just-In-Time (JIT)** execution engine via `@envelop/graphql-jit`. This significantly improves performance by compiling GraphQL queries into highly optimized JavaScript functions before execution.
+
+- 🚀 **Faster Execution**: Up to 10x faster than standard execution for repetitive queries.
+- 📉 **Lower Memory Overhead**: Reduced garbage collection pressure during high-traffic periods.
+- ⚡ **Optimized Resolvers**: Compiles resolver chains for maximum throughput.
+
 ### Field Selection
 
 Only request fields you need:

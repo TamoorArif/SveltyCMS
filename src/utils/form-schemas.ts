@@ -8,7 +8,6 @@
  */
 
 import {
-	array,
 	boolean,
 	check,
 	custom,
@@ -121,7 +120,7 @@ export const signUpOAuthFormSchema = object({
 export const addUserTokenSchema = object({
 	email: emailSchema,
 	role: string(),
-	expiresIn: picklist(['2 hrs', '12 hrs', '2 days', '1 week', '2 weeks', '1 month'])
+	expiresIn: string()
 });
 
 // Change Password Form Schema
@@ -316,47 +315,20 @@ const languageCodeSchema = pipe(
 	regex(/^[a-z]{2}$/, 'Language code must be a valid ISO 639-1 two-letter code')
 );
 
-// Timezone Schema
-const timezoneSchema = pipe(string(), trim(), minLength(1, 'Timezone is required'));
-
-// Media Storage Type Schema
-const mediaStorageTypeSchema = picklist(['local', 's3', 'r2', 'cloudinary'], 'Invalid media storage type');
-
-// Media Folder Schema
-const mediaFolderSchema = pipe(
-	string(),
-	trim(),
-	minLength(1, 'Media folder/bucket name is required'),
-	maxLength(255, 'Media folder/bucket name is too long')
-);
-
 // Complete System Settings Schema
 export const systemSettingsSchema = object({
 	siteName: siteNameSchema,
 	hostProd: hostProdSchema,
-	defaultSystemLanguage: languageCodeSchema,
-	systemLanguages: array(languageCodeSchema, 'System languages must be an array of valid language codes.'),
-	defaultContentLanguage: languageCodeSchema,
-	contentLanguages: array(languageCodeSchema, 'Content languages must be an array of valid language codes.'),
-	timezone: timezoneSchema,
-	mediaStorageType: mediaStorageTypeSchema,
-	mediaFolder: mediaFolderSchema,
-	useRedis: boolean(),
-	redisHost: optional(string()),
-	redisPort: optional(string()),
-	redisPassword: optional(string()),
-	multiTenant: boolean(),
-	demoMode: boolean()
+	defaultLanguage: languageCodeSchema
 });
 
-// Type Exports
+// --- Schema Definitions for Exports ---
 export type LoginFormSchema = InferInput<typeof loginFormSchema>;
 export type ForgotFormSchema = InferInput<typeof forgotFormSchema>;
 export type ResetFormSchema = InferInput<typeof resetFormSchema>;
 export type SignUpFormSchema = InferInput<typeof signUpFormSchema>;
-export type SignUpOAuthFormSchema = InferInput<typeof signUpOAuthFormSchema>;
 export type AddUserTokenSchema = InferInput<typeof addUserTokenSchema>;
-export type ChangePasswordSchemaType = InferInput<typeof changePasswordSchema>;
+export type ChangePasswordSchema = InferInput<typeof changePasswordSchema>;
 export type WidgetEmailSchema = InferInput<typeof widgetEmailSchema>;
 export type AddUserSchema = InferInput<typeof addUserSchema>;
 export type EditUserSchema = InferInput<typeof editUserSchema>;

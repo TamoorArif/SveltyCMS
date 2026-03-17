@@ -19,7 +19,7 @@ export const createPageSpeedResultsTable: PluginMigration = {
 		logger.info('Validating plugin_pagespeed_results table...');
 
 		// Read-based validation: check the table exists by querying it
-		const result = await dbAdapter.crud.findMany<PageSpeedResult>('pluginPagespeedResults', {});
+		const result = await dbAdapter.crud.findMany<PageSpeedResult>('pluginPagespeedResults', {}, { bypassTenantCheck: true });
 
 		if (result.success) {
 			logger.info('✅ plugin_pagespeed_results table validated');

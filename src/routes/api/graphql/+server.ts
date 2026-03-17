@@ -55,6 +55,7 @@ import { widgets } from '@src/stores/widget-store.svelte.ts';
 import { logger } from '@utils/logger.server';
 import { useServer } from 'graphql-ws/use/ws';
 import { createSchema, createYoga } from 'graphql-yoga';
+import { useGraphQlJit } from '@envelop/graphql-jit';
 // GraphQL Subscriptions
 import { WebSocketServer } from 'ws';
 import { collectionsResolvers, createCleanTypeName, registerCollections } from './resolvers/collections';
@@ -238,7 +239,7 @@ async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string | null
 		const yogaApp = createYoga({
 			graphqlEndpoint: '/api/graphql',
 			landingPage: true,
-			plugins: [],
+			plugins: [useGraphQlJit()],
 			cors: false,
 			graphiql: {
 				subscriptionsProtocol: 'WS'

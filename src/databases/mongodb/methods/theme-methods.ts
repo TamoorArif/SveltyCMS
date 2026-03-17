@@ -214,12 +214,17 @@ export class MongoThemeMethods {
 	 */
 	async update(themeId: DatabaseId, themeData: Partial<Omit<Theme, '_id' | 'createdAt' | 'updatedAt'>>): Promise<Theme | null> {
 		try {
-			const result = await this.themeModel.findByIdAndUpdate(themeId, { $set: themeData }, { returnDocument: 'after' }).lean().exec();
+			// Use findOneAndUpdate with explicit _id filter to avoid Mongoose auto-casting
+			// 24-character hex strings to ObjectId when the schema defines _id as String.
+			const result = await this.themeModel
+				.findOneAndUpdate({ _id: String(themeId) }, { $set: themeData }, { returnDocument: 'after' })
+				.lean()
+				.exec();
 
 			// Invalidate theme caches
 			await invalidateCategoryCache(CacheCategory.THEME);
 
-			return result;
+			return result as unknown as Theme | null;
 		} catch (error) {
 			throw createDatabaseError(error, 'THEME_UPDATE_FAILED', 'Failed to update theme');
 		}

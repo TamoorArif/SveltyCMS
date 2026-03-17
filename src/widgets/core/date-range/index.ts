@@ -29,14 +29,14 @@ interface AggregationField {
 
 //ParaglideJS
 import { widget_dateRange_description } from '@src/paraglide/messages';
-import { check, isoDate, minLength, object, pipe, string, type InferInput as ValibotInput } from 'valibot';
+import { check, isoTimestamp, minLength, object, pipe, string, type InferInput as ValibotInput } from 'valibot';
 import type { DateRangeProps } from './types';
 
 // Define the validation schema for the `{ start, end }` object.
 const DATE_RANGE_VALIDATION_SCHEMA = pipe(
 	object({
-		start: pipe(string(), minLength(1, 'Start date is required.'), isoDate()),
-		end: pipe(string(), minLength(1, 'End date is required.'), isoDate())
+		start: pipe(string(), minLength(1, 'Start date is required.'), isoTimestamp()),
+		end: pipe(string(), minLength(1, 'End date is required.'), isoTimestamp())
 	}),
 	check((data) => new Date(data.start) <= new Date(data.end), 'End date must be on or after the start date.')
 );

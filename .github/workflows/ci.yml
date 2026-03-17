@@ -65,6 +65,11 @@ jobs:
           bun run paraglide
           bun x svelte-kit sync
 
+      - name: Generate E2E Test Secret
+        run: |
+          mkdir -p tests/e2e/.auth
+          echo "SVELTYCMS_E2E_MASTER_SECRET_$(date +%s)" > tests/e2e/.auth/test-secret.txt
+
       - id: pw
         run: echo "version=$(bun x playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
 
@@ -75,6 +80,7 @@ jobs:
           path: |
             src/paraglide
             .svelte-kit
+            tests/e2e/.auth/test-secret.txt
 
   # ------------------------------------------------
   # 2. Quality gates
@@ -305,7 +311,7 @@ jobs:
   # ------------------------------------------------
 
   e2e:
-    name: 🎭 E2E (shard ${{ matrix.shard }})
+    name: 🎭 E2E (${{ matrix.name }})
     needs: [bootstrap, build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -313,7 +319,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        include:
+          - shard: 1
+            name: 'Wizard'
+          - shard: 2
+            name: 'Auth'
+          - shard: 3
+            name: 'Content'
+          - shard: 4
+            name: 'System'
 
     steps:
       - uses: actions/checkout@v6
@@ -351,6 +365,10 @@ jobs:
           TEST_MODE: true
           PLAYWRIGHT_TEST_BASE_URL: http://127.0.0.1:4173
         run: |
+          # Read the pre-generated secret for both server and Playwright
+          export TEST_API_SECRET=$(cat tests/e2e/.auth/test-secret.txt)
+          echo "Using pre-generated TEST_API_SECRET"
+
           # Start server in background
           bun run preview --port 4173 --host 127.0.0.1 > preview.log 2>&1 &
 
@@ -366,7 +384,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: playwright-report-${{ matrix.shard }}
+          name: playwright-report-${{ matrix.name }}
           path: playwright-report
 
   # ------------------------------------------------
