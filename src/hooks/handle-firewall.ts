@@ -44,8 +44,8 @@ import { logger } from '@utils/logger.server';
  * Focus on business logic abuse and suspicious parameter usage.
  */
 const APP_THREAT_PATTERNS = [
-	// Suspicious parameter patterns (credentials in URL)
-	/[?&](password|token|secret|api_key|auth)=[^&]*/i,
+	// Suspicious parameter patterns (credentials in URL query params)
+	/[?&](password|token|secret|api_key|auth)=[^&]+/i,
 
 	// Bulk operations abuse
 	/\/api\/(users|content|collections)\/bulk-(delete|update|create)/i,
