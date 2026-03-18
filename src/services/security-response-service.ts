@@ -64,6 +64,7 @@ export interface SecurityIncident {
 	threatLevel: ThreatLevel;
 	timestamp: number;
 	userAgent?: string;
+	tenantId?: string;
 }
 
 export interface SecurityPolicy {
@@ -244,12 +245,26 @@ class SecurityResponseService {
 		// 2. Rate limit check (fast, per-endpoint aware)
 		const url = new URL(request.url);
 		const rateLimitResult = this.checkRateLimit(clientIp, url.pathname);
+
+		// In SveltyCMS, we use the tenant context even for rate limiting if available
+		const { getTenantIdFromHostname } = await import('@utils/tenant-utils');
+		const { getPrivateSettingSync } = await import('@src/services/settings-service');
+		const multiTenant = getPrivateSettingSync('MULTI_TENANT') ?? false;
+		const tenantId = getTenantIdFromHostname(url.hostname, !!multiTenant);
+
 		if (!rateLimitResult.allowed) {
-			this.reportSecurityEvent(clientIp, 'rate_limit', 6, `Rate limit exceeded for ${url.pathname}`, {
-				endpoint: url.pathname,
-				limit: rateLimitResult.limit,
-				count: rateLimitResult.count
-			});
+			this.reportSecurityEvent(
+				clientIp,
+				'rate_limit',
+				6,
+				`Rate limit exceeded for ${url.pathname}`,
+				{
+					endpoint: url.pathname,
+					limit: rateLimitResult.limit,
+					count: rateLimitResult.count
+				},
+				tenantId || undefined
+			);
 			return { level: 'high', action: 'throttle', reason: `Rate limit exceeded (${rateLimitResult.count}/${rateLimitResult.limit}/min)` };
 		}
 
@@ -257,7 +272,7 @@ class SecurityResponseService {
 		const anomaly = this.detectAnomalies(request);
 		if (anomaly.detected) {
 			for (const ind of anomaly.indicators) {
-				this.processIndicator(clientIp, ind);
+				this.processIndicator(clientIp, ind, tenantId || undefined);
 			}
 			if (anomaly.indicators.some((i) => i.severity >= 8)) {
 				return { level: 'high', action: 'challenge', reason: 'Request anomaly detected' };
@@ -467,15 +482,22 @@ class SecurityResponseService {
 	// ========================================================================
 
 	/** Blocks an IP address. */
-	public async blockIp(ip: string, reason: string): Promise<void> {
+	public async blockIp(ip: string, reason: string, tenantId?: string): Promise<void> {
 		this.blockedIPs.add(ip);
-		logger.warn(`IP blocked: ${ip}. Reason: ${reason}`);
-		this.reportSecurityEvent(ip, 'ip_reputation', 10, reason);
-		await this.dispatchAlert(ip, 'critical', reason);
+		logger.warn(`IP blocked: ${ip}. Reason: ${reason} [Tenant: ${tenantId || 'global'}]`);
+		this.reportSecurityEvent(ip, 'ip_reputation', 10, reason, undefined, tenantId);
+		await this.dispatchAlert(ip, 'critical', reason, tenantId);
 	}
 
 	/** Report a security event. */
-	reportSecurityEvent(ip: string, eventType: ThreatIndicator['type'], severity: number, evidence: string, metadata?: Record<string, unknown>): void {
+	reportSecurityEvent(
+		ip: string,
+		eventType: ThreatIndicator['type'],
+		severity: number,
+		evidence: string,
+		metadata?: Record<string, unknown>,
+		tenantId?: string
+	): void {
 		const indicator: ThreatIndicator = {
 			type: eventType,
 			severity,
@@ -483,12 +505,13 @@ class SecurityResponseService {
 			timestamp: Date.now(),
 			metadata
 		};
-		this.processIndicator(ip, indicator);
+		this.processIndicator(ip, indicator, tenantId);
 	}
 
 	/** Process an indicator and accumulate into incidents. */
-	private processIndicator(ip: string, indicator: ThreatIndicator): void {
-		let incident = this.incidents.get(ip);
+	private processIndicator(ip: string, indicator: ThreatIndicator, tenantId?: string): void {
+		const key = tenantId ? `${ip}:${tenantId}` : ip;
+		let incident = this.incidents.get(key);
 		if (!incident) {
 			incident = {
 				id: `inc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -497,9 +520,10 @@ class SecurityResponseService {
 				indicators: [],
 				responseActions: [],
 				timestamp: Date.now(),
-				resolved: false
+				resolved: false,
+				tenantId
 			};
-			this.incidents.set(ip, incident);
+			this.incidents.set(key, incident);
 		}
 		incident.indicators.push(indicator);
 		this.evaluateIncident(incident);
@@ -516,18 +540,16 @@ class SecurityResponseService {
 			if (recentIndicators.length >= policy.triggers.indicatorThreshold) {
 				incident.threatLevel = policy.threatLevel;
 				incident.responseActions = [...policy.responses];
-				this.executeResponse(incident, policy);
+				this.executeResponse(incident.clientIp, incident);
 				break;
 			}
 		}
 	}
 
-	/** Execute security response actions. */
-	private executeResponse(incident: SecurityIncident, policy: SecurityPolicy): void {
-		const ip = incident.clientIp;
-
-		for (const action of policy.responses) {
-			switch (action) {
+	/** Executes response actions for an incident. */
+	private async executeResponse(ip: string, incident: SecurityIncident): Promise<void> {
+		for (const actionName of incident.responseActions) {
+			switch (actionName) {
 				case 'monitor':
 					break;
 				case 'warn':
@@ -535,40 +557,37 @@ class SecurityResponseService {
 						ip,
 						threatLevel: incident.threatLevel,
 						indicatorCount: incident.indicators.length,
-						incidentId: incident.id
+						incidentId: incident.id,
+						tenantId: incident.tenantId
 					});
 					break;
 				case 'throttle': {
-					const throttleUntil = Date.now() + policy.cooldownPeriod;
+					const throttleUntil = Date.now() + 300_000; // 5 minute default
 					this.throttledIPs.set(ip, {
 						until: throttleUntil,
 						factor: this.getThrottleFactor(incident.threatLevel)
 					});
-					logger.warn('IP throttled', { ip, until: new Date(throttleUntil) });
+					logger.warn('IP throttled', { ip, until: new Date(throttleUntil), tenantId: incident.tenantId });
 					break;
 				}
 				case 'block': {
-					this.blockedIPs.add(ip);
-					setTimeout(() => {
-						this.blockedIPs.delete(ip);
-						logger.info('IP unblocked after cooldown', { ip });
-					}, policy.cooldownPeriod);
-					logger.error('IP blocked', { ip, incidentId: incident.id });
+					await this.blockIp(ip, 'Security policy violation', incident.tenantId);
 					break;
 				}
-				case 'blacklist':
-					this.blockedIPs.add(ip);
-					logger.error('IP blacklisted (permanent)', { ip, incidentId: incident.id });
+				case 'challenge':
+					// MFA or CAPTCHA logic goes here
 					break;
 			}
 		}
 
-		// Dispatch webhook alert for high+ threats
-		if (policy.threatLevel === 'high' || policy.threatLevel === 'critical') {
-			this.dispatchAlert(ip, policy.threatLevel, `Policy "${policy.name}" triggered`).catch(() => {});
+		// Dispatch alerting for high+ threats
+		if (incident.threatLevel === 'high' || incident.threatLevel === 'critical') {
+			this.dispatchAlert(ip, incident.threatLevel, `Incident "${incident.id}" reached ${incident.threatLevel} threat level`, incident.tenantId).catch(
+				() => {}
+			);
 		}
 
-		metricsService.incrementRateLimitViolations();
+		metricsService.incrementSecurityViolations(incident.tenantId);
 	}
 
 	// ========================================================================
@@ -576,7 +595,7 @@ class SecurityResponseService {
 	// ========================================================================
 
 	/** Dispatches a webhook alert for security incidents. Rate-limited to prevent alert fatigue. */
-	public async dispatchAlert(ip: string, threatLevel: ThreatLevel, reason: string): Promise<void> {
+	public async dispatchAlert(ip: string, threatLevel: ThreatLevel, reason: string, tenantId?: string): Promise<void> {
 		const webhookUrl = this.getWebhookUrl();
 		if (!webhookUrl) return;
 
@@ -585,16 +604,18 @@ class SecurityResponseService {
 		if (lastAlert && Date.now() - lastAlert < this.ALERT_COOLDOWN) return;
 		this.lastAlertTime.set(ip, Date.now());
 
-		const incident = this.incidents.get(ip);
+		const key = tenantId ? `${ip}:${tenantId}` : ip;
+		const incident = this.incidents.get(key);
 		const payload = {
 			type: 'security_alert',
 			timestamp: new Date().toISOString(),
 			threatLevel,
 			clientIp: ip,
+			tenantId,
 			reason,
 			incidentId: incident?.id,
 			indicatorCount: incident?.indicators.length || 0,
-			activeIncidents: this.getActiveIncidents().length,
+			activeIncidents: this.getActiveIncidents(tenantId).length,
 			blockedIPs: this.blockedIPs.size
 		};
 
@@ -673,11 +694,14 @@ class SecurityResponseService {
 		return { throttled: true, factor: throttle.factor };
 	}
 
-	getActiveIncidents(): SecurityIncident[] {
-		return Array.from(this.incidents.values()).filter((inc) => !inc.resolved);
+	getActiveIncidents(tenantId?: string): SecurityIncident[] {
+		return Array.from(this.incidents.values()).filter((inc) => {
+			if (tenantId && inc.tenantId !== tenantId) return false;
+			return !inc.resolved;
+		});
 	}
 
-	getSecurityStats(): {
+	getSecurityStats(tenantId?: string): {
 		activeIncidents: number;
 		blockedIPs: number;
 		throttledIPs: number;
@@ -685,7 +709,10 @@ class SecurityResponseService {
 		rateLimitEntries: number;
 		threatLevelDistribution: Record<ThreatLevel, number>;
 	} {
-		const incidents = Array.from(this.incidents.values());
+		const incidents = Array.from(this.incidents.values()).filter((inc) => {
+			if (tenantId && inc.tenantId !== tenantId) return false;
+			return true;
+		});
 		const threatDistribution: Record<ThreatLevel, number> = { none: 0, low: 0, medium: 0, high: 0, critical: 0 };
 		incidents.forEach((inc) => {
 			threatDistribution[inc.threatLevel]++;
@@ -693,7 +720,7 @@ class SecurityResponseService {
 
 		return {
 			activeIncidents: incidents.filter((inc) => !inc.resolved).length,
-			blockedIPs: this.blockedIPs.size,
+			blockedIPs: this.blockedIPs.size, // IPs are blocked globally for security
 			throttledIPs: this.throttledIPs.size,
 			totalIncidents: incidents.length,
 			rateLimitEntries: this.rateLimitStore.size,

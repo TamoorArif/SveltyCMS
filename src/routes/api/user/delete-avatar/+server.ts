@@ -33,7 +33,7 @@ import { moveMediaToTrash } from '@utils/media/media-storage.server';
 import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = apiHandler(async ({ request, locals }) => {
-	const { user: currentUser, tenantId } = locals;
+	const { user: currentUser, tenantId, hasAdminPermission } = locals;
 
 	if (!currentUser) {
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -59,6 +59,15 @@ export const DELETE: RequestHandler = apiHandler(async ({ request, locals }) => 
 	// Role-based access is handled by hooks.server.ts, we just need to check if editing self vs others
 
 	const isEditingSelf = currentUser._id === targetUserId;
+
+	// **SECURITY CHECK**: Ensure user is editing themselves OR has admin permissions
+	if (!isEditingSelf && !hasAdminPermission) {
+		logger.warn('Unauthorized attempt to delete another user avatar', {
+			byUser: currentUser._id,
+			targetUser: targetUserId
+		});
+		throw new AppError('Forbidden: You can only delete your own avatar.', 403, 'FORBIDDEN');
+	}
 
 	// In multi-tenant mode, ensure target user is in same tenant when editing others
 	if (getPrivateSettingSync('MULTI_TENANT') && !isEditingSelf) {

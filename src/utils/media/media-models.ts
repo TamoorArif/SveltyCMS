@@ -90,6 +90,7 @@ export interface MediaBase {
 	originalId?: DatabaseId | null;
 	path: string; // storage-relative
 	size: number;
+	tenantId?: string | null; // For multi-tenant support
 	thumbnails?: Record<string, ResizedImage>;
 	type: MediaType;
 	updatedAt: ISODateString;

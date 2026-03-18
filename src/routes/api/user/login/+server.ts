@@ -9,6 +9,8 @@ import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 // Password utility
 import { verifyPassword } from '@utils/password';
+// Shared utilities
+import { parseSessionDuration } from '@utils/auth-utils';
 
 async function getAuth() {
 	const { auth } = await import('@src/databases/db');
@@ -88,7 +90,7 @@ export const POST = apiHandler(async ({ request, cookies, locals }) => {
 		const session = await auth.createSession({
 			user_id: user._id,
 			...(getPrivateSettingSync('MULTI_TENANT') && { tenantId }), // Add tenantId to the session
-			expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() as import('@databases/db-interface').ISODateString // 24-hour session
+			expires: new Date(Date.now() + parseSessionDuration('1d')).toISOString() as import('@databases/db-interface').ISODateString // 24-hour session
 		}); // Cache user in session store
 
 		const sessionCookie = auth.createSessionCookie(session._id);

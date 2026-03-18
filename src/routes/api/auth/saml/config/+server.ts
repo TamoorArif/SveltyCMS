@@ -15,6 +15,7 @@ import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 import { apiHandler } from '@utils/api-handler';
 import { json } from '@sveltejs/kit';
+import { getPrivateSettingSync } from '@src/services/settings-service';
 
 export const POST = apiHandler(async ({ request, locals }) => {
 	const { user } = locals;
@@ -22,24 +23,30 @@ export const POST = apiHandler(async ({ request, locals }) => {
 		throw new AppError('Unauthorized', 403, 'UNAUTHORIZED');
 	}
 
-	try {
-		const data = await request.json();
-		// Requires properties matching Jackson's createSAMLConnection
-		// e.g. rawMetadata (XML string), defaultRedirectUrl, tenant, product
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
+	const tenantId = isMultiTenant ? user.tenantId : 'default';
 
-		if (!data.rawMetadata || !data.defaultRedirectUrl || !data.tenant || !data.product) {
-			throw new AppError('Missing required SAML connection payload', 400, 'INVALID_PAYLOAD');
-		}
+	const data = await request.json().catch(() => {
+		throw new AppError('Invalid JSON payload', 400, 'INVALID_JSON');
+	});
 
-		logger.info(`Creating new SAML connection for tenant: ${data.tenant}, product: ${data.product}`);
-		const result = await createSAMLConnection(data);
+	// Requires properties matching Jackson's createSAMLConnection
+	// e.g. rawMetadata (XML string), defaultRedirectUrl, tenant, product
 
-		return json({
-			success: true,
-			data: result
-		});
-	} catch (error) {
-		logger.error('Failed to create SAML connection:', error);
-		throw new AppError('Failed to save SAML connection', 500, 'SAML_CONFIG_ERROR');
+	if (!data.rawMetadata || !data.defaultRedirectUrl || !data.tenant || !data.product) {
+		throw new AppError('Missing required SAML connection payload', 400, 'INVALID_PAYLOAD');
 	}
+
+	// Enforce tenant isolation if multi-tenant
+	if (isMultiTenant && data.tenant !== tenantId) {
+		throw new AppError(`Tenant mismatch. You are only authorized to configure SAML for tenant: ${tenantId}`, 403, 'TENANT_MISMATCH');
+	}
+
+	logger.info(`Creating new SAML connection for tenant: ${data.tenant}, product: ${data.product}`);
+	const result = await createSAMLConnection(data);
+
+	return json({
+		success: true,
+		data: result
+	});
 });

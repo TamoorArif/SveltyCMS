@@ -59,7 +59,33 @@ async function postAction(actionName: string, formData: FormData) {
 	return await res.json();
 }
 
+async function waitForReady() {
+	console.log(`⏳ Waiting for server to be operational at ${API_BASE_URL}...`);
+	for (let i = 0; i < 60; i++) {
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/system/health`);
+			if (res.ok) {
+				const data = (await res.json()) as any;
+				// In setup mode, status might be 'IDLE' or 'SETUP'
+				// We just need it to be responsive and not 'INITIALIZING'
+				const okStatuses = ['READY', 'SETUP', 'IDLE', 'DEGRADED', 'WARMING', 'WARMED'];
+				if (okStatuses.includes(data.overallStatus)) {
+					console.log(`✅ Server is operational (Status: ${data.overallStatus}).`);
+					return;
+				}
+				console.log(`⏳ Server status: ${data.overallStatus}...`);
+			}
+		} catch {
+			// Ignore fetch errors while waiting for boot
+		}
+		await new Promise((r) => setTimeout(r, 1000));
+	}
+	throw new Error('Server operational timeout (60s)');
+}
+
 async function main() {
+	await waitForReady();
+
 	const dbType = process.env.DB_TYPE || 'sqlite';
 	const dbHost = process.env.DB_HOST || '127.0.0.1';
 	const dbPort = process.env.DB_PORT || (dbType === 'mariadb' ? '3306' : dbType === 'postgresql' ? '5432' : '27017');

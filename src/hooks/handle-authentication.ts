@@ -197,25 +197,9 @@ if (typeof setInterval !== 'undefined') {
 	);
 }
 
+import { getTenantIdFromHostname } from '@utils/tenant-utils';
+
 // --- UTILITY FUNCTIONS ---
-
-/** Derives tenant ID from hostname */
-function getTenantIdFromHostname(hostname: string, multiTenant: boolean): string | null {
-	if (!multiTenant) {
-		return null;
-	}
-
-	if (hostname === 'localhost' || hostname.startsWith('127.0.0.1') || hostname.startsWith('192.168.')) {
-		return 'default';
-	}
-
-	const parts = hostname.split('.');
-	if (parts.length > 2 && !['www', 'app', 'api', 'cdn', 'static'].includes(parts[0])) {
-		return parts[0];
-	}
-
-	return null;
-}
 
 /** Multi-layer user session retrieval (in-memory → distributed → DB) */
 async function getUserFromSession(sessionId: string, tenantId?: string | null): Promise<User | null> {

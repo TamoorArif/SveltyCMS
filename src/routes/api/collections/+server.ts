@@ -64,8 +64,8 @@ export const GET = apiHandler(async ({ locals, url }) => {
 			};
 		}[] = [];
 
-		// Iterate over the array of collections
-		for (const collection of allCollections) {
+		// Process all collections - parallelize token replacements for performance
+		const tokenReplacementPromises = allCollections.map(async (collection) => {
 			const collectionInfo: {
 				id: string | undefined;
 				name: string | undefined;
@@ -111,20 +111,41 @@ export const GET = apiHandler(async ({ locals, url }) => {
 				}
 			}
 
-			// Token Replacement for Collection Metadata
+			// Token Replacement for Collection Metadata (parallelizable)
 			const tokenContext: TokenContext = {
 				user: locals.user || undefined
 			};
 
+			// Process all token replacements concurrently
+			const tokenPromises: Promise<void>[] = [];
+
 			if (collectionInfo.description?.includes('{{')) {
-				collectionInfo.description = await replaceTokens(collectionInfo.description, tokenContext);
-			}
-			if (collectionInfo.label?.includes('{{')) {
-				collectionInfo.label = await replaceTokens(collectionInfo.label, tokenContext);
+				tokenPromises.push(
+					replaceTokens(collectionInfo.description, tokenContext).then((result) => {
+						collectionInfo.description = result;
+					})
+				);
 			}
 
-			accessibleCollections.push(collectionInfo);
-		}
+			if (collectionInfo.label?.includes('{{')) {
+				tokenPromises.push(
+					replaceTokens(collectionInfo.label, tokenContext).then((result) => {
+						collectionInfo.label = result;
+					})
+				);
+			}
+
+			// Wait for all token replacements to complete
+			if (tokenPromises.length > 0) {
+				await Promise.all(tokenPromises);
+			}
+
+			return collectionInfo;
+		});
+
+		// Execute all collection processing in parallel
+		const processedCollections = await Promise.all(tokenReplacementPromises);
+		accessibleCollections.push(...processedCollections);
 
 		const duration = performance.now() - start;
 		logger.info(`${accessibleCollections.length} collections retrieved in ${duration.toFixed(2)}ms for tenant ${tenantId || 'default'}`);

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * @src\components\system\inputs\file-input.svelte run-integration-tests.ts
- * @src\widgets\coreich-text\components\image-description.svelte Truly Black-Box Integration Test Runner
+ * @src\widgets\core\rich-text\components\image-description.svelte Truly Black-Box Integration Test Runner
  * Uses /api/testing for state management. No internal imports allowed.
  */
 
@@ -40,6 +40,38 @@ async function cleanup(exitCode = 0) {
 			}
 		}
 	}
+
+	// Clean up SQLite files explicitly created by the test
+	try {
+		const fs = require('node:fs');
+		const path = require('node:path');
+		const dbName = process.env.DB_NAME || 'sveltycms_test';
+
+		// Clean up dynamically created test workers
+		for (const file of fs.readdirSync(rootDir)) {
+			// Catch sveltycms_test, sveltycms_test-wal, sveltycms_test_worker1, etc.
+			// Making sure it's a file, not a directory.
+			if (file.startsWith(dbName)) {
+				const fullPath = path.join(rootDir, file);
+				try {
+					if (fs.statSync(fullPath).isFile()) {
+						fs.unlinkSync(fullPath);
+					}
+				} catch (e) {
+					// Ignore
+				}
+			}
+		}
+
+		// Also clean up any legacy 127.0.0.1 directory if it exists
+		const badDir = path.join(rootDir, '127.0.0.1');
+		if (fs.existsSync(badDir)) {
+			fs.rmSync(badDir, { recursive: true, force: true });
+		}
+	} catch (e) {
+		console.warn('Non-fatal error cleaning up sqlite directories:', e);
+	}
+
 	process.exit(exitCode);
 }
 
@@ -85,8 +117,13 @@ async function main() {
 		const dbType = process.env.DB_TYPE || 'sqlite';
 		console.log(`📡 DB_TYPE: ${dbType}`);
 
+		// For SQLite, redirect the host to the current directory to avoid creating a '127.0.0.1' folder
+		const originalHost = process.env.DB_HOST || HOST;
+		const dbHost = dbType === 'sqlite' ? '.' : originalHost;
+
 		const setupResult = await runCommand(pkgManager, ['run', 'scripts/setup-system.ts'], {
 			DB_TYPE: dbType,
+			DB_HOST: dbHost,
 			TEST_MODE: 'true',
 			API_BASE_URL,
 			TEST_API_SECRET
@@ -97,7 +134,7 @@ async function main() {
 
 		// 1.6. RESTART SERVER to pick up new config/private.test.ts
 		console.log('🔄 Restarting preview server to apply new configuration...');
-		await startPreviewServer();
+		await startPreviewServer(dbHost);
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests
@@ -187,7 +224,7 @@ function runCommand(command: string, args: string[], extraEnv: Record<string, st
 	});
 }
 
-async function startPreviewServer() {
+async function startPreviewServer(dbHost?: string) {
 	if (previewProcess) {
 		console.log('🛑 Killing existing preview process...');
 		if (process.platform === 'win32') {
@@ -215,6 +252,7 @@ async function startPreviewServer() {
 				...process.env,
 				NODE_ENV: 'production',
 				DB_TYPE: process.env.DB_TYPE || 'sqlite',
+				DB_HOST: dbHost || process.env.DB_HOST || HOST,
 				TEST_MODE: 'true',
 				TEST_API_SECRET,
 				ORIGIN: API_BASE_URL

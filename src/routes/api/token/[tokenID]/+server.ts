@@ -54,7 +54,7 @@ const editTokenSchema = object({
  * Validates an invitation token - public endpoint for registration flow
  */
 export const GET = apiHandler(async ({ params }) => {
-	const tokenValue = params.tokenId;
+	const tokenValue = params.tokenID;
 	if (!tokenValue) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}
@@ -87,7 +87,7 @@ export const GET = apiHandler(async ({ params }) => {
 
 export const PUT = apiHandler(async ({ request, params, locals }) => {
 	const { user, tenantId } = locals;
-	const tokenId = params.tokenId;
+	const tokenId = params.tokenID;
 	if (!tokenId) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}
@@ -166,7 +166,7 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
 
 export const DELETE = apiHandler(async ({ params, locals }) => {
 	const { user, tenantId } = locals;
-	const tokenIdOrValue = params.tokenId;
+	const tokenIdOrValue = params.tokenID;
 	if (!tokenIdOrValue) {
 		throw new AppError('Token ID is required in the URL path.', 400, 'MISSING_TOKEN_ID');
 	}

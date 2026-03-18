@@ -561,10 +561,10 @@ export interface ICrudAdapter {
 
 export interface IMediaAdapter {
 	files: {
-		upload(file: EntityCreate<MediaItem>): Promise<DatabaseResult<MediaItem>>;
-		uploadMany(files: EntityCreate<MediaItem>[]): Promise<DatabaseResult<MediaItem[]>>;
-		delete(fileId: DatabaseId): Promise<DatabaseResult<void>>;
-		deleteMany(fileIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>>;
+		upload(file: EntityCreate<MediaItem>, tenantId?: string | null): Promise<DatabaseResult<MediaItem>>;
+		uploadMany(files: EntityCreate<MediaItem>[], tenantId?: string | null): Promise<DatabaseResult<MediaItem[]>>;
+		delete(fileId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
+		deleteMany(fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>>;
 		getByFolder(
 			folderId?: DatabaseId,
 			options?: PaginationOptions,
@@ -572,22 +572,23 @@ export interface IMediaAdapter {
 			tenantId?: string | null | null
 		): Promise<DatabaseResult<PaginatedResult<MediaItem>>>;
 		search(query: string, options?: PaginationOptions, tenantId?: string | null | null): Promise<DatabaseResult<PaginatedResult<MediaItem>>>;
-		getMetadata(fileIds: DatabaseId[]): Promise<DatabaseResult<Record<string, MediaMetadata>>>;
-		updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>): Promise<DatabaseResult<MediaItem>>;
-		move(fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<DatabaseResult<{ movedCount: number }>>;
-		duplicate(fileId: DatabaseId, newName?: string): Promise<DatabaseResult<MediaItem>>;
+		getMetadata(fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<Record<string, MediaMetadata>>>;
+		updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>, tenantId?: string | null): Promise<DatabaseResult<MediaItem>>;
+		move(fileIds: DatabaseId[], targetFolderId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<{ movedCount: number }>>;
+		duplicate(fileId: DatabaseId, newName?: string, tenantId?: string | null): Promise<DatabaseResult<MediaItem>>;
 	};
 	folders: {
-		create(folder: EntityCreate<MediaFolder>): Promise<DatabaseResult<MediaFolder>>;
-		createMany(folders: EntityCreate<MediaFolder>[]): Promise<DatabaseResult<MediaFolder[]>>;
-		delete(folderId: DatabaseId): Promise<DatabaseResult<void>>;
-		deleteMany(folderIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>>;
-		getTree(maxDepth?: number): Promise<DatabaseResult<MediaFolder[]>>;
+		create(folder: EntityCreate<MediaFolder>, tenantId?: string | null): Promise<DatabaseResult<MediaFolder>>;
+		createMany(folders: EntityCreate<MediaFolder>[], tenantId?: string | null): Promise<DatabaseResult<MediaFolder[]>>;
+		delete(folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
+		deleteMany(folderIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>>;
+		getTree(maxDepth?: number, tenantId?: string | null): Promise<DatabaseResult<MediaFolder[]>>;
 		getFolderContents(
 			folderId?: DatabaseId,
-			options?: PaginationOptions
+			options?: PaginationOptions,
+			tenantId?: string | null
 		): Promise<DatabaseResult<{ folders: MediaFolder[]; files: MediaItem[]; totalCount: number }>>;
-		move(folderId: DatabaseId, targetParentId?: DatabaseId): Promise<DatabaseResult<MediaFolder>>;
+		move(folderId: DatabaseId, targetParentId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<MediaFolder>>;
 	};
 	setupMediaModels(): Promise<void>;
 }

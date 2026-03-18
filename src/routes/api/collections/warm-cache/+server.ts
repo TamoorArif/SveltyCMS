@@ -17,6 +17,12 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { collectionId, entryIds } = await request.json();
+
+	// Security: Ensure user is authenticated
+	if (!locals.user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
 	const tenantId = locals.tenantId;
 
 	if (!(collectionId && Array.isArray(entryIds))) {

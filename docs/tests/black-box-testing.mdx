@@ -16,6 +16,28 @@ tags:
 
 SveltyCMS has pivoted to a **100% Black-Box Testing** strategy for all integration and E2E tests. This transition removes the reliance on internal code imports (`@src/*`) within test files, ensuring that the CMS is tested exactly as a user or API consumer would experience it.
 
+```mermaid
+graph TD
+    classDef testBed fill:#2c3e50,stroke:#34495e,stroke-width:2px,color:white;
+    classDef internal fill:#27ae60,stroke:#2ecc71,stroke-width:2px,color:white;
+    classDef server fill:#2980b9,stroke:#3498db,stroke-width:2px,color:white;
+    classDef security fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:white;
+
+    Runner[Integration Runner <br> 'bun test']:::testBed
+    GodMode[/God-Mode API: /api/testing\]:::security
+    Login[/Login API: /api/auth/login\]:::server
+    App[SvelteKit API & Pages]:::internal
+    DB[(Database Adapter <br> SQLite/Mongo/SQL)]:::internal
+
+    Runner -- 1. Orchestrate Setup & Wipe --> GodMode
+    Runner -- 2. Authenticate --> Login
+    Runner -- 3. Fetch/Submit Data --> App
+    
+    GodMode -.-> DB
+    Login -.->|Generates State & Cookie| DB
+    App -.-> DB
+```
+
 ## Why Black-Box Testing?
 
 ### 1. 🛡️ Maximum Security Verification
@@ -94,6 +116,27 @@ Black-box tests now explicitly verify the "Smart Onboarding" redirection flow:
 
 - **Empty CMS**: Verifies that Admins are redirected to `/config/collectionbuilder` immediately after login.
 - **Error Recovery**: Verifies that any failure during collection detection falls back to the root path `/` for a safe user experience.
+
+## 🛡️ Core Verification Principles
+
+To ensure our 100% black-box integration tests are robust, all current and future endpoint test suites MUST explicitly cover these critical boundaries:
+
+### 1. Multi-Tenancy Security Boundaries
+Endpoints managing sensitive data or authentication must be verified against rigorous multi-tenant isolation scenarios:
+- **Cross-Tenant Spoofing**: Prepare two separate tenant contexts (Tenant-A and Tenant-B). Attempt to execute `PUT`/`DELETE` operations against Tenant-A's resources while authenticated as Tenant-B. Assert the API strictly enforces a `403 Forbidden` response.
+- **Missing Context**: Dispatch requests lacking necessary tenant payload headers/locals and assert strict rejection (e.g. `500 TENANT_REQUIRED` or `400`).
+
+### 2. Cache Invalidation Verification (Preventing Stale UI)
+A common pitfall in headless architecture is failing to properly clear caches on mutation.
+- **Read-After-Write Consistency**: After a successful `PUT` or `DELETE` request, immediately issue a `GET` request to verify the stale cache was correctly bypassed/purged and the updated state is returned.
+- **Failure Gracefulness**: When possible via environmental simulation (like halting Redis), verify that cache deletion failures do not crash the primary mutation transaction (e.g., the API should still return `200 Success` despite an internal cache warning).
+
+### 3. Progressive Degradation & DB-Agnostic Fallbacks
+When falling back from unified interfaces to adapter-specific implementations (e.g., `TokenAdapter`), tests should verify both code paths:
+- Tests must pass successfully regardless of whether the primary unified interface handles the action or if the system safely falls back to dynamic adapter imports. This guarantees complete DB-agnostic operations.
+
+### 4. Direct Handler vs. Network Layer (MSW)
+For specialized testing of edge cases (e.g. injecting network failures or verifying ESM mocking with `vi.hoisted()`), these principles are mirrored in our White-Box Unit Tests. However, in the Black-Box suite, verify the *Network Layer* explicitly (fetching via HTTP) to guarantee that SvelteKit's parsing, middleware chain, and payload validation operate as a single harmonious unit.
 
 ---
 

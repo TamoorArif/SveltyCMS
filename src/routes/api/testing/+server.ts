@@ -50,8 +50,19 @@ export async function POST(event: RequestEvent) {
 		const { dbAdapter: initialDb, auth: initialAuth, reinitializeSystem } = await import('@src/databases/db');
 
 		if (!initialDb || !initialAuth) {
-			console.log('[API/Testing] Database not initialized. Attempting re-initialization...');
-			await reinitializeSystem(true);
+			console.log('[API/Testing] Database/Auth not fully initialized. Attempting re-initialization...');
+			const result = await reinitializeSystem(true);
+			if (result.status === 'failed') {
+				console.error('[API/Testing] Re-initialization failed:', result.error);
+				return json(
+					{
+						error: 'System re-initialization failed',
+						details: result.error,
+						status: result.status
+					},
+					{ status: 503 }
+				);
+			}
 		}
 
 		// Re-import after initialization (module-level `dbAdapter` may have been reassigned)
@@ -60,7 +71,18 @@ export async function POST(event: RequestEvent) {
 		const currentAuth = db.auth;
 
 		if (!(currentDbAdapter && currentAuth)) {
-			return json({ error: 'Database or Auth not initialized after init attempt' }, { status: 503 });
+			console.error('[API/Testing] Database or Auth still missing after init attempt', {
+				hasDb: !!currentDbAdapter,
+				hasAuth: !!currentAuth
+			});
+			return json(
+				{
+					error: 'Database or Auth not initialized after init attempt',
+					hasDb: !!currentDbAdapter,
+					hasAuth: !!currentAuth
+				},
+				{ status: 503 }
+			);
 		}
 
 		const body = await request.json();
@@ -77,7 +99,26 @@ export async function POST(event: RequestEvent) {
 				const { clearAllSessionCaches } = await import('@src/hooks/handle-authentication');
 				await clearAllSessionCaches();
 
-				return json({ success: true, message: 'Database cleared and caches invalidated' });
+				// Wipe uploaded media files from tests
+				try {
+					const { getPublicSetting } = await import('@src/services/settings-service');
+					const fs = await import('node:fs/promises');
+					const path = await import('node:path');
+					const mediaFolderPath = (await getPublicSetting('MEDIA_FOLDER')) || 'mediaFolder';
+					const fullPath = path.resolve(process.cwd(), mediaFolderPath);
+
+					// Recursively empty the folder rather than deleting it completely to avoid EBUSY on Windows
+					if (require('node:fs').existsSync(fullPath)) {
+						const items = await fs.readdir(fullPath);
+						for (const item of items) {
+							await fs.rm(path.join(fullPath, item), { recursive: true, force: true });
+						}
+					}
+				} catch (e) {
+					console.warn('[API/Testing] Non-fatal error cleaning media folder:', e);
+				}
+
+				return json({ success: true, message: 'Database cleared, caches invalidated, and media files wiped' });
 			}
 
 			case 'get-user-count': {

@@ -19,6 +19,7 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
 
 // GET - Get 2FA status including backup codes count
 export const GET = apiHandler(async ({ locals }) => {
@@ -29,7 +30,9 @@ export const GET = apiHandler(async ({ locals }) => {
 	}
 
 	const user = locals.user;
-	const tenantId = user.tenantId;
+
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, '2FA status request');
 
 	// Ensure auth service is initialized
 	if (!auth) {
@@ -57,7 +60,9 @@ export const POST = apiHandler(async ({ locals }) => {
 	}
 
 	const user = locals.user;
-	const tenantId = user.tenantId;
+
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, 'Backup code regeneration');
 
 	// Check if 2FA is enabled
 	if (!user.is2FAEnabled) {

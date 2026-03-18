@@ -328,8 +328,8 @@ export class MongoDBAdapter implements IDBAdapter {
 			this._realMedia = {
 				setupMediaModels: async () => {},
 				files: {
-					upload: (f) => this.crud.insert('media', f),
-					uploadMany: (f) =>
+					upload: (f, t) => this.crud.insert('media', f as any, t),
+					uploadMany: (f, t) =>
 						this._wrapResult(() =>
 							mediaMethods.uploadMany(
 								f.map(
@@ -339,30 +339,31 @@ export class MongoDBAdapter implements IDBAdapter {
 											createdAt: new Date().toISOString(),
 											updatedAt: new Date().toISOString()
 										}) as import('../db-interface').MediaItem
-								)
+								),
+								t
 							)
 						),
-					delete: (id) => this.crud.delete('media', id),
-					deleteMany: (ids) => this._wrapResult(() => mediaMethods.deleteMany(ids)),
+					delete: (id, t) => this.crud.delete('media', id, t),
+					deleteMany: (ids, t) => this._wrapResult(() => mediaMethods.deleteMany(ids, t)),
 					getByFolder: (id, o, recursive, tenantId) => this._wrapResult(() => mediaMethods.getFiles(id, o, recursive, tenantId)),
 					search: (_q, o, tenantId) => this._wrapResult(() => mediaMethods.getFiles(undefined, { ...o, user: o?.user }, true, tenantId)),
 					getMetadata: () => this._wrapResult(async () => ({}) as Record<string, import('../db-interface').MediaMetadata>),
-					updateMetadata: (id, m) =>
-						this._wrapResult(() => mediaMethods.updateMetadata(id, m)) as Promise<DatabaseResult<import('../db-interface').MediaItem>>,
-					move: (ids, target) => this._wrapResult(() => mediaMethods.move(ids, target)),
+					updateMetadata: (id, m, t) =>
+						this._wrapResult(() => mediaMethods.updateMetadata(id, m, t)) as Promise<DatabaseResult<import('../db-interface').MediaItem>>,
+					move: (ids, target, t) => this._wrapResult(() => mediaMethods.move(ids, target, t)),
 					duplicate: () => this._wrapResult(async () => ({}) as import('../db-interface').MediaItem)
 				},
 				folders: {
-					create: (f) => this.crud.insert('media_folders', f),
-					createMany: (f) => this.crud.insertMany('media_folders', f),
-					delete: (id) => this.crud.delete('media_folders', id),
-					deleteMany: (ids) => {
+					create: (f, t) => this.crud.insert('media_folders', f as any, t),
+					createMany: (f, t) => this.crud.insertMany('media_folders', f as any[], t),
+					delete: (id, t) => this.crud.delete('media_folders', id, t),
+					deleteMany: (ids, t) => {
 						const query: Record<string, unknown> = { _id: { $in: ids } };
 						return this.crud.deleteMany(
 							'media_folders',
 							query as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
-							undefined, // tenantId (handled by safeQuery if needed, but here it's IDs)
-							true // bypassTenantCheck
+							t, // tenantId (handled by safeQuery if needed, but here it's IDs)
+							t === undefined // bypassTenantCheck
 						);
 					},
 					getTree: () => this._wrapResult(async () => []),
@@ -372,7 +373,7 @@ export class MongoDBAdapter implements IDBAdapter {
 							files: [],
 							totalCount: 0
 						})),
-					move: (id, target) => this.crud.update('media_folders', id, { parentId: target })
+					move: (id, target, t) => this.crud.update('media_folders', id, { parentId: target }, t)
 				}
 			};
 			this._featureInit.media = true;

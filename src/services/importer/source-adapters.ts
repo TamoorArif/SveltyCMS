@@ -26,7 +26,7 @@ export async function fetchDrupalData(url: string, type: string, apiKey?: string
 			'Content-Type': 'application/vnd.api+json'
 		};
 		if (apiKey) {
-			headers['Authorization'] = `Bearer ${apiKey}`;
+			headers.Authorization = `Bearer ${apiKey}`;
 		}
 
 		const response = await fetch(endpoint, { headers });
@@ -72,7 +72,7 @@ export async function fetchWordPressData(url: string, type: string, apiKey?: str
 			Accept: 'application/json'
 		};
 		if (apiKey) {
-			headers['Authorization'] = `Basic ${Buffer.from(apiKey).toString('base64')}`;
+			headers.Authorization = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 		}
 
 		const response = await fetch(endpoint, { headers });

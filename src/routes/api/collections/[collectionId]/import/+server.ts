@@ -40,11 +40,15 @@ import { AppError } from '@utils/error-handling';
 export const POST = apiHandler(async ({ params, request, locals }) => {
 	const startTime = performance.now();
 	const { collectionId } = params;
-	const { user } = locals;
+	const { user, tenantId } = locals;
 
 	if (!user) {
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
 	}
+
+	// Get multi-tenant setting
+	const { getPrivateSettingSync } = await import('@src/services/settings-service');
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT') ?? false;
 
 	// Get collection schema
 	const schema = await contentManager.getCollection(collectionId);
@@ -89,7 +93,7 @@ export const POST = apiHandler(async ({ params, request, locals }) => {
 
 	// Import the entries
 	try {
-		const result = await importEntries(`collection_${schema._id}`, entries, schema, importOptions);
+		const result = await importEntries(`collection_${schema._id}`, entries, schema, importOptions, tenantId, isMultiTenant);
 		const duration = performance.now() - startTime;
 
 		logger.info(`Collection import completed for ${collectionId}`, {
@@ -198,7 +202,14 @@ function parseCSVLine(line: string, delimiter = ','): string[] {
 	return values;
 }
 
-async function importEntries(collectionName: string, entries: CollectionEntry[], schema: Schema, options: ImportOptions) {
+async function importEntries(
+	collectionName: string,
+	entries: CollectionEntry[],
+	schema: Schema,
+	options: ImportOptions,
+	tenantId: string | null | undefined,
+	isMultiTenant?: boolean
+) {
 	const result: {
 		imported: number;
 		skipped: number;
@@ -250,10 +261,12 @@ async function importEntries(collectionName: string, entries: CollectionEntry[],
 					// Ensure metadata
 					createdAt: entry.createdAt || new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
-					status: entry.status || 'draft'
+					status: entry.status || 'draft',
+					// Inject tenantId for multi-tenant isolation
+					...(isMultiTenant && tenantId ? { tenantId } : {})
 				};
 
-				// Check for existing entry
+				// Check for existing entry (scoped by tenantId in multi-tenant mode)
 				if (!dbAdapter) {
 					throw new Error('Database adapter not initialized');
 				}
@@ -261,9 +274,14 @@ async function importEntries(collectionName: string, entries: CollectionEntry[],
 				let existingEntry: any = null;
 				if (entry._id || entry.id) {
 					const searchId = entry._id || entry.id;
-					const searchResult = await dbAdapter.crud.findOne(collectionName, {
-						_id: searchId
-					} as any);
+					const searchQuery: Record<string, unknown> = { _id: searchId };
+
+					// Scope search by tenantId in multi-tenant mode to prevent cross-tenant overwrites
+					if (isMultiTenant && tenantId) {
+						searchQuery.tenantId = tenantId;
+					}
+
+					const searchResult = await dbAdapter.crud.findOne(collectionName, searchQuery as any);
 					if (searchResult.success && searchResult.data) {
 						existingEntry = searchResult.data;
 					}

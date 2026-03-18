@@ -25,7 +25,7 @@ async function getMediaService(): Promise<MediaService> {
 }
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
-	const { user } = locals;
+	const { user, tenantId } = locals;
 	const { id } = params;
 
 	if (!user) {
@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		const mediaService = await getMediaService();
 
 		// Use manipulateMedia to apply Sharp transformations
-		const updatedMedia = await mediaService.manipulateMedia(id, manipulations, user._id);
+		const updatedMedia = await mediaService.manipulateMedia(id, manipulations, user._id, tenantId ?? null);
 
 		return json({
 			success: true,

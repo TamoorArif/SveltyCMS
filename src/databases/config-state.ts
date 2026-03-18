@@ -43,7 +43,23 @@ export async function loadPrivateConfig(forceReload = false) {
 					return null;
 				}
 				const configURL = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
-				module = await import(/* @vite-ignore */ configURL);
+
+				try {
+					module = await import(/* @vite-ignore */ configURL);
+				} catch (err) {
+					// Fallback for Node.js (e.g. vite preview) which cannot import .ts files natively
+					logger.debug('Dynamic import of private.test.ts failed (likely Node.js). Falling back to string parser.');
+					const fs = await import('node:fs');
+					const content = fs.readFileSync(configPath, 'utf8');
+					const match = content.match(/export const privateEnv = ({[\s\S]*?});/);
+					if (match) {
+						const getObj = new Function(`return ${match[1]}`);
+						module = { privateEnv: getObj() };
+						module.__VIRTUAL__ = true;
+					} else {
+						throw err;
+					}
+				}
 			} else {
 				// STRICT SAFETY: Never allow loading live config if NODE_ENV is 'test'
 				if (process.env.NODE_ENV === 'test') {

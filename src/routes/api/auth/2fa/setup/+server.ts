@@ -19,6 +19,7 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
 
 export const POST = apiHandler(async ({ locals }) => {
 	// Ensure user is authenticated
@@ -28,7 +29,9 @@ export const POST = apiHandler(async ({ locals }) => {
 	}
 
 	const user = locals.user;
-	const tenantId = user.tenantId;
+
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, '2FA setup initiation');
 
 	// Check if 2FA is already enabled
 	if (user.is2FAEnabled) {

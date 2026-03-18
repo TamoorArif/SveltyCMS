@@ -139,7 +139,7 @@ export const POST: RequestHandler = apiHandler(async ({ request, locals }) => {
 	});
 	// Invalidate user count cache since users were deleted
 	const { invalidateUserCountCache } = await import('@src/hooks/handle-authorization');
-	invalidateUserCountCache(tenantId);
+	await invalidateUserCountCache(tenantId);
 
 	return json({ success: true, message: successMessage });
 });

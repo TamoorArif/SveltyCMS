@@ -14,11 +14,13 @@
 
 import { auth } from '@databases/db';
 import { getDefaultTwoFactorAuthService } from '@src/databases/auth/two-factor-auth';
-import { json } from '@sveltejs/kit';
+import { json, type RequestEvent } from '@sveltejs/kit';
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
+import { RateLimiter } from 'sveltekit-rate-limiter/server';
 import { array, object, parse, string } from 'valibot';
 
 // Request body schema
@@ -28,7 +30,23 @@ const verifySetupSchema = object({
 	backupCodes: array(string(), 'Backup codes are required')
 });
 
-export const POST = apiHandler(async ({ request, locals }) => {
+// Reuse verifyLimiter for setup verification
+const verifyLimiter = new RateLimiter({
+	IP: [5, '5m'],
+	IPUA: [5, '5m']
+});
+
+export const POST = apiHandler(async (event: RequestEvent) => {
+	const { request, locals } = event;
+
+	// Rate Limiting Check
+	if (await verifyLimiter.isLimited(event)) {
+		logger.warn('2FA setup verification rate limit exceeded', {
+			ip: event.getClientAddress()
+		});
+		throw new AppError('Too many verification attempts. Please try again in 5 minutes.', 429, 'RATE_LIMIT_EXCEEDED');
+	}
+
 	// Ensure user is authenticated
 	if (!locals.user) {
 		logger.warn('Unauthorized 2FA setup verification attempt');
@@ -36,7 +54,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
 	}
 
 	const user = locals.user;
-	const tenantId = user.tenantId;
+
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, '2FA setup verification');
 
 	// Check if 2FA is already enabled
 	if (user.is2FAEnabled) {

@@ -14,11 +14,13 @@
 
 import { auth } from '@databases/db';
 import { getDefaultTwoFactorAuthService } from '@src/databases/auth/two-factor-auth';
-import { json } from '@sveltejs/kit';
+import { json, type RequestEvent } from '@sveltejs/kit';
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
+import { RateLimiter } from 'sveltekit-rate-limiter/server';
 import { object, parse, string } from 'valibot';
 
 // Request body schema
@@ -27,7 +29,25 @@ const verifySchema = object({
 	code: string('Verification code is required')
 });
 
-export const POST = apiHandler(async ({ request, locals }) => {
+// Stricter limiter for 2FA verification to prevent brute-forcing backup codes
+const verifyLimiter = new RateLimiter({
+	// 5 attempts per 5 minutes per IP or IP+UA
+	IP: [5, '5m'],
+	IPUA: [5, '5m']
+});
+
+export const POST = apiHandler(async (event: RequestEvent) => {
+	const { request, locals } = event;
+
+	// Rate Limiting Check
+	if (await verifyLimiter.isLimited(event)) {
+		logger.warn('2FA verification rate limit exceeded', {
+			ip: event.getClientAddress(),
+			path: event.url.pathname
+		});
+		throw new AppError('Too many verification attempts. Please try again in 5 minutes.', 429, 'RATE_LIMIT_EXCEEDED');
+	}
+
 	// This endpoint can be used during login flow, so user might not be fully authenticated yet
 	// The userId will be provided in the request body for verification
 
@@ -37,8 +57,8 @@ export const POST = apiHandler(async ({ request, locals }) => {
 	});
 	const validatedBody = parse(verifySchema, body);
 
-	// Get tenant ID from locals if available
-	const tenantId = locals.user?.tenantId;
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, '2FA verification');
 
 	// Verify 2FA code
 	if (!auth) {

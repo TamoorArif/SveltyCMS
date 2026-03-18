@@ -48,9 +48,11 @@ export class MongoMediaMethods {
 	// ============================================================
 
 	/// Uploads multiple media files in a single, efficient batch operation
-	async uploadMany(files: Omit<MediaItem, '_id'>[]): Promise<DatabaseResult<MediaItem[]>> {
+	async uploadMany(files: Omit<MediaItem, '_id'>[], tenantId?: string | null): Promise<DatabaseResult<MediaItem[]>> {
 		try {
-			const result = await this.mediaModel.insertMany(files);
+			// Ensure files are injected with the correct tenantId if provided
+			const filesWithTenant = tenantId ? files.map((f) => ({ ...f, tenantId })) : files;
+			const result = await this.mediaModel.insertMany(filesWithTenant);
 
 			// Invalidate media caches
 			await invalidateCategoryCache(CacheCategory.MEDIA);
@@ -69,14 +71,18 @@ export class MongoMediaMethods {
 	}
 
 	// Deletes multiple media files in a single batch operation
-	async deleteMany(fileIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>> {
+	async deleteMany(fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> {
 		try {
 			if (fileIds.length === 0) {
 				return { success: true, data: { deletedCount: 0 } };
 			}
-			const result = await this.mediaModel.deleteMany({
-				_id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id']
-			});
+			const query = safeQuery(
+				{
+					_id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id']
+				},
+				tenantId
+			);
+			const result = await this.mediaModel.deleteMany(query);
 
 			// Invalidate media caches
 			await invalidateCategoryCache(CacheCategory.MEDIA);
@@ -92,7 +98,7 @@ export class MongoMediaMethods {
 	}
 
 	// Updates metadata for a single file
-	async updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>): Promise<DatabaseResult<MediaItem | null>> {
+	async updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>, tenantId?: string | null): Promise<DatabaseResult<MediaItem | null>> {
 		try {
 			const updateData = Object.entries(metadata).reduce(
 				(acc, [key, value]) => {
@@ -103,9 +109,10 @@ export class MongoMediaMethods {
 			);
 
 			updateData.updatedAt = new Date();
+			const query = safeQuery({ _id: fileId }, tenantId);
 
 			const result = await this.mediaModel
-				.findByIdAndUpdate(fileId as string, { $set: updateData }, { returnDocument: 'after' })
+				.findOneAndUpdate(query as any, { $set: updateData }, { returnDocument: 'after' })
 				.lean()
 				.exec();
 
@@ -123,12 +130,10 @@ export class MongoMediaMethods {
 	}
 
 	// Moves multiple files to a different folder
-	async move(fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<DatabaseResult<{ movedCount: number }>> {
+	async move(fileIds: DatabaseId[], targetFolderId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<{ movedCount: number }>> {
 		try {
-			const result = await this.mediaModel.updateMany(
-				{ _id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id'] },
-				{ $set: { folderId: targetFolderId as string, updatedAt: new Date() } }
-			);
+			const query = safeQuery({ _id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id'] }, tenantId);
+			const result = await this.mediaModel.updateMany(query, { $set: { folderId: targetFolderId as string, updatedAt: new Date() } });
 
 			// Invalidate media caches
 			await invalidateCategoryCache(CacheCategory.MEDIA);

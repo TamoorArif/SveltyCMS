@@ -36,22 +36,11 @@ import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 // System Logger
 import { logger } from '@utils/logger.server';
+// Shared utilities
+import { parseSessionDuration } from '@utils/auth-utils';
 
 // Input validation
 import { check, email, forward, object, optional, parse, pipe, string } from 'valibot';
-
-// Helper function to parse session duration strings
-function parseSessionDuration(duration: string): number {
-	const durationMap: Record<string, number> = {
-		'1h': 60 * 60 * 1000, // 1 hour
-		'1d': 24 * 60 * 60 * 1000, // 1 day
-		'7d': 7 * 24 * 60 * 60 * 1000, // 7 days
-		'30d': 30 * 24 * 60 * 60 * 1000, // 30 days
-		'90d': 90 * 24 * 60 * 60 * 1000 // 90 days
-	};
-
-	return durationMap[duration] || durationMap['7d']; // Default to 7 days
-}
 
 // Define a schema for the incoming user data to ensure type safety and prevent invalid data.
 const createUserSchema = pipe(

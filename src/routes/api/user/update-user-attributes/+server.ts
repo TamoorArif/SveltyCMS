@@ -53,7 +53,7 @@ const baseUserDataSchema = object({
 });
 
 export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies }) => {
-	const { user, tenantId } = locals; // Destructure user and tenantId
+	const { user, tenantId, hasAdminPermission } = locals; // Destructure user, tenantId, and hasAdminPermission
 
 	if (!auth) {
 		logger.error('Authentication system is not initialized');
@@ -87,8 +87,14 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
 	// **TWO-LEVEL PERMISSION SYSTEM**: Check if user is editing their own profile or has admin permissions
 	const isEditingSelf = user._id === userIdToUpdate;
 
-	// Permission checking is handled by hooks.server.ts
-	// Users can always edit their own profiles, admins can edit others (handled by hooks)
+	// **SECURITY CHECK**: Ensure user is editing themselves OR has admin permissions
+	if (!isEditingSelf && !hasAdminPermission) {
+		logger.warn('Unauthorized attempt to edit another user profile', {
+			byUser: user._id,
+			targetUser: userIdToUpdate
+		});
+		throw new AppError('Forbidden: You can only edit your own profile.', 403, 'FORBIDDEN');
+	}
 
 	// --- MULTI-TENANCY SECURITY CHECK ---
 	// If an admin is editing another user, ensure the target user is in the same tenant.
@@ -188,7 +194,7 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
 
 	// Invalidate roles cache since user data may have changed
 	const { invalidateRolesCache } = await import('@src/hooks/handle-authorization');
-	invalidateRolesCache(tenantId);
+	await invalidateRolesCache(tenantId);
 
 	logger.info('User attributes updated successfully', {
 		user_id: userIdToUpdate,

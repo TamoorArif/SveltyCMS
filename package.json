@@ -30,6 +30,7 @@
 		"test:unit:bun": "svelte-kit sync && bun test --preload ./tests/unit/setup.ts tests/unit/**/*.test.ts",
 		"test:integration": "$npm_execpath run scripts/run-integration-tests.ts",
 		"test:integration:run": "$npm_execpath run scripts/run-integration-tests.ts",
+		"test:integration:ci": "TEST_MODE=true $npm_execpath run scripts/run-integration-tests.ts",
 		"test:hooks": "for test in authorization security-headers theme authentication firewall static-asset-caching system-state api-requests rate-limit locale setup token-resolution; do vitest run ./tests/unit/hooks/${test}.test.ts || exit 1; done",
 		"test:e2e": "concurrently -k -s last \"$npm_execpath run dev\" \"$npm_execpath run test:e2e:run\"",
 		"test:e2e:run": "wait-on http://127.0.0.1:5173 && npx playwright test tests/e2e",
@@ -98,7 +99,7 @@
 		"mcp-server"
 	],
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.7",
+		"@biomejs/biome": "^2.4.8",
 		"@iconify/svelte": "^5.2.1",
 		"@playwright/test": "^1.58.2",
 		"@semantic-release/changelog": "^6.0.3",
@@ -204,7 +205,7 @@
 		"lru-cache": "^11.2.7",
 		"mime-types": "^3.0.2",
 		"node-os-utils": "^2.0.1",
-		"nodemailer": "^8.0.2",
+		"nodemailer": "^8.0.3",
 		"ollama": "^0.6.3",
 		"picocolors": "^1.1.1",
 		"redis": "^5.11.0",

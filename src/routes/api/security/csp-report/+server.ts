@@ -1,21 +1,11 @@
-/**
- * @file src/routes/api/security/csp-report/+server.ts
- * @description CSP violation reporting endpoint for security monitoring
- *
- * ### Features
- * - Receives and processes CSP violation reports
- * - Logs violations for security analysis
- * - Tracks violation metrics for monitoring
- * - Rate limits to prevent abuse
- * - Validates report format
- *
- * @security This endpoint helps monitor XSS attempts and policy violations
- */
-
 import { metricsService } from '@src/services/metrics-service';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { logger } from '@utils/logger.server';
 import { dev } from '$app/environment';
+// Unified Error Handling
+import { apiHandler } from '@utils/api-handler';
+import { AppError } from '@utils/error-handling';
+import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
 
 // --- TYPES ---
 
@@ -71,12 +61,6 @@ function shouldIgnoreViolation(report: CSPViolationReport): boolean {
 		return true;
 	}
 
-	// Ignore common browser artifacts
-	if (blockedUri === 'eval' && violatedDirective.includes('script-src')) {
-		// This might be legitimate eval() usage - log but don't alarm
-		return false;
-	}
-
 	// Ignore data URLs for images (commonly used legitimately)
 	if (blockedUri.startsWith('data:') && violatedDirective.includes('img-src')) {
 		return true;
@@ -90,101 +74,88 @@ function shouldIgnoreViolation(report: CSPViolationReport): boolean {
 /**
  * Handles CSP violation reports sent by browsers.
  */
-// Unified Error Handling
-import { apiHandler } from '@utils/api-handler';
+export const POST = apiHandler(async ({ request, getClientAddress, locals }) => {
+	// Parse the violation report
+	const contentType = request.headers.get('content-type') || '';
+	let reportData: unknown;
 
-/**
- * Handles CSP violation reports sent by browsers.
- */
-export const POST = apiHandler(async ({ request, getClientAddress }) => {
+	// Handle standard CSP report format or newer Reporting API format
 	try {
-		// Rate limiting check (prevent report spam)
-		const clientIp = getClientAddress();
-
-		// Parse the violation report
-		const contentType = request.headers.get('content-type') || '';
-		let reportData: unknown;
-
 		if (contentType.includes('application/csp-report')) {
-			// Standard CSP report format
 			reportData = await request.json();
 		} else if (contentType.includes('application/reports+json')) {
-			// Newer Reporting API format
 			const reports = await request.json();
 			if (Array.isArray(reports) && reports.length > 0) {
 				reportData = { 'csp-report': reports[0].body };
 			}
 		} else {
 			logger.warn(`CSP report with unexpected content-type: ${contentType}`);
-			return json({ error: 'Invalid content type' }, { status: 400 });
+			throw new AppError('Invalid content type', 400, 'INVALID_CONTENT_TYPE');
 		}
-
-		// Validate report format
-		if (!isValidCSPReport(reportData)) {
-			logger.warn('Invalid CSP report format received', { data: reportData });
-			return json({ error: 'Invalid report format' }, { status: 400 });
-		}
-
-		const report = reportData['csp-report'];
-
-		// Check if this violation should be ignored
-		if (shouldIgnoreViolation(report)) {
-			logger.trace(`Ignoring CSP violation: ${report['violated-directive']} - ${report['blocked-uri']}`);
-			return json({ status: 'ignored' }, { status: 200 });
-		}
-
-		// Log the violation for analysis
-		const logLevel = dev ? 'debug' : 'warn';
-		logger[logLevel]('CSP Violation Report', {
-			documentUri: report['document-uri'],
-			violatedDirective: report['violated-directive'],
-			effectiveDirective: report['effective-directive'],
-			blockedUri: report['blocked-uri'],
-			sourceFile: report['source-file'],
-			lineNumber: report['line-number'],
-			columnNumber: report['column-number'],
-			scriptSample: report['script-sample']?.substring(0, 100), // Truncate for logging
-			disposition: report.disposition,
-			clientIp,
-			userAgent: request.headers.get('user-agent')?.substring(0, 200)
-		});
-
-		// Track violation metrics
-		metricsService.incrementCSPViolations();
-
-		// In production, you might want to:
-		// - Store violations in database for analysis
-		// - Send alerts for suspicious patterns
-		// - Update CSP policies based on legitimate violations
-
-		if (!dev) {
-			// Example: Check for potential XSS attempts
-			const suspiciousPatterns = [/javascript:/i, /<script/i, /eval\(/i, /setTimeout\(/i, /setInterval\(/i];
-
-			const blockedContent = report['script-sample'] || report['blocked-uri'] || '';
-			const isSuspicious = suspiciousPatterns.some((pattern) => pattern.test(blockedContent));
-
-			if (isSuspicious) {
-				logger.error('Suspicious CSP violation detected - potential XSS attempt', {
-					blockedUri: report['blocked-uri'],
-					scriptSample: report['script-sample'],
-					documentUri: report['document-uri'],
-					clientIp,
-					userAgent: request.headers.get('user-agent')
-				});
-
-				// Here you could trigger additional security measures:
-				// - Rate limit the client IP
-				// - Send security alerts
-				// - Log to security monitoring system
-			}
-		}
-
-		return json({ status: 'received' }, { status: 200 });
 	} catch (error) {
-		logger.error('Error processing CSP report:', error);
-		return json({ error: 'Internal server error' }, { status: 500 });
+		if (error instanceof AppError) throw error;
+		logger.warn('Malformed JSON received at CSP report endpoint', { error });
+		throw new AppError('Malformed JSON payload', 400, 'MALFORMED_JSON');
 	}
+
+	// Validate report format
+	if (!isValidCSPReport(reportData)) {
+		logger.warn('Invalid CSP report format received', { data: reportData });
+		throw new AppError('Invalid report format', 400, 'INVALID_REPORT_FORMAT');
+	}
+
+	const report = reportData['csp-report'];
+
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, 'CSP report processing');
+
+	// Check if this violation should be ignored
+	if (shouldIgnoreViolation(report)) {
+		logger.trace(`Ignoring CSP violation: ${report['violated-directive']} - ${report['blocked-uri']}`);
+		return json({ status: 'ignored' });
+	}
+
+	const clientIp = getClientAddress();
+
+	// Log the violation for analysis
+	const logLevel = dev ? 'debug' : 'warn';
+	logger[logLevel]('CSP Violation Report', {
+		documentUri: report['document-uri'],
+		violatedDirective: report['violated-directive'],
+		effectiveDirective: report['effective-directive'],
+		blockedUri: report['blocked-uri'],
+		sourceFile: report['source-file'],
+		lineNumber: report['line-number'],
+		columnNumber: report['column-number'],
+		scriptSample: report['script-sample']?.substring(0, 100), // Truncate for logging
+		disposition: report.disposition,
+		clientIp,
+		tenantId,
+		userAgent: request.headers.get('user-agent') ?? undefined
+	});
+
+	// Track violation metrics
+	metricsService.incrementCSPViolations(tenantId ?? undefined);
+
+	// Production-only security checks
+	if (!dev) {
+		const suspiciousPatterns = [/javascript:/i, /<script/i, /eval\(/i, /setTimeout\(/i, /setInterval\(/i];
+		const blockedContent = report['script-sample'] || report['blocked-uri'] || '';
+		const isSuspicious = suspiciousPatterns.some((pattern) => pattern.test(blockedContent));
+
+		if (isSuspicious) {
+			logger.error('Suspicious CSP violation detected - potential XSS attempt', {
+				blockedUri: report['blocked-uri'],
+				scriptSample: report['script-sample'],
+				documentUri: report['document-uri'],
+				clientIp,
+				tenantId,
+				userAgent: request.headers.get('user-agent') ?? undefined
+			});
+		}
+	}
+
+	return json({ status: 'received' });
 });
 
 /**

@@ -212,17 +212,20 @@ function mapScimFieldsToDb(value: Record<string, any>): Record<string, any> {
 
 /**
  * Validates SCIM Bearer token authentication.
- * Checks for a valid API token with admin privileges.
+ * Checks for a valid API token with admin privileges and returns tenant context.
  * Falls back to session-based admin auth if no Bearer token is present.
  */
-export async function validateScimAuth(request: Request, locals: App.Locals): Promise<{ authenticated: boolean; error?: string }> {
+export async function validateScimAuth(
+	request: Request,
+	locals: App.Locals
+): Promise<{ authenticated: boolean; tenantId?: string | null; error?: string }> {
 	const authHeader = request.headers.get('authorization');
 
 	// Option 1: Bearer token
 	if (authHeader?.startsWith('Bearer ')) {
-		const token = authHeader.slice(7).trim();
+		const tokenValue = authHeader.slice(7).trim();
 
-		if (!token) {
+		if (!tokenValue) {
 			return { authenticated: false, error: 'Empty Bearer token' };
 		}
 
@@ -231,20 +234,35 @@ export async function validateScimAuth(request: Request, locals: App.Locals): Pr
 		}
 
 		try {
-			// Validate the token against the API token store
-			const tokenResult = await auth.validateToken(token, 'scim');
-			if (!tokenResult) {
-				return { authenticated: false, error: 'Invalid or expired SCIM token' };
+			// Validate the token against the database
+			// SCIM tokens should have type 'scim'
+			const tokenResult = await auth.getTokenByValue(tokenValue);
+
+			if (!tokenResult || tokenResult.type !== 'scim' || tokenResult.blocked) {
+				return { authenticated: false, error: 'Invalid or blocked SCIM token' };
 			}
-			return { authenticated: true };
-		} catch {
+
+			// Verify expiration
+			if (new Date(tokenResult.expires) < new Date()) {
+				return { authenticated: false, error: 'SCIM token has expired' };
+			}
+
+			return {
+				authenticated: true,
+				tenantId: tokenResult.tenantId || null
+			};
+		} catch (e) {
+			logger.error('SCIM token validation error', { error: e });
 			return { authenticated: false, error: 'Token validation failed' };
 		}
 	}
 
 	// Option 2: Session-based admin auth (fallback for dashboard usage)
 	if (locals.user && locals.user.role === 'admin') {
-		return { authenticated: true };
+		return {
+			authenticated: true,
+			tenantId: locals.tenantId || null
+		};
 	}
 
 	return { authenticated: false, error: 'No valid authentication provided' };

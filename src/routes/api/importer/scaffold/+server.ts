@@ -8,8 +8,8 @@ import { scaffoldCollectionSchema } from '@src/services/importer/scaffolder';
 import { apiHandler } from '@utils/api-handler';
 import { json } from '@sveltejs/kit';
 import { AppError } from '@utils/error-handling';
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 export const POST = apiHandler(async ({ request, locals }) => {
 	const { user } = locals;

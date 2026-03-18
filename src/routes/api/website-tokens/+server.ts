@@ -11,8 +11,10 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { requireTenantContext } from '@utils/tenant-utils';
 import { withTenant } from '@src/databases/db-adapter-wrapper';
 import { auditLogService, AuditEventType } from '@src/services/audit-log-service';
+import { nowISODateString } from '@utils/date-utils';
 
 export const GET = apiHandler(async ({ locals, url }) => {
 	if (!locals.user) {
@@ -23,17 +25,17 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		throw new AppError('Database not available', 500, 'DB_UNAVAILABLE');
 	}
 
+	// Resolve tenantId using shared utility
+	const tenantId = requireTenantContext(locals, 'Website tokens retrieval');
+
 	const page = Number(url.searchParams.get('page') ?? 1);
 	const limit = Number(url.searchParams.get('limit') ?? 10);
 	const sort = url.searchParams.get('sort') ?? 'createdAt';
 	const order = url.searchParams.get('order') ?? 'desc';
 
-	// Note: The current dbAdapter.system.websiteTokens.getAll() doesn't support filter parameter
-	// Search/filter functionality would need to be added to the database adapter
-	// For now, we fetch all and can filter client-side if needed
-
+	// The dbAdapter handles tenant isolation if tenantId is provided via withTenant wrapper
 	const result = await withTenant(
-		locals.tenantId,
+		tenantId,
 		async () => {
 			return await dbAdapter!.system.websiteTokens.getAll({
 				limit,
@@ -46,7 +48,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 	);
 
 	if (!result.success) {
-		logger.error('Failed to fetch website tokens:', result.error);
+		logger.error('Failed to fetch website tokens:', result.message);
 		throw new AppError('Failed to fetch website tokens', 500, 'FETCH_TOKENS_FAILED');
 	}
 
@@ -67,19 +69,26 @@ export const POST = apiHandler(async ({ locals, request }) => {
 		throw new AppError('Database not available', 500, 'DB_UNAVAILABLE');
 	}
 
-	const { name, permissions, expiresAt } = await request.json();
+	// Resolve tenantId
+	const tenantId = requireTenantContext(locals, 'Website token creation');
+
+	const { name, permissions, expiresAt } = await request.json().catch(() => {
+		throw new AppError('Invalid JSON payload', 400, 'INVALID_JSON');
+	});
 
 	if (!name) {
 		throw new AppError('Token name is required', 400, 'MISSING_NAME');
 	}
 
+	// Check for existing token in this tenant
 	const existingToken = await withTenant(
-		locals.tenantId,
+		tenantId,
 		async () => {
 			return await dbAdapter!.system.websiteTokens.getByName(name);
 		},
 		{ collection: 'websiteTokens' }
 	);
+
 	if (existingToken.success && existingToken.data) {
 		throw new AppError('A token with this name already exists', 409, 'TOKEN_EXISTS');
 	}
@@ -87,12 +96,12 @@ export const POST = apiHandler(async ({ locals, request }) => {
 	const token = `sv_${crypto.randomBytes(24).toString('hex')}`;
 
 	const result = await withTenant(
-		locals.tenantId,
+		tenantId,
 		async () => {
 			return await dbAdapter!.system.websiteTokens.create({
 				name,
 				token,
-				updatedAt: new Date().toISOString() as import('@databases/db-interface').ISODateString,
+				updatedAt: nowISODateString(),
 				createdBy: locals.user!._id,
 				permissions: permissions || [],
 				expiresAt: expiresAt || undefined
@@ -102,7 +111,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 	);
 
 	if (!result.success) {
-		logger.error('Failed to create website token:', result.error);
+		logger.error('Failed to create website token:', result.message);
 		throw new AppError('Failed to create website token', 500, 'CREATE_TOKEN_FAILED');
 	}
 
@@ -115,7 +124,8 @@ export const POST = apiHandler(async ({ locals, request }) => {
 		severity: 'medium',
 		targetId: result.data._id as DatabaseId,
 		targetType: 'token',
-		details: { tokenName: name, permissionsCount: permissions?.length || 0 }
+		details: { tokenName: name, permissionsCount: permissions?.length || 0 },
+		tenantId: tenantId ?? undefined
 	});
 
 	return json(result.data, { status: 201 });

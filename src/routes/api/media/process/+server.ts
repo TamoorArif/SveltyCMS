@@ -135,7 +135,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						}
 						try {
 							// Pass tenantId and watermarkOptions to the media service
-							const saveResult = await mediaService.saveMedia(file, user._id.toString(), access, tenantId ?? undefined, watermarkOptions);
+							const saveResult = await mediaService.saveMedia(file, user._id.toString(), access, tenantId ?? null, 'global', watermarkOptions);
 							const savedItem = saveResult as MediaItem;
 
 							results.push({
@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					return json({ success: false, error: 'Invalid media ID' }, { status: 400 });
 				}
 				// deleteMedia only takes one parameter
-				await mediaService.deleteMedia(mediaId);
+				await mediaService.deleteMedia(mediaId, tenantId ?? null);
 				result = { success: true };
 				break;
 			}

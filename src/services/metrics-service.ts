@@ -124,7 +124,8 @@ class MetricsCounters {
  * Thread-safe and optimized for minimal overhead.
  */
 class MetricsService {
-	private counters = new MetricsCounters();
+	private globalCounters = new MetricsCounters();
+	private tenantCounters = new Map<string, MetricsCounters>();
 	private resetInterval: NodeJS.Timeout | null = null;
 
 	constructor() {
@@ -139,34 +140,50 @@ class MetricsService {
 		}
 	}
 
+	/**
+	 * Gets the appropriate counters for a tenant.
+	 */
+	private getCounters(tenantId?: string): MetricsCounters {
+		if (!tenantId || tenantId === 'global') {
+			return this.globalCounters;
+		}
+		let counters = this.tenantCounters.get(tenantId);
+		if (!counters) {
+			counters = new MetricsCounters();
+			this.tenantCounters.set(tenantId, counters);
+		}
+		return counters;
+	}
+
 	// --- REQUEST METRICS ---
 
 	/**
 	 * Increment total request counter.
 	 * Call this at the start of request processing.
 	 */
-	incrementRequests(): void {
-		this.counters.requests.total++;
+	incrementRequests(tenantId?: string): void {
+		this.getCounters(tenantId).requests.total++;
 	}
 
 	/**
 	 * Increment error counter.
 	 * Call this when a request results in an error.
 	 */
-	incrementErrors(): void {
-		this.counters.requests.errors++;
+	incrementErrors(tenantId?: string): void {
+		this.getCounters(tenantId).requests.errors++;
 	}
 
 	/**
 	 * Record response time for performance analysis.
 	 * @param timeMs - Response time in milliseconds
 	 */
-	recordResponseTime(timeMs: number): void {
-		this.counters.requests.totalResponseTime += timeMs;
+	recordResponseTime(timeMs: number, tenantId?: string): void {
+		const counters = this.getCounters(tenantId);
+		counters.requests.totalResponseTime += timeMs;
 
 		// Track slow requests (>2 seconds)
 		if (timeMs > 2000) {
-			this.counters.performance.slowRequests++;
+			counters.performance.slowRequests++;
 		}
 	}
 
@@ -176,33 +193,34 @@ class MetricsService {
 	 * Increment authentication validation counter.
 	 * Call this for each session validation attempt.
 	 */
-	incrementAuthValidations(): void {
-		this.counters.auth.validations++;
+	incrementAuthValidations(tenantId?: string): void {
+		this.getCounters(tenantId).auth.validations++;
 	}
 
 	/**
 	 * Increment authentication failure counter.
 	 * Call this when session validation fails.
 	 */
-	incrementAuthFailures(): void {
-		this.counters.auth.failures++;
-		this.counters.security.authFailures++;
+	incrementAuthFailures(tenantId?: string): void {
+		const counters = this.getCounters(tenantId);
+		counters.auth.failures++;
+		counters.security.authFailures++;
 	}
 
 	/**
 	 * Record authentication cache hit.
 	 * Call this when session is found in cache.
 	 */
-	recordAuthCacheHit(): void {
-		this.counters.auth.cacheHits++;
+	recordAuthCacheHit(tenantId?: string): void {
+		this.getCounters(tenantId).auth.cacheHits++;
 	}
 
 	/**
 	 * Record authentication cache miss.
 	 * Call this when session must be fetched from database.
 	 */
-	recordAuthCacheMiss(): void {
-		this.counters.auth.cacheMisses++;
+	recordAuthCacheMiss(tenantId?: string): void {
+		this.getCounters(tenantId).auth.cacheMisses++;
 	}
 
 	// --- API METRICS ---
@@ -211,32 +229,32 @@ class MetricsService {
 	 * Increment API request counter.
 	 * Call this for each API request processed.
 	 */
-	incrementApiRequests(): void {
-		this.counters.api.requests++;
+	incrementApiRequests(tenantId?: string): void {
+		this.getCounters(tenantId).api.requests++;
 	}
 
 	/**
 	 * Increment API error counter.
 	 * Call this when an API request fails.
 	 */
-	incrementApiErrors(): void {
-		this.counters.api.errors++;
+	incrementApiErrors(tenantId?: string): void {
+		this.getCounters(tenantId).api.errors++;
 	}
 
 	/**
 	 * Record API cache hit.
 	 * Call this when API response is served from cache.
 	 */
-	recordApiCacheHit(): void {
-		this.counters.api.cacheHits++;
+	recordApiCacheHit(tenantId?: string): void {
+		this.getCounters(tenantId).api.cacheHits++;
 	}
 
 	/**
 	 * Record API cache miss.
 	 * Call this when API response must be generated.
 	 */
-	recordApiCacheMiss(): void {
-		this.counters.api.cacheMisses++;
+	recordApiCacheMiss(tenantId?: string): void {
+		this.getCounters(tenantId).api.cacheMisses++;
 	}
 
 	// --- SECURITY METRICS ---
@@ -245,23 +263,23 @@ class MetricsService {
 	 * Increment rate limit violation counter.
 	 * Call this when a request is rate limited.
 	 */
-	incrementRateLimitViolations(): void {
-		this.counters.security.rateLimitViolations++;
+	incrementRateLimitViolations(tenantId?: string): void {
+		this.getCounters(tenantId).security.rateLimitViolations++;
 	}
 
 	/**
 	 * Increment CSP violation counter.
 	 * Call this when a CSP violation is detected.
 	 */
-	incrementCSPViolations(): void {
-		this.counters.security.cspViolations++;
+	incrementCSPViolations(tenantId?: string): void {
+		this.getCounters(tenantId).security.cspViolations++;
 	}
 
 	/**
 	 * Increment security violations counter.
 	 */
-	incrementSecurityViolations(): void {
-		this.counters.security.cspViolations++; // Using CSP counter for now, can be extended
+	incrementSecurityViolations(tenantId?: string): void {
+		this.getCounters(tenantId).security.cspViolations++; // Using CSP counter for now, can be extended
 	}
 
 	// --- PERFORMANCE METRICS ---
@@ -271,34 +289,35 @@ class MetricsService {
 	 * @param hookName - Name of the hook
 	 * @param timeMs - Execution time in milliseconds
 	 */
-	recordHookExecutionTime(hookName: string, timeMs: number): void {
-		this.counters.performance.totalHookTime += timeMs;
-		this.counters.performance.hookExecutions++;
+	recordHookExecutionTime(hookName: string, timeMs: number, tenantId?: string): void {
+		const counters = this.getCounters(tenantId);
+		counters.performance.totalHookTime += timeMs;
+		counters.performance.hookExecutions++;
 
 		// Track potential bottlenecks (hooks taking >100ms)
 		if (timeMs > 100) {
-			const current = this.counters.performance.bottlenecks.get(hookName) || 0;
-			this.counters.performance.bottlenecks.set(hookName, current + 1);
+			const current = counters.performance.bottlenecks.get(hookName) || 0;
+			counters.performance.bottlenecks.set(hookName, current + 1);
 		}
 	}
 
 	// --- REPORTING ---
 
 	// Generate a comprehensive metrics report
-	getReport(): MetricsReport {
+	getReport(tenantId?: string): MetricsReport {
+		const counters = this.getCounters(tenantId);
 		const now = Date.now();
-		const uptime = now - this.counters.startTime;
+		const uptime = now - (tenantId ? counters.startTime : this.globalCounters.startTime);
 
 		// Calculate rates with safe division
 		const safeRate = (numerator: number, denominator: number): number => (denominator > 0 ? (numerator / denominator) * 100 : 0);
 
-		const avgResponseTime = this.counters.requests.total > 0 ? this.counters.requests.totalResponseTime / this.counters.requests.total : 0;
+		const avgResponseTime = counters.requests.total > 0 ? counters.requests.totalResponseTime / counters.requests.total : 0;
 
-		const avgHookTime =
-			this.counters.performance.hookExecutions > 0 ? this.counters.performance.totalHookTime / this.counters.performance.hookExecutions : 0;
+		const avgHookTime = counters.performance.hookExecutions > 0 ? counters.performance.totalHookTime / counters.performance.hookExecutions : 0;
 
 		// Get top bottlenecks
-		const bottlenecks = Array.from(this.counters.performance.bottlenecks.entries())
+		const bottlenecks = Array.from(counters.performance.bottlenecks.entries())
 			.sort(([, a], [, b]) => b - a)
 			.slice(0, 5)
 			.map(([name]) => name);
@@ -307,33 +326,33 @@ class MetricsService {
 			timestamp: now,
 			uptime,
 			requests: {
-				total: this.counters.requests.total,
-				errors: this.counters.requests.errors,
-				errorRate: safeRate(this.counters.requests.errors, this.counters.requests.total),
+				total: counters.requests.total,
+				errors: counters.requests.errors,
+				errorRate: safeRate(counters.requests.errors, counters.requests.total),
 				avgResponseTime
 			},
 			authentication: {
-				validations: this.counters.auth.validations,
-				failures: this.counters.auth.failures,
-				successRate: safeRate(this.counters.auth.validations - this.counters.auth.failures, this.counters.auth.validations),
-				cacheHits: this.counters.auth.cacheHits,
-				cacheMisses: this.counters.auth.cacheMisses,
-				cacheHitRate: safeRate(this.counters.auth.cacheHits, this.counters.auth.cacheHits + this.counters.auth.cacheMisses)
+				validations: counters.auth.validations,
+				failures: counters.auth.failures,
+				successRate: safeRate(counters.auth.validations - counters.auth.failures, counters.auth.validations),
+				cacheHits: counters.auth.cacheHits,
+				cacheMisses: counters.auth.cacheMisses,
+				cacheHitRate: safeRate(counters.auth.cacheHits, counters.auth.cacheHits + counters.auth.cacheMisses)
 			},
 			api: {
-				requests: this.counters.api.requests,
-				errors: this.counters.api.errors,
-				cacheHits: this.counters.api.cacheHits,
-				cacheMisses: this.counters.api.cacheMisses,
-				cacheHitRate: safeRate(this.counters.api.cacheHits, this.counters.api.cacheHits + this.counters.api.cacheMisses)
+				requests: counters.api.requests,
+				errors: counters.api.errors,
+				cacheHits: counters.api.cacheHits,
+				cacheMisses: counters.api.cacheMisses,
+				cacheHitRate: safeRate(counters.api.cacheHits, counters.api.cacheHits + counters.api.cacheMisses)
 			},
 			security: {
-				rateLimitViolations: this.counters.security.rateLimitViolations,
-				cspViolations: this.counters.security.cspViolations,
-				authFailures: this.counters.security.authFailures
+				rateLimitViolations: counters.security.rateLimitViolations,
+				cspViolations: counters.security.cspViolations,
+				authFailures: counters.security.authFailures
 			},
 			performance: {
-				slowRequests: this.counters.performance.slowRequests,
+				slowRequests: counters.performance.slowRequests,
 				avgHookExecutionTime: avgHookTime,
 				bottlenecks
 			}
@@ -342,7 +361,8 @@ class MetricsService {
 
 	// Reset all metrics counters periodically to prevent memory growth
 	reset(): void {
-		this.counters = new MetricsCounters();
+		this.globalCounters = new MetricsCounters();
+		this.tenantCounters.clear();
 		logger.trace('Unified metrics reset');
 	}
 
@@ -351,14 +371,14 @@ class MetricsService {
 		const report = this.getReport();
 		const lines: string[] = [];
 
-		// Request metrics
-		lines.push('# HELP svelty_requests_total Total number of requests');
+		// Global metrics (using globalCounters for raw counts)
+		lines.push('# HELP svelty_requests_total Total number of requests (global)');
 		lines.push('# TYPE svelty_requests_total counter');
-		lines.push(`svelty_requests_total ${report.requests.total}`);
+		lines.push(`svelty_requests_total ${this.globalCounters.requests.total}`);
 
-		lines.push('# HELP svelty_requests_errors_total Total number of request errors');
+		lines.push('# HELP svelty_requests_errors_total Total number of request errors (global)');
 		lines.push('# TYPE svelty_requests_errors_total counter');
-		lines.push(`svelty_requests_errors_total ${report.requests.errors}`);
+		lines.push(`svelty_requests_errors_total ${this.globalCounters.requests.errors}`);
 
 		// Authentication metrics
 		lines.push('# HELP svelty_auth_cache_hit_rate Authentication cache hit rate');

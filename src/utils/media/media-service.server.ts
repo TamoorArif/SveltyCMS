@@ -209,11 +209,11 @@ export class MediaService {
 	 * Saves a file to storage and creates a database record.
 	 */
 
-	// Saves a media file and its associated data
 	public async saveMedia(
 		file: File,
 		userId: string,
 		access: MediaAccess,
+		tenantId: string | null = null,
 		basePath = 'global',
 		watermarkOptions?: WatermarkOptions,
 		originalId?: DatabaseId | null
@@ -357,6 +357,7 @@ export class MediaService {
 			}
 
 			const media: Omit<MediaBaseWithThumbnails, '_id'> = {
+				tenantId,
 				type: mediaType,
 				hash,
 				filename: safeFileName, // Use the sanitized filename with extension
@@ -398,7 +399,8 @@ export class MediaService {
 			});
 
 			// Use db-agnostic media adapter
-			const result = await this.db.media.files.upload(cleanMedia as any);
+			// Use db-agnostic media adapter with tenantId enforcement
+			const result = await this.db.media.files.upload(cleanMedia as any, tenantId);
 
 			if (!result.success) {
 				throw result.error;
@@ -467,6 +469,7 @@ export class MediaService {
 	private createCleanMediaObject(object: Omit<MediaBaseWithThumbnails, '_id'>): Omit<MediaItem, '_id' | 'createdAt' | 'updatedAt'> {
 		// Type-safe mapping from MediaBaseWithThumbnails to a database-ready object
 		const clean: Record<string, unknown> = {
+			tenantId: object.tenantId,
 			filename: object.filename,
 			originalFilename: (object.metadata?.originalFilename as string) || object.filename,
 			hash: object.hash,
@@ -510,15 +513,20 @@ export class MediaService {
 			focalPoint?: { x: number; y: number };
 			saveBehavior?: 'new' | 'overwrite';
 		},
-		userId: string
+		userId: string,
+		tenantId: string | null = null
 	): Promise<MediaItem> {
 		this.ensureInitialized();
 
 		const db = await this.getDb();
 
-		const mediaResult = await db.crud.findOne<MediaItem>('media', {
-			_id: id as DatabaseId
-		});
+		const mediaResult = await db.crud.findOne<MediaItem>(
+			'media',
+			{
+				_id: id as DatabaseId
+			},
+			{ tenantId }
+		);
 
 		if (!(mediaResult.success && mediaResult.data)) {
 			throw new AppError('Media item not found', 404, 'MEDIA_NOT_FOUND');
@@ -657,20 +665,20 @@ export class MediaService {
 			delete newMedia.createdAt;
 			delete newMedia.updatedAt;
 
-			const result = await db.media.files.upload(newMedia);
+			const result = await db.media.files.upload(newMedia, tenantId);
 			if (!result.success) {
 				throw result.error;
 			}
 			return result.data as unknown as MediaItem;
 		} else {
 			// Overwrite / Update existing
-			await this.updateMedia(id, updates);
+			await this.updateMedia(id, updates, tenantId);
 			return { ...mediaItem, ...updates } as MediaItem;
 		}
 	}
 
 	// Updates a media item with new data
-	public async updateMedia(id: string, updates: Partial<MediaItem>): Promise<void> {
+	public async updateMedia(id: string, updates: Partial<MediaItem>, tenantId: string | null = null): Promise<void> {
 		this.ensureInitialized();
 		if (!id || typeof id !== 'string' || id.trim().length === 0) {
 			throw new Error('Invalid id: Must be a non-empty string');
@@ -681,7 +689,7 @@ export class MediaService {
 		}
 		try {
 			const db = await this.getDb();
-			const result = await db.crud.update('media', id as DatabaseId, updates as any);
+			const result = await db.crud.update('media', id as DatabaseId, updates as any, tenantId);
 
 			if (!result.success) {
 				throw result.error;
@@ -699,12 +707,16 @@ export class MediaService {
 	/**
 	 * Add a new version to an existing media item
 	 */
-	public async addVersion(id: string, file: File, userId: string, action = 'update'): Promise<MediaItem> {
+	public async addVersion(id: string, file: File, userId: string, tenantId: string | null = null, action = 'update'): Promise<MediaItem> {
 		this.ensureInitialized();
 		const db = await this.getDb();
-		const mediaResult = await db.crud.findOne<MediaItem>('media', {
-			_id: id as DatabaseId
-		});
+		const mediaResult = await db.crud.findOne<MediaItem>(
+			'media',
+			{
+				_id: id as DatabaseId
+			},
+			{ tenantId }
+		);
 
 		if (!(mediaResult.success && mediaResult.data)) {
 			throw error(404, 'Media item not found');
@@ -740,18 +752,18 @@ export class MediaService {
 			versions: [...(mediaItem.versions || []), newVersion]
 		};
 
-		await this.updateMedia(id, updates);
+		await this.updateMedia(id, updates, tenantId);
 		return { ...mediaItem, ...updates } as MediaItem;
 	}
 
 	// Deletes a media item
-	public async deleteMedia(id: string): Promise<void> {
+	public async deleteMedia(id: string, tenantId: string | null = null): Promise<void> {
 		this.ensureInitialized();
 		if (!id || typeof id !== 'string' || id.trim().length === 0) {
 			throw new Error('Invalid id: Must be a non-empty string');
 		}
 		try {
-			const result = await this.db.media.files.delete(id as DatabaseId);
+			const result = await this.db.media.files.delete(id as DatabaseId, tenantId);
 			if (!result.success) {
 				throw result.error;
 			}
@@ -766,7 +778,7 @@ export class MediaService {
 	}
 
 	// Sets access permissions for a media item
-	public async setMediaAccess(id: string, access: MediaAccess): Promise<void> {
+	public async setMediaAccess(id: string, access: MediaAccess, tenantId: string | null = null): Promise<void> {
 		this.ensureInitialized();
 		if (!id || typeof id !== 'string' || id.trim().length === 0) {
 			throw new Error('Invalid id: Must be a non-empty string');
@@ -775,7 +787,7 @@ export class MediaService {
 		// Access is now a string union, not array
 		try {
 			const db = await this.getDb();
-			const result = await db.crud.update('media', id as DatabaseId, { access } as any);
+			const result = await db.crud.update('media', id as DatabaseId, { access } as any, tenantId);
 			if (!result.success) {
 				throw result.error;
 			}
@@ -790,7 +802,7 @@ export class MediaService {
 	}
 
 	// Retrieves a media item by its ID, enforcing access control
-	public async getMedia(id: string, user: User, roles: Role[]): Promise<MediaItem> {
+	public async getMedia(id: string, user: User, roles: Role[], tenantId: string | null = null): Promise<MediaItem> {
 		this.ensureInitialized();
 		if (!id || typeof id !== 'string' || id.trim().length === 0) {
 			throw new Error('Invalid id: Must be a non-empty string');
@@ -810,9 +822,13 @@ export class MediaService {
 			}
 
 			const db = await this.getDb();
-			const result = await db.crud.findOne<MediaItem>('media', {
-				_id: id as DatabaseId
-			});
+			const result = await db.crud.findOne<MediaItem>(
+				'media',
+				{
+					_id: id as DatabaseId
+				},
+				{ tenantId }
+			);
 
 			if (!result.success) {
 				throw result.error;
@@ -874,14 +890,14 @@ export class MediaService {
 	}
 
 	// Bulk delete media items
-	public async bulkDeleteMedia(ids: string[]): Promise<void> {
+	public async bulkDeleteMedia(ids: string[], tenantId: string | null = null): Promise<void> {
 		this.ensureInitialized();
 		if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || id.trim().length === 0)) {
 			throw new Error('Invalid ids: Must be an array of non-empty strings');
 		}
 		try {
 			const convertedIds = ids.map((id) => id as DatabaseId);
-			const result = await this.db.media.files.deleteMany(convertedIds);
+			const result = await this.db.media.files.deleteMany(convertedIds, tenantId);
 			if (!result.success) {
 				throw result.error;
 			}
@@ -896,7 +912,7 @@ export class MediaService {
 	}
 
 	// Search media items
-	public async searchMedia(query: string, page = 1, limit = 20): Promise<{ media: MediaItem[]; total: number }> {
+	public async searchMedia(query: string, tenantId: string | null = null, page = 1, limit = 20): Promise<{ media: MediaItem[]; total: number }> {
 		this.ensureInitialized();
 		try {
 			const db = await this.getDb();
@@ -904,11 +920,11 @@ export class MediaService {
 				$or: [{ filename: { $regex: query, $options: 'i' } }, { 'metadata.tags': { $regex: query, $options: 'i' } }]
 			};
 
-			const options = { offset: (page - 1) * limit, limit };
+			const options = { offset: (page - 1) * limit, limit, tenantId };
 
 			const [mediaResult, totalResult] = await Promise.all([
 				db.crud.findMany<MediaItem>('media', searchCriteria as unknown as Partial<MediaItem>, options),
-				db.crud.count('media', searchCriteria as unknown as Partial<BaseEntity>)
+				db.crud.count('media', searchCriteria as unknown as Partial<BaseEntity>, tenantId)
 			]);
 
 			if (!mediaResult.success) {
@@ -930,13 +946,17 @@ export class MediaService {
 	}
 
 	// List media items
-	public async listMedia(page = 1, limit = 20): Promise<{ media: MediaItem[]; total: number }> {
+	public async listMedia(tenantId: string | null = null, page = 1, limit = 20): Promise<{ media: MediaItem[]; total: number }> {
 		this.ensureInitialized();
 		try {
 			const db = await this.getDb();
-			const options = { offset: (page - 1) * limit, limit };
+			const filter = tenantId ? { tenantId } : {};
+			const options = { offset: (page - 1) * limit, limit, tenantId };
 
-			const [mediaResult, totalResult] = await Promise.all([db.crud.findMany<MediaItem>('media', {}, options), db.crud.count('media', {})]);
+			const [mediaResult, totalResult] = await Promise.all([
+				db.crud.findMany<MediaItem>('media', filter, options as any),
+				db.crud.count('media', filter, tenantId ?? undefined)
+			]);
 
 			if (!mediaResult.success) {
 				throw mediaResult.error;
@@ -1042,7 +1062,13 @@ export class MediaService {
 		return results;
 	}
 
-	public async saveRemoteMedia(url: string, userId: string, access: MediaAccess, basePath = 'global'): Promise<MediaItem> {
+	public async saveRemoteMedia(
+		url: string,
+		userId: string,
+		access: MediaAccess,
+		tenantId: string | null = null,
+		basePath = 'global'
+	): Promise<MediaItem> {
 		const response = await fetch(url);
 		if (!response.ok) {
 			throw new Error(`Failed to fetch remote file: ${response.statusText}`);
@@ -1052,6 +1078,6 @@ export class MediaService {
 		const mimeType = response.headers.get('content-type') || mime.lookup(fileName) || 'application/octet-stream';
 		const file = new File([buffer], fileName, { type: mimeType });
 
-		return this.saveMedia(file, userId, access, basePath);
+		return this.saveMedia(file, userId, access, tenantId, basePath);
 	}
 }

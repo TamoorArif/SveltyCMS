@@ -46,6 +46,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Get user context
 		const userId = (locals as any)?.user?._id || 'anonymous';
+		const tenantId = (locals as any)?.tenantId || null;
 		const MEDIA_FOLDER = (await getPublicSetting('MEDIA_FOLDER')) || 'mediaFolder';
 
 		// Get the uploaded file
@@ -234,30 +235,46 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			if (mediaId && saveBehavior === 'overwrite') {
 				// OVERWRITE: Add as new version to existing media
 				logger.info(`Overwriting: Adding new version to media: ${mediaId}`);
-				savedItem = await mediaService.addVersion(mediaId as DatabaseId, editedFile, userId as DatabaseId, 'update');
+				savedItem = await mediaService.addVersion(mediaId as DatabaseId, editedFile, userId as DatabaseId, tenantId, 'update');
 
 				// Update metadata with operations and focal point
-				await mediaService.updateMedia(mediaId as DatabaseId, {
-					metadata: {
-						...savedItem.metadata,
-						focalPoint: focalPoint || savedItem.metadata?.focalPoint,
-						lastOperations: operations
-					}
-				});
-			} else {
-				// SAVE AS NEW MEDIA (or if no mediaId provided)
-				logger.info('Saving as new media item');
-				savedItem = await mediaService.saveMedia(editedFile, userId as DatabaseId, 'public', MEDIA_FOLDER, undefined, mediaId as DatabaseId);
-
-				// Update metadata for the new item
-				if (savedItem?._id) {
-					await mediaService.updateMedia(savedItem._id as DatabaseId, {
+				await mediaService.updateMedia(
+					mediaId as DatabaseId,
+					{
 						metadata: {
 							...savedItem.metadata,
 							focalPoint: focalPoint || savedItem.metadata?.focalPoint,
 							lastOperations: operations
 						}
-					});
+					},
+					tenantId
+				);
+			} else {
+				// SAVE AS NEW MEDIA (or if no mediaId provided)
+				logger.info('Saving as new media item');
+				savedItem = await mediaService.saveMedia(
+					editedFile,
+					userId as DatabaseId,
+					'public',
+					tenantId,
+					MEDIA_FOLDER,
+					undefined,
+					mediaId as DatabaseId
+				);
+
+				// Update metadata for the new item
+				if (savedItem?._id) {
+					await mediaService.updateMedia(
+						savedItem._id as DatabaseId,
+						{
+							metadata: {
+								...savedItem.metadata,
+								focalPoint: focalPoint || savedItem.metadata?.focalPoint,
+								lastOperations: operations
+							}
+						},
+						tenantId
+					);
 				}
 			}
 

@@ -53,7 +53,7 @@ function convertToCSV(data: unknown[]): string {
 
 export const GET = apiHandler(async ({ params, url, locals }) => {
 	const { collectionId } = params;
-	const { user, dbAdapter } = locals;
+	const { user, dbAdapter, tenantId } = locals;
 
 	if (!user) {
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -61,6 +61,10 @@ export const GET = apiHandler(async ({ params, url, locals }) => {
 	if (!dbAdapter) {
 		throw new AppError('Database adapter not initialized', 500, 'DB_ERROR');
 	}
+
+	// Get multi-tenant setting
+	const { getPrivateSettingSync } = await import('@src/services/settings-service');
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
 
 	const schema = await contentManager.getCollection(collectionId);
 	if (!schema) {
@@ -85,13 +89,18 @@ export const GET = apiHandler(async ({ params, url, locals }) => {
 		queryOptions.sort = { [sortField]: sortDirection === 'asc' ? 1 : -1 };
 	}
 
-	let filterQuery = {};
+	let filterQuery: Record<string, unknown> = {};
 	if (filterParam) {
 		try {
 			filterQuery = JSON.parse(filterParam);
 		} catch (e) {
 			logger.warn('Invalid filter', e);
 		}
+	}
+
+	// Apply tenant filter in multi-tenant mode to prevent cross-tenant data leaks
+	if (isMultiTenant && tenantId) {
+		filterQuery.tenantId = tenantId;
 	}
 
 	const result = await dbAdapter.crud.findMany(`collection_${schema._id}`, filterQuery, queryOptions);
