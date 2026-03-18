@@ -322,7 +322,6 @@ Content-Type: application/json
 ```
 
 ---
-
 ### 2. Full System Import
 
 Restores a full system backup.
@@ -331,6 +330,20 @@ Restores a full system backup.
 
 ```http
 POST /api/system-settings/import
+```
+
+... (body and response details) ...
+
+---
+
+### 3. External Smart Import (AI-Powered)
+
+Migrates content from external platforms like Drupal or WordPress.
+
+#### Request
+
+```http
+POST /api/importer/external
 ```
 
 **Headers:**
@@ -344,18 +357,19 @@ Content-Type: application/json
 
 ```json
 {
-	"data": "encrypted-backup-data-or-json",
-	"options": {
-		"overwrite": false,
-		"restoreSettings": true,
-		"restoreUsers": true,
-		"restoreMedia": true,
-		"restoreCollections": true
+	"sourceType": "drupal", // or "wordpress"
+	"sourceUrl": "https://old-site.com",
+	"apiKey": "Bearer ...",
+	"sourceTypeIdentifier": "article",
+	"targetCollection": "blog_posts",
+	"mapping": {
+		"title": { "target": "title" },
+		"field_image": { "target": "thumbnail", "transform": "media" }
 	}
 }
 ```
 
-**Permissions Required:** `admin` only
+**Permissions Required:** `admin` or `data:import`
 
 #### Response
 
@@ -364,17 +378,11 @@ Content-Type: application/json
 ```json
 {
 	"success": true,
-	"message": "System restore completed",
-	"restored": {
-		"settings": 15,
-		"collections": 524,
-		"users": 12,
-		"media": 342
-	},
-	"duration": 5432,
-	"warnings": ["Some media files not found on disk"]
+	"importedCount": 42,
+	"errors": []
 }
 ```
+
 
 ---
 

@@ -731,7 +731,8 @@ export const actions: Actions = {
 				sessionId: session._id,
 				publicSettings: {
 					SITE_NAME: system.siteName || 'SveltyCMS',
-					DEFAULT_LANGUAGE: 'en',
+					BASE_LOCALE: system.defaultSystemLanguage || 'en',
+					DEFAULT_CONTENT_LANGUAGE: system.defaultContentLanguage || 'en',
 					MULTI_TENANT: system.multiTenant,
 					DEMO: system.demoMode,
 					USE_REDIS: system.useRedis,

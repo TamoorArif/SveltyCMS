@@ -75,6 +75,21 @@ _Focus: Multi-stage workflows and conversational operations._
 
 ---
 
+## 🎯 Gap Analysis vs. other CMS
+
+While SveltyCMS has surpassed most competitors on performance and AI-native architecture, there are a few mature features present in Payload CMS that SveltyCMS should target next to achieve total feature parity:
+
+1.  **Native Soft Deletes (Trash System)**
+    Some CMS recently introduced built-in "Trash" support, allowing documents to be soft-deleted (via a `deletedAt` parameter) rather than permanently removed. This allows administrators to view a trash bin, restore accidentally deleted content, and query active versus trashed documents through the API. Implementing a native, collection-level soft-delete feature would be a major win for SveltyCMS enterprise users.
+
+2.  **Advanced Live Preview and Draft/Versioning Integration**
+    Other CMS features a highly mature Live Preview system that uses an iframe and `window.postMessage` events to instantly re-render the frontend application as editors type. Crucially, this is deeply integrated with their "Versions and Drafts" system, allowing users to save unpublished iterations of documents. While SveltyCMS is actively developing an "Enterprise Handshake Protocol" for Live Preview, ensuring it seamlessly integrates with a robust document versioning and draft state system will be necessary to match editorial workflow. see @docs\guides\live-preview-architecture.mdx
+
+3.  **Complex UI Interactions (Nested Treeviews)**
+    While you have stabilized the media gallery and image editor , development notes for the next branch indicate that complex UI interactions—specifically a nested drag-and-drop treeview layer for seamlessly reordering items and entire categories without UI flicker—are still an ongoing priority. Ensuring these advanced data-sorting UX elements are perfectly stable will dramatically improve the content manager's feel.
+
+---
+
 ## 🎓 Conclusion
 
 SveltyCMS has won the "Engine War" and the "Editor War." We are now the fastest and most intelligent self-hosted CMS on the market. The next 6 months will focus on **Phase 3**, transforming the CMS into a collaborative platform for enterprise-grade content lifecycles.

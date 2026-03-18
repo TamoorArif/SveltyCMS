@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
- * @file run-integration-tests.ts
- * @description Truly Black-Box Integration Test Runner
+ * @src\components\system\inputs\file-input.svelte run-integration-tests.ts
+ * @src\widgets\coreich-text\components\image-description.svelte Truly Black-Box Integration Test Runner
  * Uses /api/testing for state management. No internal imports allowed.
  */
 
@@ -13,27 +13,31 @@ import { dirname, join, relative } from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
-let API_BASE_URL = (globalThis as any).process?.env?.API_BASE_URL || 'http://127.0.0.1:4173';
-const pkgManager = (globalThis as any).process?.env?.npm_execpath || 'bun';
 
-// ✨ Use a fixed secret for this test run to ensure consistency across server restarts
+// ✨ Configuration Constants
+const HOST = '127.0.0.1';
+const PORT = '4173';
+const API_BASE_URL = process.env.API_BASE_URL || `http://${HOST}:${PORT}`;
+const pkgManager = process.env.npm_execpath || 'bun';
 const TEST_API_SECRET = 'test-secret-123456789';
+
+// Export to environment for spawned processes
 process.env.TEST_API_SECRET = TEST_API_SECRET;
 
 let previewProcess: ChildProcess | null = null;
 
 async function cleanup(exitCode = 0) {
 	console.log('\n🧹 Cleaning up test environment...');
-	if (previewProcess) {
+	if (previewProcess && previewProcess.pid) {
 		if (process.platform === 'win32') {
+			spawn('taskkill', ['/F', '/T', '/PID', previewProcess.pid.toString()], { stdio: 'ignore' });
+		} else {
+			// Using negative PID kills the entire process group (prevents orphaned children)
 			try {
-				// Force kill the process tree on Windows
-				spawn('taskkill', ['/F', '/T', '/PID', previewProcess.pid?.toString() || ''], { stdio: 'ignore' });
+				process.kill(-previewProcess.pid, 'SIGTERM');
 			} catch (e) {
 				previewProcess.kill('SIGTERM');
 			}
-		} else {
-			previewProcess.kill('SIGTERM');
 		}
 	}
 	process.exit(exitCode);
@@ -48,44 +52,18 @@ async function main() {
 
 		const args = process.argv.slice(2);
 		const skipBuild = args.includes('--no-build');
+		const filterArg = args.find((arg) => arg.startsWith('--filter='));
+		const dbFilter = filterArg ? filterArg.split('=')[1] : null;
 
-		// 0. Build check (if build is stale or missing)
+		// Fix: Properly filter out all flags (starting with --)
+		const testFiles = args.filter((arg) => !arg.startsWith('--'));
+
+		// 0. Build check
 		if (!skipBuild) {
-			const buildPath = join(rootDir, 'build');
-			const srcPath = join(rootDir, 'src');
-			let needsBuild = !existsSync(buildPath);
-
-			if (!needsBuild) {
-				const buildTime = statSync(buildPath).mtimeMs;
-				const checkNewer = (dir: string): boolean => {
-					const items = readdirSync(dir);
-					for (const item of items) {
-						const fullPath = join(dir, item);
-						if (statSync(fullPath).isDirectory()) {
-							if (checkNewer(fullPath)) return true;
-						} else {
-							if (statSync(fullPath).mtimeMs > buildTime) return true;
-						}
-					}
-					return false;
-				};
-				needsBuild = checkNewer(srcPath);
-			}
-
-			if (needsBuild) {
+			if (requiresRebuild()) {
 				console.log('🏗️ Detected changes in src/ or missing build. Rebuilding...');
-				const buildCode = await new Promise<number>((resolve) => {
-					const buildProc = spawn(pkgManager, ['run', 'build'], {
-						cwd: rootDir,
-						stdio: 'inherit',
-						shell: true
-					});
-					buildProc.on('close', resolve);
-				});
-				if (buildCode !== 0) {
-					console.error('❌ Build failed. Aborting tests.');
-					process.exit(1);
-				}
+				const buildCode = await runCommand(pkgManager, ['run', 'build']);
+				if (buildCode !== 0) throw new Error('Build failed. Aborting tests.');
 			} else {
 				console.log('✅ Build is up to date. Skipping rebuild.');
 			}
@@ -102,63 +80,40 @@ async function main() {
 		console.log('📦 Starting preview server for initial setup...');
 		await startPreviewServer();
 
-		// 1.5. Run Fast System Setup (Direct API calls, no browser)
+		// 1.5. Run Fast System Setup
 		console.log('⚙️ Running Fast System Setup to configure system...');
-		const dbType = (globalThis as any).process?.env?.DB_TYPE || 'sqlite';
+		const dbType = process.env.DB_TYPE || 'sqlite';
 		console.log(`📡 DB_TYPE: ${dbType}`);
 
-		const setupResult = await new Promise<number>((resolve) => {
-			const setupProc = spawn(pkgManager, ['run', 'scripts/setup-system.ts'], {
-				cwd: rootDir,
-				stdio: 'inherit',
-				shell: true,
-				env: {
-					...(globalThis as any).process?.env,
-					DB_TYPE: dbType,
-					TEST_MODE: 'true',
-					API_BASE_URL,
-					TEST_API_SECRET
-				}
-			});
-			setupProc.on('close', resolve);
+		const setupResult = await runCommand(pkgManager, ['run', 'scripts/setup-system.ts'], {
+			DB_TYPE: dbType,
+			TEST_MODE: 'true',
+			API_BASE_URL,
+			TEST_API_SECRET
 		});
 
-		if (setupResult !== 0) {
-			console.error('❌ Fast setup failed. Cannot proceed with integration tests.');
-			await cleanup(1);
-			return;
-		}
+		if (setupResult !== 0) throw new Error('Fast setup failed. Cannot proceed.');
 		console.log('✅ System configured successfully via API.');
 
-		// 1.6. RESTART SERVER to pick up new config/private.test.ts (CRITICAL for Black-Box)
+		// 1.6. RESTART SERVER to pick up new config/private.test.ts
 		console.log('🔄 Restarting preview server to apply new configuration...');
-		await startPreviewServer(); // restartPreviewServer logic integrated into startPreviewServer
+		await startPreviewServer();
 		console.log('✅ Server restarted and ready.');
 
 		// 2. Discover tests
-		const filterArg = args.find((arg) => arg.startsWith('--filter='));
-		const dbFilter = filterArg ? filterArg.split('=')[1] : null;
-
-		const testFiles = args.filter((arg) => !arg.startsWith('--') && !arg.startsWith('filter='));
 		let filesToRun = testFiles.length > 0 ? testFiles : findTestFiles(join(rootDir, 'tests/integration'));
 
-		// 2.1. Filter files based on DB_TYPE if requested
+		// 2.1. Filter files based on DB_TYPE
 		if (dbFilter) {
 			console.log(`🔍 Applying filter: ${dbFilter}`);
 			const otherDbs = ['mongodb', 'mariadb', 'postgresql', 'sqlite'].filter((db) => db !== dbFilter);
-
 			filesToRun = filesToRun.filter((file) => {
 				const lowerFile = file.toLowerCase();
-				// If the filename contains another DB's name, skip it
-				if (otherDbs.some((other) => lowerFile.includes(`${other}-adapter`) || lowerFile.includes(`${other}.test`))) {
-					return false;
-				}
-				return true;
+				return !otherDbs.some((other) => lowerFile.includes(`${other}-adapter`) || lowerFile.includes(`${other}.test`));
 			});
 		}
 
 		console.log(`🧪 Running ${filesToRun.length} test files sequentially...`);
-
 		const results: Array<{ file: string; success: boolean; code: number }> = [];
 
 		for (const file of filesToRun) {
@@ -166,46 +121,70 @@ async function main() {
 			console.log(`\n▶️  [TEST] ${relPath}`);
 
 			// Reset & Seed via God-Mode API
-			const setupOk = await resetAndSeed();
-			if (!setupOk) {
-				console.error('❌ Failed to reset/seed via API. Aborting.');
+			if (!(await invokeTestApi('reset')) || !(await invokeTestApi('seed'))) {
+				console.error('❌ Failed to reset/seed via API. Aborting current test.');
 				results.push({ file: relPath, success: false, code: -1 });
 				break;
 			}
 
 			// Run Bun test
 			const code = await runTest(file);
-			const success = code === 0;
-			results.push({ file: relPath, success, code });
+			results.push({ file: relPath, success: code === 0, code });
 
-			if (!success) {
-				console.error(`❌ Failed: ${relPath}`);
-			} else {
-				console.log(`✅ Passed: ${relPath}`);
-			}
+			if (code !== 0) console.error(`❌ Failed: ${relPath}`);
+			else console.log(`✅ Passed: ${relPath}`);
 		}
 
+		// 3. Output Summary
 		const failedCount = results.filter((r) => !r.success).length;
-		const successCount = results.length - failedCount;
-
-		console.log(`\n🏁 Total: ${results.length}, Success: ${successCount}, Errors: ${failedCount}`);
+		console.log(`\n🏁 Total: ${results.length}, Success: ${results.length - failedCount}, Errors: ${failedCount}`);
 
 		if (failedCount > 0) {
 			console.log('\n❌ FAILED TESTS SUMMARY:');
-			results
-				.filter((r) => !r.success)
-				.forEach((r) => {
-					console.log(`  - ${r.file} (Code: ${r.code})`);
-				});
+			results.filter((r) => !r.success).forEach((r) => console.log(`  - ${r.file} (Code: ${r.code})`));
 		} else if (results.length > 0) {
 			console.log('\n✅ ALL INTEGRATION TESTS PASSED!');
 		}
 
 		cleanup(failedCount > 0 ? 1 : 0);
 	} catch (error) {
-		console.error('❌ Runner Error:', error);
+		console.error('❌ Runner Error:', error instanceof Error ? error.message : error);
 		cleanup(1);
 	}
+}
+
+// --- Helper Functions ---
+
+function requiresRebuild(): boolean {
+	const buildPath = join(rootDir, 'build');
+	const srcPath = join(rootDir, 'src');
+	if (!existsSync(buildPath)) return true;
+
+	const buildTime = statSync(buildPath).mtimeMs;
+	const checkNewer = (dir: string): boolean => {
+		for (const item of readdirSync(dir)) {
+			const fullPath = join(dir, item);
+			if (statSync(fullPath).isDirectory()) {
+				if (checkNewer(fullPath)) return true;
+			} else if (statSync(fullPath).mtimeMs > buildTime) {
+				return true;
+			}
+		}
+		return false;
+	};
+	return checkNewer(srcPath);
+}
+
+function runCommand(command: string, args: string[], extraEnv: Record<string, string> = {}): Promise<number> {
+	return new Promise((resolve) => {
+		const proc = spawn(command, args, {
+			cwd: rootDir,
+			stdio: 'inherit',
+			shell: process.platform === 'win32', // Only use shell on Windows where necessary
+			env: { ...process.env, ...extraEnv }
+		});
+		proc.on('close', (code) => resolve(code || 0));
+	});
 }
 
 async function startPreviewServer() {
@@ -213,40 +192,40 @@ async function startPreviewServer() {
 		console.log('🛑 Killing existing preview process...');
 		if (process.platform === 'win32') {
 			spawn('taskkill', ['/F', '/T', '/PID', previewProcess.pid?.toString() || ''], { stdio: 'ignore' });
-		} else {
-			previewProcess.kill('SIGTERM');
+		} else if (previewProcess.pid) {
+			try {
+				process.kill(-previewProcess.pid, 'SIGTERM');
+			} catch (e) {
+				previewProcess.kill('SIGTERM');
+			}
 		}
-		// Increase delay for OS to release port
-		await new Promise((r) => setTimeout(r, 5000));
+		await new Promise((r) => setTimeout(r, 2000)); // Wait for OS to release port
 	}
 
 	return new Promise<void>((resolve, reject) => {
-		console.log('📦 Spawning preview server (127.0.0.1:4173)...');
+		console.log(`📦 Spawning preview server (${HOST}:${PORT})...`);
 		const logFd = require('node:fs').openSync(join(rootDir, 'preview.log'), 'a');
-		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', '4173', '--host', '127.0.0.1', '--strictPort'], {
+
+		previewProcess = spawn(pkgManager, ['run', 'preview', '--port', PORT, '--host', HOST, '--strictPort'], {
 			cwd: rootDir,
 			stdio: ['ignore', logFd, logFd],
-			shell: true,
+			detached: process.platform !== 'win32', // Detach to create a new process group for clean killing
+			shell: process.platform === 'win32',
 			env: {
 				...process.env,
 				NODE_ENV: 'production',
 				DB_TYPE: process.env.DB_TYPE || 'sqlite',
 				TEST_MODE: 'true',
 				TEST_API_SECRET,
-				ORIGIN: 'http://127.0.0.1:4173'
+				ORIGIN: API_BASE_URL
 			}
 		});
 
-		API_BASE_URL = 'http://127.0.0.1:4173';
-
 		let resolved = false;
 		const timeout = setTimeout(() => {
-			if (!resolved) {
-				reject(new Error('Timeout waiting for preview server health check'));
-			}
+			if (!resolved) reject(new Error('Timeout waiting for preview server health check'));
 		}, 60000);
 
-		// Poll for readiness
 		waitForServer()
 			.then(() => {
 				clearTimeout(timeout);
@@ -257,120 +236,70 @@ async function startPreviewServer() {
 				if (!resolved) reject(err);
 			});
 
-		previewProcess.on('error', (err) => {
-			console.error('❌ Failed to start preview process:', err);
-			reject(err);
-		});
-
 		previewProcess.on('close', (code) => {
-			if (!resolved && code !== null) {
-				console.error(`❌ Preview process exited with code ${code}`);
-				reject(new Error(`Preview process exited with code ${code}`));
-			}
+			if (!resolved && code !== null) reject(new Error(`Preview process exited with code ${code}`));
 		});
 	});
-}
-
-async function checkServer() {
-	try {
-		const res = await fetch(`${API_BASE_URL}/api/system/health`);
-		return res.ok;
-	} catch {
-		return false;
-	}
 }
 
 async function waitForServer() {
 	console.log(`⏳ Waiting for server health check at ${API_BASE_URL}...`);
 	for (let i = 0; i < 30; i++) {
-		if (await checkServer()) {
-			return;
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/system/health`);
+			if (res.ok) return;
+		} catch {
+			// Ignore fetch errors while waiting for boot
 		}
 		await new Promise((r) => setTimeout(r, 1000));
 	}
 	throw new Error('Server health check timeout');
 }
 
-async function resetAndSeed() {
+async function invokeTestApi(action: 'reset' | 'seed'): Promise<boolean> {
 	try {
-		// Reset
-		const resetRes = await fetch(`${API_BASE_URL}/api/testing`, {
+		const res = await fetch(`${API_BASE_URL}/api/testing`, {
 			method: 'POST',
-			body: JSON.stringify({ action: 'reset' }),
+			body: JSON.stringify({ action }),
 			headers: {
 				'Content-Type': 'application/json',
 				'x-test-secret': TEST_API_SECRET,
-				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
+				Origin: API_BASE_URL
 			}
 		});
-		if (!resetRes.ok) {
-			console.error(`❌ Reset failed: ${resetRes.status} ${resetRes.statusText}`);
-			const body = await resetRes.text();
-			console.error(`Body: ${body}`);
+		if (!res.ok) {
+			console.error(`❌ ${action.toUpperCase()} failed: ${res.status} ${res.statusText}`);
+			console.error(`Body: ${await res.text()}`);
 			return false;
 		}
-
-		// Seed
-		const seedRes = await fetch(`${API_BASE_URL}/api/testing`, {
-			method: 'POST',
-			body: JSON.stringify({ action: 'seed' }),
-			headers: {
-				'Content-Type': 'application/json',
-				'x-test-secret': TEST_API_SECRET,
-				Origin: API_BASE_URL // Add Origin header to satisfy CSRF protection in hooks
-			}
-		});
-		if (!seedRes.ok) {
-			console.error(`❌ Seed failed: ${seedRes.status} ${seedRes.statusText}`);
-			const body = await seedRes.text();
-			console.error(`Body: ${body}`);
-			return false;
-		}
-
 		return true;
 	} catch (e) {
-		console.error('[Runner] Setup error:', e);
+		console.error(`[Runner] ${action} API error:`, e);
 		return false;
 	}
 }
 
 function runTest(file: string): Promise<number> {
-	return new Promise((resolve) => {
-		const args = ['test'];
-		if (pkgManager.includes('bun')) {
-			args.push('--preload', './tests/unit/setup.ts');
-		}
-		args.push(file);
+	const args = ['test'];
+	// Note: If this is purely black-box, preloading a unit test setup might cause conflicts.
+	// Ensure `setup.ts` doesn't leak internal app state into these black-box tests.
+	if (pkgManager.includes('bun')) args.push('--preload', './tests/unit/setup.ts');
+	args.push(file);
 
-		const proc = spawn(pkgManager, args, {
-			cwd: rootDir,
-			stdio: 'inherit',
-			env: {
-				...(globalThis as any).process?.env,
-				TEST_MODE: 'true',
-				API_BASE_URL,
-				TEST_API_SECRET
-			}
-		});
-		proc.on('close', (code) => resolve(code || 0));
+	return runCommand(pkgManager, args, {
+		TEST_MODE: 'true',
+		API_BASE_URL,
+		TEST_API_SECRET
 	});
 }
 
 function findTestFiles(dir: string, list: string[] = []) {
-	if (!existsSync(dir)) {
-		return list;
-	}
-	const files = readdirSync(dir);
-	for (const f of files) {
+	if (!existsSync(dir)) return list;
+	for (const f of readdirSync(dir)) {
 		const p = join(dir, f);
 		if (statSync(p).isDirectory()) {
 			findTestFiles(p, list);
-		} else if (
-			f.endsWith('.test.ts') &&
-			!f.includes('setup-actions') &&
-			!f.includes('setup-wizard.test.ts') &&
-			!f.includes('setup-presets.test.ts')
-		) {
+		} else if (f.endsWith('.test.ts') && !f.includes('setup-actions') && !f.includes('setup-wizard') && !f.includes('setup-presets')) {
 			list.push(p);
 		}
 	}

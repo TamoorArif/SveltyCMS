@@ -319,7 +319,8 @@ const languageCodeSchema = pipe(
 export const systemSettingsSchema = object({
 	siteName: siteNameSchema,
 	hostProd: hostProdSchema,
-	defaultLanguage: languageCodeSchema
+	defaultSystemLanguage: languageCodeSchema,
+	defaultContentLanguage: languageCodeSchema
 });
 
 // --- Schema Definitions for Exports ---

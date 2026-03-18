@@ -102,6 +102,7 @@ export const privateConfigSchema = object({
 	USE_AI_TAGGING: optional(boolean()),
 	AI_PROVIDER: optional(union([literal('ollama'), literal('openai')])),
 	OLLAMA_URL: optional(pipe(string(), minLength(1))),
+	AI_API_KEY: optional(pipe(string(), minLength(1))),
 	AI_MODEL_VISION: optional(pipe(string(), minLength(1))),
 	AI_MODEL_CHAT: optional(pipe(string(), minLength(1))),
 	USE_REMOTE_AI_KNOWLEDGE: optional(boolean()),

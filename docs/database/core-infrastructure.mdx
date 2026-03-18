@@ -23,6 +23,34 @@ The core database infrastructure consists of three essential files that enable S
 
 ## 🎯 Architecture Overview
 
+```mermaid
+graph TD
+    subgraph "Application Layer"
+        UI[Svelte Components]
+        API[API Endpoints]
+    end
+
+    subgraph "Orchestration Layer (db.ts)"
+        MGR[Database Manager]
+        INIT[Initialization Logic]
+    end
+
+    subgraph "Abstraction Layer (db-interface.ts)"
+        IFACE[IDBAdapter Interface]
+    end
+
+    subgraph "Implementation Layer"
+        MA[(MongoDB Adapter)]
+        PA[(Postgres Adapter)]
+        SA[(SQLite Adapter)]
+    end
+
+    UI & API --> MGR
+    MGR --> INIT
+    INIT --> IFACE
+    IFACE --> MA & PA & SA
+```
+
 ### The Three Pillars
 
 ```

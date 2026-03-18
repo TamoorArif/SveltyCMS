@@ -126,7 +126,7 @@ if (KNOWN_PUBLIC_KEYS.length === 0 || KNOWN_PRIVATE_KEYS.length === 0) {
 }
 
 // --- Optimization Constants ---
-const CRITICAL_SETTINGS = ['MEDIA_FOLDER', 'MULTI_TENANT', 'DEFAULT_LANGUAGE'];
+const CRITICAL_SETTINGS = ['MEDIA_FOLDER', 'MULTI_TENANT', 'BASE_LOCALE', 'DEFAULT_CONTENT_LANGUAGE'];
 
 // --- Resilience Utility (Singleton) ---
 let RESILIENCE_INSTANCE: DatabaseResilience | null = null;

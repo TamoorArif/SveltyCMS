@@ -163,8 +163,34 @@ hooks: {
 }
 ```
 
+## Case Study: Stripe Payments Integration
+
+Complex integrations like Stripe are best implemented as a **Plugin** that provides a **Widget**.
+
+### 1. Configuration (Settings)
+The plugin defines its own settings schema. This automatically adds a "Stripe" section to the System Settings UI.
+
+```typescript
+config: {
+  publicKey: { type: 'string', label: 'Stripe Public Key' },
+  secretKey: { type: 'string', label: 'Stripe Secret Key', private: true }
+}
+```
+
+### 2. The Product Widget
+The plugin registers a custom widget. When an editor creates a "Product" collection, they can use the `StripeProduct` widget to link an entry to a Stripe SKU.
+
+### 3. Lifecycle Hooks
+Use `afterSave` to automatically sync content changes to Stripe. If a price changes in SveltyCMS, the plugin can update the corresponding price object in the Stripe API.
+
+### 4. Dashboard Slot
+Inject a "Recent Sales" widget into the `dashboard` zone to show real-time revenue stats fetched from the Stripe API.
+
+---
+
 ## Best Practices
 
 1.  **Lazy Loading**: Always use dynamic imports `() => import(...)` for components to keep the initial bundle size low.
 2.  **Type Safety**: Use the provided interfaces from `@src/plugins/types` to ensure compatibility.
 3.  **Isolation**: Keep your plugin styles scoped and avoid modifying global state directly.
+4.  **Security**: Use the `private: true` flag in your config schema to ensure secret keys never reach the client-side browser.

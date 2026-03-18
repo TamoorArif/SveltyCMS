@@ -74,6 +74,43 @@ export class AIService {
 	}
 
 	/**
+	 * Internal helper to generate text from the local LLM.
+	 */
+	private async generateText(prompt: string): Promise<string> {
+		try {
+			const ollamaUrl = await getPrivateSetting('OLLAMA_URL');
+			const chatModel = (await getPrivateSetting('AI_MODEL_CHAT')) || 'ministral-3:latest';
+			const localOllama = ollamaUrl ? new (await import('ollama')).Ollama({ host: ollamaUrl }) : ollama;
+
+			const response = await localOllama.generate({
+				model: chatModel,
+				prompt: prompt,
+				stream: false
+			});
+			return response.response;
+		} catch (err) {
+			console.error('AI Text Generation Error:', err);
+			return '';
+		}
+	}
+
+	/**
+	 * Generates a JSON response from the AI.
+	 */
+	public async generateJSON(prompt: string): Promise<any> {
+		const fullPrompt = `${prompt}\n\nReturn ONLY raw JSON. No markdown blocks, no explanations.`;
+		const text = await this.generateText(fullPrompt);
+		try {
+			// Strip potential markdown backticks
+			const cleanJson = text.replace(/```json|```/g, '').trim();
+			return JSON.parse(cleanJson);
+		} catch (error) {
+			console.error('Failed to parse AI JSON response:', text);
+			return null;
+		}
+	}
+
+	/**
 	 * Analyze an image and return a list of tags
 	 * @param buffer - The image buffer to analyze
 	 * @param limit - Maximum number of tags to return
@@ -197,6 +234,75 @@ ${contextRules}`;
 		} catch (err) {
 			console.error('Generative Layout Error:', err);
 			return null;
+		}
+	}
+
+	/**
+	 * Translates content between languages with cultural awareness.
+	 */
+	public async translate(text: string, sourceLoc: string, targetLoc: string, context = ''): Promise<string> {
+		const systemPrompt = `You are a professional localization expert. 
+		Translate the following text from ${sourceLoc} to ${targetLoc}.
+		Maintain the original tone, formatting, and technical terms.
+		Cultural Context: ${context}
+		
+		Return ONLY the translated text.`;
+
+		try {
+			const ollamaUrl = await getPrivateSetting('OLLAMA_URL');
+			const chatModel = (await getPrivateSetting('AI_MODEL_CHAT')) || 'ministral-3:latest';
+			const localOllama = ollamaUrl ? new (await import('ollama')).Ollama({ host: ollamaUrl }) : ollama;
+
+			const response = await localOllama.chat({
+				model: chatModel,
+				messages: [
+					{ role: 'system', content: systemPrompt },
+					{ role: 'user', content: text }
+				]
+			});
+			return response.message.content;
+		} catch (err) {
+			console.error('AI Translation Error:', err);
+			return text; // Fallback to original
+		}
+	}
+
+	/**
+	 * Suggest a mapping from a source schema to a target SveltyCMS collection schema.
+	 * Returns a JSON mapping object.
+	 */
+	public async suggestMapping(sourceSchema: any, targetCollection: any): Promise<Record<string, any>> {
+		const systemPrompt = `You are an expert content architect. 
+    Map the provided source fields to SveltyCMS widgets for the collection "${targetCollection.name}".
+    Return ONLY valid JSON mapping source field names to target field names and transformations.
+    
+    Target Collection Fields: ${JSON.stringify(targetCollection.fields)}
+    
+    Example response:
+    {
+      "title": "name",
+      "body": "content",
+      "field_image": { "target": "thumbnail", "transform": "media" }
+    }`;
+
+		try {
+			const ollamaUrl = await getPrivateSetting('OLLAMA_URL');
+			const chatModel = (await getPrivateSetting('AI_MODEL_CHAT')) || 'ministral-3:latest';
+			const localOllama = ollamaUrl ? new (await import('ollama')).Ollama({ host: ollamaUrl }) : ollama;
+
+			const response = await localOllama.chat({
+				model: chatModel,
+				format: 'json',
+				messages: [
+					{ role: 'system', content: systemPrompt },
+					{ role: 'user', content: `Source Fields: ${JSON.stringify(sourceSchema)}` }
+				]
+			});
+
+			return JSON.parse(response.message.content);
+		} catch (err) {
+			console.error('AI Mapping Suggestion Error:', err);
+			return {};
 		}
 	}
 

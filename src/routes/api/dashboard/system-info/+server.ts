@@ -192,11 +192,11 @@ const fetchDiskInfo = async () => {
 		if (diskData) {
 			// Convert v2.x format to expected format
 			rootDiskUsage = {
-				totalGb: Number.parseFloat((diskData.total.bytes / 1024 / 1024 / 1024).toFixed(2)),
-				usedGb: Number.parseFloat((diskData.used.bytes / 1024 / 1024 / 1024).toFixed(2)),
-				freeGb: Number.parseFloat((diskData.available.bytes / 1024 / 1024 / 1024).toFixed(2)),
-				usedPercentage: Number.parseFloat(diskData.usagePercentage.toFixed(2)),
-				freePercentage: Number.parseFloat((100 - diskData.usagePercentage).toFixed(2))
+				totalGb: Number.parseFloat(((diskData?.total?.bytes ?? 0) / 1024 / 1024 / 1024).toFixed(2)),
+				usedGb: Number.parseFloat(((diskData?.used?.bytes ?? 0) / 1024 / 1024 / 1024).toFixed(2)),
+				freeGb: Number.parseFloat(((diskData?.available?.bytes ?? 0) / 1024 / 1024 / 1024).toFixed(2)),
+				usedPercentage: Number.parseFloat((diskData?.usagePercentage ?? 0).toFixed(2)),
+				freePercentage: Number.parseFloat((100 - (diskData?.usagePercentage ?? 0)).toFixed(2))
 			};
 		}
 	}
@@ -310,11 +310,11 @@ const fetchMemoryInfo = async () => {
 		// v2.x format - convert to expected format
 		const memData = memoryInfoResult.data;
 		memoryInfo = {
-			totalMemMb: Number.parseFloat((memData.total.bytes / 1024 / 1024).toFixed(2)),
-			usedMemMb: Number.parseFloat((memData.used.bytes / 1024 / 1024).toFixed(2)),
-			freeMemMb: Number.parseFloat((memData.free.bytes / 1024 / 1024).toFixed(2)),
-			usedMemPercentage: Number.parseFloat(memData.usagePercentage.toFixed(2)),
-			freeMemPercentage: Number.parseFloat((100 - memData.usagePercentage).toFixed(2))
+			totalMemMb: Number.parseFloat(((memData?.total?.bytes ?? 0) / 1024 / 1024).toFixed(2)),
+			usedMemMb: Number.parseFloat(((memData?.used?.bytes ?? 0) / 1024 / 1024).toFixed(2)),
+			freeMemMb: Number.parseFloat(((memData?.free?.bytes ?? 0) / 1024 / 1024).toFixed(2)),
+			usedMemPercentage: Number.parseFloat((memData?.usagePercentage ?? 0).toFixed(2)),
+			freeMemPercentage: Number.parseFloat((100 - (memData?.usagePercentage ?? 0)).toFixed(2))
 		};
 	}
 
