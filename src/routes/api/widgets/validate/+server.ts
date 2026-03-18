@@ -15,7 +15,22 @@ import { AppError } from '@utils/error-handling';
 
 export const GET = apiHandler(async ({ locals, request, url }) => {
 	const start = performance.now();
-	const tenantId = request.headers.get('X-Tenant-ID') || locals.tenantId || 'default';
+	const { user } = locals;
+
+	if (!user) {
+		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
+	}
+
+	// Resolve target tenant correctly to prevent IDOR
+	let targetTenantId = locals.tenantId || 'default-tenant';
+	const requestedTenant = request.headers.get('X-Tenant-ID');
+
+	if (requestedTenant && requestedTenant !== targetTenantId) {
+		if (user.role !== 'super-admin') {
+			throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+		}
+		targetTenantId = requestedTenant;
+	}
 
 	try {
 		// Get active widgets from query params (sent by client)
@@ -23,12 +38,12 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 		const activeWidgets = activeWidgetsParam ? activeWidgetsParam.split(',') : [];
 
 		logger.info('[API] Validation request started', {
-			tenantId,
+			tenantId: targetTenantId,
 			activeWidgetsCount: activeWidgets.length
 		});
 
-		// Get all collections from ContentManager, scoped by tenantId
-		const allCollections = contentManager.getCollections();
+		// Get all collections from ContentManager, scoped by targetTenantId
+		const allCollections = await contentManager.getCollections(targetTenantId);
 
 		if (!allCollections || Object.keys(allCollections).length === 0) {
 			return json({
@@ -37,7 +52,7 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 					valid: 0,
 					invalid: 0,
 					warnings: [],
-					tenantId,
+					tenantId: targetTenantId,
 					integrityIssues: []
 				},
 				message: 'No collections found to validate'
@@ -103,7 +118,7 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 
 		const duration = performance.now() - start;
 		logger.info('[API] Validation completed', {
-			tenantId,
+			tenantId: targetTenantId,
 			stats: {
 				total: Object.keys(allCollections).length,
 				valid: validCollections,
@@ -122,7 +137,7 @@ export const GET = apiHandler(async ({ locals, request, url }) => {
 				warnings,
 				integrityIssues,
 				total: Object.keys(allCollections).length,
-				tenantId
+				tenantId: targetTenantId
 			},
 			message: 'Validation completed successfully'
 		});

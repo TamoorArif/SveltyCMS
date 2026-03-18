@@ -13,8 +13,6 @@ import { logger } from '@utils/logger.server';
 
 export const GET = apiHandler(async ({ url, locals }) => {
 	const start = performance.now();
-	const tenantId = url.searchParams.get('tenantId') || locals.tenantId || 'default-tenant';
-
 	try {
 		const { user } = locals;
 
@@ -29,8 +27,19 @@ export const GET = apiHandler(async ({ url, locals }) => {
 			throw new AppError('Insufficient permissions', 403, 'FORBIDDEN');
 		}
 
+		// Resolve target tenant correctly to prevent IDOR
+		let targetTenantId = locals.tenantId || 'default-tenant';
+		const requestedTenant = url.searchParams.get('tenantId');
+
+		if (requestedTenant && requestedTenant !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = requestedTenant;
+		}
+
 		// Initialize widgets to get custom widgets list
-		await widgets.initialize(tenantId);
+		await widgets.initialize(targetTenantId);
 
 		// Get all custom widgets from the file system (these are "installed" in the codebase)
 		const installedWidgetNames = widgets.customWidgets;
@@ -52,8 +61,8 @@ export const GET = apiHandler(async ({ url, locals }) => {
 
 		const duration = performance.now() - start;
 
-		logger.trace(`Retrieved ${installedWidgets.length} installed widgets for tenant: ${tenantId}`, {
-			tenantId,
+		logger.trace(`Retrieved ${installedWidgets.length} installed widgets for tenant: ${targetTenantId}`, {
+			tenantId: targetTenantId,
 			count: installedWidgets.length
 		});
 
@@ -62,7 +71,7 @@ export const GET = apiHandler(async ({ url, locals }) => {
 			data: {
 				widgets: installedWidgets,
 				total: installedWidgets.length,
-				tenantId,
+				tenantId: targetTenantId,
 				performance: { duration: `${duration.toFixed(2)}ms` }
 			},
 			message: 'Installed widgets retrieved successfully'

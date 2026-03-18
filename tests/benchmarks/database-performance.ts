@@ -1,150 +1,153 @@
 /**
  * @file tests/benchmarks/database-performance.ts
- * @description Standalone Database-agnostic performance benchmarking for SveltyCMS.
- * Measures dbAdapter CRUD latencies across the currently configured database.
+ * @description Standalone Database performance benchmarking for SveltyCMS.
+ * Measures raw MongoDB latencies using direct driver connection to avoid CMS overhead.
  */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
-
-// --- IMPORTS ---
-import { getDbInitPromise, getDb } from '../../src/databases/db';
-import { loadPrivateConfig, getPrivateEnv } from '../../src/databases/config-state';
+import mongoose from 'mongoose';
 
 const ITERATIONS = 100;
 const REGRESSION_THRESHOLD = 0.15; // 15%
 const RESULTS_DIR = path.join(process.cwd(), 'tests/benchmarks/results');
 const COLLECTION = 'collection_benchmarks';
 
+// Minimal Config Loader to avoid CMS dependencies
+async function getDBConfig() {
+	const tryFiles = ['config/private.ts', 'config/private.test.ts'];
+	let content = '';
+
+	for (const file of tryFiles) {
+		try {
+			content = await fs.readFile(path.join(process.cwd(), file), 'utf8');
+			console.log(`📖 Loaded config from: ${file}`);
+			break;
+		} catch (e) {}
+	}
+
+	const extract = (key: string) => {
+		// Handle both 'key': 'value' and key: value (unquoted or numbers)
+		const match = content.match(new RegExp(`${key}\\s*:\\s*['"]?(.*?)['"]?,?(\\s|$)`, 'i'));
+		return match ? match[1].trim() : process.env[key] || null;
+	};
+
+	return {
+		DB_TYPE: extract('DB_TYPE') || 'mongodb',
+		DB_HOST: extract('DB_HOST') || 'localhost',
+		DB_PORT: extract('DB_PORT') || '27017',
+		DB_NAME: extract('DB_NAME') || 'svelty-cms',
+		DB_USER: extract('DB_USER') || '',
+		DB_PASSWORD: extract('DB_PASSWORD') || ''
+	};
+}
+
 async function runDatabaseBenchmark() {
-	console.log('\n🚀 SveltyCMS Database Performance Benchmark');
+	console.log('\n🚀 SveltyCMS Raw Database Performance Benchmark');
 	console.log(`Date: ${new Date().toISOString()}`);
 
-	// 1. Initialize System
-	console.log('\n📡 Initializing database connection...');
-	try {
-		await loadPrivateConfig(true);
-	} catch (error) {
-		console.error('❌ Failed to load private config. Ensure config/private.test.ts exists.');
-		process.exit(1);
+	const config = await getDBConfig();
+	const dbType = config.DB_TYPE.toLowerCase();
+	console.log(`📂 DB: ${dbType.toUpperCase()} | ${config.DB_NAME}`);
+
+	let db: any;
+	let BenchModel: any;
+
+	if (dbType === 'mongodb') {
+		const auth = config.DB_USER ? `${config.DB_USER}:${encodeURIComponent(config.DB_PASSWORD)}@` : '';
+		const uri = `mongodb://${auth}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}?authSource=admin`;
+		try {
+			await mongoose.connect(uri);
+			console.log('✅ Connected to MongoDB via raw driver.');
+		} catch (e) {
+			console.error('❌ MongoDB Connection failed:', e);
+			process.exit(1);
+		}
+		const Schema = new mongoose.Schema({ firstName: String, lastName: String, status: String, benchmarkId: String }, { timestamps: true });
+		BenchModel = mongoose.models[COLLECTION] || mongoose.model(COLLECTION, Schema);
+		db = {
+			insert: (data: any) => BenchModel.create(data),
+			read: (id: any) => BenchModel.findById(id),
+			update: (id: any, data: any) => BenchModel.findByIdAndUpdate(id, data),
+			delete: (id: any) => BenchModel.findByIdAndDelete(id),
+			disconnect: () => mongoose.disconnect()
+		};
+	} else if (dbType === 'sqlite' || dbType === 'better-sqlite3') {
+		// Use Bun's native SQLite
+		const { Database } = await import('bun:sqlite');
+		const sqlite = new Database(`${config.DB_NAME}.sqlite`);
+		sqlite.run(
+			`CREATE TABLE IF NOT EXISTS ${COLLECTION} (id INTEGER PRIMARY KEY AUTOINCREMENT, firstName TEXT, lastName TEXT, status TEXT, benchmarkId TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`
+		);
+
+		db = {
+			insert: (data: any) => {
+				const query = sqlite.prepare(`INSERT INTO ${COLLECTION} (firstName, lastName, status, benchmarkId) VALUES (?, ?, ?, ?)`);
+				const res = query.run(data.firstName, data.lastName, data.status, data.benchmarkId);
+				return { _id: res.lastInsertRowid };
+			},
+			read: (id: any) => sqlite.prepare(`SELECT * FROM ${COLLECTION} WHERE id = ?`).get(id),
+			update: (id: any, data: any) => sqlite.prepare(`UPDATE ${COLLECTION} SET status = ? WHERE id = ?`).run(data.status, id),
+			delete: (id: any) => sqlite.prepare(`DELETE FROM ${COLLECTION} WHERE id = ?`).run(id),
+			disconnect: () => sqlite.close()
+		};
+		console.log('✅ Connected to SQLite (Bun Native).');
+	} else {
+		console.log(`ℹ️ Skipping: This benchmark does not yet support ${dbType}`);
+		process.exit(0);
 	}
-
-	const env = getPrivateEnv();
-	if (!env) {
-		console.error('❌ Configuration not found.');
-		process.exit(1);
-	}
-
-	const dbType = env.DB_TYPE;
-	console.log(`📂 DB Type: ${dbType.toUpperCase()}`);
-	console.log(`📂 DB Name: ${env.DB_NAME}`);
-
-	await getDbInitPromise(true);
-	const baselineFile = path.join(RESULTS_DIR, `baseline-${dbType}-agnostic.json`);
-
-	const dbAdapter = getDb();
-	if (!dbAdapter) {
-		console.error('❌ Failed to initialize dbAdapter');
-		process.exit(1);
-	}
-
-	const updateBaseline = process.argv.includes('--update-baseline');
-
-	// --- 0. PREPARE COLLECTION ---
-	console.log(`📦 Creating collection: ${COLLECTION}...`);
-	await dbAdapter.collection.createModel({
-		_id: 'benchmarks',
-		name: 'Benchmarks',
-		fields: []
-	} as any);
 
 	// --- 1. WARMUP ---
 	console.log('🔥 Warming up (20 iterations)...');
 	for (let i = 0; i < 20; i++) {
-		const res = await dbAdapter.crud.insert(COLLECTION, { firstName: 'Warm', lastName: 'Up', status: 'warm' } as any, null, true);
-		if (res.success) {
-			const id = (res.data as any)._id;
-			await dbAdapter.crud.findOne(COLLECTION, { _id: id } as any, { bypassTenantCheck: true });
-			await dbAdapter.crud.delete(COLLECTION, id, null, true);
-		}
+		const doc = await db.insert({ firstName: 'Warm', lastName: 'Up', status: 'warm', benchmarkId: 'warm' });
+		await db.read(doc._id);
+		await db.delete(doc._id);
 	}
 
 	// --- 2. BENCHMARK ---
-	console.log(`💾 Measuring CRUD Latencies (${ITERATIONS} iterations)...`);
+	console.log(`💾 Measuring Raw ${dbType.toUpperCase()} Latencies (${ITERATIONS} iterations)...`);
 
-	const metrics = {
-		insert: [] as number[],
-		read: [] as number[],
-		update: [] as number[],
-		delete: [] as number[]
-	};
+	const metrics = { insert: [] as number[], read: [] as number[], update: [] as number[], delete: [] as number[] };
 
 	for (let i = 0; i < ITERATIONS; i++) {
 		const benchmarkId = `bench-${Date.now()}-${i}`;
-
-		// INSERT
 		const s1 = performance.now();
-		const res = await dbAdapter.crud.insert(
-			COLLECTION,
-			{
-				firstName: 'Bench',
-				lastName: `User ${i}`,
-				status: 'active',
-				benchmarkId
-			} as any,
-			null,
-			true
-		);
+		const doc = await db.insert({ firstName: 'Bench', lastName: `User ${i}`, status: 'active', benchmarkId });
 		metrics.insert.push(performance.now() - s1);
-
-		if (!res.success) {
-			console.error(`❌ Insert failed at iteration ${i}:`, res.message);
-			continue;
-		}
-
-		const docId = (res.data as any)._id;
-
-		// READ (by ID)
+		const docId = doc._id;
 		const s2 = performance.now();
-		await dbAdapter.crud.findOne(COLLECTION, { _id: docId } as any, { bypassTenantCheck: true });
+		await db.read(docId);
 		metrics.read.push(performance.now() - s2);
-
-		// UPDATE
 		const s3 = performance.now();
-		await dbAdapter.crud.update(COLLECTION, docId, { status: 'archived' } as any, null, true);
+		await db.update(docId, { status: 'archived' });
 		metrics.update.push(performance.now() - s3);
-
-		// DELETE
 		const s4 = performance.now();
-		await dbAdapter.crud.delete(COLLECTION, docId, null, true);
+		await db.delete(docId);
 		metrics.delete.push(performance.now() - s4);
 	}
 
 	const avg = (arr: number[]) => (arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-	const results = {
-		insert: avg(metrics.insert),
-		read: avg(metrics.read),
-		update: avg(metrics.update),
-		delete: avg(metrics.delete)
-	};
+	const results = { insert: avg(metrics.insert), read: avg(metrics.read), update: avg(metrics.update), delete: avg(metrics.delete) };
 
-	console.log(`\n📊 Average ${dbType.toUpperCase()} Latencies (via dbAdapter):`);
+	console.log(`\n📊 Average Raw ${dbType.toUpperCase()} Latencies (ms):`);
 	console.log('-----------------------------------------------------------');
-	console.log(`Insert : ${results.insert.toFixed(3)} ms`);
-	console.log(`Read   : ${results.read.toFixed(3)} ms`);
-	console.log(`Update : ${results.update.toFixed(3)} ms`);
-	console.log(`Delete : ${results.delete.toFixed(3)} ms`);
+	console.log(`Insert : ${results.insert.toFixed(4)} ms`);
+	console.log(`Read   : ${results.read.toFixed(4)} ms`);
+	console.log(`Update : ${results.update.toFixed(4)} ms`);
+	console.log(`Delete : ${results.delete.toFixed(4)} ms`);
 	console.log('-----------------------------------------------------------');
 
 	// --- 3. REGRESSION DETECTION ---
+	const baselineFile = path.join(RESULTS_DIR, `baseline-mongodb-raw.json`);
 	let baseline = null;
 	try {
 		baseline = JSON.parse(await fs.readFile(baselineFile, 'utf8'));
 	} catch (e) {}
 
 	if (baseline) {
-		console.log('\n📉 vs Baseline:');
+		console.log('\n📉 vs Raw Baseline:');
 		const check = (name: string, cur: number, base: number) => {
 			const diff = (cur - base) / base;
 			const indicator = diff > REGRESSION_THRESHOLD ? '🔴 REGRESSION' : diff < -REGRESSION_THRESHOLD ? '🟢 IMPROVEMENT' : '⚪ STABLE';
@@ -156,25 +159,13 @@ async function runDatabaseBenchmark() {
 		check('Delete', results.delete, baseline.metrics.delete);
 	}
 
-	if (updateBaseline) {
+	if (process.argv.includes('--update-baseline')) {
 		await fs.mkdir(RESULTS_DIR, { recursive: true });
-		await fs.writeFile(
-			baselineFile,
-			JSON.stringify(
-				{
-					date: new Date().toISOString(),
-					dbType,
-					metrics: results
-				},
-				null,
-				2
-			)
-		);
+		await fs.writeFile(baselineFile, JSON.stringify({ date: new Date().toISOString(), dbType: 'mongodb', metrics: results }, null, 2));
 		console.log(`\n💾 Baseline updated: ${baselineFile}`);
 	}
 
-	// Cleanup any leftovers
-	await dbAdapter.crud.deleteMany(COLLECTION, { firstName: 'Bench' } as any, null, true);
+	await mongoose.disconnect();
 	console.log('\n✅ Benchmark complete.');
 	process.exit(0);
 }

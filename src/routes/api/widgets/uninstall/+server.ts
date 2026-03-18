@@ -31,7 +31,15 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			throw new AppError('Widget name is required', 400, 'MISSING_WIDGET_NAME');
 		}
 
-		const actualTenantId = tenantId || locals.tenantId || 'default-tenant';
+		// Resolve target tenant correctly to prevent IDOR
+		let targetTenantId = locals.tenantId || 'default-tenant';
+
+		if (tenantId && tenantId !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = tenantId;
+		}
 
 		// TODO: Implement widget uninstallation logic
 		// 1. Check if widget is currently active (must be deactivated first)
@@ -40,22 +48,22 @@ export const POST = apiHandler(async ({ request, locals }) => {
 		// 4. Update database to remove widget info
 		// 5. Unregister widget from the system
 
-		logger.info(`Uninstalling widget ${widgetName} for tenant: ${actualTenantId}`);
+		logger.info(`Uninstalling widget ${widgetName} for tenant: ${targetTenantId}`);
 
 		// Mock uninstallation process
 		const uninstallResult = {
 			success: true,
 			data: {
 				widgetName,
-				tenantId: actualTenantId,
+				tenantId: targetTenantId,
 				uninstalledAt: new Date().toISOString()
 			},
 			message: 'Widget uninstalled successfully'
 		};
 
 		const duration = performance.now() - start;
-		logger.info(`Widget ${widgetName} uninstalled successfully for tenant: ${actualTenantId}`, {
-			tenantId: actualTenantId,
+		logger.info(`Widget ${widgetName} uninstalled successfully for tenant: ${targetTenantId}`, {
+			tenantId: targetTenantId,
 			duration: `${duration.toFixed(2)}ms`
 		});
 

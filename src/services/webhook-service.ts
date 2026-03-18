@@ -1,5 +1,5 @@
 /**
- * @file src/services/webhookService.ts
+ * @file src/services/webhook-service.ts
  * @description Service for managing and dispatching system webhooks.
  * Allows external systems to subscribe to CMS events.
  */
@@ -19,6 +19,7 @@ export interface Webhook {
 	name: string;
 	secret?: string; // For signature verification
 	url: string;
+	tenantId: string; // Added for multi-tenancy
 }
 
 export type WebhookEvent = 'entry:create' | 'entry:update' | 'entry:delete' | 'entry:publish' | 'entry:unpublish' | 'media:upload' | 'media:delete';
@@ -28,9 +29,8 @@ const getDbAdapter = async () => (await import('@src/databases/db')).dbAdapter;
 export class WebhookService {
 	private static instance: WebhookService;
 
-	// In-memory cache of webhooks (refreshed periodically or on change)
-	private webhooksCache: Webhook[] | null = null;
-	private cacheTimestamp = 0;
+	// In-memory cache of webhooks per tenant
+	private webhooksCache: Map<string, { data: Webhook[]; timestamp: number }> = new Map();
 	private readonly CACHE_TTL = 60 * 1000; // 1 minute
 
 	private constructor() {}
@@ -43,18 +43,22 @@ export class WebhookService {
 	}
 
 	/**
-	 * Dispatch an event to all subscribed webhooks
+	 * Dispatch an event to all subscribed webhooks for a specific tenant
 	 */
-	public async trigger(event: WebhookEvent, payload: unknown) {
+	public async trigger(event: WebhookEvent, payload: unknown, tenantId: string) {
+		if (!tenantId) {
+			logger.warn(`Webhook trigger called without tenantId for event: ${event}`);
+			return;
+		}
 		// Don't block main thread
-		this._dispatch(event, payload).catch((err) => logger.error(`Error dispatching webhook event ${event}:`, err));
+		this._dispatch(event, payload, tenantId).catch((err) => logger.error(`Error dispatching webhook event ${event} for tenant ${tenantId}:`, err));
 	}
 
 	/**
 	 * Send a test event to a specific webhook
 	 */
-	public async testWebhook(id: string, userEmail: string) {
-		const webhooks = await this.getWebhooks();
+	public async testWebhook(id: string, userEmail: string, tenantId: string) {
+		const webhooks = await this.getWebhooks(tenantId);
 		const webhook = webhooks.find((w) => w.id === id);
 		if (!webhook) {
 			throw new Error('Webhook not found');
@@ -68,15 +72,15 @@ export class WebhookService {
 		});
 	}
 
-	private async _dispatch(event: WebhookEvent, payload: unknown) {
-		const webhooks = await this.getWebhooks();
+	private async _dispatch(event: WebhookEvent, payload: unknown, tenantId: string) {
+		const webhooks = await this.getWebhooks(tenantId);
 		const matchingHooks = webhooks.filter((wh) => wh.active && (wh.events.includes(event) || wh.events.includes('*' as unknown as WebhookEvent)));
 
 		if (matchingHooks.length === 0) {
 			return;
 		}
 
-		logger.debug(`Dispatching ${event} to ${matchingHooks.length} webhooks`);
+		logger.debug(`Dispatching ${event} to ${matchingHooks.length} webhooks for tenant ${tenantId}`);
 
 		const promises = matchingHooks.map((webhook) => this._dispatchTo(webhook, event, payload));
 
@@ -93,7 +97,8 @@ export class WebhookService {
 				timestamp: new Date().toISOString(),
 				payload,
 				webhookId: webhook.id,
-				deliveryId: uuidv4()
+				deliveryId: uuidv4(),
+				tenantId: webhook.tenantId
 			});
 
 			const headers: Record<string, string> = {
@@ -125,21 +130,26 @@ export class WebhookService {
 			}
 
 			// Update success stats (fire and forget)
-			this.updateStatus(webhook.id, true);
+			this.updateStatus(webhook.id, true, webhook.tenantId);
 		} catch (error) {
 			logger.warn(`Webhook ${webhook.name} failed:`, error);
-			this.updateStatus(webhook.id, false);
+			this.updateStatus(webhook.id, false, webhook.tenantId);
 			throw error; // Re-throw for testWebhook to catch if needed
 		}
 	}
 
 	/**
-	 * Get all configured webhooks
+	 * Get all configured webhooks for a tenant
 	 */
-	public async getWebhooks(): Promise<Webhook[]> {
-		// Simple memory cache
-		if (this.webhooksCache && Date.now() - this.cacheTimestamp < this.CACHE_TTL) {
-			return this.webhooksCache;
+	public async getWebhooks(tenantId: string): Promise<Webhook[]> {
+		if (!tenantId) {
+			return [];
+		}
+
+		// Simple memory cache per tenant
+		const cached = this.webhooksCache.get(tenantId);
+		if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+			return cached.data;
 		}
 
 		try {
@@ -148,33 +158,37 @@ export class WebhookService {
 				return [];
 			}
 
-			// We need a place to store webhooks.
-			// For V1, we'll store them in 'system_settings' under a special key 'webhooks_config'
-			// or assume a collection exists.
-			// Let's use system_settings for simplicity as it's existing infra.
+			// webhooks_config is stored in system_preferences scoped by tenantId
+			const result = await db.system.preferences.get<Webhook[]>('webhooks_config', 'system', tenantId as any);
 
-			const result = await db.system.preferences.get<Webhook[]>('webhooks_config', 'system');
+			const webhooks = result.success && Array.isArray(result.data) ? result.data : [];
 
-			this.webhooksCache = result.success && Array.isArray(result.data) ? result.data : [];
-			this.cacheTimestamp = Date.now();
+			// Enforce tenantId consistency on load
+			const sanitizedWebhooks = webhooks.map((w) => ({ ...w, tenantId }));
 
-			return this.webhooksCache || [];
+			this.webhooksCache.set(tenantId, { data: sanitizedWebhooks, timestamp: Date.now() });
+
+			return sanitizedWebhooks;
 		} catch (e) {
-			logger.error('Failed to load webhooks:', e);
+			logger.error(`Failed to load webhooks for tenant ${tenantId}:`, e);
 			return [];
 		}
 	}
 
 	/**
-	 * Save a new webhook or update existing
+	 * Save a new webhook or update existing for a tenant
 	 */
-	public async saveWebhook(webhook: Partial<Webhook>): Promise<Webhook> {
+	public async saveWebhook(webhook: Partial<Webhook>, tenantId: string): Promise<Webhook> {
+		if (!tenantId) {
+			throw new Error('tenantId is required');
+		}
+
 		const db = await getDbAdapter();
 		if (!db) {
 			throw new Error('DB not available');
 		}
 
-		const current = await this.getWebhooks();
+		const current = await this.getWebhooks(tenantId);
 		let updated: Webhook[];
 
 		const newWebhook = {
@@ -183,38 +197,56 @@ export class WebhookService {
 			active: webhook.active ?? true,
 			events: webhook.events || [],
 			name: webhook.name || 'Untitled Webhook',
-			url: webhook.url || ''
+			url: webhook.url || '',
+			tenantId // Ensure correct tenantId is set
 		} as Webhook;
 
 		if (webhook.id) {
-			updated = current.map((w) => (w.id === webhook.id ? newWebhook : w));
+			// Check if webhook exists in current tenant's list
+			const exists = current.some((w) => w.id === webhook.id);
+			if (!exists && current.length > 0) {
+				// If adding a new one with a pre-provided ID, or if ID is wrong
+				updated = [...current, newWebhook];
+			} else {
+				updated = current.map((w) => (w.id === webhook.id ? newWebhook : w));
+			}
 		} else {
 			updated = [...current, newWebhook];
 		}
-		await db.system.preferences.set('webhooks_config', updated, 'system');
-		this.webhooksCache = updated; // Update cache immediately
+
+		await db.system.preferences.set('webhooks_config', updated, 'system', tenantId as any);
+
+		// Update cache immediately
+		this.webhooksCache.set(tenantId, { data: updated, timestamp: Date.now() });
 
 		return newWebhook;
 	}
 
-	public async deleteWebhook(id: string) {
+	public async deleteWebhook(id: string, tenantId: string) {
+		if (!tenantId) {
+			return;
+		}
+
 		const db = await getDbAdapter();
 		if (!db) {
 			return;
 		}
 
-		const current = await this.getWebhooks();
+		const current = await this.getWebhooks(tenantId);
+		const initialLength = current.length;
 		const updated = current.filter((w) => w.id !== id);
-		await db.system.preferences.set('webhooks_config', updated, 'system');
-		this.webhooksCache = updated;
+
+		if (updated.length !== initialLength) {
+			await db.system.preferences.set('webhooks_config', updated, 'system', tenantId as any);
+			this.webhooksCache.set(tenantId, { data: updated, timestamp: Date.now() });
+		}
 	}
 
-	private async updateStatus(id: string, success: boolean) {
+	private async updateStatus(id: string, success: boolean, tenantId: string) {
 		// We won't write to DB on every trigger to save IO
-		// In a real system, we'd use a separate stats store or Redis
-		// For now, we update in-memory cache only if it's fresh enough
-		if (this.webhooksCache) {
-			const hook = this.webhooksCache.find((w) => w.id === id);
+		const cached = this.webhooksCache.get(tenantId);
+		if (cached) {
+			const hook = cached.data.find((w) => w.id === id);
 			if (hook) {
 				hook.lastTriggered = new Date().toISOString();
 				if (!success) {

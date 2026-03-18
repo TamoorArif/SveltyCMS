@@ -23,7 +23,6 @@ import type { MediaItem } from '@src/databases/db-interface';
 // System Logger
 import { logger } from '@utils/logger.server';
 // Media
-import { deleteFile } from '@utils/media/media-storage.server';
 
 export const DELETE: RequestHandler = async ({ request, locals }) => {
 	const { user, tenantId, roles } = locals;
@@ -48,20 +47,24 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 			throw error(400, 'URL is required');
 		}
 
-		// 1. Find the media item to check ownership
+		// 1. Find the media item to check ownership and get ID
 		const cleanPath = url.replace(/^\/files\//, '').replace(/^files\//, '');
-		const findResult = await dbAdapter.crud.findMany<MediaItem>('MediaItem', {
-			path: cleanPath
-		});
+		const findResult = await dbAdapter.crud.findMany<MediaItem>(
+			'media',
+			{
+				path: cleanPath
+			} as any,
+			{ tenantId }
+		);
 
 		if (!(findResult.success && findResult.data) || findResult.data.length === 0) {
-			logger.warn(`Media item not found for deletion: ${url}`);
+			logger.warn(`Media item not found for deletion: ${url}`, { tenantId });
 			throw error(404, 'Media not found');
 		}
 
 		const mediaItem = findResult.data[0];
 
-		// 2. Enforce Access Control
+		// 2. Enforce Access Control (Transfer logic to MediaService if preferred, but keep here for simplicity)
 		const isAdmin = roles?.some((r) => r.isAdmin);
 		const ownerId = mediaItem.createdBy || (mediaItem as any).user;
 		const isOwner = ownerId === user._id;
@@ -71,11 +74,14 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 			throw error(403, 'Access denied: You can only delete your own uploads.');
 		}
 
-		// 3. Delete the file
-		await deleteFile(url);
+		// 3. Delete via MediaService (handles both DB and storage)
+		const { MediaService } = await import('@src/utils/media/media-service.server');
+		const mediaService = new MediaService(dbAdapter);
+		await mediaService.deleteMedia(mediaItem._id as string, tenantId);
 
-		logger.info('File deleted successfully', {
+		logger.info('File and DB record deleted successfully', {
 			url,
+			id: mediaItem._id,
 			user: user?.email || 'unknown',
 			tenantId
 		});

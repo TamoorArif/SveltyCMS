@@ -11,6 +11,7 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { contentManager } from '@src/content/content-manager';
 
 export const POST = apiHandler(async ({ locals, request }) => {
 	const start = performance.now();
@@ -32,7 +33,17 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			throw new AppError('Widget database adapter not available', 500, 'DB_ADAPTER_UNAVAILABLE');
 		}
 
-		const tenantId = request.headers.get('X-Tenant-ID') || locals.tenantId;
+		// Resolve target tenant correctly to prevent IDOR
+		let targetTenantId = locals.tenantId || 'default-tenant';
+		const requestedTenant = request.headers.get('X-Tenant-ID');
+
+		if (requestedTenant && requestedTenant !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = requestedTenant;
+		}
+
 		const { widgetName, isActive } = await request.json();
 
 		if (!widgetName || typeof isActive !== 'boolean') {
@@ -57,10 +68,8 @@ export const POST = apiHandler(async ({ locals, request }) => {
 
 		// If deactivating, check if the widget is in use by collections
 		if (!isActive) {
-			const contentManager = await import('@root/src/content/content-manager').then((m) => m.contentManager);
-
-			// Check if widget is used in any collection
-			const allCollections = contentManager.getCollections();
+			// Check if widget is used in any collection for the target tenant
+			const allCollections = await contentManager.getCollections(targetTenantId);
 			const usedInCollections: string[] = [];
 			for (const schema of allCollections) {
 				// Check if any fields use this widget
@@ -123,10 +132,10 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			throw new AppError(`Failed to update widget status: ${errorMsg || 'Unknown error'}`, 500, 'UPDATE_FAILED');
 		}
 
-		// Clear widget active cache for current tenant ID
+		// Clear widget active cache for target tenant ID
 		// The cache key is 'widget:active:all' and gets prefixed with tenant during storage
-		logger.debug('[/api/widgets/status] Clearing widget active cache and related collections', { tenantId });
-		await cacheService.delete('widget:active:all', tenantId);
+		logger.debug('[/api/widgets/status] Clearing widget active cache and related collections', { tenantId: targetTenantId });
+		await cacheService.delete('widget:active:all', targetTenantId);
 
 		// Enhanced cache invalidation (moved from widgetStore)
 		// Widget state changed, so ALL collection-related caches are now invalid
@@ -141,7 +150,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 
 		const duration = performance.now() - start;
 		logger.info(`Widget ${widgetName} ${isActive ? 'activated' : 'deactivated'}`, {
-			tenantId,
+			tenantId: targetTenantId,
 			user: user._id,
 			widgetId: widget._id,
 			updatedWidget: updateResult.data,
@@ -153,7 +162,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			data: {
 				widgetName,
 				isActive,
-				tenantId,
+				tenantId: targetTenantId,
 				updatedAt: new Date().toISOString()
 			},
 			message: `Widget ${widgetName} ${isActive ? 'activated' : 'deactivated'} successfully`

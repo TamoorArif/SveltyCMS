@@ -26,7 +26,7 @@ tags:
 
 ## Overview
 
-The Media API provides a robust and type-safe system for managing media files (images, videos, documents) in SveltyCMS. All operations are handled by the **MediaService** and **MediaProcessingService**, which use a database-agnostic adapter and support multi-tenancy.
+The Media API provides a robust and type-safe system for managing media files (images, videos, documents) in SveltyCMS. All operations are handled by the **MediaService** and **MediaProcessingService**, which use a database-agnostic adapter and enforce **strict multi-tenant isolation** and **advanced security hardening** (SSRF prevention, command injection protection).
 
 **Storage Support:**
 
@@ -53,6 +53,7 @@ The Media API provides a robust and type-safe system for managing media files (i
 | POST   | `/api/media/remote`              | Upload from URL            |
 | GET    | `/api/media/transform/[...path]` | On-the-fly image transform |
 | PATCH  | `/api/media/[id]/focal`          | Update focal point         |
+| POST   | `/api/media/transcode`           | Transcode video assets     |
 
 ---
 
@@ -675,6 +676,9 @@ Content-Type: application/json
 
 **Permissions Required:** `media:write` or authenticated user.
 
+> [!IMPORTANT]
+> **SSRF Protection**: Remote URLs are strictly validated. Only HTTPS is allowed, and all internal/private IP ranges (RFC 1918, loopback, link-local) are blocked to prevent Server-Side Request Forgery attacks.
+
 #### Response (Success 200)
 
 ```json
@@ -739,6 +743,9 @@ Crop a 16:9 thumbnail with the subject (60% from left, 30% from top) staying vis
 GET /api/media/transform/product.jpg?w=400&h=225&focal=60,30
 ```
 
+> [!NOTE]
+> **Security**: The Transform API is hardened against directory traversal. All paths are resolved and validated against the `MEDIA_ROOT`.
+
 ---
 
 ### 14. Update Focal Point
@@ -780,6 +787,53 @@ Content-Type: application/json
 	}
 }
 ```
+
+---
+
+### 15. Transcode Video Asset
+
+Transcode a video file to another format (e.g., HLS for adaptive streaming).
+
+#### Request
+
+```http
+POST /api/media/transcode
+Content-Type: application/json
+```
+
+**Body (JSON):**
+
+```json
+{
+  "mediaId": "vid_123",
+  "targetFormat": "hls"
+}
+```
+
+**Parameters:**
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `mediaId` | string | ID of the media item to transcode |
+| `targetFormat` | string | Target format: `hls` (default), `mp4`, `webm` |
+
+**Permissions Required:** `media:update` or admin.
+
+#### Response (Success 200)
+
+```json
+{
+  "success": true,
+  "message": "Transcoding started successfully",
+  "data": {
+    "status": "processing",
+    "outputDir": "/mediaFolder/transcoded/vid_123"
+  }
+}
+```
+
+> [!TIP]
+> **Security**: Transcoding is handled via secure process spawning (no shell execution) to prevent command injection.
 
 ---
 
@@ -883,6 +937,7 @@ All 14 media API endpoints documented in this reference:
 12. ✅ `POST /api/media/remote` - Upload from remote URL
 13. ✅ `GET /api/media/transform/[...path]` - On-the-fly image transformation with focal point
 14. ✅ `PATCH /api/media/[id]/focal` - Quick focal point update
+15. ✅ `POST /api/media/transcode` - Video transcoding (HLS/Adaptive)
 
 ---
 
@@ -930,8 +985,9 @@ SveltyCMS media handling compared to industry-leading CMS platforms:
 4. **Advanced Search** - 18+ criteria including EXIF, dimensions, camera, dominant color
 5. **Focal Point Transform** - Smart cropping with `?focal=x,y` in Transform API
 6. **Self-Hosted Freedom** - Full control with S3/R2/Cloudinary or local storage
-7. **Storage Analytics** - AI-powered insights and consumption predictions
-8. **No Plugin Required** - All features built-in, not dependent on third-party plugins
+7. **Security Hardened** - Native SSRF protection, command injection prevention (spawn-based), and strict tenant isolation
+8. **Storage Analytics** - AI-powered insights and consumption predictions
+9. **No Plugin Required** - All features built-in, not dependent on third-party plugins
 
 ### Performance Comparison (Estimates)
 

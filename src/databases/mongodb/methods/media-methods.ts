@@ -14,7 +14,7 @@ import type { Model, QueryFilter } from 'mongoose';
 import type { DatabaseId, DatabaseResult, MediaItem, MediaMetadata, PaginatedResult, PaginationOptions } from '../../db-interface';
 import { type IMedia, mediaSchema } from '../models/media';
 import { CacheCategory, invalidateCategoryCache, withCache } from './mongodb-cache-utils';
-import { createDatabaseError } from './mongodb-utils';
+import { createDatabaseError, generateId } from './mongodb-utils';
 
 // Define model types for dependency injection
 type MediaModelType = Model<IMedia>;
@@ -133,7 +133,7 @@ export class MongoMediaMethods {
 	async move(fileIds: DatabaseId[], targetFolderId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<{ movedCount: number }>> {
 		try {
 			const query = safeQuery({ _id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id'] }, tenantId);
-			const result = await this.mediaModel.updateMany(query, { $set: { folderId: targetFolderId as string, updatedAt: new Date() } });
+			const result = await this.mediaModel.updateMany(query as any, { $set: { folderId: targetFolderId as string, updatedAt: new Date() } });
 
 			// Invalidate media caches
 			await invalidateCategoryCache(CacheCategory.MEDIA);
@@ -148,12 +148,91 @@ export class MongoMediaMethods {
 		}
 	}
 
+	// Retrieves metadata for multiple files
+	async getMetadata(fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<Record<string, MediaMetadata>>> {
+		try {
+			const query = safeQuery({ _id: { $in: fileIds } as unknown as QueryFilter<IMedia>['_id'] }, tenantId);
+			const results = await this.mediaModel
+				.find(query as any, { metadata: 1 })
+				.lean()
+				.exec();
+
+			const metadataMap: Record<string, MediaMetadata> = {};
+			results.forEach((r: any) => {
+				metadataMap[r._id] = r.metadata as MediaMetadata;
+			});
+			return { success: true, data: metadataMap };
+		} catch (error) {
+			return {
+				success: false,
+				message: 'Failed to get metadata',
+				error: createDatabaseError(error, 'GET_METADATA_ERROR', 'Failed to get metadata')
+			};
+		}
+	}
+
+	// Duplicates a media file
+	async duplicate(fileId: DatabaseId, newName?: string, tenantId?: string | null): Promise<DatabaseResult<MediaItem>> {
+		try {
+			const query = safeQuery({ _id: fileId }, tenantId);
+			const existing = await this.mediaModel
+				.findOne(query as any)
+				.lean()
+				.exec();
+			if (!existing) {
+				return {
+					success: false,
+					message: 'File not found',
+					error: { code: 'NOT_FOUND', message: 'File not found' }
+				};
+			}
+
+			const copy = {
+				...existing,
+				_id: generateId(),
+				filename: newName || `${existing.filename}_copy`,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			delete (copy as any).__v;
+
+			const result = await this.mediaModel.create(copy as any);
+			return { success: true, data: (result as any).toObject() as unknown as MediaItem };
+		} catch (error) {
+			return {
+				success: false,
+				message: 'Failed to duplicate file',
+				error: createDatabaseError(error, 'DUPLICATE_ERROR', 'Failed to duplicate file')
+			};
+		}
+	}
+
+	// Retrieves folders for the tenant (placeholder for more complex tree logic if needed)
+	async getFolders(parentId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<any[]>> {
+		try {
+			const query: Record<string, unknown> = parentId ? { parentId } : {};
+			const secureQuery = safeQuery(query as any, tenantId);
+
+			// We use the 'media_folders' collection indirectly via this.mediaModel.db
+			const folderModel = this.mediaModel.db.model('media_folders');
+			const folders = await folderModel.find(secureQuery).lean().exec();
+
+			return { success: true, data: folders };
+		} catch (error) {
+			return {
+				success: false,
+				message: 'Failed to get folders',
+				error: createDatabaseError(error, 'GET_FOLDERS_ERROR', 'Failed to get folders')
+			};
+		}
+	}
+
 	// Retrieves a paginated list of media files, optionally filtered by folder
 	async getFiles(
 		folderId?: DatabaseId,
 		options: PaginationOptions = {},
 		recursive = false,
-		tenantId?: string | null | null
+		tenantId?: string | null
 	): Promise<DatabaseResult<PaginatedResult<MediaItem>>> {
 		const { page = 1, pageSize = 25, sortField = 'createdAt', sortDirection = 'desc', user } = options;
 

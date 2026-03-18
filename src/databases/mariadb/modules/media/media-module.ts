@@ -47,22 +47,37 @@ export class MediaModule {
 	}
 
 	files = {
-		upload: async (file: Omit<MediaItem, '_id' | 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<MediaItem>> => {
+		upload: async (file: Omit<MediaItem, '_id' | 'createdAt' | 'updatedAt'>, tenantId?: string | null): Promise<DatabaseResult<MediaItem>> => {
+			if (tenantId) (file as any).tenantId = tenantId;
 			return this.crud.insert<MediaItem>('media_items', file);
 		},
 
-		uploadMany: async (files: Omit<MediaItem, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<DatabaseResult<MediaItem[]>> => {
+		uploadMany: async (
+			files: Omit<MediaItem, '_id' | 'createdAt' | 'updatedAt'>[],
+			tenantId?: string | null
+		): Promise<DatabaseResult<MediaItem[]>> => {
+			if (tenantId) {
+				for (const file of files) {
+					(file as any).tenantId = tenantId;
+				}
+			}
 			return this.crud.insertMany<MediaItem>('media_items', files);
 		},
 
-		delete: async (fileId: DatabaseId): Promise<DatabaseResult<void>> => {
-			return this.crud.delete('media_items', fileId);
+		delete: async (fileId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>> => {
+			const conditions = [eq(schema.mediaItems._id, fileId as string)];
+			if (tenantId) conditions.push(eq(schema.mediaItems.tenantId, tenantId));
+			return this.core.wrap(async () => {
+				await this.db.delete(schema.mediaItems).where(and(...conditions));
+			}, 'DELETE_FILE_FAILED');
 		},
 
-		deleteMany: async (fileIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>> => {
+		deleteMany: async (fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> => {
 			// Using simplified query filter for MariaDB
 			return this.core.wrap(async () => {
-				const result = await this.db.delete(schema.mediaItems).where(inArray(schema.mediaItems._id, fileIds as string[]));
+				const conditions = [inArray(schema.mediaItems._id, fileIds as string[])];
+				if (tenantId) conditions.push(eq(schema.mediaItems.tenantId, tenantId));
+				const result = await this.db.delete(schema.mediaItems).where(and(...conditions));
 				return { deletedCount: result[0].affectedRows };
 			}, 'DELETE_MANY_FILES_FAILED');
 		},
@@ -70,10 +85,15 @@ export class MediaModule {
 		getByFolder: async (
 			folderId?: DatabaseId,
 			options?: PaginationOptions,
-			_recursive?: boolean
+			_recursive?: boolean,
+			tenantId?: string | null | null
 		): Promise<DatabaseResult<PaginatedResult<MediaItem>>> => {
 			return this.core.wrap(async () => {
 				const conditions = folderId ? [eq(schema.mediaItems.folderId, folderId as string)] : [isNull(schema.mediaItems.folderId)];
+
+				if (tenantId) {
+					conditions.push(eq(schema.mediaItems.tenantId, tenantId));
+				}
 
 				// Ownership filtering
 				if (options?.user) {
@@ -125,10 +145,14 @@ export class MediaModule {
 			}, 'GET_FILES_BY_FOLDER_FAILED');
 		},
 
-		search: async (query: string, options?: PaginationOptions): Promise<DatabaseResult<PaginatedResult<MediaItem>>> => {
+		search: async (query: string, options?: PaginationOptions, tenantId?: string | null): Promise<DatabaseResult<PaginatedResult<MediaItem>>> => {
 			return this.core.wrap(async () => {
 				const qry = `%${query}%`;
-				const conditions = [or(like(schema.mediaItems.filename, qry), like(schema.mediaItems.originalFilename, qry))];
+				const conditions = [or(like(schema.mediaItems.filename, qry), like(schema.mediaItems.originalFilename, qry)) as import('drizzle-orm').SQL];
+
+				if (tenantId) {
+					conditions.push(eq(schema.mediaItems.tenantId, tenantId));
+				}
 
 				// Ownership filtering
 				if (options?.user) {
@@ -196,12 +220,15 @@ export class MediaModule {
 			}, 'GET_FILE_METADATA_FAILED');
 		},
 
-		updateMetadata: async (fileId: DatabaseId, metadata: Partial<MediaMetadata>): Promise<DatabaseResult<MediaItem>> => {
+		updateMetadata: async (fileId: DatabaseId, metadata: Partial<MediaMetadata>, tenantId?: string | null): Promise<DatabaseResult<MediaItem>> => {
 			return this.core.wrap(async () => {
+				const conditions = [eq(schema.mediaItems._id, fileId as string)];
+				if (tenantId) conditions.push(eq(schema.mediaItems.tenantId, tenantId));
+
 				const [existing] = await this.db
 					.select({ metadata: schema.mediaItems.metadata })
 					.from(schema.mediaItems)
-					.where(eq(schema.mediaItems._id, fileId as string))
+					.where(and(...conditions))
 					.limit(1);
 
 				const newMetadata = { ...((existing?.metadata as Record<string, unknown>) || {}), ...metadata };
@@ -209,7 +236,7 @@ export class MediaModule {
 				await this.db
 					.update(schema.mediaItems)
 					.set({ metadata: newMetadata, updatedAt: isoDateStringToDate(nowISODateString()) })
-					.where(eq(schema.mediaItems._id, fileId as string));
+					.where(and(...conditions));
 
 				const [updated] = await this.db
 					.select()
@@ -221,12 +248,14 @@ export class MediaModule {
 			}, 'UPDATE_FILE_METADATA_FAILED');
 		},
 
-		move: async (fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<DatabaseResult<{ movedCount: number }>> => {
+		move: async (fileIds: DatabaseId[], targetFolderId?: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<{ movedCount: number }>> => {
 			return this.core.wrap(async () => {
+				const conditions = [inArray(schema.mediaItems._id, fileIds as string[])];
+				if (tenantId) conditions.push(eq(schema.mediaItems.tenantId, tenantId));
 				const result = await this.db
 					.update(schema.mediaItems)
 					.set({ folderId: (targetFolderId || null) as string | null, updatedAt: isoDateStringToDate(nowISODateString()) })
-					.where(inArray(schema.mediaItems._id, fileIds as string[]));
+					.where(and(...conditions));
 				return { movedCount: result[0].affectedRows };
 			}, 'MOVE_FILES_FAILED');
 		},
@@ -263,18 +292,19 @@ export class MediaModule {
 	};
 
 	folders = {
-		create: async (folder: Omit<MediaFolder, '_id' | 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<MediaFolder>> => {
+		create: async (folder: Omit<MediaFolder, '_id' | 'createdAt' | 'updatedAt'>, tenantId?: string | null): Promise<DatabaseResult<MediaFolder>> => {
 			return this.core.wrap(async () => {
 				const id = utils.generateId() as string;
 				const now = nowISODateString();
 				const values = {
 					...folder,
 					_id: id,
+					tenantId: tenantId || null,
 					type: 'folder',
 					createdAt: isoDateStringToDate(now),
 					updatedAt: isoDateStringToDate(now)
 				};
-				await this.db.insert(schema.systemVirtualFolders).values(values as typeof schema.systemVirtualFolders.$inferInsert);
+				await this.db.insert(schema.systemVirtualFolders).values(values as any);
 				const [result] = await this.db.select().from(schema.systemVirtualFolders).where(eq(schema.systemVirtualFolders._id, id)).limit(1);
 				return utils.convertDatesToISO(result) as unknown as MediaFolder;
 			}, 'CREATE_MEDIA_FOLDER_FAILED');
@@ -299,15 +329,19 @@ export class MediaModule {
 			}, 'CREATE_MANY_MEDIA_FOLDERS_FAILED');
 		},
 
-		delete: async (folderId: DatabaseId): Promise<DatabaseResult<void>> => {
+		delete: async (folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>> => {
 			return this.core.wrap(async () => {
-				await this.db.delete(schema.systemVirtualFolders).where(eq(schema.systemVirtualFolders._id, folderId as string));
+				const conditions = [eq(schema.systemVirtualFolders._id, folderId as string)];
+				if (tenantId) conditions.push(eq(schema.systemVirtualFolders.tenantId, tenantId));
+				await this.db.delete(schema.systemVirtualFolders).where(and(...conditions));
 			}, 'DELETE_MEDIA_FOLDER_FAILED');
 		},
 
-		deleteMany: async (folderIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>> => {
+		deleteMany: async (folderIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>> => {
 			return this.core.wrap(async () => {
-				const result = await this.db.delete(schema.systemVirtualFolders).where(inArray(schema.systemVirtualFolders._id, folderIds as string[]));
+				const conditions = [inArray(schema.systemVirtualFolders._id, folderIds as string[])];
+				if (tenantId) conditions.push(eq(schema.systemVirtualFolders.tenantId, tenantId));
+				const result = await this.db.delete(schema.systemVirtualFolders).where(and(...conditions));
 				return { deletedCount: result[0].affectedRows };
 			}, 'DELETE_MANY_MEDIA_FOLDERS_FAILED');
 		},

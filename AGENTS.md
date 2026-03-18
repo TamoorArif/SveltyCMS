@@ -212,6 +212,7 @@ From the 2026 roadmap (v0.0.6, target A+ grade), prioritize these for parity/lea
 - [x] **SAML 2.0 / Enterprise SSO**: Full integration via BoxyHQ (@boxyhq/saml-jackson) for enterprise identity providers (Okta, Azure).
 - [x] **Edge Computing & Multi-Region**: Native support for edge-optimized data fetching and multi-region replication.
 - [x] **BuzzForm Visual Builder (v1.5)**: Production-ready drag-and-drop form/collection builder with real-time preview.
+- [x] **Secure Media Engine (v1.2)**: Native SSRF protection, command injection prevention (spawn-based), and hardened directory traversal.
 - [/] **Image Editor Enhancement**: Current implementation stabilized; adding cropping, filters, and focal point management.
 - [/] **Collection Builder Enhancement**: UX improvements and ergonomic field management in progress.
 - [x] **CI Pipeline Restoration**: Playwright E2E suite stabilized across MongoDB, MariaDB, and PostgreSQL.

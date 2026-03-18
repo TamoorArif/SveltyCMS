@@ -345,13 +345,13 @@ export class MongoDBAdapter implements IDBAdapter {
 						),
 					delete: (id, t) => this.crud.delete('media', id, t),
 					deleteMany: (ids, t) => this._wrapResult(() => mediaMethods.deleteMany(ids, t)),
-					getByFolder: (id, o, recursive, tenantId) => this._wrapResult(() => mediaMethods.getFiles(id, o, recursive, tenantId)),
-					search: (_q, o, tenantId) => this._wrapResult(() => mediaMethods.getFiles(undefined, { ...o, user: o?.user }, true, tenantId)),
-					getMetadata: () => this._wrapResult(async () => ({}) as Record<string, import('../db-interface').MediaMetadata>),
+					getByFolder: (id, o, recursive, t) => this._wrapResult(() => mediaMethods.getFiles(id, o, recursive, t)),
+					search: (_q, o, t) => this._wrapResult(() => mediaMethods.getFiles(undefined, { ...o, user: o?.user }, true, t)),
+					getMetadata: (ids, t) => this._wrapResult(async () => mediaMethods.getMetadata(ids, t)),
 					updateMetadata: (id, m, t) =>
 						this._wrapResult(() => mediaMethods.updateMetadata(id, m, t)) as Promise<DatabaseResult<import('../db-interface').MediaItem>>,
 					move: (ids, target, t) => this._wrapResult(() => mediaMethods.move(ids, target, t)),
-					duplicate: () => this._wrapResult(async () => ({}) as import('../db-interface').MediaItem)
+					duplicate: (id, name, t) => this._wrapResult(() => mediaMethods.duplicate(id, name, t))
 				},
 				folders: {
 					create: (f, t) => this.crud.insert('media_folders', f as any, t),
@@ -362,17 +362,25 @@ export class MongoDBAdapter implements IDBAdapter {
 						return this.crud.deleteMany(
 							'media_folders',
 							query as unknown as import('../db-interface').QueryFilter<import('../db-interface').BaseEntity>,
-							t, // tenantId (handled by safeQuery if needed, but here it's IDs)
-							t === undefined // bypassTenantCheck
+							t,
+							false // bypassTenantCheck: false to enforce isolation
 						);
 					},
-					getTree: () => this._wrapResult(async () => []),
-					getFolderContents: () =>
-						this._wrapResult(async () => ({
-							folders: [],
-							files: [],
-							totalCount: 0
-						})),
+					getTree: (_depth, t) => this._wrapResult(() => mediaMethods.getFolders(undefined, t)), // Simplified for now
+					getFolderContents: (id, o, t) =>
+						this._wrapResult(async () => {
+							const [foldersRes, filesRes] = await Promise.all([mediaMethods.getFolders(id, t), mediaMethods.getFiles(id, o, false, t)]);
+
+							if (!foldersRes.success || !filesRes.success) {
+								throw new Error('Failed to fetch folder contents');
+							}
+
+							return {
+								folders: foldersRes.data,
+								files: filesRes.data.items,
+								totalCount: foldersRes.data.length + (filesRes.data.total ?? 0)
+							};
+						}),
 					move: (id, target, t) => this.crud.update('media_folders', id, { parentId: target }, t)
 				}
 			};

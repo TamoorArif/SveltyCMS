@@ -11,25 +11,40 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
+import { widgetRegistryService } from '@src/services/widget-registry-service';
 
 export const GET = apiHandler(async ({ locals, url }) => {
 	const start = performance.now();
-	const { tenantId } = locals;
-
+	let targetTenantId = locals.tenantId || 'default-tenant';
 	try {
+		const { user } = locals;
+		if (!user) {
+			throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
+		}
+
+		// Resolve target tenant correctly to prevent IDOR
+		const requestedTenant = url.searchParams.get('tenantId');
+
+		if (requestedTenant && requestedTenant !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = requestedTenant;
+		}
+
 		// Support ?refresh=true to bypass cache (useful for debugging)
 		const forceRefresh = url.searchParams.get('refresh') === 'true';
 
 		if (forceRefresh) {
-			logger.trace('[/api/widgets/active] Force refresh requested, clearing cache', { tenantId });
-			await cacheService.delete('widget:active:all', tenantId);
+			logger.trace('[/api/widgets/active] Force refresh requested, clearing cache', { tenantId: targetTenantId });
+			await cacheService.delete('widget:active:all', targetTenantId);
 		}
 
 		// Try to get from cache first
 		const cacheKey = 'widget:active:all';
-		const cachedData = await cacheService.get<any>(cacheKey, tenantId);
+		const cachedData = await cacheService.get<any>(cacheKey, targetTenantId);
 		if (cachedData && !forceRefresh) {
-			logger.trace('[/api/widgets/active] Serving from cache', { tenantId });
+			logger.trace('[/api/widgets/active] Serving from cache', { tenantId: targetTenantId });
 			return json({
 				success: true,
 				data: cachedData,
@@ -38,7 +53,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		// Initialize widgets if not already loaded
-		await widgets.initialize(tenantId ?? undefined);
+		await widgets.initialize(targetTenantId);
 
 		// Get active widgets from database
 		const dbAdapter = locals.dbAdapter;
@@ -49,7 +64,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 
 		const result = await dbAdapter.system.widgets.getActiveWidgets();
 		logger.trace('[/api/widgets/active] Raw result from getActiveWidgets()', {
-			tenantId,
+			tenantId: targetTenantId,
 			resultType: Array.isArray(result) ? 'array' : typeof result,
 			resultLength: Array.isArray(result) ? result.length : undefined
 		});
@@ -76,8 +91,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		// Ensure core widgets are always included
-		// Usewidget-registry-service(server-side) instead of widgetStore (client-side) to avoid build issues
-		const { widgetRegistryService } = await import('@src/services/widget-registry-service');
+		// Use widgetRegistryService (server-side) instead of widgetStore (client-side) to avoid build issues
 		await widgetRegistryService.initialize();
 		const allWidgets = widgetRegistryService.getAllWidgets();
 
@@ -92,7 +106,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		widgetNames = Array.from(uniqueNames);
 
 		logger.trace('[/api/widgets/active] Extracted widget names (including core)', {
-			tenantId,
+			tenantId: targetTenantId,
 			count: widgetNames.length,
 			widgets: widgetNames,
 			allRegistryKeys: Array.from(allWidgets.keys()),
@@ -116,18 +130,18 @@ export const GET = apiHandler(async ({ locals, url }) => {
 
 		const duration = performance.now() - start;
 		logger.trace('Retrieved active widgets with metadata', {
-			tenantId,
+			tenantId: targetTenantId,
 			widgetCount: enrichedWidgets.length,
 			widgetNames: enrichedWidgets.map((w) => w.name),
 			duration: `${duration.toFixed(2)}ms`
 		});
 		const responseData = {
 			widgets: enrichedWidgets,
-			tenantId
+			tenantId: targetTenantId
 		};
 
 		// Cache the enriched results
-		await cacheService.setWithCategory(cacheKey, responseData, CacheCategory.WIDGET, tenantId);
+		await cacheService.setWithCategory(cacheKey, responseData, CacheCategory.WIDGET, targetTenantId);
 
 		return json({
 			success: true,
@@ -138,7 +152,10 @@ export const GET = apiHandler(async ({ locals, url }) => {
 	} catch (err) {
 		const duration = performance.now() - start;
 		const message = `Failed to get active widgets: ${err instanceof Error ? err.message : String(err)}`;
-		logger.error(message, { duration: `${duration.toFixed(2)}ms` });
+		logger.error(message, {
+			duration: `${duration.toFixed(2)}ms`,
+			tenantId: typeof targetTenantId !== 'undefined' ? targetTenantId : 'unknown'
+		});
 		if (err instanceof AppError) {
 			throw err;
 		}

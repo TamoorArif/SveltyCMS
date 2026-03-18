@@ -20,7 +20,7 @@ import { logger } from '@utils/logger.server';
 import sharp from 'sharp';
 import type { RequestHandler } from './$types';
 
-const MEDIA_ROOT = path.resolve(process.cwd(), 'mediaFolder');
+const MEDIA_ROOT = path.resolve(process.cwd(), 'mediaFolder') + path.sep;
 
 export const GET: RequestHandler = async ({ params, url }) => {
 	const imagePath = params.path;

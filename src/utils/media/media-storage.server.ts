@@ -12,8 +12,7 @@
 
 import path from 'node:path';
 import os from 'node:os';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
+import { spawn } from 'node:child_process';
 import { writeFileSync, readFileSync, unlinkSync } from 'node:fs';
 import { getPublicSettingSync } from '@src/services/settings-service';
 import { publicEnv } from '@src/stores/global-settings.svelte';
@@ -24,7 +23,31 @@ import { exists, getConfig, getUrl, isCloud, remove, upload } from './cloud-stor
 
 import type { ResizedImage } from './media-models';
 
-const execAsync = promisify(exec);
+/**
+ * Helper to run a process and wait for completion.
+ */
+function spawnAsync(command: string, args: string[]): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const child = spawn(command, args);
+		let stderr = '';
+
+		child.stderr?.on('data', (data) => {
+			stderr += data.toString();
+		});
+
+		child.on('error', (err) => {
+			reject(err);
+		});
+
+		child.on('exit', (code) => {
+			if (code === 0) {
+				resolve();
+			} else {
+				reject(new Error(`${command} exited with code ${code}: ${stderr.slice(-200)}`));
+			}
+		});
+	});
+}
 
 // Image sizes
 // Image sizes
@@ -45,9 +68,13 @@ const MEDIA_ROOT = getPublicSettingSync('MEDIA_FOLDER') ?? 'mediaFolder';
 
 /** Save buffer to storage (local or cloud) */
 export async function saveFile(buffer: Buffer, relPath: string): Promise<string> {
-	if (relPath.includes('..')) {
+	const MEDIA_ROOT_FULL = path.resolve(process.cwd(), MEDIA_ROOT) + path.sep;
+	const fullRelPath = path.resolve(process.cwd(), MEDIA_ROOT, relPath);
+
+	if (!fullRelPath.startsWith(MEDIA_ROOT_FULL)) {
 		throw new Error('Invalid path: Potential traversal attack');
 	}
+
 	if (isCloud()) {
 		await upload(buffer, relPath);
 		return getUrl(relPath);
@@ -55,9 +82,8 @@ export async function saveFile(buffer: Buffer, relPath: string): Promise<string>
 
 	// Local
 	const fs = await import('node:fs/promises');
-	const full = path.join(process.cwd(), MEDIA_ROOT, relPath);
-	await fs.mkdir(path.dirname(full), { recursive: true });
-	await fs.writeFile(full, buffer);
+	await fs.mkdir(path.dirname(fullRelPath), { recursive: true });
+	await fs.writeFile(fullRelPath, buffer);
 
 	return `/files/${relPath}`;
 }
@@ -87,15 +113,18 @@ export async function deleteFile(url: string): Promise<void> {
 	rel = rel.replace(/^\/+/, '');
 
 	// Path Traversal Protection
-	if (rel.includes('..')) {
+	const MEDIA_ROOT_FULL = path.resolve(process.cwd(), MEDIA_ROOT) + path.sep;
+	const full = path.resolve(process.cwd(), MEDIA_ROOT, rel);
+
+	if (!full.startsWith(MEDIA_ROOT_FULL)) {
 		const { logger } = await import('@utils/logger.server');
-		logger.error('Attempted path traversal delete blocked', { path: rel });
+		logger.error('Attempted path traversal delete blocked', { path: rel, resolved: full });
 		return;
 	}
 
 	const fs = await import('node:fs/promises');
-	const full = path.join(process.cwd(), MEDIA_ROOT, rel);
-	await fs.unlink(full).catch(() => {}); // best effort
+	const fullPath = path.join(process.cwd(), MEDIA_ROOT, rel);
+	await fs.unlink(fullPath).catch(() => {}); // best effort
 }
 
 /** Alias for backward compatibility */
@@ -122,15 +151,17 @@ export async function fileExists(rel: string): Promise<boolean> {
 
 /** Get file buffer */
 export async function getFile(rel: string): Promise<Buffer> {
-	if (rel.includes('..')) {
+	const MEDIA_ROOT_FULL = path.resolve(process.cwd(), MEDIA_ROOT) + path.sep;
+	const fullPath = path.resolve(process.cwd(), MEDIA_ROOT, rel);
+
+	if (!fullPath.startsWith(MEDIA_ROOT_FULL)) {
 		throw new Error('Invalid path: Potential traversal attack');
 	}
 	if (isCloud()) {
 		throw new Error('getFile not implemented for cloud');
 	}
 	const fs = await import('node:fs/promises');
-	const full = path.join(process.cwd(), MEDIA_ROOT, rel);
-	return await fs.readFile(full);
+	return await fs.readFile(fullPath);
 }
 
 /** Resize & save image variants */
@@ -208,7 +239,7 @@ export async function captureVideoThumbnail(buffer: Buffer): Promise<Buffer | nu
 	try {
 		writeFileSync(tempInput, buffer);
 		// Capture frame at 1s mark
-		await execAsync(`ffmpeg -ss 00:00:01 -i "${tempInput}" -frames:v 1 -q:v 2 "${tempOutput}" -y`);
+		await spawnAsync('ffmpeg', ['-ss', '00:00:01', '-i', tempInput, '-frames:v', '1', '-q:v', '2', tempOutput, '-y']);
 		return readFileSync(tempOutput);
 	} catch (err) {
 		logger.error('Error capturing video thumbnail', { error: err });
@@ -239,7 +270,19 @@ export async function generatePdfThumbnail(buffer: Buffer): Promise<Buffer | nul
 		writeFileSync(tempInput, buffer);
 		// Use ImageMagick (magick) to extract the first page [0] at 150 DPI
 		// -background white -flatten handles transparency
-		await execAsync(`magick -density 150 "${tempInput}[0]" -background white -flatten -alpha remove -quality 90 "${tempOutput}"`);
+		await spawnAsync('magick', [
+			'-density',
+			'150',
+			`${tempInput}[0]`,
+			'-background',
+			'white',
+			'-flatten',
+			'-alpha',
+			'remove',
+			'-quality',
+			'90',
+			tempOutput
+		]);
 		return readFileSync(tempOutput);
 	} catch (err) {
 		const isMagickMissing = err instanceof Error && (err.message.includes('not found') || err.message.includes('not recognized'));

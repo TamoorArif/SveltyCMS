@@ -47,7 +47,7 @@ import { getPublicSettingSync } from '@src/services/settings-service';
 import { isCloud } from '@src/utils/media/cloud-storage';
 import { getSanitizedFileName } from '@src/utils/media/media-processing';
 import { hashFileContent, mediaProcessingService } from '@src/utils/media/media-processing.server';
-import { saveFileToDisk, saveResizedImages } from '@src/utils/media/media-storage.server';
+import { deleteFile, saveFileToDisk, saveResizedImages } from '@src/utils/media/media-storage.server';
 // IMPORT SERVER-SIDE VALIDATION
 import { validateMediaFileServer } from '@src/utils/media/media-utils';
 import { AppError } from '@utils/error-handling';
@@ -214,16 +214,21 @@ export class MediaService {
 		userId: string,
 		access: MediaAccess,
 		tenantId: string | null = null,
-		basePath = 'global',
+		basePath?: string,
 		watermarkOptions?: WatermarkOptions,
 		originalId?: DatabaseId | null
 	): Promise<MediaItem> {
 		const startTime = performance.now();
 		this.ensureInitialized();
+
+		const effectiveBasePath = basePath || tenantId || 'global';
+
 		logger.trace('Starting media upload process', {
 			filename: file.name,
 			fileSize: file.size,
-			mimeType: file.type
+			mimeType: file.type,
+			tenantId,
+			basePath: effectiveBasePath
 		});
 		if (!file) {
 			const message = 'File is required';
@@ -297,13 +302,13 @@ export class MediaService {
 				safeFileName = `${safeFileName}.${extension}`;
 			}
 
-			// 1. Quota Enforcement (CRITICAL: 25MB for Demo/Guest)
-			if (basePath && basePath !== 'global') {
+			// 1. Quota Enforcement (CRITICAL)
+			if (effectiveBasePath && effectiveBasePath !== 'global') {
 				try {
 					const { tenantService: ts } = await import('@src/services/tenant-service');
-					await ts.checkQuota(basePath, 'maxStorageBytes', file.size);
+					await ts.checkQuota(effectiveBasePath, 'maxStorageBytes', file.size);
 				} catch (quotaError) {
-					logger.warn(`Storage quota exceeded for tenant ${basePath}`, {
+					logger.warn(`Storage quota exceeded for tenant ${effectiveBasePath}`, {
 						fileSize: file.size,
 						error: quotaError
 					});
@@ -312,7 +317,7 @@ export class MediaService {
 			}
 
 			// First upload the file and get basic file info
-			const { url, path, hash } = await this.uploadFile(buffer, safeFileName, mimeType, userId, basePath, watermarkOptions);
+			const { url, path, hash } = await this.uploadFile(buffer, safeFileName, mimeType, userId, effectiveBasePath, watermarkOptions);
 
 			const isImage = mimeType.startsWith('image/');
 			const isVideo = mimeType.startsWith('video/');
@@ -416,19 +421,19 @@ export class MediaService {
 					'process-media',
 					{
 						fileId: savedMedia._id as string,
-						basePath
+						basePath: effectiveBasePath
 					},
-					basePath !== 'global' ? basePath : undefined
+					effectiveBasePath !== 'global' ? effectiveBasePath : undefined
 				);
 			}
 
 			// 3. Increment usage upon successful DB record creation
-			if (basePath && basePath !== 'global') {
+			if (effectiveBasePath && effectiveBasePath !== 'global') {
 				try {
 					const { tenantService: ts } = await import('@src/services/tenant-service');
-					await ts.incrementUsage(basePath, 'maxStorageBytes', file.size);
+					await ts.incrementUsage(effectiveBasePath, 'maxStorageBytes', file.size);
 				} catch (incError) {
-					logger.error(`Failed to increment storage usage for tenant ${basePath}`, incError);
+					logger.error(`Failed to increment storage usage for tenant ${effectiveBasePath}`, incError);
 				}
 			}
 
@@ -763,6 +768,24 @@ export class MediaService {
 			throw new Error('Invalid id: Must be a non-empty string');
 		}
 		try {
+			// 1. Get media item first to get its path for disk deletion
+			const db = await this.getDb();
+			const mediaResult = await db.crud.findOne<MediaItem>('media', { _id: id as DatabaseId }, { tenantId });
+			if (mediaResult.success && mediaResult.data) {
+				const mediaItem = mediaResult.data;
+				// 2. Delete from storage (best effort)
+				if (mediaItem.url) {
+					await deleteFile(mediaItem.url);
+				}
+				// Also delete thumbnails if present
+				if (mediaItem.thumbnails) {
+					for (const thumb of Object.values(mediaItem.thumbnails)) {
+						if (thumb.url) await deleteFile(thumb.url);
+					}
+				}
+			}
+
+			// 3. Delete from database
 			const result = await this.db.media.files.delete(id as DatabaseId, tenantId);
 			if (!result.success) {
 				throw result.error;
@@ -897,6 +920,27 @@ export class MediaService {
 		}
 		try {
 			const convertedIds = ids.map((id) => id as DatabaseId);
+
+			// 1. Get all media items first for disk deletion
+			const db = await this.getDb();
+			const mediaItemsResult = await db.crud.findMany<MediaItem>('media', { _id: { $in: convertedIds } as any }, { tenantId });
+
+			if (mediaItemsResult.success && mediaItemsResult.data) {
+				for (const item of mediaItemsResult.data) {
+					// 2. Delete from storage (best effort)
+					if (item.url) {
+						await deleteFile(item.url);
+					}
+					// Also delete thumbnails
+					if (item.thumbnails) {
+						for (const thumb of Object.values(item.thumbnails)) {
+							if (thumb.url) await deleteFile(thumb.url);
+						}
+					}
+				}
+			}
+
+			// 3. Delete from database
 			const result = await this.db.media.files.deleteMany(convertedIds, tenantId);
 			if (!result.success) {
 				throw result.error;
@@ -1032,12 +1076,13 @@ export class MediaService {
 			filters: { brightness?: number; contrast?: number; saturation?: number; grayscale?: number; sepia?: number };
 			saveBehavior: 'new' | 'overwrite';
 		},
-		userId: string
+		userId: string,
+		tenantId: string | null = null
 	): Promise<MediaItem[]> {
 		this.ensureInitialized();
 		const results: MediaItem[] = [];
 
-		logger.info(`Starting batch processing for ${ids.length} items`, { userId, options });
+		logger.info(`Starting batch processing for ${ids.length} items`, { userId, options, tenantId });
 
 		// Process in parallel with concurrency limit if needed, but for now direct parallel
 		const promises = ids.map((id) =>
@@ -1047,7 +1092,8 @@ export class MediaService {
 					filters: options.filters,
 					saveBehavior: options.saveBehavior
 				},
-				userId
+				userId,
+				tenantId
 			).catch((err) => {
 				logger.error(`Batch item ${id} failed:`, err);
 				return null;
@@ -1062,6 +1108,9 @@ export class MediaService {
 		return results;
 	}
 
+	/**
+	 * Saves a remote file from a URL to the storage.
+	 */
 	public async saveRemoteMedia(
 		url: string,
 		userId: string,
@@ -1069,6 +1118,12 @@ export class MediaService {
 		tenantId: string | null = null,
 		basePath = 'global'
 	): Promise<MediaItem> {
+		this.ensureInitialized();
+
+		// SSRF Prevention: Validate URL before fetching
+		const { validateRemoteUrl } = await import('@src/utils/security/url-validator');
+		await validateRemoteUrl(url);
+
 		const response = await fetch(url);
 		if (!response.ok) {
 			throw new Error(`Failed to fetch remote file: ${response.statusText}`);

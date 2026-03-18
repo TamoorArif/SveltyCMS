@@ -181,11 +181,15 @@ export class SchedulerService {
 						await db.content.nodes.update(node.path, updateData as any);
 
 						// Trigger 'publish' webhook
-						webhookService.trigger('entry:publish', {
-							id: node._id,
-							collection: node.collectionDef?.name || 'unknown',
-							title: node.name
-						});
+						webhookService.trigger(
+							'entry:publish',
+							{
+								id: node._id,
+								collection: node.collectionDef?.name || 'unknown',
+								title: node.name
+							},
+							node.tenantId || ''
+						);
 					} else {
 						logger.warn(`Node ${node._id} has no path, skipping publish`);
 					}

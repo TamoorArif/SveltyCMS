@@ -32,10 +32,19 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			throw new AppError('Insufficient permissions', 403, 'FORBIDDEN');
 		}
 
-		const tenantId = request.headers.get('X-Tenant-ID') || locals.tenantId || 'default-tenant';
+		// Resolve target tenant correctly to prevent IDOR
+		let targetTenantId = locals.tenantId || 'default-tenant';
+		const requestedTenant = request.headers.get('X-Tenant-ID');
+
+		if (requestedTenant && requestedTenant !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = requestedTenant;
+		}
 
 		// Initialize widgets to get all from file system
-		await widgets.initialize(tenantId);
+		await widgets.initialize(targetTenantId);
 
 		// Get all widget data from file system
 		const allWidgetFunctions = widgets.widgetFunctions;
@@ -53,7 +62,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 		const dbWidgetNames = dbWidgets.map((w) => w.name as string);
 
 		logger.info('Starting widget sync...', {
-			tenantId,
+			tenantId: targetTenantId,
 			fileSystem: Object.keys(allWidgetFunctions).length,
 			database: dbWidgets.length,
 			core: coreWidgetNames.length,
@@ -123,7 +132,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 				errors: results.errors.length
 			},
 			duration: `${duration.toFixed(2)}ms`,
-			tenantId
+			tenantId: targetTenantId
 		});
 
 		return json({
@@ -138,7 +147,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 					errors: results.errors.length
 				},
 				details: results,
-				tenantId,
+				tenantId: targetTenantId,
 				performance: { duration: `${duration.toFixed(2)}ms` }
 			},
 			message: 'Widget sync completed successfully'

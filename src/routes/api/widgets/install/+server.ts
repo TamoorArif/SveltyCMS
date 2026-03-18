@@ -69,12 +69,24 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			throw new AppError('Widget ID is required', 400, 'MISSING_WIDGET_ID');
 		}
 
-		const actualTenantId = tenantId || locals.tenantId || 'default-tenant';
+		// Resolve target tenant correctly to prevent IDOR
+		let targetTenantId = locals.tenantId || 'default-tenant';
+
+		if (tenantId && tenantId !== targetTenantId) {
+			if (user.role !== 'super-admin') {
+				throw new AppError('Forbidden: You cannot manage widgets for other tenants.', 403, 'FORBIDDEN');
+			}
+			targetTenantId = tenantId;
+		}
 
 		logger.info(`[Widget Install] Starting installation for ${widgetId}`, {
-			tenantId: actualTenantId,
+			tenantId: targetTenantId,
 			user: user._id
 		});
+
+		// [SECURITY WARNING] The scanWidgetCode function uses regex-based scanning which is
+		// easily bypassed. This is currently a simulation/placeholder.
+		// For production marketplace, a robust AST-based sandbox (e.g. QuickJS) MUST be used.
 
 		// TODO: Implement marketplace widget installation logic
 		// 1. Download widget from marketplace
@@ -107,7 +119,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			success: true,
 			data: {
 				widgetId,
-				tenantId: actualTenantId,
+				tenantId: targetTenantId,
 				installedAt: new Date().toISOString(),
 				version: '1.0.0',
 				status: 'installed'
@@ -117,7 +129,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
 		const duration = performance.now() - start;
 		logger.info(`[Widget Install] Completed successfully for ${widgetId}`, {
-			tenantId: actualTenantId,
+			tenantId: targetTenantId,
 			duration: `${duration.toFixed(2)}ms`
 		});
 

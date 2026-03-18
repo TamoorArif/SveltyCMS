@@ -45,9 +45,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const mediaService = new MediaService(dbAdapter);
 
 	try {
-		// Use mediaService.getMedia to enforce ownership/admin access control
-
-		const media = await mediaService.getMedia(id, user, roles || []);
+		// Use mediaService.getMedia to enforce ownership/admin access control and tenant isolation
+		const media = await mediaService.getMedia(id, user, roles || [], locals.tenantId);
 
 		return json(media);
 	} catch (err) {
@@ -95,8 +94,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	const mediaService = new MediaService(dbAdapter);
 
 	try {
-		// 1. Get existing media to check access and merge metadata
-		const existing = await mediaService.getMedia(id, user, roles || []);
+		// 1. Get existing media to check access and merge metadata with tenant isolation
+		const existing = await mediaService.getMedia(id, user, roles || [], locals.tenantId);
 
 		// 2. Merge metadata
 		const newMetadata = {
@@ -104,8 +103,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			...metadata
 		};
 
-		// 3. Update
-		await mediaService.updateMedia(id, { metadata: newMetadata });
+		// 3. Update with tenant isolation
+		await mediaService.updateMedia(id, { metadata: newMetadata }, locals.tenantId);
 
 		return json({
 			success: true,

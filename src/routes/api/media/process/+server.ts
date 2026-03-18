@@ -190,7 +190,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 				if (!user) throw error(401, 'User not authenticated');
 
-				const processedItems = await mediaService.batchProcessImages(mediaIds, options, user._id.toString());
+				const processedItems = await mediaService.batchProcessImages(mediaIds, options, user._id.toString(), tenantId ?? null);
 				result = { success: true, data: processedItems };
 				break;
 			}
