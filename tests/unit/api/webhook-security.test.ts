@@ -2,12 +2,13 @@
  * @file tests/unit/api/webhook-security.test.ts
  * @description Unit tests for Webhook API security, focusing on IDOR and tenant isolation.
  */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET as getWebhooks, POST as createWebhook } from '@src/routes/api/webhooks/+server';
 import { PATCH as updateWebhook, DELETE as deleteWebhook } from '@src/routes/api/webhooks/[id]/+server';
 import { POST as testWebhook } from '@src/routes/api/webhooks/[id]/test/+server';
 import { webhookService } from '@src/services/webhook-service';
+
+console.log('--- vi keys in test:', typeof vi !== 'undefined' ? Object.keys(vi) : 'undefined');
 
 // Mock webhook service
 vi.mock('@src/services/webhook-service', () => ({
@@ -16,16 +17,6 @@ vi.mock('@src/services/webhook-service', () => ({
 		saveWebhook: vi.fn().mockResolvedValue({ id: 'webhook-1', name: 'Test' }),
 		deleteWebhook: vi.fn().mockResolvedValue(true),
 		testWebhook: vi.fn().mockResolvedValue(true)
-	}
-}));
-
-// Mock logger
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		error: vi.fn(),
-		warn: vi.fn(),
-		debug: vi.fn()
 	}
 }));
 
@@ -69,7 +60,7 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 			try {
 				await getWebhooks(event);
 			} catch (error: any) {
-				expect(error.statusCode).toBe(403);
+				expect(error.status).toBe(403);
 			}
 			expect(webhookService.getWebhooks).not.toHaveBeenCalledWith(otherTenant);
 		});
@@ -83,7 +74,7 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 			try {
 				await getWebhooks(event);
 			} catch (error: any) {
-				expect(error.statusCode).toBe(403);
+				expect(error.status).toBe(403);
 			}
 		});
 	});
@@ -106,7 +97,7 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 
 		it('should prevent updating a webhook that belongs to another tenant', async () => {
 			// Mocking that the webhook doesn't exist in the current tenant's list
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([]);
+			(webhookService.getWebhooks as any).mockResolvedValue([]);
 
 			const event = {
 				params: { id: webhookId },
@@ -117,13 +108,13 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 			try {
 				await updateWebhook(event);
 			} catch (error: any) {
-				expect(error.statusCode).toBe(404); // Should return 404/denied if not in tenant
+				expect(error.status).toBe(404); // Should return 404/denied if not in tenant
 			}
 			expect(webhookService.saveWebhook).not.toHaveBeenCalled();
 		});
 
 		it('should prevent deleting a webhook that belongs to another tenant', async () => {
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([]);
+			(webhookService.getWebhooks as any).mockResolvedValue([]);
 
 			const event = {
 				params: { id: webhookId },
@@ -133,13 +124,13 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 			try {
 				await deleteWebhook(event);
 			} catch (error: any) {
-				expect(error.statusCode).toBe(404);
+				expect(error.status).toBe(404);
 			}
 			expect(webhookService.deleteWebhook).not.toHaveBeenCalled();
 		});
 
 		it('should allow updating if the webhook belongs to the current tenant', async () => {
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
+			(webhookService.getWebhooks as any).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
 
 			const updates = { name: 'Updated' };
 			const event = {
@@ -154,7 +145,7 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 		});
 
 		it('should allow deleting if the webhook belongs to the current tenant', async () => {
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
+			(webhookService.getWebhooks as any).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
 
 			const event = {
 				params: { id: webhookId },
@@ -171,7 +162,7 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 		const webhookId = 'webhook-1';
 
 		it('should prevent testing a webhook that belongs to another tenant', async () => {
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([]);
+			(webhookService.getWebhooks as any).mockResolvedValue([]);
 
 			const event = {
 				params: { id: webhookId },
@@ -181,13 +172,13 @@ describe('Webhook API Security - IDOR and Tenant Isolation', () => {
 			try {
 				await testWebhook(event);
 			} catch (error: any) {
-				expect(error.statusCode).toBe(404);
+				expect(error.status).toBe(404);
 			}
 			expect(webhookService.testWebhook).not.toHaveBeenCalled();
 		});
 
 		it('should allow super-admin to test webhooks', async () => {
-			vi.mocked(webhookService.getWebhooks).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
+			(webhookService.getWebhooks as any).mockResolvedValue([{ id: webhookId, tenantId: myTenant } as any]);
 
 			const event = {
 				params: { id: webhookId },

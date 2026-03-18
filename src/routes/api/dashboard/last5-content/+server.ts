@@ -121,14 +121,16 @@ export const GET = apiHandler(async ({ locals, url }) => {
 
 	const queryPromises = collectionsEntries.map(async ([collectionId, collection]: [string, any]) => {
 		try {
-			const collectionName = `collection_${collection._id}`;
-			const filter = getPrivateSettingSync('MULTI_TENANT') ? { tenantId } : {};
-
-			// Use database-agnostic CRUD methods with explicit generic
-			const result = await adapter.crud.findMany<DashboardRawEntry>(collectionName, filter as Partial<DashboardRawEntry>, {
-				limit: query.limit,
-				fields: ['_id', 'title', 'name', 'label', 'createdAt', 'updatedAt', 'created', 'date', 'createdBy', 'author', 'creator', 'status', 'state']
-			});
+			const collectionName = `collection_${collectionId}`;
+			const result = await adapter.crud.findMany<DashboardRawEntry>(
+				collectionName,
+				{},
+				{
+					limit: query.limit,
+					fields: ['_id', 'title', 'name', 'label', 'createdAt', 'updatedAt', 'created', 'date', 'createdBy', 'author', 'creator', 'status', 'state'],
+					tenantId: getPrivateSettingSync('MULTI_TENANT') ? tenantId : undefined
+				}
+			);
 
 			if (result.success && Array.isArray(result.data)) {
 				return (result.data as DashboardRawEntry[]).map((entry) => ({

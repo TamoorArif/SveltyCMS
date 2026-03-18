@@ -46,7 +46,7 @@ const cacheClient = getPrivateSettingSync('USE_REDIS')
 import { hasPermissionWithRoles, registerPermission } from '@src/databases/auth/permissions';
 import { PermissionAction, PermissionType, type Role, type User } from '@src/databases/auth/types';
 // Unified Cache Service
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 // Import shared PubSub instance
 import { pubSub } from '@src/services/pub-sub';
 // Widget Store - ensure widgets are loaded before GraphQL setup
@@ -273,9 +273,8 @@ async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string | null
 	}
 }
 
-// Store Yoga app promise with a relaxed, generic-any typing to avoid
-// tight coupling to Yoga's internal generics, which are noisy for our use case.
-let yogaAppPromise: Promise<ReturnType<typeof createYoga<any, any>>> | null = null;
+// Store Yoga apps per tenant to prevent schema leakage
+const yogaApps = new Map<string, Promise<ReturnType<typeof createYoga<any, any>>>>();
 let wsServerInitialized = false;
 
 // Store global instance to prevent HMR EADDRINUSE errors
@@ -287,8 +286,9 @@ const globalWithWs = globalThis as typeof globalThis & {
 // We create a standalone WebSocket server on a different port.
 // In a production environment, you would ideally integrate this with your main HTTP server.
 async function initializeWebSocketServer(dbAdapter: DatabaseAdapter, tenantId?: string | null) {
+	// WebSocket server is currently global - in a full multi-tenant setup,
+	// this would need to handle dynamic schemas per connection or per tenant
 	if (globalWithWs.__SVELTY_GRAPHQL_WS__ || wsServerInitialized || building) {
-		logger.debug('WebSocket server already initialized, skipping...');
 		return;
 	}
 
@@ -372,7 +372,7 @@ import { AppError } from '@utils/error-handling';
 const handler = apiHandler(async (event: RequestEvent) => {
 	const { locals, request } = event;
 
-	// Authentication is handled by hooks.server.ts, but let's be extra sure
+	// Authentication is handled by hooks.server.ts
 	if (!locals.user) {
 		throw new AppError('Unauthorized: You must be logged in to access the GraphQL endpoint.', 401, 'UNAUTHORIZED');
 	}
@@ -383,23 +383,22 @@ const handler = apiHandler(async (event: RequestEvent) => {
 	}
 
 	try {
-		// Initialize yogaAppPromise if not already done
-		if (!yogaAppPromise) {
-			logger.debug('Initializing GraphQL Yoga app', {
-				tenantId: locals.tenantId
-			});
-			yogaAppPromise = setupGraphQL(locals.dbAdapter, locals.tenantId);
+		const tenantId = locals.tenantId || 'system';
+
+		// Initialize/Get Yoga app for this specific tenant
+		if (!yogaApps.has(tenantId)) {
+			logger.debug(`Initializing GraphQL Yoga app for tenant: ${tenantId}`);
+			yogaApps.set(tenantId, setupGraphQL(locals.dbAdapter, locals.tenantId));
 		}
-		const yogaApp = await yogaAppPromise;
+
+		const yogaApp = await yogaApps.get(tenantId);
 		if (!yogaApp) {
 			throw new AppError('GraphQL Yoga app failed to initialize', 500, 'GRAPHQL_INIT_FAILED');
 		}
 
-		// Initialize WebSocket server if not already done
+		// Initialize WebSocket server (global for now, but with tenant context)
 		if (!wsServerInitialized) {
-			logger.debug('Initializing WebSocket server', {
-				tenantId: locals.tenantId
-			});
+			logger.debug('Initializing WebSocket server');
 			void initializeWebSocketServer(locals.dbAdapter, locals.tenantId);
 		}
 
@@ -417,7 +416,6 @@ const handler = apiHandler(async (event: RequestEvent) => {
 			// Assign duplex property for streaming bodies (Node.js fetch polyfill)
 			(requestInit as RequestInit & { duplex?: string }).duplex = 'half';
 		}
-
 		const compatibleRequest = new Request(request.url.toString(), requestInit);
 
 		// Add context data to the request object for GraphQL Yoga
@@ -430,12 +428,6 @@ const handler = apiHandler(async (event: RequestEvent) => {
 			tenantId: locals.tenantId
 		};
 
-		// Log request headers for transparency
-		logger.debug('GraphQL Request Headers:', {
-			headers: Object.fromEntries(request.headers.entries()),
-			method: request.method
-		});
-
 		// Use GraphQL Yoga's handleRequest method
 		const yogaResponse = await yogaApp.handleRequest(compatibleRequest, {
 			user: locals.user,
@@ -443,33 +435,11 @@ const handler = apiHandler(async (event: RequestEvent) => {
 		});
 
 		if (!yogaResponse) {
-			logger.error('GraphQL Yoga returned undefined or null response');
 			throw new AppError('GraphQL Yoga returned no response', 500, 'GRAPHQL_NO_RESPONSE');
 		}
 
 		// Return a SvelteKit-compatible Response
 		const bodyBuffer = await yogaResponse.arrayBuffer();
-
-		// Robust Error Handling for failed requests
-		if (!yogaResponse.ok) {
-			try {
-				const bodyText = new TextDecoder().decode(bodyBuffer);
-				const bodyJson = JSON.parse(bodyText);
-
-				logger.error('GraphQL Execution Errors Detected:', {
-					status: yogaResponse.status,
-					statusText: yogaResponse.statusText,
-					errors: bodyJson.errors || 'No specific GraphQL errors provided',
-					requestId: request.headers.get('x-request-id') || 'N/A'
-				});
-			} catch {
-				logger.error('GraphQL Failed (Raw Body):', {
-					status: yogaResponse.status,
-					statusText: yogaResponse.statusText,
-					rawBodyLength: bodyBuffer.byteLength
-				});
-			}
-		}
 
 		return new Response(bodyBuffer, {
 			status: yogaResponse.status,
@@ -482,9 +452,7 @@ const handler = apiHandler(async (event: RequestEvent) => {
 			tenantId: locals.tenantId
 		});
 
-		if (error instanceof AppError) {
-			throw error;
-		}
+		if (error instanceof AppError) throw error;
 		throw new AppError('An error occurred while processing your GraphQL request.', 500, 'GRAPHQL_ERROR');
 	}
 });

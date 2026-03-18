@@ -50,7 +50,7 @@ export type { TwoFactorSetupResponse, TwoFactorVerificationResult } from './two-
 export type { Permission, PermissionAction, PermissionType, Role, RolePermissions, Session, SessionStore, Token, User } from './types';
 
 // Import caching
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 
 // Import shared crypto utilities with Argon2
 import { hashPassword as cryptoHashPassword, verifyPassword as cryptoVerifyPassword } from '@utils/crypto';

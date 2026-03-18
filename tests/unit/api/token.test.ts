@@ -18,41 +18,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Mock all dependencies before importing the module
-vi.mock('@src/databases/cache-service', () => ({
-	cacheService: { delete: vi.fn().mockResolvedValue(true) }
-}));
-
-vi.mock('@src/databases/db', () => ({
-	auth: {
-		getTokenByValue: vi.fn(),
-		updateToken: vi.fn(),
-		deleteTokens: vi.fn(),
-		getAllTokens: vi.fn(),
-		createToken: vi.fn(),
-		blockTokens: vi.fn(),
-		unblockTokens: vi.fn(),
-		checkUser: vi.fn()
-	},
-	dbAdapter: {
-		auth: {
-			getAllTokens: vi.fn(),
-			createToken: vi.fn()
-		}
-	}
-}));
-
-vi.mock('@src/services/settings-service', () => ({
-	getPrivateSettingSync: vi.fn().mockReturnValue(false)
-}));
-
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		debug: vi.fn()
-	}
-}));
 
 vi.mock('@utils/api-handler', () => ({
 	apiHandler: (fn: any) => fn
@@ -79,7 +44,7 @@ vi.mock('@src/paraglide/runtime', () => ({
 }));
 
 // Import after mocks are set up
-const tokenIdHandlers = await import('@src/routes/api/token/[tokenID]/+server.ts');
+const tokenIdHandlers = await import('@src/routes/api/token/[tokenId]/+server.ts');
 const listHandlers = await import('@src/routes/api/token/+server.ts');
 const createHandlers = await import('@src/routes/api/token/create-token/+server.ts');
 const batchHandlers = await import('@src/routes/api/token/batch/+server.ts');
@@ -122,7 +87,7 @@ describe('Token API Unit Tests', () => {
 		vi.clearAllMocks();
 
 		// Re-import modules to get fresh mock references
-		const cacheModule = await import('@src/databases/cache-service');
+		const cacheModule = await import('@src/databases/cache/cache-service');
 		const authModule = await import('@src/databases/db');
 		const settingsModule = await import('@src/services/settings-service');
 		const loggerModule = await import('@utils/logger.server');
@@ -164,7 +129,11 @@ describe('Token API Unit Tests', () => {
 
 	const createMockGetEvent = (tokenId: string) => {
 		return {
-			params: { tokenID: tokenId }
+			params: { tokenID: tokenId },
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: vi.fn().mockResolvedValue({ success: true })
+			})
 		} as unknown as RequestEvent;
 	};
 
@@ -269,7 +238,11 @@ describe('Token API Unit Tests', () => {
 			locals: {
 				user: { _id: 'user-123', role },
 				tenantId
-			}
+			},
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: vi.fn().mockResolvedValue({ success: true })
+			})
 		} as unknown as RequestEvent;
 	};
 
@@ -377,7 +350,11 @@ describe('Token API Unit Tests', () => {
 				user: { _id: 'user-123', role: 'admin' },
 				tenantId,
 				hasManageUsersPermission: true
-			}
+			},
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: vi.fn().mockResolvedValue({ success: true })
+			})
 		} as unknown as RequestEvent;
 	};
 
@@ -525,7 +502,11 @@ describe('Token API Unit Tests', () => {
 				user: { _id: 'user-123', role: 'admin' },
 				tenantId
 			},
-			url: new URL('http://localhost/api/token/create-token')
+			url: new URL('http://localhost/api/token/create-token'),
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: vi.fn().mockResolvedValue({ success: true })
+			})
 		} as unknown as RequestEvent;
 	};
 
@@ -649,16 +630,23 @@ describe('Token API Unit Tests', () => {
 				data: 'generated-token-123'
 			});
 
-			global.fetch = vi.fn().mockResolvedValue({
-				ok: false,
-				json: vi.fn().mockResolvedValue({ message: 'SMTP error' })
-			}) as any;
-
 			const event = createMockCreateEvent({
 				email: 'newuser@example.com',
 				role: 'editor',
 				expiresIn: '2 days'
 			});
+
+			// ✨ Override the event's fetch to return a failure
+			event.fetch = vi.fn().mockImplementation(() =>
+				Promise.resolve({
+					ok: false,
+					status: 500,
+					json: async () => ({ message: 'SMTP error' })
+				})
+			) as any;
+
+			// Also mock global fetch just in case
+			global.fetch = event.fetch as any;
 
 			const response = await POST_CREATE(event);
 
@@ -720,7 +708,7 @@ describe('Token API Unit Tests', () => {
 				}) as any;
 
 				const event = createMockCreateEvent({
-					email: `test-${expiresIn}@example.com`,
+					email: `test-${expiresIn.replace(' ', '')}@example.com`,
 					role: 'editor',
 					expiresIn
 				});
@@ -743,7 +731,11 @@ describe('Token API Unit Tests', () => {
 			locals: {
 				user: { _id: 'user-123', role: 'admin' },
 				tenantId
-			}
+			},
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: vi.fn().mockResolvedValue({ success: true })
+			})
 		} as unknown as RequestEvent;
 	};
 

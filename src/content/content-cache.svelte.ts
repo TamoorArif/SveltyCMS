@@ -11,8 +11,8 @@ import { contentMetrics } from './content-metrics';
 import type { Schema } from './types';
 
 // Uses lazy import to prevent client-side bundling
-const getCacheService = async () => (await import('@src/databases/cache-service')).cacheService;
-const getRedisTTL = async () => (await import('@src/databases/cache-service')).REDIS_TTL_S;
+const getCacheService = async () => (await import('@src/databases/cache/cache-service')).cacheService;
+const getRedisTTL = async () => (await import('@src/databases/cache/cache-service')).REDIS_TTL_S;
 
 // Reactive state for first collection cache
 let firstCollCache = $state<{

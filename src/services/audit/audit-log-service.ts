@@ -25,6 +25,7 @@ export interface AuditLogEntry {
 		type: string;
 		id: string;
 	};
+	tenantId?: string;
 	timestamp: string;
 }
 
@@ -92,11 +93,13 @@ export class AuditLogService {
 		action: string,
 		actor: { id: string; email: string; ip: string },
 		resource: { type: string; id: string },
-		details?: Record<string, unknown>
+		details?: Record<string, unknown> & { tenantId?: string }
 	): Promise<AuditLogEntry> {
 		if (!this.initialized) {
 			await this.init();
 		}
+
+		const tenantId = details?.tenantId;
 
 		const entry: Omit<AuditLogEntry, 'hash'> = {
 			id: crypto.randomUUID(),
@@ -105,6 +108,7 @@ export class AuditLogService {
 			actor,
 			resource,
 			details,
+			tenantId,
 			previousHash: this.lastHash
 		};
 

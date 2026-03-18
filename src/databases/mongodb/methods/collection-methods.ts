@@ -166,19 +166,21 @@ export class MongoCollectionMethods {
 	/**
 	 * Gets a saved schema definition by collection name (display name in UI).
 	 */
-	async getSchema(collectionName: string): Promise<Schema | null> {
+	async getSchema(collectionName: string, tenantId?: string | null): Promise<Schema | null> {
 		try {
 			const structureCollection = mongoose.connection.collection('system_content_structure');
-			const result = await structureCollection.findOne({
-				name: collectionName
-			});
+			const query: Record<string, unknown> = { name: collectionName };
+			if (tenantId) {
+				query.tenantId = tenantId;
+			}
+			const result = await structureCollection.findOne(query);
 
 			if (result?.collectionDef) {
 				return result.collectionDef as Schema;
 			}
 			return null;
 		} catch (error) {
-			logger.error(`Failed to get schema for ${collectionName}:`, error);
+			logger.error(`Failed to get schema for ${collectionName} (tenant: ${tenantId}):`, error);
 			return null;
 		}
 	}
@@ -187,22 +189,27 @@ export class MongoCollectionMethods {
 	 * Gets a saved schema definition by collection document _id.
 	 * Use when comparing during save so renames (General Configuration) do not look up by new name and get null.
 	 */
-	async getSchemaById(collectionId: string): Promise<Schema | null> {
+	async getSchemaById(collectionId: string, tenantId?: string | null): Promise<Schema | null> {
 		try {
 			if (!collectionId || String(collectionId).trim() === '') return null;
 			const structureCollection = mongoose.connection.collection('system_content_structure');
 			const idNorm = String(collectionId).trim().replace(/-/g, '');
-			// Content structure documents store _id as string; cast via unknown so TS accepts string _id
-			const result = await structureCollection.findOne({
+
+			const query: any = {
 				$or: [{ _id: collectionId }, { _id: idNorm }]
-			} as unknown as mongoose.mongo.Filter<mongoose.mongo.Document>);
+			};
+			if (tenantId) {
+				query.tenantId = tenantId;
+			}
+
+			const result = await structureCollection.findOne(query as unknown as mongoose.mongo.Filter<mongoose.mongo.Document>);
 
 			if (result?.collectionDef) {
 				return result.collectionDef as Schema;
 			}
 			return null;
 		} catch (error) {
-			logger.error(`Failed to get schema by id ${collectionId}:`, error);
+			logger.error(`Failed to get schema by id ${collectionId} (tenant: ${tenantId}):`, error);
 			return null;
 		}
 	}
@@ -210,14 +217,18 @@ export class MongoCollectionMethods {
 	/**
 	 * Lists all saved schemas
 	 */
-	async listSchemas(): Promise<Schema[]> {
+	async listSchemas(tenantId?: string | null): Promise<Schema[]> {
 		try {
 			const structureCollection = mongoose.connection.collection('system_content_structure');
-			const nodes = await structureCollection.find({ nodeType: 'collection' }).toArray();
+			const query: Record<string, unknown> = { nodeType: 'collection' };
+			if (tenantId) {
+				query.tenantId = tenantId;
+			}
+			const nodes = await structureCollection.find(query).toArray();
 
 			return nodes.filter((node) => node.collectionDef).map((node) => node.collectionDef as Schema);
 		} catch (error) {
-			logger.error('Failed to list schemas:', error);
+			logger.error(`Failed to list schemas for tenant ${tenantId}:`, error);
 			return [];
 		}
 	}

@@ -18,37 +18,11 @@ const mockMediaService = {
 };
 
 // Mock dependencies
-vi.mock('@src/databases/db', () => ({
-	dbAdapter: {
-		crud: {
-			findOne: vi.fn(),
-			findMany: vi.fn(),
-			updateMany: vi.fn()
-		},
-		media: {
-			files: {
-				delete: vi.fn(),
-				deleteMany: vi.fn(),
-				upload: vi.fn()
-			}
-		}
-	},
-	dbInitPromise: Promise.resolve()
-}));
-
 vi.mock('@utils/api-handler', () => ({
 	apiHandler: (fn: any) => fn
 }));
 
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		error: vi.fn(),
-		warn: vi.fn(),
-		debug: vi.fn(),
-		trace: vi.fn()
-	}
-}));
+// Mock logger and settings are handled by setup.ts
 
 // Mock MediaService to return the mock object
 vi.mock('@src/utils/media/media-service.server', () => {
@@ -115,7 +89,7 @@ describe('Media API Security Unit Tests', () => {
 
 	describe('DELETE /api/media/delete', () => {
 		it('should enforce tenant isolation when finding the media item', async () => {
-			vi.mocked(dbAdapter!.crud.findMany).mockResolvedValue({ success: true, data: [{ _id: 'media-1', path: 'test.jpg' } as any] });
+			(dbAdapter!.crud.findMany as any).mockResolvedValue({ success: true, data: [{ _id: 'media-1', path: 'test.jpg' } as any] });
 
 			const event = {
 				locals: { user, roles, tenantId },

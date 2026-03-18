@@ -10,18 +10,34 @@
 
 import { automationService } from '@src/services/automation/automation-service';
 import type { AutomationEventPayload } from '@src/services/automation/types';
+import { getPrivateSettingSync } from '@src/services/settings-service';
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { apiHandler } from '@utils/api-handler';
+import { AppError } from '@utils/error-handling';
+import { logger } from '@utils/logger.server';
 
-/** POST /api/automations/:id/test — Test a flow */
-export const POST: RequestHandler = async ({ params }) => {
+/** POST /api/automations/:id/test — Test a flow (tenant-scoped) */
+export const POST = apiHandler(async ({ params, locals }) => {
+	const userRole = locals.user?.role;
+	const isSuperAdmin = userRole === 'super-admin';
+	const isAdmin = userRole === 'admin' || isSuperAdmin;
+
+	if (!locals.user || (!isAdmin && !isSuperAdmin)) {
+		throw new AppError('Unauthorized', 403, 'FORBIDDEN');
+	}
+
+	const tenantId = locals.tenantId || '';
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 403, 'TENANT_REQUIRED');
+	}
+
 	try {
-		const flow = await automationService.getFlow(params.id);
+		const flow = await automationService.getFlow(params.id, tenantId);
 		if (!flow) {
-			return json({ success: false, error: 'Automation not found' }, { status: 404 });
+			throw new AppError('Automation not found or access denied', 404, 'NOT_FOUND');
 		}
 
-		// Build a sample payload
+		// Build a sample payload with tenant context
 		const samplePayload: AutomationEventPayload = {
 			event: flow.trigger.events?.[0] || 'entry:create',
 			collection: flow.trigger.collections?.[0] || 'TestCollection',
@@ -36,7 +52,8 @@ export const POST: RequestHandler = async ({ params }) => {
 				email: 'test@sveltycms.com',
 				username: 'testuser'
 			},
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
+			tenantId: tenantId // Added for multi-tenancy
 		};
 
 		const result = await automationService.executeFlow(flow, samplePayload);
@@ -49,8 +66,11 @@ export const POST: RequestHandler = async ({ params }) => {
 				operationResults: result.operationResults
 			}
 		});
-	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Test execution failed';
-		return json({ success: false, error: message }, { status: 500 });
+	} catch (error) {
+		logger.error(`Failed to test automation ${params.id} for tenant ${tenantId}:`, error);
+		if (error instanceof AppError) {
+			throw error;
+		}
+		throw new AppError('Internal Server Error', 500, 'AUTOMATION_TEST_FAILED');
 	}
-};
+});

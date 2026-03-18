@@ -113,7 +113,23 @@ data: {"event":"entry:publish","timestamp":"2026-02-16T14:30:00Z","user":{"id":"
 | `entry:publish`   | Content was published live.      | `{ collection: string, user: User }`      |
 | `chat:message`    | A chat message was sent.         | `{ text: string, room: string \| null }`  |
 | `ai:response`     | A chunk of AI-generated text.    | `{ text: string, done: boolean }`         |
+| `yjs:sync`        | Binary document update (Yjs).    | `{ docId: string, updateBase64: string, origin: string }` |
 | `webhook:failure` | An automated webhook failed.     | `{ collection: string, url: string }`     |
+
+---
+
+## Binary Document Synchronization (Yjs)
+
+For multi-user editing, SveltyCMS uses the `yjs:sync` event to broadcast binary document updates.
+
+### Workflow
+
+1.  **Handshake**: The client fetches the initial state via `GET /api/collaboration/yjs?docId=...`.
+2.  **Upstream**: Local changes are batched and sent via `POST /api/collaboration/yjs`.
+3.  **Downstream**: The server applies the update and broadcasts it to all other clients via the SSE stream as a `yjs:sync` event.
+
+### Throttling & Batching
+To maintain enterprise performance, `yjs:sync` events are aggressively batched (50ms window) and awareness (cursors) are throttled (100ms) to prevent network congestion.
 
 ---
 
@@ -145,3 +161,4 @@ To prevent connection timeouts by firewalls and load balancers, the server sends
 - **Max Connections**: Limited by server resources and browser limits (usually 6-8 per domain).
 - **Latency**: Sub-10ms delivery after the event is emitted on the server.
 - **Buffering**: Up to 50 latest activities are buffered in the client-side store by default.
+- **Memory Hygiene**: Strict resource management ensures `setInterval` heartbeats and `EventBus` listeners are properly destroyed upon client disconnect, preventing memory leaks and Out of Memory (OOM) errors over long-running instances.

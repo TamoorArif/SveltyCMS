@@ -42,7 +42,7 @@ describe('SAML Authentication Service', () => {
 
 		// Force re-import to get fresh module state (clear cached Jackson instance)
 		// Use dynamic import to avoid stale module cache
-		const samlModule = await import('../../../src/databases/auth/saml-auth');
+		const samlModule = await import('@src/databases/auth/saml-auth?bun-unmock=' + Date.now());
 
 		const instance = await samlModule.getJackson();
 		expect(instance).toBeDefined();
@@ -54,13 +54,13 @@ describe('SAML Authentication Service', () => {
 	});
 
 	it('should generate SAML redirect URL correctly', async () => {
-		const samlModule = await import('../../../src/databases/auth/saml-auth');
+		const samlModule = await import('@src/databases/auth/saml-auth?bun-unmock=' + Date.now());
 		const url = await samlModule.generateSAMLAuthUrl('acme-corp', 'sveltycms');
 		expect(url).toBe('https://idp.example.com/sso');
 	});
 
 	it('should create SAML connections via admin controller', async () => {
-		const samlModule = await import('../../../src/databases/auth/saml-auth');
+		const samlModule = await import('@src/databases/auth/saml-auth?bun-unmock=' + Date.now());
 		const mockPayload = {
 			rawMetadata: '<xml></xml>',
 			defaultRedirectUrl: 'http://localhost:5173/admin',

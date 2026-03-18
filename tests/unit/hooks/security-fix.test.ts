@@ -17,6 +17,21 @@
 import { handleRateLimit } from '@src/hooks/handle-rate-limit';
 import type { RequestEvent } from '@sveltejs/kit';
 
+vi.mock('@src/databases/cache/cache-service', () => ({
+	cacheService: {
+		get: vi.fn(),
+		set: vi.fn(),
+		delete: vi.fn(),
+		clearByPattern: vi.fn().mockResolvedValue(true),
+		invalidateAll: vi.fn(),
+		reconfigure: vi.fn().mockResolvedValue(true)
+	},
+	getSessionCacheTTL: vi.fn(() => 3600),
+	getUserPermCacheTTL: vi.fn(() => 60),
+	getApiCacheTTL: vi.fn(() => 300),
+	REDIS_TTL_S: 300
+}));
+
 function createMockEvent(urlStr: string): RequestEvent {
 	const url = new URL(urlStr);
 	return {

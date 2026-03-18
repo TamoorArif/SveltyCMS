@@ -18,6 +18,7 @@
  */
 
 import { dbAdapter } from '@src/databases/db';
+import { getPrivateSettingSync } from '@src/services/settings-service';
 import { json } from '@sveltejs/kit';
 import { logger } from '@utils/logger.server';
 import * as v from 'valibot';
@@ -36,18 +37,21 @@ const SET_MULTIPLE_PREFERENCES_SCHEMA = v.array(PREFERENCE_SCHEMA);
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 
-// GET Handler for retrieving one or more preferences
 export const GET = apiHandler(async ({ locals, url }) => {
-	if (!locals.user) {
+	const { user, tenantId } = locals;
+	if (!user) {
 		logger.warn('Unauthorized attempt to load system preferences');
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
 	}
 
-	// Allow any authenticated user to read their own preferences
-	// The endpoint is scoped to the current user (userId = locals.user._id)
-	// so they cannot read other users' preferences or system-wide settings here.
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 400, 'TENANT_REQUIRED');
+	}
 
-	const userId = locals.user._id;
+	// SECURITY: Prefs are scoped to BOTH user AND tenant in multi-tenant mode
+	// We use a compound identifier for userId to ensure isolation
+	const effectiveUserId = tenantId ? `${tenantId}:${user._id}` : user._id;
+
 	const singleKey = url.searchParams.get('key');
 	const multipleKeys = url.searchParams.getAll('keys[]');
 
@@ -57,7 +61,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 			if (!dbAdapter) {
 				throw new AppError('Database adapter not available', 500, 'DB_UNAVAILABLE');
 			}
-			const result = await dbAdapter.system.preferences.getMany(multipleKeys, 'user', userId as any);
+			const result = await dbAdapter.system.preferences.getMany(multipleKeys, 'user', effectiveUserId as any);
 			if (!result.success) {
 				throw new Error(result.message);
 			}
@@ -69,7 +73,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 			if (!dbAdapter) {
 				throw new AppError('Database adapter not available', 500, 'DB_UNAVAILABLE');
 			}
-			const result = await dbAdapter.system.preferences.get(singleKey, 'user', userId as any);
+			const result = await dbAdapter.system.preferences.get(singleKey, 'user', effectiveUserId as any);
 			if (!result.success) {
 				// Return a default value for layout preferences to prevent UI breakage
 				if (singleKey.startsWith('dashboard.layout.')) {
@@ -86,24 +90,24 @@ export const GET = apiHandler(async ({ locals, url }) => {
 			throw e;
 		}
 		const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-		logger.error(`Failed to load preferences for user ${userId}: ${errorMessage}`, e);
+		logger.error(`Failed to load preferences for user ${user._id} (tenant: ${tenantId}): ${errorMessage}`, e);
 		throw new AppError('Failed to load preferences', 500, 'FETCH_FAILED');
 	}
 });
 
-// POST Handler for creating or updating one or more preferences
 export const POST = apiHandler(async ({ request, locals }) => {
-	if (!locals.user) {
+	const { user, tenantId } = locals;
+	if (!user) {
 		logger.warn('Unauthorized attempt to save system preferences');
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
 	}
 
-	// Allow any authenticated user to manage their own preferences
-	// The endpoint is scoped to the current user (userId = locals.user._id)
-	// so they cannot modify other users' preferences or system-wide settings here.
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 400, 'TENANT_REQUIRED');
+	}
 
 	const data = await request.json();
-	const userId = locals.user._id;
+	const effectiveUserId = tenantId ? `${tenantId}:${user._id}` : user._id;
 
 	try {
 		// Try parsing as a single preference
@@ -113,7 +117,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 				throw new AppError('Database adapter not available', 500, 'DB_UNAVAILABLE');
 			}
 			const { key, value } = singleResult.output;
-			const result = await dbAdapter.system.preferences.set(key, value, 'user', userId as any);
+			const result = await dbAdapter.system.preferences.set(key, value, 'user', effectiveUserId as any);
 			if (!result.success) {
 				throw new Error(result.message);
 			}
@@ -129,7 +133,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			const preferencesToSet = multipleResult.output.map((p) => ({
 				...p,
 				scope: 'user' as const,
-				userId: userId as any
+				userId: effectiveUserId as any
 			}));
 			const result = await dbAdapter.system.preferences.setMany(preferencesToSet);
 			if (!result.success) {
@@ -146,9 +150,6 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
 		// If neither schema matches
 		const issues = singleResult.issues || multipleResult.issues;
-		// Instead of returning JSON error, throw AppError to be consistent
-		// However, AppError doesn't easily support attaching 'issues'.
-		// We'll log issues and return generic error or stringified issues.
 		logger.warn('Invalid preference data', { issues });
 		throw new AppError('Invalid request data.', 400, 'INVALID_DATA');
 	} catch (e) {
@@ -156,37 +157,36 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			throw e;
 		}
 		const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-		logger.error(`Failed to save preferences for user ${userId}: ${errorMessage}`, e);
+		logger.error(`Failed to save preferences for user ${user._id} (tenant: ${tenantId}): ${errorMessage}`, e);
 		throw new AppError('Failed to save preferences', 500, 'SAVE_FAILED');
 	}
 });
 
-// DELETE Handler for removing a preference
 export const DELETE = apiHandler(async ({ locals, url }) => {
-	if (!locals.user) {
+	const { user, tenantId } = locals;
+	if (!user) {
 		logger.warn('Unauthorized attempt to delete a system preference');
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
 	}
 
-	// Allow any authenticated user to delete their own preferences
-	// The endpoint is scoped to the current user (userId = locals.user._id)
-	// so they cannot delete other users' preferences or system-wide settings here.
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 400, 'TENANT_REQUIRED');
+	}
 
 	const key = url.searchParams.get('key');
 	if (!key) {
 		throw new AppError("Missing 'key' query parameter.", 400, 'MISSING_KEY');
 	}
 
-	const userId = locals.user._id;
+	const effectiveUserId = tenantId ? `${tenantId}:${user._id}` : user._id;
 
 	try {
 		if (!dbAdapter) {
 			throw new AppError('Database adapter not available', 500, 'DB_UNAVAILABLE');
 		}
-		const result = await dbAdapter.system.preferences.delete(key, 'user', userId as any);
+		const result = await dbAdapter.system.preferences.delete(key, 'user', effectiveUserId as any);
 		if (!result.success) {
-			// It might not be an error if the key didn't exist, but we log it just in case.
-			logger.warn(`Attempted to delete non-existent preference key '${key}' for user ${userId}`);
+			logger.warn(`Attempted to delete non-existent preference key '${key}' for user ${user._id} (tenant: ${tenantId})`);
 		}
 		return json({ success: true, message: `Preference '${key}' deleted.` }, { status: 200 });
 	} catch (e) {
@@ -194,7 +194,7 @@ export const DELETE = apiHandler(async ({ locals, url }) => {
 			throw e;
 		}
 		const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-		logger.error(`Failed to delete preference '${key}' for user ${userId}: ${errorMessage}`, e);
+		logger.error(`Failed to delete preference '${key}' for user ${user._id} (tenant: ${tenantId}): ${errorMessage}`, e);
 		throw new AppError('Failed to delete preference', 500, 'DELETE_FAILED');
 	}
 });

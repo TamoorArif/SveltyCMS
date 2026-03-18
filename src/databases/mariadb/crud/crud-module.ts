@@ -24,12 +24,15 @@ export class CrudModule {
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<T | null>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const results = await this.db
@@ -56,12 +59,16 @@ export class CrudModule {
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
+			includeDeleted?: boolean;
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				let q = this.db
@@ -87,13 +94,20 @@ export class CrudModule {
 	async findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			includeDeleted?: boolean;
+			populate?: string[];
+		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
 				const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options.tenantId, {
-					bypassTenantCheck: options.bypassTenantCheck
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
 				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
@@ -178,11 +192,17 @@ export class CrudModule {
 			});
 	}
 
-	async delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
+	async delete(
+		collection: string,
+		id: DatabaseId,
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
+	): Promise<DatabaseResult<void>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, { bypassTenantCheck });
+				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				await this.db.delete(table as unknown as import('drizzle-orm/mysql-core').MySqlTable).where(where);
@@ -191,6 +211,14 @@ export class CrudModule {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
 				return res;
 			});
+	}
+
+	async restore(
+		collection: string,
+		_id: DatabaseId,
+		_options: { tenantId?: string | null; bypassTenantCheck?: boolean } = {}
+	): Promise<DatabaseResult<void>> {
+		return this.core.notImplemented(`crud.restore for ${collection}`);
 	}
 
 	async upsert<T extends BaseEntity>(
@@ -240,13 +268,15 @@ export class CrudModule {
 	async count<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T> = {},
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<number>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const [result] = await this.db
@@ -264,13 +294,12 @@ export class CrudModule {
 	async exists<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<boolean>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const res = await this.count(collection, query, tenantId, bypassTenantCheck);
+				const res = await this.count(collection, query, options);
 				if (!res.success) {
 					throw res.error;
 				}
@@ -347,14 +376,13 @@ export class CrudModule {
 	async deleteMany(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
 	): Promise<DatabaseResult<{ deletedCount: number }>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
 				const table = this.core.getTable(collection);
-				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const result = await this.db.delete(table as unknown as import('drizzle-orm/mysql-core').MySqlTable).where(where);
 				return { deletedCount: (result as any).affectedRows };

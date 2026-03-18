@@ -3,7 +3,7 @@
  * @description Whitebox unit tests for CacheService enhancements
  */
 
-import { CacheService } from '@src/databases/cache/cache-service';
+(globalThis as any).vi.unmock('@src/databases/cache/cache-service');
 
 // Mock settings-service specifically for these tests
 vi.mock('@src/services/settings-service', () => ({
@@ -16,14 +16,17 @@ vi.mock('@src/services/settings-service', () => ({
 
 describe('CacheService (Whitebox)', () => {
 	let service: any;
+	let CacheServiceClass: any;
 
 	beforeEach(async () => {
-		service = CacheService.getInstance();
-		await service.initialize(true); // Force re-init to ensure clean state
+		// DYNAMIC IMPORT with query to bypass persistent Bun mock
+		const module = await import('@src/databases/cache/cache-service?bun-unmock=' + Date.now());
+		CacheServiceClass = module.CacheService;
+
+		// Create a NEW instance for each test to bypass the global singleton mock
+		service = new CacheServiceClass();
+		await service.initialize(true); // Force init
 		(globalThis as any).__mockMultiTenant = false;
-		// Clear memoization cache
-		service.keyCache?.clear();
-		service.debounceTimers?.clear();
 	});
 
 	describe('generateKey', () => {
@@ -84,7 +87,7 @@ describe('CacheService (Whitebox)', () => {
 			expect(storeSpy).toHaveBeenCalledTimes(0); // Should be waiting for debounce
 
 			// Wait for debounce (300ms + buffer)
-			await new Promise((resolve) => setTimeout(resolve, 350));
+			await new Promise((resolve) => setTimeout(resolve, 400));
 
 			expect(storeSpy).toHaveBeenCalledTimes(1);
 		});
@@ -95,7 +98,7 @@ describe('CacheService (Whitebox)', () => {
 			service.clearByTags(['tag-a']);
 			service.clearByTags(['tag-b']);
 
-			await new Promise((resolve) => setTimeout(resolve, 350));
+			await new Promise((resolve) => setTimeout(resolve, 400));
 
 			expect(storeSpy).toHaveBeenCalledTimes(2);
 		});

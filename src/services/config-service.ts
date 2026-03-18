@@ -4,7 +4,6 @@
  * Scans files, queries DB, compares states, validates dependencies, and handles import/export.
  */
 
-import { createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { dbAdapter } from '@src/databases/db';
@@ -31,18 +30,12 @@ export interface ConfigSyncStatus {
 
 class ConfigService {
 	/** Returns current sync status between filesystem and database. */
-	public async getStatus(): Promise<ConfigSyncStatus> {
-		logger.debug('Fetching configuration sync status...');
-		const [source, active] = await Promise.all([this.getSourceState(), this.getActiveState()]);
-
-		logger.debug('Source state:', Array.from(source.values()));
-		logger.debug('Active state:', Array.from(active.values()));
+	public async getStatus(tenantId?: string): Promise<ConfigSyncStatus> {
+		logger.debug(`Fetching configuration sync status for tenant: ${tenantId || 'global'}...`);
+		const [source, active] = await Promise.all([this.getSourceState(tenantId), this.getActiveState(tenantId)]);
 
 		const changes = this.compareStates(source, active);
-		logger.debug('Detected changes:', changes);
-
-		const unmetRequirements = await this.checkForUnmetRequirements(source);
-		logger.debug('Unmet requirements:', unmetRequirements);
+		const unmetRequirements = await this.checkForUnmetRequirements(source, tenantId);
 
 		return {
 			status: changes.new.length > 0 || changes.updated.length > 0 || changes.deleted.length > 0 ? 'changes_detected' : 'in_sync',
@@ -53,44 +46,24 @@ class ConfigService {
 
 	/**
 	 * Exports all configuration entities from DB to a timestamped folder.
-	 * Optimized for enterprise performance: parallel file writes, scalable for large datasets.
 	 */
-	public async performExport({ uuids }: { uuids?: string[] } = {}): Promise<{ dirPath: string }> {
-		logger.info('Exporting configuration...');
-		const exportDir = path.resolve(process.cwd(), 'config/backup', `export_${Date.now()}`);
+	public async performExport({ uuids, tenantId }: { uuids?: string[]; tenantId?: string } = {}): Promise<{ dirPath: string }> {
+		logger.info(`Exporting configuration for tenant: ${tenantId || 'global'}...`);
+		const exportDir = path.resolve(process.cwd(), 'config/backup', `export_${tenantId || 'global'}_${Date.now()}`);
 		await fs.mkdir(exportDir, { recursive: true });
 
-		// Fetch all entity types in parallel
-		// Note: Roles are database-only and not part of export/import sync
-		// TODO: Implement proper collection schema fetching via dbAdapter.collection API
-		const [collections] = await Promise.all([Promise.resolve([])]);
+		// Fetch active state for this specific tenant
+		const activeState = await this.getActiveState(tenantId);
+		const entities = {
+			collections: Array.from(activeState.values()).filter((e) => e.type === 'collection')
+		};
 
-		// Prepare entities map
-		const entities = { collections };
-
-		// Write each entity type in parallel, streaming for large datasets
+		// Write each entity type
 		await Promise.all(
 			Object.entries(entities).map(async ([key, list]) => {
 				const filtered = uuids?.length ? (list as Array<{ uuid: string }>).filter((i) => uuids.includes(i.uuid)) : (list as unknown[]);
 				const filePath = path.join(exportDir, `${key}.json`);
-				// Stream write for large arrays
-				if (filtered.length > 10_000) {
-					const stream = createWriteStream(filePath);
-					stream.write('[\n');
-					for (let i = 0; i < filtered.length; i++) {
-						stream.write(JSON.stringify(filtered[i], null, 2));
-						if (i < filtered.length - 1) {
-							stream.write(',\n');
-						}
-					}
-					stream.write('\n]');
-					await new Promise((resolve, reject) => {
-						stream.end(resolve);
-						stream.on('error', reject);
-					});
-				} else {
-					await fs.writeFile(filePath, JSON.stringify(filtered, null, 2));
-				}
+				await fs.writeFile(filePath, JSON.stringify(filtered, null, 2));
 			})
 		);
 
@@ -101,6 +74,7 @@ class ConfigService {
 	/** Imports configuration entities from filesystem into the database. */
 	public async performImport(
 		options: {
+			tenantId?: string;
 			changes?: {
 				new: ConfigEntity[];
 				updated: ConfigEntity[];
@@ -108,11 +82,12 @@ class ConfigService {
 			};
 		} = {}
 	) {
-		logger.info('Performing configuration import...');
+		const { tenantId } = options;
+		logger.info(`Performing configuration import for tenant: ${tenantId || 'global'}...`);
 		let changes = options.changes;
 
 		if (!changes) {
-			const status = await this.getStatus();
+			const status = await this.getStatus(tenantId);
 			changes = status.changes;
 		}
 
@@ -124,32 +99,28 @@ class ConfigService {
 		const toUpsert = [...changes.new, ...changes.updated];
 		for (const item of toUpsert) {
 			if (item.type === 'collection') {
-				// Use the collection manager API if available, or direct DB manipulation
-				// For collections, we typically update the schema definition in the DB
 				try {
-					// Assuming 'collections' is the system collection for schemas
-					// We use the raw crud adapter to ensure we're hitting the DB directly
-					// Cast to BaseEntity to satisfy type check
+					// ✨ ISOLATION: Explicitly pass tenantId to upsert
 					await dbAdapter.crud.upsert(
 						'collections',
-						{ name: item.name } as Record<string, unknown>, // Query by name
-						item.entity as any // Entity shape is dynamic per collection
+						{ name: item.name, ...(tenantId && { tenantId }) } as Record<string, unknown>,
+						{ ...item.entity, ...(tenantId && { tenantId }) } as any,
+						tenantId as any
 					);
-					logger.info(`Imported collection: ${item.name}`);
+					logger.info(`Imported collection: ${item.name} for tenant ${tenantId || 'global'}`);
 				} catch (err) {
 					logger.error(`Failed to import collection ${item.name}:`, err);
 				}
 			}
-			// Add handlers for other types (widgets, themes) here as needed
 		}
 
 		// 2. Handle Deleted Entities
 		for (const item of changes.deleted) {
 			if (item.type === 'collection') {
 				try {
-					// Cast string uuid to DatabaseId if needed
-					await dbAdapter.crud.delete('collections', item.uuid as import('@src/databases/db-interface').DatabaseId);
-					logger.info(`Deleted collection: ${item.name}`);
+					// ✨ ISOLATION: Explicitly pass tenantId to delete
+					await dbAdapter.crud.delete('collections', item.uuid as import('@src/databases/db-interface').DatabaseId, tenantId as any);
+					logger.info(`Deleted collection: ${item.name} for tenant ${tenantId || 'global'}`);
 				} catch (err) {
 					logger.error(`Failed to delete collection ${item.name}:`, err);
 				}
@@ -159,16 +130,16 @@ class ConfigService {
 		logger.info('Configuration import completed.');
 	}
 
-	private async getSourceState(): Promise<Map<string, ConfigEntity>> {
+	private async getSourceState(tenantId?: string): Promise<Map<string, ConfigEntity>> {
 		const state = new Map<string, ConfigEntity>();
 		const { contentManager } = await import('@src/content/content-manager');
-		await contentManager.initialize();
+		await contentManager.initialize(tenantId);
 
-		// 1. Scan Collections
-		const collections = await contentManager.getCollections();
+		// 1. Scan Collections (scoped by tenantId)
+		const collections = await contentManager.getCollections(tenantId);
 		for (const collection of collections) {
 			if (!(collection._id && collection.name)) {
-				continue; // Skip if no _id or name
+				continue;
 			}
 			const hash = createChecksum(collection);
 			state.set(collection._id, {
@@ -180,22 +151,24 @@ class ConfigService {
 			});
 		}
 
-		// Note: Roles are managed directly in the database via /api/permission/update
-		// They are not part of the filesystem config sync workflow
-		// TODO: Add calls for widgets, themes, etc.
 		return state;
 	}
 
-	private async getActiveState(): Promise<Map<string, ConfigEntity>> {
+	private async getActiveState(tenantId?: string): Promise<Map<string, ConfigEntity>> {
 		if (!dbAdapter) {
 			throw new Error('Database adapter not available.');
 		}
 		const state = new Map<string, ConfigEntity>();
 
 		try {
-			// 1. Fetch Collections from DB
-			// We assume there is a system collection named 'collections' that stores schemas
-			const collectionsResult = await dbAdapter.crud.findMany('collections', {});
+			// ✨ ISOLATION: Explicitly pass tenantId to findMany options
+			const collectionsResult = await dbAdapter.crud.findMany(
+				'collections',
+				{},
+				{
+					tenantId: tenantId || undefined
+				}
+			);
 
 			if (collectionsResult.success && Array.isArray(collectionsResult.data)) {
 				for (const collection of collectionsResult.data as unknown as Record<string, unknown>[]) {
@@ -215,7 +188,7 @@ class ConfigService {
 				}
 			}
 		} catch (err) {
-			logger.error('Failed to fetch active state from DB:', err);
+			logger.error(`Failed to fetch active state from DB for tenant ${tenantId}:`, err);
 		}
 
 		return state;
@@ -246,7 +219,7 @@ class ConfigService {
 	}
 
 	/** Checks for missing system settings required by config entities. */
-	private async checkForUnmetRequirements(source: Map<string, ConfigEntity>): Promise<Array<{ key: string; value?: unknown }>> {
+	private async checkForUnmetRequirements(source: Map<string, ConfigEntity>, tenantId?: string): Promise<Array<{ key: string; value?: unknown }>> {
 		if (!dbAdapter?.system.preferences) {
 			throw new Error('System preferences adapter unavailable.');
 		}
@@ -258,7 +231,8 @@ class ConfigService {
 			}
 
 			for (const req of entity._requiredSettings) {
-				const result = await dbAdapter.system.preferences.get(req.key, 'system');
+				// ✨ ISOLATION: Pass tenantId as userId
+				const result = await dbAdapter.system.preferences.get(req.key, 'system', tenantId as any);
 				if (!(result.success && result.data)) {
 					unmet.push(req);
 				}
@@ -268,8 +242,6 @@ class ConfigService {
 		// Deduplicate by key
 		return [...new Map(unmet.map((i) => [i.key, i])).values()];
 	}
-
-	// Note: _scanDirectory method removed as it was unused
 }
 
 export const configService = new ConfigService();

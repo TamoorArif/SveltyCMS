@@ -42,14 +42,14 @@ export const POST = apiHandler(async ({ request, locals }) => {
 	// 2. AI Auto-Mapping (if no manual mapping provided)
 	let finalMapping = mapping;
 	if (!finalMapping) {
-		// We need the target collection schema
-		const collectionsResult = await dbAdapter.collection.listSchemas();
+		// We need the target collection schema (scoped to tenant)
+		const collectionsResult = await dbAdapter.collection.listSchemas(tenantId!);
 		if (!collectionsResult.success) {
 			throw new AppError('Failed to retrieve collection schemas', 500, 'SCHEMA_FETCH_FAILED');
 		}
 		const targetCol = collectionsResult.data.find((c: any) => c.name === targetCollection);
 		if (!targetCol) {
-			throw new AppError(`Target collection ${targetCollection} not found`, 404, 'COLLECTION_NOT_FOUND');
+			throw new AppError(`Target collection ${targetCollection} not found or access denied`, 404, 'COLLECTION_NOT_FOUND');
 		}
 		finalMapping = await aiService.suggestMapping(externalData.schema, targetCol);
 	}
@@ -90,14 +90,12 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
 				// Handle transforms
 				if (transform === 'media' && value) {
-					// Auto-download media
+					// Auto-download media (scoped to tenant)
 					try {
-						// For Drupal, value might be a URI or another JSON:API object.
-						// For now, assume it's a direct URL or handled by the source adapter
-						const media = await mediaService.saveRemoteMedia(value, user._id.toString(), 'public', tenantId || 'global');
+						const media = await mediaService.saveRemoteMedia(value, user._id.toString(), 'public', tenantId);
 						value = media._id;
 					} catch (me) {
-						logger.warn(`Failed to download remote media: ${value}`, me);
+						logger.warn(`Failed to download remote media: ${value} for tenant ${tenantId}`, me);
 						value = null;
 					}
 				}
@@ -105,8 +103,8 @@ export const POST = apiHandler(async ({ request, locals }) => {
 				transformed[targetKey] = value;
 			}
 
-			// Insert into database
-			const result = await dbAdapter.crud.insert(`collection_${targetCollection}`, transformed);
+			// Insert into database (scoped to tenant)
+			const result = await dbAdapter.crud.insert(`collection_${targetCollection}`, transformed, tenantId!);
 			if (result.success) {
 				importedCount++;
 			} else {
@@ -114,7 +112,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			}
 		} catch (err) {
 			errorCount++;
-			logger.error(`Import failed for item: ${JSON.stringify(item)}`, err);
+			logger.error(`Import failed for item in tenant ${tenantId}: ${JSON.stringify(item)}`, err);
 		}
 	}
 

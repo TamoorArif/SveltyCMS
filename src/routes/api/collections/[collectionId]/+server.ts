@@ -12,13 +12,13 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { modifyRequest } from '@api/collections/modify-request';
+import { modifyRequest } from '../modify-request';
 // Databases
 // Auth
 import { contentManager } from '@src/content/content-manager';
 // Types
 import type { FieldInstance } from '@src/content/types';
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { getPrivateSettingSync } from '@src/services/settings-service';
 import { json } from '@sveltejs/kit';
 // System Logger

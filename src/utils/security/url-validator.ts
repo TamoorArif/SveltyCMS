@@ -38,6 +38,7 @@ export async function validateRemoteUrl(url: string): Promise<void> {
 	}
 
 	// 3. Check if the IP is private/internal
+	console.log(`--- SSRF Check: ${parsedUrl.hostname} resolved to ${address}`);
 	if (isPrivateIP(address)) {
 		throw new AppError('Access to internal/private network is forbidden for remote media', 403, 'SSRF_ATTEMPT');
 	}

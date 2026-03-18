@@ -19,8 +19,24 @@ import type { User } from '@src/databases/auth/types';
 import { handleApiRequests } from '@src/hooks/handle-api-requests';
 import type { RequestEvent } from '@sveltejs/kit';
 
+vi.mock('@src/databases/cache/cache-service', () => ({
+	cacheService: {
+		get: vi.fn(),
+		set: vi.fn(),
+		delete: vi.fn(),
+		clearByPattern: vi.fn().mockResolvedValue(true),
+		invalidateAll: vi.fn(),
+		reconfigure: vi.fn().mockResolvedValue(true)
+	},
+	getSessionCacheTTL: vi.fn(() => 3600),
+	getUserPermCacheTTL: vi.fn(() => 60),
+	getApiCacheTTL: vi.fn(() => 300),
+	REDIS_TTL_S: 300
+}));
+
+const { cacheService } = await import('@src/databases/cache/cache-service');
+
 // Use global mocks from setup.ts
-const cacheService = (globalThis as any).cacheService;
 const metricsService = (globalThis as any).metricsService;
 
 // --- Test Utilities ---

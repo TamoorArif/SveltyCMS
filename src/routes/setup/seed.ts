@@ -487,8 +487,7 @@ export async function initSystemFast(
 						{
 							...(tenantId && { tenantId })
 						},
-						tenantId,
-						true
+						{ tenantId, bypassTenantCheck: true }
 					);
 					logger.info('✅ Content structure cleared successfully');
 				}

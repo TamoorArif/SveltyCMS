@@ -2,8 +2,19 @@ import { json } from '@sveltejs/kit';
 import { aiService } from '@src/services/ai-service';
 import type { RequestHandler } from './$types';
 import { logger } from '@utils/logger.server';
+import { getPrivateSettingSync } from '@src/services/settings-service';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	// 1. Authentication Check
+	if (!locals.user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const { tenantId } = locals;
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		return json({ error: 'Tenant ID required' }, { status: 403 });
+	}
+
 	try {
 		const { text, action, customPrompt, language } = await request.json();
 

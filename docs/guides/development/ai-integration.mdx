@@ -66,6 +66,27 @@ SveltyCMS provides a suite of AI-native components registered in the `sveltyRegi
 
 ---
 
+## 4. Enterprise Awareness: Beyond Content
+
+In Q1 2026, the SveltyCMS Knowledge Core was updated to understand the CMS's own operational infrastructure. This allows AI agents to assist with high-level administrative and maintenance tasks.
+
+### 4.1 Trash & Recovery Logic
+The MCP server now indexes the Soft Delete "Mangle-on-Delete" patterns.
+- **AI Tooling**: Agents can help locate "lost" content by querying the Trash Bin via semantic search, even if the original slug was mangled (e.g., `my-post_DELETED_1742332800`).
+- **Context**: The AI understands that items in the trash are isolated from production APIs but restorable to their original state.
+
+### 4.2 Durable Webhook & DLQ Monitoring
+The Knowledge Core provides real-time visibility into the system's integration health.
+- **Poison Pill Detection**: AI agents can analyze failed webhook payloads in the Dead-Letter Queue (DLQ) and suggest fixes for 4xx errors (e.g., "The destination API rejected this JSON because the 'title' field was too long").
+- **Retry Strategy**: The AI can recommend manual retries for transient 5xx errors based on the high-resolution operation timing bubbled up through the DB adapters.
+
+### 4.3 Collaboration & State Handshaking
+The AI Assistant is aware of the binary Yjs collaboration state.
+- **Presence Awareness**: The AI understands which users are currently editing which documents via the SSE-based `yjs:sync` stream.
+- **Conflict Resolution**: When multiple users edit a complex document, the AI can analyze the Yjs state vector to explain how a specific merge was mathematically resolved.
+
+---
+
 ## Why AI Makes SveltyCMS Superior
 
 Most headless CMS platforms boast "AI Integration," but essentially just bolt a ChatGPT wrapper onto a rich text field. SveltyCMS is built from the ground up to be **Agentic**.

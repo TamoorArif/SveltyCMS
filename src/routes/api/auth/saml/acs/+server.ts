@@ -19,7 +19,7 @@ import type { ISODateString } from '@src/content/types';
 import { apiHandler } from '@utils/api-handler';
 import { auth, dbInitPromise } from '@src/databases/db';
 
-import { cacheService, CacheCategory } from '@src/databases/cache-service';
+import { cacheService, CacheCategory } from '@src/databases/cache/cache-service';
 const RATE_LIMIT_WINDOW_S = 60; // 1 minute
 const MAX_ATTEMPTS = 10;
 

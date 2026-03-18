@@ -4,7 +4,6 @@
  * Allows external systems to subscribe to CMS events.
  */
 
-import crypto from 'node:crypto';
 import { logger } from '@utils/logger.server';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -80,62 +79,29 @@ export class WebhookService {
 			return;
 		}
 
-		logger.debug(`Dispatching ${event} to ${matchingHooks.length} webhooks for tenant ${tenantId}`);
+		logger.debug(`Queueing ${event} for ${matchingHooks.length} webhooks for tenant ${tenantId}`);
 
-		const promises = matchingHooks.map((webhook) => this._dispatchTo(webhook, event, payload));
+		const { jobQueue } = await import('./jobs/job-queue-service');
 
-		await Promise.allSettled(promises);
+		for (const webhook of matchingHooks) {
+			await jobQueue.dispatch(
+				'webhook-delivery',
+				{
+					webhook,
+					event,
+					payload
+				},
+				tenantId
+			);
+		}
 	}
 
 	private async _dispatchTo(webhook: Webhook, event: WebhookEvent, payload: unknown) {
-		try {
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-			const payloadStr = JSON.stringify({
-				event,
-				timestamp: new Date().toISOString(),
-				payload,
-				webhookId: webhook.id,
-				deliveryId: uuidv4(),
-				tenantId: webhook.tenantId
-			});
-
-			const headers: Record<string, string> = {
-				'Content-Type': 'application/json',
-				'X-SveltyCMS-Event': event,
-				'X-SveltyCMS-Delivery': uuidv4(),
-				'X-SveltyCMS-Timestamp': Math.floor(Date.now() / 1000).toString(),
-				'User-Agent': 'SveltyCMS-Webhook/1.0',
-				...(webhook.headers || {})
-			};
-
-			// Calculate signature if secret exists
-			if (webhook.secret) {
-				const signature = crypto.createHmac('sha256', webhook.secret).update(payloadStr).digest('hex');
-				headers['X-SveltyCMS-Signature'] = `sha256=${signature}`;
-			}
-
-			const response = await fetch(webhook.url, {
-				method: 'POST',
-				headers,
-				body: payloadStr,
-				signal: controller.signal
-			});
-
-			clearTimeout(timeoutId);
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
-			}
-
-			// Update success stats (fire and forget)
-			this.updateStatus(webhook.id, true, webhook.tenantId);
-		} catch (error) {
-			logger.warn(`Webhook ${webhook.name} failed:`, error);
-			this.updateStatus(webhook.id, false, webhook.tenantId);
-			throw error; // Re-throw for testWebhook to catch if needed
-		}
+		// This is now used by testWebhook. We delegate to jobQueue for consistency,
+		// but maybe for tests we want immediate feedback?
+		// For now, let's keep it immediate for the "Test Webhook" button but use the new logic.
+		const { webhookDeliveryHandler } = await import('./jobs/webhook-jobs');
+		await webhookDeliveryHandler({ webhook, event, payload });
 	}
 
 	/**
@@ -239,20 +205,6 @@ export class WebhookService {
 		if (updated.length !== initialLength) {
 			await db.system.preferences.set('webhooks_config', updated, 'system', tenantId as any);
 			this.webhooksCache.set(tenantId, { data: updated, timestamp: Date.now() });
-		}
-	}
-
-	private async updateStatus(id: string, success: boolean, tenantId: string) {
-		// We won't write to DB on every trigger to save IO
-		const cached = this.webhooksCache.get(tenantId);
-		if (cached) {
-			const hook = cached.data.find((w) => w.id === id);
-			if (hook) {
-				hook.lastTriggered = new Date().toISOString();
-				if (!success) {
-					hook.failureCount = (hook.failureCount || 0) + 1;
-				}
-			}
 		}
 	}
 }

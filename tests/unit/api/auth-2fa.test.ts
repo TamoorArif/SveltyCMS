@@ -52,6 +52,14 @@ vi.mock('@utils/api-handler', () => ({
 	apiHandler: (fn: any) => fn
 }));
 
+vi.mock('@src/databases/auth', () => ({
+	verifyPassword: vi.fn().mockResolvedValue(true),
+	hashPassword: vi.fn().mockResolvedValue('hashed'),
+	getAllPermissions: vi.fn().mockReturnValue([]),
+	checkPermissions: vi.fn().mockReturnValue(true),
+	validateUserPermission: vi.fn().mockReturnValue(true)
+}));
+
 // Import handlers after mocks
 const setupHandler = await import('@src/routes/api/auth/2fa/setup/+server.ts');
 const verifySetupHandler = await import('@src/routes/api/auth/2fa/verify-setup/+server.ts');
@@ -69,6 +77,7 @@ const POST_BACKUP_CODES = backupCodesHandler.POST;
 describe('2FA API Unit Tests', () => {
 	let mockTwoFactorService: any;
 	let mockGetPrivateSettingSync: any;
+	let mockVerifyPassword: any;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -79,6 +88,9 @@ describe('2FA API Unit Tests', () => {
 		const { getPrivateSettingSync } = await import('@src/services/settings-service');
 		mockGetPrivateSettingSync = getPrivateSettingSync;
 		mockGetPrivateSettingSync.mockReturnValue(false);
+
+		const { verifyPassword } = await import('@src/databases/auth');
+		mockVerifyPassword = verifyPassword;
 	});
 
 	// Helper to create mock event
@@ -107,7 +119,7 @@ describe('2FA API Unit Tests', () => {
 			const result = await response.json();
 
 			expect(result.success).toBe(true);
-			expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith('user-1', '123456', undefined);
+			expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith('user-1', '123456', null);
 		});
 
 		it('should verify backup code successfully', async () => {
@@ -224,10 +236,11 @@ describe('2FA API Unit Tests', () => {
 
 	describe('POST /api/auth/2fa/disable', () => {
 		it('should disable 2FA for enabled user', async () => {
-			const user = { _id: 'user-1', is2FAEnabled: true };
+			const user = { _id: 'user-1', is2FAEnabled: true, password: 'hashed_password' };
 			mockTwoFactorService.disable2FA.mockResolvedValue(true);
+			mockVerifyPassword.mockResolvedValue(true);
 
-			const event = createMockEvent({}, user);
+			const event = createMockEvent({ password: 'correct_password' }, user);
 			const response = await POST_DISABLE(event);
 			const result = await response.json();
 
@@ -235,8 +248,10 @@ describe('2FA API Unit Tests', () => {
 		});
 
 		it('should throw 2FA_DISABLED if not enabled', async () => {
-			const user = { _id: 'user-1', is2FAEnabled: false };
-			const event = createMockEvent({}, user);
+			const user = { _id: 'user-1', is2FAEnabled: false, password: 'hashed_password' };
+			mockVerifyPassword.mockResolvedValue(true);
+
+			const event = createMockEvent({ password: 'correct_password' }, user);
 			await expect(POST_DISABLE(event)).rejects.toThrow('2FA is not enabled');
 		});
 	});

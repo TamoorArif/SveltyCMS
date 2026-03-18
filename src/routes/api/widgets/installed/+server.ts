@@ -76,14 +76,14 @@ export const GET = apiHandler(async ({ url, locals }) => {
 			},
 			message: 'Installed widgets retrieved successfully'
 		});
-	} catch (err) {
+	} catch (err: any) {
 		const duration = performance.now() - start;
-		const message = `Failed to get installed widgets: ${err instanceof Error ? err.message : String(err)}`;
+		const message = `Failed to get installed widgets: ${err.message || String(err)}`;
 		logger.error(message, {
 			duration: `${duration.toFixed(2)}ms`,
-			stack: err instanceof Error ? err.stack : undefined
+			stack: err.stack
 		});
-		if (err instanceof AppError) {
+		if (err.name === 'AppError' || err.status) {
 			throw err;
 		}
 

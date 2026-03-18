@@ -20,7 +20,7 @@
  */
 
 import { building } from '$app/environment';
-import { cacheService } from './cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 
 // Handle private config that might not exist during setup
 import { clearPrivateConfigCache, getDatabaseConnectionString, getPrivateEnv, loadPrivateConfig, privateEnv, setPrivateEnv } from './config-state';
@@ -198,7 +198,7 @@ export async function loadSettingsFromDB(criticalOnly = false): Promise<boolean>
 		await setSettingsCache(mergedPrivate, settings as unknown as PublicEnv);
 
 		// Reconfigure CacheService to reflect potentially new Redis settings
-		await cacheService.reconfigure().catch((e) => logger.warn('Failed to reconfigure CacheService:', e));
+		await cacheService.reconfigure().catch((e: any) => logger.warn('Failed to reconfigure CacheService:', e));
 
 		if (!criticalOnly) {
 			logger.info('✅ Full system settings loaded and cached.');

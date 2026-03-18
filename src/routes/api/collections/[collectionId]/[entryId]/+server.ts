@@ -110,9 +110,9 @@ export const PATCH = apiHandler(async ({ locals, params, request }) => {
 	}
 
 	// Cache & PubSub
-	const cacheService = (await import('@src/databases/cache-service')).cacheService;
+	const cacheService = (await import('@src/databases/cache/cache-service')).cacheService;
 	const cachePattern = `collection:${schema._id}:*`;
-	await cacheService.clearByPattern(cachePattern, tenantId).catch((e) => logger.warn('Cache clear failed', e));
+	await cacheService.clearByPattern(cachePattern, tenantId).catch((e: any) => logger.warn('Cache clear failed', e));
 	await contentManager.invalidateSpecificCaches([schema.path || '', schema._id as string].filter(Boolean));
 
 	// Publish entryUpdated event
@@ -140,7 +140,7 @@ export const PATCH = apiHandler(async ({ locals, params, request }) => {
 });
 
 // DELETE: Removes an entry
-export const DELETE = apiHandler(async ({ locals, params }) => {
+export const DELETE = apiHandler(async ({ locals, params, url }) => {
 	const { user, tenantId, dbAdapter } = locals;
 	const { collectionId, entryId } = params;
 
@@ -172,19 +172,25 @@ export const DELETE = apiHandler(async ({ locals, params }) => {
 		throw new AppError('Entry not found or access denied', 404, 'NOT_FOUND');
 	}
 
-	const result = await dbAdapter.crud.delete(collectionName, entryId as DatabaseId);
+	const permanent = url.searchParams.get('permanent') === 'true';
+
+	const result = await dbAdapter.crud.delete(collectionName, entryId as DatabaseId, {
+		tenantId,
+		permanent,
+		userId: user._id
+	});
 
 	if (!result.success) {
-		if (result.error.message.includes('not found')) {
+		if (result.message.includes('not found')) {
 			throw new AppError('Entry not found', 404, 'NOT_FOUND');
 		}
 		throw new AppError('Failed to delete entry', 500, 'DB_DELETE_ERROR');
 	}
 
 	// Cache & PubSub
-	const cacheService = (await import('@src/databases/cache-service')).cacheService;
+	const cacheService = (await import('@src/databases/cache/cache-service')).cacheService;
 	const cachePattern = `collection:${schema._id}:*`;
-	await cacheService.clearByPattern(cachePattern, tenantId).catch((e) => logger.warn('Cache clear failed', e));
+	await cacheService.clearByPattern(cachePattern, tenantId).catch((e: any) => logger.warn('Cache clear failed', e));
 	await contentManager.invalidateSpecificCaches([schema.path || '', schema._id as string].filter(Boolean));
 
 	try {
@@ -192,7 +198,7 @@ export const DELETE = apiHandler(async ({ locals, params }) => {
 		pubSub.publish('entryUpdated', {
 			collection: schema.name || collectionId,
 			id: entryId,
-			action: 'delete',
+			action: permanent ? 'delete' : 'trash',
 			data: { _id: entryId },
 			timestamp: new Date().toISOString(),
 			user

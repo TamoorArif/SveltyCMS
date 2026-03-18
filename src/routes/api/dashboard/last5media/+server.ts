@@ -58,13 +58,18 @@ export const GET = apiHandler(async ({ locals }) => {
 		return json([]);
 	}
 
-	// Use database-agnostic adapter to get recent media files
-	const result = await dbAdapter.media.files.getByFolder(undefined, {
-		page: 1,
-		pageSize: 5,
-		sortField: 'updatedAt',
-		sortDirection: 'desc'
-	});
+	// Use database-agnostic adapter to get recent media files (scoped to tenant)
+	const result = await dbAdapter.media.files.getByFolder(
+		undefined,
+		{
+			page: 1,
+			pageSize: 5,
+			sortField: 'updatedAt',
+			sortDirection: 'desc'
+		},
+		false,
+		getPrivateSettingSync('MULTI_TENANT') ? tenantId : undefined
+	);
 
 	if (!result.success) {
 		logger.error('Failed to fetch media files from database', {
@@ -83,12 +88,7 @@ export const GET = apiHandler(async ({ locals }) => {
 	}
 
 	// Transform the data to match the expected format
-	let items = result.data.items;
-
-	// --- MULTI-TENANCY: Filter by tenantId if enabled ---
-	if (getPrivateSettingSync('MULTI_TENANT') && tenantId) {
-		items = items.filter((file) => (file as unknown as Record<string, unknown>).tenantId === tenantId);
-	}
+	const items = result.data.items;
 
 	const recentMedia = items.map((file) => {
 		let url = file.path || '';

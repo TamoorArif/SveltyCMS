@@ -5,7 +5,7 @@
 
 import { nowISODateString } from '@src/utils/date-utils';
 import { safeQuery } from '@src/utils/security/safe-query';
-import { count } from 'drizzle-orm';
+import { count, eq, inArray } from 'drizzle-orm';
 import type { BaseEntity, DatabaseId, DatabaseResult, QueryFilter, EntityCreate, EntityUpdate } from '../../db-interface';
 import type { AdapterCore } from '../adapter/adapter-core';
 import * as utils from '../utils';
@@ -21,178 +21,28 @@ export class CrudModule {
 		return this.core.db!;
 	}
 
-	/**
-	 * Packs fields that don't exist in the physical table into a JSON 'data' blob.
-	 * This is used for dynamic collections to support arbitrary fields without migrations.
-	 */
-	private packData(table: Record<string, unknown>, data: Record<string, unknown>): Record<string, unknown> {
-		const result: Record<string, unknown> = {};
-		const existingData = data.data;
-		const jsonBlob: Record<string, unknown> =
-			typeof existingData === 'string' ? JSON.parse(existingData) : { ...((existingData as Record<string, unknown>) || {}) };
-
-		for (const [key, value] of Object.entries(data)) {
-			if (key === 'data') {
-				continue;
-			}
-			if (table[key]) {
-				result[key] = value;
-			} else {
-				jsonBlob[key] = value;
-			}
-		}
-		result.data = jsonBlob;
-		return result;
-	}
-
-	/**
-	 * Unpacks fields from the JSON 'data' blob back into the top-level object.
-	 */
-	private unpackData(row: Record<string, unknown>): Record<string, unknown> {
-		if (!row) {
-			return row;
-		}
-		const { data, ...rest } = row;
-		let jsonBlob: Record<string, unknown>;
-		if (!data) {
-			jsonBlob = {};
-		} else if (typeof data === 'string') {
-			jsonBlob = JSON.parse(data);
-		} else {
-			jsonBlob = data as Record<string, unknown>;
-		}
-		return { ...jsonBlob, ...rest };
-	}
-
-	/**
-	 * Resolves populated fields for a set of results.
-	 */
-	private async resolvePopulation<T extends BaseEntity>(
-		collection: string,
-		items: T[],
-		populate?: string[],
-		tenantId?: string | null | null
-	): Promise<T[]> {
-		if (!populate || populate.length === 0 || items.length === 0) {
-			return items;
-		}
-
-		const schemaResult = await this.core.adapter.collection.getSchema(collection);
-		if (!schemaResult.success || !schemaResult.data) {
-			return items;
-		}
-
-		const schema = schemaResult.data;
-		const populatedItems = [...items];
-
-		for (const fieldPath of populate) {
-			const field = schema.fields.find((f: any) => f.name === fieldPath) as any;
-			if (!field) continue;
-
-			// --- 1. Forward Relationship (Relation Field) ---
-			if (field.type === 'relation' && field.relation) {
-				const targetCollection = field.relation.collection;
-				const foreignKey = field.name;
-
-				// Extract unique IDs to fetch
-				const idsToFetch = new Set<string>();
-				for (const item of populatedItems) {
-					const val = (item as any)[foreignKey];
-					if (Array.isArray(val)) {
-						val.forEach((id) => id && idsToFetch.add(String(id)));
-					} else if (val) {
-						idsToFetch.add(String(val));
-					}
-				}
-
-				if (idsToFetch.size === 0) continue;
-
-				// Fetch related records in one batch
-				const relatedResult = await this.core.adapter.crud.findByIds(targetCollection, Array.from(idsToFetch) as any, {
-					tenantId,
-					bypassTenantCheck: false
-				});
-
-				if (relatedResult.success) {
-					const relatedMap = new Map(relatedResult.data.map((r: any) => [String(r._id), r]));
-
-					// Map them back to the original items
-					for (let i = 0; i < populatedItems.length; i++) {
-						const val = (populatedItems[i] as any)[foreignKey];
-						if (Array.isArray(val)) {
-							(populatedItems[i] as any)[foreignKey] = val.map((id) => relatedMap.get(String(id)) || id);
-						} else if (val) {
-							(populatedItems[i] as any)[foreignKey] = relatedMap.get(String(val)) || val;
-						}
-					}
-				}
-			}
-
-			// --- 2. Inverse Relationship (Smart Join Field) ---
-			else if (field.collection && field.on) {
-				const targetCollection = field.collection;
-				const foreignKeyInTarget = field.on;
-
-				// For each item, fetch related records that point to this item
-				// TODO: Optimization - Batch this by using $in query on the target collection
-				for (let i = 0; i < populatedItems.length; i++) {
-					const item = populatedItems[i];
-					const itemId = String(item._id);
-
-					const query = {
-						[foreignKeyInTarget]: itemId,
-						...(field.where || {})
-					} as any;
-
-					const relatedResult = await this.core.adapter.crud.findMany(targetCollection, query, {
-						limit: field.limit,
-						sort: field.sort ? { [field.sort]: 'asc' } : undefined,
-						tenantId,
-						bypassTenantCheck: false
-					});
-
-					if (relatedResult.success) {
-						(populatedItems[i] as any)[fieldPath] = relatedResult.data;
-					}
-				}
-			}
-		}
-
-		return populatedItems;
-	}
-
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options: {
-			fields?: (keyof T)[];
-			tenantId?: string | null | null;
-			bypassTenantCheck?: boolean;
-			populate?: string[];
-		} = {}
+		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<T | null>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const results = await this.db
 					.select()
 					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 					.where(where)
 					.limit(1);
-				if (results.length === 0) {
-					return null;
-				}
-				const row = utils.convertDatesToISO(results[0] as Record<string, unknown>);
-				const unpacked = this.unpackData(row) as unknown as T;
 
-				// Resolve population
-				const populated = await this.resolvePopulation(collection, [unpacked], options.populate, options.tenantId);
-				return populated[0] as T;
+				const data = results.length === 0 ? null : (utils.convertDatesToISO(results[0] as Record<string, unknown>) as T);
+				return data;
 			}, 'CRUD_FIND_ONE_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -209,17 +59,18 @@ export class CrudModule {
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
-			populate?: string[];
+			includeDeleted?: boolean;
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				let q = this.db
 					.select()
 					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
@@ -232,10 +83,7 @@ export class CrudModule {
 					q = q.offset(options.offset);
 				}
 				const results = await q;
-				const unpacked = utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
-
-				// Resolve population
-				return await this.resolvePopulation(collection, unpacked, options.populate, options.tenantId);
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]) as T[];
 			}, 'CRUD_FIND_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -250,6 +98,7 @@ export class CrudModule {
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
+			includeDeleted?: boolean;
 			populate?: string[];
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
@@ -257,20 +106,16 @@ export class CrudModule {
 		return this.core
 			.wrap(async () => {
 				const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options.tenantId, {
-					bypassTenantCheck: options.bypassTenantCheck
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
 				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, query as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const results = await this.db
 					.select()
 					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 					.where(where);
-				const unpacked = utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
-
-				// Resolve population
-				return await this.resolvePopulation(collection, unpacked, options.populate, options.tenantId);
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]) as T[];
 			}, 'CRUD_FIND_BY_IDS_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -290,21 +135,23 @@ export class CrudModule {
 				const table = this.core.getTable(collection);
 				const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
 				const now = new Date(nowISODateString());
-				const packed = this.packData(table as unknown as Record<string, unknown>, {
-					...(data as unknown as Record<string, unknown>),
+				const values = {
+					...data,
 					_id: id,
-					tenantId: tenantId || (data as Partial<T>).tenantId,
+					tenantId: tenantId || (data as any).tenantId,
 					createdAt: now,
 					updatedAt: now
-				});
+				};
 
-				const results = await this.db
-					.insert(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
-					.values(packed as unknown as Record<string, unknown>)
-					.returning();
+				await this.db.insert(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable).values(values as unknown as Record<string, unknown>);
 
-				const row = utils.convertDatesToISO(results[0] as Record<string, unknown>);
-				return this.unpackData(row) as unknown as T;
+				const [result] = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
+					.where(eq((table as any)._id, id as string))
+					.limit(1);
+
+				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
 			}, 'CRUD_INSERT_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -322,25 +169,22 @@ export class CrudModule {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const query = safeQuery({ _id: id } as unknown as QueryFilter<T>, tenantId, { bypassTenantCheck });
+				const secureQuery = safeQuery({ _id: id } as unknown as QueryFilter<T>, tenantId, { bypassTenantCheck });
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, query as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const now = new Date(nowISODateString());
-				const packed = this.packData(table as unknown as Record<string, unknown>, {
-					...(data as unknown as Record<string, unknown>),
-					updatedAt: now
-				});
 
-				const results = await this.db
+				await this.db
 					.update(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
-					.set(packed as unknown as Record<string, unknown>)
-					.where(where)
-					.returning();
+					.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+					.where(where);
 
-				const row = utils.convertDatesToISO(results[0] as Record<string, unknown>);
-				return this.unpackData(row) as unknown as T;
+				const [result] = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
+					.where(where)
+					.limit(1);
+				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
 			}, 'CRUD_UPDATE_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -348,23 +192,33 @@ export class CrudModule {
 			});
 	}
 
-	async delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
+	async delete(
+		collection: string,
+		id: DatabaseId,
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
+	): Promise<DatabaseResult<void>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, {
-					bypassTenantCheck
+				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck
 				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, query as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				await this.db.delete(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable).where(where);
 			}, 'CRUD_DELETE_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
 				return res;
 			});
+	}
+
+	async restore(
+		collection: string,
+		_id: DatabaseId,
+		_options: { tenantId?: string | null; bypassTenantCheck?: boolean } = {}
+	): Promise<DatabaseResult<void>> {
+		return this.core.notImplemented(`crud.restore for ${collection}`);
 	}
 
 	async upsert<T extends BaseEntity>(
@@ -377,18 +231,15 @@ export class CrudModule {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, {
-					bypassTenantCheck
-				});
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const existing = await this.db
 					.select()
 					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 					.where(where)
 					.limit(1);
+
 				if (existing.length > 0) {
 					const res = await this.update<T>(
 						collection,
@@ -417,24 +268,22 @@ export class CrudModule {
 	async count<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T> = {},
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<number>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, {
-					bypassTenantCheck
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
 				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const [result] = await this.db
 					.select({ count: count() })
-					.from(table as any)
+					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
 					.where(where);
-				return Number((result as { count: number }).count);
+				return Number((result as any).count);
 			}, 'CRUD_COUNT_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -445,13 +294,12 @@ export class CrudModule {
 	async exists<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<boolean>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const res = await this.count(collection, query, tenantId, bypassTenantCheck);
+				const res = await this.count(collection, query, options);
 				if (!res.success) {
 					throw res.error;
 				}
@@ -477,23 +325,23 @@ export class CrudModule {
 				}
 				const table = this.core.getTable(collection);
 				const now = new Date(nowISODateString());
-				const values = data.map((d) => {
-					const id = (d as Partial<T>)._id || (utils.generateId() as DatabaseId);
-					return this.packData(table as unknown as Record<string, unknown>, {
-						...(d as unknown as Record<string, unknown>),
-						_id: id,
-						tenantId: tenantId || (d as Partial<T>).tenantId,
-						createdAt: now,
-						updatedAt: now
-					});
-				});
-
-				const results = await this.db
+				const values = data.map((d) => ({
+					...d,
+					_id: utils.generateId() as DatabaseId,
+					tenantId: tenantId || (d as any).tenantId,
+					createdAt: now,
+					updatedAt: now
+				}));
+				await this.db
 					.insert(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
-					.values(values as unknown as Record<string, unknown>[])
-					.returning();
+					.values(values as unknown as Record<string, unknown>[]);
 
-				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => this.unpackData(row)) as unknown as T[];
+				const ids = values.map((v) => v._id as string);
+				const results = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
+					.where(inArray((table as any)._id, ids));
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => row) as unknown as T[];
 			}, 'CRUD_INSERT_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -511,13 +359,9 @@ export class CrudModule {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, {
-					bypassTenantCheck
-				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
+				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const now = new Date(nowISODateString());
 				const result = await this.db
 					.update(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable)
@@ -534,20 +378,15 @@ export class CrudModule {
 	async deleteMany(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
 	): Promise<DatabaseResult<{ deletedCount: number }>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, {
-					bypassTenantCheck
-				});
 				const table = this.core.getTable(collection);
-				const where = this.core.mapQuery(table as unknown as Record<string, unknown>, secureQuery as Record<string, unknown>) as
-					| import('drizzle-orm').SQL
-					| undefined;
-				const result = await this.db.delete(table as any).where(where);
+				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
+				const result = await this.db.delete(table as unknown as import('drizzle-orm/sqlite-core').SQLiteTable).where(where);
 				return { deletedCount: (result as any).changes };
 			}, 'CRUD_DELETE_MANY_FAILED')
 			.then((res) => {
@@ -571,10 +410,7 @@ export class CrudModule {
 				let upsertedCount = 0;
 				let modifiedCount = 0;
 				for (const item of items) {
-					const existing = await this.findOne(collection, item.query, {
-						tenantId,
-						bypassTenantCheck
-					});
+					const existing = await this.findOne(collection, item.query, { tenantId, bypassTenantCheck });
 					if (existing.success && existing.data) {
 						await this.update(collection, (existing.data as any)._id, item.data as Partial<T>, tenantId, bypassTenantCheck);
 						modifiedCount++;
@@ -591,12 +427,12 @@ export class CrudModule {
 			});
 	}
 
-	async aggregate<R = any>(
-		_collection: string,
-		_pipeline: any[],
+	async aggregate<R = unknown>(
+		collection: string,
+		_pipeline: unknown[],
 		_tenantId?: string | null | null,
 		_bypassTenantCheck?: boolean
 	): Promise<DatabaseResult<R[]>> {
-		return this.core.notImplemented('crud.aggregate');
+		return this.core.notImplemented(`crud.aggregate for ${collection}`);
 	}
 }

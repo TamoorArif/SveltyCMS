@@ -5,7 +5,7 @@
 
 import { nowISODateString } from '@src/utils/date-utils';
 import { safeQuery } from '@src/utils/security/safe-query';
-import { count } from 'drizzle-orm';
+import { count, eq, inArray } from 'drizzle-orm';
 import type { BaseEntity, DatabaseId, DatabaseResult, QueryFilter, EntityCreate, EntityUpdate } from '../../db-interface';
 import type { AdapterCore } from '../adapter/adapter-core';
 import * as utils from '../utils';
@@ -24,12 +24,15 @@ export class CrudModule {
 	async findOne<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<T | null>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const results = await this.db
@@ -37,10 +40,9 @@ export class CrudModule {
 					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.where(where)
 					.limit(1);
-				if (results.length === 0) {
-					return null;
-				}
-				return utils.convertDatesToISO(results[0]) as T;
+
+				const data = results.length === 0 ? null : (utils.convertDatesToISO(results[0] as Record<string, unknown>) as T);
+				return data;
 			}, 'CRUD_FIND_ONE_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -57,12 +59,16 @@ export class CrudModule {
 			fields?: (keyof T)[];
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
+			includeDeleted?: boolean;
 		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				let q = this.db
@@ -77,7 +83,7 @@ export class CrudModule {
 					q = q.offset(options.offset);
 				}
 				const results = await q;
-				return utils.convertArrayDatesToISO(results) as T[];
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]) as T[];
 			}, 'CRUD_FIND_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -88,13 +94,20 @@ export class CrudModule {
 	async findByIds<T extends BaseEntity>(
 		collection: string,
 		ids: DatabaseId[],
-		options: { fields?: (keyof T)[]; tenantId?: string | null | null; bypassTenantCheck?: boolean } = {}
+		options: {
+			fields?: (keyof T)[];
+			tenantId?: string | null | null;
+			bypassTenantCheck?: boolean;
+			includeDeleted?: boolean;
+			populate?: string[];
+		} = {}
 	): Promise<DatabaseResult<T[]>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
 				const query = safeQuery({ _id: { $in: ids } } as unknown as QueryFilter<T>, options.tenantId, {
-					bypassTenantCheck: options.bypassTenantCheck
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
 				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
@@ -102,7 +115,7 @@ export class CrudModule {
 					.select()
 					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.where(where);
-				return utils.convertArrayDatesToISO(results) as T[];
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]) as T[];
 			}, 'CRUD_FIND_BY_IDS_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -129,10 +142,15 @@ export class CrudModule {
 					createdAt: now,
 					updatedAt: now
 				};
+
+				await this.db.insert(table as unknown as import('drizzle-orm/pg-core').PgTable).values(values as unknown as Record<string, unknown>);
+
 				const [result] = await this.db
-					.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
-					.values(values as unknown as Record<string, unknown>)
-					.returning();
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(eq((table as any)._id, id as string))
+					.limit(1);
+
 				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
 			}, 'CRUD_INSERT_FAILED')
 			.then((res) => {
@@ -155,11 +173,17 @@ export class CrudModule {
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const now = new Date(nowISODateString());
-				const [result] = await this.db
+
+				await this.db
 					.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+					.where(where);
+
+				const [result] = await this.db
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.where(where)
-					.returning();
+					.limit(1);
 				return utils.convertDatesToISO(result as Record<string, unknown>) as T;
 			}, 'CRUD_UPDATE_FAILED')
 			.then((res) => {
@@ -168,11 +192,17 @@ export class CrudModule {
 			});
 	}
 
-	async delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>> {
+	async delete(
+		collection: string,
+		id: DatabaseId,
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
+	): Promise<DatabaseResult<void>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, tenantId, { bypassTenantCheck });
+				const query = safeQuery({ _id: id } as unknown as QueryFilter<BaseEntity>, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, query as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				await this.db.delete(table as unknown as import('drizzle-orm/pg-core').PgTable).where(where);
@@ -181,6 +211,14 @@ export class CrudModule {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
 				return res;
 			});
+	}
+
+	async restore(
+		collection: string,
+		_id: DatabaseId,
+		_options: { tenantId?: string | null; bypassTenantCheck?: boolean } = {}
+	): Promise<DatabaseResult<void>> {
+		return this.core.notImplemented(`crud.restore for ${collection}`);
 	}
 
 	async upsert<T extends BaseEntity>(
@@ -201,6 +239,7 @@ export class CrudModule {
 					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.where(where)
 					.limit(1);
+
 				if (existing.length > 0) {
 					const res = await this.update<T>(
 						collection,
@@ -229,13 +268,15 @@ export class CrudModule {
 	async count<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T> = {},
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<number>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, {
+					bypassTenantCheck: options.bypassTenantCheck,
+					includeDeleted: options.includeDeleted
+				});
 				const table = this.core.getTable(collection);
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const [result] = await this.db
@@ -253,13 +294,12 @@ export class CrudModule {
 	async exists<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean } = {}
 	): Promise<DatabaseResult<boolean>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
-				const res = await this.count(collection, query, tenantId, bypassTenantCheck);
+				const res = await this.count(collection, query, options);
 				if (!res.success) {
 					throw res.error;
 				}
@@ -292,11 +332,14 @@ export class CrudModule {
 					createdAt: now,
 					updatedAt: now
 				}));
+				await this.db.insert(table as unknown as import('drizzle-orm/pg-core').PgTable).values(values as unknown as Record<string, unknown>[]);
+
+				const ids = values.map((v) => v._id as string);
 				const results = await this.db
-					.insert(table as unknown as import('drizzle-orm/pg-core').PgTable)
-					.values(values as unknown as Record<string, unknown>[])
-					.returning();
-				return utils.convertArrayDatesToISO(results) as unknown as T[];
+					.select()
+					.from(table as unknown as import('drizzle-orm/pg-core').PgTable)
+					.where(inArray((table as any)._id, ids));
+				return utils.convertArrayDatesToISO(results as Record<string, unknown>[]).map((row) => row) as unknown as T[];
 			}, 'CRUD_INSERT_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -318,12 +361,11 @@ export class CrudModule {
 				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
 				const now = new Date(nowISODateString());
-				const results = await this.db
+				const result = await this.db
 					.update(table as unknown as import('drizzle-orm/pg-core').PgTable)
 					.set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
-					.where(where)
-					.returning();
-				return { modifiedCount: results.length };
+					.where(where);
+				return { modifiedCount: (result as any).rowCount };
 			}, 'CRUD_UPDATE_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };
@@ -334,20 +376,16 @@ export class CrudModule {
 	async deleteMany(
 		collection: string,
 		query: QueryFilter<BaseEntity>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string } = {}
 	): Promise<DatabaseResult<{ deletedCount: number }>> {
 		const startTime = performance.now();
 		return this.core
 			.wrap(async () => {
 				const table = this.core.getTable(collection);
-				const secureQuery = safeQuery(query, tenantId, { bypassTenantCheck });
+				const secureQuery = safeQuery(query, options.tenantId, { bypassTenantCheck: options.bypassTenantCheck });
 				const where = this.core.mapQuery(table, secureQuery as Record<string, unknown>) as import('drizzle-orm').SQL | undefined;
-				const results = await this.db
-					.delete(table as unknown as import('drizzle-orm/pg-core').PgTable)
-					.where(where)
-					.returning();
-				return { deletedCount: results.length };
+				const result = await this.db.delete(table as unknown as import('drizzle-orm/pg-core').PgTable).where(where);
+				return { deletedCount: (result as any).rowCount };
 			}, 'CRUD_DELETE_MANY_FAILED')
 			.then((res) => {
 				if (res.success) res.meta = { executionTime: performance.now() - startTime };

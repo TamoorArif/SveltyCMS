@@ -16,10 +16,13 @@ import type { ICrudAdapter, IDBAdapter, IMediaAdapter } from './db-interface';
 const CONTENT_COLLECTION_PREFIX = 'collection_';
 
 export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBAdapter> {
-	// Dynamically import webhookService to avoid circular dependency with db.ts
-	const { webhookService } = await import('@src/services/webhook-service');
+	// Dynamically import services to avoid circular dependency with db.ts
+	const [{ webhookService }, { eventBus }] = await Promise.all([
+		import('@src/services/webhook-service'),
+		import('@src/services/automation/event-bus')
+	]);
 
-	logger.info('🔌 Webhook Proxy Wrapper active on Database Adapter');
+	logger.info('🔌 Webhook & EventBus Proxy Wrapper active on Database Adapter');
 
 	// --- Wrap CRUD Operations (Lazy Access) ---
 	let originalCrud: ICrudAdapter | undefined;
@@ -59,7 +62,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [collection, , tenantId] = args as [string, any, string];
 				if (res.success && (collection.startsWith(CONTENT_COLLECTION_PREFIX) || collection === 'MediaItem')) {
 					const event: WebhookEvent = collection === 'MediaItem' ? 'media:upload' : 'entry:create';
-					webhookService.trigger(event, { collection, data: res.data }, tenantId);
+					webhookService.trigger(event, { collection, data: res.data as any }, tenantId);
+					eventBus.emit(event as any, { collection, data: res.data as any, tenantId });
 				}
 				return res;
 			},
@@ -68,7 +72,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [collection, , tenantId] = args as [string, any[], string];
 				if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
 					for (const item of res.data) {
-						webhookService.trigger('entry:create', { collection, data: item }, tenantId);
+						webhookService.trigger('entry:create', { collection, data: item as any }, tenantId);
+						eventBus.emit('entry:create', { collection, data: item as any, tenantId });
 					}
 				}
 				return res;
@@ -85,7 +90,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 							event = 'entry:unpublish';
 						}
 					}
-					webhookService.trigger(event, { collection, id: id as any, data: res.data }, tenantId);
+					webhookService.trigger(event, { collection, id: id as any, data: res.data as any }, tenantId);
+					eventBus.emit(event as any, { collection, entryId: id as any, data: res.data as any, tenantId });
 				}
 				return res;
 			},
@@ -103,6 +109,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						},
 						tenantId
 					);
+					eventBus.emit('entry:update', { collection, data: { query, changes: data, modifiedCount: res.data.modifiedCount }, tenantId });
 				}
 				return res;
 			},
@@ -112,6 +119,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				if (res.success && (collection.startsWith(CONTENT_COLLECTION_PREFIX) || collection === 'MediaItem')) {
 					const event: WebhookEvent = collection === 'MediaItem' ? 'media:delete' : 'entry:delete';
 					webhookService.trigger(event, { collection, id: id as any }, tenantId);
+					eventBus.emit(event as any, { collection, entryId: id as any, tenantId });
 				}
 				return res;
 			},
@@ -128,6 +136,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 						},
 						tenantId
 					);
+					eventBus.emit('entry:delete', { collection, data: { query, deletedCount: res.data.deletedCount }, tenantId });
 				}
 				return res;
 			},
@@ -136,6 +145,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [collection, query, , tenantId] = args as [string, any, any, string];
 				if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
 					webhookService.trigger('entry:update', { collection, query: query as any, data: res.data }, tenantId);
+					eventBus.emit('entry:update', { collection, data: { query, data: res.data }, tenantId });
 				}
 				return res;
 			}
@@ -189,7 +199,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const res = await originalFiles.upload(...args);
 				const [, tenantId] = args as [any, string];
 				if (res.success) {
-					webhookService.trigger('media:upload', { data: res.data }, tenantId);
+					webhookService.trigger('media:upload', { data: res.data as any }, tenantId);
+					eventBus.emit('media:upload', { data: res.data as any, tenantId });
 				}
 				return res;
 			},
@@ -198,7 +209,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [, tenantId] = args as [any[], string];
 				if (res.success) {
 					for (const file of res.data) {
-						webhookService.trigger('media:upload', { data: file }, tenantId);
+						webhookService.trigger('media:upload', { data: file as any }, tenantId);
+						eventBus.emit('media:upload', { data: file as any, tenantId });
 					}
 				}
 				return res;
@@ -208,6 +220,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [id, tenantId] = args as [any, string];
 				if (res.success) {
 					webhookService.trigger('media:delete', { id }, tenantId);
+					eventBus.emit('media:delete', { entryId: id as any, tenantId });
 				}
 				return res;
 			},
@@ -216,6 +229,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 				const [ids, tenantId] = args as [any[], string];
 				if (res.success) {
 					webhookService.trigger('media:delete', { ids }, tenantId);
+					eventBus.emit('media:delete', { data: { ids }, tenantId });
 				}
 				return res;
 			}

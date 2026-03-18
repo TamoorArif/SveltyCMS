@@ -12,28 +12,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Mock dependencies
-vi.mock('@src/databases/db', () => ({
-	auth: {
-		getUserBySamlId: vi.fn(),
-		getUserByEmail: vi.fn(),
-		getUserById: vi.fn(),
-		createUser: vi.fn(),
-		createSession: vi.fn(),
-		checkUser: vi.fn(),
-		createSessionCookie: vi.fn().mockReturnValue({ name: 'session', value: 'secret', attributes: {} }),
-		authInterface: {
-			getUserById: vi.fn()
-		}
-	},
-	dbAdapter: {
-		auth: {
-			getUserCount: vi.fn(),
-			getAllUsers: vi.fn()
-		}
-	},
-	dbInitPromise: Promise.resolve()
-}));
-
 vi.mock('@src/databases/auth/saml-auth', () => ({
 	createSAMLConnection: vi.fn(),
 	generateSAMLAuthUrl: vi.fn(),
@@ -44,22 +22,8 @@ vi.mock('@src/databases/auth/saml-auth', () => ({
 	})
 }));
 
-vi.mock('@src/services/settings-service', () => ({
-	getPrivateSettingSync: vi.fn().mockReturnValue(false),
-	getPublicSettingSync: vi.fn().mockReturnValue(true)
-}));
-
 vi.mock('@utils/api-handler', () => ({
 	apiHandler: (fn: any) => fn
-}));
-
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		debug: vi.fn()
-	}
 }));
 
 // Import handlers after mocks

@@ -59,9 +59,9 @@ let flow: AutomationFlow = $state({
 	trigger: { type: 'event', events: [], collections: [] },
 	operations: [],
 	createdAt: '',
-	updatedAt: ''
+	updatedAt: '',
+	tenantId: ''
 });
-
 // ── Lifecycle ──
 
 onMount(async () => {

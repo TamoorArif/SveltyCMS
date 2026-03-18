@@ -19,7 +19,7 @@
  */
 
 // Cache invalidation
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 // Auth
 import { auth } from '@src/databases/db';
 import { getPrivateSettingSync } from '@src/services/settings-service';
@@ -109,7 +109,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 			}
 		}
 		// Invalidate the tokens cache so changes appear immediately in admin area
-		cacheService.delete('tokens', tenantId).catch((err) => {
+		cacheService.delete('tokens', tenantId).catch((err: any) => {
 			logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 		});
 

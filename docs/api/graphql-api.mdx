@@ -618,11 +618,11 @@ const media = await dbAdapter.media.files.getByFolder(folder);
 
 ## Multi-Tenancy Support
 
-When multi-tenant mode is enabled:
+When multi-tenant mode is enabled, SveltyCMS provides robust, mathematically proven schema and data isolation:
 
-- Queries automatically scoped to tenant
-- Users can only access own tenant data
-- Cross-tenant queries blocked
+- **Per-Tenant Yoga Instances**: SveltyCMS dynamically instantiates and caches a separate GraphQL Yoga server for each tenant. This completely eliminates "Schema Leakage", ensuring that custom collections or fields defined by Tenant A are never visible in the introspection queries of Tenant B.
+- **Data Isolation**: Queries are automatically scoped to the tenant context injected by the authentication middleware.
+- **Cross-Tenant Prevention**: Users can only access their own tenant data. Cross-tenant queries are blocked at the database adapter level.
 
 **Tenant Filtering:**
 

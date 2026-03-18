@@ -129,7 +129,7 @@ Proactive caching reduces "cold start" latency:
 ### Cache Store Methods
 
 ```typescript
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 
 // Set cache value with category (recommended)
 await cacheService.setWithCategory('key', data, CacheCategory.API);

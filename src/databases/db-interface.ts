@@ -469,21 +469,23 @@ export interface ICrudAdapter {
 	count<T extends BaseEntity>(
 		collection: string,
 		query?: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options?: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean }
 	): Promise<DatabaseResult<number>>;
-	delete(collection: string, id: DatabaseId, tenantId?: string | null | null, bypassTenantCheck?: boolean): Promise<DatabaseResult<void>>;
+	delete(
+		collection: string,
+		id: DatabaseId,
+		options?: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string }
+	): Promise<DatabaseResult<void>>;
 	deleteMany<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options?: { tenantId?: string | null; bypassTenantCheck?: boolean; permanent?: boolean; userId?: string }
 	): Promise<DatabaseResult<{ deletedCount: number }>>;
+	restore(collection: string, id: DatabaseId, options?: { tenantId?: string | null; bypassTenantCheck?: boolean }): Promise<DatabaseResult<void>>;
 	exists<T extends BaseEntity>(
 		collection: string,
 		query: QueryFilter<T>,
-		tenantId?: string | null | null,
-		bypassTenantCheck?: boolean
+		options?: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean }
 	): Promise<DatabaseResult<boolean>>;
 	findByIds<T extends BaseEntity>(
 		collection: string,
@@ -493,6 +495,7 @@ export interface ICrudAdapter {
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
 			populate?: string[];
+			includeDeleted?: boolean;
 		}
 	): Promise<DatabaseResult<T[]>>;
 	findMany<T extends BaseEntity>(
@@ -506,6 +509,7 @@ export interface ICrudAdapter {
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
 			populate?: string[];
+			includeDeleted?: boolean;
 		}
 	): Promise<DatabaseResult<T[]>>;
 	findOne<T extends BaseEntity>(
@@ -516,6 +520,7 @@ export interface ICrudAdapter {
 			tenantId?: string | null | null;
 			bypassTenantCheck?: boolean;
 			populate?: string[];
+			includeDeleted?: boolean;
 		}
 	): Promise<DatabaseResult<T | null>>;
 	insert<T extends BaseEntity>(
@@ -563,6 +568,7 @@ export interface IMediaAdapter {
 	files: {
 		upload(file: EntityCreate<MediaItem>, tenantId?: string | null): Promise<DatabaseResult<MediaItem>>;
 		uploadMany(files: EntityCreate<MediaItem>[], tenantId?: string | null): Promise<DatabaseResult<MediaItem[]>>;
+		restore(fileId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
 		delete(fileId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
 		deleteMany(fileIds: DatabaseId[], tenantId?: string | null): Promise<DatabaseResult<{ deletedCount: number }>>;
 		getByFolder(
@@ -601,6 +607,7 @@ export interface IContentAdapter {
 		publish(draftId: DatabaseId): Promise<DatabaseResult<void>>;
 		publishMany(draftIds: DatabaseId[]): Promise<DatabaseResult<{ publishedCount: number }>>;
 		getForContent(contentId: DatabaseId, options?: PaginationOptions): Promise<DatabaseResult<PaginatedResult<ContentDraft>>>;
+		restore(draftId: DatabaseId): Promise<DatabaseResult<void>>;
 		delete(draftId: DatabaseId): Promise<DatabaseResult<void>>;
 		deleteMany(draftIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>>;
 	};
@@ -649,16 +656,16 @@ export interface ISystemAdapter {
 		clear(scope?: 'user' | 'system', userId?: DatabaseId): Promise<DatabaseResult<void>>;
 	};
 	virtualFolder: {
-		create(folder: EntityCreate<SystemVirtualFolder>): Promise<DatabaseResult<SystemVirtualFolder>>;
-		getById(folderId: DatabaseId): Promise<DatabaseResult<SystemVirtualFolder | null>>;
-		getByParentId(parentId: DatabaseId | null): Promise<DatabaseResult<SystemVirtualFolder[]>>;
-		getAll(): Promise<DatabaseResult<SystemVirtualFolder[]>>;
-		update(folderId: DatabaseId, updateData: Partial<SystemVirtualFolder>): Promise<DatabaseResult<SystemVirtualFolder>>;
-		addToFolder(contentId: DatabaseId, folderPath: string): Promise<DatabaseResult<void>>;
-		getContents(folderPath: string): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: MediaItem[] }>>;
-		ensure(folder: EntityCreate<SystemVirtualFolder>): Promise<DatabaseResult<SystemVirtualFolder>>;
-		delete(folderId: DatabaseId): Promise<DatabaseResult<void>>;
-		exists(path: string): Promise<DatabaseResult<boolean>>;
+		create(folder: EntityCreate<SystemVirtualFolder>, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder>>;
+		getById(folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder | null>>;
+		getByParentId(parentId: DatabaseId | null, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder[]>>;
+		getAll(tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder[]>>;
+		update(folderId: DatabaseId, updateData: Partial<SystemVirtualFolder>, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder>>;
+		addToFolder(contentId: DatabaseId, folderPath: string, tenantId?: string | null): Promise<DatabaseResult<void>>;
+		getContents(folderPath: string, tenantId?: string | null): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: MediaItem[] }>>;
+		ensure(folder: EntityCreate<SystemVirtualFolder>, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder>>;
+		delete(folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>>;
+		exists(path: string, tenantId?: string | null): Promise<DatabaseResult<boolean>>;
 	};
 	tenants: {
 		create(tenant: EntityCreate<Tenant> & { _id?: DatabaseId }): Promise<DatabaseResult<Tenant>>;
@@ -762,8 +769,8 @@ export interface IDBAdapter {
 		createModel(schema: Schema, force?: boolean): Promise<void>;
 		updateModel(schema: Schema): Promise<void>;
 		deleteModel(id: string): Promise<void>;
-		getSchema(collectionName: string): Promise<DatabaseResult<Schema | null>>;
-		listSchemas(): Promise<DatabaseResult<Schema[]>>;
+		getSchema(collectionName: string, tenantId?: string | null): Promise<DatabaseResult<Schema | null>>;
+		listSchemas(tenantId?: string | null): Promise<DatabaseResult<Schema[]>>;
 	};
 
 	// Connection Management with Pooling

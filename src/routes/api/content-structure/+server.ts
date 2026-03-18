@@ -16,7 +16,7 @@ import type { ContentNodeOperation } from '@root/src/content/types';
 // Auth
 import { contentManager } from '@src/content/content-manager';
 // Redis
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { dbAdapter } from '@src/databases/db';
 import { getPrivateSettingSync } from '@src/services/settings-service';
 import { json } from '@sveltejs/kit';
@@ -59,8 +59,8 @@ export const GET = apiHandler(async ({ url, locals }) => {
 
 		switch (action) {
 			case 'getStructure': {
-				// Return full structure with metadata
-				const contentNodes = await contentManager.getContentStructure();
+				// Return full structure with metadata (scoped to tenant)
+				const contentNodes = await contentManager.getContentStructure(tenantId);
 				const version = contentManager.getContentVersion();
 
 				response = {
@@ -77,8 +77,8 @@ export const GET = apiHandler(async ({ url, locals }) => {
 			}
 
 			case 'getContentStructure': {
-				// Return content nodes from database
-				const contentStructure = await contentManager.getContentStructure();
+				// Return content nodes from database (scoped to tenant)
+				const contentStructure = await contentManager.getContentStructure(tenantId);
 				const version = contentManager.getContentVersion();
 				logger.info('Returning content structure from database', { tenantId });
 				response = {
@@ -127,7 +127,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 					throw new AppError('Items array is required for reorderContentStructure', 400, 'INVALID_ITEMS');
 				}
 
-				const updatedContentStructure = await contentManager.reorderContentNodes(items);
+				const updatedContentStructure = await contentManager.reorderContentNodes(items, tenantId);
 
 				if (!browser) {
 					const cachePattern = `api:content-structure:${tenantId || 'global'}:*`;
@@ -152,7 +152,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
 					throw new AppError('Items array is required for updateContentStructure', 400, 'INVALID_ITEMS');
 				}
 
-				const updatedContentStructure = await contentManager.upsertContentNodes(items);
+				const updatedContentStructure = await contentManager.upsertContentNodes(items, tenantId);
 
 				if (!browser) {
 					const cachePattern = `api:content-structure:${tenantId || 'global'}:*`;
@@ -248,7 +248,7 @@ export const PUT = apiHandler(async ({ request, locals }) => {
 
 		const updateResult = await dbAdapter.content.nodes.update(_id, updates);
 		if (!(updateResult.success && updateResult.data)) {
-			throw new AppError('Node not found', 404, 'NODE_NOT_FOUND');
+			throw new AppError('Node not found or access denied', 404, 'NODE_NOT_FOUND');
 		}
 
 		const updatedNode = updateResult.data;

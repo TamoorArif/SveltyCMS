@@ -67,20 +67,21 @@ describe('AutomationService', () => {
 					active: true,
 					trigger: {} as any,
 					operations: [] as any[],
-					createdAt: new Date(),
-					updatedAt: new Date()
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					tenantId: 'tenant-1'
 				}
 			];
 			mockDbAdapter.system.preferences.get.mockReturnValue(Promise.resolve({ success: true, data: mockFlows as any }));
 
-			const flows = await automationService.getFlows();
+			const flows = await automationService.getFlows('tenant-1');
 			expect(flows as any).toEqual(mockFlows);
-			expect(mockDbAdapter.system.preferences.get).toHaveBeenCalledWith('automations_config', 'system');
+			expect(mockDbAdapter.system.preferences.get).toHaveBeenCalledWith('automations_config', 'system', 'tenant-1');
 		});
 
 		it('should save a new flow', async () => {
 			const newFlow = { name: 'New Automation', active: true } as any;
-			const saved = await automationService.saveFlow(newFlow);
+			const saved = await automationService.saveFlow(newFlow, 'tenant-1');
 
 			expect(saved.id).toBeDefined();
 			expect(saved.name).toBe('New Automation');
@@ -94,14 +95,15 @@ describe('AutomationService', () => {
 					name: 'Delete Me',
 					trigger: {} as any,
 					operations: [] as any[],
-					createdAt: new Date(),
-					updatedAt: new Date()
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					tenantId: 'tenant-1'
 				}
 			];
 			mockDbAdapter.system.preferences.get.mockReturnValue(Promise.resolve({ success: true, data: mockFlows as any }));
 
-			await automationService.deleteFlow('flow-1');
-			expect(mockDbAdapter.system.preferences.set).toHaveBeenCalledWith('automations_config', [], 'system');
+			await automationService.deleteFlow('flow-1', 'tenant-1');
+			expect(mockDbAdapter.system.preferences.set).toHaveBeenCalledWith('automations_config', [], 'system', 'tenant-1');
 		});
 	});
 

@@ -205,6 +205,7 @@ export interface AutomationFlow {
 	trigger: AutomationTrigger;
 	triggerCount?: number;
 	updatedAt: string;
+	tenantId: string; // Added for multi-tenancy
 }
 
 // ── Execution Log ──────────────────────────────────────────────
@@ -230,6 +231,7 @@ export interface ExecutionLogEntry {
 	timestamp: string;
 	/** Trigger payload snapshot */
 	triggerPayload?: unknown;
+	tenantId: string; // Added for multi-tenancy
 }
 
 // ── Event Bus Types ────────────────────────────────────────────
@@ -242,4 +244,5 @@ export interface AutomationEventPayload {
 	previousData?: Record<string, unknown>;
 	timestamp: string;
 	user?: { email?: string; username?: string; _id?: string };
+	tenantId: string; // Added for multi-tenancy
 }

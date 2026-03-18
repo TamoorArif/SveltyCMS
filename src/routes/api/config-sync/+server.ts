@@ -14,27 +14,40 @@ import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 import { logger } from '@utils/logger.server';
 
-// GET → Returns filesystem vs. database synchronization status
+import { getPrivateSettingSync } from '@src/services/settings-service';
+
+// GET → Returns filesystem vs. database synchronization status (tenant-scoped)
 export const GET = apiHandler(async ({ locals }) => {
-	if (!(locals.user && locals.isAdmin)) {
+	const { user, tenantId, isAdmin } = locals;
+
+	if (!(user && isAdmin)) {
 		throw new AppError('Forbidden: Administrator access required.', 403, 'FORBIDDEN');
 	}
 
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 400, 'TENANT_REQUIRED');
+	}
+
 	try {
-		const status = await configService.getStatus();
-		// Return only the sync status object for frontend compatibility
+		const status = await configService.getStatus(tenantId!);
 		return json(status);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		logger.error('Failed to get configuration status:', err);
+		logger.error(`Failed to get configuration status for tenant ${tenantId}:`, err);
 		throw new AppError(`Configuration status check failed: ${message}`, 500, 'CONFIG_STATUS_ERROR');
 	}
 });
 
-// POST → Triggers an 'import' or 'export' synchronization action
+// POST → Triggers an 'import' or 'export' synchronization action (tenant-scoped)
 export const POST = apiHandler(async ({ locals, request }) => {
-	if (!(locals.user && locals.isAdmin)) {
+	const { user, tenantId, isAdmin } = locals;
+
+	if (!(user && isAdmin)) {
 		throw new AppError('Forbidden: Administrator access required.', 403, 'FORBIDDEN');
+	}
+
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		throw new AppError('Tenant ID required', 400, 'TENANT_REQUIRED');
 	}
 
 	try {
@@ -42,7 +55,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 
 		switch (action) {
 			case 'import': {
-				const status = await configService.getStatus();
+				const status = await configService.getStatus(tenantId!);
 
 				if (status.unmetRequirements.length > 0) {
 					return json(
@@ -55,7 +68,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 					);
 				}
 
-				await configService.performImport({ changes: payload });
+				await configService.performImport({ changes: payload, tenantId: tenantId! });
 				invalidateSettingsCache();
 
 				return json({
@@ -65,8 +78,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 			}
 
 			case 'export': {
-				// Enhanced: run export in parallel for all entity types, support large datasets
-				const result = await configService.performExport({ uuids });
+				const result = await configService.performExport({ uuids, tenantId: tenantId! });
 				return json({
 					success: true,
 					message: 'Configuration exported successfully.',
@@ -79,7 +91,7 @@ export const POST = apiHandler(async ({ locals, request }) => {
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		logger.error('Configuration sync POST failed:', err);
+		logger.error(`Configuration sync POST failed for tenant ${tenantId}:`, err);
 		if (err instanceof AppError) {
 			throw err;
 		}

@@ -597,12 +597,24 @@ const getSystemInfo = async (type?: string) => {
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 
+import { getPrivateSettingSync } from '@src/services/settings-service';
+
 // Fetches and returns system information including CPU, disk, memory, and OS details.
 export const GET = apiHandler(async ({ url, locals }) => {
+	const { user, tenantId } = locals;
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
+	const isSuperAdmin = user?.role === 'super-admin';
+
 	// Authentication is handled by hooks.server.ts
-	if (!locals.user) {
+	if (!user) {
 		logger.warn('Unauthorized attempt to access system info');
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
+	}
+
+	// SECURITY: In multi-tenant mode, only super-admins can see global system info
+	if (isMultiTenant && !isSuperAdmin) {
+		logger.warn(`Unauthorized system-info access attempt by tenant admin ${user._id} (tenant: ${tenantId})`);
+		throw new AppError('Insufficient permissions: Only super-admins can view global system information in multi-tenant mode.', 403, 'FORBIDDEN');
 	}
 
 	// Check if specific type of information is requested
@@ -620,8 +632,8 @@ export const GET = apiHandler(async ({ url, locals }) => {
 			});
 		}
 		logger.info(`System information (${type}) fetched successfully`, {
-			userId: locals.user?._id,
-			userEmail: locals.user?.email
+			userId: user?._id,
+			userEmail: user?.email
 		});
 
 		// Return the system information as a JSON response

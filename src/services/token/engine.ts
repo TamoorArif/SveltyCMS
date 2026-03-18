@@ -42,6 +42,19 @@ class TokenRegistryService {
 			}
 		}
 
+		// --- SPECIAL CASE: SITE TOKENS (Tenant-Scoped) ---
+		if (tokenKey.startsWith('site.')) {
+			try {
+				const parts = tokenKey.split('.');
+				const { getAllSettings } = await import('../settings-service');
+				const settings = await getAllSettings();
+				return parts.slice(1).reduce((curr: any, key) => curr?.[key], settings);
+			} catch (e) {
+				logger.error(`Failed to resolve site token ${tokenKey}:`, e);
+				return undefined;
+			}
+		}
+
 		// Try relation resolver for deep entry tokens
 		if (tokenKey.startsWith('entry.') && tokenKey.split('.').length > 2) {
 			try {

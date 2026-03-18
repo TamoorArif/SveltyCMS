@@ -5,7 +5,7 @@
  * as well as activate/deactivate them.
  */
 
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { logger } from '@utils/logger';
 import type { Model } from 'mongoose';
 import type { DatabaseId, DatabaseResult, Widget as IWidget, Widget } from '../../db-interface'; // Assuming you have a document interface

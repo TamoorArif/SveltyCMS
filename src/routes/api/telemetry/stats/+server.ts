@@ -30,8 +30,20 @@ import { apiHandler } from '@utils/api-handler';
 
 // ... (MOCK_DB_DATA definition)
 
+import { getPrivateSettingSync } from '@src/services/settings-service';
+import { AppError } from '@utils/error-handling';
+
 export const GET = apiHandler(async ({ locals }) => {
-	const isAdmin = locals.user?.isAdmin;
+	const { user } = locals;
+	const userRole = user?.role;
+	const isSuperAdmin = userRole === 'super-admin';
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
+
+	// SECURITY: In multi-tenant mode, telemetry stats are system-wide and require super-admin
+	if (isMultiTenant && !isSuperAdmin) {
+		logger.warn(`Unauthorized telemetry stats access attempt by user ${user?._id}`);
+		throw new AppError('Insufficient permissions: Only super-admins can view global telemetry statistics.', 403, 'FORBIDDEN');
+	}
 
 	// 1. Calculate Aggregations
 	const stats = {
@@ -42,7 +54,10 @@ export const GET = apiHandler(async ({ locals }) => {
 		countries: aggregate(MOCK_DB_DATA, 'country')
 	};
 
-	const responseData = isAdmin ? { role: 'admin', aggregates: stats, raw_data: MOCK_DB_DATA } : { role: 'guest', aggregates: stats, raw_data: [] };
+	const responseData =
+		isSuperAdmin || !isMultiTenant
+			? { role: 'admin', aggregates: stats, raw_data: MOCK_DB_DATA }
+			: { role: 'guest', aggregates: stats, raw_data: [] };
 
 	return json({
 		success: true,

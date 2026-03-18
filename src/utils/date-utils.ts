@@ -191,6 +191,8 @@ export function formatDisplayDate(
 	}
 }
 
+export const formatDate = formatDisplayDate;
+
 /**
  * Format date for display in a relative way (e.g. "2 hours ago")
  * @param dateInput - Date, timestamp or ISO string

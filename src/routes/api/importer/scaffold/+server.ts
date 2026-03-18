@@ -11,10 +11,21 @@ import { AppError } from '@utils/error-handling';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { getPrivateSettingSync } from '@src/services/settings-service';
+
 export const POST = apiHandler(async ({ request, locals }) => {
 	const { user } = locals;
-	if (!user || user.role !== 'admin') {
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
+	const isSuperAdmin = user?.role === 'super-admin';
+
+	if (!user) {
 		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
+	}
+
+	// SECURITY: In multi-tenant mode, only super-admins can scaffold collections as they affect global config files
+	if ((isMultiTenant && !isSuperAdmin) || (!isMultiTenant && user.role !== 'admin')) {
+		logger.warn(`Unauthorized scaffold attempt by user ${user._id}`);
+		throw new AppError('Forbidden: Only super-admins can scaffold collections in multi-tenant mode.', 403, 'FORBIDDEN');
 	}
 
 	const { sourceType, sourceUrl, apiKey, sourceTypeIdentifier, collectionName } = await request.json();

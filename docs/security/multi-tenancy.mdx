@@ -1,0 +1,72 @@
+---
+path: 'docs/security/multi-tenancy.mdx'
+title: 'Multi-Tenant Security Architecture'
+description: 'In-depth documentation of the security boundaries and tenant isolation in SveltyCMS.'
+order: 2
+icon: 'mdi:shield-home-outline'
+---
+
+# Multi-Tenant Security Architecture
+
+SveltyCMS employs a rigorous "Defense in Depth" strategy for multi-tenant environments. This document outlines the architectural boundaries, isolation mechanisms, and security protocols that prevent cross-tenant data leakage and unauthorized access.
+
+## 1. Core Isolation Principles
+
+The system is built on the principle of **Universal Tenant Context**. Every request that enters the system is tagged with a `tenantId` via middleware, which is then propagated through every layer of the application.
+
+### 1.1 The middleware layer
+- **Tenant Identification**: The `handleAuthentication` hook identifies the tenant based on the hostname or a specific header.
+- **Context Injection**: The `tenantId` is injected into `event.locals`, making it available to all downstream handlers.
+- **Boundary Enforcement**: If `MULTI_TENANT` mode is enabled, requests without a valid `tenantId` are rejected before they reach the API handlers.
+
+## 2. API Hardening & IDOR Prevention
+
+All SveltyCMS APIs are hardened against Insecure Direct Object Reference (IDOR) attacks.
+
+### 2.1 Explicit Scoping
+Every database query explicitly includes the `tenantId` in its filter or options. This ensures that even if a user knows the UUID of an object belonging to another tenant, the database will return no results because the `tenantId` does not match.
+
+```typescript
+// Standard IDOR Prevention Pattern
+const result = await dbAdapter.crud.findOne(collectionName, { 
+    _id: targetId,
+    tenantId // ✨ Enforces the tenant boundary at the DB level
+});
+```
+
+### 2.2 Role-Based Overrides (RBAC)
+- **Tenant Admins**: Can only access and modify data within their own `tenantId`.
+- **Super-Admins**: Have global visibility. They can override the `tenantId` via query parameters (e.g., `?tenantId=target-tenant`) for system-wide maintenance. This override is strictly protected and returns a `403 Forbidden` for any other role.
+
+## 3. Specialized Service Isolation
+
+### 3.1 GraphQL Schema Isolation
+SveltyCMS prevents "Schema Leakage" by maintaining isolated `YogaServer` instances per tenant. This ensures that custom collections or fields defined by one tenant are never visible in the introspection query of another.
+
+### 3.2 Real-Time Event Stream (SSE)
+The Server-Sent Events (SSE) stream at `/api/events` performs real-time filtering. The `eventBus` wildcard listener verifies the `payload.tenantId` against the user's `locals.tenantId` before enqueuing data to the stream controller.
+
+### 3.3 Memory & Resource Hygiene
+- **Cleanup**: SSE streams utilize the `cancel()` method to clear `setInterval` heartbeats and `eventBus` listeners, preventing memory leaks that could lead to Denial of Service (DoS).
+- **Caching**: Services like `AutomationService` and `WebhookService` use a `Map<tenantId, Cache>` structure to ensure that cached data is never shared across tenant boundaries.
+
+## 4. Data Portability & Encryption
+
+### 4.1 Export Security
+All data exports (Standard and Full) are tenant-scoped. Sensitive fields (API keys, secrets) are automatically detected via pattern matching and encrypted using **AES-256-GCM** with an **Argon2** derived key before being included in the export JSON.
+
+### 4.2 Import Integrity
+The import system validates the scope of incoming settings. It dynamically looks up setting definitions to ensure that user-specific preferences are never imported into the global system scope, preventing database corruption.
+
+## 5. Summary of Boundaries
+
+| Boundary | Mechanism | Enforcement Point |
+| :--- | :--- | :--- |
+| **Data** | Explicit `tenantId` filters | Database Adapters |
+| **Schema** | Isolated Yoga Instances | GraphQL Handler |
+| **Real-Time** | Payload Filtering | SSE Controller |
+| **Secrets** | AES-256-GCM Encryption | Export Utility |
+| **UI/Prefs** | Compound `tenantId:userId` keys | Preferences API |
+| **Infrastructure** | Super-Admin Restrictons | RBAC Middleware |
+
+This architecture ensures that SveltyCMS remains secure, compliant, and performant even when hosting thousands of isolated customers on a single installation.

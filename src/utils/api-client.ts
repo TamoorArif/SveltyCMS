@@ -66,7 +66,7 @@ interface GetDataResponse {
  * 3. Unified Error Response extraction
  * 4. Network error catching
  */
-async function fetchApi<T>(endpoint: string, options: RequestInit): Promise<ApiResponse<T>> {
+export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
 	try {
 		const response = await fetch(endpoint, {
 			headers: { 'Content-Type': 'application/json' },

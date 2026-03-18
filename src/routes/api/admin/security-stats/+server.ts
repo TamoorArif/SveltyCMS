@@ -12,9 +12,17 @@ import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
 
+import { getPrivateSettingSync } from '@src/services/settings-service';
+
 export const GET = apiHandler(async ({ locals }) => {
-	if (!locals.user || locals.user.role !== 'admin') {
-		throw new AppError('Forbidden: Admin access required', 403, 'FORBIDDEN');
+	const { user } = locals;
+	const userRole = user?.role;
+	const isSuperAdmin = userRole === 'super-admin';
+	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
+
+	// SECURITY: In multi-tenant mode, global security stats require super-admin
+	if (!user || (isMultiTenant && !isSuperAdmin) || (!isMultiTenant && userRole !== 'admin')) {
+		throw new AppError('Forbidden: Access restricted', 403, 'FORBIDDEN');
 	}
 
 	const stats = securityResponseService.getSecurityStats();

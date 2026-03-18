@@ -101,8 +101,6 @@ export class CacheService {
 	private readonly debounceTimers = new Map<string, NodeJS.Timeout>(); // For bulk invalidations
 	private bootstrapping = true;
 
-	private constructor() {}
-
 	static getInstance(): CacheService {
 		if (!CacheService.instance) {
 			CacheService.instance = new CacheService();
@@ -329,11 +327,18 @@ export class CacheService {
 		return 180;
 	}
 
-	async invalidateAll(): Promise<void> {
+	async invalidateAll(tenantId?: string | null): Promise<void> {
 		await this.ensureInitialized();
-		logger.info('🔄 Invalidating all cache entries');
-		if (this.store) {
-			await this.store.clearByPattern('*');
+		if (getPrivateSettingSync('MULTI_TENANT') && tenantId) {
+			logger.info(`🔄 Invalidating all cache entries for tenant ${tenantId}`);
+			if (this.store) {
+				await this.store.clearByPattern(`tenant:${tenantId}:*`);
+			}
+		} else {
+			logger.info('🔄 Invalidating all cache entries');
+			if (this.store) {
+				await this.store.clearByPattern('*');
+			}
 		}
 		logger.info('✅ Cache invalidated successfully');
 	}

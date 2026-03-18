@@ -8,7 +8,7 @@
 
 import { logger } from '@utils/logger';
 import { CacheCategory } from './cache/types';
-import { cacheService } from './cache-service';
+import { cacheService } from './cache/cache-service';
 import { dbAdapter } from './db';
 
 /**

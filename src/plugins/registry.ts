@@ -254,7 +254,7 @@ class PluginRegistry implements IPluginService {
 	private async ensureMigrationTable(dbAdapter: IDBAdapter): Promise<void> {
 		const table = 'pluginMigrations';
 		try {
-			const count = await dbAdapter.crud.count(table, undefined, undefined, true);
+			const count = await dbAdapter.crud.count(table, undefined, { bypassTenantCheck: true });
 			if (count.success) {
 				return;
 			}
@@ -275,7 +275,7 @@ class PluginRegistry implements IPluginService {
 			undefined,
 			true
 		);
-		await dbAdapter.crud.deleteMany(table, { pluginId: '__INIT__' } as any, undefined, true);
+		await dbAdapter.crud.deleteMany(table, { pluginId: '__INIT__' } as any, { bypassTenantCheck: true });
 	}
 
 	// Get applied migrations from database

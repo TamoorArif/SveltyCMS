@@ -31,7 +31,7 @@
  * @prerequisite System state is READY and JWT secret is available
  */
 
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { metricsService } from '@src/services/metrics-service';
 import { getPrivateSettingSync } from '@src/services/settings-service';
 import { dev } from '$app/environment';

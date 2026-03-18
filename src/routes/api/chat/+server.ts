@@ -45,19 +45,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				text: content,
 				room: room || null,
 				tab: tab || 'chat'
-			}
+			},
+			tenantId: locals.tenantId!
 		});
 
 		// 3. AI Logic
 		// If no room is specified, we assume it's a chat with the AI Assistant
 		if (room) {
-			logger.debug(`RTC: Group Chat message in room ${room} from ${locals.user.username}`);
+			logger.debug(`RTC: Group Chat message in room ${room} from ${locals.user.username} (tenant: ${locals.tenantId})`);
 		} else {
-			logger.debug(`RTC: AI Chat message from ${locals.user.username}`);
+			logger.debug(`RTC: AI Chat message from ${locals.user.username} (tenant: ${locals.tenantId})`);
 
 			// Use AIService to get a real response
 			// We wrap it in an async IIFE to return the HTTP response immediately
 			// while the AI generates its answer in the background (dispatched via EventBus)
+			const tenantId = locals.tenantId!;
 			(async () => {
 				try {
 					const aiResponse = await aiService.chat(content, history);
@@ -67,7 +69,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						data: {
 							text: aiResponse,
 							done: true
-						}
+						},
+						tenantId
 					});
 				} catch (err) {
 					logger.error('RTC: AI Inference failed:', err);
@@ -76,7 +79,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						data: {
 							text: 'I encountered an error while processing your request. Please check if Ollama is running.',
 							done: true
-						}
+						},
+						tenantId
 					});
 				}
 			})();

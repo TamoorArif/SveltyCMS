@@ -39,26 +39,12 @@ vi.mock('@src/databases/db', () => ({
 	dbInitPromise: Promise.resolve()
 }));
 
-vi.mock('@src/services/settings-service', () => ({
-	getPrivateSettingSync: vi.fn().mockReturnValue(false),
-	getPublicSettingSync: vi.fn().mockReturnValue({})
-}));
-
 vi.mock('@src/utils/tenant-utils', () => ({
 	requireTenantContext: vi.fn().mockImplementation((locals: any) => locals.tenantId || null)
 }));
 
 vi.mock('@utils/api-handler', () => ({
 	apiHandler: (fn: any) => fn
-}));
-
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		debug: vi.fn()
-	}
 }));
 
 vi.mock('@utils/media/media-storage.server', () => ({

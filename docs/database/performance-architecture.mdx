@@ -451,7 +451,7 @@ TTL settings managed via UI at `/config/system-settings` (Cache tab):
 
 ```typescript
 // Automatic caching in API endpoints
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 
 // Query results cached
 const cached = await cacheService.get('query:posts:published');

@@ -36,8 +36,8 @@ const getDbAdapter = async () => (await import('@src/databases/db')).dbAdapter;
  */
 class AutomationService {
 	private static instance: AutomationService;
-	private flowsCache: AutomationFlow[] | null = null;
-	private cacheTimestamp = 0;
+	// Per-tenant cache of flows
+	private flowsCache: Map<string, { data: AutomationFlow[]; timestamp: number }> = new Map();
 	private readonly CACHE_TTL = 60 * 1000; // 1 minute
 	private initialized = false;
 
@@ -73,10 +73,15 @@ class AutomationService {
 
 	// ── Flow CRUD ──────────────────────────────────────────────
 
-	/** Get all automation flows */
-	public async getFlows(): Promise<AutomationFlow[]> {
-		if (this.flowsCache && Date.now() - this.cacheTimestamp < this.CACHE_TTL) {
-			return this.flowsCache;
+	/** Get all automation flows for a tenant */
+	public async getFlows(tenantId: string): Promise<AutomationFlow[]> {
+		if (!tenantId) {
+			return [];
+		}
+
+		const cached = this.flowsCache.get(tenantId);
+		if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+			return cached.data;
 		}
 
 		try {
@@ -85,30 +90,38 @@ class AutomationService {
 				return [];
 			}
 
-			const result = await db.system.preferences.get<AutomationFlow[]>('automations_config', 'system');
-			this.flowsCache = result.success && Array.isArray(result.data) ? result.data : [];
-			this.cacheTimestamp = Date.now();
-			return this.flowsCache || [];
+			const result = await db.system.preferences.get<AutomationFlow[]>('automations_config', 'system', tenantId as any);
+			const flows = result.success && Array.isArray(result.data) ? result.data : [];
+
+			// Enforce tenantId consistency
+			const sanitizedFlows = flows.map((f) => ({ ...f, tenantId }));
+
+			this.flowsCache.set(tenantId, { data: sanitizedFlows, timestamp: Date.now() });
+			return sanitizedFlows;
 		} catch (e) {
-			logger.error('Failed to load automation flows:', e);
+			logger.error(`Failed to load automation flows for tenant ${tenantId}:`, e);
 			return [];
 		}
 	}
 
-	/** Get a single flow by ID */
-	public async getFlow(id: string): Promise<AutomationFlow | null> {
-		const flows = await this.getFlows();
+	/** Get a single flow by ID for a tenant */
+	public async getFlow(id: string, tenantId: string): Promise<AutomationFlow | null> {
+		const flows = await this.getFlows(tenantId);
 		return flows.find((f) => f.id === id) ?? null;
 	}
 
-	/** Create or update a flow */
-	public async saveFlow(flow: Partial<AutomationFlow>): Promise<AutomationFlow> {
+	/** Create or update a flow for a tenant */
+	public async saveFlow(flow: Partial<AutomationFlow>, tenantId: string): Promise<AutomationFlow> {
+		if (!tenantId) {
+			throw new Error('tenantId is required');
+		}
+
 		const db = await getDbAdapter();
 		if (!db || !db.system) {
 			throw new Error('Database or system not available');
 		}
 
-		const current = await this.getFlows();
+		const current = await this.getFlows(tenantId);
 		const now = new Date().toISOString();
 
 		const savedFlow: AutomationFlow = {
@@ -122,7 +135,8 @@ class AutomationService {
 			triggerCount: flow.triggerCount ?? 0,
 			failureCount: flow.failureCount ?? 0,
 			createdAt: flow.createdAt || now,
-			updatedAt: now
+			updatedAt: now,
+			tenantId // Ensure correct tenantId is set
 		};
 
 		let updated: AutomationFlow[];
@@ -132,50 +146,65 @@ class AutomationService {
 			updated = [...current, savedFlow];
 		}
 
-		await db.system.preferences.set('automations_config', updated, 'system');
-		this.flowsCache = updated;
-		this.cacheTimestamp = Date.now();
+		await db.system.preferences.set('automations_config', updated, 'system', tenantId as any);
+
+		// Update cache immediately
+		this.flowsCache.set(tenantId, { data: updated, timestamp: Date.now() });
 
 		return savedFlow;
 	}
 
-	/** Delete a flow by ID */
-	public async deleteFlow(id: string): Promise<void> {
+	/** Delete a flow by ID for a tenant */
+	public async deleteFlow(id: string, tenantId: string): Promise<void> {
+		if (!tenantId) {
+			return;
+		}
+
 		const db = await getDbAdapter();
 		if (!db || !db.system) {
 			return;
 		}
 
-		const current = await this.getFlows();
+		const current = await this.getFlows(tenantId);
+		const initialLength = current.length;
 		const updated = current.filter((f) => f.id !== id);
 
-		await db.system.preferences.set('automations_config', updated, 'system');
-		this.flowsCache = updated;
-		this.cacheTimestamp = Date.now();
+		if (updated.length !== initialLength) {
+			await db.system.preferences.set('automations_config', updated, 'system', tenantId as any);
+			this.flowsCache.set(tenantId, { data: updated, timestamp: Date.now() });
+		}
 	}
 
-	/** Duplicate a flow */
-	public async duplicateFlow(id: string): Promise<AutomationFlow> {
-		const flow = await this.getFlow(id);
+	/** Duplicate a flow for a tenant */
+	public async duplicateFlow(id: string, tenantId: string): Promise<AutomationFlow> {
+		const flow = await this.getFlow(id, tenantId);
 		if (!flow) {
 			throw new Error('Flow not found');
 		}
 
-		return this.saveFlow({
-			...flow,
-			id: undefined,
-			name: `${flow.name} (Copy)`,
-			active: false,
-			triggerCount: 0,
-			failureCount: 0
-		});
+		return this.saveFlow(
+			{
+				...flow,
+				id: undefined,
+				name: `${flow.name} (Copy)`,
+				active: false,
+				triggerCount: 0,
+				failureCount: 0
+			},
+			tenantId
+		);
 	}
 
 	// ── Event Handling ─────────────────────────────────────────
 
 	/** Handle an incoming event: find matching flows and execute */
 	private async handleEvent(payload: AutomationEventPayload): Promise<void> {
-		const flows = await this.getFlows();
+		if (!payload.tenantId) {
+			logger.warn(`AutomationService: Event ${payload.event} received without tenantId`);
+			return;
+		}
+
+		const flows = await this.getFlows(payload.tenantId);
 		const matchingFlows = flows.filter((flow) => {
 			if (!flow.active) {
 				return false;
@@ -204,7 +233,7 @@ class AutomationService {
 			return;
 		}
 
-		logger.debug(`AutomationService: ${payload.event} matched ${matchingFlows.length} flows`);
+		logger.debug(`AutomationService: ${payload.event} matched ${matchingFlows.length} flows for tenant ${payload.tenantId}`);
 
 		// Execute matching flows in parallel (non-blocking)
 		for (const flow of matchingFlows) {
@@ -224,7 +253,8 @@ class AutomationService {
 			operationResults: [],
 			duration: 0,
 			timestamp: new Date().toISOString(),
-			triggerPayload: payload
+			triggerPayload: payload,
+			tenantId: flow.tenantId
 		};
 
 		for (const operation of flow.operations) {
@@ -264,7 +294,7 @@ class AutomationService {
 		logEntry.duration = Date.now() - startTime;
 
 		// Update flow stats (fire-and-forget)
-		this.updateFlowStats(flow.id, logEntry.status).catch(() => {});
+		this.updateFlowStats(flow.id, logEntry.status, flow.tenantId).catch(() => {});
 
 		// Store log entry
 		this.addLogEntry(logEntry);
@@ -317,6 +347,7 @@ class AutomationService {
 			'Content-Type': 'application/json',
 			'User-Agent': 'SveltyCMS-Automation/1.0',
 			'X-SveltyCMS-Event': payload.event,
+			'X-SveltyCMS-Tenant': payload.tenantId,
 			...(config.headers || {})
 		};
 
@@ -340,7 +371,7 @@ class AutomationService {
 				throw new Error(`Webhook returned HTTP ${response.status}`);
 			}
 
-			logger.debug(`Automation webhook sent to ${config.url}`);
+			logger.debug(`Automation webhook sent to ${config.url} for tenant ${payload.tenantId}`);
 		} catch (err) {
 			clearTimeout(timeoutId);
 			throw err;
@@ -386,11 +417,16 @@ class AutomationService {
 		}
 
 		// Update the field on the entry
-		await db.crud.update(payload.collection, payload.entryId as any, {
-			[config.field]: config.value
-		});
+		await db.crud.update(
+			payload.collection,
+			payload.entryId as any,
+			{
+				[config.field]: config.value
+			},
+			payload.tenantId as any
+		);
 
-		logger.debug(`Automation set_field: ${config.field} = ${config.value} on ${payload.entryId}`);
+		logger.debug(`Automation set_field: ${config.field} = ${config.value} on ${payload.entryId} (tenant: ${payload.tenantId})`);
 	}
 
 	/** Evaluate a condition operation */
@@ -438,7 +474,8 @@ class AutomationService {
 					collection: payload.collection,
 					entryId: payload.entryId,
 					timestamp: payload.timestamp,
-					previous: payload.previousData || {}
+					previous: payload.previousData || {},
+					tenantId: payload.tenantId
 				}
 			} as any;
 
@@ -461,12 +498,13 @@ class AutomationService {
 
 	// ── Stats & Logging ────────────────────────────────────────
 
-	private async updateFlowStats(flowId: string, status: ExecutionStatus): Promise<void> {
-		if (!this.flowsCache) {
+	private async updateFlowStats(flowId: string, status: ExecutionStatus, tenantId: string): Promise<void> {
+		const cached = this.flowsCache.get(tenantId);
+		if (!cached) {
 			return;
 		}
 
-		const flow = this.flowsCache.find((f) => f.id === flowId);
+		const flow = cached.data.find((f) => f.id === flowId);
 		if (flow) {
 			flow.lastTriggered = new Date().toISOString();
 			flow.triggerCount = (flow.triggerCount || 0) + 1;
@@ -477,7 +515,7 @@ class AutomationService {
 			// Persist stats update
 			const db = await getDbAdapter();
 			if (db && db.system) {
-				await db.system.preferences.set('automations_config', this.flowsCache!, 'system').catch(() => {});
+				await db.system.preferences.set('automations_config', cached.data, 'system', tenantId as any).catch(() => {});
 			}
 		}
 	}
@@ -489,18 +527,25 @@ class AutomationService {
 		}
 	}
 
-	/** Get recent execution logs (optionally filtered by automation ID) */
-	public getLogs(automationId?: string): ExecutionLogEntry[] {
-		if (automationId) {
-			return this.executionLogs.filter((l) => l.automationId === automationId);
+	/** Get recent execution logs (optionally filtered by automation ID and tenant) */
+	public getLogs(automationId?: string, tenantId?: string): ExecutionLogEntry[] {
+		let logs = this.executionLogs;
+		if (tenantId) {
+			logs = logs.filter((l) => l.tenantId === tenantId);
 		}
-		return this.executionLogs;
+		if (automationId) {
+			logs = logs.filter((l) => l.automationId === automationId);
+		}
+		return logs;
 	}
 
 	/** Clear flow cache (force reload on next access) */
-	public invalidateCache(): void {
-		this.flowsCache = null;
-		this.cacheTimestamp = 0;
+	public invalidateCache(tenantId?: string): void {
+		if (tenantId) {
+			this.flowsCache.delete(tenantId);
+		} else {
+			this.flowsCache.clear();
+		}
 	}
 }
 

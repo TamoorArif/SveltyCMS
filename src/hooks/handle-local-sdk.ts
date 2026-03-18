@@ -40,11 +40,7 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 				);
 			},
 			delete: async (collection: string, id: string) => {
-				return db.crud.delete(
-					collection,
-					id as import('@src/databases/db-interface').DatabaseId,
-					event.locals.tenantId as import('@src/databases/db-interface').DatabaseId
-				);
+				return db.crud.delete(collection, id as import('@src/databases/db-interface').DatabaseId, { tenantId: event.locals.tenantId });
 			},
 			// Access to the raw adapter for advanced queries
 			db

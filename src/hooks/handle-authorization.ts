@@ -17,7 +17,7 @@ import {
 	USER_COUNT_CACHE_TTL_S,
 	USER_PERM_CACHE_TTL_MS,
 	USER_PERM_CACHE_TTL_S
-} from '@src/databases/cache-service';
+} from '@src/databases/cache/cache-service';
 import { auth } from '@src/databases/db';
 import { error, type Handle, redirect } from '@sveltejs/kit';
 import { AppError, handleApiError } from '@utils/error-handling';

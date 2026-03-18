@@ -6,7 +6,7 @@
 
 import type { CollectionEntry, FieldDefinition, RevisionData, Schema } from '@src/content/types';
 import type { User } from '@src/databases/auth/types';
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import type { IDBAdapter } from '@src/databases/db-interface';
 import { modifyRequest } from '@src/routes/api/collections/modify-request';
 import { getPrivateSettingSync } from '@src/services/settings-service';

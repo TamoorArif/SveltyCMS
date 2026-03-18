@@ -59,6 +59,11 @@ if (!building) {
 			return;
 		}
 
+		// Initialize AutomationService
+		import('@src/services/automation').then(({ automationService }) => {
+			automationService.init();
+		});
+
 		import('@src/services/telemetry-service').then(({ telemetryService }) => {
 			const globalWithTelemetry = globalThis as typeof globalThis & {
 				__SVELTY_TELEMETRY_INTERVAL__?: NodeJS.Timeout;

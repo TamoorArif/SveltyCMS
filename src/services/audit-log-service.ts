@@ -46,6 +46,7 @@ export interface AuditLogEntry extends BaseEntity {
 	severity: AuditSeverity;
 	targetId?: DatabaseId | null; // What was affected
 	targetType?: string; // 'user', 'token', 'collection', etc.
+	tenantId?: string | null; // For multi-tenant support
 	timestamp: string;
 	userAgent?: string;
 }
@@ -100,6 +101,7 @@ export interface AuditQueryOptions {
 	severity?: AuditSeverity;
 	startDate?: string;
 	targetId?: DatabaseId;
+	tenantId?: string;
 }
 
 // Statistics interface
@@ -185,6 +187,10 @@ export class AuditLogService {
 
 			if (options.targetId) {
 				filters.targetId = options.targetId;
+			}
+
+			if (options.tenantId) {
+				filters.tenantId = options.tenantId;
 			}
 
 			if (options.severity) {
@@ -356,7 +362,7 @@ export class AuditLogService {
 						// Note: timestampFilter needs to be a query that safeQuery accepts.
 						// { timestamp: ... } is fine.
 						// We pass tenantId as 3rd arg to deleteMany.
-						const result = await db.crud.deleteMany(this.collectionName, timestampFilter, tenant._id);
+						const result = await db.crud.deleteMany(this.collectionName, timestampFilter, { tenantId: tenant._id as string });
 						if (result.success && result.data) {
 							totalDeleted += result.data.deletedCount;
 						}

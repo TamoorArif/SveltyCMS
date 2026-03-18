@@ -18,7 +18,7 @@
  */
 
 // Cache invalidation
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 // Auth
 import { auth } from '@src/databases/db';
 import { getPrivateSettingSync } from '@src/services/settings-service';
@@ -157,7 +157,7 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
 	});
 
 	// Invalidate the tokens cache so the UI updates immediately
-	cacheService.delete('tokens', tenantId).catch((err) => {
+	cacheService.delete('tokens', tenantId).catch((err: any) => {
 		logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 	});
 
@@ -232,11 +232,11 @@ export const DELETE = apiHandler(async ({ params, locals }) => {
 	}
 
 	if (deletedCount === 0) {
-		throw new AppError('Token not found', 404, 'TOKEN_NOT_FOUND');
+		throw new AppError('Token not found.', 404, 'TOKEN_NOT_FOUND');
 	}
 
 	// Invalidate the tokens cache so the deleted token disappears immediately from admin area
-	cacheService.delete('tokens', tenantId).catch((err) => {
+	cacheService.delete('tokens', tenantId).catch((err: any) => {
 		logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 	});
 

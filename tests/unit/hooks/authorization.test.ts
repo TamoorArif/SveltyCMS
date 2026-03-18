@@ -12,6 +12,7 @@
  * - Redirect to setup when no roles
  */
 
+import { describe, it, expect, beforeEach } from 'vitest';
 import type { Role, User } from '@src/databases/auth/types';
 import { handleAuthorization, invalidateUserCountCache, invalidateRolesCache } from '@src/hooks/handle-authorization';
 import type { RequestEvent } from '@sveltejs/kit';

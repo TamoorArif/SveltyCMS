@@ -502,13 +502,14 @@ During import, data is validated:
 - Admin-only for full system exports
 - Collection-specific permissions for collection exports
 - Audit logging for all export/import operations
+- Cross-tenant exports restricted to super-admins in multi-tenant mode
 
 ### Data Encryption
 
-- Default encryption for sensitive data
-- Secure key management
+- Default AES-256-GCM encryption for all sensitive fields (API keys, secrets) in both standard and full exports
+- Secure Argon2id key derivation
 - Encrypted backup storage
-- Password-protected exports (optional)
+- Password-protected full exports (optional)
 
 ### Import Validation
 

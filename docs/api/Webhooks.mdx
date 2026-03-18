@@ -76,6 +76,23 @@ function verifyWebhook(payload, signature, secret) {
 | `X-SveltyCMS-Timestamp` | Unix timestamp of the dispatch                  |
 | `X-SveltyCMS-Signature` | HMAC-SHA256 signature (prefixed with `sha256=`) |
 
+## 🛡️ Durable Delivery & DLQ
+
+SveltyCMS utilizes a **Job-Queue-Driven** delivery system to ensure webhooks are reliable even if your endpoint is temporarily down.
+
+### Status-Aware Retries
+The system intelligently distinguishes between transient and permanent failures:
+
+| Status Code | Action | Strategy |
+| :--- | :--- | :--- |
+| **2xx** | Success | Mark as delivered. |
+| **5xx, 429, 408** | Retry | Exponential backoff (up to 5 attempts). |
+| **4xx (Other)** | DLQ | Mark as **FAILED_PERMANENTLY** (Poison Pill). |
+| **Network Error** | Retry | Exponential backoff. |
+
+### Dead-Letter Queue (DLQ)
+Webhooks that fail permanently or exhaust all retry attempts are moved to the DLQ. Administrators can monitor these via `GET /api/webhooks/logs`.
+
 ---
 
 ## 📡 Event Reference

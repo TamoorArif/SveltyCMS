@@ -233,16 +233,16 @@ This means you can swap databases (MongoDB, PostgreSQL, MySQL) without changing 
 
 ## Multi-Tenancy Support
 
-When `MULTI_TENANT` mode is enabled:
+When `MULTI_TENANT` mode is enabled, SveltyCMS implements a hybrid isolation model:
 
-- Settings can be scoped to specific tenants
-- Tenant ID is derived from subdomain or user context
-- System-wide settings override tenant-specific ones
+- **Site-Specific Settings**: Settings like Appearance, Languages, and Site Config are seamlessly scoped to the specific `tenantId`. A tenant admin can only view and modify their own settings.
+- **Infrastructure Settings**: Critical system groups (e.g., `database`, `security`, `email`) apply globally across the CMS. Access to these groups is strictly restricted to **super-admins**.
+- **Tenant ID Resolution**: The `tenantId` is derived from the user's session context or dynamically injected by the middleware.
 
-**Tenant-Specific Settings:**
+**Tenant-Specific Settings Example:**
 
 ```http
-GET /api/settings/system
+GET /api/settings/site
 # Automatically scoped to the current tenant
 ```
 

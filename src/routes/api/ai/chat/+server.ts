@@ -8,6 +8,7 @@
  */
 
 import { aiService } from '@services/ai-service';
+import { getPrivateSettingSync } from '@src/services/settings-service';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -17,6 +18,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
+	const { tenantId } = locals;
+	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
+		return json({ error: 'Tenant ID required' }, { status: 403 });
+	}
+
 	try {
 		const { message, history } = await request.json();
 
@@ -24,6 +30,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'Message is required' }, { status: 400 });
 		}
 
+		// AIService is stateless, but we pass tenant context for logging/future use
 		const reply = await aiService.chat(message, history || []);
 
 		return json({ reply });

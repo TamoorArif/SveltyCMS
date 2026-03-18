@@ -13,12 +13,16 @@ import { createDatabaseError, generateId } from './mongodb-utils';
  * Implements the systemVirtualFolder interface from IDBAdapter.
  */
 export class MongoSystemVirtualFolderMethods {
-	async create(folder: Omit<SystemVirtualFolder, '_id' | 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<SystemVirtualFolder>> {
+	async create(
+		folder: Omit<SystemVirtualFolder, '_id' | 'createdAt' | 'updatedAt'>,
+		tenantId?: string | null
+	): Promise<DatabaseResult<SystemVirtualFolder>> {
 		try {
 			const ID = generateId();
 			const newFolder = new SystemVirtualFolderModel({
 				...folder,
-				_id: ID
+				_id: ID,
+				...(tenantId && { tenantId })
 			});
 			const savedFolder = await newFolder.save();
 			return { success: true, data: savedFolder.toObject() };
@@ -31,13 +35,17 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async ensure(folder: Omit<SystemVirtualFolder, '_id' | 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<SystemVirtualFolder>> {
+	async ensure(
+		folder: Omit<SystemVirtualFolder, '_id' | 'createdAt' | 'updatedAt'>,
+		tenantId?: string | null
+	): Promise<DatabaseResult<SystemVirtualFolder>> {
 		try {
-			// Atomic upsert: query by path, only insert if not exists
-			// We generate the _id unconditionally but it only persists if a new doc is inserted.
+			const query: any = { path: folder.path };
+			if (tenantId) query.tenantId = tenantId;
+
 			const result = await SystemVirtualFolderModel.findOneAndUpdate(
-				{ path: folder.path },
-				{ $setOnInsert: { ...folder, _id: generateId() } },
+				query,
+				{ $setOnInsert: { ...folder, _id: generateId(), ...(tenantId && { tenantId }) } },
 				{ upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
 			)
 				.lean()
@@ -53,9 +61,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async getById(folderId: DatabaseId): Promise<DatabaseResult<SystemVirtualFolder | null>> {
+	async getById(folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder | null>> {
 		try {
-			const folder = await SystemVirtualFolderModel.findById(folderId).lean().exec();
+			const query: any = { _id: folderId };
+			if (tenantId) query.tenantId = tenantId;
+			const folder = await SystemVirtualFolderModel.findOne(query).lean().exec();
 			return { success: true, data: folder as SystemVirtualFolder | null };
 		} catch (error) {
 			return {
@@ -66,13 +76,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async getByParentId(parentId: DatabaseId | null): Promise<DatabaseResult<SystemVirtualFolder[]>> {
+	async getByParentId(parentId: DatabaseId | null, tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder[]>> {
 		try {
-			const folders = await SystemVirtualFolderModel.find({
-				parentId: parentId ?? null
-			})
-				.lean()
-				.exec();
+			const query: any = { parentId: parentId ?? null };
+			if (tenantId) query.tenantId = tenantId;
+			const folders = await SystemVirtualFolderModel.find(query).lean().exec();
 			return { success: true, data: folders as SystemVirtualFolder[] };
 		} catch (error) {
 			return {
@@ -83,9 +91,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async getAll(): Promise<DatabaseResult<SystemVirtualFolder[]>> {
+	async getAll(tenantId?: string | null): Promise<DatabaseResult<SystemVirtualFolder[]>> {
 		try {
-			const folders = await SystemVirtualFolderModel.find({}).lean().exec();
+			const query: any = {};
+			if (tenantId) query.tenantId = tenantId;
+			const folders = await SystemVirtualFolderModel.find(query).lean().exec();
 			return { success: true, data: folders as SystemVirtualFolder[] };
 		} catch (error) {
 			return {
@@ -96,13 +106,19 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async update(folderId: DatabaseId, updateData: Partial<SystemVirtualFolder>): Promise<DatabaseResult<SystemVirtualFolder>> {
+	async update(
+		folderId: DatabaseId,
+		updateData: Partial<SystemVirtualFolder>,
+		tenantId?: string | null
+	): Promise<DatabaseResult<SystemVirtualFolder>> {
 		try {
-			const updatedFolder = await SystemVirtualFolderModel.findByIdAndUpdate(folderId, updateData, { returnDocument: 'after' }).lean().exec();
+			const query: any = { _id: folderId };
+			if (tenantId) query.tenantId = tenantId;
+			const updatedFolder = await SystemVirtualFolderModel.findOneAndUpdate(query, updateData, { returnDocument: 'after' }).lean().exec();
 			if (!updatedFolder) {
 				return {
 					success: false,
-					error: { code: 'NOT_FOUND', message: 'Folder not found' },
+					error: { code: 'NOT_FOUND', message: 'Folder not found or access denied' },
 					message: 'Folder not found'
 				};
 			}
@@ -116,14 +132,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async addToFolder(contentId: DatabaseId, folderPath: string): Promise<DatabaseResult<void>> {
-		// This seems to be more related to media files, not generic content
+	async addToFolder(contentId: DatabaseId, folderPath: string, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		try {
-			const folder = await SystemVirtualFolderModel.findOne({
-				path: folderPath
-			})
-				.lean()
-				.exec();
+			const query: any = { path: folderPath };
+			if (tenantId) query.tenantId = tenantId;
+			const folder = await SystemVirtualFolderModel.findOne(query).lean().exec();
 			if (!folder) {
 				return {
 					success: false,
@@ -132,12 +145,14 @@ export class MongoSystemVirtualFolderMethods {
 				};
 			}
 
-			const result = await MediaModel.updateOne({ _id: contentId }, { $set: { folderId: folder._id } });
+			const updateQuery: any = { _id: contentId };
+			if (tenantId) updateQuery.tenantId = tenantId;
+			const result = await MediaModel.updateOne(updateQuery, { $set: { folderId: folder._id } });
 
 			if (result.matchedCount === 0) {
 				return {
 					success: false,
-					error: { code: 'NOT_FOUND', message: 'Media item not found' },
+					error: { code: 'NOT_FOUND', message: 'Media item not found or access denied' },
 					message: 'Media item not found'
 				};
 			}
@@ -152,17 +167,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	/**
-	 * Gets the contents of a virtual folder (subfolders and files).
-	 * Uses Promise.all to fetch subfolders and files in parallel (2x faster).
-	 */
-	async getContents(folderPath: string): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: MediaItem[] }>> {
+	async getContents(folderPath: string, tenantId?: string | null): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: MediaItem[] }>> {
 		try {
-			const folder = await SystemVirtualFolderModel.findOne({
-				path: folderPath
-			})
-				.lean()
-				.exec();
+			const query: any = { path: folderPath };
+			if (tenantId) query.tenantId = tenantId;
+			const folder = await SystemVirtualFolderModel.findOne(query).lean().exec();
 
 			if (!folder) {
 				return {
@@ -175,10 +184,14 @@ export class MongoSystemVirtualFolderMethods {
 				};
 			}
 
-			// 🚀 Run these two independent queries in parallel
+			const subQuery: any = { parentId: folder._id };
+			if (tenantId) subQuery.tenantId = tenantId;
+			const fileQuery: any = { folderId: folder._id };
+			if (tenantId) fileQuery.tenantId = tenantId;
+
 			const [subfolders, files] = await Promise.all([
-				SystemVirtualFolderModel.find({ parentId: folder._id }).lean().exec(),
-				MediaModel.find({ folderId: folder._id }).lean().exec()
+				SystemVirtualFolderModel.find(subQuery).lean().exec(),
+				MediaModel.find(fileQuery).lean().exec()
 			]);
 
 			return {
@@ -197,10 +210,14 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	async delete(folderId: DatabaseId): Promise<DatabaseResult<void>> {
+	async delete(folderId: DatabaseId, tenantId?: string | null): Promise<DatabaseResult<void>> {
 		try {
-			// This should probably be a recursive delete or prevent deleting non-empty folders
-			await SystemVirtualFolderModel.findByIdAndDelete(folderId).exec();
+			const query: any = { _id: folderId };
+			if (tenantId) query.tenantId = tenantId;
+			const res = await SystemVirtualFolderModel.deleteOne(query).exec();
+			if (res.deletedCount === 0) {
+				return { success: false, message: 'Folder not found or access denied', error: { code: 'NOT_FOUND', message: 'Folder not found' } };
+			}
 			return { success: true, data: undefined };
 		} catch (error) {
 			return {
@@ -211,14 +228,11 @@ export class MongoSystemVirtualFolderMethods {
 		}
 	}
 
-	/**
-	 * Checks if a virtual folder exists at the given path.
-	 * Uses findOne with projection instead of countDocuments for faster execution.
-	 */
-	async exists(path: string): Promise<DatabaseResult<boolean>> {
+	async exists(path: string, tenantId?: string | null): Promise<DatabaseResult<boolean>> {
 		try {
-			// Use findOne with projection for optimal performance
-			const doc = await SystemVirtualFolderModel.findOne({ path }, { _id: 1 }).lean().exec();
+			const query: any = { path };
+			if (tenantId) query.tenantId = tenantId;
+			const doc = await SystemVirtualFolderModel.findOne(query, { _id: 1 }).lean().exec();
 			return { success: true, data: !!doc };
 		} catch (error) {
 			return {

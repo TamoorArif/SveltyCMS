@@ -15,7 +15,7 @@ export class PluginSettingsService {
 	// Ensure the plugin_states collection exists
 	async initialize(): Promise<void> {
 		try {
-			const count = await this.dbAdapter.crud.count(this.COLLECTION, undefined, undefined, true);
+			const count = await this.dbAdapter.crud.count(this.COLLECTION, undefined, { bypassTenantCheck: true });
 			if (!count.success) {
 				logger.info(`Creating ${this.COLLECTION} collection...`);
 				// Create by inserting and deleting a dummy record if createCollection not explicitly available
@@ -29,14 +29,7 @@ export class PluginSettingsService {
 					undefined,
 					true
 				);
-				await this.dbAdapter.crud.deleteMany(
-					this.COLLECTION,
-					{
-						pluginId: '__INIT__'
-					} as any,
-					undefined,
-					true
-				);
+				await this.dbAdapter.crud.deleteMany(this.COLLECTION, { pluginId: '__INIT__' } as any, { bypassTenantCheck: true });
 			}
 		} catch (error) {
 			logger.error(`Failed to initialize ${this.COLLECTION}`, { error });

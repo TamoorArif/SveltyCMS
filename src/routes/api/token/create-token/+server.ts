@@ -14,7 +14,7 @@
 import type { ISODateString } from '@src/content/types';
 import { getDefaultRoles } from '@src/databases/auth/default-roles';
 // Cache invalidation
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { auth, dbAdapter } from '@src/databases/db';
 // ParaglideJS
 import { getLocale } from '@src/paraglide/runtime';
@@ -186,7 +186,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 				config_status: smtpNotConfigured ? 'smtp_not_configured' : 'dummy_email_config'
 			});
 			// Return token so it can be delivered manually in dev
-			cacheService.delete('tokens', tenantId).catch((err) => {
+			cacheService.delete('tokens', tenantId).catch((err: any) => {
 				logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 			});
 			return json({
@@ -207,7 +207,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 			tenantId
 		});
 
-		cacheService.delete('tokens', tenantId).catch((err) => {
+		cacheService.delete('tokens', tenantId).catch((err: any) => {
 			logger.warn(`Failed to invalidate tokens cache: ${err.message}`);
 		}); // Return success response
 
@@ -234,6 +234,7 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 		const status = httpError.status || 500;
 		const message = httpError.body?.message || 'An unexpected error occurred.';
 
+		console.error('--- DEBUG ERROR IN create-token:', err);
 		logger.error('Error in create-token API:', {
 			error: message,
 			stack: err instanceof Error ? err.stack : undefined,

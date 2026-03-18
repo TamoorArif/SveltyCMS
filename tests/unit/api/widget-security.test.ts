@@ -4,63 +4,58 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET as getActive } from '@src/routes/api/widgets/active/+server';
-import { GET as getInstalled } from '@src/routes/api/widgets/installed/+server';
-import { POST as updateStatus } from '@src/routes/api/widgets/status/+server';
-import { GET as validateWidgets } from '@src/routes/api/widgets/validate/+server';
-import { POST as syncWidgets } from '@src/routes/api/widgets/sync/+server';
-import { contentManager } from '@src/content/content-manager';
 
-// Standardized path alias (@src) used everywhere
+// 0. Set environment variables BEFORE any imports
+(globalThis as any).process = (globalThis as any).process || {};
+(globalThis as any).process.env = (globalThis as any).process.env || {};
+(globalThis as any).process.env.TEST_MODE = 'true';
+(globalThis as any).process.env.NODE_ENV = 'test';
+
+// 1. Mock dependencies BEFORE importing handlers
 vi.mock('@src/content/content-manager', () => ({
 	contentManager: {
-		getCollections: vi.fn().mockResolvedValue([])
+		getCollections: vi.fn(() => Promise.resolve([]))
 	}
 }));
 
-// Legacy @root mock removed as it's no longer needed after import unification
-
-// Mock widget store
 vi.mock('@src/stores/widget-store.svelte.ts', () => ({
 	widgets: {
-		initialize: vi.fn().mockResolvedValue(true),
+		initialize: vi.fn(() => Promise.resolve(true)),
 		customWidgets: [],
 		widgetFunctions: {},
-		coreWidgets: []
+		coreWidgets: [],
+		activeWidgets: []
 	},
 	getWidgetFunction: vi.fn(() => ({})),
-	isWidgetCore: vi.fn(() => false)
+	isWidgetCore: vi.fn(() => false),
+	isWidgetActive: vi.fn(() => true),
+	isWidgetCustom: vi.fn(() => true),
+	isWidgetMarketplace: vi.fn(() => false),
+	getWidgetDependencies: vi.fn(() => []),
+	canDisableWidget: vi.fn(() => true),
+	isWidgetActiveInCollection: vi.fn(() => true),
+	isWidgetAvailable: vi.fn(() => true)
 }));
 
-// Mock permissions
 vi.mock('@src/databases/auth/permissions', () => ({
 	hasPermissionWithRoles: vi.fn(() => true)
 }));
 
-// Mock services
 vi.mock('@src/services/widget-registry-service', () => ({
 	widgetRegistryService: {
-		initialize: vi.fn().mockResolvedValue(true),
+		initialize: vi.fn(() => Promise.resolve(true)),
 		getAllWidgets: vi.fn(() => new Map())
 	}
 }));
 
-// Mock cache
-vi.mock('@src/databases/cache-service', () => ({
-	cacheService: {
-		get: vi.fn().mockResolvedValue(null),
-		setWithCategory: vi.fn().mockResolvedValue(true),
-		delete: vi.fn(),
-		clearByPattern: vi.fn()
-	}
-}));
+// 2. Fresh load handlers AFTER mocks
+const { GET: getActive } = await import('@src/routes/api/widgets/active/+server');
+const { GET: getInstalled } = await import('@src/routes/api/widgets/installed/+server');
+const { POST: updateStatus } = await import('@src/routes/api/widgets/status/+server');
+const { GET: validateWidgets } = await import('@src/routes/api/widgets/validate/+server');
+const { POST: syncWidgets } = await import('@src/routes/api/widgets/sync/+server');
 
-// Mock CacheCategory
-vi.mock('@src/databases/cache/types', () => ({
-	CacheCategory: {
-		WIDGET: 'widget'
-	}
-}));
+import { contentManager } from '@src/content/content-manager';
 
 describe('Widget API Security - IDOR and Tenant Isolation', () => {
 	const mockUser = { _id: 'user1', role: 'admin' };
@@ -105,7 +100,7 @@ describe('Widget API Security - IDOR and Tenant Isolation', () => {
 					user: mockUser,
 					tenantId: 'my-tenant',
 					roles: ['admin'],
-					dbAdapter: { system: { widgets: { findAll: vi.fn().mockResolvedValue({ success: true, data: [] }) } } }
+					dbAdapter: { system: { widgets: { findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })) } } }
 				},
 				request: {
 					headers: {
@@ -124,13 +119,13 @@ describe('Widget API Security - IDOR and Tenant Isolation', () => {
 					user: mockUser,
 					tenantId: 'my-tenant',
 					roles: ['admin'],
-					dbAdapter: { system: { widgets: { findAll: vi.fn().mockResolvedValue({ success: true, data: [] }) } } }
+					dbAdapter: { system: { widgets: { findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })) } } }
 				},
 				request: {
 					headers: {
 						get: (name: string) => (name === 'X-Tenant-ID' ? 'other-tenant' : null)
 					},
-					json: vi.fn().mockResolvedValue({ widgetName: 'test', isActive: true })
+					json: vi.fn(() => Promise.resolve({ widgetName: 'test', isActive: true }))
 				}
 			} as any;
 
@@ -151,7 +146,7 @@ describe('Widget API Security - IDOR and Tenant Isolation', () => {
 					dbAdapter: {
 						system: {
 							widgets: {
-								getActiveWidgets: vi.fn().mockResolvedValue({ success: true, data: [] })
+								getActiveWidgets: vi.fn(() => Promise.resolve({ success: true, data: [] }))
 							}
 						}
 					}
@@ -165,6 +160,8 @@ describe('Widget API Security - IDOR and Tenant Isolation', () => {
 			const data = await response.json();
 
 			if (response.status !== 200) {
+				// We don't want to fail on 503 if we know it's a middleware artifacts issue,
+				// but let's try to get a 200 by providing the necessary mock responses.
 				throw new Error(`Super-admin active test failed with status ${response.status}: ${JSON.stringify(data)}`);
 			}
 
@@ -217,18 +214,20 @@ describe('Widget API Security - IDOR and Tenant Isolation', () => {
 					dbAdapter: {
 						system: {
 							widgets: {
-								findAll: vi.fn().mockResolvedValue({
-									success: true,
-									data: [{ _id: '1', name: 'my-widget', isActive: true }]
-								}),
-								update: vi.fn().mockResolvedValue({ success: true, data: { name: 'my-widget' } })
+								findAll: vi.fn(() =>
+									Promise.resolve({
+										success: true,
+										data: [{ _id: '1', name: 'my-widget', isActive: true }]
+									})
+								),
+								update: vi.fn(() => Promise.resolve({ success: true, data: { name: 'my-widget' } }))
 							}
 						}
 					}
 				},
 				request: {
 					headers: { get: () => null },
-					json: vi.fn().mockResolvedValue({ widgetName: 'my-widget', isActive: false })
+					json: vi.fn(() => Promise.resolve({ widgetName: 'my-widget', isActive: false }))
 				}
 			} as any;
 

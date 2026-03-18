@@ -40,7 +40,7 @@ const execAsync = promisify(exec);
 import type { BaseEntity, ISODateString } from '@src/content/types';
 import type { Role, User } from '@src/databases/auth/types';
 // Media Cache
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 // Database Interface
 import type { DatabaseId, IDBAdapter } from '@src/databases/db-interface';
 import { getPublicSettingSync } from '@src/services/settings-service';
@@ -968,7 +968,7 @@ export class MediaService {
 
 			const [mediaResult, totalResult] = await Promise.all([
 				db.crud.findMany<MediaItem>('media', searchCriteria as unknown as Partial<MediaItem>, options),
-				db.crud.count('media', searchCriteria as unknown as Partial<BaseEntity>, tenantId)
+				db.crud.count('media', searchCriteria as unknown as Partial<BaseEntity>, { tenantId })
 			]);
 
 			if (!mediaResult.success) {
@@ -999,7 +999,7 @@ export class MediaService {
 
 			const [mediaResult, totalResult] = await Promise.all([
 				db.crud.findMany<MediaItem>('media', filter, options as any),
-				db.crud.count('media', filter, tenantId ?? undefined)
+				db.crud.count('media', filter, { tenantId: tenantId ?? undefined })
 			]);
 
 			if (!mediaResult.success) {

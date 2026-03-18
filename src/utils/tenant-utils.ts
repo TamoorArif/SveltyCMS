@@ -40,20 +40,15 @@ export function getTenantIdFromHostname(hostname: string, multiTenant: boolean =
 	return null;
 }
 
+import { getPrivateSettingSync } from '@src/services/settings-service';
+import { logger } from '@utils/logger.server';
+import { AppError } from '@utils/error-handling';
+
 /**
- * Reusable utility to enforce multi-tenant context and resolve tenantId.
- * Reduces boilerplate across API endpoints.
- *
- * @param locals - The SvelteKit locals object
- * @param operationName - Name of the operation for logging (e.g. '2FA verification')
- * @returns Refined tenantId or null
- * @throws AppError if multi-tenancy is enabled but no tenantId is found
+ * Derives a tenant ID from the request hostname.
+...
  */
 export function requireTenantContext(locals: App.Locals, operationName: string): string | null {
-	const { getPrivateSettingSync } = require('@src/services/settings-service');
-	const { logger } = require('@utils/logger.server');
-	const { AppError } = require('@utils/error-handling');
-
 	const isMultiTenant = getPrivateSettingSync('MULTI_TENANT');
 
 	// Resolve tenantId: prefer locals.tenantId (set by hook) or fallback to user's tenant
@@ -68,4 +63,29 @@ export function requireTenantContext(locals: App.Locals, operationName: string):
 	}
 
 	return tenantId;
+}
+
+/**
+ * Convert Yjs Uint8Array to a Base64 string for HTTP transport
+ */
+export function encodeYjsToBase64(uint8Array: Uint8Array): string {
+	// We use a loop instead of String.fromCharCode(...arr) to prevent
+	// "Maximum call stack size exceeded" errors on massive document loads.
+	let binaryString = '';
+	for (let i = 0; i < uint8Array.length; i++) {
+		binaryString += String.fromCharCode(uint8Array[i]);
+	}
+	return btoa(binaryString); // Native Browser/Runtime API
+}
+
+/**
+ * Convert Base64 string from SSE back into a Yjs Uint8Array
+ */
+export function decodeBase64ToYjs(base64: string): Uint8Array {
+	const binaryString = atob(base64); // Native Browser/Runtime API
+	const uint8Array = new Uint8Array(binaryString.length);
+	for (let i = 0; i < binaryString.length; i++) {
+		uint8Array[i] = binaryString.charCodeAt(i);
+	}
+	return uint8Array;
 }

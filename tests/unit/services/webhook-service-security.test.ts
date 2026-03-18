@@ -5,6 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WebhookService, type WebhookEvent } from '@src/services/webhook-service';
+import { jobQueue } from '@src/services/jobs/job-queue-service';
 
 // Mock DB adapter
 const mockDb = {
@@ -29,7 +30,14 @@ vi.mock('@utils/logger.server', () => ({
 	}
 }));
 
-// Mock fetch - cast to any to avoid missing preconnect/etc properties in Vitest environment
+// Mock jobQueue
+vi.mock('@src/services/jobs/job-queue-service', () => ({
+	jobQueue: {
+		dispatch: vi.fn().mockResolvedValue('job-123')
+	}
+}));
+
+// Mock fetch
 global.fetch = vi.fn().mockImplementation(() => Promise.resolve({ ok: true })) as any;
 
 describe('WebhookService Security - Tenant Isolation', () => {
@@ -84,11 +92,11 @@ describe('WebhookService Security - Tenant Isolation', () => {
 		// Wait for async dispatch
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
-		// Should have called fetch only for tenant 1's hook
-		expect(global.fetch).toHaveBeenCalledTimes(1);
-		const fetchArgs = (global.fetch as any).mock.calls[0];
-		expect(JSON.parse(fetchArgs[1].body).webhookId).toBe('h1');
-		expect(JSON.parse(fetchArgs[1].body).tenantId).toBe(tenant1);
+		// Should have dispatched only for tenant 1's hook
+		expect(jobQueue.dispatch).toHaveBeenCalledTimes(1);
+		const dispatchArgs = (jobQueue.dispatch as any).mock.calls[0];
+		expect(dispatchArgs[1].webhook.id).toBe('h1');
+		expect(dispatchArgs[2]).toBe(tenant1);
 	});
 
 	it('should enforce tenantId when saving webhooks', async () => {

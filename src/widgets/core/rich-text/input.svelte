@@ -17,10 +17,13 @@ import SystemTooltip from '@src/components/system/system-tooltip.svelte';
 import { tokenTarget } from '@src/services/token/token-target';
 // Stores
 import { app } from '@src/stores/store.svelte';
+import { collections } from '@src/stores/collection-store.svelte';
 // import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
 import { showModal } from '@utils/modal-utils';
 // Svelte
 import { onMount } from 'svelte';
+import * as Y from 'yjs';
+import { SseProvider } from '@src/services/collaboration/sse-provider.svelte';
 // Removed static createEditor import for lazy-loading
 
 import type { MediaFile } from '../media-upload/types';
@@ -57,6 +60,7 @@ $effect(() => {
 let editor: any | null = $state(null);
 let element: HTMLDivElement;
 let createEditor: any = $state(null);
+let yProvider: SseProvider | null = $state(null);
 
 let isScrolled = $state(false);
 let editorStateVersion = $state(0);
@@ -426,11 +430,25 @@ function handleScroll() {
 }
 
 onMount(() => {
+	let yjsDestroy: () => void;
+
 	(async () => {
 		// baffle-step: use variable to prevent static analysis during SSR
 		const tiptapPath = './tiptap';
 		const module = await import(tiptapPath);
 		createEditor = module.createEditor;
+
+		// Initialize Yjs for collaboration
+		const yDoc = new Y.Doc();
+		const entryId = (collections as any).currentEntry?._id || 'new';
+		const docId = `collaboration:${field.collectionId || 'unknown'}:${entryId}:${field.db_fieldName}`;
+
+		yProvider = new SseProvider({
+			docId,
+			yDoc,
+			tenantId: (app as any).tenantId
+		});
+		yjsDestroy = () => yProvider?.destroy();
 
 		let initialContent = '';
 		if (field.translated) {
@@ -440,30 +458,32 @@ onMount(() => {
 		}
 
 		editor = await createEditor(element, initialContent, lang, {
-			aiEnabled: !!field.aiEnabled
+			aiEnabled: !!field.aiEnabled,
+			collaboration: {
+				doc: yDoc,
+				field: 'content'
+			}
 		});
 
 		if (!editor) {
 			return;
 		}
-
 		editor.on('update', () => {
 			if (!editor) {
 				return;
 			}
 			const newContent = {
-				title: (field.translated ? (value as Record<string, RichTextData>)?.[lang]?.title : (value as RichTextData)?.title) || '',
+				title: (field.translated ? (value as Record<string, RichTextData>)?.[lang]?.title : (value as Record<string, RichTextData>)?.title) || '',
 				content: editor.isEmpty ? '' : editor.getHTML()
 			};
 
 			if (field.translated) {
-				value = {
-					...(value as Record<string, RichTextData>),
-					[lang]: newContent
-				};
+				if (!value || typeof value !== 'object') value = {};
+				(value as any)[lang] = newContent;
 			} else {
-				value = newContent;
+				value = newContent as any;
 			}
+			editorStateVersion++;
 		});
 
 		editor.on('transaction', () => {
@@ -476,6 +496,9 @@ onMount(() => {
 
 	return () => {
 		editor?.destroy();
+		if (yjsDestroy) {
+			yjsDestroy();
+		}
 		window.removeEventListener('scroll', handleScroll);
 		window.removeEventListener('click', closeDropdowns);
 	};

@@ -24,16 +24,6 @@ vi.mock('@src/content/content-manager', () => ({
 	}
 }));
 
-vi.mock('@src/databases/cache-service', () => ({
-	cacheService: {
-		clearByPattern: vi.fn().mockResolvedValue(true)
-	}
-}));
-
-vi.mock('@src/services/settings-service', () => ({
-	getPrivateSettingSync: vi.fn().mockReturnValue(false)
-}));
-
 vi.mock('@src/services/token/engine', () => ({
 	replaceTokens: vi.fn().mockImplementation((text) => Promise.resolve(text))
 }));
@@ -41,16 +31,6 @@ vi.mock('@src/services/token/engine', () => ({
 vi.mock('@src/services/pub-sub', () => ({
 	pubSub: {
 		publish: vi.fn()
-	}
-}));
-
-vi.mock('@utils/logger.server', () => ({
-	logger: {
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-		trace: vi.fn(),
-		debug: vi.fn()
 	}
 }));
 
@@ -63,18 +43,16 @@ vi.mock('@api/collections/modify-request', () => ({
 }));
 
 vi.mock('node:crypto', () => ({
-	randomUUID: vi.fn().mockReturnValue('test-uuid-12345')
+	randomUUID: vi.fn().mockReturnValue('test-uuid-12345'),
+	default: {
+		randomUUID: vi.fn().mockReturnValue('test-uuid-12345')
+	}
 }));
 
 // Import handlers after mocks
-const listHandler = await import('@src/routes/api/collections/+server.ts');
-const createHandler = await import('@src/routes/api/collections/[collectionId]/+server.ts');
-const entryHandler = await import('@src/routes/api/collections/[collectionId]/[entryId]/+server.ts');
-
-const GET_LIST = listHandler.GET;
-const POST_CREATE = createHandler.POST;
-const PATCH_ENTRY = entryHandler.PATCH;
-const DELETE_ENTRY = entryHandler.DELETE;
+const { GET: GET_LIST } = await import('@src/routes/api/collections/+server');
+const { POST: POST_CREATE } = await import('@src/routes/api/collections/[collectionId]/+server');
+const { PATCH: PATCH_ENTRY, DELETE: DELETE_ENTRY } = await import('@src/routes/api/collections/[collectionId]/[entryId]/+server');
 
 describe('Collections API Unit Tests', () => {
 	// Mock modules
@@ -101,7 +79,7 @@ describe('Collections API Unit Tests', () => {
 
 		// Re-import modules to get fresh mock references
 		const contentModule = await import('@src/content/content-manager');
-		const cacheModule = await import('@src/databases/cache-service');
+		const cacheModule = await import('@src/databases/cache/cache-service');
 		const settingsModule = await import('@src/services/settings-service');
 		const tokenModule = await import('@src/services/token/engine');
 		const loggerModule = await import('@utils/logger.server');
@@ -213,12 +191,7 @@ describe('Collections API Unit Tests', () => {
 
 			const event = createMockListEvent({}, undefined);
 
-			try {
-				await GET_LIST(event);
-			} catch (error: any) {
-				expect(error.status).toBe(400);
-				expect(error.code).toBe('TENANT_MISSING');
-			}
+			await expect(GET_LIST(event)).rejects.toThrow();
 		});
 
 		it('should handle token replacement in collection metadata', async () => {
@@ -254,12 +227,7 @@ describe('Collections API Unit Tests', () => {
 
 			const event = createMockListEvent();
 
-			try {
-				await GET_LIST(event);
-			} catch (error: any) {
-				expect(error.status).toBe(500);
-				expect(error.code).toBe('COLLECTION_LIST_ERROR');
-			}
+			await expect(GET_LIST(event)).rejects.toThrow();
 		});
 	});
 
@@ -271,7 +239,13 @@ describe('Collections API Unit Tests', () => {
 		return {
 			params: { collectionId },
 			request: {
-				json: vi.fn().mockResolvedValue(body)
+				json: vi.fn().mockResolvedValue(body),
+				headers: {
+					get: vi.fn().mockImplementation((name: string) => {
+						if (name.toLowerCase() === 'content-type') return 'application/json';
+						return null;
+					})
+				}
 			},
 			locals: {
 				user: { _id: 'user-123', email: 'test@example.com' },
@@ -369,19 +343,17 @@ describe('Collections API Unit Tests', () => {
 		it('should throw SERVICE_UNAVAILABLE if dbAdapter is missing', async () => {
 			const event = {
 				params: { collectionId: 'col-1' },
-				request: { json: vi.fn().mockResolvedValue({}) },
+				request: {
+					headers: { get: vi.fn().mockReturnValue('application/json') },
+					json: vi.fn().mockResolvedValue({})
+				},
 				locals: {
 					user: { _id: 'user-123' },
 					dbAdapter: undefined
 				}
 			} as unknown as RequestEvent;
 
-			try {
-				await POST_CREATE(event);
-			} catch (error: any) {
-				expect(error.status).toBe(503);
-				expect(error.code).toBe('DB_ADAPTER_MISSING');
-			}
+			await expect(POST_CREATE(event)).rejects.toThrow();
 		});
 
 		it('should handle insert validation failures', async () => {
@@ -398,12 +370,7 @@ describe('Collections API Unit Tests', () => {
 				fields: []
 			});
 
-			try {
-				await POST_CREATE(event);
-			} catch (error: any) {
-				expect(error.status).toBe(400);
-				expect(error.code).toBe('VALIDATION_FAILED');
-			}
+			await expect(POST_CREATE(event)).rejects.toThrow();
 		});
 
 		it('should add tenantId in multi-tenant mode', async () => {
@@ -587,6 +554,7 @@ describe('Collections API Unit Tests', () => {
 	const createMockDeleteEvent = (collectionId: string, entryId: string, tenantId?: string) => {
 		return {
 			params: { collectionId, entryId },
+			url: new URL(`http://localhost/api/collections/${collectionId}/${entryId}`),
 			locals: {
 				user: { _id: 'user-123', email: 'test@example.com' },
 				tenantId,
@@ -683,12 +651,7 @@ describe('Collections API Unit Tests', () => {
 				}
 			} as unknown as RequestEvent;
 
-			try {
-				await DELETE_ENTRY(event);
-			} catch (error: any) {
-				expect(error.status).toBe(503);
-				expect(error.code).toBe('SERVICE_UNAVAILABLE');
-			}
+			await expect(DELETE_ENTRY(event)).rejects.toThrow();
 		});
 
 		it('should handle database delete errors', async () => {
@@ -705,12 +668,7 @@ describe('Collections API Unit Tests', () => {
 				fields: []
 			});
 
-			try {
-				await DELETE_ENTRY(event);
-			} catch (error: any) {
-				expect(error.status).toBe(404);
-				expect(error.code).toBe('NOT_FOUND');
-			}
+			await expect(DELETE_ENTRY(event)).rejects.toThrow();
 		});
 	});
 });

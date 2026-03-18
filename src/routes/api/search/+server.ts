@@ -71,7 +71,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		// --- MULTI-TENANCY: Scope all filters by tenantId ---
-		const baseFilter: { status?: string; tenantId?: string | null } = getPrivateSettingSync('MULTI_TENANT') ? { tenantId } : {};
+		const baseFilter: { status?: string } = {};
 		if (additionalFilter) {
 			Object.assign(baseFilter, additionalFilter);
 		}
@@ -84,7 +84,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 		}
 
 		const searchResults: unknown[] = [];
-		const totalResults = 0;
+		let totalResults = 0;
 
 		if (!dbAdapter) {
 			logger.error('Database adapter not initialized');
@@ -103,7 +103,6 @@ export const GET = apiHandler(async ({ locals, url }) => {
 				const searchFilter: Record<string, unknown> = { ...baseFilter };
 
 				// For text search, we'll use the database's text search capabilities
-				// Note: The exact implementation depends on the database adapter
 				const collectionName = `collection_${collection._id}`;
 
 				// Use findMany instead of queryBuilder for simpler type compatibility
@@ -111,7 +110,8 @@ export const GET = apiHandler(async ({ locals, url }) => {
 					throw new Error('Database adapter not initialized');
 				}
 				const result = await dbAdapter.crud.findMany(collectionName, searchFilter as Record<string, unknown>, {
-					limit: Math.min(limit, 100)
+					limit: Math.min(limit, 100),
+					tenantId: getPrivateSettingSync('MULTI_TENANT') ? tenantId : undefined
 				});
 
 				if (result.success && result.data) {

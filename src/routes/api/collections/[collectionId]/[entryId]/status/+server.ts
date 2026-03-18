@@ -101,8 +101,8 @@ export const PATCH = apiHandler(async ({ locals, params, request }) => {
 		results = [{ entryId, success: true, data: result.data }];
 	}
 
-	const cacheService = (await import('@src/databases/cache-service')).cacheService;
-	await cacheService.clearByPattern(`collection:${schema._id}:*`).catch((e) => logger.warn('Cache clear failed', e));
+	const cacheService = (await import('@src/databases/cache/cache-service')).cacheService;
+	await cacheService.clearByPattern(`collection:${schema._id}:*`).catch((e: any) => logger.warn('Cache clear failed', e));
 
 	const duration = performance.now() - start;
 	return json({

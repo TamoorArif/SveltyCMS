@@ -10,6 +10,7 @@ import { getDb } from '@src/databases/db';
 import type { Job, DatabaseId } from '@src/databases/db-interface';
 import { logger } from '@utils/logger.server';
 import { processMediaHandler } from './media-jobs';
+import { webhookDeliveryHandler } from './webhook-jobs';
 
 export type JobHandler = (payload: any) => Promise<void>;
 
@@ -21,6 +22,7 @@ class JobQueueService {
 	constructor() {
 		// Register core handlers
 		this.registerHandler('process-media', processMediaHandler);
+		this.registerHandler('webhook-delivery', webhookDeliveryHandler);
 	}
 
 	/**
@@ -134,13 +136,33 @@ class JobQueueService {
 			const errMessage = error instanceof Error ? error.message : String(error);
 			logger.error(`[JobQueue] Job ${job._id} failed:`, error);
 
+			const isPermanent = errMessage.includes('PERMANENT_FAILURE');
 			const newAttempts = job.attempts + 1;
-			const status = newAttempts >= job.maxAttempts ? 'failed' : 'pending';
+			const status = isPermanent || newAttempts >= job.maxAttempts ? 'failed' : 'pending';
 
 			// Exponential backoff for retry
 			const nextRunAt = new Date(Date.now() + 2 ** newAttempts * 1000 * 60);
 
-			await db.system.jobs.update(job._id, { status, lastError: errMessage, nextRunAt: status === 'pending' ? nextRunAt : job.nextRunAt });
+			await db.system.jobs.update(job._id, {
+				status,
+				lastError: errMessage,
+				nextRunAt: status === 'pending' ? nextRunAt : job.nextRunAt
+			});
+
+			// If it's a webhook failure, we might want to emit an event for the UI
+			if (job.taskType === 'webhook-delivery' && status === 'failed') {
+				try {
+					const { pubSub } = await import('@src/services/pub-sub');
+					pubSub.publish('webhook:failed', {
+						webhookId: (job.payload as any).webhook.id,
+						deliveryId: job._id as string,
+						tenantId: job.tenantId as string,
+						error: errMessage
+					});
+				} catch (e) {
+					// Ignore pubsub errors during job handling
+				}
+			}
 		}
 	}
 

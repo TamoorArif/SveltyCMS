@@ -24,7 +24,7 @@
 import type { ISODateString } from '@databases/db-interface';
 import { SESSION_COOKIE_NAME } from '@src/databases/auth/constants';
 import type { User } from '@src/databases/auth/types';
-import { cacheService, SESSION_CACHE_TTL_MS } from '@src/databases/cache-service';
+import { cacheService, SESSION_CACHE_TTL_MS } from '@src/databases/cache/cache-service';
 import { auth, dbAdapter } from '@src/databases/db';
 import { metricsService } from '@src/services/metrics-service';
 import { getSystemState } from '@src/stores/system/state';
@@ -251,7 +251,7 @@ async function getUserFromSession(sessionId: string, tenantId?: string | null): 
 			const cacheKey = tenantId ? `session:${tenantId}:${sessionId}` : `session:${sessionId}`;
 			await cacheService
 				.set(cacheKey, sessionData, Math.ceil(SESSION_CACHE_TTL_MS / 1000), tenantId)
-				.catch((err) => logger.warn(`Session cache set failed: ${err.message}`));
+				.catch((err: any) => logger.warn(`Session cache set failed: ${err.message}`));
 			logger.trace(`Session validated from DB: ${sessionId.substring(0, 8)}...`);
 			return user;
 		}
@@ -315,7 +315,7 @@ async function handleSessionRotation(event: RequestEvent, user: User, oldSession
 			// Destroy old session
 			await auth
 				.destroySession(oldSessionId)
-				.catch((err) => logger.warn(`Failed to destroy old session ${oldSessionId.substring(0, 8)}: ${err.message}`));
+				.catch((err: any) => logger.warn(`Failed to destroy old session ${oldSessionId.substring(0, 8)}: ${err.message}`));
 
 			// Invalidate old session from all caches
 			invalidateSessionCache(oldSessionId, event.locals.tenantId);
@@ -327,7 +327,7 @@ async function handleSessionRotation(event: RequestEvent, user: User, oldSession
 			const cacheKey = event.locals.tenantId ? `session:${event.locals.tenantId}:${newSessionId}` : `session:${newSessionId}`;
 			await cacheService
 				.set(cacheKey, sessionData, Math.ceil(SESSION_CACHE_TTL_MS / 1000), event.locals.tenantId)
-				.catch((err) => logger.warn(`Failed to cache rotated session: ${err.message}`));
+				.catch((err: any) => logger.warn(`Failed to cache rotated session: ${err.message}`));
 
 			// Update locals with new session ID
 			event.locals.session_id = newSessionId;
@@ -563,7 +563,7 @@ export function invalidateSessionCache(sessionId: string, tenantId?: string | nu
 	lastRotationAttempt.delete(sessionId);
 
 	const cacheKey = tenantId ? `session:${tenantId}:${sessionId}` : `session:${sessionId}`;
-	cacheService.delete(cacheKey, tenantId).catch((err) => logger.warn(`Failed to delete session from Redis: ${err.message}`));
+	cacheService.delete(cacheKey, tenantId).catch((err: any) => logger.warn(`Failed to delete session from Redis: ${err.message}`));
 
 	logger.debug(`Session cache invalidated: ${sessionId.substring(0, 8)}...`);
 }

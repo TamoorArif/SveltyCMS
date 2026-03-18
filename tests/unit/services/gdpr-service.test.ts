@@ -18,13 +18,15 @@ const mockAuditLog = (globalThis as any).mockAuditLog;
 const mockDbAdapter = (globalThis as any).mockDbAdapter;
 
 describe('GDPRService', () => {
+	const tenantId = 'tenant-1';
+
 	beforeEach(() => {
 		mockAuditLog.log.mockClear();
 		mockAuditLog.getLogs.mockClear();
-		(mockDbAdapter.auth.getUserById as any).mockImplementation((id: string) =>
+		(mockDbAdapter.auth.getUserById as any).mockImplementation((id: string, tid: string) =>
 			Promise.resolve({
 				success: true,
-				data: { _id: id, email: 'test@example.com', username: 'tester' }
+				data: { _id: id, email: 'test@example.com', username: 'tester', tenantId: tid }
 			})
 		);
 		mockDbAdapter.auth.updateUserAttributes.mockImplementation(() => Promise.resolve({ success: true }));
@@ -34,14 +36,14 @@ describe('GDPRService', () => {
 		it('should fetch user profile and related logs', async () => {
 			const userId = '123';
 			const mockLogs = [
-				{ actor: { id: '123' }, action: 'entry.create' },
-				{ actor: { id: '456' }, action: 'entry.update' } // different user
+				{ actor: { id: '123' }, action: 'entry.create', tenantId },
+				{ actor: { id: '456' }, action: 'entry.update', tenantId } // different user
 			];
 			mockAuditLog.getLogs.mockReturnValue(Promise.resolve(mockLogs as any));
 
-			const result = (await gdprService.exportUserData(userId)) as any;
+			const result = (await gdprService.exportUserData(userId, tenantId)) as any;
 
-			expect(mockDbAdapter.auth.getUserById).toHaveBeenCalledWith(userId);
+			expect(mockDbAdapter.auth.getUserById).toHaveBeenCalledWith(userId, tenantId);
 			expect(mockAuditLog.getLogs).toHaveBeenCalled();
 			expect(result.profile._id).toBe(userId);
 			expect(result.history).toHaveLength(1);
@@ -52,14 +54,14 @@ describe('GDPRService', () => {
 		it('should throw error if user not found', async () => {
 			const nonExistentUserId = 'non-existent-user-123';
 			mockDbAdapter.auth.getUserById.mockReturnValue(Promise.resolve({ success: false, data: null as any }));
-			expect(gdprService.exportUserData(nonExistentUserId)).rejects.toThrow('User not found');
+			expect(gdprService.exportUserData(nonExistentUserId, tenantId)).rejects.toThrow('User not found');
 		});
 	});
 
 	describe('anonymizeUser', () => {
 		it('should update user attributes with ghost identity', async () => {
 			const userId = '123';
-			const result = await gdprService.anonymizeUser(userId);
+			const result = await gdprService.anonymizeUser(userId, tenantId);
 
 			expect(result).toBe(true);
 			expect(mockDbAdapter.auth.updateUserAttributes).toHaveBeenCalledWith(
@@ -67,7 +69,8 @@ describe('GDPRService', () => {
 				expect.objectContaining({
 					email: expect.stringContaining('anonymized.sveltycms.com'),
 					username: expect.stringContaining('ghost-')
-				})
+				}),
+				tenantId
 			);
 			expect(mockAuditLog.log).toHaveBeenCalledWith('gdpr.erasure', expect.anything(), expect.anything(), expect.anything());
 		});
@@ -75,7 +78,7 @@ describe('GDPRService', () => {
 		it('should return false if user is not found', async () => {
 			const nonExistentUserId = 'non-existent-user-123';
 			mockDbAdapter.auth.getUserById.mockReturnValue(Promise.resolve({ success: false, data: null as any }));
-			const result = await gdprService.anonymizeUser(nonExistentUserId);
+			const result = await gdprService.anonymizeUser(nonExistentUserId, tenantId);
 			expect(result).toBe(false);
 		});
 	});

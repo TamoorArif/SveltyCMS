@@ -5,7 +5,7 @@
  */
 
 import { hasPermissionWithRoles } from '@src/databases/auth/permissions';
-import { cacheService } from '@src/databases/cache-service';
+import { cacheService } from '@src/databases/cache/cache-service';
 import { json } from '@sveltejs/kit';
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';

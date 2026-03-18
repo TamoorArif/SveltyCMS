@@ -6,7 +6,9 @@
  */
 
 import { eventBus } from '@src/services/automation/event-bus';
+import { pubSub } from '@src/services/pub-sub';
 import { logger } from '@utils/logger.server';
+import { encodeYjsToBase64 } from '@utils/tenant-utils';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -18,6 +20,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	logger.debug(`RTC: User ${locals.user.email} connecting to events stream`);
 
+	let heartbeat: ReturnType<typeof setInterval>;
+	let unsubscribe: (() => void) | undefined;
+	let yjsUnsubscribe: (() => void) | undefined;
+
 	const stream = new ReadableStream({
 		start(controller) {
 			// 2. Connection Confirmation
@@ -27,8 +33,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 `);
 
 			// 3. Subscribe to EventBus
-			// We listen for ALL events and filter them on the client side based on preferences
-			const unsubscribe = eventBus.on('*', (payload) => {
+			// We listen for ALL events and filter them by tenantId for isolation
+			const tenantId = locals.tenantId;
+			unsubscribe = eventBus.on('*', (payload) => {
+				// ✨ ISOLATION: Only stream events belonging to the user's tenant
+				if (tenantId && payload.tenantId !== tenantId) {
+					return;
+				}
+
 				try {
 					// Format as SSE data chunk
 					controller.enqueue(`data: ${JSON.stringify(payload)}
@@ -39,30 +51,47 @@ export const GET: RequestHandler = async ({ locals }) => {
 				}
 			});
 
+			// Handle Yjs sync events from PubSub
+			(async () => {
+				for await (const data of pubSub.subscribe('yjs:sync')) {
+					if (tenantId && data.tenantId !== tenantId) continue;
+
+					try {
+						controller.enqueue(`data: ${JSON.stringify({
+							event: 'yjs:sync',
+							docId: data.docId,
+							updateBase64: encodeYjsToBase64(data.update),
+							origin: data.origin,
+							timestamp: new Date().toISOString()
+						})}
+
+`);
+					} catch (e) {
+						// Ignore
+					}
+				}
+			})();
+
 			// 4. Heartbeat (Ping)
 			// Keeps the connection alive and detects hung clients
-			const heartbeat = setInterval(() => {
+			heartbeat = setInterval(() => {
 				try {
 					controller.enqueue(`: heartbeat
 
 `);
 				} catch {
 					// If enqueue fails, the client disconnected
-					clearInterval(heartbeat);
-					unsubscribe();
+					if (heartbeat) clearInterval(heartbeat);
+					if (unsubscribe) unsubscribe();
+					if (yjsUnsubscribe) yjsUnsubscribe();
 					logger.debug(`RTC: Connection closed for ${locals.user?.email} (heartbeat fail)`);
 				}
 			}, 30_000);
-
-			// 5. Cleanup
-			// This is called when the server shuts down or the connection is aborted
-			return () => {
-				clearInterval(heartbeat);
-				unsubscribe();
-				logger.debug(`RTC: Unsubscribed user ${locals.user?.email}`);
-			};
 		},
 		cancel() {
+			if (heartbeat) clearInterval(heartbeat);
+			if (unsubscribe) unsubscribe();
+			if (yjsUnsubscribe) yjsUnsubscribe();
 			logger.debug(`RTC: Stream cancelled by ${locals.user?.email}`);
 		}
 	});
