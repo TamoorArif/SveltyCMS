@@ -6,189 +6,195 @@
  * like image processing, AI enrichment, and bulk operations.
  */
 
-import { getDb } from '@src/databases/db';
-import type { Job, DatabaseId } from '@src/databases/db-interface';
-import { logger } from '@utils/logger.server';
-import { processMediaHandler } from './media-jobs';
-import { webhookDeliveryHandler } from './webhook-jobs';
+import { getDb } from "@src/databases/db";
+import type { Job, DatabaseId } from "@src/databases/db-interface";
+import { logger } from "@utils/logger.server";
+import { processMediaHandler } from "./media-jobs";
+import { webhookDeliveryHandler } from "./webhook-jobs";
 
 export type JobHandler = (payload: any) => Promise<void>;
 
 class JobQueueService {
-	private handlers: Map<string, JobHandler> = new Map();
-	private isProcessing = false;
-	private pollInterval: NodeJS.Timeout | null = null;
+  private handlers: Map<string, JobHandler> = new Map();
+  private isProcessing = false;
+  private pollInterval: NodeJS.Timeout | null = null;
 
-	constructor() {
-		// Register core handlers
-		this.registerHandler('process-media', processMediaHandler);
-		this.registerHandler('webhook-delivery', webhookDeliveryHandler);
-	}
+  constructor() {
+    // Register core handlers
+    this.registerHandler("process-media", processMediaHandler);
+    this.registerHandler("webhook-delivery", webhookDeliveryHandler);
+  }
 
-	/**
-	 * Register a handler for a specific task type.
-	 */
-	registerHandler(taskType: string, handler: JobHandler) {
-		this.handlers.set(taskType, handler);
-		logger.info(`[JobQueue] Registered handler for task: ${taskType}`);
-	}
+  /**
+   * Register a handler for a specific task type.
+   */
+  registerHandler(taskType: string, handler: JobHandler) {
+    this.handlers.set(taskType, handler);
+    logger.info(`[JobQueue] Registered handler for task: ${taskType}`);
+  }
 
-	/**
-	 * Dispatch a new job to the queue.
-	 */
-	async dispatch(taskType: string, payload: Record<string, unknown>, tenantId?: string): Promise<string | null> {
-		const db = getDb();
-		if (!db || !db.system.jobs) {
-			logger.error('[JobQueue] Database adapter not ready or jobs not supported.');
-			return null;
-		}
+  /**
+   * Dispatch a new job to the queue.
+   */
+  async dispatch(
+    taskType: string,
+    payload: Record<string, unknown>,
+    tenantId?: string,
+  ): Promise<string | null> {
+    const db = getDb();
+    if (!db || !db.system.jobs) {
+      logger.error("[JobQueue] Database adapter not ready or jobs not supported.");
+      return null;
+    }
 
-		try {
-			const jobData = {
-				taskType,
-				payload,
-				status: 'pending' as const,
-				attempts: 0,
-				maxAttempts: 3,
-				nextRunAt: new Date(),
-				tenantId: tenantId as DatabaseId | undefined
-			};
+    try {
+      const jobData = {
+        taskType,
+        payload,
+        status: "pending" as const,
+        attempts: 0,
+        maxAttempts: 3,
+        nextRunAt: new Date(),
+        tenantId: tenantId as DatabaseId | undefined,
+      };
 
-			const result = await db.system.jobs.create(jobData);
-			if (result.success) {
-				logger.debug(`[JobQueue] Dispatched job ${result.data._id} of type ${taskType}`);
+      const result = await db.system.jobs.create(jobData);
+      if (result.success) {
+        logger.debug(`[JobQueue] Dispatched job ${result.data._id} of type ${taskType}`);
 
-				// Optional: trigger immediate processing attempt if not already running
-				if (!this.isProcessing) {
-					// Fire and forget
-					this.processNextBatch().catch((err) => logger.error('[JobQueue] Error in immediate process', err));
-				}
+        // Optional: trigger immediate processing attempt if not already running
+        if (!this.isProcessing) {
+          // Fire and forget
+          this.processNextBatch().catch((err) =>
+            logger.error("[JobQueue] Error in immediate process", err),
+          );
+        }
 
-				return result.data._id;
-			}
-			throw new Error(result.message);
-		} catch (error) {
-			logger.error(`[JobQueue] Failed to dispatch job ${taskType}:`, error);
-			return null;
-		}
-	}
+        return result.data._id;
+      }
+      throw new Error(result.message);
+    } catch (error) {
+      logger.error(`[JobQueue] Failed to dispatch job ${taskType}:`, error);
+      return null;
+    }
+  }
 
-	/**
-	 * Process the next batch of ready jobs.
-	 */
-	async processNextBatch(batchSize = 5) {
-		if (this.isProcessing) return;
-		this.isProcessing = true;
+  /**
+   * Process the next batch of ready jobs.
+   */
+  async processNextBatch(batchSize = 5) {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
 
-		const db = getDb();
-		if (!db || !db.system.jobs) {
-			this.isProcessing = false;
-			return;
-		}
+    const db = getDb();
+    if (!db || !db.system.jobs) {
+      this.isProcessing = false;
+      return;
+    }
 
-		try {
-			// 1. Fetch pending jobs ready to run
-			const readyJobsResult = await db.system.jobs.getNextReady(batchSize);
-			if (!readyJobsResult.success || !readyJobsResult.data || readyJobsResult.data.length === 0) {
-				this.isProcessing = false;
-				return;
-			}
+    try {
+      // 1. Fetch pending jobs ready to run
+      const readyJobsResult = await db.system.jobs.getNextReady(batchSize);
+      if (!readyJobsResult.success || !readyJobsResult.data || readyJobsResult.data.length === 0) {
+        this.isProcessing = false;
+        return;
+      }
 
-			const jobs = readyJobsResult.data;
+      const jobs = readyJobsResult.data;
 
-			// 2. Process each job
-			for (const job of jobs) {
-				await this.executeJob(job, db);
-			}
-		} catch (error) {
-			logger.error('[JobQueue] Error during batch processing:', error);
-		} finally {
-			this.isProcessing = false;
-		}
-	}
+      // 2. Process each job
+      for (const job of jobs) {
+        await this.executeJob(job, db);
+      }
+    } catch (error) {
+      logger.error("[JobQueue] Error during batch processing:", error);
+    } finally {
+      this.isProcessing = false;
+    }
+  }
 
-	/**
-	 * Execute a single job and update its state.
-	 */
-	private async executeJob(job: Job, db: any) {
-		const handler = this.handlers.get(job.taskType);
+  /**
+   * Execute a single job and update its state.
+   */
+  private async executeJob(job: Job, db: any) {
+    const handler = this.handlers.get(job.taskType);
 
-		// Mark as running
-		await db.system.jobs.update(job._id, { status: 'running', attempts: job.attempts + 1 });
+    // Mark as running
+    await db.system.jobs.update(job._id, { status: "running", attempts: job.attempts + 1 });
 
-		if (!handler) {
-			logger.warn(`[JobQueue] No handler found for task type: ${job.taskType}`);
-			await db.system.jobs.update(job._id, {
-				status: 'failed',
-				lastError: 'No handler registered'
-			});
-			return;
-		}
+    if (!handler) {
+      logger.warn(`[JobQueue] No handler found for task type: ${job.taskType}`);
+      await db.system.jobs.update(job._id, {
+        status: "failed",
+        lastError: "No handler registered",
+      });
+      return;
+    }
 
-		try {
-			logger.debug(`[JobQueue] Executing job ${job._id} (${job.taskType})`);
-			await handler(job.payload);
+    try {
+      logger.debug(`[JobQueue] Executing job ${job._id} (${job.taskType})`);
+      await handler(job.payload);
 
-			// Mark as completed
-			await db.system.jobs.update(job._id, { status: 'completed' });
-			logger.info(`[JobQueue] Job ${job._id} completed successfully`);
-		} catch (error) {
-			const errMessage = error instanceof Error ? error.message : String(error);
-			logger.error(`[JobQueue] Job ${job._id} failed:`, error);
+      // Mark as completed
+      await db.system.jobs.update(job._id, { status: "completed" });
+      logger.info(`[JobQueue] Job ${job._id} completed successfully`);
+    } catch (error) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`[JobQueue] Job ${job._id} failed:`, error);
 
-			const isPermanent = errMessage.includes('PERMANENT_FAILURE');
-			const newAttempts = job.attempts + 1;
-			const status = isPermanent || newAttempts >= job.maxAttempts ? 'failed' : 'pending';
+      const isPermanent = errMessage.includes("PERMANENT_FAILURE");
+      const newAttempts = job.attempts + 1;
+      const status = isPermanent || newAttempts >= job.maxAttempts ? "failed" : "pending";
 
-			// Exponential backoff for retry
-			const nextRunAt = new Date(Date.now() + 2 ** newAttempts * 1000 * 60);
+      // Exponential backoff for retry
+      const nextRunAt = new Date(Date.now() + 2 ** newAttempts * 1000 * 60);
 
-			await db.system.jobs.update(job._id, {
-				status,
-				lastError: errMessage,
-				nextRunAt: status === 'pending' ? nextRunAt : job.nextRunAt
-			});
+      await db.system.jobs.update(job._id, {
+        status,
+        lastError: errMessage,
+        nextRunAt: status === "pending" ? nextRunAt : job.nextRunAt,
+      });
 
-			// If it's a webhook failure, we might want to emit an event for the UI
-			if (job.taskType === 'webhook-delivery' && status === 'failed') {
-				try {
-					const { pubSub } = await import('@src/services/pub-sub');
-					pubSub.publish('webhook:failed', {
-						webhookId: (job.payload as any).webhook.id,
-						deliveryId: job._id as string,
-						tenantId: job.tenantId as string,
-						error: errMessage
-					});
-				} catch (e) {
-					// Ignore pubsub errors during job handling
-				}
-			}
-		}
-	}
+      // If it's a webhook failure, we might want to emit an event for the UI
+      if (job.taskType === "webhook-delivery" && status === "failed") {
+        try {
+          const { pubSub } = await import("@src/services/pub-sub");
+          pubSub.publish("webhook:failed", {
+            webhookId: (job.payload as any).webhook.id,
+            deliveryId: job._id as string,
+            tenantId: job.tenantId as string,
+            error: errMessage,
+          });
+        } catch {
+          // Ignore pubsub errors during job handling
+        }
+      }
+    }
+  }
 
-	/**
-	 * Start the background polling worker.
-	 */
-	startPolling(intervalMs = 10000) {
-		if (this.pollInterval) {
-			clearInterval(this.pollInterval);
-		}
-		logger.info(`[JobQueue] Starting background worker (interval: ${intervalMs}ms)`);
-		this.pollInterval = setInterval(() => {
-			this.processNextBatch().catch((err) => logger.error('[JobQueue] Polling error', err));
-		}, intervalMs);
-	}
+  /**
+   * Start the background polling worker.
+   */
+  startPolling(intervalMs = 10000) {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
+    logger.info(`[JobQueue] Starting background worker (interval: ${intervalMs}ms)`);
+    this.pollInterval = setInterval(() => {
+      this.processNextBatch().catch((err) => logger.error("[JobQueue] Polling error", err));
+    }, intervalMs);
+  }
 
-	/**
-	 * Stop the background polling worker.
-	 */
-	stopPolling() {
-		if (this.pollInterval) {
-			clearInterval(this.pollInterval);
-			this.pollInterval = null;
-			logger.info('[JobQueue] Stopped background worker');
-		}
-	}
+  /**
+   * Stop the background polling worker.
+   */
+  stopPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+      logger.info("[JobQueue] Stopped background worker");
+    }
+  }
 }
 
 export const jobQueue = new JobQueueService();

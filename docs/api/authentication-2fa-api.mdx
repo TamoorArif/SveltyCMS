@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/authentication-2fa-api.mdx'
-title: 'Two-Factor Authentication API'
-description: 'Complete API reference for 2FA setup, verification, and management endpoints in SveltyCMS.'
+path: "docs/api/authentication-2fa-api.mdx"
+title: "Two-Factor Authentication API"
+description: "Complete API reference for 2FA setup, verification, and management endpoints in SveltyCMS."
 order: 2
-icon: 'mdi:shield-lock'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:shield-lock"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'authentication'
-  - '2fa'
-  - 'security'
-  - 'totp'
+  - "api"
+  - "authentication"
+  - "2fa"
+  - "security"
+  - "totp"
 ---
 
 # Two-Factor Authentication API
@@ -75,21 +75,32 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"secret": "JBSWY3DPEHPK3PXP",
-		"qrCodeURL": "otpauth://totp/SveltyCMS:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=SveltyCMS",
-		"manualEntryDetails": {
-			"issuer": "SveltyCMS",
-			"account": "user@example.com",
-			"secret": "JBSWY3DPEHPK3PXP",
-			"algorithm": "SHA1",
-			"digits": 6,
-			"period": 30
-		},
-		"backupCodes": ["A1B2C3D4", "E5F6G7H8", "I9J0K1L2", "M3N4O5P6", "Q7R8S9T0", "U1V2W3X4", "Y5Z6A7B8", "C9D0E1F2", "G3H4I5J6", "K7L8M9N0"]
-	},
-	"message": "2FA setup initiated. Please save your backup codes and scan the QR code with your authenticator app."
+  "success": true,
+  "data": {
+    "secret": "JBSWY3DPEHPK3PXP",
+    "qrCodeURL": "otpauth://totp/SveltyCMS:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=SveltyCMS",
+    "manualEntryDetails": {
+      "issuer": "SveltyCMS",
+      "account": "user@example.com",
+      "secret": "JBSWY3DPEHPK3PXP",
+      "algorithm": "SHA1",
+      "digits": 6,
+      "period": 30
+    },
+    "backupCodes": [
+      "A1B2C3D4",
+      "E5F6G7H8",
+      "I9J0K1L2",
+      "M3N4O5P6",
+      "Q7R8S9T0",
+      "U1V2W3X4",
+      "Y5Z6A7B8",
+      "C9D0E1F2",
+      "G3H4I5J6",
+      "K7L8M9N0"
+    ]
+  },
+  "message": "2FA setup initiated. Please save your backup codes and scan the QR code with your authenticator app."
 }
 ```
 
@@ -142,9 +153,20 @@ Content-Type: application/json
 
 ```json
 {
-	"secret": "JBSWY3DPEHPK3PXP",
-	"verificationCode": "123456",
-	"backupCodes": ["A1B2C3D4", "E5F6G7H8", "I9J0K1L2", "M3N4O5P6", "Q7R8S9T0", "U1V2W3X4", "Y5Z6A7B8", "C9D0E1F2", "G3H4I5J6", "K7L8M9N0"]
+  "secret": "JBSWY3DPEHPK3PXP",
+  "verificationCode": "123456",
+  "backupCodes": [
+    "A1B2C3D4",
+    "E5F6G7H8",
+    "I9J0K1L2",
+    "M3N4O5P6",
+    "Q7R8S9T0",
+    "U1V2W3X4",
+    "Y5Z6A7B8",
+    "C9D0E1F2",
+    "G3H4I5J6",
+    "K7L8M9N0"
+  ]
 }
 ```
 
@@ -163,8 +185,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "2FA has been successfully enabled for your account. Please save your backup codes in a secure location."
+  "success": true,
+  "message": "2FA has been successfully enabled for your account. Please save your backup codes in a secure location."
 }
 ```
 
@@ -220,8 +242,8 @@ Content-Type: application/json
 
 ```json
 {
-	"userId": "user123",
-	"code": "123456"
+  "userId": "user123",
+  "code": "123456"
 }
 ```
 
@@ -233,10 +255,10 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "2FA verification successful",
-	"method": "totp",
-	"backupCodeUsed": false
+  "success": true,
+  "message": "2FA verification successful",
+  "method": "totp",
+  "backupCodeUsed": false
 }
 ```
 
@@ -244,10 +266,10 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "2FA verification successful using backup code. 9 backup codes remaining.",
-	"method": "backup",
-	"backupCodeUsed": true
+  "success": true,
+  "message": "2FA verification successful using backup code. 9 backup codes remaining.",
+  "method": "backup",
+  "backupCodeUsed": true
 }
 ```
 
@@ -255,8 +277,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": false,
-	"message": "Invalid 2FA code"
+  "success": false,
+  "message": "Invalid 2FA code"
 }
 ```
 
@@ -265,7 +287,7 @@ Content-Type: application/json
 ```json
 // 500 Internal Server Error
 {
-	"message": "Failed to verify 2FA code"
+  "message": "Failed to verify 2FA code"
 }
 ```
 
@@ -308,8 +330,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "2FA has been disabled for your account."
+  "success": true,
+  "message": "2FA has been disabled for your account."
 }
 ```
 
@@ -364,13 +386,13 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"enabled": true,
-		"hasBackupCodes": true,
-		"backupCodesCount": 10,
-		"lastVerification": "2025-10-05T14:30:00Z"
-	}
+  "success": true,
+  "data": {
+    "enabled": true,
+    "hasBackupCodes": true,
+    "backupCodesCount": 10,
+    "lastVerification": "2025-10-05T14:30:00Z"
+  }
 }
 ```
 
@@ -420,11 +442,22 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"backupCodes": ["A1B2C3D4", "E5F6G7H8", "I9J0K1L2", "M3N4O5P6", "Q7R8S9T0", "U1V2W3X4", "Y5Z6A7B8", "C9D0E1F2", "G3H4I5J6", "K7L8M9N0"]
-	},
-	"message": "New backup codes generated. Please save these codes in a secure location. Your old backup codes are no longer valid."
+  "success": true,
+  "data": {
+    "backupCodes": [
+      "A1B2C3D4",
+      "E5F6G7H8",
+      "I9J0K1L2",
+      "M3N4O5P6",
+      "Q7R8S9T0",
+      "U1V2W3X4",
+      "Y5Z6A7B8",
+      "C9D0E1F2",
+      "G3H4I5J6",
+      "K7L8M9N0"
+    ]
+  },
+  "message": "New backup codes generated. Please save these codes in a secure location. Your old backup codes are no longer valid."
 }
 ```
 
@@ -539,11 +572,11 @@ The 2FA data is stored in the User model:
 
 ```typescript
 interface User {
-	// ... other fields
-	is2FAEnabled?: boolean; // Whether 2FA is active
-	totpSecret?: string; // Encrypted TOTP secret
-	backupCodes?: string[]; // Hashed backup codes
-	last2FAVerification?: Date; // Last successful verification
+  // ... other fields
+  is2FAEnabled?: boolean; // Whether 2FA is active
+  totpSecret?: string; // Encrypted TOTP secret
+  backupCodes?: string[]; // Hashed backup codes
+  last2FAVerification?: Date; // Last successful verification
 }
 ```
 

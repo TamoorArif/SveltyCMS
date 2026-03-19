@@ -29,13 +29,13 @@
  * @prerequisite Runs after rate limiting, before authentication
  */
 
-import { dev } from '$app/environment';
-import { metricsService } from '@src/services/metrics-service';
-import { getPrivateSettingSync, getPublicSettingSync } from '@src/services/settings-service';
-import type { Handle, RequestEvent } from '@sveltejs/kit';
-import { error } from '@sveltejs/kit';
-import { AppError, handleApiError } from '@utils/error-handling';
-import { logger } from '@utils/logger.server';
+import { dev } from "$app/environment";
+import { metricsService } from "@src/services/metrics-service";
+import { getPrivateSettingSync, getPublicSettingSync } from "@src/services/settings-service";
+import type { Handle, RequestEvent } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
+import { AppError, handleApiError } from "@utils/error-handling";
+import { logger } from "@utils/logger.server";
 
 // --- THREAT DETECTION PATTERNS ---
 
@@ -44,51 +44,60 @@ import { logger } from '@utils/logger.server';
  * Focus on business logic abuse and suspicious parameter usage.
  */
 const APP_THREAT_PATTERNS = [
-	// Suspicious parameter patterns (credentials in URL query params)
-	/[?&](password|token|secret|api_key|auth)=[^&]+/i,
+  // Suspicious parameter patterns (credentials in URL query params)
+  /[?&](password|token|secret|api_key|auth)=[^&]+/i,
 
-	// Bulk operations abuse
-	/\/api\/(users|content|collections)\/bulk-(delete|update|create)/i,
+  // Bulk operations abuse
+  /\/api\/(users|content|collections)\/bulk-(delete|update|create)/i,
 
-	// Administrative endpoint enumeration
-	/\/(admin|manage|control-panel|dashboard)\/[^/]*\/(delete|remove|destroy)/i,
+  // Administrative endpoint enumeration
+  /\/(admin|manage|control-panel|dashboard)\/[^/]*\/(delete|remove|destroy)/i,
 
-	// Known malicious payloads in paths
-	/<script[^>]*>|javascript:\s*|data:text\/html|vbscript:/i,
+  // Known malicious payloads in paths
+  /<script[^>]*>|javascript:\s*|data:text\/html|vbscript:/i,
 
-	// Template injection attempts (refined to allow legitimate CMS tokens)
-	// Original: /\{\{.*\}\}|\${.*}|<%.*%>/i
-	// Refined: We allow {{...}} but block suspicious content within them or in non-token contexts
-	// This specifically allows {{user.name}}, {{entry._id}}, etc. but still flags very long or complex expressions
-	/(?<!\{\{)\$\{.*\}|(?<!\{\{)<%.*%>|(?<!\{\{)\{\{.*[;<>].*\}\}/i,
+  // Template injection attempts (refined to allow legitimate CMS tokens)
+  // Original: /\{\{.*\}\}|\${.*}|<%.*%>/i
+  // Refined: We allow {{...}} but block suspicious content within them or in non-token contexts
+  // This specifically allows {{user.name}}, {{entry._id}}, etc. but still flags very long or complex expressions
+  /(?<!\{\{)\$\{.*\}|(?<!\{\{)<%.*%>|(?<!\{\{)\{\{.*[;<>].*\}\}/i,
 
-	// Command injection patterns
-	/;(\s)*(ls|cat|wget|curl|nc|bash|sh|cmd|powershell)/i
+  // Command injection patterns
+  /;(\s)*(ls|cat|wget|curl|nc|bash|sh|cmd|powershell)/i,
 ];
 
 /**
  * Advanced bot detection patterns.
  * These are automation tools that might bypass basic CDN detection.
  */
-const ADVANCED_BOT_PATTERNS = [/HeadlessChrome/i, /PhantomJS/i, /Selenium/i, /Puppeteer/i, /WebDriver/i, /Playwright/i, /Nightmare/i, /ZombieJS/i];
+const ADVANCED_BOT_PATTERNS = [
+  /HeadlessChrome/i,
+  /PhantomJS/i,
+  /Selenium/i,
+  /Puppeteer/i,
+  /WebDriver/i,
+  /Playwright/i,
+  /Nightmare/i,
+  /ZombieJS/i,
+];
 
 /**
  * Legitimate bot patterns that should NOT be blocked.
  * These are search engines and social media crawlers.
  */
 const LEGITIMATE_BOT_PATTERNS = [
-	/Googlebot/i,
-	/Bingbot/i,
-	/Slurp/i, // Yahoo
-	/DuckDuckBot/i,
-	/Baiduspider/i,
-	/YandexBot/i,
-	/facebookexternalhit/i,
-	/LinkedInBot/i,
-	/Twitterbot/i,
-	/WhatsApp/i,
-	/TelegramBot/i,
-	/Discordbot/i
+  /Googlebot/i,
+  /Bingbot/i,
+  /Slurp/i, // Yahoo
+  /DuckDuckBot/i,
+  /Baiduspider/i,
+  /YandexBot/i,
+  /facebookexternalhit/i,
+  /LinkedInBot/i,
+  /Twitterbot/i,
+  /WhatsApp/i,
+  /TelegramBot/i,
+  /Discordbot/i,
 ];
 
 // --- UTILITY FUNCTIONS ---
@@ -99,54 +108,54 @@ const LEGITIMATE_BOT_PATTERNS = [
  * @returns True if the request is from a trusted origin
  */
 function isTrustedOrigin(event: RequestEvent): boolean {
-	const origin = event.request.headers.get('origin');
-	const referer = event.request.headers.get('referer');
-	const host = event.url.host;
-	const protocol = event.url.protocol;
+  const origin = event.request.headers.get("origin");
+  const referer = event.request.headers.get("referer");
+  const host = event.url.host;
+  const protocol = event.url.protocol;
 
-	// Always trust localhost/loopback in dev or demo mode
-	if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
-		return true;
-	}
+  // Always trust localhost/loopback in dev or demo mode
+  if (host.startsWith("localhost") || host.startsWith("127.0.0.1")) {
+    return true;
+  }
 
-	// Get configured trusted host
-	const trustedHost = dev ? getPublicSettingSync('HOST_DEV') : getPublicSettingSync('HOST_PROD');
+  // Get configured trusted host
+  const trustedHost = dev ? getPublicSettingSync("HOST_DEV") : getPublicSettingSync("HOST_PROD");
 
-	// 1. Check Origin header (most reliable)
-	if (origin) {
-		// Always trust localhost/loopback origins
-		if (origin.includes('//localhost') || origin.includes('//127.0.0.1')) {
-			return true;
-		}
+  // 1. Check Origin header (most reliable)
+  if (origin) {
+    // Always trust localhost/loopback origins
+    if (origin.includes("//localhost") || origin.includes("//127.0.0.1")) {
+      return true;
+    }
 
-		// If we have a configured trusted host, we MUST match it
-		if (trustedHost) {
-			const expectedOrigin = `${protocol}//${trustedHost}`;
-			return origin === expectedOrigin;
-		}
+    // If we have a configured trusted host, we MUST match it
+    if (trustedHost) {
+      const expectedOrigin = `${protocol}//${trustedHost}`;
+      return origin === expectedOrigin;
+    }
 
-		// Fallback to self-referential check if host setting not yet loaded/available
-		const expectedOrigin = `${protocol}//${host}`;
-		return origin === expectedOrigin;
-	}
+    // Fallback to self-referential check if host setting not yet loaded/available
+    const expectedOrigin = `${protocol}//${host}`;
+    return origin === expectedOrigin;
+  }
 
-	// 2. Fallback to Referer header
-	if (referer) {
-		try {
-			const refererUrl = new URL(referer);
-			if (trustedHost) {
-				return refererUrl.host === trustedHost && refererUrl.protocol === protocol;
-			}
-			return refererUrl.host === host && refererUrl.protocol === protocol;
-		} catch {
-			return false;
-		}
-	}
+  // 2. Fallback to Referer header
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      if (trustedHost) {
+        return refererUrl.host === trustedHost && refererUrl.protocol === protocol;
+      }
+      return refererUrl.host === host && refererUrl.protocol === protocol;
+    } catch {
+      return false;
+    }
+  }
 
-	// 3. If neither header is present, we only allow it for non-mutation requests
-	// or if specifically allowed (e.g., from a trusted mobile app - would need API key check)
-	const method = event.request.method;
-	return !['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+  // 3. If neither header is present, we only allow it for non-mutation requests
+  // or if specifically allowed (e.g., from a trusted mobile app - would need API key check)
+  const method = event.request.method;
+  return !["POST", "PUT", "DELETE", "PATCH"].includes(method);
 }
 
 /**
@@ -155,9 +164,9 @@ function isTrustedOrigin(event: RequestEvent): boolean {
  * @returns True if the bot is legitimate (search engines, social media)
  */
 function isLegitimateBot(userAgent: string): boolean {
-	const allowedBots = getPrivateSettingSync('FIREWALL_ALLOWED_BOTS') || [];
-	const patterns = [...LEGITIMATE_BOT_PATTERNS, ...allowedBots.map((p) => new RegExp(p, 'i'))];
-	return patterns.some((pattern) => pattern.test(userAgent));
+  const allowedBots = getPrivateSettingSync("FIREWALL_ALLOWED_BOTS") || [];
+  const patterns = [...LEGITIMATE_BOT_PATTERNS, ...allowedBots.map((p) => new RegExp(p, "i"))];
+  return patterns.some((pattern) => pattern.test(userAgent));
 }
 
 /**
@@ -166,9 +175,9 @@ function isLegitimateBot(userAgent: string): boolean {
  * @returns True if advanced bot patterns are detected
  */
 function isAdvancedBot(userAgent: string): boolean {
-	const blockedBots = getPrivateSettingSync('FIREWALL_BLOCKED_BOTS') || [];
-	const patterns = [...ADVANCED_BOT_PATTERNS, ...blockedBots.map((p) => new RegExp(p, 'i'))];
-	return patterns.some((pattern) => pattern.test(userAgent));
+  const blockedBots = getPrivateSettingSync("FIREWALL_BLOCKED_BOTS") || [];
+  const patterns = [...ADVANCED_BOT_PATTERNS, ...blockedBots.map((p) => new RegExp(p, "i"))];
+  return patterns.some((pattern) => pattern.test(userAgent));
 }
 
 /**
@@ -178,8 +187,8 @@ function isAdvancedBot(userAgent: string): boolean {
  * @returns True if threat patterns are detected
  */
 function hasApplicationThreat(pathname: string, search: string): boolean {
-	const fullPath = pathname + search;
-	return APP_THREAT_PATTERNS.some((pattern) => pattern.test(fullPath));
+  const fullPath = pathname + search;
+  return APP_THREAT_PATTERNS.some((pattern) => pattern.test(fullPath));
 }
 
 /**
@@ -188,98 +197,108 @@ function hasApplicationThreat(pathname: string, search: string): boolean {
  * @returns True if suspicious patterns are detected
  */
 function hasSuspiciousPattern(pathname: string): boolean {
-	// Check for excessive path depth (possible enumeration)
-	const pathDepth = pathname.split('/').filter(Boolean).length;
-	if (pathDepth > 10) {
-		return true;
-	}
+  // Check for excessive path depth (possible enumeration)
+  const pathDepth = pathname.split("/").filter(Boolean).length;
+  if (pathDepth > 10) {
+    return true;
+  }
 
-	// Check for suspicious file operations
-	if (pathname.includes('/../') || pathname.includes('/./')) {
-		return true;
-	}
+  // Check for suspicious file operations
+  if (pathname.includes("/../") || pathname.includes("/./")) {
+    return true;
+  }
 
-	// Check for encoded bypasses
-	if (pathname.includes('%2e%2e') || pathname.includes('%252e')) {
-		return true;
-	}
+  // Check for encoded bypasses
+  if (pathname.includes("%2e%2e") || pathname.includes("%252e")) {
+    return true;
+  }
 
-	return false;
+  return false;
 }
 
 // --- MAIN HOOK ---
 
 export const handleFirewall: Handle = async ({ event, resolve }) => {
-	const { request, url } = event;
-	const userAgent = request.headers.get('user-agent') || '';
-	const pathname = url.pathname.toLowerCase();
-	const search = url.search.toLowerCase();
+  const { request, url } = event;
+  const userAgent = request.headers.get("user-agent") || "";
+  const pathname = url.pathname.toLowerCase();
+  const search = url.search.toLowerCase();
 
-	try {
-		// SECURITY: Never bypass firewall based on TEST_MODE in production
-		// TEST_MODE should only affect automated testing, not production security
-		// The firewall is critical for blocking attacks
+  try {
+    // SECURITY: Never bypass firewall based on TEST_MODE in production
+    // TEST_MODE should only affect automated testing, not production security
+    // The firewall is critical for blocking attacks
 
-		// Check if firewall is enabled (default to true if not set)
-		const firewallEnabled = getPrivateSettingSync('FIREWALL_ENABLED') ?? true;
+    // Check if firewall is enabled (default to true if not set)
+    const firewallEnabled = getPrivateSettingSync("FIREWALL_ENABLED") ?? true;
 
-		// Determine if we are in an automated test environment (integration tests hit a spawned server)
-		// We explicitly check for VITEST/BUN_TEST/NODE_ENV=test to ensure unit tests
-		// (which also set TEST_MODE=true) still execute the firewall logic to verify it.
-		const isUnitTesting = !!(process.env.VITEST || process.env.BUN_TEST || process.env.NODE_ENV === 'test');
-		const isIntegrationTestServer = process.env.TEST_MODE === 'true' && !isUnitTesting;
+    // Determine if we are in an automated test environment (integration tests hit a spawned server)
+    // We explicitly check for VITEST/BUN_TEST/NODE_ENV=test to ensure unit tests
+    // (which also set TEST_MODE=true) still execute the firewall logic to verify it.
+    const isUnitTesting = !!(
+      process.env.VITEST ||
+      process.env.BUN_TEST ||
+      process.env.NODE_ENV === "test"
+    );
+    const isIntegrationTestServer = process.env.TEST_MODE === "true" && !isUnitTesting;
 
-		// Allow forcing security checks in integration tests via special header
-		const forceSecurity = request.headers.get('x-test-security') === 'true';
+    // Allow forcing security checks in integration tests via special header
+    const forceSecurity = request.headers.get("x-test-security") === "true";
 
-		// Bypass firewall ONLY if it's disabled OR if it's an integration test server AND security is not forced
-		if ((!firewallEnabled || isIntegrationTestServer) && !forceSecurity) {
-			return resolve(event);
-		}
+    // Bypass firewall ONLY if it's disabled OR if it's an integration test server AND security is not forced
+    if ((!firewallEnabled || isIntegrationTestServer) && !forceSecurity) {
+      return resolve(event);
+    }
 
-		if (isAdvancedBot(userAgent) && !isLegitimateBot(userAgent)) {
-			metricsService.incrementSecurityViolations();
-			logger.warn(`Advanced bot detected and blocked: UA=${userAgent.substring(0, 50)}, Path=${pathname}`);
-			throw new AppError('Forbidden: Automated access detected', 403, 'BOT_DETECTED');
-		}
+    if (isAdvancedBot(userAgent) && !isLegitimateBot(userAgent)) {
+      metricsService.incrementSecurityViolations();
+      logger.warn(
+        `Advanced bot detected and blocked: UA=${userAgent.substring(0, 50)}, Path=${pathname}`,
+      );
+      throw new AppError("Forbidden: Automated access detected", 403, "BOT_DETECTED");
+    }
 
-		// --- 2. CSRF Protection ---
-		// Validate origin for state-changing requests
-		if (!(['GET', 'HEAD', 'OPTIONS'].includes(request.method) || isTrustedOrigin(event))) {
-			metricsService.incrementSecurityViolations();
-			logger.warn(`Potential CSRF attempt blocked: IP=${event.getClientAddress()}, Path=${pathname}, Origin=${request.headers.get('origin')}`);
-			throw new AppError('Forbidden: Origin not trusted', 403, 'CSRF_DETECTED');
-		}
+    // --- 2. CSRF Protection ---
+    // Validate origin for state-changing requests
+    if (!(["GET", "HEAD", "OPTIONS"].includes(request.method) || isTrustedOrigin(event))) {
+      metricsService.incrementSecurityViolations();
+      logger.warn(
+        `Potential CSRF attempt blocked: IP=${event.getClientAddress()}, Path=${pathname}, Origin=${request.headers.get("origin")}`,
+      );
+      throw new AppError("Forbidden: Origin not trusted", 403, "CSRF_DETECTED");
+    }
 
-		// --- 3. Application-Level Threat Detection ---
-		// Check for patterns that Nginx can't detect (business logic abuse)
-		if (hasApplicationThreat(pathname, search)) {
-			metricsService.incrementSecurityViolations();
-			logger.warn(`Application threat detected: IP=${event.getClientAddress()}, Path=${pathname}, UA=${userAgent.substring(0, 50)}`);
-			throw new AppError('Forbidden: Request pattern not allowed', 403, 'THREAT_DETECTED');
-		}
+    // --- 3. Application-Level Threat Detection ---
+    // Check for patterns that Nginx can't detect (business logic abuse)
+    if (hasApplicationThreat(pathname, search)) {
+      metricsService.incrementSecurityViolations();
+      logger.warn(
+        `Application threat detected: IP=${event.getClientAddress()}, Path=${pathname}, UA=${userAgent.substring(0, 50)}`,
+      );
+      throw new AppError("Forbidden: Request pattern not allowed", 403, "THREAT_DETECTED");
+    }
 
-		// --- 3. Suspicious Pattern Detection ---
-		// Check for indicators of enumeration or abuse attempts
-		if (hasSuspiciousPattern(pathname)) {
-			metricsService.incrementSecurityViolations();
-			logger.warn(`Suspicious pattern detected: IP=${event.getClientAddress()}, Path=${pathname}`);
-			throw new AppError('Forbidden: Invalid request pattern', 403, 'SUSPICIOUS_PATTERN');
-		}
+    // --- 3. Suspicious Pattern Detection ---
+    // Check for indicators of enumeration or abuse attempts
+    if (hasSuspiciousPattern(pathname)) {
+      metricsService.incrementSecurityViolations();
+      logger.warn(`Suspicious pattern detected: IP=${event.getClientAddress()}, Path=${pathname}`);
+      throw new AppError("Forbidden: Invalid request pattern", 403, "SUSPICIOUS_PATTERN");
+    }
 
-		// --- 4. Request Passed All Checks ---
-		return await resolve(event);
-	} catch (err) {
-		if (url.pathname.startsWith('/api/')) {
-			return handleApiError(err, event);
-		}
+    // --- 4. Request Passed All Checks ---
+    return await resolve(event);
+  } catch (err) {
+    if (url.pathname.startsWith("/api/")) {
+      return handleApiError(err, event);
+    }
 
-		if (err instanceof AppError) {
-			throw error(err.status, err.message);
-		}
+    if (err instanceof AppError) {
+      throw error(err.status, err.message);
+    }
 
-		throw err;
-	}
+    throw err;
+  }
 };
 
 // --- UTILITY EXPORTS ---

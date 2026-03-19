@@ -1,19 +1,19 @@
 ---
-path: 'docs/guides/setup-wizard.mdx'
-title: 'Setup Wizard Guide'
-description: 'Complete guide to the SveltyCMS setup wizard with real-time validation, error handling, and solution presets'
+path: "docs/guides/setup-wizard.mdx"
+title: "Setup Wizard Guide"
+description: "Complete guide to the SveltyCMS setup wizard with real-time validation, error handling, and solution presets"
 order: 2
-icon: 'mdi:wizard-hat'
-author: 'admin'
-created: '2025-10-30'
-updated: '2026-03-05'
+icon: "mdi:wizard-hat"
+author: "admin"
+created: "2025-10-30"
+updated: "2026-03-05"
 tags:
-  - 'setup'
-  - 'wizard'
-  - 'installation'
-  - 'configuration'
-  - 'validation'
-  - 'presets'
+  - "setup"
+  - "wizard"
+  - "installation"
+  - "configuration"
+  - "validation"
+  - "presets"
 ---
 
 # Setup Wizard Guide
@@ -55,9 +55,10 @@ The setup wizard is a multi-step form that guides users through initial SveltyCM
 - **✨ NO SERVER RESTART REQUIRED**: System becomes operational immediately after setup completion
 
 <Callout type="success">
-	**Zero-Restart Architecture**: Unlike traditional CMSs that require server restart after initial setup, SveltyCMS uses dynamic in-memory
-	configuration loading (`initializeWithConfig()`). The system transitions from `IDLE` → `READY` state instantly, with cache warming ensuring the
-	first page load is blazing fast.
+  **Zero-Restart Architecture**: Unlike traditional CMSs that require server restart after initial
+  setup, SveltyCMS uses dynamic in-memory configuration loading (`initializeWithConfig()`). The
+  system transitions from `IDLE` → `READY` state instantly, with cache warming ensuring the first
+  page load is blazing fast.
 </Callout>
 
 ---
@@ -176,51 +177,62 @@ src/routes/setup/
 Located in `src/utils/formSchemas.ts`:
 
 ```typescript
-import * as v from 'valibot';
+import * as v from "valibot";
 
 // Database configuration schema
 export const dbConfigSchema = v.object({
-	type: v.string(),
-	host: v.pipe(v.string(), v.minLength(1, 'Host is required')),
-	port: v.string(),
-	name: v.pipe(v.string(), v.minLength(1, 'Database name is required')),
-	user: v.string(),
-	password: v.string()
+  type: v.string(),
+  host: v.pipe(v.string(), v.minLength(1, "Host is required")),
+  port: v.string(),
+  name: v.pipe(v.string(), v.minLength(1, "Database name is required")),
+  user: v.string(),
+  password: v.string(),
 });
 
 // Admin user schema
 export const setupAdminSchema = v.object(
-	{
-		username: v.pipe(v.string(), v.minLength(3, 'Username must be at least 3 characters'), v.maxLength(50, 'Username must not exceed 50 characters')),
-		email: v.pipe(v.string(), v.email('Invalid email address')),
-		password: v.pipe(
-			v.string(),
-			v.minLength(8, 'Password must be at least 8 characters'),
-			v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'),
-			v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'),
-			v.regex(/[0-9]/, 'Password must contain at least one number'),
-			v.regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/, 'Password must contain at least one special character')
-		),
-		confirmPassword: v.string()
-	},
-	[
-		v.forward(
-			v.partialCheck([['password'], ['confirmPassword']], (input) => input.password === input.confirmPassword, 'Passwords do not match'),
-			['confirmPassword']
-		)
-	]
+  {
+    username: v.pipe(
+      v.string(),
+      v.minLength(3, "Username must be at least 3 characters"),
+      v.maxLength(50, "Username must not exceed 50 characters"),
+    ),
+    email: v.pipe(v.string(), v.email("Invalid email address")),
+    password: v.pipe(
+      v.string(),
+      v.minLength(8, "Password must be at least 8 characters"),
+      v.regex(/[A-Z]/, "Password must contain at least one uppercase letter"),
+      v.regex(/[a-z]/, "Password must contain at least one lowercase letter"),
+      v.regex(/[0-9]/, "Password must contain at least one number"),
+      v.regex(
+        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/,
+        "Password must contain at least one special character",
+      ),
+    ),
+    confirmPassword: v.string(),
+  },
+  [
+    v.forward(
+      v.partialCheck(
+        [["password"], ["confirmPassword"]],
+        (input) => input.password === input.confirmPassword,
+        "Passwords do not match",
+      ),
+      ["confirmPassword"],
+    ),
+  ],
 );
 
 // System settings schema
 export const systemSettingsSchema = v.object({
-	siteName: v.pipe(v.string(), v.minLength(1, 'Site name is required')),
-	hostProd: v.pipe(v.string(), v.url('Must be a valid URL')),
-	defaultSystemLanguage: v.string(),
-	systemLanguages: v.pipe(v.array(v.string()), v.minLength(1)),
-	defaultContentLanguage: v.string(),
-	contentLanguages: v.pipe(v.array(v.string()), v.minLength(1)),
-	mediaStorageType: v.string(),
-	mediaFolder: v.string()
+  siteName: v.pipe(v.string(), v.minLength(1, "Site name is required")),
+  hostProd: v.pipe(v.string(), v.url("Must be a valid URL")),
+  defaultSystemLanguage: v.string(),
+  systemLanguages: v.pipe(v.array(v.string()), v.minLength(1)),
+  defaultContentLanguage: v.string(),
+  contentLanguages: v.pipe(v.array(v.string()), v.minLength(1)),
+  mediaStorageType: v.string(),
+  mediaFolder: v.string(),
 });
 ```
 
@@ -520,44 +532,44 @@ The wizard implements a two-tier validation system:
 
 ```typescript
 // In each step component (e.g., database-config.svelte)
-import { safeParse } from 'valibot';
-import { dbConfigSchema } from '@utils/formSchemas';
+import { safeParse } from "valibot";
+import { dbConfigSchema } from "@utils/formSchemas";
 
 // Real-time validation state
 let localValidationErrors = $state<Record<string, string>>({});
 
 // Validate form data in real-time
 const validationResult = $derived(
-	safeParse(dbConfigSchema, {
-		type: dbConfig.type,
-		host: dbConfig.host,
-		port: dbConfig.port,
-		name: dbConfig.name,
-		user: dbConfig.user,
-		password: dbConfig.password
-	})
+  safeParse(dbConfigSchema, {
+    type: dbConfig.type,
+    host: dbConfig.host,
+    port: dbConfig.port,
+    name: dbConfig.name,
+    user: dbConfig.user,
+    password: dbConfig.password,
+  }),
 );
 
 const isFormValid = $derived(validationResult.success);
 
 // Update errors when validation changes
 $effect(() => {
-	const newErrors: Record<string, string> = {};
-	if (!validationResult.success) {
-		for (const issue of validationResult.issues) {
-			const path = issue.path?.[0]?.key as string;
-			if (path) {
-				newErrors[path] = issue.message;
-			}
-		}
-	}
-	localValidationErrors = newErrors;
+  const newErrors: Record<string, string> = {};
+  if (!validationResult.success) {
+    for (const issue of validationResult.issues) {
+      const path = issue.path?.[0]?.key as string;
+      if (path) {
+        newErrors[path] = issue.message;
+      }
+    }
+  }
+  localValidationErrors = newErrors;
 });
 
 // Combine local and parent validation errors
 const displayErrors = $derived<Record<string, string>>({
-	...localValidationErrors,
-	...validationErrors // Server errors take precedence
+  ...localValidationErrors,
+  ...validationErrors, // Server errors take precedence
 });
 ```
 
@@ -576,40 +588,40 @@ const displayErrors = $derived<Record<string, string>>({
 
 ```typescript
 function validateStep(step: number, mutateErrors = true): boolean {
-	const errs: ValidationErrors = {};
-	const errorMessages: string[] = [];
+  const errs: ValidationErrors = {};
+  const errorMessages: string[] = [];
 
-	switch (step) {
-		case 0: // Database
-			const dbResult = safeParse(dbConfigSchema, wizard.dbConfig);
-			if (!dbResult.success) {
-				for (const issue of dbResult.issues) {
-					const path = issue.path?.[0]?.key as string;
-					if (path) {
-						errs[path] = issue.message;
-						errorMessages.push(`${path}: ${issue.message}`);
-					}
-				}
-			}
-			break;
+  switch (step) {
+    case 0: // Database
+      const dbResult = safeParse(dbConfigSchema, wizard.dbConfig);
+      if (!dbResult.success) {
+        for (const issue of dbResult.issues) {
+          const path = issue.path?.[0]?.key as string;
+          if (path) {
+            errs[path] = issue.message;
+            errorMessages.push(`${path}: ${issue.message}`);
+          }
+        }
+      }
+      break;
 
-		case 1: // Admin
-			const adminResult = safeParse(setupAdminSchema, wizard.adminUser);
-			// ... similar processing
-			break;
+    case 1: // Admin
+      const adminResult = safeParse(setupAdminSchema, wizard.adminUser);
+      // ... similar processing
+      break;
 
-		case 2: // System
-			const systemResult = safeParse(systemSettingsSchema, wizard.systemSettings);
-			// ... similar processing
-			break;
-	}
+    case 2: // System
+      const systemResult = safeParse(systemSettingsSchema, wizard.systemSettings);
+      // ... similar processing
+      break;
+  }
 
-	if (mutateErrors) {
-		validationErrors = errs;
-		stepErrors[step] = errorMessages;
-	}
+  if (mutateErrors) {
+    validationErrors = errs;
+    stepErrors[step] = errorMessages;
+  }
 
-	return Object.keys(errs).length === 0;
+  return Object.keys(errs).length === 0;
 }
 ```
 
@@ -759,31 +771,31 @@ You can:
 
 ```typescript
 async function testDatabaseConnection() {
-	const maxRetries = 3;
-	let attempt = 0;
+  const maxRetries = 3;
+  let attempt = 0;
 
-	while (attempt < maxRetries) {
-		try {
-			const formData = new FormData();
-			formData.append('data', JSON.stringify(wizard.dbConfig));
+  while (attempt < maxRetries) {
+    try {
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(wizard.dbConfig));
 
-			const response = await fetch('/setup?/testDatabase', {
-				method: 'POST',
-				body: formData
-			});
+      const response = await fetch("/setup?/testDatabase", {
+        method: "POST",
+        body: formData,
+      });
 
-			if (response.ok) return await response.json();
+      if (response.ok) return await response.json();
 
-			attempt++;
-			if (attempt < maxRetries) {
-				await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-			}
-		} catch (error) {
-			attempt++;
-		}
-	}
+      attempt++;
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    } catch (error) {
+      attempt++;
+    }
+  }
 
-	throw new Error('Connection failed after 3 attempts');
+  throw new Error("Connection failed after 3 attempts");
 }
 ```
 
@@ -791,14 +803,14 @@ async function testDatabaseConnection() {
 
 ```typescript
 async function completeSetup() {
-	try {
-		// Try to send welcome email
-		await sendWelcomeEmail(adminUser.email);
-	} catch (emailError) {
-		// Don't fail setup if email fails
-		console.warn('Welcome email failed (non-fatal):', emailError);
-		showToast('Setup complete! (Welcome email could not be sent)', 'warning');
-	}
+  try {
+    // Try to send welcome email
+    await sendWelcomeEmail(adminUser.email);
+  } catch (emailError) {
+    // Don't fail setup if email fails
+    console.warn("Welcome email failed (non-fatal):", emailError);
+    showToast("Setup complete! (Welcome email could not be sent)", "warning");
+  }
 }
 ```
 
@@ -806,15 +818,15 @@ async function completeSetup() {
 
 ```typescript
 function classifyDatabaseError(error: DatabaseError): string {
-	if (error.code === 'EAUTH') {
-		return 'Authentication failed. Please check your username and password.';
-	} else if (error.code === 'ECONNREFUSED') {
-		return 'Connection refused. Is your database running?';
-	} else if (error.code === 'ETIMEDOUT') {
-		return 'Connection timed out. Check firewall rules and network connectivity.';
-	} else {
-		return `Database error: ${error.message}`;
-	}
+  if (error.code === "EAUTH") {
+    return "Authentication failed. Please check your username and password.";
+  } else if (error.code === "ECONNREFUSED") {
+    return "Connection refused. Is your database running?";
+  } else if (error.code === "ETIMEDOUT") {
+    return "Connection timed out. Check firewall rules and network connectivity.";
+  } else {
+    return `Database error: ${error.message}`;
+  }
 }
 ```
 
@@ -892,30 +904,30 @@ export const setupStore = new SetupStore();
 
 ```typescript
 // Capture initial state on mount
-let initialDataSnapshot = $state<string>('');
+let initialDataSnapshot = $state<string>("");
 
 onMount(() => {
-	loadStore();
-	initialDataSnapshot = JSON.stringify(wizard);
+  loadStore();
+  initialDataSnapshot = JSON.stringify(wizard);
 
-	// Warn before navigation
-	const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-		if (hasUnsavedChanges() && !isSubmitting) {
-			e.preventDefault();
-			e.returnValue = ''; // Required for Chrome
-			return '';
-		}
-	};
+  // Warn before navigation
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges() && !isSubmitting) {
+      e.preventDefault();
+      e.returnValue = ""; // Required for Chrome
+      return "";
+    }
+  };
 
-	window.addEventListener('beforeunload', handleBeforeUnload);
-	return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
 });
 
 // Check if data changed
 const hasUnsavedChanges = $derived(() => {
-	if (!initialDataSnapshot) return false;
-	const currentSnapshot = JSON.stringify(wizard);
-	return currentSnapshot !== initialDataSnapshot;
+  if (!initialDataSnapshot) return false;
+  const currentSnapshot = JSON.stringify(wizard);
+  return currentSnapshot !== initialDataSnapshot;
 });
 ```
 
@@ -972,16 +984,16 @@ const hasUnsavedChanges = $derived(() => {
 **Implementation**:
 
 ```typescript
-import { showToast } from '@utils/toast';
+import { showToast } from "@utils/toast";
 
 // Success
-showToast('Database initialized successfully! ✨', 'success', 3000);
+showToast("Database initialized successfully! ✨", "success", 3000);
 
 // Error
-showToast('Connection failed. Please check your settings.', 'error', 5000);
+showToast("Connection failed. Please check your settings.", "error", 5000);
 
 // Info
-showToast('Setup will continue, data will be created as needed.', 'info', 4000);
+showToast("Setup will continue, data will be created as needed.", "info", 4000);
 ```
 
 ### Responsive Design
@@ -1015,16 +1027,16 @@ showToast('Setup will continue, data will be created as needed.', 'info', 4000);
 ```css
 /* Mobile-first approach */
 .form-grid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
 /* Tablet and above */
 @media (min-width: 768px) {
-	.form-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 ```
 
@@ -1077,8 +1089,8 @@ showToast('Setup will continue, data will be created as needed.', 'info', 4000);
 ```typescript
 // src/utils/formSchemas.ts
 export const myStepSchema = v.object({
-	field1: v.pipe(v.string(), v.minLength(1, 'Field 1 is required')),
-	field2: v.pipe(v.string(), v.email('Invalid email'))
+  field1: v.pipe(v.string(), v.minLength(1, "Field 1 is required")),
+  field2: v.pipe(v.string(), v.email("Invalid email")),
 });
 ```
 
@@ -1087,13 +1099,13 @@ export const myStepSchema = v.object({
 ```typescript
 // src/stores/setup-store.svelte.ts
 class SetupStore {
-	wizard = $state({
-		// ... existing fields
-		myStepData: {
-			field1: '',
-			field2: ''
-		}
-	});
+  wizard = $state({
+    // ... existing fields
+    myStepData: {
+      field1: "",
+      field2: "",
+    },
+  });
 }
 ```
 
@@ -1149,19 +1161,22 @@ class SetupStore {
 
 ```typescript
 // src/utils/formSchemas.ts
-import * as v from 'valibot';
+import * as v from "valibot";
 
 // Custom async validator
 const isDatabaseNameAvailable = async (name: string) => {
-	const response = await fetch(`/api/check-database?name=${name}`);
-	return response.ok;
+  const response = await fetch(`/api/check-database?name=${name}`);
+  return response.ok;
 };
 
 export const dbConfigSchema = v.pipeAsync(
-	v.object({
-		name: v.string()
-	}),
-	v.checkAsync(async (input) => await isDatabaseNameAvailable(input.name), 'Database name already exists')
+  v.object({
+    name: v.string(),
+  }),
+  v.checkAsync(
+    async (input) => await isDatabaseNameAvailable(input.name),
+    "Database name already exists",
+  ),
 );
 ```
 
@@ -1169,16 +1184,20 @@ export const dbConfigSchema = v.pipeAsync(
 
 ```typescript
 export const adminSchema = v.object(
-	{
-		password: v.string(),
-		confirmPassword: v.string()
-	},
-	[
-		v.forward(
-			v.partialCheck([['password'], ['confirmPassword']], (input) => input.password === input.confirmPassword, 'Passwords must match'),
-			['confirmPassword']
-		)
-	]
+  {
+    password: v.string(),
+    confirmPassword: v.string(),
+  },
+  [
+    v.forward(
+      v.partialCheck(
+        [["password"], ["confirmPassword"]],
+        (input) => input.password === input.confirmPassword,
+        "Passwords must match",
+      ),
+      ["confirmPassword"],
+    ),
+  ],
 );
 ```
 
@@ -1187,76 +1206,76 @@ export const adminSchema = v.object(
 **Unit Tests** (Vitest):
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { safeParse } from 'valibot';
-import { dbConfigSchema } from '@utils/formSchemas';
+import { describe, it, expect } from "vitest";
+import { safeParse } from "valibot";
+import { dbConfigSchema } from "@utils/formSchemas";
 
-describe('dbConfigSchema', () => {
-	it('validates correct database config', () => {
-		const result = safeParse(dbConfigSchema, {
-			type: 'mongodb',
-			host: 'localhost',
-			port: '27017',
-			name: 'test',
-			user: 'admin',
-			password: 'secret'
-		});
+describe("dbConfigSchema", () => {
+  it("validates correct database config", () => {
+    const result = safeParse(dbConfigSchema, {
+      type: "mongodb",
+      host: "localhost",
+      port: "27017",
+      name: "test",
+      user: "admin",
+      password: "secret",
+    });
 
-		expect(result.success).toBe(true);
-	});
+    expect(result.success).toBe(true);
+  });
 
-	it('rejects empty host', () => {
-		const result = safeParse(dbConfigSchema, {
-			type: 'mongodb',
-			host: '',
-			port: '27017',
-			name: 'test',
-			user: '',
-			password: ''
-		});
+  it("rejects empty host", () => {
+    const result = safeParse(dbConfigSchema, {
+      type: "mongodb",
+      host: "",
+      port: "27017",
+      name: "test",
+      user: "",
+      password: "",
+    });
 
-		expect(result.success).toBe(false);
-		expect(result.issues[0].message).toContain('Host is required');
-	});
+    expect(result.success).toBe(false);
+    expect(result.issues[0].message).toContain("Host is required");
+  });
 });
 ```
 
 **E2E Tests** (Playwright):
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Setup Wizard', () => {
-	test('completes setup successfully', async ({ page }) => {
-		await page.goto('/setup');
+test.describe("Setup Wizard", () => {
+  test("completes setup successfully", async ({ page }) => {
+    await page.goto("/setup");
 
-		// Step 1: Database
-		await page.fill('#db-host', 'localhost');
-		await page.fill('#db-port', '27017');
-		await page.fill('#db-name', 'test');
-		await page.click('button:has-text("Test Connection")');
-		await expect(page.locator('text=Connection successful')).toBeVisible();
-		await page.click('button:has-text("Next")');
+    // Step 1: Database
+    await page.fill("#db-host", "localhost");
+    await page.fill("#db-port", "27017");
+    await page.fill("#db-name", "test");
+    await page.click('button:has-text("Test Connection")');
+    await expect(page.locator("text=Connection successful")).toBeVisible();
+    await page.click('button:has-text("Next")');
 
-		// Step 2: Admin
-		await page.fill('#admin-username', 'admin');
-		await page.fill('#admin-email', 'admin@test.com');
-		await page.fill('#admin-password', 'Test1234!');
-		await page.fill('#admin-confirm-password', 'Test1234!');
-		await page.click('button:has-text("Next")');
+    // Step 2: Admin
+    await page.fill("#admin-username", "admin");
+    await page.fill("#admin-email", "admin@test.com");
+    await page.fill("#admin-password", "Test1234!");
+    await page.fill("#admin-confirm-password", "Test1234!");
+    await page.click('button:has-text("Next")');
 
-		// Step 3: System
-		await page.fill('#site-name', 'Test Site');
-		await page.fill('#host-prod', 'https://test.com');
-		await page.click('button:has-text("Next")');
+    // Step 3: System
+    await page.fill("#site-name", "Test Site");
+    await page.fill("#host-prod", "https://test.com");
+    await page.click('button:has-text("Next")');
 
-		// Step 4: Email (skip)
-		await page.click('button:has-text("Next")');
+    // Step 4: Email (skip)
+    await page.click('button:has-text("Next")');
 
-		// Step 5: Complete
-		await page.click('button:has-text("Complete")');
-		await expect(page).toHaveURL(/\/Collections/);
-	});
+    // Step 5: Complete
+    await page.click('button:has-text("Complete")');
+    await expect(page).toHaveURL(/\/Collections/);
+  });
 });
 ```
 
@@ -1303,72 +1322,72 @@ bun test --watch tests/bun/api/setup.test.ts
 **Database Connection Test:**
 
 ```typescript
-it('should test database connection successfully', async () => {
-	const formData = new FormData();
-	formData.append(
-		'config',
-		JSON.stringify({
-			type: 'mongodb',
-			host: 'localhost',
-			port: 27017,
-			name: 'testdb',
-			user: 'admin',
-			password: 'secret'
-		})
-	);
+it("should test database connection successfully", async () => {
+  const formData = new FormData();
+  formData.append(
+    "config",
+    JSON.stringify({
+      type: "mongodb",
+      host: "localhost",
+      port: 27017,
+      name: "testdb",
+      user: "admin",
+      password: "secret",
+    }),
+  );
 
-	const response = await fetch('/setup?/testDatabase', {
-		method: 'POST',
-		body: formData
-	});
+  const response = await fetch("/setup?/testDatabase", {
+    method: "POST",
+    body: formData,
+  });
 
-	expect(response.status).toBe(200);
-	const result = await response.json();
-	expect(result.success).toBe(true);
-	expect(result.latencyMs).toBeDefined();
+  expect(response.status).toBe(200);
+  const result = await response.json();
+  expect(result.success).toBe(true);
+  expect(result.latencyMs).toBeDefined();
 });
 ```
 
 **Complete Setup Flow Test:**
 
 ```typescript
-it('should complete entire setup process', async () => {
-	// 1. Test database
-	const dbForm = new FormData();
-	dbForm.append('config', JSON.stringify(dbConfig));
-	await fetch('/setup?/testDatabase', {
-		method: 'POST',
-		body: dbForm
-	});
+it("should complete entire setup process", async () => {
+  // 1. Test database
+  const dbForm = new FormData();
+  dbForm.append("config", JSON.stringify(dbConfig));
+  await fetch("/setup?/testDatabase", {
+    method: "POST",
+    body: dbForm,
+  });
 
-	// 2. Seed database
-	// Action: seedDatabase takes config too? Or uses existing.
-	// We'll assume it takes config or is called after test
-	const seedForm = new FormData();
-	seedForm.append('config', JSON.stringify(dbConfig));
-	const seedResponse = await fetch('/setup?/seedDatabase', {
-		method: 'POST',
-		body: seedForm
-	});
-	const { firstCollection } = await seedResponse.json();
+  // 2. Seed database
+  // Action: seedDatabase takes config too? Or uses existing.
+  // We'll assume it takes config or is called after test
+  const seedForm = new FormData();
+  seedForm.append("config", JSON.stringify(dbConfig));
+  const seedResponse = await fetch("/setup?/seedDatabase", {
+    method: "POST",
+    body: seedForm,
+  });
+  const { firstCollection } = await seedResponse.json();
 
-	// 3. Complete setup
-	const completeForm = new FormData();
-	completeForm.append(
-		'data',
-		JSON.stringify({
-			admin: admin - config,
-			firstCollection
-		})
-	);
-	const response = await fetch('/setup?/completeSetup', {
-		method: 'POST',
-		body: completeForm
-	});
+  // 3. Complete setup
+  const completeForm = new FormData();
+  completeForm.append(
+    "data",
+    JSON.stringify({
+      admin: admin - config,
+      firstCollection,
+    }),
+  );
+  const response = await fetch("/setup?/completeSetup", {
+    method: "POST",
+    body: completeForm,
+  });
 
-	expect(response.status).toBe(200);
-	const cookies = response.headers.get('set-cookie');
-	expect(cookies).toContain('auth_session');
+  expect(response.status).toBe(200);
+  const cookies = response.headers.get("set-cookie");
+  expect(cookies).toContain("auth_session");
 });
 ```
 
@@ -1389,22 +1408,22 @@ it('should complete entire setup process', async () => {
 ```typescript
 // Ensure $effect updates localValidationErrors
 $effect(() => {
-	const newErrors: Record<string, string> = {};
-	if (!validationResult.success) {
-		for (const issue of validationResult.issues) {
-			const path = issue.path?.[0]?.key as string;
-			if (path) {
-				newErrors[path] = issue.message;
-			}
-		}
-	}
-	localValidationErrors = newErrors;
+  const newErrors: Record<string, string> = {};
+  if (!validationResult.success) {
+    for (const issue of validationResult.issues) {
+      const path = issue.path?.[0]?.key as string;
+      if (path) {
+        newErrors[path] = issue.message;
+      }
+    }
+  }
+  localValidationErrors = newErrors;
 });
 
 // Ensure displayErrors combines both sources
 const displayErrors = $derived<Record<string, string>>({
-	...localValidationErrors,
-	...validationErrors
+  ...localValidationErrors,
+  ...validationErrors,
 });
 ```
 
@@ -1418,11 +1437,11 @@ const displayErrors = $derived<Record<string, string>>({
 
 ```typescript
 onMount(() => {
-	loadStore(); // Load existing data
-	setupPersistence(); // Start auto-save
+  loadStore(); // Load existing data
+  setupPersistence(); // Start auto-save
 
-	// Capture initial state AFTER loading
-	initialDataSnapshot = JSON.stringify(wizard);
+  // Capture initial state AFTER loading
+  initialDataSnapshot = JSON.stringify(wizard);
 });
 ```
 
@@ -1436,19 +1455,19 @@ onMount(() => {
 
 ```typescript
 async function completeSetup() {
-	// Guard at the top
-	if (isSubmitting) {
-		console.log('Already submitting, preventing duplicate');
-		return;
-	}
+  // Guard at the top
+  if (isSubmitting) {
+    console.log("Already submitting, preventing duplicate");
+    return;
+  }
 
-	isSubmitting = true;
+  isSubmitting = true;
 
-	try {
-		// ... API call
-	} finally {
-		isSubmitting = false; // Always reset
-	}
+  try {
+    // ... API call
+  } finally {
+    isSubmitting = false; // Always reset
+  }
 }
 ```
 
@@ -1462,22 +1481,22 @@ async function completeSetup() {
 
 ```typescript
 onMount(() => {
-	// Capture initial state after loading from localStorage
-	initialDataSnapshot = JSON.stringify(wizard);
+  // Capture initial state after loading from localStorage
+  initialDataSnapshot = JSON.stringify(wizard);
 
-	const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-		if (hasUnsavedChanges() && !isSubmitting) {
-			e.preventDefault();
-			e.returnValue = ''; // Required for Chrome
-			return ''; // Required for some browsers
-		}
-	};
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges() && !isSubmitting) {
+      e.preventDefault();
+      e.returnValue = ""; // Required for Chrome
+      return ""; // Required for some browsers
+    }
+  };
 
-	window.addEventListener('beforeunload', handleBeforeUnload);
+  window.addEventListener("beforeunload", handleBeforeUnload);
 
-	return () => {
-		window.removeEventListener('beforeunload', handleBeforeUnload);
-	};
+  return () => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  };
 });
 ```
 
@@ -1510,11 +1529,11 @@ Then clear localStorage and retry test.
 
 ```typescript
 const stepClickable = $derived<boolean[]>([
-	true, // Step 0 always clickable
-	wizard.highestStepReached >= 1,
-	wizard.highestStepReached >= 2,
-	wizard.highestStepReached >= 3,
-	wizard.highestStepReached >= 4
+  true, // Step 0 always clickable
+  wizard.highestStepReached >= 1,
+  wizard.highestStepReached >= 2,
+  wizard.highestStepReached >= 3,
+  wizard.highestStepReached >= 4,
 ]);
 ```
 

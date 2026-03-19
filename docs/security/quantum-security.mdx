@@ -1,18 +1,18 @@
 ---
-path: 'docs/security/quantum-security.mdx'
-title: 'Quantum Security Best Practices'
-description: 'Understanding quantum computing threats and implementing quantum-resistant cryptography in SveltyCMS'
+path: "docs/security/quantum-security.mdx"
+title: "Quantum Security Best Practices"
+description: "Understanding quantum computing threats and implementing quantum-resistant cryptography in SveltyCMS"
 order: 10
-icon: 'mdi:atom'
-author: 'admin'
-created: '2025-11-02'
-updated: '2025-11-14'
+icon: "mdi:atom"
+author: "admin"
+created: "2025-11-02"
+updated: "2025-11-14"
 tags:
-  - 'security'
-  - 'quantum'
-  - 'cryptography'
-  - 'post-quantum'
-  - 'future-proof'
+  - "security"
+  - "quantum"
+  - "cryptography"
+  - "post-quantum"
+  - "future-proof"
 ---
 
 # Quantum Security Best Practices
@@ -277,10 +277,10 @@ Dilithium-5: ~AES-256 security (quantum)
 ```typescript
 // Current configuration (optimal for now)
 export const cryptoConfig = {
-	passwordHashing: 'argon2id',
-	encryption: 'aes-256-gcm',
-	keyDerivation: 'argon2id',
-	checksums: 'sha256'
+  passwordHashing: "argon2id",
+  encryption: "aes-256-gcm",
+  keyDerivation: "argon2id",
+  checksums: "sha256",
 };
 ```
 
@@ -299,32 +299,35 @@ export const cryptoConfig = {
 
 ```typescript
 // Future hybrid implementation (conceptual)
-import { kyberEncapsulate, kyberDecapsulate } from 'pqcrypto';
-import { encryptData, decryptData } from '@utils/crypto';
+import { kyberEncapsulate, kyberDecapsulate } from "pqcrypto";
+import { encryptData, decryptData } from "@utils/crypto";
 
 async function hybridEncrypt(data: object, password: string, publicKey: Buffer) {
-	// Step 1: Classical encryption (current method)
-	const classicalKey = generateRandomKey(32);
-	const classicalCiphertext = await encryptData(data, password);
+  // Step 1: Classical encryption (current method)
+  const classicalKey = generateRandomKey(32);
+  const classicalCiphertext = await encryptData(data, password);
 
-	// Step 2: Post-quantum key encapsulation
-	const { ciphertext: pqCiphertext, sharedSecret } = await kyberEncapsulate(publicKey);
+  // Step 2: Post-quantum key encapsulation
+  const { ciphertext: pqCiphertext, sharedSecret } = await kyberEncapsulate(publicKey);
 
-	// Step 3: Combine both for maximum security
-	return {
-		classical: classicalCiphertext,
-		postQuantum: pqCiphertext.toString('base64'),
-		algorithm: 'AES-256-GCM + Kyber-1024'
-	};
+  // Step 3: Combine both for maximum security
+  return {
+    classical: classicalCiphertext,
+    postQuantum: pqCiphertext.toString("base64"),
+    algorithm: "AES-256-GCM + Kyber-1024",
+  };
 }
 
 async function hybridDecrypt(encrypted: HybridCiphertext, password: string, secretKey: Buffer) {
-	// Decrypt using both classical and post-quantum methods
-	const classicalData = await decryptData(encrypted.classical, password);
-	const pqSharedSecret = await kyberDecapsulate(Buffer.from(encrypted.postQuantum, 'base64'), secretKey);
+  // Decrypt using both classical and post-quantum methods
+  const classicalData = await decryptData(encrypted.classical, password);
+  const pqSharedSecret = await kyberDecapsulate(
+    Buffer.from(encrypted.postQuantum, "base64"),
+    secretKey,
+  );
 
-	// Verify both methods agree (defense in depth)
-	return classicalData;
+  // Verify both methods agree (defense in depth)
+  return classicalData;
 }
 ```
 
@@ -351,10 +354,10 @@ async function hybridDecrypt(encrypted: HybridCiphertext, password: string, secr
 ```typescript
 // Future post-quantum configuration
 export const cryptoConfig = {
-	primaryEncryption: 'kyber-1024 + aes-256-gcm', // Hybrid
-	signatures: 'dilithium-5',
-	keyDerivation: 'argon2id', // Still optimal
-	fallback: 'aes-256-gcm' // For legacy support
+  primaryEncryption: "kyber-1024 + aes-256-gcm", // Hybrid
+  signatures: "dilithium-5",
+  keyDerivation: "argon2id", // Still optimal
+  fallback: "aes-256-gcm", // For legacy support
 };
 ```
 
@@ -379,12 +382,12 @@ export const cryptoConfig = {
 
 ```typescript
 // ✅ GOOD: Argon2id with strong parameters
-import { hashPassword } from '@utils/crypto';
+import { hashPassword } from "@utils/crypto";
 
-const hashedPassword = await hashPassword('userPassword123!');
+const hashedPassword = await hashPassword("userPassword123!");
 
 // ❌ BAD: Weak hashing
-const weakHash = crypto.createHash('md5').update(password).digest('hex');
+const weakHash = crypto.createHash("md5").update(password).digest("hex");
 ```
 
 #### 2. Implement Key Rotation
@@ -394,18 +397,18 @@ const weakHash = crypto.createHash('md5').update(password).digest('hex');
 const KEY_ROTATION_PERIOD = 90 * 24 * 60 * 60 * 1000; // 90 days
 
 async function rotateEncryptionKeys() {
-	const oldKey = getCurrentKey();
-	const newKey = generateNewKey();
+  const oldKey = getCurrentKey();
+  const newKey = generateNewKey();
 
-	// Re-encrypt data with new key
-	for (const record of await getAllEncryptedData()) {
-		const decrypted = await decryptData(record.data, oldKey);
-		const reencrypted = await encryptData(decrypted, newKey);
-		await updateRecord(record.id, reencrypted);
-	}
+  // Re-encrypt data with new key
+  for (const record of await getAllEncryptedData()) {
+    const decrypted = await decryptData(record.data, oldKey);
+    const reencrypted = await encryptData(decrypted, newKey);
+    await updateRecord(record.id, reencrypted);
+  }
 
-	setCurrentKey(newKey);
-	archiveKey(oldKey); // Keep for recovery
+  setCurrentKey(newKey);
+  archiveKey(oldKey); // Keep for recovery
 }
 ```
 
@@ -414,25 +417,25 @@ async function rotateEncryptionKeys() {
 ```typescript
 // ✅ GOOD: Additional encryption for long-term storage
 interface LongTermEncryption {
-	data: string; // AES-256-GCM encrypted data
-	encryptedAt: Date; // Encryption timestamp
-	algorithm: string; // 'aes-256-gcm'
-	keyDerivation: string; // 'argon2id'
-	reencryptBefore: Date; // When to re-encrypt
-	postQuantumReady: boolean; // Can be migrated to PQC
+  data: string; // AES-256-GCM encrypted data
+  encryptedAt: Date; // Encryption timestamp
+  algorithm: string; // 'aes-256-gcm'
+  keyDerivation: string; // 'argon2id'
+  reencryptBefore: Date; // When to re-encrypt
+  postQuantumReady: boolean; // Can be migrated to PQC
 }
 
 async function encryptForLongTerm(data: object, password: string): Promise<LongTermEncryption> {
-	const encrypted = await encryptData(data, password);
+  const encrypted = await encryptData(data, password);
 
-	return {
-		data: encrypted,
-		encryptedAt: new Date(),
-		algorithm: 'aes-256-gcm',
-		keyDerivation: 'argon2id',
-		reencryptBefore: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000), // 5 years
-		postQuantumReady: true
-	};
+  return {
+    data: encrypted,
+    encryptedAt: new Date(),
+    algorithm: "aes-256-gcm",
+    keyDerivation: "argon2id",
+    reencryptBefore: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000), // 5 years
+    postQuantumReady: true,
+  };
 }
 ```
 

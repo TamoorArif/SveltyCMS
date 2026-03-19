@@ -1,16 +1,16 @@
 ---
-path: 'docs/api/email-api.mdx'
-title: 'Email API'
-description: 'Programmatic email sending with Svelte templates.'
+path: "docs/api/email-api.mdx"
+title: "Email API"
+description: "Programmatic email sending with Svelte templates."
 order: 14
-icon: 'mdi:email-outline'
-author: 'admin'
-created: '2026-02-13'
-updated: '2026-02-13'
+icon: "mdi:email-outline"
+author: "admin"
+created: "2026-02-13"
+updated: "2026-02-13"
 tags:
-  - 'api'
-  - 'email'
-  - 'notifications'
+  - "api"
+  - "email"
+  - "notifications"
 ---
 
 # Email API Reference
@@ -37,13 +37,13 @@ Sends a rendered email to one or more recipients.
 
 ```json
 {
-	"recipientEmail": "user@example.com",
-	"subject": "Reset your password",
-	"templateName": "forgottenPassword",
-	"props": {
-		"token": "abc123456",
-		"expiresIn": "2 hours"
-	}
+  "recipientEmail": "user@example.com",
+  "subject": "Reset your password",
+  "templateName": "forgottenPassword",
+  "props": {
+    "token": "abc123456",
+    "expiresIn": "2 hours"
+  }
 }
 ```
 
@@ -53,10 +53,10 @@ Sends a rendered email to one or more recipients.
 
 ```json
 {
-	"success": true,
-	"messageId": "<unique-delivery-id@smtp.yourdomain.com>",
-	"recipient": "user@example.com",
-	"status": "sent"
+  "success": true,
+  "messageId": "<unique-delivery-id@smtp.yourdomain.com>",
+  "recipient": "user@example.com",
+  "status": "sent"
 }
 ```
 
@@ -64,8 +64,8 @@ Sends a rendered email to one or more recipients.
 
 ```json
 {
-	"success": false,
-	"error": "Template 'nonExistentTemplate' not found."
+  "success": false,
+  "error": "Template 'nonExistentTemplate' not found."
 }
 ```
 
@@ -82,12 +82,12 @@ To send a custom HTML body (e.g. from an external editor), use the `customEmail`
 
 ```json
 {
-	"recipientEmail": "user@example.com",
-	"subject": "Special Announcement",
-	"templateName": "customEmail",
-	"props": {
-		"body": "<h1>Big News!</h1><p>Our new collection is live.</p>"
-	}
+  "recipientEmail": "user@example.com",
+  "subject": "Special Announcement",
+  "templateName": "customEmail",
+  "props": {
+    "body": "<h1>Big News!</h1><p>Our new collection is live.</p>"
+  }
 }
 ```
 

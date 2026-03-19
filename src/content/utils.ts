@@ -5,5 +5,5 @@
  * Re-exports from split modules to maintain backward compatibility while resolving build warnings.
  */
 
-export * from './content-utils';
-export { processModule } from './module-processor.server';
+export * from "./content-utils";
+export { processModule } from "./module-processor.server";

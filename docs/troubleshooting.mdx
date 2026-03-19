@@ -1,17 +1,17 @@
 ---
-path: 'docs/troubleshooting.mdx'
-title: 'Troubleshooting Guide'
-description: 'Solutions to common issues and problems when installing and using SveltyCMS.'
+path: "docs/troubleshooting.mdx"
+title: "Troubleshooting Guide"
+description: "Solutions to common issues and problems when installing and using SveltyCMS."
 order: 2
-icon: 'mdi:wrench'
-author: 'SveltyCMS Team'
-created: '2025-10-05'
-updated: '2026-02-22'
+icon: "mdi:wrench"
+author: "SveltyCMS Team"
+created: "2025-10-05"
+updated: "2026-02-22"
 tags:
-  - 'troubleshooting'
-  - 'debugging'
-  - 'support'
-  - 'faq'
+  - "troubleshooting"
+  - "debugging"
+  - "support"
+  - "faq"
 ---
 
 # Troubleshooting Guide
@@ -124,9 +124,9 @@ Error: listen EADDRINUSE: address already in use :::5173
 3. **Update vite.config.ts:**
    ```typescript
    export default defineConfig({
-   	server: {
-   		port: 3000
-   	}
+     server: {
+       port: 3000,
+     },
    });
    ```
 
@@ -244,7 +244,7 @@ MariaDB connection failed: Access denied
 
 ```json
 {
-	"error": "Unauthorized"
+  "error": "Unauthorized"
 }
 ```
 
@@ -329,10 +329,10 @@ TypeError: Cannot read properties of undefined (reading 'user')
 
    ```javascript
    // ✅ Correct
-   fetch('/api/collections/posts');
+   fetch("/api/collections/posts");
 
    // ❌ Wrong
-   fetch('api/collections/posts'); // Missing leading /
+   fetch("api/collections/posts"); // Missing leading /
    ```
 
 4. **Restart server:**
@@ -456,7 +456,7 @@ Error: File type not allowed
 
    ```javascript
    // MongoDB
-   db.posts.createIndex({ title: 'text', content: 'text' });
+   db.posts.createIndex({ title: "text", content: "text" });
    db.posts.createIndex({ createdAt: -1 });
    ```
 
@@ -464,7 +464,7 @@ Error: File type not allowed
 
    ```javascript
    // Use pagination
-   fetch('/api/collections/posts?limit=25&page=1');
+   fetch("/api/collections/posts?limit=25&page=1");
    ```
 
 4. **Optimize images:**
@@ -500,9 +500,9 @@ FATAL ERROR: Reached heap limit
 
    ```json
    {
-   	"scripts": {
-   		"dev": "NODE_OPTIONS='--max-old-space-size=4096' vite dev"
-   	}
+     "scripts": {
+       "dev": "NODE_OPTIONS='--max-old-space-size=4096' vite dev"
+     }
    }
    ```
 
@@ -538,12 +538,12 @@ Type error: Property 'user' does not exist on type 'Locals'
    ```typescript
    // src/app.d.ts
    declare global {
-   	namespace App {
-   		interface Locals {
-   			user: import('$lib/types').User | null;
-   			tenantId: string;
-   		}
-   	}
+     namespace App {
+       interface Locals {
+         user: import("$lib/types").User | null;
+         tenantId: string;
+       }
+     }
    }
    ```
 
@@ -574,16 +574,16 @@ Type error: Property 'user' does not exist on type 'Locals'
    ```javascript
    // vite.config.ts
    export default defineConfig({
-   	build: {
-   		rollupOptions: {
-   			output: {
-   				manualChunks: {
-   					vendor: ['svelte'],
-   					utils: ['./src/utils']
-   				}
-   			}
-   		}
-   	}
+     build: {
+       rollupOptions: {
+         output: {
+           manualChunks: {
+             vendor: ["svelte"],
+             utils: ["./src/utils"],
+           },
+         },
+       },
+     },
    });
    ```
 
@@ -603,10 +603,10 @@ Type error: Property 'user' does not exist on type 'Locals'
 
    ```javascript
    // Instead of
-   import Widget from './widget.svelte';
+   import Widget from "./widget.svelte";
 
    // Use
-   const Widget = await import('./widget.svelte');
+   const Widget = await import("./widget.svelte");
    ```
 
 ---
@@ -645,7 +645,7 @@ Type error: Property 'user' does not exist on type 'Locals'
 
 4. **Load .env explicitly (if needed):**
    ```javascript
-   import 'dotenv/config';
+   import "dotenv/config";
    ```
 
 ---
@@ -673,12 +673,12 @@ Type error: Property 'user' does not exist on type 'Locals'
 ```javascript
 // svelte.config.js
 export default {
-	kit: {
-		cors: {
-			origin: ['http://localhost:3000'],
-			credentials: true
-		}
-	}
+  kit: {
+    cors: {
+      origin: ["http://localhost:3000"],
+      credentials: true,
+    },
+  },
 };
 ```
 
@@ -769,10 +769,10 @@ curl -X POST http://localhost:5173/api/widgets/sync \
 
 ```json
 {
-	"success": true,
-	"added": 5,
-	"updated": 2,
-	"message": "Widgets synchronized successfully"
+  "success": true,
+  "added": 5,
+  "updated": 2,
+  "message": "Widgets synchronized successfully"
 }
 ```
 
@@ -924,7 +924,7 @@ Error: Widget 'custom-widget' not found
    ```javascript
    // src/widgets/widget-factory.ts
    const displayWidgets = {
-   	'custom-widget': () => import('./display/custom-widget.svelte')
+     "custom-widget": () => import("./display/custom-widget.svelte"),
    };
    ```
 
@@ -932,7 +932,7 @@ Error: Widget 'custom-widget' not found
 
    ```javascript
    // Database check
-   db.widgets.findOne({ name: 'custom-widget' });
+   db.widgets.findOne({ name: "custom-widget" });
    // Verify: { enabled: true }
    ```
 

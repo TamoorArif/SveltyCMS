@@ -15,49 +15,49 @@
  */
 
 declare global {
-	var mock: {
-		(fn?: (...args: any[]) => any): any;
-		module(path: string, factory: () => any): void;
-	};
-	var spyOn: typeof import('bun:test').spyOn;
-	var vi: {
-		fn: typeof import('bun:test').Mock;
-		spyOn: typeof import('bun:test').spyOn;
-		mock: (path: string, factory?: () => any) => void;
-		clearAllMocks: () => void;
-		resetAllMocks: () => void;
-		restoreAllMocks: () => void;
-	};
-	var describe: typeof import('bun:test').describe;
-	var it: typeof import('bun:test').it;
-	var test: typeof import('bun:test').test;
-	var expect: typeof import('bun:test').expect;
-	var beforeEach: typeof import('bun:test').beforeEach;
-	var afterEach: typeof import('bun:test').afterEach;
-	var beforeAll: typeof import('bun:test').beforeAll;
-	var afterAll: typeof import('bun:test').afterAll;
+  var mock: {
+    (fn?: (...args: any[]) => any): any;
+    module(path: string, factory: () => any): void;
+  };
+  var spyOn: typeof import("bun:test").spyOn;
+  var vi: {
+    fn: typeof import("bun:test").Mock;
+    spyOn: typeof import("bun:test").spyOn;
+    mock: (path: string, factory?: () => any) => void;
+    clearAllMocks: () => void;
+    resetAllMocks: () => void;
+    restoreAllMocks: () => void;
+  };
+  var describe: typeof import("bun:test").describe;
+  var it: typeof import("bun:test").it;
+  var test: typeof import("bun:test").test;
+  var expect: typeof import("bun:test").expect;
+  var beforeEach: typeof import("bun:test").beforeEach;
+  var afterEach: typeof import("bun:test").afterEach;
+  var beforeAll: typeof import("bun:test").beforeAll;
+  var afterAll: typeof import("bun:test").afterAll;
 
-	// Svelte Runes (for tests without compiler)
-	var $state: any;
-	var $derived: any;
-	var $effect: any;
-	var $props: any;
-	var $bindable: any;
-	var $inspect: any;
+  // Svelte Runes (for tests without compiler)
+  var $state: any;
+  var $derived: any;
+  var $effect: any;
+  var $props: any;
+  var $bindable: any;
+  var $inspect: any;
 
-	// CMS Globals
-	var privateEnv: any;
-	var browser: boolean;
-	var dev: boolean;
-	var building: boolean;
-	var logger: any;
-	var metricsService: any;
-	var cacheService: any;
-	var auth: any;
-	var mockAuditLog: any;
-	var mockDbAdapter: any;
-	var mockSetupCheck: any;
-	var mockEventBus: any;
+  // CMS Globals
+  var privateEnv: any;
+  var browser: boolean;
+  var dev: boolean;
+  var building: boolean;
+  var logger: any;
+  var metricsService: any;
+  var cacheService: any;
+  var auth: any;
+  var mockAuditLog: any;
+  var mockDbAdapter: any;
+  var mockSetupCheck: any;
+  var mockEventBus: any;
 }
 
 export {};

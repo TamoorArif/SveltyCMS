@@ -20,29 +20,38 @@
  * @prerequisite Static asset handling done by earlier middleware
  */
 
-import type { Handle } from '@sveltejs/kit';
-import { dev } from '$app/environment';
+import type { Handle } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 export const addSecurityHeaders: Handle = async ({ event, resolve }) => {
-	const response = await resolve(event);
+  const response = await resolve(event);
 
-	// Static assets are already handled by handleStaticAssetCaching middleware
+  // Static assets are already handled by handleStaticAssetCaching middleware
 
-	// Basic security headers (SvelteKit handles CSP via svelte.config.js)
-	response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-	response.headers.set('X-Content-Type-Options', 'nosniff');
-	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set(
-		'Permissions-Policy',
-		['geolocation=()', 'microphone=()', 'camera=()', 'display-capture=()', 'clipboard-read=()', 'clipboard-write=(self)', 'web-share=(self)'].join(
-			', '
-		)
-	);
+  // Basic security headers (SvelteKit handles CSP via svelte.config.js)
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    [
+      "geolocation=()",
+      "microphone=()",
+      "camera=()",
+      "display-capture=()",
+      "clipboard-read=()",
+      "clipboard-write=(self)",
+      "web-share=(self)",
+    ].join(", "),
+  );
 
-	// HTTPS-only headers for production (CRITICAL: Fixed from 'httpss:' typo)
-	if (!dev && event.url.protocol === 'https:') {
-		response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-	}
+  // HTTPS-only headers for production (CRITICAL: Fixed from 'httpss:' typo)
+  if (!dev && event.url.protocol === "https:") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload",
+    );
+  }
 
-	return response;
+  return response;
 };

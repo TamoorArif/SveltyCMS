@@ -12,21 +12,21 @@
  * @body {object} A JSON object representing the settings snapshot.
  * @returns {Response} A JSON object indicating success or failure.
  */
-import { hasPermissionByAction } from '@src/databases/auth/permissions';
-import { updateSettingsFromSnapshot } from '@src/services/settings-service';
-import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { hasPermissionByAction } from "@src/databases/auth/permissions";
+import { updateSettingsFromSnapshot } from "@src/services/settings-service";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!(locals.user && hasPermissionByAction(locals.user, 'manage', 'settings'))) {
-		throw error(403, 'Forbidden: You do not have permission to import settings.');
-	}
+  if (!(locals.user && hasPermissionByAction(locals.user, "manage", "settings"))) {
+    throw error(403, "Forbidden: You do not have permission to import settings.");
+  }
 
-	try {
-		const snapshot = await request.json();
-		const result = await updateSettingsFromSnapshot(snapshot);
-		return json({ success: true, result });
-	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Invalid snapshot format';
-		throw error(400, message);
-	}
+  try {
+    const snapshot = await request.json();
+    const result = await updateSettingsFromSnapshot(snapshot);
+    return json({ success: true, result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid snapshot format";
+    throw error(400, message);
+  }
 };

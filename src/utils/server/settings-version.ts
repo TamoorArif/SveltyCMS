@@ -6,7 +6,7 @@
  * to all connected clients via SSE for instant UI updates.
  */
 
-import { logger } from '@utils/logger.server';
+import { logger } from "@utils/logger.server";
 
 let currentVersion = 0;
 type VersionListener = (version: number) => void;
@@ -17,15 +17,15 @@ const listeners = new Set<VersionListener>();
  * Should be called whenever settings are updated in the database.
  */
 export function updateVersion(): void {
-	currentVersion++;
-	// Notify all SSE listeners
-	listeners.forEach((listener) => {
-		try {
-			listener(currentVersion);
-		} catch (error) {
-			logger.error('Error notifying settings listener:', error);
-		}
-	});
+  currentVersion++;
+  // Notify all SSE listeners
+  listeners.forEach((listener) => {
+    try {
+      listener(currentVersion);
+    } catch (error) {
+      logger.error("Error notifying settings listener:", error);
+    }
+  });
 }
 
 /**
@@ -35,6 +35,6 @@ export function updateVersion(): void {
  * @returns Unsubscribe function
  */
 export function subscribeToSettingsChanges(listener: VersionListener): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }

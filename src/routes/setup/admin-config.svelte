@@ -100,7 +100,7 @@ const displayErrors = $derived.by(() => {
 
 function handleBlur(fieldName: string) {
 	touchedFields.add(fieldName);
-	touchedFields = touchedFields; // Trigger reactivity
+	touchedFields = new Set(touchedFields); // Trigger reactivity
 }
 </script>
 

@@ -7,12 +7,11 @@ echo "🔍 Running pre-commit checks (Native Git Hook)..."
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|js|svelte|json|md)$' || true)
 
 if [ -n "$STAGED_FILES" ]; then
-    # 0. & 1. Format and Lint (Biome)
-    # Biome has a native flag to only check staged files, which is lightning fast.
-    echo "✨ Formatting & ⚡ Linting (Biome on staged files)..."
-    bunx @biomejs/biome check --write --staged
+    echo "✨ Formatting & ⚡ Linting (Vite+ on staged files)..."
+    bunx oxfmt --write $STAGED_FILES
+    bunx oxlint --fix $STAGED_FILES
 
-    # Re-stage files in case Biome fixed formatting/linting issues automatically
+    # Re-stage files in case Vite+ fixed formatting/linting issues automatically
     git add $STAGED_FILES
 else
     echo "⏩ No relevant staged files found for formatting/linting."

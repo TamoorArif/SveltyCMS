@@ -317,14 +317,14 @@ curl -H "Authorization: Bearer <token>" \
 
 ```graphql
 query {
-	posts(limit: 5) {
-		id
-		title
-		slug
-		author {
-			name
-		}
-	}
+  posts(limit: 5) {
+    id
+    title
+    slug
+    author {
+      name
+    }
+  }
 }
 ```
 

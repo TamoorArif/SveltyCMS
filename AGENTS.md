@@ -243,8 +243,8 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 
 ## Development Commands
 
-| Category      | Command                                         | Description                                                |
-| ------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| Category      | Command                                                                                         | Description                                                |
+| ------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | Daily Dev     | `bun run dev`                                                                                   | Dev server (auto-setup wizard)                             |
 |               | `bun run build`                                                                                 | Production build                                           |
 |               | `bun run preview`                                                                               | Preview on 127.0.0.1:4173                                  |
@@ -281,13 +281,13 @@ Use `dbAdapter` for agnosticism:
 Example (condensed):
 
 ```typescript
-import { createWidget } from '@widgets/widgetFactory';
-import * as v from 'valibot';
+import { createWidget } from "@widgets/widgetFactory";
+import * as v from "valibot";
 
 export default createWidget<{ maxLength?: number }>({
-	Name: 'myWidget',
-	validationSchema: (field) => v.string([v.maxLength(field.maxLength ?? 100)]),
-	GuiSchema: { maxLength: { widget: 'number', label: 'Max Length' } }
+  Name: "myWidget",
+  validationSchema: (field) => v.string([v.maxLength(field.maxLength ?? 100)]),
+  GuiSchema: { maxLength: { widget: "number", label: "Max Length" } },
 });
 ```
 

@@ -116,7 +116,7 @@ const displayErrors = $derived.by(() => {
 }); // Handle field blur to mark as touched
 function handleBlur(fieldName: string) {
 	touchedFields.add(fieldName);
-	touchedFields = touchedFields; // Trigger reactivity
+	touchedFields = new Set(touchedFields); // Trigger reactivity
 } // Parse MongoDB connection string (Atlas or standard)
 function parseMongoConnectionString(
 	connStr: string

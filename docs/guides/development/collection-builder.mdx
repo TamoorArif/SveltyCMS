@@ -1,20 +1,20 @@
 ---
-path: 'docs/guides/collection-builder.mdx'
-title: 'Collection Builder Guide'
-description: 'Complete guide to creating and managing content collections using the visual collection builder in SveltyCMS'
-icon: 'mdi:view-grid-plus'
+path: "docs/guides/collection-builder.mdx"
+title: "Collection Builder Guide"
+description: "Complete guide to creating and managing content collections using the visual collection builder in SveltyCMS"
+icon: "mdi:view-grid-plus"
 published: true
 order: 5
-status: 'beta'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+status: "beta"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'collection'
-  - 'builder'
-  - 'content'
-  - 'cms'
-  - 'widgets'
+  - "collection"
+  - "builder"
+  - "content"
+  - "cms"
+  - "widgets"
 ---
 
 # Collection Builder Guide
@@ -472,15 +472,15 @@ SveltyCMS uses a **modern widget architecture** with three pillars:
 Widgets are created using the factory pattern:
 
 ```typescript
-import { createWidget } from '@widgets/widgetFactory';
+import { createWidget } from "@widgets/widgetFactory";
 
 const widget = createWidget({
-	Name: 'my-widget',
-	Icon: 'mdi:my-icon',
-	Description: 'My custom widget',
-	GuiSchema: {
-		/* configuration */
-	}
+  Name: "my-widget",
+  Icon: "mdi:my-icon",
+  Description: "My custom widget",
+  GuiSchema: {
+    /* configuration */
+  },
 });
 ```
 
@@ -639,26 +639,26 @@ Content-Type: application/json
 
 ```typescript
 interface Schema {
-	_id: string;
-	name: string;
-	slug: string;
-	icon: string;
-	description?: string;
-	status: 'published' | 'unpublished' | 'draft';
-	fields: FieldInstance[];
-	permissions?: PermissionConfig;
-	createdAt: Date;
-	updatedAt: Date;
+  _id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  description?: string;
+  status: "published" | "unpublished" | "draft";
+  fields: FieldInstance[];
+  permissions?: PermissionConfig;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface FieldInstance {
-	widget: WidgetDefinition;
-	label: string;
-	db_fieldName: string;
-	required?: boolean;
-	translated?: boolean;
-	permissions?: FieldPermissions;
-	// Widget-specific properties...
+  widget: WidgetDefinition;
+  label: string;
+  db_fieldName: string;
+  required?: boolean;
+  translated?: boolean;
+  permissions?: FieldPermissions;
+  // Widget-specific properties...
 }
 ```
 
@@ -690,11 +690,11 @@ When saving a collection with breaking changes, a **confirmation modal** display
 The schema comparison engine (`collectionSchemaWarnings.ts`) can be used programmatically:
 
 ```typescript
-import { analyzeSchemaChanges } from '@utils/collectionSchemaWarnings';
+import { analyzeSchemaChanges } from "@utils/collectionSchemaWarnings";
 
 const result = analyzeSchemaChanges(oldSchema, newSchema);
 if (result.hasDataLoss) {
-	console.warn('⚠️ Data loss detected:', result.summary);
+  console.warn("⚠️ Data loss detected:", result.summary);
 }
 ```
 

@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/miscellaneous-api.mdx'
-title: 'Miscellaneous API Endpoints'
-description: 'Documentation for additional API endpoints including permissions, email, folders, and utilities.'
+path: "docs/api/miscellaneous-api.mdx"
+title: "Miscellaneous API Endpoints"
+description: "Documentation for additional API endpoints including permissions, email, folders, and utilities."
 order: 12
-icon: 'mdi:dots-horizontal'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:dots-horizontal"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'utilities'
-  - 'permissions'
-  - 'email'
-  - 'folders'
+  - "api"
+  - "utilities"
+  - "permissions"
+  - "email"
+  - "folders"
 ---
 
 # Miscellaneous API Endpoints
@@ -46,20 +46,20 @@ Content-Type: application/json
 
 ```json
 {
-	"roles": [
-		{
-			"_id": "editor",
-			"name": "Editor",
-			"isAdmin": false,
-			"permissions": ["content:read", "content:write", "media:read", "media:write"]
-		},
-		{
-			"_id": "contributor",
-			"name": "Contributor",
-			"isAdmin": false,
-			"permissions": ["content:read", "content:create", "media:read"]
-		}
-	]
+  "roles": [
+    {
+      "_id": "editor",
+      "name": "Editor",
+      "isAdmin": false,
+      "permissions": ["content:read", "content:write", "media:read", "media:write"]
+    },
+    {
+      "_id": "contributor",
+      "name": "Contributor",
+      "isAdmin": false,
+      "permissions": ["content:read", "content:create", "media:read"]
+    }
+  ]
 }
 ```
 
@@ -71,7 +71,7 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -131,13 +131,13 @@ Content-Type: application/json
 
 ```json
 {
-	"recipientEmail": "user@example.com",
-	"subject": "Welcome to SveltyCMS",
-	"templateName": "welcomeUser",
-	"props": {
-		"username": "john_doe",
-		"activationLink": "https://cms.example.com/activate/token123"
-	}
+  "recipientEmail": "user@example.com",
+  "subject": "Welcome to SveltyCMS",
+  "templateName": "welcomeUser",
+  "props": {
+    "username": "john_doe",
+    "activationLink": "https://cms.example.com/activate/token123"
+  }
 }
 ```
 
@@ -156,10 +156,10 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "Email sent successfully",
-	"messageId": "<abc123@smtp.example.com>",
-	"recipient": "user@example.com"
+  "success": true,
+  "message": "Email sent successfully",
+  "messageId": "<abc123@smtp.example.com>",
+  "recipient": "user@example.com"
 }
 ```
 
@@ -224,31 +224,31 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": [
-		{
-			"_id": "folder123",
-			"name": "Product Images",
-			"path": "/Product Images",
-			"parentId": null,
-			"type": "folder",
-			"order": 0,
-			"tenantId": "tenant-abc",
-			"createdAt": "2025-10-01T10:00:00Z",
-			"updatedAt": "2025-10-01T10:00:00Z"
-		},
-		{
-			"_id": "folder124",
-			"name": "Blog Images",
-			"path": "/Blog Images",
-			"parentId": null,
-			"type": "folder",
-			"order": 1,
-			"tenantId": "tenant-abc",
-			"createdAt": "2025-10-02T12:00:00Z",
-			"updatedAt": "2025-10-02T12:00:00Z"
-		}
-	]
+  "success": true,
+  "data": [
+    {
+      "_id": "folder123",
+      "name": "Product Images",
+      "path": "/Product Images",
+      "parentId": null,
+      "type": "folder",
+      "order": 0,
+      "tenantId": "tenant-abc",
+      "createdAt": "2025-10-01T10:00:00Z",
+      "updatedAt": "2025-10-01T10:00:00Z"
+    },
+    {
+      "_id": "folder124",
+      "name": "Blog Images",
+      "path": "/Blog Images",
+      "parentId": null,
+      "type": "folder",
+      "order": 1,
+      "tenantId": "tenant-abc",
+      "createdAt": "2025-10-02T12:00:00Z",
+      "updatedAt": "2025-10-02T12:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -275,8 +275,8 @@ Content-Type: application/json
 
 ```json
 {
-	"name": "Marketing Assets",
-	"parentId": null
+  "name": "Marketing Assets",
+  "parentId": null
 }
 ```
 
@@ -293,18 +293,18 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"folder": {
-		"_id": "folder125",
-		"name": "Marketing Assets",
-		"path": "/Marketing Assets",
-		"parentId": null,
-		"type": "folder",
-		"order": 0,
-		"tenantId": "tenant-abc",
-		"createdAt": "2025-10-05T14:30:00Z",
-		"updatedAt": "2025-10-05T14:30:00Z"
-	}
+  "success": true,
+  "folder": {
+    "_id": "folder125",
+    "name": "Marketing Assets",
+    "path": "/Marketing Assets",
+    "parentId": null,
+    "type": "folder",
+    "order": 0,
+    "tenantId": "tenant-abc",
+    "createdAt": "2025-10-05T14:30:00Z",
+    "updatedAt": "2025-10-05T14:30:00Z"
+  }
 }
 ```
 
@@ -354,41 +354,41 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"currentFolder": {
-			"_id": "folder123",
-			"name": "Product Images",
-			"path": "/Product Images",
-			"parentId": null,
-			"type": "folder",
-			"order": 0
-		},
-		"contents": {
-			"folders": [
-				{
-					"_id": "folder126",
-					"name": "Electronics",
-					"path": "/Product Images/Electronics",
-					"parentId": "folder123",
-					"order": 0
-				}
-			],
-			"files": [
-				{
-					"_id": "img001",
-					"filename": "product1.jpg",
-					"virtualFolderId": "folder123",
-					"url": "/media/images/product1.jpg",
-					"thumbnail": {
-						"url": "/media/thumbnails/product1.jpg",
-						"width": 200,
-						"height": 200
-					}
-				}
-			]
-		}
-	}
+  "success": true,
+  "data": {
+    "currentFolder": {
+      "_id": "folder123",
+      "name": "Product Images",
+      "path": "/Product Images",
+      "parentId": null,
+      "type": "folder",
+      "order": 0
+    },
+    "contents": {
+      "folders": [
+        {
+          "_id": "folder126",
+          "name": "Electronics",
+          "path": "/Product Images/Electronics",
+          "parentId": "folder123",
+          "order": 0
+        }
+      ],
+      "files": [
+        {
+          "_id": "img001",
+          "filename": "product1.jpg",
+          "virtualFolderId": "folder123",
+          "url": "/media/images/product1.jpg",
+          "thumbnail": {
+            "url": "/media/thumbnails/product1.jpg",
+            "width": 200,
+            "height": 200
+          }
+        }
+      ]
+    }
+  }
 }
 ```
 
@@ -417,7 +417,7 @@ Content-Type: application/json
 
 ```json
 {
-	"name": "Updated Folder Name"
+  "name": "Updated Folder Name"
 }
 ```
 
@@ -429,14 +429,14 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"folder": {
-		"_id": "folder125",
-		"name": "Updated Folder Name",
-		"path": "/Updated Folder Name",
-		"parentId": null,
-		"updatedAt": "2025-10-05T14:35:00Z"
-	}
+  "success": true,
+  "folder": {
+    "_id": "folder125",
+    "name": "Updated Folder Name",
+    "path": "/Updated Folder Name",
+    "parentId": null,
+    "updatedAt": "2025-10-05T14:35:00Z"
+  }
 }
 ```
 
@@ -482,7 +482,7 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -525,19 +525,19 @@ Content-Type: application/json
 
 ```json
 {
-	"action": "reorder",
-	"orderUpdates": [
-		{
-			"folderId": "folder123",
-			"order": 0,
-			"parentId": null
-		},
-		{
-			"folderId": "folder124",
-			"order": 1,
-			"parentId": "folder123"
-		}
-	]
+  "action": "reorder",
+  "orderUpdates": [
+    {
+      "folderId": "folder123",
+      "order": 0,
+      "parentId": null
+    },
+    {
+      "folderId": "folder124",
+      "order": 1,
+      "parentId": "folder123"
+    }
+  ]
 }
 ```
 
@@ -557,7 +557,7 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -668,15 +668,15 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"preferences": {
-		"siteName": "My CMS",
-		"siteUrl": "https://cms.example.com",
-		"defaultSystemLanguage": "en",
-		"timezone": "UTC",
-		"dateFormat": "YYYY-MM-DD",
-		"timeFormat": "HH:mm:ss"
-	}
+  "success": true,
+  "preferences": {
+    "siteName": "My CMS",
+    "siteUrl": "https://cms.example.com",
+    "defaultSystemLanguage": "en",
+    "timezone": "UTC",
+    "dateFormat": "YYYY-MM-DD",
+    "timeFormat": "HH:mm:ss"
+  }
 }
 ```
 
@@ -703,10 +703,10 @@ Content-Type: application/json
 
 ```json
 {
-	"preferences": {
-		"siteName": "Updated CMS Name",
-		"defaultSystemLanguage": "de"
-	}
+  "preferences": {
+    "siteName": "Updated CMS Name",
+    "defaultSystemLanguage": "de"
+  }
 }
 ```
 
@@ -718,8 +718,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "System preferences updated successfully"
+  "success": true,
+  "message": "System preferences updated successfully"
 }
 ```
 
@@ -756,21 +756,21 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"widgets": [
-		{
-			"id": "widget-gallery-pro",
-			"name": "Gallery Pro",
-			"description": "Advanced image gallery widget",
-			"version": "2.1.0",
-			"author": "SveltyCMS Team",
-			"category": "media",
-			"price": "free",
-			"downloads": 1523,
-			"rating": 4.8
-		}
-	],
-	"total": 1
+  "success": true,
+  "widgets": [
+    {
+      "id": "widget-gallery-pro",
+      "name": "Gallery Pro",
+      "description": "Advanced image gallery widget",
+      "version": "2.1.0",
+      "author": "SveltyCMS Team",
+      "category": "media",
+      "price": "free",
+      "downloads": 1523,
+      "rating": 4.8
+    }
+  ],
+  "total": 1
 }
 ```
 
@@ -802,15 +802,15 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"debug": {
-		"environment": "production",
-		"nodeVersion": "v20.10.0",
-		"platform": "linux",
-		"uptime": 86400,
-		"database": "mongodb",
-		"cacheEnabled": true
-	}
+  "success": true,
+  "debug": {
+    "environment": "production",
+    "nodeVersion": "v20.10.0",
+    "platform": "linux",
+    "uptime": 86400,
+    "database": "mongodb",
+    "cacheEnabled": true
+  }
 }
 ```
 
@@ -840,14 +840,14 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"settings": {
-		"loaded": true,
-		"source": "database",
-		"groups": ["system", "theme", "security"],
-		"totalSettings": 45,
-		"cached": true
-	}
+  "success": true,
+  "settings": {
+    "loaded": true,
+    "source": "database",
+    "groups": ["system", "theme", "security"],
+    "totalSettings": 45,
+    "cached": true
+  }
 }
 ```
 
@@ -876,7 +876,7 @@ Content-Type: application/json
 
 ```json
 {
-	"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -888,15 +888,15 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"video": {
-		"platform": "youtube",
-		"videoId": "dQw4w9WgXcQ",
-		"title": "Video Title",
-		"thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
-		"duration": 213,
-		"embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ"
-	}
+  "success": true,
+  "video": {
+    "platform": "youtube",
+    "videoId": "dQw4w9WgXcQ",
+    "title": "Video Title",
+    "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    "duration": 213,
+    "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ"
+  }
 }
 ```
 
@@ -925,10 +925,10 @@ await dbAdapter.auth.deleteRole(roleId, tenantId);
 // Uses Nodemailer with SMTP
 
 // Media files queried from multiple collections
-await dbAdapter.crud.findMany('media_images', filter);
-await dbAdapter.crud.findMany('media_documents', filter);
-await dbAdapter.crud.findMany('media_audio', filter);
-await dbAdapter.crud.findMany('media_videos', filter);
+await dbAdapter.crud.findMany("media_images", filter);
+await dbAdapter.crud.findMany("media_documents", filter);
+await dbAdapter.crud.findMany("media_audio", filter);
+await dbAdapter.crud.findMany("media_videos", filter);
 ```
 
 ---
@@ -950,58 +950,58 @@ All endpoints fully support multi-tenancy:
 
 ```javascript
 // Send email
-await fetch('/api/send-mail', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		recipientEmail: 'user@example.com',
-		subject: 'Test Email',
-		templateName: 'welcomeUser',
-		props: { username: 'john' }
-	})
+await fetch("/api/send-mail", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    recipientEmail: "user@example.com",
+    subject: "Test Email",
+    templateName: "welcomeUser",
+    props: { username: "john" },
+  }),
 });
 
 // Create system virtual folder
-await fetch('/api/system-virtual-folder', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		name: 'New Folder',
-		parentId: null
-	})
+await fetch("/api/system-virtual-folder", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "New Folder",
+    parentId: null,
+  }),
 });
 
 // Get folder contents (root level)
-const response = await fetch('/api/system-virtual-folder/root', {
-	credentials: 'include'
+const response = await fetch("/api/system-virtual-folder/root", {
+  credentials: "include",
 });
 const { data } = await response.json();
 console.log(data.contents.folders, data.contents.files);
 
 // Update folder
-await fetch('/api/system-virtual-folder/folder123', {
-	method: 'PATCH',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		name: 'Renamed Folder'
-	})
+await fetch("/api/system-virtual-folder/folder123", {
+  method: "PATCH",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "Renamed Folder",
+  }),
 });
 
 // Reorder folders
-await fetch('/api/system-virtual-folder', {
-	method: 'PATCH',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		action: 'reorder',
-		orderUpdates: [
-			{ folderId: 'folder123', order: 0, parentId: null },
-			{ folderId: 'folder124', order: 1, parentId: 'folder123' }
-		]
-	})
+await fetch("/api/system-virtual-folder", {
+  method: "PATCH",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    action: "reorder",
+    orderUpdates: [
+      { folderId: "folder123", order: 0, parentId: null },
+      { folderId: "folder124", order: 1, parentId: "folder123" },
+    ],
+  }),
 });
 ```
 

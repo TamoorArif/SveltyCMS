@@ -1,17 +1,17 @@
 ---
-path: 'docs/architecture/components/schedule-modal.mdx'
-title: 'schedule-modal Component'
-description: 'Documentation for the scheduling modal that allows future-dated publish/unpublish/delete actions.'
+path: "docs/architecture/components/schedule-modal.mdx"
+title: "schedule-modal Component"
+description: "Documentation for the scheduling modal that allows future-dated publish/unpublish/delete actions."
 order: 4
-icon: 'mdi:calendar-clock'
-author: 'admin'
-created: '2026-01-04'
-updated: '2026-01-04'
+icon: "mdi:calendar-clock"
+author: "admin"
+created: "2026-01-04"
+updated: "2026-01-04"
 tags:
-  - 'components'
-  - 'scheduling'
-  - 'modal'
-  - 'publish'
+  - "components"
+  - "scheduling"
+  - "modal"
+  - "publish"
 ---
 
 # schedule-modal Component
@@ -90,9 +90,9 @@ sequenceDiagram
 
 ```typescript
 interface ScheduleResponse {
-	confirmed: boolean;
-	date: Date;
-	action: 'publish' | 'unpublish' | 'delete';
+  confirmed: boolean;
+  date: Date;
+  action: "publish" | "unpublish" | "delete";
 }
 ```
 
@@ -105,10 +105,10 @@ The modal is opened via `modalState` and returns a response object:
 ```typescript
 // Opening the modal
 modalState.open({
-	component: schedule - modal,
-	props: {
-		meta: { initialAction: 'publish' }
-	}
+  component: schedule - modal,
+  props: {
+    meta: { initialAction: "publish" },
+  },
 });
 
 // Handling response (via modalState callback)

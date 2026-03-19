@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/dashboard-api.mdx'
-title: 'Dashboard & Monitoring API'
-description: 'Complete API reference for dashboard metrics, system monitoring, and analytics in SveltyCMS.'
+path: "docs/api/dashboard-api.mdx"
+title: "Dashboard & Monitoring API"
+description: "Complete API reference for dashboard metrics, system monitoring, and analytics in SveltyCMS."
 order: 8
-icon: 'mdi:view-dashboard'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:view-dashboard"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'dashboard'
-  - 'monitoring'
-  - 'metrics'
-  - 'analytics'
+  - "api"
+  - "dashboard"
+  - "monitoring"
+  - "metrics"
+  - "analytics"
 ---
 
 # Dashboard & Monitoring API
@@ -65,13 +65,13 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"timestamp": "2025-10-05T14:30:00Z",
-	"requestCount": 1523,
-	"avgResponseTime": 45.3,
-	"errorRate": 0.02,
-	"cacheHitRate": 0.87,
-	"activeConnections": 12,
-	"uptime": 3600
+  "timestamp": "2025-10-05T14:30:00Z",
+  "requestCount": 1523,
+  "avgResponseTime": 45.3,
+  "errorRate": 0.02,
+  "cacheHitRate": 0.87,
+  "activeConnections": 12,
+  "uptime": 3600
 }
 ```
 
@@ -79,23 +79,23 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"timestamp": "2025-10-05T14:30:00Z",
-	"requestCount": 1523,
-	"avgResponseTime": 45.3,
-	"errorRate": 0.02,
-	"cacheHitRate": 0.87,
-	"activeConnections": 12,
-	"uptime": 3600,
-	"system": {
-		"memory": {
-			"used": 256,
-			"total": 512,
-			"external": 32,
-			"rss": 384
-		},
-		"uptime": 86400,
-		"nodeVersion": "v20.10.0"
-	}
+  "timestamp": "2025-10-05T14:30:00Z",
+  "requestCount": 1523,
+  "avgResponseTime": 45.3,
+  "errorRate": 0.02,
+  "cacheHitRate": 0.87,
+  "activeConnections": 12,
+  "uptime": 3600,
+  "system": {
+    "memory": {
+      "used": 256,
+      "total": 512,
+      "external": 32,
+      "rss": 384
+    },
+    "uptime": 86400,
+    "nodeVersion": "v20.10.0"
+  }
 }
 ```
 
@@ -136,33 +136,33 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"system": {
-		"platform": "linux",
-		"arch": "x64",
-		"nodeVersion": "v20.10.0",
-		"hostname": "sveltycms-server",
-		"cpus": 4,
-		"totalMemory": 8192,
-		"freeMemory": 4096,
-		"uptime": 864000
-	},
-	"application": {
-		"version": "1.0.0",
-		"environment": "production",
-		"database": "mongodb",
-		"cacheEnabled": true,
-		"multiTenant": true
-	},
-	"runtime": {
-		"memoryUsage": {
-			"heapUsed": 256,
-			"heapTotal": 512,
-			"external": 32,
-			"rss": 384
-		},
-		"processUptime": 86400
-	}
+  "success": true,
+  "system": {
+    "platform": "linux",
+    "arch": "x64",
+    "nodeVersion": "v20.10.0",
+    "hostname": "sveltycms-server",
+    "cpus": 4,
+    "totalMemory": 8192,
+    "freeMemory": 4096,
+    "uptime": 864000
+  },
+  "application": {
+    "version": "1.0.0",
+    "environment": "production",
+    "database": "mongodb",
+    "cacheEnabled": true,
+    "multiTenant": true
+  },
+  "runtime": {
+    "memoryUsage": {
+      "heapUsed": 256,
+      "heapTotal": 512,
+      "external": 32,
+      "rss": 384
+    },
+    "processUptime": 86400
+  }
 }
 ```
 
@@ -192,28 +192,28 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"cache": {
-		"enabled": true,
-		"size": 1024,
-		"maxSize": 10240,
-		"hitRate": 0.87,
-		"missRate": 0.13,
-		"hits": 8756,
-		"misses": 1244,
-		"evictions": 45,
-		"avgLookupTime": 0.5
-	},
-	"keys": {
-		"total": 342,
-		"byType": {
-			"settings": 25,
-			"collections": 150,
-			"media": 100,
-			"users": 67
-		}
-	},
-	"timestamp": "2025-10-05T14:30:00Z"
+  "success": true,
+  "cache": {
+    "enabled": true,
+    "size": 1024,
+    "maxSize": 10240,
+    "hitRate": 0.87,
+    "missRate": 0.13,
+    "hits": 8756,
+    "misses": 1244,
+    "evictions": 45,
+    "avgLookupTime": 0.5
+  },
+  "keys": {
+    "total": 342,
+    "byType": {
+      "settings": 25,
+      "collections": 150,
+      "media": 100,
+      "users": 67
+    }
+  },
+  "timestamp": "2025-10-05T14:30:00Z"
 }
 ```
 
@@ -249,26 +249,26 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"logs": [
-		{
-			"timestamp": "2025-10-05T14:30:00Z",
-			"level": "info",
-			"message": "User logged in successfully",
-			"context": {
-				"userId": "user123",
-				"ip": "192.168.1.1"
-			}
-		},
-		{
-			"timestamp": "2025-10-05T14:29:45Z",
-			"level": "error",
-			"message": "Failed to connect to database",
-			"error": "Connection timeout"
-		}
-	],
-	"total": 2,
-	"limit": 100
+  "success": true,
+  "logs": [
+    {
+      "timestamp": "2025-10-05T14:30:00Z",
+      "level": "info",
+      "message": "User logged in successfully",
+      "context": {
+        "userId": "user123",
+        "ip": "192.168.1.1"
+      }
+    },
+    {
+      "timestamp": "2025-10-05T14:29:45Z",
+      "level": "error",
+      "message": "Failed to connect to database",
+      "error": "Connection timeout"
+    }
+  ],
+  "total": 2,
+  "limit": 100
 }
 ```
 
@@ -302,20 +302,20 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"onlineUsers": [
-		{
-			"userId": "user123",
-			"username": "john_doe",
-			"email": "john@example.com",
-			"lastActivity": "2025-10-05T14:30:00Z",
-			"sessionStart": "2025-10-05T14:00:00Z",
-			"ipAddress": "192.168.1.1",
-			"userAgent": "Mozilla/5.0..."
-		}
-	],
-	"count": 1,
-	"tenantId": "tenant-abc"
+  "success": true,
+  "onlineUsers": [
+    {
+      "userId": "user123",
+      "username": "john_doe",
+      "email": "john@example.com",
+      "lastActivity": "2025-10-05T14:30:00Z",
+      "sessionStart": "2025-10-05T14:00:00Z",
+      "ipAddress": "192.168.1.1",
+      "userAgent": "Mozilla/5.0..."
+    }
+  ],
+  "count": 1,
+  "tenantId": "tenant-abc"
 }
 ```
 
@@ -352,28 +352,28 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"content": [
-		{
-			"_id": "entry123",
-			"collection": "posts",
-			"title": "New Blog Post",
-			"author": "user123",
-			"status": "published",
-			"createdAt": "2025-10-05T14:25:00Z",
-			"updatedAt": "2025-10-05T14:30:00Z"
-		},
-		{
-			"_id": "entry124",
-			"collection": "pages",
-			"title": "About Us",
-			"author": "user456",
-			"status": "draft",
-			"createdAt": "2025-10-05T14:20:00Z",
-			"updatedAt": "2025-10-05T14:22:00Z"
-		}
-	],
-	"count": 2
+  "success": true,
+  "content": [
+    {
+      "_id": "entry123",
+      "collection": "posts",
+      "title": "New Blog Post",
+      "author": "user123",
+      "status": "published",
+      "createdAt": "2025-10-05T14:25:00Z",
+      "updatedAt": "2025-10-05T14:30:00Z"
+    },
+    {
+      "_id": "entry124",
+      "collection": "pages",
+      "title": "About Us",
+      "author": "user456",
+      "status": "draft",
+      "createdAt": "2025-10-05T14:20:00Z",
+      "updatedAt": "2025-10-05T14:22:00Z"
+    }
+  ],
+  "count": 2
 }
 ```
 
@@ -407,28 +407,28 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"media": [
-		{
-			"_id": "file123",
-			"filename": "image.jpg",
-			"mimeType": "image/jpeg",
-			"size": 245760,
-			"uploadedBy": "user123",
-			"uploadedAt": "2025-10-05T14:28:00Z",
-			"url": "/uploads/image.jpg"
-		},
-		{
-			"_id": "file124",
-			"filename": "video.mp4",
-			"mimeType": "video/mp4",
-			"size": 5242880,
-			"uploadedBy": "user456",
-			"uploadedAt": "2025-10-05T14:15:00Z",
-			"url": "/uploads/video.mp4"
-		}
-	],
-	"count": 2
+  "success": true,
+  "media": [
+    {
+      "_id": "file123",
+      "filename": "image.jpg",
+      "mimeType": "image/jpeg",
+      "size": 245760,
+      "uploadedBy": "user123",
+      "uploadedAt": "2025-10-05T14:28:00Z",
+      "url": "/uploads/image.jpg"
+    },
+    {
+      "_id": "file124",
+      "filename": "video.mp4",
+      "mimeType": "video/mp4",
+      "size": 5242880,
+      "uploadedBy": "user456",
+      "uploadedAt": "2025-10-05T14:15:00Z",
+      "url": "/uploads/video.mp4"
+    }
+  ],
+  "count": 2
 }
 ```
 
@@ -462,20 +462,20 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"messages": [
-		{
-			"_id": "msg123",
-			"title": "Scheduled Maintenance",
-			"message": "System will be down for maintenance on Oct 10",
-			"type": "warning",
-			"priority": "high",
-			"status": "active",
-			"createdAt": "2025-10-05T10:00:00Z",
-			"expiresAt": "2025-10-10T00:00:00Z"
-		}
-	],
-	"count": 1
+  "success": true,
+  "messages": [
+    {
+      "_id": "msg123",
+      "title": "Scheduled Maintenance",
+      "message": "System will be down for maintenance on Oct 10",
+      "type": "warning",
+      "priority": "high",
+      "status": "active",
+      "createdAt": "2025-10-05T10:00:00Z",
+      "expiresAt": "2025-10-10T00:00:00Z"
+    }
+  ],
+  "count": 1
 }
 ```
 
@@ -533,17 +533,17 @@ GET /api/system-preferences?key=dashboard.layout.default
 
 ```json
 {
-	"id": "default",
-	"name": "Default",
-	"preferences": [
-		{
-			"id": "widget-abc-123",
-			"component": "cpu-widget",
-			"label": "CPU Usage",
-			"size": { "w": 1, "h": 1 },
-			"order": 0
-		}
-	]
+  "id": "default",
+  "name": "Default",
+  "preferences": [
+    {
+      "id": "widget-abc-123",
+      "component": "cpu-widget",
+      "label": "CPU Usage",
+      "size": { "w": 1, "h": 1 },
+      "order": 0
+    }
+  ]
 }
 ```
 
@@ -595,8 +595,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "Preference 'dashboard.layout.default' saved."
+  "success": true,
+  "message": "Preference 'dashboard.layout.default' saved."
 }
 ```
 
@@ -622,8 +622,8 @@ DELETE /api/system-preferences?key=dashboard.widget.cpu.state
 
 ```json
 {
-	"success": true,
-	"message": "Preference 'dashboard.widget.cpu.state' deleted."
+  "success": true,
+  "message": "Preference 'dashboard.widget.cpu.state' deleted."
 }
 ```
 
@@ -639,12 +639,12 @@ const metrics = getHealthMetrics();
 
 // System info from Node.js runtime
 const systemInfo = {
-	platform: process.platform,
-	memory: process.memoryUsage()
+  platform: process.platform,
+  memory: process.memoryUsage(),
 };
 
 // Database queries use adapter interface
-await dbAdapter.crud.findMany('content', filter, { limit: 5, sort: { createdAt: -1 } });
+await dbAdapter.crud.findMany("content", filter, { limit: 5, sort: { createdAt: -1 } });
 ```
 
 **No direct database queries** - all data access through adapters.
@@ -674,11 +674,11 @@ Dashboard can be enhanced with real-time updates:
 
 ```javascript
 // WebSocket connection for real-time metrics
-const ws = new WebSocket('wss://cms.example.com/ws/dashboard');
+const ws = new WebSocket("wss://cms.example.com/ws/dashboard");
 
 ws.onmessage = (event) => {
-	const metrics = JSON.parse(event.data);
-	updateDashboard(metrics);
+  const metrics = JSON.parse(event.data);
+  updateDashboard(metrics);
 };
 ```
 
@@ -710,18 +710,18 @@ Dashboard implements aggressive client-side optimization:
 
 ```typescript
 // Lazy loading reduces initial bundle by 250KB
-const widgetModules = import.meta.glob('./widgets/*.svelte');
+const widgetModules = import.meta.glob("./widgets/*.svelte");
 
 // Intersection Observer for on-demand loading
 const observer = new IntersectionObserver(
-	(entries) => {
-		entries.forEach(async (entry) => {
-			if (entry.isIntersecting) {
-				await loadWidget(entry.target.dataset.widget);
-			}
-		});
-	},
-	{ rootMargin: '100px' }
+  (entries) => {
+    entries.forEach(async (entry) => {
+      if (entry.isIntersecting) {
+        await loadWidget(entry.target.dataset.widget);
+      }
+    });
+  },
+  { rootMargin: "100px" },
 );
 ```
 
@@ -739,20 +739,20 @@ All dashboard queries use optimized patterns:
 ```typescript
 // Indexed queries for fast retrieval
 await dbAdapter.crud.findMany(
-	'auditLogs',
-	{ timestamp: { $gte: sevenDaysAgo } },
-	{
-		limit: 100,
-		sort: { timestamp: -1 },
-		projection: { sensitiveData: 0 } // Exclude sensitive fields
-	}
+  "auditLogs",
+  { timestamp: { $gte: sevenDaysAgo } },
+  {
+    limit: 100,
+    sort: { timestamp: -1 },
+    projection: { sensitiveData: 0 }, // Exclude sensitive fields
+  },
 );
 
 // Aggregation pipelines for statistics
-const stats = await dbAdapter.crud.aggregate('auditLogs', [
-	{ $match: { timestamp: { $gte: sevenDaysAgo } } },
-	{ $group: { _id: '$eventType', count: { $sum: 1 } } },
-	{ $sort: { count: -1 } }
+const stats = await dbAdapter.crud.aggregate("auditLogs", [
+  { $match: { timestamp: { $gte: sevenDaysAgo } } },
+  { $group: { _id: "$eventType", count: { $sum: 1 } } },
+  { $sort: { count: -1 } },
 ]);
 ```
 
@@ -781,26 +781,26 @@ const stats = await dbAdapter.crud.aggregate('auditLogs', [
 
 ```javascript
 // Get system metrics
-const metricsResponse = await fetch('/api/dashboard/metrics?detailed=true', {
-	credentials: 'include'
+const metricsResponse = await fetch("/api/dashboard/metrics?detailed=true", {
+  credentials: "include",
 });
 const metrics = await metricsResponse.json();
-console.log('Uptime:', metrics.system.uptime);
+console.log("Uptime:", metrics.system.uptime);
 
 // Get online users
-const usersResponse = await fetch('/api/dashboard/online-user', {
-	credentials: 'include'
+const usersResponse = await fetch("/api/dashboard/online-user", {
+  credentials: "include",
 });
 const { onlineUsers, count } = await usersResponse.json();
 console.log(`${count} users online`);
 
 // Get recent content
-const contentResponse = await fetch('/api/dashboard/last5-content', {
-	credentials: 'include'
+const contentResponse = await fetch("/api/dashboard/last5-content", {
+  credentials: "include",
 });
 const { content } = await contentResponse.json();
 content.forEach((entry) => {
-	console.log(`${entry.title} - ${entry.collection}`);
+  console.log(`${entry.title} - ${entry.collection}`);
 });
 ```
 
@@ -826,10 +826,10 @@ Dashboard metrics can be exported for Prometheus:
 ```yaml
 # prometheus.yml
 scrape_configs:
-  - job_name: 'sveltycms'
-    metrics_path: '/api/dashboard/metrics'
+  - job_name: "sveltycms"
+    metrics_path: "/api/dashboard/metrics"
     static_configs:
-      - targets: ['cms.example.com']
+      - targets: ["cms.example.com"]
 ```
 
 ---

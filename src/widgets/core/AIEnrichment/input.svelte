@@ -63,7 +63,7 @@ async function runEnrichment() {
 		const data = await response.json();
 
 		if (field.translated) {
-			value = { ...(value || {}), [contentLanguage]: data.result };
+			value = { ...value, [contentLanguage]: data.result };
 		} else {
 			value = data.result;
 		}

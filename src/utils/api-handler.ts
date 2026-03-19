@@ -4,8 +4,8 @@
  * Abstraction layer that eliminates try/catch blocks in individual routes.
  */
 
-import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
-import { handleApiError } from './error-handling';
+import type { RequestEvent, RequestHandler } from "@sveltejs/kit";
+import { handleApiError } from "./error-handling";
 
 type ApiHandlerCallback = (event: RequestEvent) => Promise<Response> | Response;
 
@@ -22,11 +22,11 @@ type ApiHandlerCallback = (event: RequestEvent) => Promise<Response> | Response;
  * @returns A standard SvelteKit RequestHandler
  */
 export const apiHandler = (handler: ApiHandlerCallback): RequestHandler => {
-	return async (event) => {
-		try {
-			return await handler(event);
-		} catch (err) {
-			return handleApiError(err, event);
-		}
-	};
+  return async (event) => {
+    try {
+      return await handler(event);
+    } catch (err) {
+      return handleApiError(err, event);
+    }
+  };
 };

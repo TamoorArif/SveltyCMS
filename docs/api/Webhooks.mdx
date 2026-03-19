@@ -1,16 +1,16 @@
 ---
-path: 'docs/api/Webhooks.mdx'
-title: 'HTTP Webhooks Guide'
-description: 'How to configure, secure, and use HTTP webhooks for real-time CMS events with Multi-Tenancy 2.0 support.'
+path: "docs/api/Webhooks.mdx"
+title: "HTTP Webhooks Guide"
+description: "How to configure, secure, and use HTTP webhooks for real-time CMS events with Multi-Tenancy 2.0 support."
 order: 15
-icon: 'mdi:webhook'
-author: 'admin'
-created: '2026-02-03'
-updated: '2026-03-05'
+icon: "mdi:webhook"
+author: "admin"
+created: "2026-02-03"
+updated: "2026-03-05"
 tags:
-  - 'api'
-  - 'webhooks'
-  - 'multi-tenancy'
+  - "api"
+  - "webhooks"
+  - "multi-tenancy"
 ---
 
 # HTTP Webhooks Guide
@@ -58,12 +58,13 @@ Every request includes an `X-SveltyCMS-Signature` header containing a **SHA-256 
 **Verification Example (Node.js):**
 
 ```javascript
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 function verifyWebhook(payload, signature, secret) {
-	const expectedSignature = 'sha256=' + crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const expectedSignature =
+    "sha256=" + crypto.createHmac("sha256", secret).update(payload).digest("hex");
 
-	return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 }
 ```
 
@@ -81,16 +82,18 @@ function verifyWebhook(payload, signature, secret) {
 SveltyCMS utilizes a **Job-Queue-Driven** delivery system to ensure webhooks are reliable even if your endpoint is temporarily down.
 
 ### Status-Aware Retries
+
 The system intelligently distinguishes between transient and permanent failures:
 
-| Status Code | Action | Strategy |
-| :--- | :--- | :--- |
-| **2xx** | Success | Mark as delivered. |
-| **5xx, 429, 408** | Retry | Exponential backoff (up to 5 attempts). |
-| **4xx (Other)** | DLQ | Mark as **FAILED_PERMANENTLY** (Poison Pill). |
-| **Network Error** | Retry | Exponential backoff. |
+| Status Code       | Action  | Strategy                                      |
+| :---------------- | :------ | :-------------------------------------------- |
+| **2xx**           | Success | Mark as delivered.                            |
+| **5xx, 429, 408** | Retry   | Exponential backoff (up to 5 attempts).       |
+| **4xx (Other)**   | DLQ     | Mark as **FAILED_PERMANENTLY** (Poison Pill). |
+| **Network Error** | Retry   | Exponential backoff.                          |
 
 ### Dead-Letter Queue (DLQ)
+
 Webhooks that fail permanently or exhaust all retry attempts are moved to the DLQ. Administrators can monitor these via `GET /api/webhooks/logs`.
 
 ---
@@ -124,19 +127,19 @@ The payload sent is a JSON object with the following schema:
 
 ```json
 {
-	"event": "entry:publish",
-	"timestamp": "2026-02-03T21:44:55.123Z",
-	"webhookId": "uuid-of-webhook",
-	"deliveryId": "uuid-for-this-delivery",
-	"payload": {
-		"collection": "Posts",
-		"id": "64f1...",
-		"data": {
-			"title": "Hello World",
-			"status": "publish",
-			"...": "..."
-		}
-	}
+  "event": "entry:publish",
+  "timestamp": "2026-02-03T21:44:55.123Z",
+  "webhookId": "uuid-of-webhook",
+  "deliveryId": "uuid-for-this-delivery",
+  "payload": {
+    "collection": "Posts",
+    "id": "64f1...",
+    "data": {
+      "title": "Hello World",
+      "status": "publish",
+      "...": "..."
+    }
+  }
 }
 ```
 

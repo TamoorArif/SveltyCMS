@@ -1,19 +1,19 @@
 ---
-path: 'docs/api/graphql-websocket-subscriptions.mdx'
-title: 'GraphQL WebSocket Subscriptions'
-description: 'Real-time GraphQL subscriptions with secure WebSocket authentication and testing guide.'
+path: "docs/api/graphql-websocket-subscriptions.mdx"
+title: "GraphQL WebSocket Subscriptions"
+description: "Real-time GraphQL subscriptions with secure WebSocket authentication and testing guide."
 order: 8
-icon: 'mdi:websocket'
-author: 'admin'
-created: '2025-10-29'
-updated: '2025-11-08'
+icon: "mdi:websocket"
+author: "admin"
+created: "2025-10-29"
+updated: "2025-11-08"
 tags:
-  - 'graphql'
-  - 'websocket'
-  - 'subscriptions'
-  - 'real-time'
-  - 'authentication'
-  - 'testing'
+  - "graphql"
+  - "websocket"
+  - "subscriptions"
+  - "real-time"
+  - "authentication"
+  - "testing"
 ---
 
 # GraphQL WebSocket Subscriptions
@@ -103,19 +103,19 @@ bun add graphql-ws graphql
 **Best for:** Server-side applications or when you have direct access to the session ID.
 
 ```typescript
-import { createClient } from 'graphql-ws';
+import { createClient } from "graphql-ws";
 
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		sessionId: 'your-session-id-here'
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    sessionId: "your-session-id-here",
+  },
 });
 
 // Subscribe to posts
 const unsubscribe = client.subscribe(
-	{
-		query: `
+  {
+    query: `
       subscription {
         postAdded {
           _id
@@ -123,19 +123,19 @@ const unsubscribe = client.subscribe(
           content
         }
       }
-    `
-	},
-	{
-		next: (data) => {
-			console.log('New post:', data);
-		},
-		error: (error) => {
-			console.error('Subscription error:', error);
-		},
-		complete: () => {
-			console.log('Subscription complete');
-		}
-	}
+    `,
+  },
+  {
+    next: (data) => {
+      console.log("New post:", data);
+    },
+    error: (error) => {
+      console.error("Subscription error:", error);
+    },
+    complete: () => {
+      console.log("Subscription complete");
+    },
+  },
 );
 
 // Cleanup when done
@@ -149,14 +149,14 @@ const unsubscribe = client.subscribe(
 **Best for:** Browser clients that already have session cookies (most web applications).
 
 ```typescript
-import { createClient } from 'graphql-ws';
+import { createClient } from "graphql-ws";
 
 // Extract cookies from document.cookie
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		cookie: document.cookie
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    cookie: document.cookie,
+  },
 });
 
 // Use same subscription as Method 1
@@ -169,13 +169,13 @@ const client = createClient({
 **Best for:** API integrations and third-party applications using access tokens.
 
 ```typescript
-import { createClient } from 'graphql-ws';
+import { createClient } from "graphql-ws";
 
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		authorization: 'Bearer your-api-token-here'
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    authorization: "Bearer your-api-token-here",
+  },
 });
 
 // Use same subscription as Method 1
@@ -283,15 +283,15 @@ The HTTP GraphQL endpoint includes GraphiQL with built-in WebSocket support:
 
 ```typescript
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		sessionId: 'your-session-id'
-	},
-	on: {
-		connected: () => console.log('Connected'),
-		closed: () => console.log('Disconnected'),
-		error: (error) => console.error('Connection error:', error)
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    sessionId: "your-session-id",
+  },
+  on: {
+    connected: () => console.log("Connected"),
+    closed: () => console.log("Disconnected"),
+    error: (error) => console.error("Connection error:", error),
+  },
 });
 ```
 
@@ -306,10 +306,10 @@ For production, configure the WebSocket server to use secure connections:
 ```typescript
 // In src/routes/api/graphql/+server.ts
 const wsServer = new WebSocketServer({
-	port: 3001,
-	path: '/api/graphql'
-	// Add SSL configuration for production
-	// server: httpsServer
+  port: 3001,
+  path: "/api/graphql",
+  // Add SSL configuration for production
+  // server: httpsServer
 });
 ```
 
@@ -317,10 +317,10 @@ const wsServer = new WebSocketServer({
 
 ```typescript
 const client = createClient({
-	url: 'wss://your-domain.com:3001/api/graphql',
-	connectionParams: {
-		cookie: document.cookie
-	}
+  url: "wss://your-domain.com:3001/api/graphql",
+  connectionParams: {
+    cookie: document.cookie,
+  },
 });
 ```
 
@@ -362,22 +362,22 @@ wscat -c ws://localhost:3001/api/graphql -s graphql-ws
 
 ```javascript
 // test-websocket.js
-import { createClient } from 'graphql-ws';
-import WebSocket from 'ws';
+import { createClient } from "graphql-ws";
+import WebSocket from "ws";
 
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	webSocketImpl: WebSocket,
-	connectionParams: {
-		sessionId: 'your-session-id-here'
-	}
+  url: "ws://localhost:3001/api/graphql",
+  webSocketImpl: WebSocket,
+  connectionParams: {
+    sessionId: "your-session-id-here",
+  },
 });
 
-console.log('Connecting to WebSocket server...');
+console.log("Connecting to WebSocket server...");
 
 const unsubscribe = client.subscribe(
-	{
-		query: `
+  {
+    query: `
       subscription {
         postAdded {
           _id
@@ -386,30 +386,30 @@ const unsubscribe = client.subscribe(
           createdAt
         }
       }
-    `
-	},
-	{
-		next: (data) => {
-			console.log('✅ Received update:', JSON.stringify(data, null, 2));
-		},
-		error: (error) => {
-			console.error('❌ Subscription error:', error);
-		},
-		complete: () => {
-			console.log('✅ Subscription complete');
-		}
-	}
+    `,
+  },
+  {
+    next: (data) => {
+      console.log("✅ Received update:", JSON.stringify(data, null, 2));
+    },
+    error: (error) => {
+      console.error("❌ Subscription error:", error);
+    },
+    complete: () => {
+      console.log("✅ Subscription complete");
+    },
+  },
 );
 
 // Keep the script running
-console.log('Waiting for events... (Press Ctrl+C to exit)');
+console.log("Waiting for events... (Press Ctrl+C to exit)");
 
 // Cleanup on exit
-process.on('SIGINT', () => {
-	console.log('\nCleaning up...');
-	unsubscribe();
-	client.dispose();
-	process.exit(0);
+process.on("SIGINT", () => {
+  console.log("\nCleaning up...");
+  unsubscribe();
+  client.dispose();
+  process.exit(0);
 });
 ```
 
@@ -425,67 +425,67 @@ Test WebSocket subscriptions in your test suite:
 
 ```typescript
 // tests/bun/api/graphql-subscriptions.test.ts
-import { describe, it, expect } from 'bun:test';
-import { createClient } from 'graphql-ws';
-import WebSocket from 'ws';
+import { describe, it, expect } from "bun:test";
+import { createClient } from "graphql-ws";
+import WebSocket from "ws";
 
-describe('GraphQL WebSocket Subscriptions', () => {
-	it('should connect with session authentication', async () => {
-		const client = createClient({
-			url: 'ws://localhost:3001/api/graphql',
-			webSocketImpl: WebSocket,
-			connectionParams: {
-				sessionId: 'test-session-id'
-			}
-		});
+describe("GraphQL WebSocket Subscriptions", () => {
+  it("should connect with session authentication", async () => {
+    const client = createClient({
+      url: "ws://localhost:3001/api/graphql",
+      webSocketImpl: WebSocket,
+      connectionParams: {
+        sessionId: "test-session-id",
+      },
+    });
 
-		let connected = false;
+    let connected = false;
 
-		client.on('connected', () => {
-			connected = true;
-		});
+    client.on("connected", () => {
+      connected = true;
+    });
 
-		// Wait for connection
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Wait for connection
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-		expect(connected).toBe(true);
+    expect(connected).toBe(true);
 
-		client.dispose();
-	});
+    client.dispose();
+  });
 
-	it('should receive subscription updates', async () => {
-		const client = createClient({
-			url: 'ws://localhost:3001/api/graphql',
-			webSocketImpl: WebSocket,
-			connectionParams: {
-				cookie: 'session=test-cookie'
-			}
-		});
+  it("should receive subscription updates", async () => {
+    const client = createClient({
+      url: "ws://localhost:3001/api/graphql",
+      webSocketImpl: WebSocket,
+      connectionParams: {
+        cookie: "session=test-cookie",
+      },
+    });
 
-		const updates = [];
+    const updates = [];
 
-		const unsubscribe = client.subscribe(
-			{
-				query: `subscription { postAdded { _id title } }`
-			},
-			{
-				next: (data) => {
-					updates.push(data);
-				}
-			}
-		);
+    const unsubscribe = client.subscribe(
+      {
+        query: `subscription { postAdded { _id title } }`,
+      },
+      {
+        next: (data) => {
+          updates.push(data);
+        },
+      },
+    );
 
-		// Trigger a mutation that publishes to postAdded
-		// ... create a post ...
+    // Trigger a mutation that publishes to postAdded
+    // ... create a post ...
 
-		// Wait for update
-		await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait for update
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-		expect(updates.length).toBeGreaterThan(0);
+    expect(updates.length).toBeGreaterThan(0);
 
-		unsubscribe();
-		client.dispose();
-	});
+    unsubscribe();
+    client.dispose();
+  });
 });
 ```
 
@@ -495,10 +495,10 @@ describe('GraphQL WebSocket Subscriptions', () => {
 
 ```typescript
 const sessionClient = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		sessionId: await getSessionId()
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    sessionId: await getSessionId(),
+  },
 });
 ```
 
@@ -506,10 +506,10 @@ const sessionClient = createClient({
 
 ```typescript
 const cookieClient = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		cookie: `session=${sessionCookie}`
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    cookie: `session=${sessionCookie}`,
+  },
 });
 ```
 
@@ -517,10 +517,10 @@ const cookieClient = createClient({
 
 ```typescript
 const tokenClient = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		authorization: `Bearer ${apiToken}`
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    authorization: `Bearer ${apiToken}`,
+  },
 });
 ```
 
@@ -530,18 +530,18 @@ const tokenClient = createClient({
 
 ```typescript
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		sessionId: 'your-session-id'
-	},
-	on: {
-		connected: () => console.log('✅ Connected'),
-		closed: (event) => console.log('❌ Closed:', event),
-		error: (error) => console.error('❌ Error:', error),
-		connecting: () => console.log('⏳ Connecting...'),
-		ping: () => console.log('🏓 Ping'),
-		pong: () => console.log('🏓 Pong')
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    sessionId: "your-session-id",
+  },
+  on: {
+    connected: () => console.log("✅ Connected"),
+    closed: (event) => console.log("❌ Closed:", event),
+    error: (error) => console.error("❌ Error:", error),
+    connecting: () => console.log("⏳ Connecting..."),
+    ping: () => console.log("🏓 Ping"),
+    pong: () => console.log("🏓 Pong"),
+  },
 });
 ```
 
@@ -565,15 +565,15 @@ tail -f logs/app.log | grep WebSocket
 const startTime = Date.now();
 
 client.subscribe(
-	{
-		query: `subscription { postAdded { _id } }`
-	},
-	{
-		next: (data) => {
-			const latency = Date.now() - startTime;
-			console.log(`Latency: ${latency}ms`);
-		}
-	}
+  {
+    query: `subscription { postAdded { _id } }`,
+  },
+  {
+    next: (data) => {
+      const latency = Date.now() - startTime;
+      console.log(`Latency: ${latency}ms`);
+    },
+  },
 );
 ```
 
@@ -584,14 +584,14 @@ client.subscribe(
 const clients = [];
 
 for (let i = 0; i < 100; i++) {
-	const client = createClient({
-		url: 'ws://localhost:3001/api/graphql',
-		connectionParams: {
-			sessionId: `test-session-${i}`
-		}
-	});
+  const client = createClient({
+    url: "ws://localhost:3001/api/graphql",
+    connectionParams: {
+      sessionId: `test-session-${i}`,
+    },
+  });
 
-	clients.push(client);
+  clients.push(client);
 }
 
 // Monitor memory and CPU usage
@@ -622,7 +622,7 @@ WebSocket: Authentication failed - no valid credentials provided
 ```typescript
 // Check session is valid
 connectionParams: {
-	sessionId: 'valid-session-id'; // Must exist in database
+  sessionId: "valid-session-id"; // Must exist in database
 }
 ```
 
@@ -632,7 +632,7 @@ connectionParams: {
 
 ```typescript
 // In your mutation resolver
-await pubSub.publish('postAdded', newPost);
+await pubSub.publish("postAdded", newPost);
 ```
 
 **4. Port Already in Use**
@@ -664,23 +664,23 @@ kill -9 <PID>
 ```typescript
 // WebSocket server initialization
 const wsServer = new WebSocketServer({
-	port: 3001,
-	path: '/api/graphql'
+  port: 3001,
+  path: "/api/graphql",
 });
 
 // GraphQL WS integration
 useServer(
-	{
-		schema,
-		context: async (ctx) => {
-			// Extract auth from connection params
-			const params = ctx.connectionParams;
+  {
+    schema,
+    context: async (ctx) => {
+      // Extract auth from connection params
+      const params = ctx.connectionParams;
 
-			// Validate session/token/cookie
-			// Return { user, tenantId, pubSub }
-		}
-	},
-	wsServer
+      // Validate session/token/cookie
+      // Return { user, tenantId, pubSub }
+    },
+  },
+  wsServer,
 );
 ```
 
@@ -699,7 +699,7 @@ useServer(
 
 ```graphql
 type Subscription {
-	postAdded: Post
+  postAdded: Post
 }
 ```
 
@@ -707,12 +707,12 @@ type Subscription {
 
 ```graphql
 type Subscription {
-	postAdded: Post
-	postUpdated: Post
-	postDeleted: ID
-	userOnline: User
-	mediaUploaded: Media
-	commentAdded: Comment
+  postAdded: Post
+  postUpdated: Post
+  postDeleted: ID
+  userOnline: User
+  mediaUploaded: Media
+  commentAdded: Comment
 }
 ```
 
@@ -756,21 +756,21 @@ examples/
 **Quick Start:**
 
 ```typescript
-import { createClient } from 'graphql-ws';
+import { createClient } from "graphql-ws";
 
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		cookie: document.cookie
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    cookie: document.cookie,
+  },
 });
 
 client.subscribe(
-	{ query: 'subscription { postAdded { _id title } }' },
-	{
-		next: (data) => console.log('Update:', data),
-		error: (err) => console.error('Error:', err)
-	}
+  { query: "subscription { postAdded { _id title } }" },
+  {
+    next: (data) => console.log("Update:", data),
+    error: (err) => console.error("Error:", err),
+  },
 );
 ```
 

@@ -356,7 +356,7 @@ export interface TreeNode {
 		}
 
 		const related = event?.relatedTarget as Node | null;
-		if (!(related && (event?.currentTarget as Node).contains(related))) {
+		if (!(related && event?.currentTarget && (event.currentTarget as Node).contains(related))) {
 			dragOverNode = null;
 			dropPosition = null;
 		}

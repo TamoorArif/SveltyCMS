@@ -63,29 +63,29 @@ graph TB
 
 ```typescript
 // src/plugins/my-plugin/index.ts
-import type { Plugin } from '@src/plugins/types';
+import type { Plugin } from "@src/plugins/types";
 
 export const myPlugin: Plugin = {
-	metadata: {
-		id: 'my-plugin',
-		name: 'My Custom Plugin',
-		description: 'Adds custom functionality',
-		version: '1.0.0',
-		enabled: true,
-		icon: 'mdi:star'
-	}
+  metadata: {
+    id: "my-plugin",
+    name: "My Custom Plugin",
+    description: "Adds custom functionality",
+    version: "1.0.0",
+    enabled: true,
+    icon: "mdi:star",
+  },
 };
 ```
 
 Register it in `src/plugins/index.ts`:
 
 ```typescript
-import { myPlugin } from './my-plugin';
+import { myPlugin } from "./my-plugin";
 
 export const availablePlugins: Plugin[] = [
-	pageSpeedPlugin,
-	editableWebsitePlugin,
-	myPlugin // ← Add here
+  pageSpeedPlugin,
+  editableWebsitePlugin,
+  myPlugin, // ← Add here
 ];
 ```
 
@@ -93,13 +93,13 @@ export const availablePlugins: Plugin[] = [
 
 ```typescript
 interface Plugin {
-	metadata: PluginMetadata; // Required: id, name, version, enabled
-	config?: PluginConfig; // Public/private settings
-	hooks?: PluginLifecycleHooks; // CRUD interception
-	ssrHook?: PluginSSRHook; // SSR data enrichment
-	ui?: PluginUIContribution; // UI columns, actions, tabs
-	migrations?: PluginMigration[]; // DB schema migrations
-	enabledCollections?: string[]; // Restrict to specific collections
+  metadata: PluginMetadata; // Required: id, name, version, enabled
+  config?: PluginConfig; // Public/private settings
+  hooks?: PluginLifecycleHooks; // CRUD interception
+  ssrHook?: PluginSSRHook; // SSR data enrichment
+  ui?: PluginUIContribution; // UI columns, actions, tabs
+  migrations?: PluginMigration[]; // DB schema migrations
+  enabledCollections?: string[]; // Restrict to specific collections
 }
 ```
 
@@ -143,12 +143,12 @@ Add custom data to entry lists during server-side rendering:
 
 ```typescript
 ssrHook: async (context, entries) => {
-	// Return enriched data for each entry
-	return entries.map((entry) => ({
-		entryId: String(entry._id),
-		updatedAt: new Date().toISOString(),
-		data: { score: Math.random() * 100 }
-	}));
+  // Return enriched data for each entry
+  return entries.map((entry) => ({
+    entryId: String(entry._id),
+    updatedAt: new Date().toISOString(),
+    data: { score: Math.random() * 100 },
+  }));
 };
 ```
 
@@ -181,19 +181,19 @@ Plugins create their own collections via migrations:
 
 ```typescript
 migrations: [
-	{
-		id: '001_create_results',
-		pluginId: 'my-plugin',
-		version: 1,
-		description: 'Create results collection',
-		up: async (dbAdapter) => {
-			await dbAdapter.crud.insert('plugin_my-plugin_results', {
-				_id: '__INIT__',
-				initialized: true
-			});
-			await dbAdapter.crud.deleteMany('plugin_my-plugin_results', { _id: '__INIT__' });
-		}
-	}
+  {
+    id: "001_create_results",
+    pluginId: "my-plugin",
+    version: 1,
+    description: "Create results collection",
+    up: async (dbAdapter) => {
+      await dbAdapter.crud.insert("plugin_my-plugin_results", {
+        _id: "__INIT__",
+        initialized: true,
+      });
+      await dbAdapter.crud.deleteMany("plugin_my-plugin_results", { _id: "__INIT__" });
+    },
+  },
 ];
 ```
 
@@ -215,10 +215,10 @@ Plugins can be enabled/disabled per tenant:
 
 ```typescript
 // Toggle via registry
-await pluginRegistry.togglePlugin('my-plugin', true, tenantId, userId);
+await pluginRegistry.togglePlugin("my-plugin", true, tenantId, userId);
 
 // Check state
-const state = await pluginRegistry.getPluginState('my-plugin', tenantId);
+const state = await pluginRegistry.getPluginState("my-plugin", tenantId);
 ```
 
 ## Existing Plugins

@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/index.mdx'
-title: 'API Reference'
-description: 'Complete REST API documentation for SveltyCMS - authentication, collections, widgets, and more.'
+path: "docs/api/index.mdx"
+title: "API Reference"
+description: "Complete REST API documentation for SveltyCMS - authentication, collections, widgets, and more."
 order: 1
-icon: 'mdi:api'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-11-14'
+icon: "mdi:api"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-11-14"
 tags:
-  - 'api'
-  - 'developer'
-  - 'rest'
-  - 'reference'
+  - "api"
+  - "developer"
+  - "rest"
+  - "reference"
 ---
 
 # API Reference
@@ -158,9 +158,9 @@ All API responses follow a consistent structure:
 
 ```json
 {
-	"success": false,
-	"error": "Error description",
-	"message": "User-friendly error message"
+  "success": false,
+  "error": "Error description",
+  "message": "User-friendly error message"
 }
 ```
 
@@ -249,16 +249,16 @@ curl -X GET https://your-domain.com/api/collections \
 
 ```javascript
 // Example: Create a new entry
-const response = await fetch('https://your-domain.com/api/collections/posts', {
-	method: 'POST',
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	credentials: 'include', // Include session cookies
-	body: JSON.stringify({
-		title: 'My Post',
-		content: 'Post content here'
-	})
+const response = await fetch("https://your-domain.com/api/collections/posts", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include", // Include session cookies
+  body: JSON.stringify({
+    title: "My Post",
+    content: "Post content here",
+  }),
 });
 
 const result = await response.json();

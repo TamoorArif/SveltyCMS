@@ -1,19 +1,19 @@
 ---
-path: 'docs/tests/index.mdx'
-title: 'Testing Documentation'
-description: 'Complete testing guide for SveltyCMS including Bun unit tests, Playwright E2E tests, GitHub Actions automation, and local testing workflows.'
+path: "docs/tests/index.mdx"
+title: "Testing Documentation"
+description: "Complete testing guide for SveltyCMS including Bun unit tests, Playwright E2E tests, GitHub Actions automation, and local testing workflows."
 order: 1
-icon: 'mdi:test-tube'
-author: 'admin'
-created: '2025-11-08'
-updated: '2026-03-14'
+icon: "mdi:test-tube"
+author: "admin"
+created: "2025-11-08"
+updated: "2026-03-14"
 tags:
-  - 'testing'
-  - 'documentation'
-  - 'quality-assurance'
-  - 'ci-cd'
-  - 'bun'
-  - 'playwright'
+  - "testing"
+  - "documentation"
+  - "quality-assurance"
+  - "ci-cd"
+  - "bun"
+  - "playwright"
 ---
 
 # SveltyCMS Testing Documentation
@@ -81,6 +81,7 @@ graph TD
 - **Execution Time**: ~10 seconds (dual suite)
 
 **What It Tests**:
+
 - ✅ **Middleware Hooks**: 71% latency reduction and fast-path short-circuits.
 - ✅ **Database Adapters**: Single-trip operations (.returning) and micro-telemetry.
 - ✅ **Secure Preview**: Signed HMAC-SHA256 handshake tokens and expiration logic.
@@ -88,11 +89,13 @@ graph TD
 - ✅ **Environment Parity**: jsdom (Vitest) for component logic + Native (Bun) for core utilities.
 
 ### 🚀 Performance Benchmarks
+
 - **Hooks Benchmark**: Measures micro-latency of the middleware chain (target < 0.6ms).
 - **Database Benchmark**: Measures CRUD micro-latency and telemetry integrity.
 - **Media Benchmark**: Measures upload block-time reduction via async job queue (target 99%+ reduction).
 
 ### 🎭 Playwright - End-to-End Tests
+
 - **Purpose**: Browser automation for critical user journeys.
 - **Location**: `tests/e2e/`
 - **Test Count**: ~40 tests

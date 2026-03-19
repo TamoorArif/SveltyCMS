@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/settings-api.mdx'
-title: 'System Settings API'
-description: 'API reference for managing system-wide and tenant-specific configuration settings in SveltyCMS.'
+path: "docs/api/settings-api.mdx"
+title: "System Settings API"
+description: "API reference for managing system-wide and tenant-specific configuration settings in SveltyCMS."
 order: 4
-icon: 'mdi:cog'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:cog"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'settings'
-  - 'configuration'
-  - 'system'
-  - 'multi-tenant'
+  - "api"
+  - "settings"
+  - "configuration"
+  - "system"
+  - "multi-tenant"
 ---
 
 # System Settings API
@@ -65,12 +65,12 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"SITE_NAME": "My CMS",
-		"SITE_URL": "https://example.com",
-		"MULTI_TENANT": false
-	}
+  "success": true,
+  "data": {
+    "SITE_NAME": "My CMS",
+    "SITE_URL": "https://example.com",
+    "MULTI_TENANT": false
+  }
 }
 ```
 
@@ -119,9 +119,9 @@ Content-Type: application/json
 
 ```json
 {
-	"SITE_NAME": "Updated Site Name",
-	"SITE_URL": "https://newdomain.com",
-	"MULTI_TENANT": true
+  "SITE_NAME": "Updated Site Name",
+  "SITE_URL": "https://newdomain.com",
+  "MULTI_TENANT": true
 }
 ```
 
@@ -133,8 +133,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "Settings saved successfully."
+  "success": true,
+  "message": "Settings saved successfully."
 }
 ```
 
@@ -175,10 +175,10 @@ Content-Type: application/json
 
 ```json
 {
-	"SITE_NAME": "string",
-	"SITE_URL": "string",
-	"MULTI_TENANT": "boolean",
-	"DEFAULT_LANGUAGE": "string"
+  "SITE_NAME": "string",
+  "SITE_URL": "string",
+  "MULTI_TENANT": "boolean",
+  "DEFAULT_LANGUAGE": "string"
 }
 ```
 
@@ -186,10 +186,10 @@ Content-Type: application/json
 
 ```json
 {
-	"DB_TYPE": "mongodb | postgres | mysql",
-	"DB_HOST": "string",
-	"DB_PORT": "number",
-	"DB_NAME": "string"
+  "DB_TYPE": "mongodb | postgres | mysql",
+  "DB_HOST": "string",
+  "DB_PORT": "number",
+  "DB_NAME": "string"
 }
 ```
 
@@ -197,10 +197,10 @@ Content-Type: application/json
 
 ```json
 {
-	"SMTP_HOST": "string",
-	"SMTP_PORT": "number",
-	"SMTP_USER": "string",
-	"SMTP_FROM": "string"
+  "SMTP_HOST": "string",
+  "SMTP_PORT": "number",
+  "SMTP_USER": "string",
+  "SMTP_FROM": "string"
 }
 ```
 
@@ -208,10 +208,10 @@ Content-Type: application/json
 
 ```json
 {
-	"SESSION_TIMEOUT": "number (minutes)",
-	"PASSWORD_MIN_LENGTH": "number",
-	"ENABLE_2FA": "boolean",
-	"RATE_LIMIT_ENABLED": "boolean"
+  "SESSION_TIMEOUT": "number (minutes)",
+  "PASSWORD_MIN_LENGTH": "number",
+  "ENABLE_2FA": "boolean",
+  "RATE_LIMIT_ENABLED": "boolean"
 }
 ```
 
@@ -321,22 +321,22 @@ curl -X POST https://your-domain.com/api/settings/update \
 
 ```javascript
 // Get settings
-const response = await fetch('/api/settings/system', {
-	credentials: 'include'
+const response = await fetch("/api/settings/system", {
+  credentials: "include",
 });
 const { data } = await response.json();
 
 // Update settings
-const updateResponse = await fetch('/api/settings/update', {
-	method: 'POST',
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	credentials: 'include',
-	body: JSON.stringify({
-		SITE_NAME: 'Updated Name',
-		MULTI_TENANT: true
-	})
+const updateResponse = await fetch("/api/settings/update", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    SITE_NAME: "Updated Name",
+    MULTI_TENANT: true,
+  }),
 });
 ```
 

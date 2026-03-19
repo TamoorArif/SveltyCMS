@@ -30,279 +30,313 @@
  * @prerequisite User authentication and authorization are complete
  */
 
-import { hasApiPermission } from '@src/databases/auth/api-permissions';
-import { API_CACHE_TTL_S, cacheService } from '@src/databases/cache/cache-service';
-import { metricsService } from '@src/services/metrics-service';
-import type { Handle } from '@sveltejs/kit';
-import { AppError, getErrorMessage, handleApiError } from '@utils/error-handling';
-import { logger } from '@utils/logger.server';
-import crypto from 'node:crypto';
+import { hasApiPermission } from "@src/databases/auth/api-permissions";
+import { API_CACHE_TTL_S, cacheService } from "@src/databases/cache/cache-service";
+import { metricsService } from "@src/services/metrics-service";
+import type { Handle } from "@sveltejs/kit";
+import { AppError, getErrorMessage, handleApiError } from "@utils/error-handling";
+import { logger } from "@utils/logger.server";
+import crypto from "node:crypto";
 
 // --- METRICS INTEGRATION ---
 // API metrics are now handled by the unifiedmetrics-servicefor enterprise-grade monitoring
 
 /** Extracts the API endpoint from the URL pathname. */
 function getApiEndpoint(pathname: string): string | null {
-	const parts = pathname.split('/api/')[1]?.split('/');
-	return parts?.[0] || null;
+  const parts = pathname.split("/api/")[1]?.split("/");
+  return parts?.[0] || null;
 }
 
 /** Generates a cache key for API responses. */
 function generateCacheKey(pathname: string, search: string, userId: string): string {
-	return `api:${userId}:${pathname}${search}`;
+  return `api:${userId}:${pathname}${search}`;
 }
 
 /** Checks if cache should be bypassed based on query parameters. */
 function shouldBypassCache(searchParams: URLSearchParams): boolean {
-	return searchParams.get('refresh') === 'true' || searchParams.get('nocache') === 'true';
+  return searchParams.get("refresh") === "true" || searchParams.get("nocache") === "true";
 }
 
-function isPublicApiRoute(pathname: string, method: string | undefined, testMode: string | undefined): boolean {
-	// Allow /api/testing in TEST_MODE
-	if (testMode === 'true' && pathname.startsWith('/api/testing')) {
-		return true;
-	}
+function isPublicApiRoute(
+  pathname: string,
+  method: string | undefined,
+  testMode: string | undefined,
+): boolean {
+  // Allow /api/testing in TEST_MODE
+  if (testMode === "true" && pathname.startsWith("/api/testing")) {
+    return true;
+  }
 
-	// Token validation endpoint is public for GET only (registration flow)
-	// Format: /api/token/{tokenValue} - not the list endpoint /api/token
-	if (method === 'GET' && pathname.startsWith('/api/token/') && pathname.length > 11) {
-		return true;
-	}
+  // Token validation endpoint is public for GET only (registration flow)
+  // Format: /api/token/{tokenValue} - not the list endpoint /api/token
+  if (method === "GET" && pathname.startsWith("/api/token/") && pathname.length > 11) {
+    return true;
+  }
 
-	// Legacy hardcoded list fallback (matches handleAuthorization.ts public routes)
-	const legacyPublic = ['/api/system/version', '/api/user/login', '/api/system/health', '/api/settings/public', '/api/preview'];
-	return legacyPublic.some((r) => pathname.startsWith(r));
+  // Legacy hardcoded list fallback (matches handleAuthorization.ts public routes)
+  const legacyPublic = [
+    "/api/system/version",
+    "/api/user/login",
+    "/api/system/health",
+    "/api/settings/public",
+    "/api/preview",
+  ];
+  return legacyPublic.some((r) => pathname.startsWith(r));
 }
 
 export const handleApiRequests: Handle = async ({ event, resolve }) => {
-	const { url, locals, request } = event;
+  const { url, locals, request } = event;
 
-	// Early exit for non-API routes
-	if (!url.pathname.startsWith('/api/')) {
-		return resolve(event);
-	}
+  // Early exit for non-API routes
+  if (!url.pathname.startsWith("/api/")) {
+    return resolve(event);
+  }
 
-	// Dynamic check for public API endpoints based on permissions configuration
+  // Dynamic check for public API endpoints based on permissions configuration
 
-	// Dynamic check for public API endpoints based on permissions configuration
-	if (isPublicApiRoute(url.pathname, request.method, process.env.TEST_MODE)) {
-		return resolve(event);
-	}
+  // Dynamic check for public API endpoints based on permissions configuration
+  if (isPublicApiRoute(url.pathname, request.method, process.env.TEST_MODE)) {
+    return resolve(event);
+  }
 
-	try {
-		// Require authentication for all other API routes
-		if (!locals.user) {
-			logger.warn(`Unauthenticated API access attempt: ${url.pathname}`);
-			throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
-		}
+  try {
+    // Require authentication for all other API routes
+    if (!locals.user) {
+      logger.warn(`Unauthenticated API access attempt: ${url.pathname}`);
+      throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    }
 
-		metricsService.incrementApiRequests();
+    metricsService.incrementApiRequests();
 
-		// --- 0. Rate Limiting for Sensitive Endpoints ---
-		if (['/api/website-tokens', '/api/permission/update'].some((p) => url.pathname.startsWith(p))) {
-			// Basic implementation of an increment function using the single value atomic fallback pattern
-			// If Redis is backing cacheService, it handles TTL well.
-			const rateLimitKey = `ratelimit:api:sensitive:${locals.user._id}:${url.pathname}`;
-			let attempts = 1;
-			try {
-				const current = await cacheService.get<{ count: number }>(rateLimitKey);
-				if (current) {
-					attempts = current.count + 1;
-				}
-				await cacheService.set(rateLimitKey, { count: attempts }, 60); // 60s window
+    // --- 0. Rate Limiting for Sensitive Endpoints ---
+    if (["/api/website-tokens", "/api/permission/update"].some((p) => url.pathname.startsWith(p))) {
+      // Basic implementation of an increment function using the single value atomic fallback pattern
+      // If Redis is backing cacheService, it handles TTL well.
+      const rateLimitKey = `ratelimit:api:sensitive:${locals.user._id}:${url.pathname}`;
+      let attempts = 1;
+      try {
+        const current = await cacheService.get<{ count: number }>(rateLimitKey);
+        if (current) {
+          attempts = current.count + 1;
+        }
+        await cacheService.set(rateLimitKey, { count: attempts }, 60); // 60s window
 
-				if (attempts > 30) {
-					logger.warn(`Rate limit exceeded on sensitive API: ${url.pathname} for user ${locals.user._id}`);
-					throw new AppError('Rate limit exceeded', 429, 'TOO_MANY_REQUESTS');
-				}
-			} catch (e) {
-				// Don't fail open, but log cache issue
-				logger.error(`Rate limit check failed: ${getErrorMessage(e)}`);
-			}
-		}
+        if (attempts > 30) {
+          logger.warn(
+            `Rate limit exceeded on sensitive API: ${url.pathname} for user ${locals.user._id}`,
+          );
+          throw new AppError("Rate limit exceeded", 429, "TOO_MANY_REQUESTS");
+        }
+      } catch (e) {
+        // Don't fail open, but log cache issue
+        logger.error(`Rate limit check failed: ${getErrorMessage(e)}`);
+      }
+    }
 
-		const apiEndpoint = getApiEndpoint(url.pathname);
+    const apiEndpoint = getApiEndpoint(url.pathname);
 
-		if (!apiEndpoint) {
-			logger.warn(`Invalid API path: ${url.pathname}`);
-			throw new AppError('Invalid API path', 400, 'INVALID_PATH');
-		}
+    if (!apiEndpoint) {
+      logger.warn(`Invalid API path: ${url.pathname}`);
+      throw new AppError("Invalid API path", 400, "INVALID_PATH");
+    }
 
-		// --- 1. Authorization Check ---
-		if (url.pathname === '/api/user/logout') {
-			logger.trace('Logout endpoint - bypassing permission checks');
-			// Proceed to resolve
-		} else {
-			const isAdmin = locals.user.isAdmin === true || (locals.user as any).role === 'admin';
-			if (!hasApiPermission(locals.user.role, apiEndpoint, isAdmin)) {
-				logger.warn(
-					`User ${locals.user._id} (role: ${locals.user.role}, isAdmin: ${isAdmin}, tenant: ${locals.tenantId || 'global'}) ` +
-						`denied access to /api/${apiEndpoint} - insufficient permissions`
-				);
-				throw new AppError(`Forbidden: Your role (${locals.user.role}) does not have permission to access this API endpoint.`, 403, 'FORBIDDEN');
-			}
-			logger.trace(`User ${locals.user._id} granted access to /api/${apiEndpoint}`, {
-				role: locals.user.role,
-				isAdmin,
-				tenant: locals.tenantId || 'global'
-			});
-		}
+    // --- 1. Authorization Check ---
+    if (url.pathname === "/api/user/logout") {
+      logger.trace("Logout endpoint - bypassing permission checks");
+      // Proceed to resolve
+    } else {
+      const isAdmin = locals.user.isAdmin === true || (locals.user as any).role === "admin";
+      if (!hasApiPermission(locals.user.role, apiEndpoint, isAdmin)) {
+        logger.warn(
+          `User ${locals.user._id} (role: ${locals.user.role}, isAdmin: ${isAdmin}, tenant: ${locals.tenantId || "global"}) ` +
+            `denied access to /api/${apiEndpoint} - insufficient permissions`,
+        );
+        throw new AppError(
+          `Forbidden: Your role (${locals.user.role}) does not have permission to access this API endpoint.`,
+          403,
+          "FORBIDDEN",
+        );
+      }
+      logger.trace(`User ${locals.user._id} granted access to /api/${apiEndpoint}`, {
+        role: locals.user.role,
+        isAdmin,
+        tenant: locals.tenantId || "global",
+      });
+    }
 
-		// --- 2. Handle GET Requests with Caching ---
-		if (request.method === 'GET') {
-			const bypassCache = shouldBypassCache(url.searchParams);
-			const cacheKey = generateCacheKey(url.pathname, url.search, locals.user._id);
+    // --- 2. Handle GET Requests with Caching ---
+    if (request.method === "GET") {
+      const bypassCache = shouldBypassCache(url.searchParams);
+      const cacheKey = generateCacheKey(url.pathname, url.search, locals.user._id);
 
-			if (bypassCache) {
-				logger.debug(`Cache bypass requested for ${url.pathname}`);
-			} else {
-				try {
-					const cached = await cacheService.get<{
-						data: unknown;
-						headers: Record<string, string>;
-					}>(cacheKey, locals.tenantId);
+      if (bypassCache) {
+        logger.debug(`Cache bypass requested for ${url.pathname}`);
+      } else {
+        try {
+          const cached = await cacheService.get<{
+            data: unknown;
+            headers: Record<string, string>;
+          }>(cacheKey, locals.tenantId);
 
-					if (cached) {
-						logger.debug(`Cache hit for API GET ${url.pathname} (tenant: ${locals.tenantId || 'global'})`);
-						metricsService.recordApiCacheHit();
-						return new Response(JSON.stringify(cached.data), {
-							status: 200,
-							headers: {
-								...cached.headers,
-								'Content-Type': 'application/json',
-								'X-Cache': 'HIT'
-							}
-						});
-					}
-				} catch (cacheError) {
-					logger.warn(`Cache read error for ${cacheKey}: ${getErrorMessage(cacheError)}`);
-				}
-			}
+          if (cached) {
+            logger.debug(
+              `Cache hit for API GET ${url.pathname} (tenant: ${locals.tenantId || "global"})`,
+            );
+            metricsService.recordApiCacheHit();
+            return new Response(JSON.stringify(cached.data), {
+              status: 200,
+              headers: {
+                ...cached.headers,
+                "Content-Type": "application/json",
+                "X-Cache": "HIT",
+              },
+            });
+          }
+        } catch (cacheError) {
+          logger.warn(`Cache read error for ${cacheKey}: ${getErrorMessage(cacheError)}`);
+        }
+      }
 
-			// Resolve the request (cache miss or bypassed)
-			const response = await resolve(event);
+      // Resolve the request (cache miss or bypassed)
+      const response = await resolve(event);
 
-			// --- OPTIMIZED: GraphQL bypass, no new Response created ---
-			if (apiEndpoint === 'graphql') {
-				response.headers.set('X-Cache', 'BYPASS');
-				metricsService.recordApiCacheMiss();
-				return response;
-			}
+      // --- OPTIMIZED: GraphQL bypass, no new Response created ---
+      if (apiEndpoint === "graphql") {
+        response.headers.set("X-Cache", "BYPASS");
+        metricsService.recordApiCacheMiss();
+        return response;
+      }
 
-			// --- STREAMING OPTIMIZATION: Cache successful responses without blocking ---
-			if (response.ok) {
-				metricsService.recordApiCacheMiss();
+      // --- STREAMING OPTIMIZATION: Cache successful responses without blocking ---
+      if (response.ok) {
+        metricsService.recordApiCacheMiss();
 
-				// Check Content-Type to ensure we only cache/ETag JSON responses
-				const contentType = response.headers.get('content-type');
-				if (contentType?.includes('application/json')) {
-					const responseClone = response.clone();
-					const responseBody = await responseClone.text();
+        // Check Content-Type to ensure we only cache/ETag JSON responses
+        const contentType = response.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          const responseClone = response.clone();
+          const responseBody = await responseClone.text();
 
-					// --- ETag / If-None-Match Support ---
-					const etag = `"${crypto.createHash('md5').update(responseBody).digest('hex')}"`;
-					if (request.headers.get('if-none-match') === etag) {
-						return new Response(null, { status: 304, headers: { ETag: etag } });
-					}
-					response.headers.set('ETag', etag);
+          // --- ETag / If-None-Match Support ---
+          const etag = `"${crypto.createHash("md5").update(responseBody).digest("hex")}"`;
+          if (request.headers.get("if-none-match") === etag) {
+            return new Response(null, { status: 304, headers: { ETag: etag } });
+          }
+          response.headers.set("ETag", etag);
 
-					// Set cache header immediately on the response going to the user
-					response.headers.set('X-Cache', 'MISS');
+          // Set cache header immediately on the response going to the user
+          response.headers.set("X-Cache", "MISS");
 
-					// Cache in background - don't await to avoid blocking the response stream
-					(async () => {
-						try {
-							const responseData = JSON.parse(responseBody);
+          // Cache in background - don't await to avoid blocking the response stream
+          (async () => {
+            try {
+              const responseData = JSON.parse(responseBody);
 
-							await cacheService.set(
-								cacheKey,
-								{
-									data: responseData,
-									headers: Object.fromEntries(responseClone.headers)
-								},
-								API_CACHE_TTL_S,
-								locals.tenantId
-							);
+              await cacheService.set(
+                cacheKey,
+                {
+                  data: responseData,
+                  headers: Object.fromEntries(responseClone.headers),
+                },
+                API_CACHE_TTL_S,
+                locals.tenantId,
+              );
 
-							logger.trace(`Background cache set complete for ${url.pathname}`);
-						} catch (processingError) {
-							logger.error(`Error caching API response for /api/${apiEndpoint}: ${getErrorMessage(processingError)}`);
-						}
-					})();
-				} else {
-					logger.trace(`Skipped caching non-JSON response for /api/${apiEndpoint}`);
-				}
+              logger.trace(`Background cache set complete for ${url.pathname}`);
+            } catch (processingError) {
+              logger.error(
+                `Error caching API response for /api/${apiEndpoint}: ${getErrorMessage(processingError)}`,
+              );
+            }
+          })();
+        } else {
+          logger.trace(`Skipped caching non-JSON response for /api/${apiEndpoint}`);
+        }
 
-				return response;
-			}
+        return response;
+      }
 
-			return response;
-		}
+      return response;
+    }
 
-		// --- 3. Handle Mutations (POST, PUT, DELETE, PATCH) ---
-		const response = await resolve(event);
+    // --- 3. Handle Mutations (POST, PUT, DELETE, PATCH) ---
+    const response = await resolve(event);
 
-		// Exclude specific endpoints from invalidation
-		const isWarmCache = url.pathname.endsWith('/warm-cache');
+    // Exclude specific endpoints from invalidation
+    const isWarmCache = url.pathname.endsWith("/warm-cache");
 
-		if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) && response.ok && !isWarmCache) {
-			try {
-				// Skip cache invalidation if user is null (e.g., after logout)
-				if (!locals.user?._id) {
-					return response;
-				}
-				const patternToInvalidate = `api:${locals.user._id}:/api/${apiEndpoint}`;
-				await cacheService.clearByPattern(`${patternToInvalidate}*`, locals.tenantId);
+    if (
+      ["POST", "PUT", "DELETE", "PATCH"].includes(request.method) &&
+      response.ok &&
+      !isWarmCache
+    ) {
+      try {
+        // Skip cache invalidation if user is null (e.g., after logout)
+        if (!locals.user?._id) {
+          return response;
+        }
+        const patternToInvalidate = `api:${locals.user._id}:/api/${apiEndpoint}`;
+        await cacheService.clearByPattern(`${patternToInvalidate}*`, locals.tenantId);
 
-				logger.debug(
-					`Invalidated API cache for pattern ${patternToInvalidate}* (tenant: ${locals.tenantId || 'global'}) after ${request.method} request`
-				);
-			} catch (invalidationError) {
-				logger.error(`Failed to invalidate API cache after ${request.method}: ${getErrorMessage(invalidationError)}`);
-			}
-		}
+        logger.debug(
+          `Invalidated API cache for pattern ${patternToInvalidate}* (tenant: ${locals.tenantId || "global"}) after ${request.method} request`,
+        );
+      } catch (invalidationError) {
+        logger.error(
+          `Failed to invalidate API cache after ${request.method}: ${getErrorMessage(invalidationError)}`,
+        );
+      }
+    }
 
-		return response;
-	} catch (err) {
-		// --- UNIFIED ERROR HANDLING ---
-		// Catch any AppError thrown during Auth/Permissions checks above
-		metricsService.incrementApiErrors();
-		return handleApiError(err, event);
-	}
+    return response;
+  } catch (err) {
+    // --- UNIFIED ERROR HANDLING ---
+    // Catch any AppError thrown during Auth/Permissions checks above
+    metricsService.incrementApiErrors();
+    return handleApiError(err, event);
+  }
 };
 
 // --- UTILITY EXPORTS ---
 
 /** Manually invalidates API cache for a specific endpoint and user. */
-export async function invalidateApiCache(apiEndpoint: string, userId: string, tenantId?: string | null): Promise<void> {
-	const baseKey = `api:${userId}:/api/${apiEndpoint}`;
-	logger.debug(`Manually invalidating API cache for pattern ${baseKey}* (tenant: ${tenantId || 'global'})`);
+export async function invalidateApiCache(
+  apiEndpoint: string,
+  userId: string,
+  tenantId?: string | null,
+): Promise<void> {
+  const baseKey = `api:${userId}:/api/${apiEndpoint}`;
+  logger.debug(
+    `Manually invalidating API cache for pattern ${baseKey}* (tenant: ${tenantId || "global"})`,
+  );
 
-	try {
-		await cacheService.clearByPattern(`${baseKey}*`, tenantId);
-		await cacheService.delete(baseKey, tenantId);
-	} catch (err) {
-		logger.error(`Error during manual API cache invalidation for ${baseKey}: ${getErrorMessage(err)}`);
-	}
+  try {
+    await cacheService.clearByPattern(`${baseKey}*`, tenantId);
+    await cacheService.delete(baseKey, tenantId);
+  } catch (err) {
+    logger.error(
+      `Error during manual API cache invalidation for ${baseKey}: ${getErrorMessage(err)}`,
+    );
+  }
 }
 
 /** Returns API metrics from the unified metrics service. */
 export function getApiHealthMetrics() {
-	const report = metricsService.getReport();
-	return {
-		cache: {
-			hits: report.api.cacheHits,
-			misses: report.api.cacheMisses,
-			hitRate: report.api.cacheHitRate
-		},
-		requests: {
-			total: report.api.requests,
-			errors: report.api.errors
-		}
-	};
+  const report = metricsService.getReport();
+  return {
+    cache: {
+      hits: report.api.cacheHits,
+      misses: report.api.cacheMisses,
+      hitRate: report.api.cacheHitRate,
+    },
+    requests: {
+      total: report.api.requests,
+      errors: report.api.errors,
+    },
+  };
 }
 
 /** API metrics are now managed by the unified MetricsService. */
 export function resetApiHealthMetrics(): void {
-	logger.trace('API health metrics managed by unified MetricsService');
+  logger.trace("API health metrics managed by unified MetricsService");
 }

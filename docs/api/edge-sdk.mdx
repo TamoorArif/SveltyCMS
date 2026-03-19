@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/edge-sdk.mdx'
-title: 'Edge SDK Reference'
-description: 'API Reference for the SveltyCMS Edge SDK for high-performance content delivery.'
+path: "docs/api/edge-sdk.mdx"
+title: "Edge SDK Reference"
+description: "API Reference for the SveltyCMS Edge SDK for high-performance content delivery."
 order: 20
-icon: 'mdi:webhook'
-author: 'admin'
-created: '2026-03-18'
-updated: '2026-03-18'
+icon: "mdi:webhook"
+author: "admin"
+created: "2026-03-18"
+updated: "2026-03-18"
 tags:
-  - 'api'
-  - 'edge'
-  - 'sdk'
-  - 'content-delivery'
+  - "api"
+  - "edge"
+  - "sdk"
+  - "content-delivery"
 ---
 
 # SveltyCMS Edge SDK
@@ -23,7 +23,7 @@ The SveltyCMS Edge SDK is a lightweight, dependency-free client designed to run 
 The SDK is built directly into SveltyCMS and can be imported as a utility.
 
 ```typescript
-import { createEdgeClient } from '@utils/sdk/edge-sdk';
+import { createEdgeClient } from "@utils/sdk/edge-sdk";
 ```
 
 ## Initialization
@@ -32,57 +32,64 @@ To initialize the client, you need your SveltyCMS host and a valid API Key.
 
 ```typescript
 const cms = createEdgeClient({
-    host: 'https://cms.yourproject.com',
-    apiKey: 'your_secret_api_key',
-    tenantId: 'default', // Optional: for multi-tenant environments
-    timeout: 5000       // Optional: fetch timeout in ms
+  host: "https://cms.yourproject.com",
+  apiKey: "your_secret_api_key",
+  tenantId: "default", // Optional: for multi-tenant environments
+  timeout: 5000, // Optional: fetch timeout in ms
 });
 ```
 
 ## Core Methods
 
 ### `getEntries<T>(collection, options)`
+
 Fetches a list of entries from a collection.
 
 **Parameters:**
+
 - `collection` (string): The collection ID (e.g., 'posts').
 - `options` (QueryOptions): Filtering, sorting, and pagination options.
 
 ```typescript
-const posts = await cms.getEntries('posts', {
-    limit: 10,
-    sort: '-createdAt',
-    filter: { status: 'published' },
-    populate: ['author', 'categories']
+const posts = await cms.getEntries("posts", {
+  limit: 10,
+  sort: "-createdAt",
+  filter: { status: "published" },
+  populate: ["author", "categories"],
 });
 ```
 
 ### `getEntry<T>(collection, id, options)`
+
 Fetches a single entry by its ID.
 
 ```typescript
-const post = await cms.getEntry('posts', 'entry_id_123', {
-    populate: ['author']
+const post = await cms.getEntry("posts", "entry_id_123", {
+  populate: ["author"],
 });
 ```
 
 ### `graphql<T>(query, variables)`
+
 Executes a raw GraphQL query against the SveltyCMS engine.
 
 ```typescript
-const result = await cms.graphql(`
+const result = await cms.graphql(
+  `
     query GetAuthor($id: ID!) {
         author(id: $id) {
             name
             avatar
         }
     }
-`, { id: 'author_456' });
+`,
+  { id: "author_456" },
+);
 ```
 
 ## Performance & Caching
 
-The Edge SDK is designed for **Sub-millisecond serialization**. 
+The Edge SDK is designed for **Sub-millisecond serialization**.
 
 - **Native Fetch**: Uses the global `fetch` API, allowing it to leverage the native cache of edge routers.
 - **AbortController**: Supports intelligent timeout handling to prevent hanging edge functions.
@@ -96,7 +103,7 @@ The Edge SDK is designed for **Sub-millisecond serialization**.
 export default async function handler(req: Request) {
     const cms = createEdgeClient({ ... });
     const content = await cms.getEntry('pages', 'home');
-    
+
     return new Response(JSON.stringify(content), {
         headers: { 'Content-Type': 'application/json' }
     });

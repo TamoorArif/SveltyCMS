@@ -44,10 +44,10 @@ flowchart TD
 
 ## When to use each tool
 
-| Layer             | Tool       | When to use                                      | Speed (local) | Speed (CI)   | DB state               |
-|-------------------|------------|--------------------------------------------------|---------------|--------------|------------------------|
-| Unit / Logic      | Vitest     | Pure functions, stores, utils, Svelte components | < 1 s / test  | < 30 s total | Mocked / :memory:      |
-| Integration       | Vitest     | API endpoints, Drizzle queries, server actions   | 1–5 s         | < 90 s       | Real SQLite per suite  |
-| E2E – Wizard      | Playwright | First-time install flow (UI steps)               | 10–30 s       | 20–40 s      | Completely empty       |
-| E2E – Auth+Roles  | Playwright | Login, signup via invite, role switching         | —             | —            | After wizard           |
-| E2E – Business    | Playwright | CRUD, RBAC violations, security scenarios        | 5–15 s / test | < 3 min sharded | After auth setup   |
+| Layer            | Tool       | When to use                                      | Speed (local) | Speed (CI)      | DB state              |
+| ---------------- | ---------- | ------------------------------------------------ | ------------- | --------------- | --------------------- |
+| Unit / Logic     | Vitest     | Pure functions, stores, utils, Svelte components | < 1 s / test  | < 30 s total    | Mocked / :memory:     |
+| Integration      | Vitest     | API endpoints, Drizzle queries, server actions   | 1–5 s         | < 90 s          | Real SQLite per suite |
+| E2E – Wizard     | Playwright | First-time install flow (UI steps)               | 10–30 s       | 20–40 s         | Completely empty      |
+| E2E – Auth+Roles | Playwright | Login, signup via invite, role switching         | —             | —               | After wizard          |
+| E2E – Business   | Playwright | CRUD, RBAC violations, security scenarios        | 5–15 s / test | < 3 min sharded | After auth setup      |

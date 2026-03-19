@@ -1,18 +1,18 @@
 ---
-path: 'docs/architecture/content-system.mdx'
-title: 'Content System Architecture'
-description: 'Detailed overview of the SveltyCMS Content System, including the modular Content Manager, Reconciler, and Reactivity model.'
+path: "docs/architecture/content-system.mdx"
+title: "Content System Architecture"
+description: "Detailed overview of the SveltyCMS Content System, including the modular Content Manager, Reconciler, and Reactivity model."
 order: 5
-icon: 'mdi:database-sync'
-author: 'admin'
-created: '2025-12-02'
-updated: '2026-03-10'
+icon: "mdi:database-sync"
+author: "admin"
+created: "2025-12-02"
+updated: "2026-03-10"
 tags:
-  - 'architecture'
-  - 'content-system'
-  - 'reactivity'
-  - 'svelte5'
-  - 'multi-tenancy'
+  - "architecture"
+  - "content-system"
+  - "reactivity"
+  - "svelte5"
+  - "multi-tenancy"
 ---
 
 # Content System Architecture
@@ -27,42 +27,48 @@ To ensure maintainability and tree-shakability, the Content System has been deco
 graph TD
     Bridge[Content Bridge Index.ts] --> CI[ContentInitializer]
     Bridge --> CP[ContentPolling]
-    
+
     CM[ContentManager Facade] --> CI
     CM --> CN[ContentNavigation]
     CM --> CR[ContentReconciler]
     CM --> CMt[ContentMetrics]
-    
+
     CI --> CC[ContentCache]
     CI --> CR
-    
+
     CR --> CS[ContentStructure $state]
     CR --> Scan[ScanFiles Utility]
     CR --> DB[(Database Adapter)]
-    
+
     CN --> CS
-    
+
     CC --> Srv[CacheService L1/L2]
 ```
 
 ### Core Components
 
 #### 1. Content Manager Facade (`src/content/content-manager.ts`)
+
 A thin coordinator providing a stable public API. It orchestrates the various specialized modules to ensure consistent data flow across the CMS.
 
 #### 2. Content Structure (`src/content/content-structure.svelte.ts`)
+
 The single source of truth for in-memory content state. It uses **Svelte 5 runes** (`$state`, `$derived`) to provide reactive access to the content node map and path lookup map. It includes a `sync()` method for atomic bulk updates.
 
 #### 3. Content Initializer (`src/content/content-initializer.ts`)
+
 Manages the system lifecycle (IDLE → INITIALIZING → READY). It handles tenant-specific bootstrapping and implements self-healing retries with exponential backoff.
 
 #### 4. Content Reconciler (`src/content/content-reconciler.ts`)
+
 A **database-agnostic** module responsible for synchronizing filesystem definitions (`.compiledCollections/`) with the database. It delegates filesystem scanning to the high-performance `scan-files.ts` utility.
 
 #### 5. Content Polling (`src/content/content-polling.svelte.ts`)
+
 A client-side service that synchronizes local state with the server by polling the `/api/content/version` endpoint. It triggers a reactive refresh only when a version mismatch is detected.
 
 #### 6. Content Navigation (`src/content/content-navigation.ts`)
+
 Provides pure tree operations, including breadcrumb generation and descendant lookups, reading directly from the reactive `ContentStructure`.
 
 ---

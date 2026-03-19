@@ -4,14 +4,14 @@ on:
   push:
     branches: [main, next]
     paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.vscode/**'
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
   pull_request:
     branches: [main, next]
     paths-ignore:
-      - '**.md'
-      - 'docs/**'
+      - "**.md"
+      - "docs/**"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -22,7 +22,7 @@ permissions:
 
 env:
   BUN_CACHE_DIR: .bun-cache
-  NODE_OPTIONS: '--no-warnings --no-deprecation'
+  NODE_OPTIONS: "--no-warnings --no-deprecation"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -321,13 +321,13 @@ jobs:
       matrix:
         include:
           - shard: 1
-            name: 'Wizard'
+            name: "Wizard"
           - shard: 2
-            name: 'Auth'
+            name: "Auth"
           - shard: 3
-            name: 'Content'
+            name: "Content"
           - shard: 4
-            name: 'System'
+            name: "System"
 
     steps:
       - uses: actions/checkout@v6
@@ -445,5 +445,5 @@ jobs:
           echo "### 💾 Raw Database Performance" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           # Run the new agnostic benchmark
-          bun x vitest run -c vitest.benchmark.config.ts >> $GITHUB_STEP_SUMMARY
+          bun x vp test run -c vitest.benchmark.config.ts >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

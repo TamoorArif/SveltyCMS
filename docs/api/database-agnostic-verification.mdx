@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/database-agnostic-verification.mdx'
-title: 'Database Agnostic Verification Report'
-description: 'Verification report confirming all API endpoints use database-agnostic adapter patterns.'
+path: "docs/api/database-agnostic-verification.mdx"
+title: "Database Agnostic Verification Report"
+description: "Verification report confirming all API endpoints use database-agnostic adapter patterns."
 order: 99
-icon: 'mdi:check-decagram'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:check-decagram"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'verification'
-  - 'database'
-  - 'architecture'
+  - "api"
+  - "verification"
+  - "database"
+  - "architecture"
 ---
 
 # Database Agnostic Verification Report
@@ -188,7 +188,7 @@ await db.settings.getAllSettings();
 
 ```typescript
 // Uses permission checking only - no database operations
-const hasPermission = hasPermissionWithRoles(user, 'api:widgets', roles);
+const hasPermission = hasPermissionWithRoles(user, "api:widgets", roles);
 
 // Widget data is stored in file system and Svelte stores
 // No direct database queries ✅
@@ -205,33 +205,33 @@ All endpoints use the standardized database adapter interface:
 
 ```typescript
 interface DatabaseAdapter {
-	// Authentication
-	auth: {
-		user: UserOperations;
-		session: SessionOperations;
-		token: TokenOperations;
-	};
+  // Authentication
+  auth: {
+    user: UserOperations;
+    session: SessionOperations;
+    token: TokenOperations;
+  };
 
-	// CRUD operations
-	crud: {
-		create(collection: string, data: any): Promise<any>;
-		findOne(collection: string, filter: any): Promise<any>;
-		findMany(collection: string, filter: any, options?: any): Promise<any[]>;
-		update(collection: string, id: string, data: any): Promise<any>;
-		delete(collection: string, id: string): Promise<boolean>;
-	};
+  // CRUD operations
+  crud: {
+    create(collection: string, data: any): Promise<any>;
+    findOne(collection: string, filter: any): Promise<any>;
+    findMany(collection: string, filter: any, options?: any): Promise<any[]>;
+    update(collection: string, id: string, data: any): Promise<any>;
+    delete(collection: string, id: string): Promise<boolean>;
+  };
 
-	// Media operations
-	media: {
-		files: FileOperations;
-	};
+  // Media operations
+  media: {
+    files: FileOperations;
+  };
 
-	// Settings operations
-	settings: {
-		getSettings(group: string): Promise<any>;
-		updateSettings(data: any): Promise<void>;
-		getAllSettings(): Promise<any>;
-	};
+  // Settings operations
+  settings: {
+    getSettings(group: string): Promise<any>;
+    updateSettings(data: any): Promise<void>;
+    getAllSettings(): Promise<any>;
+  };
 }
 ```
 
@@ -252,7 +252,7 @@ Provides database-agnostic settings retrieval:
 const settings = await getAllSettings();
 
 // Instead of direct database query
-const settings = await db.collection('settings').find({}).toArray(); // ❌
+const settings = await db.collection("settings").find({}).toArray(); // ❌
 ```
 
 ### hasPermissionWithRoles()
@@ -263,7 +263,7 @@ Provides permission checking without database queries:
 
 ```typescript
 // Uses in-memory role/permission checking
-const hasPermission = hasPermissionWithRoles(user, 'api:widgets', roles);
+const hasPermission = hasPermissionWithRoles(user, "api:widgets", roles);
 
 // No database lookup needed
 ```

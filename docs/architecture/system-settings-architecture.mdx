@@ -1,22 +1,22 @@
 ---
-path: 'docs/architecture/system-settings-architecture.mdx'
-title: 'SveltyCMS: System Settings Architecture'
-description: 'An overview of how dynamic settings are managed, cached, and synchronized, including language configuration and data preservation.'
+path: "docs/architecture/system-settings-architecture.mdx"
+title: "SveltyCMS: System Settings Architecture"
+description: "An overview of how dynamic settings are managed, cached, and synchronized, including language configuration and data preservation."
 order: 2
-icon: 'mdi:tune'
-author: 'admin'
-created: '2025-10-09'
-updated: '2025-11-02'
+icon: "mdi:tune"
+author: "admin"
+created: "2025-10-09"
+updated: "2025-11-02"
 tags:
-  - 'architecture'
-  - 'settings'
-  - 'system'
-  - 'cache'
-  - 'languages'
-  - 'i18n'
+  - "architecture"
+  - "settings"
+  - "system"
+  - "cache"
+  - "languages"
+  - "i18n"
 ---
 
-import { Callout } from 'nextra/components';
+import { Callout } from "nextra/components";
 
 # System Settings Architecture
 
@@ -103,8 +103,8 @@ SveltyCMS integrates with local and remote AI models to power advanced features 
 - **`AI_MODEL_VISION`**: The model used for vision tasks, such as `llava` or `moondream`.
 
 <Callout type="info">
-	**Note:** AI features require an active connection to the configured provider. If using Ollama, ensure the server is running and the specified
-	vision model is pulled (`ollama pull llava`).
+  **Note:** AI features require an active connection to the configured provider. If using Ollama,
+  ensure the server is running and the specified vision model is pulled (`ollama pull llava`).
 </Callout>
 
 ## API Endpoints
@@ -122,8 +122,9 @@ SveltyCMS integrates with local and remote AI models to power advanced features 
 ### Language Configuration Warnings
 
 <Callout type="error">
-	**CRITICAL: Data Loss Risk When Removing Content Languages** Removing a language from `AVAILABLE_CONTENT_LANGUAGES` after content has been created
-	can result in **permanent data loss** for translations in that language.
+  **CRITICAL: Data Loss Risk When Removing Content Languages** Removing a language from
+  `AVAILABLE_CONTENT_LANGUAGES` after content has been created can result in **permanent data loss**
+  for translations in that language.
 </Callout>
 
 **The Problem:**
@@ -191,31 +192,31 @@ AVAILABLE_CONTENT_LANGUAGES: ['en', 'de', 'fr']
    ```typescript
    // Remove Spanish translations from all entries
    async function removeLanguageTranslations(languageToRemove: string) {
-   	const collections = await db.content.nodes.getStructure('flat');
+     const collections = await db.content.nodes.getStructure("flat");
 
-   	for (const collection of collections) {
-   		const entries = await db.crud.findMany(collection.id, {});
+     for (const collection of collections) {
+       const entries = await db.crud.findMany(collection.id, {});
 
-   		for (const entry of entries) {
-   			const updatedEntry = { ...entry };
+       for (const entry of entries) {
+         const updatedEntry = { ...entry };
 
-   			// Remove language key from all translated fields
-   			for (const [key, value] of Object.entries(updatedEntry)) {
-   				if (typeof value === 'object' && value !== null && languageToRemove in value) {
-   					delete value[languageToRemove];
-   					updatedEntry[key] = value;
-   				}
-   			}
+         // Remove language key from all translated fields
+         for (const [key, value] of Object.entries(updatedEntry)) {
+           if (typeof value === "object" && value !== null && languageToRemove in value) {
+             delete value[languageToRemove];
+             updatedEntry[key] = value;
+           }
+         }
 
-   			await db.crud.update(collection.id, entry._id, updatedEntry);
-   		}
-   	}
+         await db.crud.update(collection.id, entry._id, updatedEntry);
+       }
+     }
 
-   	console.log(`Removed all ${languageToRemove} translations`);
+     console.log(`Removed all ${languageToRemove} translations`);
    }
 
    // Usage:
-   await removeLanguageTranslations('es');
+   await removeLanguageTranslations("es");
    // Now safe to remove 'es' from AVAILABLE_CONTENT_LANGUAGES
    ```
 
@@ -275,15 +276,19 @@ If translations were accidentally deleted:
 7. ✅ **Monitor** for issues after deployment
 8. ✅ **Keep backups** for at least 30 days
 
-<Callout type="info">**Adding languages is always safe** - no existing data is affected. Only **removing** languages poses data loss risks.</Callout>
+<Callout type="info">
+  **Adding languages is always safe** - no existing data is affected. Only **removing** languages
+  poses data loss risks.
+</Callout>
 
 ### Exporting (`config:export`)
 
 When a full configuration export is run, the `ConfigExporter` service queries the `system_preferences` table and saves all non-secret settings to a file like `/config/sync/system/system.settings.json`.
 
 <Callout type="warning">
-	**Security:** The export process must be configured to **exclude** secrets like `SMTP_PASSWORD`. The `category: 'private'` property on a setting
-	field ensures it is not included in public exports.
+  **Security:** The export process must be configured to **exclude** secrets like `SMTP_PASSWORD`.
+  The `category: 'private'` property on a setting field ensures it is not included in public
+  exports.
 </Callout>
 
 ### Importing (`config:import`)

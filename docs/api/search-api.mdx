@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/search-api.mdx'
-title: 'Search API'
-description: 'Complete API reference for full-text search across collections in SveltyCMS.'
+path: "docs/api/search-api.mdx"
+title: "Search API"
+description: "Complete API reference for full-text search across collections in SveltyCMS."
 order: 9
-icon: 'mdi:magnify'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:magnify"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'search'
-  - 'query'
-  - 'full-text'
+  - "api"
+  - "search"
+  - "query"
+  - "full-text"
 ---
 
 # Search API
@@ -71,44 +71,44 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"results": [
-		{
-			"_id": "entry123",
-			"collection": "posts",
-			"title": "Introduction to SveltyCMS",
-			"excerpt": "Learn how to use SveltyCMS...",
-			"author": "user123",
-			"status": "published",
-			"createdAt": "2025-10-01T10:00:00Z",
-			"updatedAt": "2025-10-05T14:30:00Z",
-			"score": 0.95
-		},
-		{
-			"_id": "entry124",
-			"collection": "pages",
-			"title": "About SveltyCMS",
-			"excerpt": "SveltyCMS is a headless CMS...",
-			"author": "user456",
-			"status": "published",
-			"createdAt": "2025-09-15T08:00:00Z",
-			"updatedAt": "2025-10-03T12:00:00Z",
-			"score": 0.87
-		}
-	],
-	"pagination": {
-		"page": 1,
-		"limit": 25,
-		"total": 42,
-		"totalPages": 2,
-		"hasNextPage": true,
-		"hasPreviousPage": false
-	},
-	"meta": {
-		"query": "SveltyCMS",
-		"collections": ["posts", "pages"],
-		"processingTime": "45ms"
-	}
+  "success": true,
+  "results": [
+    {
+      "_id": "entry123",
+      "collection": "posts",
+      "title": "Introduction to SveltyCMS",
+      "excerpt": "Learn how to use SveltyCMS...",
+      "author": "user123",
+      "status": "published",
+      "createdAt": "2025-10-01T10:00:00Z",
+      "updatedAt": "2025-10-05T14:30:00Z",
+      "score": 0.95
+    },
+    {
+      "_id": "entry124",
+      "collection": "pages",
+      "title": "About SveltyCMS",
+      "excerpt": "SveltyCMS is a headless CMS...",
+      "author": "user456",
+      "status": "published",
+      "createdAt": "2025-09-15T08:00:00Z",
+      "updatedAt": "2025-10-03T12:00:00Z",
+      "score": 0.87
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 25,
+    "total": 42,
+    "totalPages": 2,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  },
+  "meta": {
+    "query": "SveltyCMS",
+    "collections": ["posts", "pages"],
+    "processingTime": "45ms"
+  }
 }
 ```
 
@@ -116,19 +116,19 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"results": [],
-	"pagination": {
-		"page": 1,
-		"limit": 25,
-		"total": 0,
-		"totalPages": 0
-	},
-	"meta": {
-		"query": "nonexistent",
-		"collections": ["posts"],
-		"processingTime": "12ms"
-	}
+  "success": true,
+  "results": [],
+  "pagination": {
+    "page": 1,
+    "limit": 25,
+    "total": 0,
+    "totalPages": 0
+  },
+  "meta": {
+    "query": "nonexistent",
+    "collections": ["posts"],
+    "processingTime": "12ms"
+  }
 }
 ```
 
@@ -181,21 +181,21 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"results": [
-		{
-			"_id": "entry123",
-			"title": "Search Result Title",
-			"content": "Content with matching query...",
-			"score": 0.95,
-			"highlights": {
-				"title": "Search <mark>Result</mark> Title",
-				"content": "Content with matching <mark>query</mark>..."
-			}
-		}
-	],
-	"total": 1,
-	"collection": "posts"
+  "success": true,
+  "results": [
+    {
+      "_id": "entry123",
+      "title": "Search Result Title",
+      "content": "Content with matching query...",
+      "score": 0.95,
+      "highlights": {
+        "title": "Search <mark>Result</mark> Title",
+        "content": "Content with matching <mark>query</mark>..."
+      }
+    }
+  ],
+  "total": 1,
+  "collection": "posts"
 }
 ```
 
@@ -299,12 +299,12 @@ const queryBuilder = new QueryBuilder(dbAdapter);
 
 // Search across collections
 const results = await queryBuilder
-	.collection(collectionName)
-	.search(searchQuery)
-	.filter(baseFilter)
-	.sort(sortField, sortDirection)
-	.paginate(page, limit)
-	.execute();
+  .collection(collectionName)
+  .search(searchQuery)
+  .filter(baseFilter)
+  .sort(sortField, sortDirection)
+  .paginate(page, limit)
+  .execute();
 
 // No direct database queries
 ```
@@ -375,11 +375,11 @@ Track search queries for analytics:
 
 ```json
 {
-	"query": "svelte cms",
-	"userId": "user123",
-	"timestamp": "2025-10-05T14:30:00Z",
-	"resultsCount": 42,
-	"clickedResult": "entry123"
+  "query": "svelte cms",
+  "userId": "user123",
+  "timestamp": "2025-10-05T14:30:00Z",
+  "resultsCount": 42,
+  "clickedResult": "entry123"
 }
 ```
 
@@ -391,29 +391,31 @@ Track search queries for analytics:
 
 ```javascript
 // Basic search
-const response = await fetch('/api/search?q=svelte&collections=posts', {
-	credentials: 'include'
+const response = await fetch("/api/search?q=svelte&collections=posts", {
+  credentials: "include",
 });
 const { results, pagination } = await response.json();
 
 // Advanced search with filters
 const advancedResponse = await fetch(
-	'/api/search?q=cms&filter=' +
-		encodeURIComponent(
-			JSON.stringify({
-				status: 'published',
-				author: 'user123'
-			})
-		) +
-		'&sortField=createdAt&sortDirection=desc',
-	{ credentials: 'include' }
+  "/api/search?q=cms&filter=" +
+    encodeURIComponent(
+      JSON.stringify({
+        status: "published",
+        author: "user123",
+      }),
+    ) +
+    "&sortField=createdAt&sortDirection=desc",
+  { credentials: "include" },
 );
 
 // Paginated search
 for (let page = 1; page <= totalPages; page++) {
-	const pageResponse = await fetch(`/api/search?q=news&page=${page}&limit=10`, { credentials: 'include' });
-	const data = await pageResponse.json();
-	console.log(`Page ${page}:`, data.results.length, 'results');
+  const pageResponse = await fetch(`/api/search?q=news&page=${page}&limit=10`, {
+    credentials: "include",
+  });
+  const data = await pageResponse.json();
+  console.log(`Page ${page}:`, data.results.length, "results");
 }
 ```
 

@@ -1,18 +1,18 @@
 ---
-path: 'docs/widgets/architecture.mdx'
-title: 'Widget System Architecture'
-description: 'Technical deep-dive into the SveltyCMS widget system, covering the Factory Pattern, Runtime Discovery, and Data Flow.'
+path: "docs/widgets/architecture.mdx"
+title: "Widget System Architecture"
+description: "Technical deep-dive into the SveltyCMS widget system, covering the Factory Pattern, Runtime Discovery, and Data Flow."
 order: 2
-icon: 'mdi:cube-outline'
-author: 'admin'
-created: '2025-10-17'
-updated: '2026-02-03'
+icon: "mdi:cube-outline"
+author: "admin"
+created: "2025-10-17"
+updated: "2026-02-03"
 tags:
-  - 'architecture'
-  - 'widgets'
-  - 'factory'
-  - 'runtime'
-  - 'diagrams'
+  - "architecture"
+  - "widgets"
+  - "factory"
+  - "runtime"
+  - "diagrams"
 ---
 
 # Widget System Architecture
@@ -64,25 +64,25 @@ The `createWidget` function is the core of the system. It enforces the 3-Pillar 
 ```typescript
 // src/widgets/widgetFactory.ts
 export function createWidget<TProps extends WidgetProps>(config: WidgetConfig<TProps>) {
-	// 1. Create immutable widget definition
-	const widgetDefinition: WidgetDefinition = {
-		widgetId: config.Name,
-		Name: config.Name,
-		inputComponent: config.inputComponent,
-		displayComponent: config.displayComponent
-		// ... validation and metadata
-	};
+  // 1. Create immutable widget definition
+  const widgetDefinition: WidgetDefinition = {
+    widgetId: config.Name,
+    Name: config.Name,
+    inputComponent: config.inputComponent,
+    displayComponent: config.displayComponent,
+    // ... validation and metadata
+  };
 
-	// 2. Return factory function for field instances
-	const widgetFactory = (fieldConfig: FieldConfig<TProps>): FieldInstance => {
-		return {
-			widget: widgetDefinition,
-			...config.defaults,
-			...fieldConfig
-		};
-	};
+  // 2. Return factory function for field instances
+  const widgetFactory = (fieldConfig: FieldConfig<TProps>): FieldInstance => {
+    return {
+      widget: widgetDefinition,
+      ...config.defaults,
+      ...fieldConfig,
+    };
+  };
 
-	return widgetFactory;
+  return widgetFactory;
 }
 ```
 

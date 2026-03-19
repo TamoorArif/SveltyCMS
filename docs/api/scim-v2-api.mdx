@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/scim-v2-api.mdx'
-title: 'SCIM v2.0 API'
-description: 'Enterprise user and group provisioning via SCIM 2.0 protocol.'
+path: "docs/api/scim-v2-api.mdx"
+title: "SCIM v2.0 API"
+description: "Enterprise user and group provisioning via SCIM 2.0 protocol."
 order: 55
-icon: 'mdi:account-group'
-author: 'admin'
-created: '2026-03-18'
-updated: '2026-03-18'
+icon: "mdi:account-group"
+author: "admin"
+created: "2026-03-18"
+updated: "2026-03-18"
 tags:
-  - 'api'
-  - 'scim'
-  - 'provisioning'
-  - 'enterprise'
+  - "api"
+  - "scim"
+  - "provisioning"
+  - "enterprise"
 ---
 
 # SCIM v2.0 API (Enterprise Provisioning)
@@ -19,9 +19,11 @@ tags:
 SveltyCMS implements the SCIM 2.0 (System for Cross-domain Identity Management) protocol for automated user and group provisioning. This allows integration with identity providers like Okta and Azure AD to manage users and roles across the organization.
 
 ## Base URL
+
 `/api/scim/v2`
 
 ## Authentication
+
 SCIM requests must be authenticated using a **Bearer Token**.
 Tokens can be generated in the SveltyCMS Admin Panel under **Settings > API Access**.
 
@@ -29,16 +31,17 @@ Tokens can be generated in the SveltyCMS Admin Panel under **Settings > API Acce
 
 ### Users
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/Users` | List users (supports filtration) |
-| POST | `/Users` | Create a new user |
-| GET | `/Users/{id}` | Get user details |
-| PUT | `/Users/{id}` | Replace user details |
-| PATCH | `/Users/{id}` | Partial user update |
-| DELETE | `/Users/{id}` | Deactivate user |
+| Method | Endpoint      | Description                      |
+| ------ | ------------- | -------------------------------- |
+| GET    | `/Users`      | List users (supports filtration) |
+| POST   | `/Users`      | Create a new user                |
+| GET    | `/Users/{id}` | Get user details                 |
+| PUT    | `/Users/{id}` | Replace user details             |
+| PATCH  | `/Users/{id}` | Partial user update              |
+| DELETE | `/Users/{id}` | Deactivate user                  |
 
 #### Filtering Users
+
 Supports `filter` query parameter with `eq`, `co`, `sw`, `pr`, etc.
 Example: `GET /Users?filter=userName eq "john@example.com"`
 
@@ -46,17 +49,18 @@ Example: `GET /Users?filter=userName eq "john@example.com"`
 
 In SveltyCMS, SCIM Groups map directly to **Roles**.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/Groups` | List all roles |
-| POST | `/Groups` | Create a new role |
-| GET | `/Groups/{id}` | Get role details and members |
-| PATCH | `/Groups/{id}` | Add/remove members from role |
-| DELETE | `/Groups/{id}` | Delete role |
+| Method | Endpoint       | Description                  |
+| ------ | -------------- | ---------------------------- |
+| GET    | `/Groups`      | List all roles               |
+| POST   | `/Groups`      | Create a new role            |
+| GET    | `/Groups/{id}` | Get role details and members |
+| PATCH  | `/Groups/{id}` | Add/remove members from role |
+| DELETE | `/Groups/{id}` | Delete role                  |
 
 ## Tenant Isolation
 
 The SCIM API is fully multi-tenant aware:
+
 - Authentication tokens are scoped to a specific tenant.
 - All operations (CRUD) only affect resources within the authorized tenant.
 - Filters and searches are automatically scoped to the tenant.
@@ -64,13 +68,16 @@ The SCIM API is fully multi-tenant aware:
 ## SCIM v2 Discovery
 
 ### Service Provider Configuration
+
 **GET** `/api/scim/v2/service-provider-config`
 Returns metadata about the SCIM implementation features (e.g., patch support, bulk support).
 
 ### Resource Types
+
 **GET** `/api/scim/v2/ResourceTypes`
 Lists the supported resource types (`User`, `Group`).
 
 ### Schemas
+
 **GET** `/api/scim/v2/Schemas`
 Lists the supported SCIM schemas.

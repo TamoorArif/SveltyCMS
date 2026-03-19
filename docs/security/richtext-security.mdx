@@ -1,20 +1,20 @@
 ---
-path: 'docs/widgets/richtext-security.mdx'
-title: 'RichText Widget Security Architecture'
-description: 'Defense-in-depth security architecture for the RichText widget with XSS protection, CSS injection prevention, and URL validation.'
+path: "docs/widgets/richtext-security.mdx"
+title: "RichText Widget Security Architecture"
+description: "Defense-in-depth security architecture for the RichText widget with XSS protection, CSS injection prevention, and URL validation."
 order: 5
-icon: 'mdi:shield-lock'
-author: 'admin'
-created: '2025-11-14'
-updated: '2025-11-14'
+icon: "mdi:shield-lock"
+author: "admin"
+created: "2025-11-14"
+updated: "2025-11-14"
 tags:
-  - 'widgets'
-  - 'security'
-  - 'xss'
-  - 'richtext'
-  - 'sanitization'
-  - 'dompurify'
-  - 'tiptap'
+  - "widgets"
+  - "security"
+  - "xss"
+  - "richtext"
+  - "sanitization"
+  - "dompurify"
+  - "tiptap"
 ---
 
 # RichText Widget Security Architecture
@@ -87,7 +87,9 @@ editor.on('update', () => {
 container.style.float = nodeAttrs.float as string; // Injects arbitrary CSS
 
 // AFTER (secure):
-const safeFloat = ['left', 'right', 'unset', 'none'].includes(nodeAttrs.float as string) ? nodeAttrs.float : 'unset';
+const safeFloat = ["left", "right", "unset", "none"].includes(nodeAttrs.float as string)
+  ? nodeAttrs.float
+  : "unset";
 container.style.float = safeFloat;
 ```
 
@@ -105,8 +107,8 @@ setFontSize: (fontSize: string) => chain().setMark(this.name, { fontSize }).run(
 
 // AFTER (secure):
 setFontSize: (fontSize: string) => {
-	const sanitized = fontSize.match(/^\d+(\.\d+)?(px|em|rem|pt|%)$/) ? fontSize : '16px'; // Safe fallback
-	return chain().setMark(this.name, { fontSize: sanitized }).run();
+  const sanitized = fontSize.match(/^\d+(\.\d+)?(px|em|rem|pt|%)$/) ? fontSize : "16px"; // Safe fallback
+  return chain().setMark(this.name, { fontSize: sanitized }).run();
 };
 ```
 
@@ -124,11 +126,12 @@ setFontSize: (fontSize: string) => {
 
 ```typescript
 // Strict YouTube URL validation
-const youtubePattern = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+const youtubePattern =
+  /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
 if (!youtubePattern.test(youtube_url)) {
-	alert('Invalid YouTube URL');
-	return;
+  alert("Invalid YouTube URL");
+  return;
 }
 ```
 
@@ -174,18 +177,18 @@ Expected: Description shows literal text, no execution
 
 <!-- Test 2: CSS injection via float -->
 <div style="float: expression(alert(1))">
-	Expected: Falls back to float: unset
+  Expected: Falls back to float: unset
 
-	<!-- Test 3: Font-size injection -->
-	<span style="font-size: 10px; color: red; }; body { background: red; ">
-		Expected: Falls back to font-size: 16px
+  <!-- Test 3: Font-size injection -->
+  <span style="font-size: 10px; color: red; }; body { background: red; ">
+    Expected: Falls back to font-size: 16px
 
-		<!-- Test 4: YouTube URL injection -->
-		https://evil.com/youtube.com/watch?v=abc Expected: Rejected with "Invalid YouTube URL" error
+    <!-- Test 4: YouTube URL injection -->
+    https://evil.com/youtube.com/watch?v=abc Expected: Rejected with "Invalid YouTube URL" error
 
-		<!-- Test 5: JavaScript URI in YouTube -->
-		javascript:alert(document.cookie) Expected: Rejected (doesn't match pattern)</span
-	>
+    <!-- Test 5: JavaScript URI in YouTube -->
+    javascript:alert(document.cookie) Expected: Rejected (doesn't match pattern)</span
+  >
 </div>
 ```
 

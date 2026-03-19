@@ -1,19 +1,19 @@
 ---
-path: 'docs/architecture/cache-system.mdx'
-title: 'Cache System'
-description: 'Comprehensive guide to SveltyCMS dual-layer caching system with Redis & MongoDB, TTL configuration, metrics, and predictive warming.'
+path: "docs/architecture/cache-system.mdx"
+title: "Cache System"
+description: "Comprehensive guide to SveltyCMS dual-layer caching system with Redis & MongoDB, TTL configuration, metrics, and predictive warming."
 order: 5
-icon: 'mdi:database-clock'
-author: 'admin'
-created: '2025-10-03'
-updated: '2026-03-05'
+icon: "mdi:database-clock"
+author: "admin"
+created: "2025-10-03"
+updated: "2026-03-05"
 tags:
-  - 'cache'
-  - 'redis'
-  - 'performance'
-  - 'metrics'
-  - 'optimization'
-  - 'architecture'
+  - "cache"
+  - "redis"
+  - "performance"
+  - "metrics"
+  - "optimization"
+  - "architecture"
 ---
 
 # Cache System
@@ -91,18 +91,18 @@ The `CacheService` orchestrates the dual-layer logic and integrates with the sys
 
 ```typescript
 export enum CacheCategory {
-	SCHEMA = 'schema',
-	WIDGET = 'widget',
-	THEME = 'theme',
-	CONTENT = 'content',
-	MEDIA = 'media',
-	SESSION = 'session',
-	USER = 'user',
-	API = 'api'
+  SCHEMA = "schema",
+  WIDGET = "widget",
+  THEME = "theme",
+  CONTENT = "content",
+  MEDIA = "media",
+  SESSION = "session",
+  USER = "user",
+  API = "api",
 }
 
 // Example usage
-await cacheService.setWithCategory('user:123', userData, CacheCategory.USER, tenantId);
+await cacheService.setWithCategory("user:123", userData, CacheCategory.USER, tenantId);
 ```
 
 ### Cache Metrics (`CacheMetrics.ts`)
@@ -129,16 +129,16 @@ Proactive caching reduces "cold start" latency:
 ### Cache Store Methods
 
 ```typescript
-import { cacheService } from '@src/databases/cache/cache-service';
+import { cacheService } from "@src/databases/cache/cache-service";
 
 // Set cache value with category (recommended)
-await cacheService.setWithCategory('key', data, CacheCategory.API);
+await cacheService.setWithCategory("key", data, CacheCategory.API);
 
 // Set with explicit TTL (seconds)
-await cacheService.set('key', data, 3600);
+await cacheService.set("key", data, 3600);
 
 // Pattern invalidation
-await cacheService.deletePattern('query:collections:*');
+await cacheService.deletePattern("query:collections:*");
 
 // Category invalidation
 await cacheService.invalidateCategory(CacheCategory.SCHEMA);

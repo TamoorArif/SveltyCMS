@@ -1,12 +1,12 @@
 ---
-path: '/docs/database/mongodb-implementation'
-title: 'MongoDB Implementation Guide'
-description: 'Complete MongoDB-specific implementation guide covering optimizations, indexes, connection pooling, cursor pagination, streaming, and performance tuning for SveltyCMS.'
+path: "/docs/database/mongodb-implementation"
+title: "MongoDB Implementation Guide"
+description: "Complete MongoDB-specific implementation guide covering optimizations, indexes, connection pooling, cursor pagination, streaming, and performance tuning for SveltyCMS."
 order: 4
-icon: 'mdi:leaf'
-author: 'SveltyCMS Team'
-created: '2024-01-15'
-updated: '2026-02-09'
+icon: "mdi:leaf"
+author: "SveltyCMS Team"
+created: "2024-01-15"
+updated: "2026-02-09"
 tags:
   - database
   - mongodb
@@ -152,7 +152,7 @@ SessionSchema.index({ expires: 1 }, { expireAfterSeconds: 0 });
 // File: src/databases/mongodb/models/authUser.ts
 
 // Auto-delete expired password reset tokens after 1 hour
-UserSchema.index({ 'resetToken.expires': 1 }, { sparse: true, expireAfterSeconds: 3600 });
+UserSchema.index({ "resetToken.expires": 1 }, { sparse: true, expireAfterSeconds: 3600 });
 
 // Auto-delete temporary/unverified users after expiration
 UserSchema.index({ expiresAt: 1 }, { sparse: true, expireAfterSeconds: 0 });
@@ -254,10 +254,10 @@ private async createIndexes(model: Model<unknown>, schema: Schema): Promise<void
 ```typescript
 // Field with unique: true in schema
 {
-	slug: 1;
+  slug: 1;
 } // Unique index with sparse option
 {
-	email: 1;
+  email: 1;
 } // Unique email addresses
 ```
 
@@ -266,10 +266,10 @@ private async createIndexes(model: Model<unknown>, schema: Schema): Promise<void
 ```typescript
 // Field with indexed: true in schema
 {
-	category: 1;
+  category: 1;
 } // Fast category filtering
 {
-	tags: 1;
+  tags: 1;
 } // Fast tag lookups
 ```
 
@@ -278,10 +278,10 @@ private async createIndexes(model: Model<unknown>, schema: Schema): Promise<void
 ```typescript
 // Text/textarea fields with searchable: true
 {
-	title: 'text';
+  title: "text";
 } // Full-text search
 {
-	description: 'text';
+  description: "text";
 } // Full-text search
 ```
 
@@ -290,10 +290,10 @@ private async createIndexes(model: Model<unknown>, schema: Schema): Promise<void
 ```typescript
 // fields with sortable: true in schema
 {
-	price: 1;
+  price: 1;
 } // Sort by price
 {
-	publishDate: -1;
+  publishDate: -1;
 } // Sort by date
 ```
 
@@ -356,14 +356,14 @@ private async createIndexes(model: Model<unknown>, schema: Schema): Promise<void
 // File: src/routes/(app)/[language]/[...collection]/+page.server.ts
 
 if (!editEntryId) {
-	// List view: Select only display fields
-	const displayfields = getDisplayfields(currentCollection, 'list', {
-		maxDisplayfields: 5
-	});
+  // List view: Select only display fields
+  const displayfields = getDisplayfields(currentCollection, "list", {
+    maxDisplayfields: 5,
+  });
 
-	query = query.select(displayfields);
-	// Query returns: _id, status, createdAt, title, thumbnail
-	// Instead of all 35 fields!
+  query = query.select(displayfields);
+  // Query returns: _id, status, createdAt, title, thumbnail
+  // Instead of all 35 fields!
 }
 ```
 
@@ -526,9 +526,9 @@ contentStructureSchema.index({ tenantId: 1, slug: 1 }, { sparse: true });
 // Query: All German posts in tenant
 // Before: 180ms (table scan), After: 5ms
 contentStructureSchema.index({
-	tenantId: 1,
-	'translations.languageTag': 1,
-	nodeType: 1
+  tenantId: 1,
+  "translations.languageTag": 1,
+  nodeType: 1,
 });
 
 // Child node ordering
@@ -580,8 +580,8 @@ mediaSchema.index({ folderId: 1, mimeType: 1, status: 1 });
 // Query: Search for "logo"
 // Before: 300ms (regex scan), After: 10ms
 mediaSchema.index({
-	filename: 'text',
-	originalFilename: 'text'
+  filename: "text",
+  originalFilename: "text",
 });
 ```
 
@@ -674,23 +674,23 @@ The MongoDB adapter uses an optimized connection pool for enterprise-scale perfo
 // File: src/databases/mongodb/mongodb-adapter.ts
 
 const connectOptions: mongoose.ConnectOptions = {
-	// Connection Pool Settings
-	maxPoolSize: 10, // Optimized for CMS workloads
-	minPoolSize: 2, // Maintain warm connections
+  // Connection Pool Settings
+  maxPoolSize: 10, // Optimized for CMS workloads
+  minPoolSize: 2, // Maintain warm connections
 
-	// Performance Optimizations
-	compressors: ['zstd', 'snappy'], // Wire compression: 40-60% bandwidth reduction
-	heartbeatFrequencyMS: 10000, // Faster topology detection for replica sets
+  // Performance Optimizations
+  compressors: ["zstd", "snappy"], // Wire compression: 40-60% bandwidth reduction
+  heartbeatFrequencyMS: 10000, // Faster topology detection for replica sets
 
-	// Timeout Settings
-	serverSelectionTimeoutMS: 5000, // Fail fast on connection issues
-	connectTimeoutMS: 5000, // Connection timeout
-	socketTimeoutMS: 45000, // Prevent zombie connections (45s idle timeout)
+  // Timeout Settings
+  serverSelectionTimeoutMS: 5000, // Fail fast on connection issues
+  connectTimeoutMS: 5000, // Connection timeout
+  socketTimeoutMS: 45000, // Prevent zombie connections (45s idle timeout)
 
-	// Reliability Settings
-	retryWrites: true, // Auto-retry failed writes
-	retryReads: true, // Auto-retry transient read failures
-	w: 'majority' // Write concern for data durability
+  // Reliability Settings
+  retryWrites: true, // Auto-retry failed writes
+  retryReads: true, // Auto-retry transient read failures
+  w: "majority", // Write concern for data durability
 };
 ```
 
@@ -708,16 +708,16 @@ const connectOptions: mongoose.ConnectOptions = {
 
 ```typescript
 // Monitor connection pool health
-mongoose.connection.on('connected', () => {
-	console.log('MongoDB connected');
+mongoose.connection.on("connected", () => {
+  console.log("MongoDB connected");
 });
 
-mongoose.connection.on('disconnected', () => {
-	console.log('MongoDB disconnected');
+mongoose.connection.on("disconnected", () => {
+  console.log("MongoDB disconnected");
 });
 
-mongoose.connection.on('error', (err) => {
-	console.error('MongoDB error:', err);
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB error:", err);
 });
 ```
 
@@ -773,36 +773,36 @@ async paginate(options: PaginateOptions): Promise<DatabaseResult<T[]>> {
 ```typescript
 // Page 1: No cursor needed
 const page1 = await db
-	.queryBuilder('posts')
-	.paginate({
-		pageSize: 20,
-		sortField: '_id',
-		sortDirection: 'desc'
-	})
-	.execute();
+  .queryBuilder("posts")
+  .paginate({
+    pageSize: 20,
+    sortField: "_id",
+    sortDirection: "desc",
+  })
+  .execute();
 
 console.log(`Loaded ${page1.data.length} posts`);
 console.log(`Has more: ${page1.meta.hasMore}`);
 
 // Page 2: Use cursor from page 1
 const page2 = await db
-	.queryBuilder('posts')
-	.paginate({
-		cursor: page1.meta.nextCursor, // '_id:507f1f77bcf86cd799439011'
-		pageSize: 20,
-		sortDirection: 'desc'
-	})
-	.execute();
+  .queryBuilder("posts")
+  .paginate({
+    cursor: page1.meta.nextCursor, // '_id:507f1f77bcf86cd799439011'
+    pageSize: 20,
+    sortDirection: "desc",
+  })
+  .execute();
 
 // Page 3: Use cursor from page 2
 const page3 = await db
-	.queryBuilder('posts')
-	.paginate({
-		cursor: page2.meta.nextCursor,
-		pageSize: 20,
-		sortDirection: 'desc'
-	})
-	.execute();
+  .queryBuilder("posts")
+  .paginate({
+    cursor: page2.meta.nextCursor,
+    pageSize: 20,
+    sortDirection: "desc",
+  })
+  .execute();
 ```
 
 #### Performance Comparison
@@ -858,21 +858,21 @@ async stream(): Promise<DatabaseResult<AsyncIterable<T>>> {
 
 ```typescript
 // Export 100,000 media files
-const stream = await db.queryBuilder('media').where({ status: 'published' }).stream();
+const stream = await db.queryBuilder("media").where({ status: "published" }).stream();
 
 if (stream.success) {
-	let count = 0;
+  let count = 0;
 
-	for await (const media of stream.data) {
-		await exportToFile(media); // Process one at a time
-		count++;
+  for await (const media of stream.data) {
+    await exportToFile(media); // Process one at a time
+    count++;
 
-		if (count % 1000 === 0) {
-			console.log(`Exported ${count} files...`);
-		}
-	}
+    if (count % 1000 === 0) {
+      console.log(`Exported ${count} files...`);
+    }
+  }
 
-	console.log(`Total exported: ${count}`);
+  console.log(`Total exported: ${count}`);
 }
 
 // Memory usage: ~50MB (constant)
@@ -883,25 +883,28 @@ if (stream.success) {
 
 ```typescript
 // Process all users for email campaign
-const stream = await db.queryBuilder('users').where({ emailVerified: true, blocked: false }).stream();
+const stream = await db
+  .queryBuilder("users")
+  .where({ emailVerified: true, blocked: false })
+  .stream();
 
 if (stream.success) {
-	const batchSize = 100;
-	let batch: User[] = [];
+  const batchSize = 100;
+  let batch: User[] = [];
 
-	for await (const user of stream.data) {
-		batch.push(user);
+  for await (const user of stream.data) {
+    batch.push(user);
 
-		if (batch.length >= batchSize) {
-			await sendEmailBatch(batch); // Send 100 at a time
-			batch = [];
-		}
-	}
+    if (batch.length >= batchSize) {
+      await sendEmailBatch(batch); // Send 100 at a time
+      batch = [];
+    }
+  }
 
-	// Send remaining
-	if (batch.length > 0) {
-		await sendEmailBatch(batch);
-	}
+  // Send remaining
+  if (batch.length > 0) {
+    await sendEmailBatch(batch);
+  }
 }
 ```
 
@@ -909,20 +912,20 @@ if (stream.success) {
 
 ```typescript
 // Migrate content to new schema
-const stream = await db.queryBuilder('posts').stream();
+const stream = await db.queryBuilder("posts").stream();
 
 if (stream.success) {
-	for await (const post of stream.data) {
-		// Transform data
-		const migratedPost = {
-			...post,
-			newField: computeNewField(post)
-			// ... more transformations
-		};
+  for await (const post of stream.data) {
+    // Transform data
+    const migratedPost = {
+      ...post,
+      newField: computeNewField(post),
+      // ... more transformations
+    };
 
-		// Update in database
-		await db.update('posts', post.id, migratedPost);
-	}
+    // Update in database
+    await db.update("posts", post.id, migratedPost);
+  }
 }
 
 // Processes millions of records without memory issues
@@ -976,10 +979,10 @@ private async executeQuery(): Promise<T[]> {
 ```typescript
 // Force use of compound index for better performance
 const users = await db
-	.queryBuilder('users')
-	.where({ tenantId: 'acme', role: 'editor' })
-	.hint({ useIndex: ['tenantId_1_role_1_blocked_1'] })
-	.execute();
+  .queryBuilder("users")
+  .where({ tenantId: "acme", role: "editor" })
+  .hint({ useIndex: ["tenantId_1_role_1_blocked_1"] })
+  .execute();
 
 // MongoDB will use the specified index instead of choosing automatically
 ```
@@ -989,10 +992,10 @@ const users = await db
 ```typescript
 // Limit query execution time to prevent long-running queries
 const results = await db
-	.queryBuilder('analytics')
-	.where({ date: { $gte: startDate, $lte: endDate } })
-	.hint({ maxExecutionTime: 5000 }) // 5 second max
-	.execute();
+  .queryBuilder("analytics")
+  .where({ date: { $gte: startDate, $lte: endDate } })
+  .hint({ maxExecutionTime: 5000 }) // 5 second max
+  .execute();
 
 // Query aborts after 5 seconds, preventing resource exhaustion
 ```
@@ -1002,18 +1005,18 @@ const results = await db
 ```typescript
 // Force optimal index for complex multi-tenant query
 const content = await db
-	.queryBuilder('content')
-	.where({
-		tenantId: 'acme',
-		'translations.languageTag': 'de',
-		nodeType: 'post',
-		status: 'published'
-	})
-	.hint({
-		useIndex: ['tenantId_1_translations.languageTag_1_nodeType_1'],
-		maxExecutionTime: 3000
-	})
-	.execute();
+  .queryBuilder("content")
+  .where({
+    tenantId: "acme",
+    "translations.languageTag": "de",
+    nodeType: "post",
+    status: "published",
+  })
+  .hint({
+    useIndex: ["tenantId_1_translations.languageTag_1_nodeType_1"],
+    maxExecutionTime: 3000,
+  })
+  .execute();
 ```
 
 ---
@@ -1028,13 +1031,13 @@ All MongoDB queries use `.lean()` for optimal performance.
 
 ```typescript
 // Without .lean() - Full Mongoose Document
-const user = await User.findOne({ email: 'user@example.com' });
+const user = await User.findOne({ email: "user@example.com" });
 // Returns: MongooseDocument with methods, getters, virtuals
 // Memory: ~100KB per document
 // Access: user.name (with getters/setters)
 
 // With .lean() - Plain Object
-const user = await User.findOne({ email: 'user@example.com' }).lean();
+const user = await User.findOne({ email: "user@example.com" }).lean();
 // Returns: Plain JavaScript object
 // Memory: ~60KB per document (40% less!)
 // Access: user.name (direct property access)
@@ -1082,25 +1085,25 @@ All queries return metadata for performance monitoring.
 
 ```typescript
 interface QueryMeta {
-	executionTime?: number; // Query execution time in ms
-	cached?: boolean; // Was result from cache?
-	indexUsed?: string; // Which index was used
-	documentsScanned?: number; // How many docs scanned
+  executionTime?: number; // Query execution time in ms
+  cached?: boolean; // Was result from cache?
+  indexUsed?: string; // Which index was used
+  documentsScanned?: number; // How many docs scanned
 }
 ```
 
 #### Usage Example
 
 ```typescript
-const result = await db.queryBuilder('users').where({ tenantId: 'acme', role: 'admin' }).execute();
+const result = await db.queryBuilder("users").where({ tenantId: "acme", role: "admin" }).execute();
 
-console.log('Execution time:', result.meta?.executionTime, 'ms');
-console.log('Cached:', result.meta?.cached);
-console.log('Index used:', result.meta?.indexUsed);
+console.log("Execution time:", result.meta?.executionTime, "ms");
+console.log("Cached:", result.meta?.cached);
+console.log("Index used:", result.meta?.indexUsed);
 
 // Monitor slow queries
 if (result.meta?.executionTime > 100) {
-	Logger.warn(`Slow query detected: ${result.meta.executionTime}ms`);
+  Logger.warn(`Slow query detected: ${result.meta.executionTime}ms`);
 }
 ```
 
@@ -1109,19 +1112,19 @@ if (result.meta?.executionTime > 100) {
 MongoDB queries integrate with the cache system for monitoring.
 
 ```typescript
-import { cacheMetrics } from '@src/databases/CacheMetrics';
+import { cacheMetrics } from "@src/databases/CacheMetrics";
 
 // Get cache performance metrics
 const metrics = cacheMetrics.getMetrics();
 
-console.log('Cache hit rate:', metrics.hitRate);
-console.log('Average response time:', metrics.averageResponseTime);
-console.log('Total hits:', metrics.totalHits);
-console.log('Total misses:', metrics.totalMisses);
+console.log("Cache hit rate:", metrics.hitRate);
+console.log("Average response time:", metrics.averageResponseTime);
+console.log("Total hits:", metrics.totalHits);
+console.log("Total misses:", metrics.totalMisses);
 
 // Per-category metrics
-const userMetrics = cacheMetrics.getCategoryMetrics('USER');
-console.log('User cache hit rate:', userMetrics.hitRate);
+const userMetrics = cacheMetrics.getCategoryMetrics("USER");
+console.log("User cache hit rate:", userMetrics.hitRate);
 ```
 
 ---
@@ -1135,36 +1138,36 @@ console.log('User cache hit rate:', userMetrics.hitRate);
 ```typescript
 // ✅ Good: Cursor pagination (constant O(1) performance)
 const page = await db
-	.queryBuilder('posts')
-	.paginate({
-		cursor: lastCursor,
-		pageSize: 20,
-		sortField: '_id',
-		sortDirection: 'desc'
-	})
-	.execute();
+  .queryBuilder("posts")
+  .paginate({
+    cursor: lastCursor,
+    pageSize: 20,
+    sortField: "_id",
+    sortDirection: "desc",
+  })
+  .execute();
 
 // ❌ Bad: Offset pagination (degrades to O(n))
 const page = await db
-	.find('posts')
-	.skip(pageNumber * 20) // Scans all skipped records
-	.limit(20)
-	.execute();
+  .find("posts")
+  .skip(pageNumber * 20) // Scans all skipped records
+  .limit(20)
+  .execute();
 ```
 
 #### 2. Use Streaming for Large Exports
 
 ```typescript
 // ✅ Good: Streaming (constant ~50MB memory)
-const stream = await db.queryBuilder('media').stream();
+const stream = await db.queryBuilder("media").stream();
 for await (const item of stream.data) {
-	await processItem(item);
+  await processItem(item);
 }
 
 // ❌ Bad: Load all at once (scales with data size)
-const allMedia = await db.find('media', {}); // 2GB+ memory!
+const allMedia = await db.find("media", {}); // 2GB+ memory!
 for (const item of allMedia) {
-	await processItem(item);
+  await processItem(item);
 }
 ```
 
@@ -1172,18 +1175,18 @@ for (const item of allMedia) {
 
 ```typescript
 // ✅ Good: Uses compound index (2ms)
-const users = await db.find('users', {
-	tenantId: 'acme',
-	role: 'editor',
-	blocked: false
+const users = await db.find("users", {
+  tenantId: "acme",
+  role: "editor",
+  blocked: false,
 });
 // Uses index: tenantId_1_role_1_blocked_1
 
 // ❌ Bad: Only uses first field (50ms)
-const users = await db.find('users', {
-	role: 'editor', // No index starts with 'role'
-	tenantId: 'acme',
-	blocked: false
+const users = await db.find("users", {
+  role: "editor", // No index starts with 'role'
+  tenantId: "acme",
+  blocked: false,
 });
 ```
 
@@ -1191,29 +1194,29 @@ const users = await db.find('users', {
 
 ```typescript
 // ✅ Good: Check cache first
-const user = await CacheService.get('USER', `user:${userId}`);
+const user = await CacheService.get("USER", `user:${userId}`);
 if (!user) {
-	const result = await db.findOne('users', { id: userId });
-	if (result.success) {
-		await CacheService.set('USER', `user:${userId}`, result.data);
-	}
+  const result = await db.findOne("users", { id: userId });
+  if (result.success) {
+    await CacheService.set("USER", `user:${userId}`, result.data);
+  }
 }
 
 // ❌ Bad: Always hit database
-const user = await db.findOne('users', { id: userId });
+const user = await db.findOne("users", { id: userId });
 ```
 
 #### 5. Monitor Query Performance
 
 ```typescript
 // ✅ Good: Monitor and alert on slow queries
-const result = await db.queryBuilder('posts').execute();
+const result = await db.queryBuilder("posts").execute();
 if (result.meta?.executionTime > 100) {
-	Logger.warn('Slow query', {
-		collection: 'posts',
-		time: result.meta.executionTime,
-		indexUsed: result.meta.indexUsed
-	});
+  Logger.warn("Slow query", {
+    collection: "posts",
+    time: result.meta.executionTime,
+    indexUsed: result.meta.indexUsed,
+  });
 }
 ```
 
@@ -1224,19 +1227,19 @@ if (result.meta?.executionTime > 100) {
 ```typescript
 // ❌ Bad: Page 100 takes 15 seconds
 const posts = await db
-	.find('posts')
-	.skip(100 * 20) // Scans 2000 records
-	.limit(20)
-	.execute();
+  .find("posts")
+  .skip(100 * 20) // Scans 2000 records
+  .limit(20)
+  .execute();
 ```
 
 #### 2. Don't Load Large Datasets into Memory
 
 ```typescript
 // ❌ Bad: 10GB memory for 1M records
-const allUsers = await db.find('users', {});
+const allUsers = await db.find("users", {});
 for (const user of allUsers) {
-	await sendEmail(user); // OOM crash!
+  await sendEmail(user); // OOM crash!
 }
 ```
 
@@ -1244,14 +1247,14 @@ for (const user of allUsers) {
 
 ```typescript
 // ❌ Bad: Full table scan (500ms)
-const users = await db.find('users', {
-	email: { $regex: /.*@example\.com/ }
+const users = await db.find("users", {
+  email: { $regex: /.*@example\.com/ },
 });
 
 // ✅ Good: Use text index (10ms)
 // First add text index: userSchema.index({ email: 'text' })
-const users = await db.find('users', {
-	$text: { $search: 'example.com' }
+const users = await db.find("users", {
+  $text: { $search: "example.com" },
 });
 ```
 
@@ -1259,12 +1262,12 @@ const users = await db.find('users', {
 
 ```typescript
 // ❌ Bad: Stale cache after update
-await db.update('users', userId, { role: 'admin' });
+await db.update("users", userId, { role: "admin" });
 // Cache still has old role!
 
 // ✅ Good: Invalidate cache after mutation
-await db.update('users', userId, { role: 'admin' });
-await CacheService.delete('USER', `user:${userId}`);
+await db.update("users", userId, { role: "admin" });
+await CacheService.delete("USER", `user:${userId}`);
 ```
 
 #### 5. Don't Ignore Connection Pool Limits
@@ -1272,14 +1275,14 @@ await CacheService.delete('USER', `user:${userId}`);
 ```typescript
 // ❌ Bad: Creating 100 parallel connections
 for (let i = 0; i < 100; i++) {
-	promises.push(db.find('posts', {})); // Exceeds pool!
+  promises.push(db.find("posts", {})); // Exceeds pool!
 }
 
 // ✅ Good: Batch with concurrency limit
-import pLimit from 'p-limit';
+import pLimit from "p-limit";
 const limit = pLimit(10); // Max 10 concurrent
 for (let i = 0; i < 100; i++) {
-	promises.push(limit(() => db.find('posts', {})));
+  promises.push(limit(() => db.find("posts", {})));
 }
 ```
 
@@ -1292,11 +1295,11 @@ for (let i = 0; i < 100; i++) {
 ```typescript
 // Check index usage statistics
 const indexStats = await mongoose.connection.db
-	.collection('auth_users')
-	.aggregate([{ $indexStats: {} }])
-	.toArray();
+  .collection("auth_users")
+  .aggregate([{ $indexStats: {} }])
+  .toArray();
 
-console.log('Index statistics:', indexStats);
+console.log("Index statistics:", indexStats);
 
 // Look for:
 // - Unused indexes (ops: 0)
@@ -1322,12 +1325,12 @@ tail -f /var/log/mongodb/mongod.log | grep "slow query"
 
 ```typescript
 // Get collection statistics
-const stats = await mongoose.connection.db.collection('auth_users').stats();
+const stats = await mongoose.connection.db.collection("auth_users").stats();
 
-console.log('Total documents:', stats.count);
-console.log('Average document size:', stats.avgObjSize);
-console.log('Total index size:', stats.totalIndexSize);
-console.log('Storage size:', stats.storageSize);
+console.log("Total documents:", stats.count);
+console.log("Average document size:", stats.avgObjSize);
+console.log("Total index size:", stats.totalIndexSize);
+console.log("Storage size:", stats.storageSize);
 ```
 
 ---
@@ -1363,15 +1366,18 @@ console.log('Storage size:', stats.storageSize);
 ### Cursor Pagination
 
 ```typescript
-const page = await db.queryBuilder('posts').paginate({ cursor: lastCursor, pageSize: 20 }).execute();
+const page = await db
+  .queryBuilder("posts")
+  .paginate({ cursor: lastCursor, pageSize: 20 })
+  .execute();
 ```
 
 ### Streaming
 
 ```typescript
-const stream = await db.queryBuilder('media').stream();
+const stream = await db.queryBuilder("media").stream();
 for await (const item of stream.data) {
-	await processItem(item);
+  await processItem(item);
 }
 ```
 
@@ -1379,27 +1385,27 @@ for await (const item of stream.data) {
 
 ```typescript
 const result = await db
-	.queryBuilder('users')
-	.hint({ useIndex: ['tenantId_1_email_1'] })
-	.execute();
+  .queryBuilder("users")
+  .hint({ useIndex: ["tenantId_1_email_1"] })
+  .execute();
 ```
 
 ### Cache Integration
 
 ```typescript
-const cached = await CacheService.get('USER', key);
+const cached = await CacheService.get("USER", key);
 if (!cached) {
-	const result = await db.findOne('users', { id });
-	await CacheService.set('USER', key, result.data);
+  const result = await db.findOne("users", { id });
+  await CacheService.set("USER", key, result.data);
 }
 ```
 
 ### Performance Monitoring
 
 ```typescript
-const result = await db.queryBuilder('posts').execute();
-console.log('Time:', result.meta?.executionTime, 'ms');
-console.log('Cached:', result.meta?.cached);
+const result = await db.queryBuilder("posts").execute();
+console.log("Time:", result.meta?.executionTime, "ms");
+console.log("Cached:", result.meta?.cached);
 ```
 
 ---

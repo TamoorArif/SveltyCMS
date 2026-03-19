@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/graphql-api.mdx'
-title: 'GraphQL API'
-description: 'Complete GraphQL API reference for querying and mutating data in SveltyCMS with dynamic schema generation.'
+path: "docs/api/graphql-api.mdx"
+title: "GraphQL API"
+description: "Complete GraphQL API reference for querying and mutating data in SveltyCMS with dynamic schema generation."
 order: 11
-icon: 'mdi:graphql'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-11-08'
+icon: "mdi:graphql"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-11-08"
 tags:
-  - 'api'
-  - 'graphql'
-  - 'query'
-  - 'mutation'
-  - 'subscriptions'
+  - "api"
+  - "graphql"
+  - "query"
+  - "mutation"
+  - "subscriptions"
 ---
 
 # GraphQL API
@@ -52,11 +52,11 @@ Cookie: session=your-session-cookie
 
 ```javascript
 // Session cookie automatically sent
-fetch('/api/graphql', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({ query })
+fetch("/api/graphql", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ query }),
 });
 ```
 
@@ -73,8 +73,8 @@ curl -X POST https://cms.example.com/api/graphql \
 
 ```json
 {
-	"error": "Unauthorized",
-	"message": "You must be logged in to access the GraphQL endpoint."
+  "error": "Unauthorized",
+  "message": "You must be logged in to access the GraphQL endpoint."
 }
 ```
 
@@ -113,40 +113,40 @@ The GraphQL schema is dynamically generated based on your:
 ```graphql
 # Auto-generated from "Posts" collection
 type Posts_abc123 {
-	_id: String
-	title: String
-	content: String
-	author: User
-	tags: [String]
-	status: String
-	createdAt: String
-	updatedAt: String
-	createdBy: String
-	updatedBy: String
+  _id: String
+  title: String
+  content: String
+  author: User
+  tags: [String]
+  status: String
+  createdAt: String
+  updatedAt: String
+  createdBy: String
+  updatedBy: String
 }
 
 type Query {
-	# Collection queries (dynamically generated)
-	Posts_abc123: [Posts_abc123]
-	Articles_def456: [Articles_def456]
+  # Collection queries (dynamically generated)
+  Posts_abc123: [Posts_abc123]
+  Articles_def456: [Articles_def456]
 
-	# User queries
-	users(pagination: PaginationInput): [User]
+  # User queries
+  users(pagination: PaginationInput): [User]
 
-	# Media queries
-	mediaImages(pagination: PaginationInput): [MediaImage]
-	mediaDocuments(pagination: PaginationInput): [MediaDocument]
-	mediaAudio(pagination: PaginationInput): [MediaAudio]
-	mediaVideos(pagination: PaginationInput): [MediaVideo]
-	mediaRemote(pagination: PaginationInput): [MediaRemote]
+  # Media queries
+  mediaImages(pagination: PaginationInput): [MediaImage]
+  mediaDocuments(pagination: PaginationInput): [MediaDocument]
+  mediaAudio(pagination: PaginationInput): [MediaAudio]
+  mediaVideos(pagination: PaginationInput): [MediaVideo]
+  mediaRemote(pagination: PaginationInput): [MediaRemote]
 
-	# Permission queries
-	accessManagementPermission: AccessManagementPermission
+  # Permission queries
+  accessManagementPermission: AccessManagementPermission
 }
 
 input PaginationInput {
-	page: Int = 1
-	limit: Int = 50
+  page: Int = 1
+  limit: Int = 50
 }
 ```
 
@@ -158,18 +158,18 @@ input PaginationInput {
 
 ```graphql
 query GetPosts {
-	posts(limit: 10, filter: { status: "published" }) {
-		_id
-		title
-		content
-		author {
-			_id
-			username
-			email
-		}
-		createdAt
-		updatedAt
-	}
+  posts(limit: 10, filter: { status: "published" }) {
+    _id
+    title
+    content
+    author {
+      _id
+      username
+      email
+    }
+    createdAt
+    updatedAt
+  }
 }
 ```
 
@@ -177,22 +177,22 @@ query GetPosts {
 
 ```json
 {
-	"data": {
-		"posts": [
-			{
-				"_id": "post123",
-				"title": "Hello World",
-				"content": "Post content...",
-				"author": {
-					"_id": "user123",
-					"username": "john_doe",
-					"email": "john@example.com"
-				},
-				"createdAt": "2025-10-05T14:30:00Z",
-				"updatedAt": "2025-10-05T14:30:00Z"
-			}
-		]
-	}
+  "data": {
+    "posts": [
+      {
+        "_id": "post123",
+        "title": "Hello World",
+        "content": "Post content...",
+        "author": {
+          "_id": "user123",
+          "username": "john_doe",
+          "email": "john@example.com"
+        },
+        "createdAt": "2025-10-05T14:30:00Z",
+        "updatedAt": "2025-10-05T14:30:00Z"
+      }
+    ]
+  }
 }
 ```
 
@@ -200,15 +200,15 @@ query GetPosts {
 
 ```graphql
 query GetPost($id: ID!) {
-	post(id: $id) {
-		_id
-		title
-		content
-		status
-		author {
-			username
-		}
-	}
+  post(id: $id) {
+    _id
+    title
+    content
+    status
+    author {
+      username
+    }
+  }
 }
 ```
 
@@ -216,7 +216,7 @@ query GetPost($id: ID!) {
 
 ```json
 {
-	"id": "post123"
+  "id": "post123"
 }
 ```
 
@@ -224,11 +224,11 @@ query GetPost($id: ID!) {
 
 ```graphql
 query FilteredPosts {
-	posts(filter: { status: "published", author: "user123" }, limit: 20, skip: 0) {
-		_id
-		title
-		createdAt
-	}
+  posts(filter: { status: "published", author: "user123" }, limit: 20, skip: 0) {
+    _id
+    title
+    createdAt
+  }
 }
 ```
 
@@ -242,12 +242,12 @@ Advanced queries for CMS metadata, navigation, and diagnostics.
 
 ```graphql
 query CollectionStats {
-	collectionStats(collectionId: "posts_123") {
-		_id
-		name
-		fieldCount
-		hasRevisions
-	}
+  collectionStats(collectionId: "posts_123") {
+    _id
+    name
+    fieldCount
+    hasRevisions
+  }
 }
 ```
 
@@ -255,14 +255,14 @@ query CollectionStats {
 
 ```graphql
 query Navigation($options: NavigationOptions) {
-	navigationStructure(options: { maxDepth: 2 }) {
-		_id
-		name
-		children {
-			_id
-			name
-		}
-	}
+  navigationStructure(options: { maxDepth: 2 }) {
+    _id
+    name
+    children {
+      _id
+      name
+    }
+  }
 }
 ```
 
@@ -270,10 +270,10 @@ query Navigation($options: NavigationOptions) {
 
 ```graphql
 query Breadcrumb {
-	breadcrumb(path: "/blog/hello-world") {
-		name
-		path
-	}
+  breadcrumb(path: "/blog/hello-world") {
+    name
+    path
+  }
 }
 ```
 
@@ -281,11 +281,11 @@ query Breadcrumb {
 
 ```graphql
 query Diagnostics {
-	contentManagerHealth {
-		state
-		nodeCount
-		cacheAge
-	}
+  contentManagerHealth {
+    state
+    nodeCount
+    cacheAge
+  }
 }
 ```
 
@@ -303,12 +303,12 @@ Triggered when schemas or collections change.
 
 ```graphql
 subscription OnStructureUpdate {
-	contentStructureUpdated {
-		version
-		timestamp
-		affectedCollections
-		changeType
-	}
+  contentStructureUpdated {
+    version
+    timestamp
+    affectedCollections
+    changeType
+  }
 }
 ```
 
@@ -316,11 +316,11 @@ subscription OnStructureUpdate {
 
 ```graphql
 subscription OnPostAdded {
-	postAdded {
-		_id
-		title
-		createdAt
-	}
+  postAdded {
+    _id
+    title
+    createdAt
+  }
 }
 ```
 
@@ -332,14 +332,14 @@ subscription OnPostAdded {
 
 ```graphql
 query Me {
-	me {
-		_id
-		username
-		email
-		role
-		permissions
-		createdAt
-	}
+  me {
+    _id
+    username
+    email
+    role
+    permissions
+    createdAt
+  }
 }
 ```
 
@@ -347,13 +347,13 @@ query Me {
 
 ```graphql
 query GetUsers {
-	users(filter: { role: "editor" }, limit: 10) {
-		_id
-		username
-		email
-		role
-		blocked
-	}
+  users(filter: { role: "editor" }, limit: 10) {
+    _id
+    username
+    email
+    role
+    blocked
+  }
 }
 ```
 
@@ -361,14 +361,14 @@ query GetUsers {
 
 ```graphql
 query GetUser($id: ID!) {
-	user(id: $id) {
-		_id
-		username
-		email
-		role
-		createdAt
-		lastLogin
-	}
+  user(id: $id) {
+    _id
+    username
+    email
+    role
+    createdAt
+    lastLogin
+  }
 }
 ```
 
@@ -380,17 +380,17 @@ query GetUser($id: ID!) {
 
 ```graphql
 query GetMedia {
-	media(limit: 20) {
-		_id
-		filename
-		url
-		mimeType
-		size
-		uploadedBy {
-			username
-		}
-		uploadedAt
-	}
+  media(limit: 20) {
+    _id
+    filename
+    url
+    mimeType
+    size
+    uploadedBy {
+      username
+    }
+    uploadedAt
+  }
 }
 ```
 
@@ -398,16 +398,16 @@ query GetMedia {
 
 ```graphql
 query GetMediaFile($id: ID!) {
-	mediaFile(id: $id) {
-		_id
-		filename
-		url
-		mimeType
-		size
-		width
-		height
-		metadata
-	}
+  mediaFile(id: $id) {
+    _id
+    filename
+    url
+    mimeType
+    size
+    width
+    height
+    metadata
+  }
 }
 ```
 
@@ -419,13 +419,13 @@ query GetMediaFile($id: ID!) {
 
 ```graphql
 mutation CreatePost($input: PostInput!) {
-	createPost(input: $input) {
-		_id
-		title
-		content
-		status
-		createdAt
-	}
+  createPost(input: $input) {
+    _id
+    title
+    content
+    status
+    createdAt
+  }
 }
 ```
 
@@ -433,12 +433,12 @@ mutation CreatePost($input: PostInput!) {
 
 ```json
 {
-	"input": {
-		"title": "New Post",
-		"content": "Post content here...",
-		"status": "draft",
-		"author": "user123"
-	}
+  "input": {
+    "title": "New Post",
+    "content": "Post content here...",
+    "status": "draft",
+    "author": "user123"
+  }
 }
 ```
 
@@ -446,11 +446,11 @@ mutation CreatePost($input: PostInput!) {
 
 ```graphql
 mutation UpdatePost($id: ID!, $input: PostInput!) {
-	updatePost(id: $id, input: $input) {
-		_id
-		title
-		updatedAt
-	}
+  updatePost(id: $id, input: $input) {
+    _id
+    title
+    updatedAt
+  }
 }
 ```
 
@@ -458,11 +458,11 @@ mutation UpdatePost($id: ID!, $input: PostInput!) {
 
 ```json
 {
-	"id": "post123",
-	"input": {
-		"title": "Updated Title",
-		"status": "published"
-	}
+  "id": "post123",
+  "input": {
+    "title": "Updated Title",
+    "status": "published"
+  }
 }
 ```
 
@@ -470,7 +470,7 @@ mutation UpdatePost($id: ID!, $input: PostInput!) {
 
 ```graphql
 mutation DeletePost($id: ID!) {
-	deletePost(id: $id)
+  deletePost(id: $id)
 }
 ```
 
@@ -484,22 +484,22 @@ SveltyCMS automatically generates GraphQL types for each collection:
 
 ```graphql
 type Post {
-	_id: ID!
-	title: String!
-	content: String
-	excerpt: String
-	status: String
-	author: User
-	createdAt: DateTime
-	updatedAt: DateTime
+  _id: ID!
+  title: String!
+  content: String
+  excerpt: String
+  status: String
+  author: User
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 input PostInput {
-	title: String!
-	content: String
-	excerpt: String
-	status: String
-	author: ID
+  title: String!
+  content: String
+  excerpt: String
+  status: String
+  author: ID
 }
 ```
 
@@ -507,19 +507,19 @@ input PostInput {
 
 ```graphql
 type Page {
-	_id: ID!
-	title: String!
-	slug: String!
-	content: String
-	template: String
-	createdAt: DateTime
+  _id: ID!
+  title: String!
+  slug: String!
+  content: String
+  template: String
+  createdAt: DateTime
 }
 
 input PageInput {
-	title: String!
-	slug: String!
-	content: String
-	template: String
+  title: String!
+  slug: String!
+  content: String
+  template: String
 }
 ```
 
@@ -550,14 +550,14 @@ query {
 
 ```json
 {
-	"errors": [
-		{
-			"message": "Unauthorized: Insufficient permissions",
-			"extensions": {
-				"code": "FORBIDDEN"
-			}
-		}
-	]
+  "errors": [
+    {
+      "message": "Unauthorized: Insufficient permissions",
+      "extensions": {
+        "code": "FORBIDDEN"
+      }
+    }
+  ]
 }
 ```
 
@@ -599,10 +599,10 @@ GraphQL resolvers use database adapters:
 
 ```typescript
 // Collections resolver
-const posts = await dbAdapter.crud.findMany('posts', filter, {
-	limit,
-	skip,
-	sort: { createdAt: -1 }
+const posts = await dbAdapter.crud.findMany("posts", filter, {
+  limit,
+  skip,
+  sort: { createdAt: -1 },
 });
 
 // User resolver
@@ -639,20 +639,20 @@ GraphQL errors follow standard format:
 
 ```json
 {
-	"errors": [
-		{
-			"message": "Post not found",
-			"locations": [{ "line": 2, "column": 3 }],
-			"path": ["post"],
-			"extensions": {
-				"code": "NOT_FOUND",
-				"id": "post123"
-			}
-		}
-	],
-	"data": {
-		"post": null
-	}
+  "errors": [
+    {
+      "message": "Post not found",
+      "locations": [{ "line": 2, "column": 3 }],
+      "path": ["post"],
+      "extensions": {
+        "code": "NOT_FOUND",
+        "id": "post123"
+      }
+    }
+  ],
+  "data": {
+    "post": null
+  }
 }
 ```
 
@@ -672,20 +672,20 @@ GraphQL errors follow standard format:
 
 ```graphql
 query PostWithAuthorAndComments {
-	post(id: "post123") {
-		title
-		author {
-			username
-			email
-		}
-		comments {
-			_id
-			content
-			author {
-				username
-			}
-		}
-	}
+  post(id: "post123") {
+    title
+    author {
+      username
+      email
+    }
+    comments {
+      _id
+      content
+      author {
+        username
+      }
+    }
+  }
 }
 ```
 
@@ -693,9 +693,9 @@ query PostWithAuthorAndComments {
 
 ```graphql
 query PostStats {
-	postsCount: posts(filter: { status: "published" }) {
-		_id
-	}
+  postsCount: posts(filter: { status: "published" }) {
+    _id
+  }
 }
 ```
 
@@ -703,14 +703,14 @@ query PostStats {
 
 ```graphql
 query MultipleQueries {
-	published: posts(filter: { status: "published" }) {
-		_id
-		title
-	}
-	drafts: posts(filter: { status: "draft" }) {
-		_id
-		title
-	}
+  published: posts(filter: { status: "published" }) {
+    _id
+    title
+  }
+  drafts: posts(filter: { status: "draft" }) {
+    _id
+    title
+  }
 }
 ```
 
@@ -722,22 +722,22 @@ query MultipleQueries {
 
 ```javascript
 async function queryGraphQL(query, variables = {}) {
-	const response = await fetch('/api/graphql', {
-		method: 'POST',
-		credentials: 'include',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({ query, variables })
-	});
+  const response = await fetch("/api/graphql", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
 
-	const { data, errors } = await response.json();
+  const { data, errors } = await response.json();
 
-	if (errors) {
-		throw new Error(errors[0].message);
-	}
+  if (errors) {
+    throw new Error(errors[0].message);
+  }
 
-	return data;
+  return data;
 }
 
 // Usage
@@ -754,50 +754,50 @@ const data = await queryGraphQL(`
 ### Apollo Client
 
 ```javascript
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, gql } from "@apollo/client";
 
 const client = new ApolloClient({
-	uri: '/api/graphql',
-	cache: new InMemoryCache(),
-	credentials: 'include'
+  uri: "/api/graphql",
+  cache: new InMemoryCache(),
+  credentials: "include",
 });
 
 const { data } = await client.query({
-	query: gql`
-		query GetPosts {
-			posts {
-				_id
-				title
-			}
-		}
-	`
+  query: gql`
+    query GetPosts {
+      posts {
+        _id
+        title
+      }
+    }
+  `,
 });
 ```
 
 ### urql
 
 ```javascript
-import { createClient } from 'urql';
+import { createClient } from "urql";
 
 const client = createClient({
-	url: '/api/graphql',
-	fetchOptions: {
-		credentials: 'include'
-	}
+  url: "/api/graphql",
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 const result = await client
-	.query(
-		`
+  .query(
+    `
   query GetPosts {
     posts {
       _id
       title
     }
   }
-`
-	)
-	.toPromise();
+`,
+  )
+  .toPromise();
 ```
 
 ---
@@ -845,10 +845,10 @@ Use pagination for large datasets:
 
 ```graphql
 query PaginatedPosts($limit: Int!, $skip: Int!) {
-	posts(limit: $limit, skip: $skip) {
-		_id
-		title
-	}
+  posts(limit: $limit, skip: $skip) {
+    _id
+    title
+  }
 }
 ```
 
@@ -858,18 +858,18 @@ Batch multiple queries:
 
 ```graphql
 query BatchQuery {
-	posts {
-		_id
-		title
-	}
-	users {
-		_id
-		username
-	}
-	media {
-		_id
-		filename
-	}
+  posts {
+    _id
+    title
+  }
+  users {
+    _id
+    username
+  }
+  media {
+    _id
+    filename
+  }
 }
 ```
 
@@ -883,9 +883,9 @@ All inputs are validated:
 
 ```graphql
 mutation CreatePost($input: PostInput!) {
-	createPost(input: $input) {
-		_id
-	}
+  createPost(input: $input) {
+    _id
+  }
 }
 ```
 
@@ -925,7 +925,7 @@ GraphQL subscriptions enable real-time data updates via WebSocket connections.
 
 ```graphql
 type Subscription {
-	postAdded: Post
+  postAdded: Post
 }
 ```
 
@@ -933,15 +933,15 @@ type Subscription {
 
 ```graphql
 subscription OnPostAdded {
-	postAdded {
-		_id
-		title
-		content
-		createdAt
-		author {
-			username
-		}
-	}
+  postAdded {
+    _id
+    title
+    content
+    createdAt
+    author {
+      username
+    }
+  }
 }
 ```
 
@@ -956,30 +956,30 @@ Subscriptions require a WebSocket connection on **port 3001**:
 ### Quick Start
 
 ```typescript
-import { createClient } from 'graphql-ws';
+import { createClient } from "graphql-ws";
 
 const client = createClient({
-	url: 'ws://localhost:3001/api/graphql',
-	connectionParams: {
-		cookie: document.cookie
-	}
+  url: "ws://localhost:3001/api/graphql",
+  connectionParams: {
+    cookie: document.cookie,
+  },
 });
 
 client.subscribe(
-	{
-		query: `
+  {
+    query: `
       subscription {
         postAdded {
           _id
           title
         }
       }
-    `
-	},
-	{
-		next: (data) => console.log('New post:', data),
-		error: (error) => console.error('Error:', error)
-	}
+    `,
+  },
+  {
+    next: (data) => console.log("New post:", data),
+    error: (error) => console.error("Error:", error),
+  },
 );
 ```
 
@@ -1064,9 +1064,9 @@ bun test --coverage tests/bun/api/graphql.test.ts
 ### Example Test
 
 ```typescript
-describe('User Queries', () => {
-	it('should fetch users with pagination', async () => {
-		const query = `
+describe("User Queries", () => {
+  it("should fetch users with pagination", async () => {
+    const query = `
       query GetUsers($pagination: PaginationInput) {
         users(pagination: $pagination) {
           _id
@@ -1076,22 +1076,22 @@ describe('User Queries', () => {
       }
     `;
 
-		const response = await executeGraphQL(
-			query,
-			{
-				pagination: {
-					page: 1,
-					limit: 5
-				}
-			},
-			authCookie
-		);
+    const response = await executeGraphQL(
+      query,
+      {
+        pagination: {
+          page: 1,
+          limit: 5,
+        },
+      },
+      authCookie,
+    );
 
-		expect(response.status).toBe(200);
-		const result = await response.json();
-		expect(result.data.users).toBeDefined();
-		expect(Array.isArray(result.data.users)).toBe(true);
-	});
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result.data.users).toBeDefined();
+    expect(Array.isArray(result.data.users)).toBe(true);
+  });
 });
 ```
 
@@ -1142,17 +1142,17 @@ Test GraphQL with other API endpoints:
 
 ```javascript
 // 1. Create user via REST API
-const userResponse = await fetch('/api/user/create-user', {
-	method: 'POST',
-	body: JSON.stringify({ email, username, password })
+const userResponse = await fetch("/api/user/create-user", {
+  method: "POST",
+  body: JSON.stringify({ email, username, password }),
 });
 
 // 2. Query user via GraphQL
-const graphqlResponse = await fetch('/api/graphql', {
-	method: 'POST',
-	body: JSON.stringify({
-		query: `query { users { _id email } }`
-	})
+const graphqlResponse = await fetch("/api/graphql", {
+  method: "POST",
+  body: JSON.stringify({
+    query: `query { users { _id email } }`,
+  }),
 });
 
 // 3. Verify user exists in GraphQL response

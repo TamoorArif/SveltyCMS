@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/user-management-api.mdx'
-title: 'User Management API'
-description: 'Complete API reference for user authentication, registration, and profile management in SveltyCMS.'
+path: "docs/api/user-management-api.mdx"
+title: "User Management API"
+description: "Complete API reference for user authentication, registration, and profile management in SveltyCMS."
 order: 2
-icon: 'mdi:account-multiple'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:account-multiple"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'users'
-  - 'authentication'
-  - 'profile'
+  - "api"
+  - "users"
+  - "authentication"
+  - "profile"
 ---
 
 # User Management API
@@ -65,8 +65,8 @@ Content-Type: application/json
 
 ```json
 {
-	"email": "user@example.com",
-	"password": "securePassword123"
+  "email": "user@example.com",
+  "password": "securePassword123"
 }
 ```
 
@@ -78,17 +78,17 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"user": {
-		"_id": "user123",
-		"email": "user@example.com",
-		"username": "john_doe",
-		"role": "editor",
-		"tenantId": "tenant-abc",
-		"isRegistered": true,
-		"blocked": false
-	},
-	"message": "Login successful"
+  "success": true,
+  "user": {
+    "_id": "user123",
+    "email": "user@example.com",
+    "username": "john_doe",
+    "role": "editor",
+    "tenantId": "tenant-abc",
+    "isRegistered": true,
+    "blocked": false
+  },
+  "message": "Login successful"
 }
 ```
 
@@ -158,8 +158,8 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"message": "Logged out successfully"
+  "success": true,
+  "message": "Logged out successfully"
 }
 ```
 
@@ -192,10 +192,10 @@ Content-Type: application/json
 
 ```json
 {
-	"email": "newuser@example.com",
-	"username": "new_user",
-	"password": "SecurePass123!",
-	"role": "editor"
+  "email": "newuser@example.com",
+  "username": "new_user",
+  "password": "SecurePass123!",
+  "role": "editor"
 }
 ```
 
@@ -207,13 +207,13 @@ Content-Type: application/json
 
 ```json
 {
-	"_id": "user456",
-	"email": "newuser@example.com",
-	"username": "new_user",
-	"role": "editor",
-	"tenantId": "tenant-abc",
-	"isRegistered": true,
-	"createdAt": "2025-10-05T14:30:00Z"
+  "_id": "user456",
+  "email": "newuser@example.com",
+  "username": "new_user",
+  "role": "editor",
+  "tenantId": "tenant-abc",
+  "isRegistered": true,
+  "createdAt": "2025-10-05T14:30:00Z"
 }
 ```
 
@@ -261,13 +261,13 @@ Content-Type: application/json
 
 ```json
 {
-	"userId": "user123",
-	"updates": {
-		"username": "updated_username",
-		"email": "newemail@example.com",
-		"role": "admin",
-		"blocked": false
-	}
+  "userId": "user123",
+  "updates": {
+    "username": "updated_username",
+    "email": "newemail@example.com",
+    "role": "admin",
+    "blocked": false
+  }
 }
 ```
 
@@ -282,15 +282,15 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"user": {
-		"_id": "user123",
-		"username": "updated_username",
-		"email": "newemail@example.com",
-		"role": "admin",
-		"updatedAt": "2025-10-05T14:30:00Z"
-	},
-	"message": "User updated successfully"
+  "success": true,
+  "user": {
+    "_id": "user123",
+    "username": "updated_username",
+    "email": "newemail@example.com",
+    "role": "admin",
+    "updatedAt": "2025-10-05T14:30:00Z"
+  },
+  "message": "User updated successfully"
 }
 ```
 
@@ -331,12 +331,12 @@ Content-Type: application/json
 
 ```json
 {
-	"operation": "update",
-	"userIds": ["user123", "user456", "user789"],
-	"updates": {
-		"role": "contributor",
-		"blocked": false
-	}
+  "operation": "update",
+  "userIds": ["user123", "user456", "user789"],
+  "updates": {
+    "role": "contributor",
+    "blocked": false
+  }
 }
 ```
 
@@ -355,24 +355,24 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"operation": "update",
-	"processed": 3,
-	"results": [
-		{
-			"userId": "user123",
-			"success": true
-		},
-		{
-			"userId": "user456",
-			"success": true
-		},
-		{
-			"userId": "user789",
-			"success": false,
-			"error": "User not found"
-		}
-	]
+  "success": true,
+  "operation": "update",
+  "processed": 3,
+  "results": [
+    {
+      "userId": "user123",
+      "success": true
+    },
+    {
+      "userId": "user456",
+      "success": true
+    },
+    {
+      "userId": "user789",
+      "success": false,
+      "error": "User not found"
+    }
+  ]
 }
 ```
 
@@ -411,9 +411,9 @@ Content-Type: multipart/form-data
 
 ```json
 {
-	"success": true,
-	"avatarUrl": "/uploads/avatars/user123.jpg",
-	"message": "Avatar updated successfully"
+  "success": true,
+  "avatarUrl": "/uploads/avatars/user123.jpg",
+  "message": "Avatar updated successfully"
 }
 ```
 
@@ -447,7 +447,7 @@ Content-Type: application/json
 
 ```json
 {
-	"userId": "user123"
+  "userId": "user123"
 }
 ```
 
@@ -462,8 +462,8 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "Avatar deleted successfully"
+  "success": true,
+  "message": "Avatar deleted successfully"
 }
 ```
 
@@ -505,7 +505,7 @@ When multi-tenant mode is enabled:
 // Automatically scoped by tenant
 const userLookupCriteria = { email };
 if (MULTI_TENANT) {
-	userLookupCriteria.tenantId = tenantId;
+  userLookupCriteria.tenantId = tenantId;
 }
 const user = await auth.getUserByEmail(userLookupCriteria);
 ```
@@ -600,46 +600,46 @@ Each role has specific permissions that can be customized dynamically through th
 
 ```javascript
 // Login
-const loginResponse = await fetch('/api/user/login', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		email: 'user@example.com',
-		password: 'SecurePass123!'
-	})
+const loginResponse = await fetch("/api/user/login", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: "user@example.com",
+    password: "SecurePass123!",
+  }),
 });
 
 const { user } = await loginResponse.json();
-console.log('Logged in as:', user.username);
+console.log("Logged in as:", user.username);
 
 // Create user (admin only)
-const createResponse = await fetch('/api/user/create-user', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		email: 'newuser@example.com',
-		password: 'NewUserPass123!',
-		role: 'editor'
-	})
+const createResponse = await fetch("/api/user/create-user", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: "newuser@example.com",
+    password: "NewUserPass123!",
+    role: "editor",
+  }),
 });
 
 // Update profile
-await fetch('/api/user/update-user-attributes', {
-	method: 'PATCH',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		userId: user._id,
-		updates: { username: 'new_username' }
-	})
+await fetch("/api/user/update-user-attributes", {
+  method: "PATCH",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: user._id,
+    updates: { username: "new_username" },
+  }),
 });
 
 // Logout
-await fetch('/api/user/logout', {
-	method: 'POST',
-	credentials: 'include'
+await fetch("/api/user/logout", {
+  method: "POST",
+  credentials: "include",
 });
 ```
 

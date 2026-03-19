@@ -3,19 +3,22 @@
  * @description Generates SveltyCMS collection schemas from external source metadata.
  */
 
-import { aiService } from '@src/services/ai-service';
-import { logger } from '@utils/logger.server';
-import type { ExternalSourceSchemaField } from './source-adapters';
+import { aiService } from "@src/services/ai-service";
+import { logger } from "@utils/logger.server";
+import type { ExternalSourceSchemaField } from "./source-adapters";
 
 /**
  * Scaffolds a new collection schema based on external source metadata.
  */
-export async function scaffoldCollectionSchema(collectionName: string, sourceFields: ExternalSourceSchemaField[]) {
-	try {
-		logger.info(`Scaffolding collection: ${collectionName}`);
+export async function scaffoldCollectionSchema(
+  collectionName: string,
+  sourceFields: ExternalSourceSchemaField[],
+) {
+  try {
+    logger.info(`Scaffolding collection: ${collectionName}`);
 
-		// Ask AI to suggest widgets for each source field
-		const prompt = `
+    // Ask AI to suggest widgets for each source field
+    const prompt = `
 			You are an expert CMS architect. I have a remote schema from an external source (WordPress/Drupal).
 			Source Fields: ${JSON.stringify(sourceFields)}
 			
@@ -38,19 +41,19 @@ export async function scaffoldCollectionSchema(collectionName: string, sourceFie
 			}
 		`;
 
-		const response = await aiService.generateJSON(prompt);
-		const fields = Array.isArray(response) ? response : [];
+    const response = await aiService.generateJSON(prompt);
+    const fields = Array.isArray(response) ? response : [];
 
-		const schema = {
-			name: collectionName,
-			icon: 'mdi:import',
-			slug: collectionName.toLowerCase().replace(/\s+/g, '_'),
-			fields: fields
-		};
+    const schema = {
+      name: collectionName,
+      icon: "mdi:import",
+      slug: collectionName.toLowerCase().replace(/\s+/g, "_"),
+      fields: fields,
+    };
 
-		return schema;
-	} catch (error) {
-		logger.error('Error scaffolding collection schema:', error);
-		throw error;
-	}
+    return schema;
+  } catch (error) {
+    logger.error("Error scaffolding collection schema:", error);
+    throw error;
+  }
 }

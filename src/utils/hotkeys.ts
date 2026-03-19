@@ -37,95 +37,100 @@
  *   - Cheatsheet modal (? or mod+/)
  *   - Conflict detection / logging
  */
-import { onDestroy } from 'svelte';
+import { onDestroy } from "svelte";
 
 type KeyCombo = string; // e.g. 'mod+s', 'delete', 'escape'
 type HotkeyAction = {
-	handler: () => void;
-	description?: string;
-	preventDefault?: boolean;
+  handler: () => void;
+  description?: string;
+  preventDefault?: boolean;
 };
 
 const hotkeys = new Map<string, HotkeyAction>();
 
-const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
-const MOD = isMac ? 'meta' : 'ctrl';
+const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
+const MOD = isMac ? "meta" : "ctrl";
 
 function normalizeCombo(combo: string): string {
-	return combo
-		.toLowerCase()
-		.replace(/\bmod\b/g, MOD)
-		.replace(/\s+/g, '+');
+  return combo
+    .toLowerCase()
+    .replace(/\bmod\b/g, MOD)
+    .replace(/\s+/g, "+");
 }
 
 function eventMatches(e: KeyboardEvent, combo: string): boolean {
-	const parts = combo.split('+');
-	const required = {
-		meta: parts.includes('meta'),
-		ctrl: parts.includes('ctrl'),
-		alt: parts.includes('alt'),
-		shift: parts.includes('shift'),
-		key: parts.find((p) => !['meta', 'ctrl', 'alt', 'shift'].includes(p)) || ''
-	};
+  const parts = combo.split("+");
+  const required = {
+    meta: parts.includes("meta"),
+    ctrl: parts.includes("ctrl"),
+    alt: parts.includes("alt"),
+    shift: parts.includes("shift"),
+    key: parts.find((p) => !["meta", "ctrl", "alt", "shift"].includes(p)) || "",
+  };
 
-	// Special handling for Delete / Backspace
-	const keyLower = e.key.toLowerCase();
-	const isDelete = keyLower === 'delete' || (e.key === 'Backspace' && !required.shift);
+  // Special handling for Delete / Backspace
+  const keyLower = e.key.toLowerCase();
+  const isDelete = keyLower === "delete" || (e.key === "Backspace" && !required.shift);
 
-	return (
-		(!required.meta || e.metaKey) &&
-		(!required.ctrl || e.ctrlKey) &&
-		(!required.alt || e.altKey) &&
-		(!required.shift || e.shiftKey) &&
-		(required.key === '' || keyLower === required.key || (required.key === 'delete' && isDelete))
-	);
+  return (
+    (!required.meta || e.metaKey) &&
+    (!required.ctrl || e.ctrlKey) &&
+    (!required.alt || e.altKey) &&
+    (!required.shift || e.shiftKey) &&
+    (required.key === "" || keyLower === required.key || (required.key === "delete" && isDelete))
+  );
 }
 
 function globalKeydownHandler(e: KeyboardEvent) {
-	// Skip if typing in input/textarea/select/contenteditable
-	const target = e.target as HTMLElement;
-	const tag = target.tagName;
-	if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
-		return;
-	}
+  // Skip if typing in input/textarea/select/contenteditable
+  const target = e.target as HTMLElement;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) {
+    return;
+  }
 
-	for (const [combo, action] of hotkeys.entries()) {
-		if (eventMatches(e, combo)) {
-			if (action.preventDefault !== false) e.preventDefault();
-			action.handler();
-			// First match wins (can add priority later)
-			return;
-		}
-	}
+  for (const [combo, action] of hotkeys.entries()) {
+    if (eventMatches(e, combo)) {
+      if (action.preventDefault !== false) e.preventDefault();
+      action.handler();
+      // First match wins (can add priority later)
+      return;
+    }
+  }
 }
 
 let listenerActive = false;
 
 function ensureGlobalListener() {
-	if (listenerActive || typeof window === 'undefined') return;
-	window.addEventListener('keydown', globalKeydownHandler, { capture: true });
-	listenerActive = true;
+  if (listenerActive || typeof window === "undefined") return;
+  window.addEventListener("keydown", globalKeydownHandler, { capture: true });
+  listenerActive = true;
 }
 
-export function registerHotkey(combo: KeyCombo, handler: () => void, description?: string, preventDefault = true) {
-	const norm = normalizeCombo(combo);
-	hotkeys.set(norm, { handler, description, preventDefault });
+export function registerHotkey(
+  combo: KeyCombo,
+  handler: () => void,
+  description?: string,
+  preventDefault = true,
+) {
+  const norm = normalizeCombo(combo);
+  hotkeys.set(norm, { handler, description, preventDefault });
 
-	ensureGlobalListener();
+  ensureGlobalListener();
 
-	onDestroy(() => {
-		hotkeys.delete(norm);
-		if (hotkeys.size === 0 && listenerActive) {
-			window.removeEventListener('keydown', globalKeydownHandler, { capture: true });
-			listenerActive = false;
-		}
-	});
+  onDestroy(() => {
+    hotkeys.delete(norm);
+    if (hotkeys.size === 0 && listenerActive) {
+      window.removeEventListener("keydown", globalKeydownHandler, { capture: true });
+      listenerActive = false;
+    }
+  });
 }
 
 // Optional: for cheatsheet / help menu
 export function getRegisteredHotkeys() {
-	return Array.from(hotkeys.entries()).map(([combo, { description }]) => ({
-		combo: combo.replace(new RegExp(MOD, 'gi'), 'Mod').replace(/\+/g, ' + '),
-		description
-	}));
+  return Array.from(hotkeys.entries()).map(([combo, { description }]) => ({
+    combo: combo.replace(new RegExp(MOD, "gi"), "Mod").replace(/\+/g, " + "),
+    description,
+  }));
 }

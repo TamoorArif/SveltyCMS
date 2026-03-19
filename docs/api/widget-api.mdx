@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/widget-api.mdx'
-title: 'Widget Management API'
-description: 'Complete API reference for managing widgets in SveltyCMS including installation, activation, and dependency management.'
+path: "docs/api/widget-api.mdx"
+title: "Widget Management API"
+description: "Complete API reference for managing widgets in SveltyCMS including installation, activation, and dependency management."
 order: 6
-icon: 'mdi:puzzle'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-27'
+icon: "mdi:puzzle"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-27"
 tags:
-  - 'api'
-  - 'widgets'
-  - 'plugins'
-  - 'extensions'
+  - "api"
+  - "widgets"
+  - "plugins"
+  - "extensions"
 ---
 
 # Widget Management API
@@ -74,39 +74,39 @@ GET /api/widgets/list
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widgets": [
-			{
-				"name": "widgetFunction",
-				"version": "1.0.0",
-				"category": "core",
-				"isActive": true,
-				"isCore": true,
-				"dependencies": [],
-				"pillar": {
-					"definition": { "exists": true },
-					"input": { "exists": true, "componentPath": "..." },
-					"display": { "exists": true, "componentPath": "..." }
-				},
-				"metadata": {
-					"author": "SveltyCMS",
-					"license": "MIT",
-					"icon": "mdi:puzzle"
-				}
-			}
-			// ... more widgets
-		],
-		"summary": {
-			"total": 25,
-			"active": 18,
-			"inactive": 5,
-			"core": 15,
-			"custom": 10
-		}
-	},
-	"message": "Widgets retrieved successfully",
-	"performance": { "duration": 45 }
+  "success": true,
+  "data": {
+    "widgets": [
+      {
+        "name": "widgetFunction",
+        "version": "1.0.0",
+        "category": "core",
+        "isActive": true,
+        "isCore": true,
+        "dependencies": [],
+        "pillar": {
+          "definition": { "exists": true },
+          "input": { "exists": true, "componentPath": "..." },
+          "display": { "exists": true, "componentPath": "..." }
+        },
+        "metadata": {
+          "author": "SveltyCMS",
+          "license": "MIT",
+          "icon": "mdi:puzzle"
+        }
+      }
+      // ... more widgets
+    ],
+    "summary": {
+      "total": 25,
+      "active": 18,
+      "inactive": 5,
+      "core": 15,
+      "custom": 10
+    }
+  },
+  "message": "Widgets retrieved successfully",
+  "performance": { "duration": 45 }
 }
 ```
 
@@ -114,9 +114,9 @@ GET /api/widgets/list
 
 ```json
 {
-	"success": false,
-	"message": "Unauthorized access",
-	"error": "UNAUTHORIZED"
+  "success": false,
+  "message": "Unauthorized access",
+  "error": "UNAUTHORIZED"
 }
 ```
 
@@ -136,18 +136,18 @@ Returns a list of currently active widgets with enriched 3-pillar architecture m
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widgets": [
-			{
-				"name": "WidgetName",
-				"isCore": true,
-				"icon": "mdi:icon",
-				"inputComponentPath": "...",
-				"displayComponentPath": "..."
-			}
-		]
-	}
+  "success": true,
+  "data": {
+    "widgets": [
+      {
+        "name": "WidgetName",
+        "isCore": true,
+        "icon": "mdi:icon",
+        "inputComponentPath": "...",
+        "displayComponentPath": "..."
+      }
+    ]
+  }
 }
 ```
 
@@ -172,12 +172,12 @@ Content-Type: application/json
 
 ```json
 {
-	"widgetId": "custom-widget-123",
-	"tenantId": "tenant-xyz",
-	"version": "1.0.0",
-	"config": {
-		"option1": "value1"
-	}
+  "widgetId": "custom-widget-123",
+  "tenantId": "tenant-xyz",
+  "version": "1.0.0",
+  "config": {
+    "option1": "value1"
+  }
 }
 ```
 
@@ -189,17 +189,17 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widgetId": "custom-widget-123",
-		"installedAt": "2025-10-05T14:30:00Z",
-		"securityScan": {
-			"safe": true,
-			"issues": []
-		}
-	},
-	"message": "Widget installed successfully",
-	"performance": { "duration": 120 }
+  "success": true,
+  "data": {
+    "widgetId": "custom-widget-123",
+    "installedAt": "2025-10-05T14:30:00Z",
+    "securityScan": {
+      "safe": true,
+      "issues": []
+    }
+  },
+  "message": "Widget installed successfully",
+  "performance": { "duration": 120 }
 }
 ```
 
@@ -207,12 +207,12 @@ Content-Type: application/json
 
 ```json
 {
-	"success": false,
-	"message": "Security scan failed: Malicious code detected",
-	"error": "SECURITY_VIOLATION",
-	"data": {
-		"issues": ["Use of forbidden function: eval()"]
-	}
+  "success": false,
+  "message": "Security scan failed: Malicious code detected",
+  "error": "SECURITY_VIOLATION",
+  "data": {
+    "issues": ["Use of forbidden function: eval()"]
+  }
 }
 ```
 
@@ -239,9 +239,9 @@ Content-Type: application/json
 
 ```json
 {
-	"widgetName": "custom-widget",
-	"tenantId": "tenant-xyz",
-	"force": false
+  "widgetName": "custom-widget",
+  "tenantId": "tenant-xyz",
+  "force": false
 }
 ```
 
@@ -259,13 +259,13 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widgetName": "custom-widget",
-		"uninstalledAt": "2025-10-05T14:30:00Z"
-	},
-	"message": "Widget uninstalled successfully",
-	"performance": { "duration": 85 }
+  "success": true,
+  "data": {
+    "widgetName": "custom-widget",
+    "uninstalledAt": "2025-10-05T14:30:00Z"
+  },
+  "message": "Widget uninstalled successfully",
+  "performance": { "duration": 85 }
 }
 ```
 
@@ -320,9 +320,9 @@ Content-Type: application/json
 
 ```json
 {
-	"widgetName": "custom-widget",
-	"isActive": true, // or false
-	"tenantId": "tenant-xyz"
+  "widgetName": "custom-widget",
+  "isActive": true, // or false
+  "tenantId": "tenant-xyz"
 }
 ```
 
@@ -334,14 +334,14 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widgetName": "custom-widget",
-		"status": "active", // or inactive
-		"updatedAt": "2025-10-05T14:30:00Z"
-	},
-	"message": "Widget activated successfully",
-	"performance": { "duration": 40 }
+  "success": true,
+  "data": {
+    "widgetName": "custom-widget",
+    "status": "active", // or inactive
+    "updatedAt": "2025-10-05T14:30:00Z"
+  },
+  "message": "Widget activated successfully",
+  "performance": { "duration": 40 }
 }
 ```
 
@@ -394,21 +394,21 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"widget": {
-			"name": "mediaUpload",
-			"version": "1.2.0",
-			"status": "active",
-			"isCore": true,
-			"dependencies": ["widgetFunction"],
-			"dependents": ["imageGallery", "fileManager"],
-			"installedAt": "2025-01-01T00:00:00Z",
-			"lastUpdated": "2025-10-05T14:30:00Z"
-		}
-	},
-	"message": "Widget status retrieved",
-	"performance": { "duration": 15 }
+  "success": true,
+  "data": {
+    "widget": {
+      "name": "mediaUpload",
+      "version": "1.2.0",
+      "status": "active",
+      "isCore": true,
+      "dependencies": ["widgetFunction"],
+      "dependents": ["imageGallery", "fileManager"],
+      "installedAt": "2025-01-01T00:00:00Z",
+      "lastUpdated": "2025-10-05T14:30:00Z"
+    }
+  },
+  "message": "Widget status retrieved",
+  "performance": { "duration": 15 }
 }
 ```
 
@@ -417,9 +417,9 @@ Cookie: session=your-session-id
 ```json
 // 404 Not Found
 {
-	"success": false,
-	"message": "Widget 'mediaUpload' not found",
-	"error": "WIDGET_NOT_FOUND"
+  "success": false,
+  "message": "Widget 'mediaUpload' not found",
+  "error": "WIDGET_NOT_FOUND"
 }
 ```
 
@@ -446,8 +446,8 @@ Content-Type: application/json
 
 ```json
 {
-	"widgetName": "custom-widget",
-	"version": "1.0.0"
+  "widgetName": "custom-widget",
+  "version": "1.0.0"
 }
 ```
 
@@ -459,23 +459,23 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"valid": true,
-		"checks": {
-			"fileIntegrity": "passed",
-			"dependencies": "passed",
-			"compatibility": "passed",
-			"permissions": "passed",
-			"security": "passed"
-		},
-		"securityReport": {
-			"scannedFiles": 5,
-			"threatsFound": 0
-		}
-	},
-	"message": "Widget validation successful",
-	"performance": { "duration": 150 }
+  "success": true,
+  "data": {
+    "valid": true,
+    "checks": {
+      "fileIntegrity": "passed",
+      "dependencies": "passed",
+      "compatibility": "passed",
+      "permissions": "passed",
+      "security": "passed"
+    },
+    "securityReport": {
+      "scannedFiles": 5,
+      "threatsFound": 0
+    }
+  },
+  "message": "Widget validation successful",
+  "performance": { "duration": 150 }
 }
 ```
 
@@ -483,21 +483,21 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"valid": false,
-	"checks": {
-		"fileIntegrity": "passed",
-		"dependencies": "failed",
-		"compatibility": "warning",
-		"permissions": "passed",
-		"security": "passed"
-	},
-	"errors": ["Missing dependency: widgetFunction v2.0.0"],
-	"warnings": ["Newer version available: 1.3.0"],
-	"securityReport": {
-		"scannedFiles": 5,
-		"threatsFound": 0
-	}
+  "success": true,
+  "valid": false,
+  "checks": {
+    "fileIntegrity": "passed",
+    "dependencies": "failed",
+    "compatibility": "warning",
+    "permissions": "passed",
+    "security": "passed"
+  },
+  "errors": ["Missing dependency: widgetFunction v2.0.0"],
+  "warnings": ["Newer version available: 1.3.0"],
+  "securityReport": {
+    "scannedFiles": 5,
+    "threatsFound": 0
+  }
 }
 ```
 
@@ -505,12 +505,12 @@ Content-Type: application/json
 
 ```json
 {
-	"success": false,
-	"message": "Security scan failed: Malicious code detected",
-	"error": "SECURITY_VIOLATION",
-	"data": {
-		"issues": ["Use of forbidden function: eval()"]
-	}
+  "success": false,
+  "message": "Security scan failed: Malicious code detected",
+  "error": "SECURITY_VIOLATION",
+  "data": {
+    "issues": ["Use of forbidden function: eval()"]
+  }
 }
 ```
 
@@ -537,8 +537,8 @@ Content-Type: application/json
 
 ```json
 {
-	"tenantId": "tenant-xyz",
-	"force": false
+  "tenantId": "tenant-xyz",
+  "force": false
 }
 ```
 
@@ -550,18 +550,18 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"syncedAt": "2025-10-05T14:30:00Z",
-		"changes": {
-			"created": 2,
-			"skipped": 15,
-			"updated": 3,
-			"errors": 0
-		}
-	},
-	"message": "Widget registry synchronized",
-	"performance": { "duration": 200 }
+  "success": true,
+  "data": {
+    "syncedAt": "2025-10-05T14:30:00Z",
+    "changes": {
+      "created": 2,
+      "skipped": 15,
+      "updated": 3,
+      "errors": 0
+    }
+  },
+  "message": "Widget registry synchronized",
+  "performance": { "duration": 200 }
 }
 ```
 
@@ -570,9 +570,9 @@ Content-Type: application/json
 ```json
 // 500 Internal Server Error
 {
-	"success": false,
-	"message": "Failed to synchronize widgets",
-	"error": "INTERNAL_ERROR"
+  "success": false,
+  "message": "Failed to synchronize widgets",
+  "error": "INTERNAL_ERROR"
 }
 ```
 
@@ -606,14 +606,14 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"activeWidgets": ["widgetFunction", "mediaUpload", "userManagement", "collectionBuilder"],
-		"count": 4,
-		"tenantId": "default-tenant"
-	},
-	"message": "Active widgets retrieved",
-	"performance": { "duration": 25 }
+  "success": true,
+  "data": {
+    "activeWidgets": ["widgetFunction", "mediaUpload", "userManagement", "collectionBuilder"],
+    "count": 4,
+    "tenantId": "default-tenant"
+  },
+  "message": "Active widgets retrieved",
+  "performance": { "duration": 25 }
 }
 ```
 
@@ -643,13 +643,13 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"data": {
-		"required": ["widgetFunction", "authentication", "userManagement", "systemSettings"],
-		"count": 4
-	},
-	"message": "Required widgets retrieved",
-	"performance": { "duration": 12 }
+  "success": true,
+  "data": {
+    "required": ["widgetFunction", "authentication", "userManagement", "systemSettings"],
+    "count": 4
+  },
+  "message": "Required widgets retrieved",
+  "performance": { "duration": 12 }
 }
 ```
 
@@ -686,9 +686,9 @@ Widgets can depend on other widgets:
 
 ```json
 {
-	"name": "imageGallery",
-	"dependencies": ["widgetFunction", "mediaUpload"],
-	"dependents": ["portfolioWidget"]
+  "name": "imageGallery",
+  "dependencies": ["widgetFunction", "mediaUpload"],
+  "dependents": ["portfolioWidget"]
 }
 ```
 
@@ -706,7 +706,7 @@ The Widget API uses permission-based authorization (no direct DB queries):
 
 ```typescript
 // Permission check only - no database operations
-const hasPermission = hasPermissionWithRoles(user, 'api:widgets', roles);
+const hasPermission = hasPermissionWithRoles(user, "api:widgets", roles);
 ```
 
 Widget data is stored in:
@@ -794,16 +794,16 @@ my-widget/
 
 ```json
 {
-	"name": "my-widget",
-	"version": "1.0.0",
-	"description": "My custom widget",
-	"author": "Developer Name",
-	"license": "MIT",
-	"category": "custom",
-	"dependencies": ["widgetFunction"],
-	"permissions": ["media:write", "content:read"],
-	"icon": "mdi:puzzle",
-	"homepage": "https://example.com"
+  "name": "my-widget",
+  "version": "1.0.0",
+  "description": "My custom widget",
+  "author": "Developer Name",
+  "license": "MIT",
+  "category": "custom",
+  "dependencies": ["widgetFunction"],
+  "permissions": ["media:write", "content:read"],
+  "icon": "mdi:puzzle",
+  "homepage": "https://example.com"
 }
 ```
 
@@ -815,31 +815,31 @@ my-widget/
 
 ```javascript
 // List all widgets
-const response = await fetch('/api/widgets/list', {
-	credentials: 'include'
+const response = await fetch("/api/widgets/list", {
+  credentials: "include",
 });
 const { widgets, summary } = await response.json();
 
 // Install widget
-const installResponse = await fetch('/api/widgets/install', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		widgetId: 'custom-widget-123',
-		tenantId: 'my-tenant'
-	})
+const installResponse = await fetch("/api/widgets/install", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    widgetId: "custom-widget-123",
+    tenantId: "my-tenant",
+  }),
 });
 
 // Activate widget
-await fetch('/api/widgets/status', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		widgetName: 'custom-widget',
-		isActive: true
-	})
+await fetch("/api/widgets/status", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    widgetName: "custom-widget",
+    isActive: true,
+  }),
 });
 ```
 

@@ -1,17 +1,17 @@
 ---
-path: 'docs/architecture/demo-mode.mdx'
-title: 'Demo Mode Architecture'
-description: 'Architecture and implementation details of SveltyCMS Demo Mode.'
+path: "docs/architecture/demo-mode.mdx"
+title: "Demo Mode Architecture"
+description: "Architecture and implementation details of SveltyCMS Demo Mode."
 order: 5
-icon: 'mdi:presentation-play'
-author: 'admin'
-created: '2025-11-30'
-updated: '2026-03-03'
+icon: "mdi:presentation-play"
+author: "admin"
+created: "2025-11-30"
+updated: "2026-03-03"
 tags:
-  - 'architecture'
-  - 'demo-mode'
-  - 'multi-tenancy'
-  - 'seeding'
+  - "architecture"
+  - "demo-mode"
+  - "multi-tenancy"
+  - "seeding"
 ---
 
 # Demo Mode Architecture
@@ -36,7 +36,6 @@ Demo Mode is a specialized configuration of the Multi-Tenancy system designed to
 
 In March 2026, the `handleSystemState` hook was optimized to allow bootstrap routes (like `/setup`) from any host when `DEMO: true` is active. This ensures that live demo environments on dynamic URLs (e.g., Vercel, Netlify) do not trigger 403 Forbidden errors before the system is fully initialized.
 
-
 ### Enabling Demo Mode
 
 Demo mode is strictly controlled via `config/private.ts` to prevent accidental disabling in production.
@@ -49,9 +48,9 @@ Demo mode is strictly controlled via `config/private.ts` to prevent accidental d
 
     ```typescript
     export const privateEnv = {
-    	// ...
-    	MULTI_TENANT: true,
-    	DEMO: true
+      // ...
+      MULTI_TENANT: true,
+      DEMO: true,
     };
     ```
 

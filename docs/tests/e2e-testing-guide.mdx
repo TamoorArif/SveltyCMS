@@ -1,17 +1,17 @@
 ---
-path: 'docs/tests/e2e-testing-guide.mdx'
-title: 'E2E Testing Guide'
-description: 'Guide for writing and running Playwright E2E tests with auth helper'
+path: "docs/tests/e2e-testing-guide.mdx"
+title: "E2E Testing Guide"
+description: "Guide for writing and running Playwright E2E tests with auth helper"
 order: 12
-icon: 'mdi:test-tube'
-author: 'admin'
-created: '2025-01-20'
-updated: '2025-01-20'
+icon: "mdi:test-tube"
+author: "admin"
+created: "2025-01-20"
+updated: "2025-01-20"
 tags:
-  - 'testing'
-  - 'e2e'
-  - 'playwright'
-  - 'automation'
+  - "testing"
+  - "e2e"
+  - "playwright"
+  - "automation"
 ---
 
 # E2E Testing Guide
@@ -55,15 +55,15 @@ bun run scripts/test-smart.ts
 Avoid logging in via UI in every test. Use `loginAsAdmin` from `helpers/auth.ts`.
 
 ```typescript
-import { test, expect } from '@playwright/test';
-import { loginAsAdmin } from './helpers/auth';
+import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./helpers/auth";
 
-test('Admin can access dashboard', async ({ page }) => {
-	// Logs in and waits for navigation to dashboard
-	await loginAsAdmin(page);
+test("Admin can access dashboard", async ({ page }) => {
+  // Logs in and waits for navigation to dashboard
+  await loginAsAdmin(page);
 
-	// Your test logic
-	await expect(page.getByText('Dashboard')).toBeVisible();
+  // Your test logic
+  await expect(page.getByText("Dashboard")).toBeVisible();
 });
 ```
 
@@ -91,8 +91,8 @@ For robust tests that don't break when CSS classes change, always use `data-test
 **In Playwright Test:**
 
 ```typescript
-await page.getByTestId('signin-email').fill('admin@example.com');
-await page.getByTestId('signin-submit').click();
+await page.getByTestId("signin-email").fill("admin@example.com");
+await page.getByTestId("signin-submit").click();
 ```
 
 Avoid using:

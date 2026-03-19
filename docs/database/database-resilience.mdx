@@ -1,16 +1,16 @@
 ---
-path: 'docs/database/database-resilience.mdx'
-title: 'Database Resilience'
-description: 'Unified guide to resilience features, integration, metrics, and planned enhancements for SveltyCMS.'
+path: "docs/database/database-resilience.mdx"
+title: "Database Resilience"
+description: "Unified guide to resilience features, integration, metrics, and planned enhancements for SveltyCMS."
 order: 12
-icon: 'mdi:shield-refresh'
-author: 'admin'
-created: '2025-11-11'
-updated: '2026-02-09'
+icon: "mdi:shield-refresh"
+author: "admin"
+created: "2025-11-11"
+updated: "2026-02-09"
 tags:
-  - 'architecture'
-  - 'database'
-  - 'resilience'
+  - "architecture"
+  - "database"
+  - "resilience"
 ---
 
 # Database Resilience
@@ -56,13 +56,13 @@ All features above are production-ready. The "Planned Features" section later in
 ## Quick Start
 
 ```ts
-import { getDatabaseResilience } from '@src/databases/DatabaseResilience';
+import { getDatabaseResilience } from "@src/databases/DatabaseResilience";
 
 const resilience = getDatabaseResilience();
 
 await resilience.executeWithRetry(async () => {
-	// e.g. connect to MongoDB or SQL
-}, 'Connection step');
+  // e.g. connect to MongoDB or SQL
+}, "Connection step");
 ```
 
 Recommended defaults (in the singleton):
@@ -106,10 +106,10 @@ You can override defaults when needed:
 
 ```ts
 const resilience = getDatabaseResilience({
-	maxAttempts: 3,
-	initialDelayMs: 500,
-	maxDelayMs: 5000,
-	jitterMs: 200
+  maxAttempts: 3,
+  initialDelayMs: 500,
+  maxDelayMs: 5000,
+  jitterMs: 200,
 });
 ```
 
@@ -149,16 +149,16 @@ Use `executeWithRetry()` to handle transient failures consistently across the co
 
 ```ts
 const resilience = getDatabaseResilience({
-	maxAttempts: 5,
-	initialDelayMs: 1000,
-	backoffMultiplier: 2,
-	maxDelayMs: 32000,
-	jitterMs: 500
+  maxAttempts: 5,
+  initialDelayMs: 1000,
+  backoffMultiplier: 2,
+  maxDelayMs: 32000,
+  jitterMs: 500,
 });
 
 await resilience.executeWithRetry(async () => {
-	await mongoose.connect(connectionString, options);
-}, 'MongoDB connection');
+  await mongoose.connect(connectionString, options);
+}, "MongoDB connection");
 ```
 
 ### Circuit Breaker Pattern
@@ -229,14 +229,16 @@ If installation fails (e.g., due to permission errors in production), the system
 const status = await getSystemStatus();
 
 if (!status.health.healthy) {
-	logger.error('Database unhealthy', { message: status.health.message });
+  logger.error("Database unhealthy", { message: status.health.message });
 }
 
 if (status.health.latency > 1000) {
-	logger.warn('High DB latency', { latency: status.health.latency });
+  logger.warn("High DB latency", { latency: status.health.latency });
 }
 
-const successRate = status.metrics.totalRetries ? (status.metrics.successfulRetries / status.metrics.totalRetries) * 100 : 100;
+const successRate = status.metrics.totalRetries
+  ? (status.metrics.successfulRetries / status.metrics.totalRetries) * 100
+  : 100;
 ```
 
 ---
@@ -271,11 +273,11 @@ Overhead: small singleton footprint and lightweight metrics store.
 Integrates with `@src/stores/system` for fast-path checks and precise reasons on UX surfaces.
 
 ```ts
-const { getSystemState, isServiceHealthy } = await import('@src/stores/system');
+const { getSystemState, isServiceHealthy } = await import("@src/stores/system");
 const systemState = getSystemState();
 
-if (!isServiceHealthy('database') || systemState.overallState === 'FAILED') {
-	// Avoid slow queries; surface failure reason from state
+if (!isServiceHealthy("database") || systemState.overallState === "FAILED") {
+  // Avoid slow queries; surface failure reason from state
 }
 ```
 

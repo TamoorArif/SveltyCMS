@@ -1,18 +1,18 @@
 ---
-path: 'docs/architecture/content-type-system.mdx'
-title: 'Content Type System & Code Generation'
-description: 'How SveltyCMS generates TypeScript types for collections at build time'
+path: "docs/architecture/content-type-system.mdx"
+title: "Content Type System & Code Generation"
+description: "How SveltyCMS generates TypeScript types for collections at build time"
 order: 52
-icon: 'mdi:code-tags'
-author: 'admin'
-created: '2025-11-01'
-updated: '2025-11-01'
+icon: "mdi:code-tags"
+author: "admin"
+created: "2025-11-01"
+updated: "2025-11-01"
 tags:
-  - 'developer'
-  - 'types'
-  - 'collections'
-  - 'code-generation'
-  - 'typescript'
+  - "developer"
+  - "types"
+  - "collections"
+  - "code-generation"
+  - "typescript"
 ---
 
 # Content Type System & Code Generation
@@ -77,23 +77,23 @@ In production mode, the system uses direct filesystem scanning for better perfor
 ```typescript
 // src/content/index.ts
 async function getImports(recompile: boolean = false): Promise<Record<ContentTypes, Schema>> {
-	// Production mode: Direct filesystem scanning
-	if (!dev && !building) {
-		const { scanCompiledCollections } = await import('./collectionScanner');
-		const compiledCollections = await scanCompiledCollections();
+  // Production mode: Direct filesystem scanning
+  if (!dev && !building) {
+    const { scanCompiledCollections } = await import("./collectionScanner");
+    const compiledCollections = await scanCompiledCollections();
 
-		const imports: Record<string, Schema> = {};
-		for (const collection of compiledCollections) {
-			if (collection.name) {
-				imports[collection.name] = collection;
-			}
-		}
+    const imports: Record<string, Schema> = {};
+    for (const collection of compiledCollections) {
+      if (collection.name) {
+        imports[collection.name] = collection;
+      }
+    }
 
-		return imports as Record<ContentTypes, Schema>;
-	}
+    return imports as Record<ContentTypes, Schema>;
+  }
 
-	// Development mode: Vite's import.meta.glob
-	// ... existing code
+  // Development mode: Vite's import.meta.glob
+  // ... existing code
 }
 ```
 
@@ -103,15 +103,15 @@ async function getImports(recompile: boolean = false): Promise<Record<ContentTyp
 
 ```typescript
 // Full autocomplete for collection names
-import type { ContentTypes } from '@src/content/types';
+import type { ContentTypes } from "@src/content/types";
 
 function getCollection(name: ContentTypes) {
-	// TypeScript knows 'Posts', 'Users', etc. are valid
-	return contentManager.getCollection(name);
+  // TypeScript knows 'Posts', 'Users', etc. are valid
+  return contentManager.getCollection(name);
 }
 
 // Error: Argument of type '"InvalidName"' is not assignable
-getCollection('InvalidName'); // ❌ TypeScript error
+getCollection("InvalidName"); // ❌ TypeScript error
 ```
 
 ### 2. IDE Support
@@ -120,13 +120,13 @@ Your IDE provides autocomplete when working with collections:
 
 ```typescript
 const collections: Record<ContentTypes, Schema> = {
-	Posts: {
-		/* ... */
-	}, // ✅ Autocomplete suggests 'Posts', 'Users', etc.
-	Users: {
-		/* ... */
-	}
-	// IDE warns if you miss any collections
+  Posts: {
+    /* ... */
+  }, // ✅ Autocomplete suggests 'Posts', 'Users', etc.
+  Users: {
+    /* ... */
+  },
+  // IDE warns if you miss any collections
 };
 ```
 
@@ -136,11 +136,11 @@ When you rename a collection, TypeScript catches all references:
 
 ```typescript
 // Before: Collection named "BlogPosts"
-const posts = getCollection('BlogPosts'); // Works
+const posts = getCollection("BlogPosts"); // Works
 
 // After: Renamed to "Articles"
-const posts = getCollection('BlogPosts'); // ❌ TypeScript error - must update
-const posts = getCollection('Articles'); // ✅ Fixed
+const posts = getCollection("BlogPosts"); // ❌ TypeScript error - must update
+const posts = getCollection("Articles"); // ✅ Fixed
 ```
 
 ## 🔧 Implementation Details
@@ -151,15 +151,15 @@ The system validates field definitions to ensure they have required properties:
 
 ```typescript
 interface Field {
-	db_fieldName?: string;
-	label: string;
-	type?: string;
+  db_fieldName?: string;
+  label: string;
+  type?: string;
 }
 
 // Validates that each field has at least a label
 if (!collection?.fields || !Array.isArray(collection.fields)) {
-	logger.warn(`Collection ${key} has no valid fields array`);
-	continue;
+  logger.warn(`Collection ${key} has no valid fields array`);
+  continue;
 }
 ```
 
@@ -169,12 +169,12 @@ Every content entry in SveltyCMS automatically includes audit metadata. The syst
 
 ```typescript
 export interface BaseEntity {
-	_id: DatabaseId;
-	createdAt: ISODateString;
-	updatedAt: ISODateString;
-	isDeleted?: boolean;
-	deletedAt?: ISODateString; // New: Timestamp of deletion
-	deletedBy?: string; // New: User ID who deleted the item
+  _id: DatabaseId;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+  isDeleted?: boolean;
+  deletedAt?: ISODateString; // New: Timestamp of deletion
+  deletedBy?: string; // New: User ID who deleted the item
 }
 ```
 
@@ -185,17 +185,17 @@ To avoid circular dependencies, some types are defined locally where needed:
 ```typescript
 // src/content/index.ts
 interface CategoryNode {
-	id: number;
-	name: string;
-	icon: string;
-	order: number;
-	collections: Schema[];
-	subcategories: Map<string, CategoryNode>;
+  id: number;
+  name: string;
+  icon: string;
+  order: number;
+  collections: Schema[];
+  subcategories: Map<string, CategoryNode>;
 }
 
 interface ProcessedModule {
-	schema?: Schema;
-	default?: Schema;
+  schema?: Schema;
+  default?: Schema;
 }
 ```
 
@@ -206,14 +206,14 @@ The system adds runtime checks to ensure data integrity:
 ```typescript
 // Ensure fields is always an array
 if (!Array.isArray(collection.fields)) {
-	logger.warn('Collection fields is not an array, skipping');
-	continue;
+  logger.warn("Collection fields is not an array, skipping");
+  continue;
 }
 
 // Safely map over fields
 const processedfields = collection.fields.map((field) => ({
-	name: field.db_fieldName || field.label,
-	type: field.type || 'string'
+  name: field.db_fieldName || field.label,
+  type: field.type || "string",
 }));
 ```
 

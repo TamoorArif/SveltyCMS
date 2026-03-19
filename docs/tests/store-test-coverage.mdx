@@ -1,13 +1,13 @@
 ---
-path: 'docs/tests/store-test-coverage.mdx'
-title: 'Store Test Coverage'
-description: 'Comprehensive test coverage documentation for SvelteCMS store management'
+path: "docs/tests/store-test-coverage.mdx"
+title: "Store Test Coverage"
+description: "Comprehensive test coverage documentation for SvelteCMS store management"
 order: 8
-icon: 'mdi:database'
-author: 'Test Suite'
-created: '2025-11-09'
-updated: '2025-11-09'
-tags: ['testing', 'stores', 'state-management', 'svelte-5']
+icon: "mdi:database"
+author: "Test Suite"
+created: "2025-11-09"
+updated: "2025-11-09"
+tags: ["testing", "stores", "state-management", "svelte-5"]
 ---
 
 # Store Test Coverage
@@ -79,7 +79,7 @@ SvelteCMS uses **Svelte 5 runes** (`$state`, `$derived`, `$effect`) for reactive
 **System States:**
 
 ```typescript
-type SystemState = 'IDLE' | 'INITIALIZING' | 'READY' | 'DEGRADED' | 'FAILED';
+type SystemState = "IDLE" | "INITIALIZING" | "READY" | "DEGRADED" | "FAILED";
 ```
 
 #### Performance Metrics (3 tests)
@@ -147,18 +147,18 @@ The loading-store uses Svelte 5 runes which require a browser runtime. These tes
 
 ```typescript
 const loadingOperations = {
-	navigation: 'navigation',
-	dataFetch: 'data-fetch',
-	authentication: 'authentication',
-	initialization: 'initialization',
-	imageUpload: 'image-upload',
-	formSubmission: 'form-submission',
-	configSave: 'config-save',
-	roleManagement: 'role-management',
-	permissionUpdate: 'permission-update',
-	tokenGeneration: 'token-generation',
-	collectionLoad: 'collection-load',
-	widgetInit: 'widget-init'
+  navigation: "navigation",
+  dataFetch: "data-fetch",
+  authentication: "authentication",
+  initialization: "initialization",
+  imageUpload: "image-upload",
+  formSubmission: "form-submission",
+  configSave: "config-save",
+  roleManagement: "role-management",
+  permissionUpdate: "permission-update",
+  tokenGeneration: "token-generation",
+  collectionLoad: "collection-load",
+  widgetInit: "widget-init",
 };
 ```
 
@@ -309,7 +309,7 @@ const doubled = $derived(state.value * 2);
 
 // Effect rune - side effects
 $effect(() => {
-	console.log('Value changed:', state.value);
+  console.log("Value changed:", state.value);
 });
 ```
 
@@ -318,7 +318,7 @@ $effect(() => {
 Stores guard against server-side execution:
 
 ```typescript
-if (typeof window === 'undefined') return null;
+if (typeof window === "undefined") return null;
 if (!browser) return; // from $app/environment
 ```
 
@@ -327,8 +327,8 @@ if (!browser) return; // from $app/environment
 Full TypeScript support with discriminated unions:
 
 ```typescript
-type ServiceHealth = 'healthy' | 'unhealthy' | 'initializing';
-type SystemState = 'IDLE' | 'INITIALIZING' | 'READY' | 'DEGRADED' | 'FAILED';
+type ServiceHealth = "healthy" | "unhealthy" | "initializing";
+type SystemState = "IDLE" | "INITIALIZING" | "READY" | "DEGRADED" | "FAILED";
 ```
 
 ### 4. Performance Tracking
@@ -337,13 +337,13 @@ Self-optimizing with metrics:
 
 ```typescript
 interface ServicePerformanceMetrics {
-	initializationDuration?: number;
-	healthCheckCount: number;
-	failureCount: number;
-	consecutiveFailures: number;
-	uptimePercentage: number;
-	stateTimings: StateTimingMetrics;
-	anomalyThresholds: AnomalyThresholds;
+  initializationDuration?: number;
+  healthCheckCount: number;
+  failureCount: number;
+  consecutiveFailures: number;
+  uptimePercentage: number;
+  stateTimings: StateTimingMetrics;
+  anomalyThresholds: AnomalyThresholds;
 }
 ```
 
@@ -433,41 +433,41 @@ bun x playwright test tests/playwright/stores/
 ### 1. State Testing
 
 ```typescript
-it('should update state correctly', () => {
-	const initial = getSystemState();
-	expect(initial.overallState).toBe('IDLE');
+it("should update state correctly", () => {
+  const initial = getSystemState();
+  expect(initial.overallState).toBe("IDLE");
 
-	updateServiceHealth('database', 'healthy', 'Connected');
+  updateServiceHealth("database", "healthy", "Connected");
 
-	const updated = getSystemState();
-	expect(updated.services.database.status).toBe('healthy');
+  const updated = getSystemState();
+  expect(updated.services.database.status).toBe("healthy");
 });
 ```
 
 ### 2. Type Validation
 
 ```typescript
-it('should enforce type constraints', () => {
-	const config: DbConfig = {
-		type: 'mongodb',
-		host: 'localhost',
-		port: '27017',
-		name: 'test',
-		user: '',
-		password: ''
-	};
+it("should enforce type constraints", () => {
+  const config: DbConfig = {
+    type: "mongodb",
+    host: "localhost",
+    port: "27017",
+    name: "test",
+    user: "",
+    password: "",
+  };
 
-	expect(config.type).toBe('mongodb');
+  expect(config.type).toBe("mongodb");
 });
 ```
 
 ### 3. Edge Case Testing
 
 ```typescript
-it('should handle edge cases gracefully', () => {
-	expect(getScreenSizeName(0)).toBe(ScreenSize.XS);
-	expect(getScreenSizeName(999999)).toBe(ScreenSize.XXL);
-	expect(getScreenSizeName(767.5)).toBe(ScreenSize.SM);
+it("should handle edge cases gracefully", () => {
+  expect(getScreenSizeName(0)).toBe(ScreenSize.XS);
+  expect(getScreenSizeName(999999)).toBe(ScreenSize.XXL);
+  expect(getScreenSizeName(767.5)).toBe(ScreenSize.SM);
 });
 ```
 

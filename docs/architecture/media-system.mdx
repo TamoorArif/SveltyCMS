@@ -1,17 +1,17 @@
 ---
-path: 'docs/architecture/media-system.mdx'
-title: 'Media System Architecture'
-description: 'In-depth technical architecture of the SveltyCMS Media & DAM Engine.'
+path: "docs/architecture/media-system.mdx"
+title: "Media System Architecture"
+description: "In-depth technical architecture of the SveltyCMS Media & DAM Engine."
 order: 10
-icon: 'mdi:sitemap'
-author: 'admin'
-created: '2026-02-16'
-updated: '2026-03-14'
+icon: "mdi:sitemap"
+author: "admin"
+created: "2026-02-16"
+updated: "2026-03-14"
 tags:
-  - 'architecture'
-  - 'media'
-  - 'dam'
-  - 'svelte5'
+  - "architecture"
+  - "media"
+  - "dam"
+  - "svelte5"
 ---
 
 # Media System Architecture
@@ -71,14 +71,14 @@ graph TB
 
 The Media System implements **WCAG 3.0 Functional Performance** principles via a centralized hotkey manager.
 
-| Shortcut | Action | Scope |
-| :--- | :--- | :--- |
-| `Mod + F` | Focus Search | Gallery |
-| `Mod + A` | Select All | Gallery / Widget |
-| `Mod + O` | Open Library | MediaUpload Widget |
-| `Delete` | Bulk Delete | Gallery (Selected) |
-| `Escape` | Clear Filters | Gallery / Editor |
-| `Mod + Z` | Undo Edit | ImageEditor |
+| Shortcut  | Action        | Scope              |
+| :-------- | :------------ | :----------------- |
+| `Mod + F` | Focus Search  | Gallery            |
+| `Mod + A` | Select All    | Gallery / Widget   |
+| `Mod + O` | Open Library  | MediaUpload Widget |
+| `Delete`  | Bulk Delete   | Gallery (Selected) |
+| `Escape`  | Clear Filters | Gallery / Editor   |
+| `Mod + Z` | Undo Edit     | ImageEditor        |
 
 ---
 
@@ -87,14 +87,18 @@ The Media System implements **WCAG 3.0 Functional Performance** principles via a
 The pipeline is split between **Synchronous Critical Path** (for instant feedback) and **Asynchronous Background Jobs** (for heavy lifting).
 
 ### 1. Synchronous Path (Hot Path)
+
 Executed during the initial `POST` request. Goal: `< 5ms` block time.
+
 - **Binary Validation**: Buffer inspection via `file-type`.
 - **Deduplication**: SHA-256 content hashing.
 - **Persistence**: Save original file to storage (Local/S3).
 - **Metadata**: Basic technical metadata extraction.
 
 ### 2. Asynchronous Path (Background Jobs)
+
 Offloaded to `JobQueueService`.
+
 - **Transformation (Sharp.js)**: Parallel generation of multi-scale variants (`sm`, `md`, `lg`).
 - **AI Analysis**: Descriptive tagging via local models.
 - **Video Transcoding**: HLS/Dash segmenting via `ffmpeg`.
@@ -105,14 +109,15 @@ Offloaded to `JobQueueService`.
 
 The transition to a background job queue has revolutionized the media ingestion experience.
 
-| Task | Sync Flow (Legacy) | Async Flow (Phase 3) |
-| :--- | :--- | :--- |
-| Hashing (SHA-256) | 0.02 ms | 0.02 ms |
-| Metadata Extraction | 0.15 ms | 0.15 ms |
-| Multi-scale Resizing + Compress | 58.55 ms | **0.00 ms (Deferred)** |
-| **Total Block Time** | **58.72 ms** | **0.17 ms** |
+| Task                            | Sync Flow (Legacy) | Async Flow (Phase 3)   |
+| :------------------------------ | :----------------- | :--------------------- |
+| Hashing (SHA-256)               | 0.02 ms            | 0.02 ms                |
+| Metadata Extraction             | 0.15 ms            | 0.15 ms                |
+| Multi-scale Resizing + Compress | 58.55 ms           | **0.00 ms (Deferred)** |
+| **Total Block Time**            | **58.72 ms**       | **0.17 ms**            |
 
 **Impact:**
+
 - **99.7% reduction** in API block time during media uploads.
 - **Zero UI stuttering**: Large bulk uploads (100+ images) finish in-process instantly while the worker handles the CPU-intensive resizing.
 

@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/collection-api.mdx'
-title: 'Collection API Reference'
-description: 'Complete API documentation for SveltyCMS Collections - endpoints, parameters, response formats, and advanced features'
+path: "docs/api/collection-api.mdx"
+title: "Collection API Reference"
+description: "Complete API documentation for SveltyCMS Collections - endpoints, parameters, response formats, and advanced features"
 order: 41
-icon: 'mdi:api'
-author: 'admin'
-created: '2025-08-06'
-updated: '2025-10-02'
+icon: "mdi:api"
+author: "admin"
+created: "2025-08-06"
+updated: "2025-10-02"
 tags:
-  - 'developer'
-  - 'api'
-  - 'collections'
-  - 'reference'
+  - "developer"
+  - "api"
+  - "collections"
+  - "reference"
 ---
 
 # Collection API Reference
@@ -70,9 +70,9 @@ All collection API endpoints follow the pattern:
 ```typescript
 // +page.svelte
 onMount(async () => {
-	const res = await fetch(`/api/collections/${collectionId}`);
-	const { data } = await res.json();
-	entries = data.items;
+  const res = await fetch(`/api/collections/${collectionId}`);
+  const { data } = await res.json();
+  entries = data.items;
 });
 ```
 
@@ -81,13 +81,13 @@ onMount(async () => {
 ```typescript
 // +page.server.ts
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const entries = await dbAdapter
-		.queryBuilder(`collection_${collectionId}`)
-		.where({ tenantId: locals.tenantId })
-		.paginate({ page: 1, pageSize: 25 })
-		.execute();
+  const entries = await dbAdapter
+    .queryBuilder(`collection_${collectionId}`)
+    .where({ tenantId: locals.tenantId })
+    .paginate({ page: 1, pageSize: 25 })
+    .execute();
 
-	return { entries: entries.data };
+  return { entries: entries.data };
 };
 
 // +page.svelte
@@ -205,26 +205,26 @@ GET /api/collections/posts?page=1&pageSize=10&filter={"status":"published"}
 
 ```json
 {
-	"success": true,
-	"data": {
-		"items": [
-			{
-				"_id": "entry123",
-				"title": "Sample Post",
-				"content": "Post content...",
-				"status": "published",
-				"createdAt": "2025-08-06T10:00:00Z",
-				"updatedAt": "2025-08-06T10:00:00Z"
-			}
-		],
-		"total": 150,
-		"page": 1,
-		"pageSize": 10,
-		"totalPages": 15
-	},
-	"performance": {
-		"duration": 45.2
-	}
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "_id": "entry123",
+        "title": "Sample Post",
+        "content": "Post content...",
+        "status": "published",
+        "createdAt": "2025-08-06T10:00:00Z",
+        "updatedAt": "2025-08-06T10:00:00Z"
+      }
+    ],
+    "total": 150,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 15
+  },
+  "performance": {
+    "duration": 45.2
+  }
 }
 ```
 
@@ -248,18 +248,18 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"_id": "entry456",
-		"title": "New Post",
-		"content": "Post content...",
-		"status": "draft",
-		"tags": ["technology", "web"],
-		"createdAt": "2025-08-06T10:30:00Z",
-		"updatedAt": "2025-08-06T10:30:00Z",
-		"createdBy": "user123",
-		"updatedBy": "user123"
-	}
+  "success": true,
+  "data": {
+    "_id": "entry456",
+    "title": "New Post",
+    "content": "Post content...",
+    "status": "draft",
+    "tags": ["technology", "web"],
+    "createdAt": "2025-08-06T10:30:00Z",
+    "updatedAt": "2025-08-06T10:30:00Z",
+    "createdBy": "user123",
+    "updatedBy": "user123"
+  }
 }
 ```
 
@@ -281,14 +281,14 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"_id": "entry456",
-		"title": "Updated Post Title",
-		"status": "published",
-		"updatedAt": "2025-08-06T11:00:00Z",
-		"updatedBy": "user123"
-	}
+  "success": true,
+  "data": {
+    "_id": "entry456",
+    "title": "Updated Post Title",
+    "status": "published",
+    "updatedAt": "2025-08-06T11:00:00Z",
+    "updatedBy": "user123"
+  }
 }
 ```
 
@@ -304,8 +304,8 @@ DELETE /api/collections/posts/entry456
 
 ```json
 {
-	"success": true,
-	"message": "Entry deleted successfully"
+  "success": true,
+  "message": "Entry deleted successfully"
 }
 ```
 
@@ -336,19 +336,19 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"processed": 3,
-		"successful": 3,
-		"failed": 0,
-		"results": [
-			{
-				"entryId": "entry1",
-				"success": true,
-				"operation": "status_update"
-			}
-		]
-	}
+  "success": true,
+  "data": {
+    "processed": 3,
+    "successful": 3,
+    "failed": 0,
+    "results": [
+      {
+        "entryId": "entry1",
+        "success": true,
+        "operation": "status_update"
+      }
+    ]
+  }
 }
 ```
 
@@ -370,22 +370,22 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "3 entries deleted successfully",
-	"data": {
-		"action": "delete",
-		"results": [
-			{
-				"entryId": "entry1",
-				"success": true
-			}
-		],
-		"summary": {
-			"total": 3,
-			"successful": 3,
-			"failed": 0
-		}
-	}
+  "success": true,
+  "message": "3 entries deleted successfully",
+  "data": {
+    "action": "delete",
+    "results": [
+      {
+        "entryId": "entry1",
+        "success": true
+      }
+    ],
+    "summary": {
+      "total": 3,
+      "successful": 3,
+      "failed": 0
+    }
+  }
 }
 ```
 
@@ -395,12 +395,12 @@ Content-Type: application/json
 
 ```json
 {
-	"success": false,
-	"error": "Error message",
-	"code": "ERROR_CODE",
-	"details": {
-		"field": "validation error details"
-	}
+  "success": false,
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "details": {
+    "field": "validation error details"
+  }
 }
 ```
 
@@ -418,12 +418,12 @@ Content-Type: application/json
 
 ```json
 {
-	"success": false,
-	"error": "Validation failed",
-	"details": {
-		"title": "Title is required",
-		"email": "Invalid email format"
-	}
+  "success": false,
+  "error": "Validation failed",
+  "details": {
+    "title": "Title is required",
+    "email": "Invalid email format"
+  }
 }
 ```
 
@@ -479,11 +479,11 @@ All API responses include performance metrics:
 
 ```json
 {
-	"performance": {
-		"duration": 45.2, // milliseconds
-		"cacheHit": false,
-		"queryTime": 38.5
-	}
+  "performance": {
+    "duration": 45.2, // milliseconds
+    "cacheHit": false,
+    "queryTime": 38.5
+  }
 }
 ```
 
@@ -496,8 +496,8 @@ When `MULTI_TENANT=true`, all operations are automatically scoped by `tenantId`:
 ```javascript
 // Automatically applied to all queries
 const filter = {
-	...userFilter,
-	tenantId: extractedFromJWT
+  ...userFilter,
+  tenantId: extractedFromJWT,
 };
 ```
 
@@ -514,21 +514,21 @@ const filter = {
 All collection entries use centralized TypeScript types from `@src/content/types.ts`:
 
 ```typescript
-import type { CollectionEntry, Schema, StatusType } from '@src/content/types';
+import type { CollectionEntry, Schema, StatusType } from "@src/content/types";
 
 // CollectionEntry interface extends Record<string, unknown> with standard fields:
 interface CollectionEntry extends Record<string, unknown> {
-	_id: string;
-	status: StatusType;
-	createdAt: string;
-	updatedAt: string;
-	createdBy: string;
-	updatedBy: string;
-	tenantId?: string;
+  _id: string;
+  status: StatusType;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+  tenantId?: string;
 }
 
 // Status types
-type StatusType = 'draft' | 'published' | 'archived' | 'scheduled' | 'unpublished';
+type StatusType = "draft" | "published" | "archived" | "scheduled" | "unpublished";
 ```
 
 This ensures type consistency across the entire codebase and simplifies maintenance.
@@ -570,27 +570,27 @@ Built-in status system supports:
 ### Frontend Integration (Svelte)
 
 ```javascript
-import { getData } from '@utils/api-client';
+import { getData } from "@utils/api-client";
 
 // List entries with filters
 const entries = await getData({
-	collectionId: 'posts',
-	page: 1,
-	pageSize: 10,
-	filter: JSON.stringify({ status: 'published' }),
-	contentLanguage: 'en'
+  collectionId: "posts",
+  page: 1,
+  pageSize: 10,
+  filter: JSON.stringify({ status: "published" }),
+  contentLanguage: "en",
 });
 ```
 
 ### Node.js Integration
 
 ```javascript
-const response = await fetch('/api/collections/posts', {
-	method: 'GET',
-	headers: {
-		Authorization: `Bearer ${token}`,
-		'Content-Type': 'application/json'
-	}
+const response = await fetch("/api/collections/posts", {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
 });
 
 const data = await response.json();
@@ -644,7 +644,7 @@ The Collection API has comprehensive integration tests located in `tests/bun/api
 | Content Structure    | 3      | Test collection metadata and recompilation        |
 | Search Functionality | 3      | Test POST /api/search with different queries      |
 | CRUD Operations      | 4      | Test create, read, update, delete operations      |
-| Data Export          | 1      | Test GET /api/export-data endpoint                 |
+| Data Export          | 1      | Test GET /api/export-data endpoint                |
 | **Total**            | **19** | **Comprehensive API coverage**                    |
 
 ### Running Tests
@@ -666,23 +666,23 @@ bun test tests/bun/api/collections.test.ts -t "RESTful Collection Operations"
 
 ```typescript
 // Tests verify that all endpoints require authentication
-it('should fail without authentication', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/collections`);
-	expect(response.status).toBe(401);
+it("should fail without authentication", async () => {
+  const response = await fetch(`${API_BASE_URL}/api/collections`);
+  expect(response.status).toBe(401);
 });
 ```
 
 #### 2. Collection Listing
 
 ```typescript
-it('should list all collections with admin authentication', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/collections`, {
-		headers: { Authorization: `Bearer ${authToken}` }
-	});
-	expect(response.status).toBe(200);
-	const result = await response.json();
-	expect(result.success).toBe(true);
-	expect(result.data.collections).toBeDefined();
+it("should list all collections with admin authentication", async () => {
+  const response = await fetch(`${API_BASE_URL}/api/collections`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  expect(response.status).toBe(200);
+  const result = await response.json();
+  expect(result.success).toBe(true);
+  expect(result.data.collections).toBeDefined();
 });
 ```
 
@@ -690,58 +690,61 @@ it('should list all collections with admin authentication', async () => {
 
 ```typescript
 // Create entry
-it('should create a new entry', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/collections/${collectionId}`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${authToken}`
-		},
-		body: JSON.stringify({ title: 'Test Post', content: 'Test content' })
-	});
-	expect(response.status).toBe(200);
-	expect(result.success).toBe(true);
+it("should create a new entry", async () => {
+  const response = await fetch(`${API_BASE_URL}/api/collections/${collectionId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ title: "Test Post", content: "Test content" }),
+  });
+  expect(response.status).toBe(200);
+  expect(result.success).toBe(true);
 });
 
 // Get entries with pagination
-it('should get collection entries with pagination', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/collections/${collectionId}?page=1&pageSize=10`, {
-		headers: { Authorization: `Bearer ${authToken}` }
-	});
-	expect(response.status).toBe(200);
+it("should get collection entries with pagination", async () => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/collections/${collectionId}?page=1&pageSize=10`,
+    {
+      headers: { Authorization: `Bearer ${authToken}` },
+    },
+  );
+  expect(response.status).toBe(200);
 });
 ```
 
 #### 4. Search Functionality
 
 ```typescript
-it('should search content across collections', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/search`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${authToken}`
-		},
-		body: JSON.stringify({ query: 'test', collections: [] })
-	});
-	expect(response.status).toBe(200);
-	expect(result.success).toBe(true);
+it("should search content across collections", async () => {
+  const response = await fetch(`${API_BASE_URL}/api/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ query: "test", collections: [] }),
+  });
+  expect(response.status).toBe(200);
+  expect(result.success).toBe(true);
 });
 ```
 
 #### 5. Error Handling
 
 ```typescript
-it('should return 404 for invalid collection ID', async () => {
-	const response = await fetch(`${API_BASE_URL}/api/collections/invalid-collection-id`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${authToken}`
-		},
-		body: JSON.stringify({ title: 'Test Post' })
-	});
-	expect(response.status).toBe(404);
+it("should return 404 for invalid collection ID", async () => {
+  const response = await fetch(`${API_BASE_URL}/api/collections/invalid-collection-id`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ title: "Test Post" }),
+  });
+  expect(response.status).toBe(404);
 });
 ```
 
@@ -801,11 +804,11 @@ The test suite uses the following setup pattern:
 
 ```typescript
 beforeEach(async () => {
-	// Clean database to ensure test isolation
-	await cleanupTestDatabase();
+  // Clean database to ensure test isolation
+  await cleanupTestDatabase();
 
-	// Create admin user and get authentication token
-	authToken = await loginAsAdminAndGetToken();
+  // Create admin user and get authentication token
+  authToken = await loginAsAdminAndGetToken();
 });
 ```
 
@@ -814,29 +817,29 @@ beforeEach(async () => {
 For testing collection operations in your own code:
 
 ```typescript
-import { getData, postData, patchData, deleteData } from '@utils/api-client';
+import { getData, postData, patchData, deleteData } from "@utils/api-client";
 
 // Test creating an entry
 const newEntry = await postData({
-	endpoint: `/api/collections/${collectionId}`,
-	data: { title: 'Test', content: 'Content' }
+  endpoint: `/api/collections/${collectionId}`,
+  data: { title: "Test", content: "Content" },
 });
 
 // Test retrieving entries
 const entries = await getData({
-	endpoint: `/api/collections/${collectionId}`,
-	params: { page: 1, pageSize: 10 }
+  endpoint: `/api/collections/${collectionId}`,
+  params: { page: 1, pageSize: 10 },
 });
 
 // Test updating an entry
 const updated = await patchData({
-	endpoint: `/api/collections/${collectionId}/${entryId}`,
-	data: { title: 'Updated Title' }
+  endpoint: `/api/collections/${collectionId}/${entryId}`,
+  data: { title: "Updated Title" },
 });
 
 // Test deleting an entry
 await deleteData({
-	endpoint: `/api/collections/${collectionId}/${entryId}`
+  endpoint: `/api/collections/${collectionId}/${entryId}`,
 });
 ```
 
@@ -856,7 +859,7 @@ await deleteData({
 | `/api/search`                     | POST   | ✅ Tested      |
 | `/api/content-structure`          | GET    | ✅ Tested      |
 | `/api/content-structure`          | POST   | ✅ Tested      |
-| `/api/export-data`                 | GET    | ✅ Tested      |
+| `/api/export-data`                | GET    | ✅ Tested      |
 
 **Legend:**
 

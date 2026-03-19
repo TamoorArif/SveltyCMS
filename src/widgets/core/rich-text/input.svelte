@@ -58,7 +58,7 @@ $effect(() => {
 });
 
 let editor: any | null = $state(null);
-let element: HTMLDivElement;
+let element = $state<HTMLDivElement>();
 let createEditor: any = $state(null);
 let yProvider: SseProvider | null = $state(null);
 
@@ -67,7 +67,7 @@ let editorStateVersion = $state(0);
 let showSlashMenu = $state(false);
 let showSource = $state(false); // Source View Toggle
 let activeDropdown = $state<string | null>(null);
-let colorInput: HTMLInputElement;
+let colorInput = $state<HTMLInputElement>();
 
 // Table Picker State
 let hoverRows = $state(0);

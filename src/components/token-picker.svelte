@@ -278,7 +278,7 @@ function draggable(node: HTMLElement) {
 		window.removeEventListener('mousemove', move);
 		window.removeEventListener('mouseup', stop);
 	};
-	node.addEventListener('mousedown', (e) => {
+	const handleMouseDown = (e: MouseEvent) => {
 		if ((e.target as HTMLElement).closest('button')) {
 			return;
 		}
@@ -286,8 +286,9 @@ function draggable(node: HTMLElement) {
 		y = e.clientY;
 		window.addEventListener('mousemove', move);
 		window.addEventListener('mouseup', stop);
-	});
-	return { destroy: () => node.removeEventListener('mousedown', () => {}) };
+	};
+	node.addEventListener('mousedown', handleMouseDown);
+	return { destroy: () => node.removeEventListener('mousedown', handleMouseDown) };
 }
 </script>
 

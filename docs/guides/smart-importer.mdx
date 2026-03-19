@@ -1,18 +1,18 @@
 ---
-path: 'docs/guides/smart-importer.mdx'
-title: 'Smart CMS Importer'
-description: 'Guide to using the AI-powered external importer for migrating from WordPress and Drupal.'
+path: "docs/guides/smart-importer.mdx"
+title: "Smart CMS Importer"
+description: "Guide to using the AI-powered external importer for migrating from WordPress and Drupal."
 order: 20
-icon: 'mdi:import'
-author: 'admin'
-created: '2026-03-17'
-updated: '2026-03-17'
+icon: "mdi:import"
+author: "admin"
+created: "2026-03-17"
+updated: "2026-03-17"
 tags:
-  - 'migration'
-  - 'import'
-  - 'wordpress'
-  - 'drupal'
-  - 'ai'
+  - "migration"
+  - "import"
+  - "wordpress"
+  - "drupal"
+  - "ai"
 ---
 
 ## 🔄 Migration Workflow
@@ -31,14 +31,14 @@ sequenceDiagram
     AIS-->>User: Return JSON Mapping (AI-Matched)
     User->>User: Review & Override Mapping
     User->>DB: "Start Import"
-    
+
     loop Batch Fetching
         Adapter->>Media: Extract Image URLs
         Media->>Media: Download & Process Assets
         Media-->>DB: Save Media + Return IDs
         DB->>DB: Insert Entry with Linked Media
     end
-    
+
     User-->>User: Migration Complete 🎉
 ```
 
@@ -55,17 +55,19 @@ sequenceDiagram
 ## 🛠 How to Use
 
 ### Step 1: Source Configuration
+
 Navigate to **Config > Smart Importer** (`/config/importer`).
 
 1. **Source Type**: Select either "Drupal" or "WordPress".
 2. **Source URL**: Enter the base URL of your existing site (e.g., `https://my-old-blog.com`).
 3. **API Key**: If your source API is protected, enter the Bearer token or Basic Auth credentials.
 4. **Content Type**: Enter the machine name of the content type (e.g., `article` for Drupal or `posts` for WordPress).
-5. **Target Collection**: Choose the SveltyCMS collection where you want the data to land. 
+5. **Target Collection**: Choose the SveltyCMS collection where you want the data to land.
    > [!TIP]
    > **Instant Scaffold**: If you haven't created the target collection yet, use the **Scaffold** button to auto-generate a new collection based on the external fields.
 
 ### Step 2: Field Mapping
+
 Once you click "Next", the AI will analyze both your source and target schemas.
 
 - **Automatic Suggestions**: The AI will fill in the mappings for you.
@@ -73,7 +75,9 @@ Once you click "Next", the AI will analyze both your source and target schemas.
 - **✨ AI Re-Map**: If you've changed your target collection, click this to get fresh suggestions.
 
 ### Step 3: Execution
+
 Review the summary and click **Start Import**. The system will:
+
 1. Fetch the data in batches.
 2. Download and process any remote media.
 3. Link the media to your new entries.

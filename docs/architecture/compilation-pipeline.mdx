@@ -1,14 +1,14 @@
 ---
-path: 'docs/architecture/compilation-pipeline.mdx'
+path: "docs/architecture/compilation-pipeline.mdx"
 title: Compilation Pipeline
 description: Detailed architecture of the SveltyCMS compilation system, explaining how TypeScript collections are transformed into runtime-ready JavaScript with UUID syncing and robust validation.
-author: 'admin'
-created: '2025-12-29'
-updated: '2025-12-29'
+author: "admin"
+created: "2025-12-29"
+updated: "2025-12-29"
 tags:
-  - 'architecture'
-  - 'compilation'
-  - 'pipeline'
+  - "architecture"
+  - "compilation"
+  - "pipeline"
 ---
 
 # Compilation Pipeline
@@ -65,14 +65,14 @@ In development mode, the `cmsWatcherPlugin` invokes the compiler on file changes
 
 ```typescript
 // vite.config.ts leverage the shared compile utility
-import { compile } from './src/utils/compilation/compile';
+import { compile } from "./src/utils/compilation/compile";
 
 // ... inside watcher
 await compile({
-	userCollections: paths.userCollections,
-	compiledCollections: paths.compiledCollections,
-	targetFile: file, // Incremental compilation
-	logger: log // Injects the Vite logger
+  userCollections: paths.userCollections,
+  compiledCollections: paths.compiledCollections,
+  targetFile: file, // Incremental compilation
+  logger: log, // Injects the Vite logger
 });
 ```
 
@@ -82,7 +82,7 @@ The Collection Builder UI triggers compilation when you save a collection:
 
 ```typescript
 // src/routes/(app)/config/collectionbuilder/.../+page.server.ts
-import { compile } from '@src/utils/compilation/compile';
+import { compile } from "@src/utils/compilation/compile";
 
 // ... inside save action
 await compile({ logger }); // Trigger full or partial compile
@@ -107,12 +107,12 @@ While the compilation pipeline handles the _transformation_ of code to checks, t
 To manually trigger compilation or use it in a script:
 
 ```typescript
-import { compile } from '@src/utils/compilation/compile';
+import { compile } from "@src/utils/compilation/compile";
 
 await compile({
-	userCollections: './config/collections',
-	compiledCollections: './compiledCollections',
-	concurrency: 10 // Optional: speed up for large projects
+  userCollections: "./config/collections",
+  compiledCollections: "./compiledCollections",
+  concurrency: 10, // Optional: speed up for large projects
 });
 ```
 

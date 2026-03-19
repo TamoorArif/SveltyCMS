@@ -1,18 +1,18 @@
 ---
-path: 'docs/widgets/development.mdx'
-title: 'Widget Development Guide'
-description: 'Complete guide to creating, translating, and testing custom widgets for SveltyCMS.'
+path: "docs/widgets/development.mdx"
+title: "Widget Development Guide"
+description: "Complete guide to creating, translating, and testing custom widgets for SveltyCMS."
 order: 3
-icon: 'mdi:code-tags'
-author: 'admin'
-created: '2025-10-17'
-updated: '2026-02-03'
+icon: "mdi:code-tags"
+author: "admin"
+created: "2025-10-17"
+updated: "2026-02-03"
 tags:
-  - 'developer'
-  - 'widgets'
-  - 'tutorial'
-  - 'testing'
-  - 'i18n'
+  - "developer"
+  - "widgets"
+  - "tutorial"
+  - "testing"
+  - "i18n"
 ---
 
 # Widget Development Guide
@@ -38,28 +38,28 @@ src/widgets/custom/my-widget/
 This file defines your widget's capabilities, validation, and metadata.
 
 ```typescript
-import { createWidget } from '@widgets/widgetFactory';
-import * as v from 'valibot';
+import { createWidget } from "@widgets/widgetFactory";
+import * as v from "valibot";
 
 export default createWidget({
-	Name: 'my-widget',
-	Icon: 'mdi:star',
-	Description: 'A custom widget example',
+  Name: "my-widget",
+  Icon: "mdi:star",
+  Description: "A custom widget example",
 
-	// 3-Pillar Component Loaders (Type-safe, Tree-shakeable)
-	inputComponent: () => import('./input.svelte'),
-	displayComponent: () => import('./display.svelte'),
+  // 3-Pillar Component Loaders (Type-safe, Tree-shakeable)
+  inputComponent: () => import("./input.svelte"),
+  displayComponent: () => import("./display.svelte"),
 
-	// Validation Schema (Valibot)
-	validationSchema: (field) => {
-		const schema = v.string([v.minLength(1)]);
-		// Handle multilingual object structure if translated
-		return field.translated ? v.record(v.string(), schema) : schema;
-	},
+  // Validation Schema (Valibot)
+  validationSchema: (field) => {
+    const schema = v.string([v.minLength(1)]);
+    // Handle multilingual object structure if translated
+    return field.translated ? v.record(v.string(), schema) : schema;
+  },
 
-	defaults: {
-		translated: true
-	}
+  defaults: {
+    translated: true,
+  },
 });
 ```
 
@@ -138,38 +138,38 @@ We use **Vitest** and **Testing Library**.
 ### Unit Testing (`input.test.ts`)
 
 ```typescript
-import { render, fireEvent, screen } from '@testing-library/svelte';
-import { app } from '@stores/store.svelte';
-import Input from './input.svelte';
+import { render, fireEvent, screen } from "@testing-library/svelte";
+import { app } from "@stores/store.svelte";
+import Input from "./input.svelte";
 
-test('updates correct language', async () => {
-	app.contentLanguage = 'en';
-	let value = { en: '', de: 'Hallo' };
+test("updates correct language", async () => {
+  app.contentLanguage = "en";
+  let value = { en: "", de: "Hallo" };
 
-	const { getByRole } = render(Input, {
-		field: { translated: true },
-		value
-	});
+  const { getByRole } = render(Input, {
+    field: { translated: true },
+    value,
+  });
 
-	const input = getByRole('textbox');
-	await fireEvent.input(input, { target: { value: 'Hello' } });
+  const input = getByRole("textbox");
+  await fireEvent.input(input, { target: { value: "Hello" } });
 
-	expect(value.en).toBe('Hello');
-	expect(value.de).toBe('Hallo'); // Preserved
+  expect(value.en).toBe("Hello");
+  expect(value.de).toBe("Hallo"); // Preserved
 });
 ```
 
 ### Validation Testing
 
 ```typescript
-import { parse } from 'valibot';
-import Widget from './index';
+import { parse } from "valibot";
+import Widget from "./index";
 
-test('validates multilingual structure', () => {
-	const schema = Widget.validationSchema({ translated: true });
+test("validates multilingual structure", () => {
+  const schema = Widget.validationSchema({ translated: true });
 
-	expect(() => parse(schema, { en: 'Valid' })).not.toThrow();
-	expect(() => parse(schema, 'Invalid String')).toThrow();
+  expect(() => parse(schema, { en: "Valid" })).not.toThrow();
+  expect(() => parse(schema, "Invalid String")).toThrow();
 });
 ```
 

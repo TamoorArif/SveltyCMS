@@ -1,18 +1,18 @@
 ---
-path: 'docs/security/index.mdx'
-title: 'Security Documentation'
-description: 'Comprehensive security documentation for SveltyCMS covering authentication, cryptography, widget security, and best practices'
+path: "docs/security/index.mdx"
+title: "Security Documentation"
+description: "Comprehensive security documentation for SveltyCMS covering authentication, cryptography, widget security, and best practices"
 order: 1
-icon: 'mdi:shield-lock'
-author: 'admin'
-created: '2025-11-14'
-updated: '2026-03-15'
+icon: "mdi:shield-lock"
+author: "admin"
+created: "2025-11-14"
+updated: "2026-03-15"
 tags:
-  - 'security'
-  - 'documentation'
-  - 'authentication'
-  - 'encryption'
-  - 'best-practices'
+  - "security"
+  - "documentation"
+  - "authentication"
+  - "encryption"
+  - "best-practices"
 ---
 
 # Security Documentation
@@ -228,7 +228,7 @@ Our integration tests authenticate like real users:
 
    ```typescript
    // Tests login just like real users
-   await postAction('login', { email: 'admin@test.com', password: 'Test123!' });
+   await postAction("login", { email: "admin@test.com", password: "Test123!" });
    ```
 
 3. **Test Phase**: Authenticated requests proceed normally through the security middleware. Every request includes the `x-test-worker-index` for database isolation and the `x-test-secret` for the cryptographic handshake.
@@ -281,8 +281,8 @@ bun test tests/integration/api/security.test.ts
 
 ### Security Vulnerabilities Fixed
 
-| Issue                            | File                             | Fix Date   |
-| -------------------------------- | -------------------------------- | ---------- |
+| Issue                            | File                             | Fix Date               |
+| -------------------------------- | -------------------------------- | ---------------------- |
 | Rate limiting bypass (localhost) | `src/hooks/handle-rate-limit.ts` | March 2026 (Protected) |
 | Firewall bypass (TEST_MODE)      | `src/hooks/handle-firewall.ts`   | March 2026 (Protected) |
 

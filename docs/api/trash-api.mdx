@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/trash-api.mdx'
-title: 'Trash & Soft Delete API'
-description: 'API reference for the SveltyCMS Trash system, enabling safe content deletion and recovery.'
+path: "docs/api/trash-api.mdx"
+title: "Trash & Soft Delete API"
+description: "API reference for the SveltyCMS Trash system, enabling safe content deletion and recovery."
 order: 16
-icon: 'mdi:trash-can-outline'
-author: 'admin'
-created: '2026-03-18'
-updated: '2026-03-18'
+icon: "mdi:trash-can-outline"
+author: "admin"
+created: "2026-03-18"
+updated: "2026-03-18"
 tags:
-  - 'api'
-  - 'trash'
-  - 'soft-delete'
-  - 'recovery'
+  - "api"
+  - "trash"
+  - "soft-delete"
+  - "recovery"
 ---
 
 # Trash & Soft Delete API
@@ -21,11 +21,14 @@ SveltyCMS implements a **Native Soft Delete** system. By default, when an entry 
 ## 🗑️ How Soft Delete Works
 
 ### Mangle-on-Delete
+
 To prevent **Unique Index Collisions** (e.g., trying to create a new post with the same slug as a deleted one), SveltyCMS automatically mangles unique fields upon deletion.
+
 - **Original**: `my-awesome-post`
 - **Trashed**: `my-awesome-post_DELETED_1710793389`
 
 ### Global Query Filtering
+
 The `safeQuery` middleware automatically filters out trashed items from all standard CMS queries. Trashed items are only visible when explicitly requested via the `includeDeleted` option in the database adapter.
 
 ---
@@ -33,11 +36,13 @@ The `safeQuery` middleware automatically filters out trashed items from all stan
 ## 📡 Endpoints
 
 ### 1. List Trashed Items
+
 **GET** `/api/trash`
 
 Lists all soft-deleted items across all collections for the current tenant.
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -55,11 +60,13 @@ Lists all soft-deleted items across all collections for the current tenant.
 ```
 
 ### 2. Restore an Item
+
 **POST** `/api/trash/restore`
 
 Restores a specific item from the trash, de-mangling its unique fields and restoring its active status.
 
 **Body**:
+
 ```json
 {
   "collectionId": "Posts",
@@ -71,6 +78,7 @@ Restores a specific item from the trash, de-mangling its unique fields and resto
 If restoring an item would cause a collision (e.g., another active post now uses the same slug), the API will return a `409 Conflict` error.
 
 ### 3. Permanent Deletion
+
 To permanently remove an item without sending it to the trash, use the `permanent` query parameter on the standard delete endpoint.
 
 **DELETE** `/api/collections/[collectionId]/[entryId]?permanent=true`

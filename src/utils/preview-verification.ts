@@ -19,13 +19,13 @@
  * ```
  */
 
-import crypto from 'node:crypto';
+import crypto from "node:crypto";
 
 export interface VerificationResult {
-	valid: boolean;
-	userId: string;
-	entryId: string;
-	expires: number;
+  valid: boolean;
+  userId: string;
+  entryId: string;
+  expires: number;
 }
 
 /**
@@ -36,33 +36,37 @@ export interface VerificationResult {
  * @returns Verification result with metadata
  */
 export function verifyPreviewToken(token: string, secret: string): VerificationResult {
-	try {
-		// 1. Decode token
-		const decoded = Buffer.from(token, 'base64url').toString();
-		const parts = decoded.split(':');
+  try {
+    // 1. Decode token
+    const decoded = Buffer.from(token, "base64url").toString();
+    const parts = decoded.split(":");
 
-		if (parts.length !== 4) {
-			return { valid: false, userId: '', entryId: '', expires: 0 };
-		}
+    if (parts.length !== 4) {
+      return { valid: false, userId: "", entryId: "", expires: 0 };
+    }
 
-		const [userId, entryId, expiresStr, signature] = parts;
-		const expires = Number(expiresStr);
+    const [userId, entryId, expiresStr, signature] = parts;
+    const expires = Number(expiresStr);
 
-		// 2. Check Expiration
-		if (Date.now() > expires) {
-			return { valid: false, userId, entryId, expires };
-		}
+    // 2. Check Expiration
+    if (Date.now() > expires) {
+      return { valid: false, userId, entryId, expires };
+    }
 
-		// 3. Verify Signature
-		const payload = `${userId}:${entryId}:${expiresStr}`;
-		const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex').slice(0, 32);
+    // 3. Verify Signature
+    const payload = `${userId}:${entryId}:${expiresStr}`;
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(payload)
+      .digest("hex")
+      .slice(0, 32);
 
-		if (signature !== expectedSignature) {
-			return { valid: false, userId, entryId, expires };
-		}
+    if (signature !== expectedSignature) {
+      return { valid: false, userId, entryId, expires };
+    }
 
-		return { valid: true, userId, entryId, expires };
-	} catch (err) {
-		return { valid: false, userId: '', entryId: '', expires: 0 };
-	}
+    return { valid: true, userId, entryId, expires };
+  } catch {
+    return { valid: false, userId: "", entryId: "", expires: 0 };
+  }
 }

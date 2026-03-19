@@ -12,75 +12,94 @@
  * - Returns the updated theme in the response.
  */
 
-import { dbAdapter } from '@src/databases/db';
-import type { DatabaseId } from '@src/databases/db-interface';
-import { ThemeManager } from '@src/databases/theme-manager';
-import { getPrivateSettingSync } from '@src/services/settings-service';
-import { json } from '@sveltejs/kit';
+import { dbAdapter } from "@src/databases/db";
+import type { DatabaseId } from "@src/databases/db-interface";
+import { ThemeManager } from "@src/databases/theme-manager";
+import { getPrivateSettingSync } from "@src/services/settings-service";
+import { json } from "@sveltejs/kit";
 
 // Permission checking
 
 // System Logger
-import { logger } from '@utils/logger.server';
+import { logger } from "@utils/logger.server";
 
 // Initialize ThemeManager singleton
 const themeManager = ThemeManager.getInstance();
 
 // Unified Error Handling
-import { apiHandler } from '@utils/api-handler';
-import { AppError } from '@utils/error-handling';
+import { apiHandler } from "@utils/api-handler";
+import { AppError } from "@utils/error-handling";
 
 // ... (ThemeManager instance)
 
 export const POST = apiHandler(async ({ request, locals }) => {
-	const { user, tenantId } = locals;
+  const { user, tenantId } = locals;
 
-	// Authentication is handled by hooks.server.ts
-	if (!user) {
-		throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
-	}
+  // Authentication is handled by hooks.server.ts
+  if (!user) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
 
-	if (getPrivateSettingSync('MULTI_TENANT') && !tenantId) {
-		throw new AppError('Tenant could not be identified for this operation.', 400, 'TENANT_REQUIRED');
-	}
+  if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    throw new AppError(
+      "Tenant could not be identified for this operation.",
+      400,
+      "TENANT_REQUIRED",
+    );
+  }
 
-	const { themeId, customCss } = await request.json();
+  const { themeId, customCss } = await request.json();
 
-	if (!themeId || typeof themeId !== 'string') {
-		logger.warn(`Invalid theme ID provided: ${themeId}`, { tenantId });
-		throw new AppError('Invalid theme ID.', 400, 'INVALID_THEME_ID');
-	}
+  if (!themeId || typeof themeId !== "string") {
+    logger.warn(`Invalid theme ID provided: ${themeId}`, { tenantId });
+    throw new AppError("Invalid theme ID.", 400, "INVALID_THEME_ID");
+  }
 
-	try {
-		if (!dbAdapter) {
-			throw new Error('Database adapter is not initialized');
-		}
+  try {
+    if (!dbAdapter) {
+      throw new Error("Database adapter is not initialized");
+    }
 
-		// Fetch the theme from the database to ensure it exists for the current tenant
-		const themeResult = await dbAdapter.system.themes.update(themeId as unknown as DatabaseId, { customCss });
+    // Fetch the theme from the database to ensure it exists for the current tenant
+    const themeResult = await dbAdapter.system.themes.update(themeId as unknown as DatabaseId, {
+      customCss,
+    });
 
-		if (!(themeResult.success && themeResult.data)) {
-			logger.warn(`Theme '${themeId}' does not exist or update failed for this tenant.`, { tenantId });
-			throw new AppError(`Theme '${themeId}' does not exist or update failed.`, 404, 'THEME_NOT_FOUND');
-		}
+    if (!(themeResult.success && themeResult.data)) {
+      logger.warn(`Theme '${themeId}' does not exist or update failed for this tenant.`, {
+        tenantId,
+      });
+      throw new AppError(
+        `Theme '${themeId}' does not exist or update failed.`,
+        404,
+        "THEME_NOT_FOUND",
+      );
+    }
 
-		const updatedTheme = themeResult.data;
+    const updatedTheme = themeResult.data;
 
-		// Invalidate theme cache after update
-		await themeManager.refresh();
+    // Invalidate theme cache after update
+    await themeManager.refresh();
 
-		logger.info(`Theme '${updatedTheme.name}' custom CSS successfully updated by user '${user._id}'.`, { tenantId });
+    logger.info(
+      `Theme '${updatedTheme.name}' custom CSS successfully updated by user '${user._id}'.`,
+      { tenantId },
+    );
 
-		return json({ success: true, theme: updatedTheme });
-	} catch (err) {
-		if (err instanceof AppError) {
-			throw err;
-		}
-		const errorMessage = err instanceof Error ? err.message : String(err);
-		logger.error('Error updating theme custom CSS:', {
-			error: errorMessage,
-			tenantId
-		});
-		throw new AppError(`Error updating theme custom CSS: ${errorMessage}`, 500, 'THEME_UPDATE_FAILED');
-	}
+    return json({ success: true, theme: updatedTheme });
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Error updating theme custom CSS:", {
+      error: errorMessage,
+      tenantId,
+    });
+    throw new AppError(
+      `Error updating theme custom CSS: ${errorMessage}`,
+      500,
+      "THEME_UPDATE_FAILED",
+    );
+  }
 });

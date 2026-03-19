@@ -23,11 +23,11 @@
  * @prerequisite Runs after i18n.handle() in the middleware sequence
  */
 
-import type { Locale } from '@src/paraglide/runtime';
-import { locales } from '@src/paraglide/runtime';
-import { app } from '@src/stores/store.svelte';
-import type { Handle } from '@sveltejs/kit';
-import { logger } from '@utils/logger.server';
+import type { Locale } from "@src/paraglide/runtime";
+import { locales } from "@src/paraglide/runtime";
+import { app } from "@src/stores/store.svelte";
+import type { Handle } from "@sveltejs/kit";
+import { logger } from "@utils/logger.server";
 
 // --- UTILITY FUNCTIONS ---
 
@@ -38,10 +38,10 @@ import { logger } from '@utils/logger.server';
  * @returns True if the language is supported, false otherwise
  */
 function isValidLocale(lang: string | undefined): lang is Locale {
-	if (!lang) {
-		return false;
-	}
-	return (locales as readonly string[]).includes(lang);
+  if (!lang) {
+    return false;
+  }
+  return (locales as readonly string[]).includes(lang);
 }
 
 /**
@@ -52,61 +52,78 @@ function isValidLocale(lang: string | undefined): lang is Locale {
  * @param setter - Function to update the store
  * @returns True if successfully set, false otherwise
  */
-function safelySetLanguage(cookieName: string, cookieValue: string | undefined, setter: (value: Locale) => void): boolean {
-	if (!cookieValue) {
-		return false;
-	}
+function safelySetLanguage(
+  cookieName: string,
+  cookieValue: string | undefined,
+  setter: (value: Locale) => void,
+): boolean {
+  if (!cookieValue) {
+    return false;
+  }
 
-	if (!isValidLocale(cookieValue)) {
-		logger.warn(`Invalid ${cookieName} cookie value: "${cookieValue}". ` + `Supported locales: ${locales.join(', ')}`);
-		return false;
-	}
+  if (!isValidLocale(cookieValue)) {
+    logger.warn(
+      `Invalid ${cookieName} cookie value: "${cookieValue}". ` +
+        `Supported locales: ${locales.join(", ")}`,
+    );
+    return false;
+  }
 
-	try {
-		setter(cookieValue);
-		logger.trace(`${cookieName} set to: ${cookieValue}`);
-		return true;
-	} catch (err) {
-		logger.error(`Failed to set ${cookieName} store: ${err instanceof Error ? err.message : String(err)}`);
-		return false;
-	}
+  try {
+    setter(cookieValue);
+    logger.trace(`${cookieName} set to: ${cookieValue}`);
+    return true;
+  } catch (err) {
+    logger.error(
+      `Failed to set ${cookieName} store: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return false;
+  }
 }
 
 // --- MAIN HOOK ---
 
 export const handleLocale: Handle = async ({ event, resolve }) => {
-	const { url, cookies } = event;
+  const { url, cookies } = event;
 
-	// Skip for API routes - performance fast-path
-	if (url.pathname.startsWith('/api/')) {
-		return resolve(event);
-	}
+  // Skip for API routes - performance fast-path
+  if (url.pathname.startsWith("/api/")) {
+    return resolve(event);
+  }
 
-	// Safety check: Ensure stores are available (server-side initialization)
-	if (!app) {
-		logger.warn('Language stores not available on server, skipping handleLocale');
-		return resolve(event);
-	}
+  // Safety check: Ensure stores are available (server-side initialization)
+  if (!app) {
+    logger.warn("Language stores not available on server, skipping handleLocale");
+    return resolve(event);
+  }
 
-	// Sync system language store from cookie
-	const systemLangCookie = cookies.get('systemLanguage');
-	const systemLangSet = safelySetLanguage('systemLanguage', systemLangCookie, (value) => (app.systemLanguage = value));
+  // Sync system language store from cookie
+  const systemLangCookie = cookies.get("systemLanguage");
+  const systemLangSet = safelySetLanguage(
+    "systemLanguage",
+    systemLangCookie,
+    (value) => (app.systemLanguage = value),
+  );
 
-	// Clean up invalid system language cookie
-	if (systemLangCookie && !systemLangSet) {
-		logger.debug('Removing invalid systemLanguage cookie');
-		cookies.delete('systemLanguage', { path: '/' });
-	}
+  // Clean up invalid system language cookie
+  if (systemLangCookie && !systemLangSet) {
+    logger.debug("Removing invalid systemLanguage cookie");
+    cookies.delete("systemLanguage", { path: "/" });
+  }
 
-	// Sync content language store from cookie
-	const contentLangCookie = cookies.get('contentLanguage');
-	const contentLangSet = safelySetLanguage('contentLanguage', contentLangCookie, (value) => (app.contentLanguage = value));
+  // Sync content language store from cookie
+  const contentLangCookie = cookies.get("contentLanguage");
+  const contentLangSet = safelySetLanguage(
+    "contentLanguage",
+    contentLangCookie,
+    (value) => (app.contentLanguage = value),
+  );
 
-	// Clean up invalid content language cookie
-	if (contentLangCookie && !contentLangSet) {
-		logger.debug('Removing invalid contentLanguage cookie');
-		cookies.delete('contentLanguage', { path: '/' });
-	}
+  // Clean up invalid content language cookie
+  if (contentLangCookie && !contentLangSet) {
+    logger.debug("Removing invalid contentLanguage cookie");
+    cookies.delete("contentLanguage", { path: "/" });
+  }
 
-	return resolve(event);
+  return resolve(event);
 };

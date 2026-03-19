@@ -1,18 +1,18 @@
 ---
-path: 'docs/database/database-methods.mdx'
-title: 'Database Methods Architecture'
-description: 'Complete reference for MongoDB method modules including authentication, collections, CRUD operations, content management, media, themes, widgets, and system settings.'
+path: "docs/database/database-methods.mdx"
+title: "Database Methods Architecture"
+description: "Complete reference for MongoDB method modules including authentication, collections, CRUD operations, content management, media, themes, widgets, and system settings."
 order: 6
-icon: 'mdi:database-cog'
-author: 'admin'
-created: '2025-10-03'
-updated: '2026-02-09'
+icon: "mdi:database-cog"
+author: "admin"
+created: "2025-10-03"
+updated: "2026-02-09"
 tags:
-  - 'database'
-  - 'mongodb'
-  - 'architecture'
-  - 'methods'
-  - 'crud'
+  - "database"
+  - "mongodb"
+  - "architecture"
+  - "methods"
+  - "crud"
 ---
 
 # Database Methods Architecture
@@ -59,7 +59,10 @@ export async function initializeWithConfig(config: PrivateEnv): Promise<{ status
  * Re-initialization - forces system reload
  * Used during: Configuration updates, adapter swaps
  */
-export async function reinitializeSystem(force = false, waitForAuth = true): Promise<{ status: string; error?: string }>;
+export async function reinitializeSystem(
+  force = false,
+  waitForAuth = true,
+): Promise<{ status: string; error?: string }>;
 ```
 
 ### initializeWithConfig() - Zero-Restart Setup
@@ -106,38 +109,38 @@ sequenceDiagram
 let privateEnv: PrivateEnv | null = null; // In-memory config storage
 
 export async function initializeWithConfig(config: PrivateEnv): Promise<{ status: string }> {
-	try {
-		logger.info('Initializing with provided config (bypassing Vite cache)...');
+  try {
+    logger.info("Initializing with provided config (bypassing Vite cache)...");
 
-		// Store config in memory (critical for zero-restart)
-		privateEnv = config;
+    // Store config in memory (critical for zero-restart)
+    privateEnv = config;
 
-		// Initialize system with in-memory config
-		// skipSetupCheck = true tells initializeSystem to use privateEnv instead of importing
-		initializationPromise = initializeSystem(false, true);
-		await initializationPromise;
+    // Initialize system with in-memory config
+    // skipSetupCheck = true tells initializeSystem to use privateEnv instead of importing
+    initializationPromise = initializeSystem(false, true);
+    await initializationPromise;
 
-		return { status: 'success' };
-	} catch (error) {
-		logger.error('Failed to initialize with config:', error);
-		throw error;
-	}
+    return { status: "success" };
+  } catch (error) {
+    logger.error("Failed to initialize with config:", error);
+    throw error;
+  }
 }
 
 async function initializeSystem(forceReload = false, skipSetupCheck = false): Promise<void> {
-	// ...
+  // ...
 
-	let privateConfig;
-	if (skipSetupCheck) {
-		// Use in-memory config (from initializeWithConfig)
-		logger.debug('Using pre-set configuration (zero-restart mode)');
-		privateConfig = privateEnv;
-	} else {
-		// Normal mode: import from filesystem
-		privateConfig = await loadPrivateConfig(forceReload);
-	}
+  let privateConfig;
+  if (skipSetupCheck) {
+    // Use in-memory config (from initializeWithConfig)
+    logger.debug("Using pre-set configuration (zero-restart mode)");
+    privateConfig = privateEnv;
+  } else {
+    // Normal mode: import from filesystem
+    privateConfig = await loadPrivateConfig(forceReload);
+  }
 
-	// ... continue with adapter loading, connection, etc.
+  // ... continue with adapter loading, connection, etc.
 }
 ```
 
@@ -254,13 +257,13 @@ The database adapter handles storage format differences transparently:
 ```typescript
 // Application layer always works with this format:
 const entry = {
-	title: { en: 'Hello', de: 'Hallo' },
-	description: { en: 'World', de: 'Welt' },
-	slug: 'hello-world' // Not translated
+  title: { en: "Hello", de: "Hallo" },
+  description: { en: "World", de: "Welt" },
+  slug: "hello-world", // Not translated
 };
 
 // MongoDB adapter stores nested objects directly:
-db.collection('posts').insertOne(entry);
+db.collection("posts").insertOne(entry);
 // Result: { title: { en: "Hello", de: "Hallo" }, ... }
 
 // SQL (Drizzle) adapter transforms to relational for better normalization:
@@ -317,8 +320,8 @@ All method classes use constructor injection for:
 
 ```typescript
 export class MongoAuthModelRegistrar {
-	constructor(mongooseInstance: typeof Mongoose);
-	async setupAuthModels(): Promise<void>;
+  constructor(mongooseInstance: typeof Mongoose);
+  async setupAuthModels(): Promise<void>;
 }
 ```
 
@@ -378,17 +381,17 @@ await registrar.setupAuthModels();
 
 ```typescript
 export class MongoCollectionMethods {
-	constructor(mongoose: typeof Mongoose);
+  constructor(mongoose: typeof Mongoose);
 
-	async getModel(id: string): Promise<CollectionModel>;
-	async createModel(schema: Schema): Promise<void>;
-	async updateModel(schema: Schema): Promise<void>;
-	async deleteModel(id: string): Promise<void>;
-	async getSchema(collectionName: string): Promise<Schema | null>;
-	async listSchemas(): Promise<Schema[]>;
-	async collectionExists(collectionName: string): Promise<boolean>;
-	getMongooseModel(id: string): Model<unknown> | null;
-	getRegisteredModelIds(): string[];
+  async getModel(id: string): Promise<CollectionModel>;
+  async createModel(schema: Schema): Promise<void>;
+  async updateModel(schema: Schema): Promise<void>;
+  async deleteModel(id: string): Promise<void>;
+  async getSchema(collectionName: string): Promise<Schema | null>;
+  async listSchemas(): Promise<Schema[]>;
+  async collectionExists(collectionName: string): Promise<boolean>;
+  getMongooseModel(id: string): Model<unknown> | null;
+  getRegisteredModelIds(): string[];
 }
 ```
 
@@ -480,20 +483,20 @@ const collectionMethods = new MongoCollectionMethods(mongoose);
 
 // Create dynamic model
 await collectionMethods.createModel({
-	id: 'blog_posts',
-	name: 'Blog Posts',
-	fields: [
-		{ name: 'title', type: 'string', required: true },
-		{ name: 'content', type: 'text' },
-		{ name: 'publishedAt', type: 'date' }
-	]
+  id: "blog_posts",
+  name: "Blog Posts",
+  fields: [
+    { name: "title", type: "string", required: true },
+    { name: "content", type: "text" },
+    { name: "publishedAt", type: "date" },
+  ],
 });
 
 // Check if exists
-const exists = await collectionMethods.collectionExists('blog_posts');
+const exists = await collectionMethods.collectionExists("blog_posts");
 
 // Get model
-const model = collectionMethods.getMongooseModel('blog_posts');
+const model = collectionMethods.getMongooseModel("blog_posts");
 ```
 
 ---
@@ -521,26 +524,26 @@ const model = collectionMethods.getMongooseModel('blog_posts');
 
 ```typescript
 export class MongoCrudMethods<T extends BaseEntity> {
-	constructor(model: Model<T>);
+  constructor(model: Model<T>);
 
-	async findOne(query: FilterQuery<T>): Promise<T | null>;
-	async findById(id: DatabaseId): Promise<T | null>;
-	async findByIds(ids: DatabaseId[]): Promise<T[]>;
-	async findMany(query: FilterQuery<T>, options?: PaginationOptions): Promise<T[]>;
+  async findOne(query: FilterQuery<T>): Promise<T | null>;
+  async findById(id: DatabaseId): Promise<T | null>;
+  async findByIds(ids: DatabaseId[]): Promise<T[]>;
+  async findMany(query: FilterQuery<T>, options?: PaginationOptions): Promise<T[]>;
 
-	async insert(data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>): Promise<T>;
-	async insertMany(data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<T[]>;
+  async insert(data: Omit<T, "_id" | "createdAt" | "updatedAt">): Promise<T>;
+  async insertMany(data: Omit<T, "_id" | "createdAt" | "updatedAt">[]): Promise<T[]>;
 
-	async update(id: DatabaseId, data: UpdateQuery<T>): Promise<T | null>;
-	async upsert(query: FilterQuery<T>, data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>): Promise<T>;
-	async upsertMany(items: Array<{ query: FilterQuery<T>; data: Partial<T> }>): Promise<T[]>;
+  async update(id: DatabaseId, data: UpdateQuery<T>): Promise<T | null>;
+  async upsert(query: FilterQuery<T>, data: Omit<T, "_id" | "createdAt" | "updatedAt">): Promise<T>;
+  async upsertMany(items: Array<{ query: FilterQuery<T>; data: Partial<T> }>): Promise<T[]>;
 
-	async delete(id: DatabaseId): Promise<boolean>;
-	async deleteMany(query: FilterQuery<T>): Promise<{ deletedCount: number }>;
+  async delete(id: DatabaseId): Promise<boolean>;
+  async deleteMany(query: FilterQuery<T>): Promise<{ deletedCount: number }>;
 
-	async count(query: FilterQuery<T>): Promise<number>;
-	async exists(query: FilterQuery<T>): Promise<boolean>;
-	async aggregate<R>(pipeline: PipelineStage[]): Promise<R[]>;
+  async count(query: FilterQuery<T>): Promise<number>;
+  async exists(query: FilterQuery<T>): Promise<boolean>;
+  async aggregate<R>(pipeline: PipelineStage[]): Promise<R[]>;
 }
 ```
 
@@ -555,31 +558,31 @@ export class MongoCrudMethods<T extends BaseEntity> {
 **Usage Example:**
 
 ```typescript
-import { MongoCrudMethods } from './crudMethods';
+import { MongoCrudMethods } from "./crudMethods";
 
 // Create CRUD repository for blog posts
 const postsRepo = new MongoCrudMethods<BlogPost>(BlogPostModel);
 
 // Find all published posts
-const posts = await postsRepo.findMany({ status: 'published' });
+const posts = await postsRepo.findMany({ status: "published" });
 
 // Insert new post
 const newPost = await postsRepo.insert({
-	title: 'New Post',
-	content: 'Content here...',
-	author: 'user123'
+  title: "New Post",
+  content: "Content here...",
+  author: "user123",
 });
 
 // Update post
 await postsRepo.update(newPost._id, {
-	$set: { title: 'Updated Title' }
+  $set: { title: "Updated Title" },
 });
 
 // Delete post
 await postsRepo.delete(newPost._id);
 
 // Count posts by author
-const count = await postsRepo.count({ author: 'user123' });
+const count = await postsRepo.count({ author: "user123" });
 ```
 
 ---
@@ -604,29 +607,43 @@ const count = await postsRepo.count({ author: 'user123' });
 
 ```typescript
 export class MongoContentMethods {
-	constructor(nodesRepo: MongoCrudMethods<ContentNode>, draftsRepo: MongoCrudMethods<ContentDraft>, revisionsRepo: MongoCrudMethods<ContentRevision>);
+  constructor(
+    nodesRepo: MongoCrudMethods<ContentNode>,
+    draftsRepo: MongoCrudMethods<ContentDraft>,
+    revisionsRepo: MongoCrudMethods<ContentRevision>,
+  );
 
-	// Content Structure
-	async getStructure(mode: 'flat' | 'nested', filter?: FilterQuery<ContentNode>): Promise<ContentNode[]>;
-	async addNode(node: Omit<ContentNode, '_id'>): Promise<ContentNode>;
-	async updateNode(id: DatabaseId, data: Partial<ContentNode>): Promise<ContentNode | null>;
-	async deleteNode(id: DatabaseId): Promise<boolean>;
-	async moveNode(id: DatabaseId, newParentId: DatabaseId | null): Promise<ContentNode | null>;
+  // Content Structure
+  async getStructure(
+    mode: "flat" | "nested",
+    filter?: FilterQuery<ContentNode>,
+  ): Promise<ContentNode[]>;
+  async addNode(node: Omit<ContentNode, "_id">): Promise<ContentNode>;
+  async updateNode(id: DatabaseId, data: Partial<ContentNode>): Promise<ContentNode | null>;
+  async deleteNode(id: DatabaseId): Promise<boolean>;
+  async moveNode(id: DatabaseId, newParentId: DatabaseId | null): Promise<ContentNode | null>;
 
-	// Drafts
-	async createDraft(data: Omit<ContentDraft, '_id'>): Promise<ContentDraft>;
-	async getDraft(draftId: DatabaseId): Promise<ContentDraft | null>;
-	async updateDraft(id: DatabaseId, data: Partial<ContentDraft>): Promise<ContentDraft | null>;
-	async deleteDraft(id: DatabaseId): Promise<boolean>;
-	async listDrafts(userId?: DatabaseId, options?: PaginationOptions): Promise<PaginatedResult<ContentDraft>>;
-	async publishDraft(draftId: DatabaseId): Promise<ContentNode>;
+  // Drafts
+  async createDraft(data: Omit<ContentDraft, "_id">): Promise<ContentDraft>;
+  async getDraft(draftId: DatabaseId): Promise<ContentDraft | null>;
+  async updateDraft(id: DatabaseId, data: Partial<ContentDraft>): Promise<ContentDraft | null>;
+  async deleteDraft(id: DatabaseId): Promise<boolean>;
+  async listDrafts(
+    userId?: DatabaseId,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<ContentDraft>>;
+  async publishDraft(draftId: DatabaseId): Promise<ContentNode>;
 
-	// Revisions
-	async createRevision(nodeId: DatabaseId, data: unknown, userId: DatabaseId): Promise<ContentRevision>;
-	async getRevisions(nodeId: DatabaseId, limit?: number): Promise<ContentRevision[]>;
-	async getRevision(revisionId: DatabaseId): Promise<ContentRevision | null>;
-	async restoreRevision(revisionId: DatabaseId): Promise<ContentNode>;
-	async cleanupOldRevisions(nodeId: DatabaseId, keepCount?: number): Promise<void>;
+  // Revisions
+  async createRevision(
+    nodeId: DatabaseId,
+    data: unknown,
+    userId: DatabaseId,
+  ): Promise<ContentRevision>;
+  async getRevisions(nodeId: DatabaseId, limit?: number): Promise<ContentRevision[]>;
+  async getRevision(revisionId: DatabaseId): Promise<ContentRevision | null>;
+  async restoreRevision(revisionId: DatabaseId): Promise<ContentNode>;
+  async cleanupOldRevisions(nodeId: DatabaseId, keepCount?: number): Promise<void>;
 }
 ```
 
@@ -644,13 +661,13 @@ export class MongoContentMethods {
 const contentMethods = new MongoContentMethods(nodesRepo, draftsRepo, revisionsRepo);
 
 // Get content tree structure
-const tree = await contentMethods.getStructure('nested');
+const tree = await contentMethods.getStructure("nested");
 
 // Create draft
 const draft = await contentMethods.createDraft({
-	title: 'New Article',
-	content: 'Draft content...',
-	authorId: userId
+  title: "New Article",
+  content: "Draft content...",
+  authorId: userId,
 });
 
 // Publish draft (creates revision automatically)
@@ -681,13 +698,19 @@ await contentMethods.restoreRevision(revisions[1]._id);
 
 ```typescript
 export class MongoMediaMethods {
-	constructor(model: Model<MediaItem>);
+  constructor(model: Model<MediaItem>);
 
-	async uploadMany(files: Omit<MediaItem, '_id'>[]): Promise<MediaItem[]>;
-	async deleteMany(fileIds: DatabaseId[]): Promise<{ deletedCount: number }>;
-	async updateMetadata(fileId: DatabaseId, metadata: Partial<MediaMetadata>): Promise<MediaItem | null>;
-	async move(fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<{ movedCount: number }>;
-	async getFiles(folderId?: DatabaseId, options?: PaginationOptions): Promise<PaginatedResult<MediaItem>>;
+  async uploadMany(files: Omit<MediaItem, "_id">[]): Promise<MediaItem[]>;
+  async deleteMany(fileIds: DatabaseId[]): Promise<{ deletedCount: number }>;
+  async updateMetadata(
+    fileId: DatabaseId,
+    metadata: Partial<MediaMetadata>,
+  ): Promise<MediaItem | null>;
+  async move(fileIds: DatabaseId[], targetFolderId?: DatabaseId): Promise<{ movedCount: number }>;
+  async getFiles(
+    folderId?: DatabaseId,
+    options?: PaginationOptions,
+  ): Promise<PaginatedResult<MediaItem>>;
 }
 ```
 
@@ -760,15 +783,15 @@ const mediaMethods = new MongoMediaMethods(MediaModel);
 
 // Upload files
 const uploaded = await mediaMethods.uploadMany([
-	{ filename: 'image1.jpg', path: '/uploads/image1.jpg', mimeType: 'image/jpeg', size: 102400 },
-	{ filename: 'image2.jpg', path: '/uploads/image2.jpg', mimeType: 'image/jpeg', size: 98304 }
+  { filename: "image1.jpg", path: "/uploads/image1.jpg", mimeType: "image/jpeg", size: 102400 },
+  { filename: "image2.jpg", path: "/uploads/image2.jpg", mimeType: "image/jpeg", size: 98304 },
 ]);
 
 // Update metadata
 await mediaMethods.updateMetadata(uploaded[0]._id, {
-	title: 'Hero Image',
-	alt: 'Homepage hero banner',
-	tags: ['homepage', 'banner']
+  title: "Hero Image",
+  alt: "Homepage hero banner",
+  tags: ["homepage", "banner"],
 });
 
 // Get paginated files
@@ -795,16 +818,16 @@ await mediaMethods.deleteMany([uploaded[1]._id]);
 
 ```typescript
 export class MongoThemeMethods {
-	constructor(model: Model<Theme>);
+  constructor(model: Model<Theme>);
 
-	async getActive(): Promise<Theme | null>;
-	async getDefault(): Promise<Theme | null>;
-	async findAll(): Promise<Theme[]>;
-	async setActive(themeId: DatabaseId): Promise<Theme | null>;
-	async setDefault(themeId: DatabaseId): Promise<Theme | null>;
-	async install(themeData: Omit<Theme, '_id' | 'createdAt' | 'updatedAt'>): Promise<Theme>;
-	async uninstall(themeId: DatabaseId): Promise<boolean>;
-	async update(themeId: DatabaseId, themeData: Partial<Theme>): Promise<Theme | null>;
+  async getActive(): Promise<Theme | null>;
+  async getDefault(): Promise<Theme | null>;
+  async findAll(): Promise<Theme[]>;
+  async setActive(themeId: DatabaseId): Promise<Theme | null>;
+  async setDefault(themeId: DatabaseId): Promise<Theme | null>;
+  async install(themeData: Omit<Theme, "_id" | "createdAt" | "updatedAt">): Promise<Theme>;
+  async uninstall(themeId: DatabaseId): Promise<boolean>;
+  async update(themeId: DatabaseId, themeData: Partial<Theme>): Promise<Theme | null>;
 }
 ```
 
@@ -853,9 +876,9 @@ const themeMethods = new MongoThemeMethods(ThemeModel);
 
 // Install theme
 const theme = await themeMethods.install({
-	name: 'Dark Mode',
-	version: '1.0.0',
-	config: { primaryColor: '#1a1a1a' }
+  name: "Dark Mode",
+  version: "1.0.0",
+  config: { primaryColor: "#1a1a1a" },
 });
 
 // Set as active
@@ -866,7 +889,7 @@ const active = await themeMethods.getActive();
 
 // Update theme
 await themeMethods.update(theme._id, {
-	config: { primaryColor: '#000000' }
+  config: { primaryColor: "#000000" },
 });
 
 // Uninstall
@@ -890,16 +913,16 @@ await themeMethods.uninstall(theme._id);
 
 ```typescript
 export class MongoWidgetMethods {
-	constructor(model: Model<Widget>);
+  constructor(model: Model<Widget>);
 
-	async register(widgetData: Omit<Widget, '_id' | 'createdAt' | 'updatedAt'>): Promise<Widget>;
-	async findById(widgetId: DatabaseId): Promise<Widget | null>;
-	async activate(widgetId: DatabaseId): Promise<Widget | null>;
-	async deactivate(widgetId: DatabaseId): Promise<Widget | null>;
-	async update(widgetId: DatabaseId, widgetData: Partial<Widget>): Promise<Widget | null>;
-	async delete(widgetId: DatabaseId): Promise<boolean>;
-	async findAll(): Promise<Widget[]>;
-	async findAllActive(): Promise<Widget[]>;
+  async register(widgetData: Omit<Widget, "_id" | "createdAt" | "updatedAt">): Promise<Widget>;
+  async findById(widgetId: DatabaseId): Promise<Widget | null>;
+  async activate(widgetId: DatabaseId): Promise<Widget | null>;
+  async deactivate(widgetId: DatabaseId): Promise<Widget | null>;
+  async update(widgetId: DatabaseId, widgetData: Partial<Widget>): Promise<Widget | null>;
+  async delete(widgetId: DatabaseId): Promise<boolean>;
+  async findAll(): Promise<Widget[]>;
+  async findAllActive(): Promise<Widget[]>;
 }
 ```
 
@@ -916,10 +939,10 @@ const widgetMethods = new MongoWidgetMethods(WidgetModel);
 
 // Register widget
 const widget = await widgetMethods.register({
-	name: 'User Stats',
-	type: 'dashboard',
-	config: { displayMode: 'chart' },
-	isActive: false
+  name: "User Stats",
+  type: "dashboard",
+  config: { displayMode: "chart" },
+  isActive: false,
 });
 
 // Activate widget
@@ -930,7 +953,7 @@ const activeWidgets = await widgetMethods.findAllActive();
 
 // Update widget config
 await widgetMethods.update(widget._id, {
-	config: { displayMode: 'table' }
+  config: { displayMode: "table" },
 });
 
 // Deactivate and delete
@@ -985,24 +1008,24 @@ export class MongoSystemMethods {
 const systemMethods = new MongoSystemMethods(system - preferencesModel, SystemSettingModel);
 
 // Set user layout preferences
-await systemMethods.setUserPreferences('user123', 'dashboard', {
-	preferences: [
-		{ id: 'widget1', x: 0, y: 0, w: 6, h: 4 },
-		{ id: 'widget2', x: 6, y: 0, w: 6, h: 4 }
-	]
+await systemMethods.setUserPreferences("user123", "dashboard", {
+  preferences: [
+    { id: "widget1", x: 0, y: 0, w: 6, h: 4 },
+    { id: "widget2", x: 6, y: 0, w: 6, h: 4 },
+  ],
 });
 
 // Get widget state
-const widgetState = await systemMethods.getWidgetState('user123', 'dashboard', 'widget1');
+const widgetState = await systemMethods.getWidgetState("user123", "dashboard", "widget1");
 
 // Set system-wide setting
-await systemMethods.set('maintenanceMode', false, 'system');
+await systemMethods.set("maintenanceMode", false, "system");
 
 // Get user-specific setting
-const userTheme = await systemMethods.get('theme', 'user', 'user123');
+const userTheme = await systemMethods.get("theme", "user", "user123");
 
 // Clear all user preferences
-(await systemMethods.clearsystem) - preferences('user123');
+(await systemMethods.clearsystem) - preferences("user123");
 ```
 
 ---
@@ -1021,18 +1044,25 @@ const userTheme = await systemMethods.get('theme', 'user', 'user123');
 **Class:**
 
 ```typescript
-export class MongoSystemVirtualFolderMethods implements IDBAdapter['systemVirtualFolder'] {
-	constructor(model: Model<SystemVirtualFolder>);
+export class MongoSystemVirtualFolderMethods implements IDBAdapter["systemVirtualFolder"] {
+  constructor(model: Model<SystemVirtualFolder>);
 
-	async create(folder: Omit<SystemVirtualFolder, '_id' | 'createdAt' | 'updatedAt'>): Promise<DatabaseResult<SystemVirtualFolder>>;
-	async getById(folderId: DatabaseId): Promise<DatabaseResult<SystemVirtualFolder | null>>;
-	async getByParentId(parentId: DatabaseId | null): Promise<DatabaseResult<SystemVirtualFolder[]>>;
-	async getAll(): Promise<DatabaseResult<SystemVirtualFolder[]>>;
-	async update(folderId: DatabaseId, updateData: Partial<SystemVirtualFolder>): Promise<DatabaseResult<SystemVirtualFolder>>;
-	async addToFolder(contentId: DatabaseId, folderPath: string): Promise<DatabaseResult<void>>;
-	async getContents(folderPath: string): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: any[] }>>;
-	async delete(folderId: DatabaseId): Promise<DatabaseResult<void>>;
-	async exists(path: string): Promise<DatabaseResult<boolean>>;
+  async create(
+    folder: Omit<SystemVirtualFolder, "_id" | "createdAt" | "updatedAt">,
+  ): Promise<DatabaseResult<SystemVirtualFolder>>;
+  async getById(folderId: DatabaseId): Promise<DatabaseResult<SystemVirtualFolder | null>>;
+  async getByParentId(parentId: DatabaseId | null): Promise<DatabaseResult<SystemVirtualFolder[]>>;
+  async getAll(): Promise<DatabaseResult<SystemVirtualFolder[]>>;
+  async update(
+    folderId: DatabaseId,
+    updateData: Partial<SystemVirtualFolder>,
+  ): Promise<DatabaseResult<SystemVirtualFolder>>;
+  async addToFolder(contentId: DatabaseId, folderPath: string): Promise<DatabaseResult<void>>;
+  async getContents(
+    folderPath: string,
+  ): Promise<DatabaseResult<{ folders: SystemVirtualFolder[]; files: any[] }>>;
+  async delete(folderId: DatabaseId): Promise<DatabaseResult<void>>;
+  async exists(path: string): Promise<DatabaseResult<boolean>>;
 }
 ```
 
@@ -1050,28 +1080,28 @@ const folderMethods = new MongoSystemVirtualFolderMethods(SystemVirtualFolderMod
 
 // Create root folder
 const rootResult = await folderMethods.create({
-	name: 'Documents',
-	path: '/documents',
-	parentId: null
+  name: "Documents",
+  path: "/documents",
+  parentId: null,
 });
 
 // Create subfolder
 const subResult = await folderMethods.create({
-	name: 'Reports',
-	path: '/documents/reports',
-	parentId: rootResult.data._id
+  name: "Reports",
+  path: "/documents/reports",
+  parentId: rootResult.data._id,
 });
 
 // Add content to folder
-await folderMethods.addToFolder(contentId, '/documents/reports');
+await folderMethods.addToFolder(contentId, "/documents/reports");
 
 // Get folder contents
-const contents = await folderMethods.getContents('/documents/reports');
+const contents = await folderMethods.getContents("/documents/reports");
 console.log(contents.data.folders); // Subfolders
 console.log(contents.data.files); // Files/content
 
 // Check existence
-const exists = await folderMethods.exists('/documents');
+const exists = await folderMethods.exists("/documents");
 ```
 
 ---
@@ -1109,7 +1139,12 @@ Generates MongoDB-compatible ObjectId strings.
 #### Caching
 
 ```typescript
-export async function withCache<T>(key: string, operation: () => Promise<T>, ttl?: number, category?: CacheCategory): Promise<T>;
+export async function withCache<T>(
+  key: string,
+  operation: () => Promise<T>,
+  ttl?: number,
+  category?: CacheCategory,
+): Promise<T>;
 
 export function invalidateCategoryCache(category: CacheCategory): void;
 ```
@@ -1127,27 +1162,27 @@ export function invalidateCategoryCache(category: CacheCategory): void;
 
 ```typescript
 export interface CacheWrapperOptions {
-	ttl?: number;
-	category?: CacheCategory;
-	skipCache?: boolean;
+  ttl?: number;
+  category?: CacheCategory;
+  skipCache?: boolean;
 }
 ```
 
 **Usage:**
 
 ```typescript
-import { withCache, invalidateCategoryCache } from './mongoDBCacheUtils';
+import { withCache, invalidateCategoryCache } from "./mongoDBCacheUtils";
 
 // Cached database query
 const result = await withCache(
-	'users:active',
-	async () => await UserModel.find({ status: 'active' }),
-	600, // 10 minutes TTL
-	'COLLECTION'
+  "users:active",
+  async () => await UserModel.find({ status: "active" }),
+  600, // 10 minutes TTL
+  "COLLECTION",
 );
 
 // Invalidate cache category
-invalidateCategoryCache('THEME'); // Clears all theme-related cache
+invalidateCategoryCache("THEME"); // Clears all theme-related cache
 ```
 
 ---
@@ -1171,24 +1206,24 @@ const posts = await postsRepo.findMany({ authorId: user._id });
 ```typescript
 // Combine multiple method modules for complex operations
 class BlogService {
-	constructor(
-		private postsRepo: MongoCrudMethods<Post>,
-		private contentMethods: MongoContentMethods,
-		private mediaMethods: MongoMediaMethods
-	) {}
+  constructor(
+    private postsRepo: MongoCrudMethods<Post>,
+    private contentMethods: MongoContentMethods,
+    private mediaMethods: MongoMediaMethods,
+  ) {}
 
-	async createBlogPost(data: BlogPostData) {
-		// Create draft
-		const draft = await this.contentMethods.createDraft(data);
+  async createBlogPost(data: BlogPostData) {
+    // Create draft
+    const draft = await this.contentMethods.createDraft(data);
 
-		// Upload media
-		if (data.images) {
-			await this.mediaMethods.uploadMany(data.images);
-		}
+    // Upload media
+    if (data.images) {
+      await this.mediaMethods.uploadMany(data.images);
+    }
 
-		// Publish
-		return await this.contentMethods.publishDraft(draft._id);
-	}
+    // Publish
+    return await this.contentMethods.publishDraft(draft._id);
+  }
 }
 ```
 
@@ -1196,14 +1231,18 @@ class BlogService {
 
 ```typescript
 // Efficient batch processing
-const items = await Promise.all([mediaMethods.uploadMany(images), widgetMethods.findAllActive(), themeMethods.getActive()]);
+const items = await Promise.all([
+  mediaMethods.uploadMany(images),
+  widgetMethods.findAllActive(),
+  themeMethods.getActive(),
+]);
 
 // Batch upserts
 await postsRepo.upsertMany(
-	posts.map((post) => ({
-		query: { slug: post.slug },
-		data: post
-	}))
+  posts.map((post) => ({
+    query: { slug: post.slug },
+    data: post,
+  })),
 );
 ```
 
@@ -1228,7 +1267,12 @@ For multilingual content, cache keys **must** include the language parameter to 
 ```typescript
 // ✅ CORRECT: Language-specific cache
 const cacheKey = `entries:${collectionId}:page:${page}:lang:${language}`;
-const entries = await withCache(cacheKey, async () => await db.crud.findMany('posts', { collectionId }), 180, 'CONTENT');
+const entries = await withCache(
+  cacheKey,
+  async () => await db.crud.findMany("posts", { collectionId }),
+  180,
+  "CONTENT",
+);
 
 // ❌ WRONG: Missing language - will serve cached EN data when DE is requested
 const cacheKey = `entries:${collectionId}:page:${page}`;
@@ -1240,17 +1284,17 @@ When updating multilingual content, invalidate cache for **all languages**:
 
 ```typescript
 async function updateEntry(entryId: string, data: any) {
-	// Update database
-	await db.crud.update('entries', entryId, data);
+  // Update database
+  await db.crud.update("entries", entryId, data);
 
-	// Clear cache for ALL languages
-	const languages = await getAvailableContentLanguages();
-	for (const lang of languages) {
-		await db.cache.delete(`entry:${entryId}:lang:${lang}`);
-	}
+  // Clear cache for ALL languages
+  const languages = await getAvailableContentLanguages();
+  for (const lang of languages) {
+    await db.cache.delete(`entry:${entryId}:lang:${lang}`);
+  }
 
-	// Or use category invalidation to clear all entry caches
-	invalidateCategoryCache('CONTENT');
+  // Or use category invalidation to clear all entry caches
+  invalidateCategoryCache("CONTENT");
 }
 ```
 
@@ -1276,14 +1320,14 @@ async function updateEntry(entryId: string, data: any) {
 ```typescript
 // ❌ BAD: Fetches full documents in loop
 for (const id of ids) {
-	const doc = await Model.findById(id);
-	process(doc);
+  const doc = await Model.findById(id);
+  process(doc);
 }
 
 // ✅ GOOD: Batch query with projection
 const docs = await Model.find({ _id: { $in: ids } })
-	.select('title status author')
-	.lean();
+  .select("title status author")
+  .lean();
 docs.forEach(process);
 ```
 
@@ -1295,9 +1339,9 @@ All methods use `createDatabaseError()` for consistent error reporting:
 
 ```typescript
 try {
-	const result = await Model.findById(id);
+  const result = await Model.findById(id);
 } catch (error) {
-	throw createDatabaseError(error, 'DOCUMENT_NOT_FOUND', `Document with ID ${id} not found`);
+  throw createDatabaseError(error, "DOCUMENT_NOT_FOUND", `Document with ID ${id} not found`);
 }
 ```
 
@@ -1305,9 +1349,9 @@ try {
 
 ```typescript
 interface DatabaseError extends Error {
-	code: string; // Machine-readable error code
-	message: string; // Human-readable message
-	originalError: any; // Original error from database
+  code: string; // Machine-readable error code
+  message: string; // Human-readable message
+  originalError: any; // Original error from database
 }
 ```
 
@@ -1326,58 +1370,58 @@ interface DatabaseError extends Error {
 ### Unit Testing Example
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { MongoCrudMethods } from './crudMethods';
+import { describe, it, expect, vi } from "vitest";
+import { MongoCrudMethods } from "./crudMethods";
 
-describe('MongoCrudMethods', () => {
-	it('should find document by ID', async () => {
-		const mockModel = {
-			findById: vi.fn().mockReturnValue({
-				lean: vi.fn().mockResolvedValue({ _id: '123', name: 'Test' })
-			})
-		};
+describe("MongoCrudMethods", () => {
+  it("should find document by ID", async () => {
+    const mockModel = {
+      findById: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({ _id: "123", name: "Test" }),
+      }),
+    };
 
-		const repo = new MongoCrudMethods(mockModel as any);
-		const result = await repo.findById('123');
+    const repo = new MongoCrudMethods(mockModel as any);
+    const result = await repo.findById("123");
 
-		expect(result).toEqual({ _id: '123', name: 'Test' });
-		expect(mockModel.findById).toHaveBeenCalledWith('123');
-	});
+    expect(result).toEqual({ _id: "123", name: "Test" });
+    expect(mockModel.findById).toHaveBeenCalledWith("123");
+  });
 });
 ```
 
 ### Integration Testing
 
 ```typescript
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
+import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
 
-describe('MongoContentMethods Integration', () => {
-	let mongoServer: MongoMemoryServer;
+describe("MongoContentMethods Integration", () => {
+  let mongoServer: MongoMemoryServer;
 
-	beforeAll(async () => {
-		mongoServer = await MongoMemoryServer.create();
-		await mongoose.connect(mongoServer.getUri());
-	});
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+  });
 
-	afterAll(async () => {
-		await mongoose.disconnect();
-		await mongoServer.stop();
-	});
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
 
-	it('should create and publish draft', async () => {
-		const contentMethods = new MongoContentMethods(/* ... */);
+  it("should create and publish draft", async () => {
+    const contentMethods = new MongoContentMethods(/* ... */);
 
-		const draft = await contentMethods.createDraft({
-			title: 'Test Post',
-			content: 'Content...'
-		});
+    const draft = await contentMethods.createDraft({
+      title: "Test Post",
+      content: "Content...",
+    });
 
-		expect(draft._id).toBeDefined();
+    expect(draft._id).toBeDefined();
 
-		const published = await contentMethods.publishDraft(draft._id);
-		expect(published.status).toBe('published');
-	});
+    const published = await contentMethods.publishDraft(draft._id);
+    expect(published.status).toBe("published");
+  });
 });
 ```
 
@@ -1391,8 +1435,10 @@ describe('MongoContentMethods Integration', () => {
 
 ```typescript
 // Direct MongoDB access
-const users = await mongoose.connection.collection('users').find({ status: 'active' }).toArray();
-await mongoose.connection.collection('users').updateOne({ _id: userId }, { $set: { name: 'New Name' } });
+const users = await mongoose.connection.collection("users").find({ status: "active" }).toArray();
+await mongoose.connection
+  .collection("users")
+  .updateOne({ _id: userId }, { $set: { name: "New Name" } });
 ```
 
 **After:**
@@ -1400,8 +1446,8 @@ await mongoose.connection.collection('users').updateOne({ _id: userId }, { $set:
 ```typescript
 // Using method modules
 const usersRepo = new MongoCrudMethods<User>(UserModel);
-const users = await usersRepo.findMany({ status: 'active' });
-await usersRepo.update(userId, { $set: { name: 'New Name' } });
+const users = await usersRepo.findMany({ status: "active" });
+await usersRepo.update(userId, { $set: { name: "New Name" } });
 ```
 
 **Benefits:**

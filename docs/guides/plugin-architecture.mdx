@@ -56,12 +56,12 @@ A **Plugin** is a self-contained module that defines metadata, configuration, an
 
 ```typescript
 export interface Plugin {
-	metadata: PluginMetadata; // Name, version, icon...
-	migrations?: PluginMigration[]; // Database changes
-	ssrHook?: PluginSSRHook; // Server-side data enrichment
-	hooks?: PluginLifecycleHooks; // CRUD interception
-	ui?: PluginUIContribution; // UI slots and actions
-	config?: PluginConfig; // Settings schema
+  metadata: PluginMetadata; // Name, version, icon...
+  migrations?: PluginMigration[]; // Database changes
+  ssrHook?: PluginSSRHook; // Server-side data enrichment
+  hooks?: PluginLifecycleHooks; // CRUD interception
+  ui?: PluginUIContribution; // UI slots and actions
+  config?: PluginConfig; // Settings schema
 }
 ```
 
@@ -92,18 +92,18 @@ Create a new directory in `src/plugins/your-plugin` and define your plugin objec
 
 ```typescript
 // src/plugins/my-plugin/index.ts
-import type { Plugin } from '@src/plugins/types';
+import type { Plugin } from "@src/plugins/types";
 
 export const myPlugin: Plugin = {
-	metadata: {
-		id: 'my-plugin',
-		name: 'My Custom Plugin',
-		version: '1.0.0',
-		description: 'Adds a custom tab to the entry editor.',
-		icon: 'mdi:star',
-		enabled: true
-	}
-	// ... capabilities
+  metadata: {
+    id: "my-plugin",
+    name: "My Custom Plugin",
+    version: "1.0.0",
+    description: "Adds a custom tab to the entry editor.",
+    icon: "mdi:star",
+    enabled: true,
+  },
+  // ... capabilities
 };
 ```
 
@@ -113,17 +113,17 @@ To add a custom tab to the Content Editor:
 
 ```typescript
 // src/plugins/my-plugin/index.ts
-import { slotRegistry } from '@src/plugins/slotRegistry';
+import { slotRegistry } from "@src/plugins/slotRegistry";
 
 // Register the slot
 slotRegistry.register({
-	id: 'my-plugin-tab',
-	zone: 'entry_edit',
-	component: () => import('./my-custom-tab.svelte'), // Lazy loaded
-	props: {
-		label: 'My Tab',
-		icon: 'mdi:star'
-	}
+  id: "my-plugin-tab",
+  zone: "entry_edit",
+  component: () => import("./my-custom-tab.svelte"), // Lazy loaded
+  props: {
+    label: "My Tab",
+    icon: "mdi:star",
+  },
 });
 ```
 
@@ -168,6 +168,7 @@ hooks: {
 Complex integrations like Stripe are best implemented as a **Plugin** that provides a **Widget**.
 
 ### 1. Configuration (Settings)
+
 The plugin defines its own settings schema. This automatically adds a "Stripe" section to the System Settings UI.
 
 ```typescript
@@ -178,12 +179,15 @@ config: {
 ```
 
 ### 2. The Product Widget
+
 The plugin registers a custom widget. When an editor creates a "Product" collection, they can use the `StripeProduct` widget to link an entry to a Stripe SKU.
 
 ### 3. Lifecycle Hooks
+
 Use `afterSave` to automatically sync content changes to Stripe. If a price changes in SveltyCMS, the plugin can update the corresponding price object in the Stripe API.
 
 ### 4. Dashboard Slot
+
 Inject a "Recent Sales" widget into the `dashboard` zone to show real-time revenue stats fetched from the Stripe API.
 
 ---

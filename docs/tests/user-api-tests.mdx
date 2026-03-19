@@ -1,18 +1,18 @@
 ---
-path: 'docs/tests/user-api-tests.mdx'
-title: 'User API Integration Tests'
-description: 'Comprehensive test coverage documentation for all user-related API endpoints including authentication, avatar management, and invitations.'
+path: "docs/tests/user-api-tests.mdx"
+title: "User API Integration Tests"
+description: "Comprehensive test coverage documentation for all user-related API endpoints including authentication, avatar management, and invitations."
 order: 1
-icon: 'mdi:test-tube'
-author: 'admin'
-created: '2025-11-08'
-updated: '2026-03-03'
+icon: "mdi:test-tube"
+author: "admin"
+created: "2025-11-08"
+updated: "2026-03-03"
 tags:
-  - 'testing'
-  - 'api'
-  - 'user-management'
-  - 'integration-tests'
-  - 'bun'
+  - "testing"
+  - "api"
+  - "user-management"
+  - "integration-tests"
+  - "bun"
 ---
 
 # User API Integration Tests
@@ -92,11 +92,11 @@ bun test tests/bun/api/user.test.ts --verbose
 **Tests**: 4
 
 ```typescript
-describe('POST /api/user/create-user', () => {
-	it('should create the first user successfully without authentication');
-	it('should reject user creation with an invalid email format');
-	it('should reject user creation with mismatched passwords');
-	it('should reject user creation with a duplicate email');
+describe("POST /api/user/create-user", () => {
+  it("should create the first user successfully without authentication");
+  it("should reject user creation with an invalid email format");
+  it("should reject user creation with mismatched passwords");
+  it("should reject user creation with a duplicate email");
 });
 ```
 
@@ -117,9 +117,9 @@ describe('POST /api/user/create-user', () => {
 **Tests**: 2
 
 ```typescript
-describe('POST /api/user/login', () => {
-	it('should log in successfully with valid credentials');
-	it('should reject login with invalid credentials');
+describe("POST /api/user/login", () => {
+  it("should log in successfully with valid credentials");
+  it("should reject login with invalid credentials");
 });
 ```
 
@@ -143,11 +143,11 @@ describe('POST /api/user/login', () => {
 **Tests**: 4
 
 ```typescript
-describe('PUT /api/user/update-user-attributes', () => {
-	it('should allow a user to update their own attributes');
-	it('should allow an admin to update another user role');
-	it('should prevent any user, including an admin, from changing their own role');
-	it('should reject request without a valid token');
+describe("PUT /api/user/update-user-attributes", () => {
+  it("should allow a user to update their own attributes");
+  it("should allow an admin to update another user role");
+  it("should prevent any user, including an admin, from changing their own role");
+  it("should reject request without a valid token");
 });
 ```
 
@@ -172,9 +172,9 @@ describe('PUT /api/user/update-user-attributes', () => {
 **Tests**: 2
 
 ```typescript
-describe('POST /api/user/batch', () => {
-	it('should allow an admin to perform batch user operations');
-	it('should reject batch operations without authorization');
+describe("POST /api/user/batch", () => {
+  it("should allow an admin to perform batch user operations");
+  it("should reject batch operations without authorization");
 });
 ```
 
@@ -191,13 +191,13 @@ describe('POST /api/user/batch', () => {
 **Tests**: 6
 
 ```typescript
-describe('POST /api/user/save-avatar', () => {
-	it('should upload avatar for authenticated user');
-	it('should reject avatar upload without authentication');
-	it('should reject avatar upload without file');
-	it('should reject invalid file type for avatar');
-	it('should allow admin to upload avatar for another user');
-	it('should accept various image formats (JPEG, PNG, GIF, WebP)');
+describe("POST /api/user/save-avatar", () => {
+  it("should upload avatar for authenticated user");
+  it("should reject avatar upload without authentication");
+  it("should reject avatar upload without file");
+  it("should reject invalid file type for avatar");
+  it("should allow admin to upload avatar for another user");
+  it("should accept various image formats (JPEG, PNG, GIF, WebP)");
 });
 ```
 
@@ -233,12 +233,12 @@ describe('POST /api/user/save-avatar', () => {
 **Tests**: 5
 
 ```typescript
-describe('DELETE /api/user/delete-avatar', () => {
-	it('should delete own avatar when authenticated');
-	it('should reject avatar deletion without authentication');
-	it('should allow deletion when no avatar exists');
-	it('should allow admin to delete another user avatar');
-	it('should return default avatar URL after deletion');
+describe("DELETE /api/user/delete-avatar", () => {
+  it("should delete own avatar when authenticated");
+  it("should reject avatar deletion without authentication");
+  it("should allow deletion when no avatar exists");
+  it("should allow admin to delete another user avatar");
+  it("should return default avatar URL after deletion");
 });
 ```
 
@@ -264,12 +264,12 @@ describe('DELETE /api/user/delete-avatar', () => {
 **Tests**: 5
 
 ```typescript
-describe('POST /api/user (index - invitations)', () => {
-	it('should create user and send invitation token via email');
-	it('should reject user creation without authentication');
-	it('should reject duplicate user creation for same email');
-	it('should reject invalid expiration time');
-	it('should accept valid expiration time options');
+describe("POST /api/user (index - invitations)", () => {
+  it("should create user and send invitation token via email");
+  it("should reject user creation without authentication");
+  it("should reject duplicate user creation for same email");
+  it("should reject invalid expiration time");
+  it("should accept valid expiration time options");
 });
 ```
 
@@ -294,23 +294,23 @@ describe('POST /api/user (index - invitations)', () => {
 **Tests**: 8
 
 ```typescript
-describe('Error Handling & Edge Cases', () => {
-	describe('Invalid Input Validation', () => {
-		it('should reject empty email');
-		it('should reject missing password');
-		it('should reject password shorter than 8 characters');
-		it('should reject malformed JSON');
-	});
+describe("Error Handling & Edge Cases", () => {
+  describe("Invalid Input Validation", () => {
+    it("should reject empty email");
+    it("should reject missing password");
+    it("should reject password shorter than 8 characters");
+    it("should reject malformed JSON");
+  });
 
-	describe('Authentication Edge Cases', () => {
-		it('should reject login with non-existent email');
-		it('should reject login with empty credentials');
-	});
+  describe("Authentication Edge Cases", () => {
+    it("should reject login with non-existent email");
+    it("should reject login with empty credentials");
+  });
 
-	describe('Authorization Edge Cases', () => {
-		it('should reject updateUserAttributes with invalid user_id');
-		it('should reject updateUserAttributes with empty newUserData');
-	});
+  describe("Authorization Edge Cases", () => {
+    it("should reject updateUserAttributes with invalid user_id");
+    it("should reject updateUserAttributes with empty newUserData");
+  });
 });
 ```
 
@@ -328,10 +328,10 @@ describe('Error Handling & Edge Cases', () => {
 **Tests**: 3
 
 ```typescript
-describe('Session Management', () => {
-	it('should set session cookie on successful login');
-	it('should reject authenticated requests with invalid session cookie');
-	it('should clear session on logout');
+describe("Session Management", () => {
+  it("should set session cookie on successful login");
+  it("should reject authenticated requests with invalid session cookie");
+  it("should clear session on logout");
 });
 ```
 
@@ -353,10 +353,10 @@ describe('Session Management', () => {
 **Tests**: 3
 
 ```typescript
-describe('API Endpoint Availability', () => {
-	it('should have /api/admin/users endpoint available');
-	it('should have /api/admin/tokens endpoint available');
-	it('should have /api/user/logout endpoint available');
+describe("API Endpoint Availability", () => {
+  it("should have /api/admin/users endpoint available");
+  it("should have /api/admin/tokens endpoint available");
+  it("should have /api/user/logout endpoint available");
 });
 ```
 
@@ -375,10 +375,10 @@ describe('API Endpoint Availability', () => {
 Prevents timeout errors by waiting for the SvelteKit server to be ready.
 
 ```typescript
-import { waitForServer, getApiBaseUrl } from '../helpers/server';
+import { waitForServer, getApiBaseUrl } from "../helpers/server";
 
 beforeAll(async () => {
-	await waitForServer(); // Waits up to 60 seconds
+  await waitForServer(); // Waits up to 60 seconds
 });
 
 const API_BASE_URL = getApiBaseUrl(); // http://localhost:5173
@@ -397,18 +397,23 @@ const API_BASE_URL = getApiBaseUrl(); // http://localhost:5173
 Provides fixtures, database cleanup, and role resolution.
 
 ```typescript
-import { initializeTestEnvironment, cleanupTestDatabase, cleanupTestEnvironment, testFixtures } from '../helpers/testSetup';
+import {
+  initializeTestEnvironment,
+  cleanupTestDatabase,
+  cleanupTestEnvironment,
+  testFixtures,
+} from "../helpers/testSetup";
 
 beforeAll(async () => {
-	await initializeTestEnvironment();
+  await initializeTestEnvironment();
 });
 
 afterAll(async () => {
-	await cleanupTestEnvironment();
+  await cleanupTestEnvironment();
 });
 
 beforeEach(async () => {
-	await cleanupTestDatabase();
+  await cleanupTestDatabase();
 });
 ```
 

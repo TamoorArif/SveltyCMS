@@ -220,7 +220,7 @@ function generatePreviewSpec(fieldsToRender: FieldInstance[]): Spec {
 			label: field.label,
 			options: {
 				widget: widgetName,
-				...((field.GuiFields as any) || {})
+				...(field.GuiFields as any)
 			}
 		};
 	});

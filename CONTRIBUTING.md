@@ -351,13 +351,13 @@ SveltyCMS uses a performance-optimized GitHub Actions workflow designed for fast
 
 ```typescript
 // Example test structure (Bun Test)
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from "bun:test";
 
-describe('Collection API', () => {
-	it('should create a new collection', async () => {
-		// Test logic here
-		expect(true).toBe(true);
-	});
+describe("Collection API", () => {
+  it("should create a new collection", async () => {
+    // Test logic here
+    expect(true).toBe(true);
+  });
 });
 ```
 
@@ -399,17 +399,17 @@ When updating documentation:
 2. **Include frontmatter** with required fields:
    ```mdx
    ---
-   path: 'docs/your-doc'
-   title: 'Your Title'
-   description: 'Brief description'
+   path: "docs/your-doc"
+   title: "Your Title"
+   description: "Brief description"
    order: 1
-   icon: 'mdi:icon-name'
-   author: 'Your Name'
-   created: '2025-01-01'
-   updated: '2025-01-01'
+   icon: "mdi:icon-name"
+   author: "Your Name"
+   created: "2025-01-01"
+   updated: "2025-01-01"
    tags:
-     - 'tag1'
-     - 'tag2'
+     - "tag1"
+     - "tag2"
    ---
    ```
 3. **Use clear headings** and structure
@@ -441,20 +441,20 @@ All database queries must be database-agnostic:
 
 ```typescript
 // ✅ Correct - Uses adapter pattern
-import { getDB } from '$databases';
+import { getDB } from "$databases";
 
 export async function GET({ locals }) {
-	const db = getDB(locals.dbType);
-	const items = await db.find('collection_name', {});
-	return json(items);
+  const db = getDB(locals.dbType);
+  const items = await db.find("collection_name", {});
+  return json(items);
 }
 
 // ❌ Wrong - Direct database access
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 export async function GET() {
-	const items = await mongoose.model('Collection').find();
-	return json(items);
+  const items = await mongoose.model("Collection").find();
+  return json(items);
 }
 ```
 

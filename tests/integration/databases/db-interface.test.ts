@@ -8,352 +8,359 @@
  * NOTE: TypeScript errors for 'bun:test' module are expected - it's a runtime module.
  */
 
-import { beforeAll, describe, expect, it } from 'bun:test';
-import type { DatabaseResult } from '../../../src/databases/db-interface';
+import { beforeAll, describe, expect, it } from "bun:test";
+import type { DatabaseResult } from "../../../src/databases/db-interface";
 
-describe('Database Interface Contract Tests', () => {
-	let db: any = null;
+describe("Database Interface Contract Tests", () => {
+  let db: any = null;
 
-	beforeAll(async () => {
-		// biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
-		// @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
-		const { privateEnv } = await import('../../../config/private.test');
+  beforeAll(async () => {
+    // biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
+    // @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
+    const { privateEnv } = await import("../../../config/private.test");
 
-		const dbType = privateEnv?.DB_TYPE || process.env.DB_TYPE || 'sqlite';
-		console.log(`DB Interface Test: Testing adapter for ${dbType}...`);
+    const dbType = privateEnv?.DB_TYPE || process.env.DB_TYPE || "sqlite";
+    console.log(`DB Interface Test: Testing adapter for ${dbType}...`);
 
-		if (dbType === 'mongodb') {
-			const { MongoDBAdapter } = await import('../../../src/databases/mongodb/mongo-db-adapter');
-			db = new MongoDBAdapter();
-			const host = privateEnv.DB_HOST || process.env.DB_HOST || '127.0.0.1';
-			const port = privateEnv.DB_PORT || process.env.DB_PORT || '27017';
-			const dbName = privateEnv.DB_NAME || process.env.DB_NAME || 'sveltycms_test';
-			const connectionString = `mongodb://${host}:${port}/${dbName}`;
-			await db.connect(connectionString);
-		} else if (dbType === 'mariadb') {
-			const { MariaDBAdapter } = await import('../../../src/databases/mariadb/mariadb-adapter');
-			db = new MariaDBAdapter();
-			await db.connect();
-		} else if (dbType === 'postgresql') {
-			const { PostgreSQLAdapter } = await import('../../../src/databases/postgresql/postgres-adapter');
-			db = new PostgreSQLAdapter();
-			await db.connect();
-		} else {
-			const { SQLiteAdapter } = await import('../../../src/databases/sqlite/adapter/index');
-			db = new SQLiteAdapter();
-			await db.connect();
-		}
+    if (dbType === "mongodb") {
+      const { MongoDBAdapter } = await import("../../../src/databases/mongodb/mongo-db-adapter");
+      db = new MongoDBAdapter();
+      const host = privateEnv.DB_HOST || process.env.DB_HOST || "127.0.0.1";
+      const port = privateEnv.DB_PORT || process.env.DB_PORT || "27017";
+      const dbName = privateEnv.DB_NAME || process.env.DB_NAME || "sveltycms_test";
+      const connectionString = `mongodb://${host}:${port}/${dbName}`;
+      await db.connect(connectionString);
+    } else if (dbType === "mariadb") {
+      const { MariaDBAdapter } = await import("../../../src/databases/mariadb/mariadb-adapter");
+      db = new MariaDBAdapter();
+      await db.connect();
+    } else if (dbType === "postgresql") {
+      const { PostgreSQLAdapter } =
+        await import("../../../src/databases/postgresql/postgres-adapter");
+      db = new PostgreSQLAdapter();
+      await db.connect();
+    } else {
+      const { SQLiteAdapter } = await import("../../../src/databases/sqlite/adapter/index");
+      db = new SQLiteAdapter();
+      await db.connect();
+    }
 
-		try {
-			// CRITICAL: Initialize lazy-loaded features for interface testing
-			await Promise.all([db.ensureAuth?.(), db.ensureMedia?.(), db.ensureContent?.(), db.ensureSystem?.(), db.ensureMonitoring?.()]);
-			console.log('DB Interface Test: All features initialized (if available)');
-		} catch (err) {
-			console.error('DB Interface Test Check: Failed to initialize features', err);
-		}
-	});
+    try {
+      // CRITICAL: Initialize lazy-loaded features for interface testing
+      await Promise.all([
+        db.ensureAuth?.(),
+        db.ensureMedia?.(),
+        db.ensureContent?.(),
+        db.ensureSystem?.(),
+        db.ensureMonitoring?.(),
+      ]);
+      console.log("DB Interface Test: All features initialized (if available)");
+    } catch (err) {
+      console.error("DB Interface Test Check: Failed to initialize features", err);
+    }
+  });
 
-	describe('Connection Management', () => {
-		it('should implement connect method', () => {
-			expect(typeof db?.connect).toBe('function');
-		});
+  describe("Connection Management", () => {
+    it("should implement connect method", () => {
+      expect(typeof db?.connect).toBe("function");
+    });
 
-		it('should implement disconnect method', () => {
-			expect(typeof db?.disconnect).toBe('function');
-		});
+    it("should implement disconnect method", () => {
+      expect(typeof db?.disconnect).toBe("function");
+    });
 
-		it('should implement isConnected method', () => {
-			expect(typeof db?.isConnected).toBe('function');
-		});
+    it("should implement isConnected method", () => {
+      expect(typeof db?.isConnected).toBe("function");
+    });
 
-		it('should implement getConnectionHealth method', () => {
-			expect(typeof db?.getConnectionHealth).toBe('function');
-		});
+    it("should implement getConnectionHealth method", () => {
+      expect(typeof db?.getConnectionHealth).toBe("function");
+    });
 
-		it('should implement waitForConnection method', () => {
-			// Optional method for async adapters
-			if (db?.waitForConnection) {
-				expect(typeof db.waitForConnection).toBe('function');
-			}
-		});
-	});
+    it("should implement waitForConnection method", () => {
+      // Optional method for async adapters
+      if (db?.waitForConnection) {
+        expect(typeof db.waitForConnection).toBe("function");
+      }
+    });
+  });
 
-	describe('CRUD Operations', () => {
-		it('should implement findOne method', () => {
-			expect(typeof db?.crud?.findOne).toBe('function');
-		});
+  describe("CRUD Operations", () => {
+    it("should implement findOne method", () => {
+      expect(typeof db?.crud?.findOne).toBe("function");
+    });
 
-		it('should implement findMany method', () => {
-			expect(typeof db?.crud?.findMany).toBe('function');
-		});
+    it("should implement findMany method", () => {
+      expect(typeof db?.crud?.findMany).toBe("function");
+    });
 
-		it('should implement insert method', () => {
-			expect(typeof db?.crud?.insert).toBe('function');
-		});
+    it("should implement insert method", () => {
+      expect(typeof db?.crud?.insert).toBe("function");
+    });
 
-		it('should implement update method', () => {
-			expect(typeof db?.crud?.update).toBe('function');
-		});
+    it("should implement update method", () => {
+      expect(typeof db?.crud?.update).toBe("function");
+    });
 
-		it('should implement delete method', () => {
-			expect(typeof db?.crud?.delete).toBe('function');
-		});
+    it("should implement delete method", () => {
+      expect(typeof db?.crud?.delete).toBe("function");
+    });
 
-		it('should implement batch operations', () => {
-			expect(typeof db?.crud?.findByIds).toBe('function');
-			expect(typeof db?.crud?.insertMany).toBe('function');
-			expect(typeof db?.crud?.updateMany).toBe('function');
-			expect(typeof db?.crud?.deleteMany).toBe('function');
-		});
+    it("should implement batch operations", () => {
+      expect(typeof db?.crud?.findByIds).toBe("function");
+      expect(typeof db?.crud?.insertMany).toBe("function");
+      expect(typeof db?.crud?.updateMany).toBe("function");
+      expect(typeof db?.crud?.deleteMany).toBe("function");
+    });
 
-		it('should implement upsert operations', () => {
-			expect(typeof db?.crud?.upsert).toBe('function');
-			expect(typeof db?.crud?.upsertMany).toBe('function');
-		});
+    it("should implement upsert operations", () => {
+      expect(typeof db?.crud?.upsert).toBe("function");
+      expect(typeof db?.crud?.upsertMany).toBe("function");
+    });
 
-		it('should implement aggregation methods', () => {
-			expect(typeof db?.crud?.count).toBe('function');
-			expect(typeof db?.crud?.exists).toBe('function');
-			expect(typeof db?.crud?.aggregate).toBe('function');
-		});
-	});
+    it("should implement aggregation methods", () => {
+      expect(typeof db?.crud?.count).toBe("function");
+      expect(typeof db?.crud?.exists).toBe("function");
+      expect(typeof db?.crud?.aggregate).toBe("function");
+    });
+  });
 
-	describe('Authentication Interface', () => {
-		it('should implement user management methods', () => {
-			expect(typeof db?.auth?.createUser).toBe('function');
-			expect(typeof db?.auth?.getUserById).toBe('function');
-			expect(typeof db?.auth?.getUserByEmail).toBe('function');
-			expect(typeof db?.auth?.updateUserAttributes).toBe('function');
-			expect(typeof db?.auth?.deleteUser).toBe('function');
-			expect(typeof db?.auth?.getAllUsers).toBe('function');
-		});
+  describe("Authentication Interface", () => {
+    it("should implement user management methods", () => {
+      expect(typeof db?.auth?.createUser).toBe("function");
+      expect(typeof db?.auth?.getUserById).toBe("function");
+      expect(typeof db?.auth?.getUserByEmail).toBe("function");
+      expect(typeof db?.auth?.updateUserAttributes).toBe("function");
+      expect(typeof db?.auth?.deleteUser).toBe("function");
+      expect(typeof db?.auth?.getAllUsers).toBe("function");
+    });
 
-		it('should implement session management methods', () => {
-			expect(typeof db?.auth?.createSession).toBe('function');
-			expect(typeof db?.auth?.validateSession).toBe('function');
-			expect(typeof db?.auth?.deleteSession).toBe('function');
-			expect(typeof db?.auth?.deleteExpiredSessions).toBe('function');
-			expect(typeof db?.auth?.invalidateAllUserSessions).toBe('function');
-		});
+    it("should implement session management methods", () => {
+      expect(typeof db?.auth?.createSession).toBe("function");
+      expect(typeof db?.auth?.validateSession).toBe("function");
+      expect(typeof db?.auth?.deleteSession).toBe("function");
+      expect(typeof db?.auth?.deleteExpiredSessions).toBe("function");
+      expect(typeof db?.auth?.invalidateAllUserSessions).toBe("function");
+    });
 
-		it('should implement token management methods', () => {
-			expect(typeof db?.auth?.createToken).toBe('function');
-			expect(typeof db?.auth?.validateToken).toBe('function');
-			expect(typeof db?.auth?.consumeToken).toBe('function');
-			// Note: getTokenData is in the interface but not implemented in MongoDB adapter yet
-			// expect(typeof db?.auth?.getTokenData).toBe('function');
-			expect(typeof db?.auth?.deleteExpiredTokens).toBe('function');
-		});
-	});
+    it("should implement token management methods", () => {
+      expect(typeof db?.auth?.createToken).toBe("function");
+      expect(typeof db?.auth?.validateToken).toBe("function");
+      expect(typeof db?.auth?.consumeToken).toBe("function");
+      // Note: getTokenData is in the interface but not implemented in MongoDB adapter yet
+      // expect(typeof db?.auth?.getTokenData).toBe('function');
+      expect(typeof db?.auth?.deleteExpiredTokens).toBe("function");
+    });
+  });
 
-	describe('DatabaseResult Contract', () => {
-		it('should return success result with data', () => {
-			const successResult: DatabaseResult<string> = {
-				success: true,
-				data: 'test-data'
-			};
+  describe("DatabaseResult Contract", () => {
+    it("should return success result with data", () => {
+      const successResult: DatabaseResult<string> = {
+        success: true,
+        data: "test-data",
+      };
 
-			expect(successResult.success).toBe(true);
-			expect(successResult.data).toBe('test-data');
-		});
+      expect(successResult.success).toBe(true);
+      expect(successResult.data).toBe("test-data");
+    });
 
-		it('should return failure result with error', () => {
-			const failureResult: DatabaseResult<string> = {
-				success: false,
-				message: 'Operation failed',
-				error: {
-					code: 'TEST_ERROR',
-					message: 'Test error message'
-				}
-			};
+    it("should return failure result with error", () => {
+      const failureResult: DatabaseResult<string> = {
+        success: false,
+        message: "Operation failed",
+        error: {
+          code: "TEST_ERROR",
+          message: "Test error message",
+        },
+      };
 
-			expect(failureResult.success).toBe(false);
-			expect(failureResult.error.code).toBe('TEST_ERROR');
-			expect(failureResult.error.message).toBe('Test error message');
-		});
+      expect(failureResult.success).toBe(false);
+      expect(failureResult.error.code).toBe("TEST_ERROR");
+      expect(failureResult.error.message).toBe("Test error message");
+    });
 
-		it('should include optional metadata in success result', () => {
-			const resultWithMeta: DatabaseResult<string> = {
-				success: true,
-				data: 'test',
-				meta: {
-					executionTime: 100,
-					cached: false
-				}
-			};
+    it("should include optional metadata in success result", () => {
+      const resultWithMeta: DatabaseResult<string> = {
+        success: true,
+        data: "test",
+        meta: {
+          executionTime: 100,
+          cached: false,
+        },
+      };
 
-			expect(resultWithMeta.meta?.executionTime).toBe(100);
-			expect(resultWithMeta.meta?.cached).toBe(false);
-		});
-	});
+      expect(resultWithMeta.meta?.executionTime).toBe(100);
+      expect(resultWithMeta.meta?.cached).toBe(false);
+    });
+  });
 
-	describe('Batch Operations Interface', () => {
-		it('should implement batch execution method', () => {
-			expect(typeof db?.batch?.execute).toBe('function');
-		});
+  describe("Batch Operations Interface", () => {
+    it("should implement batch execution method", () => {
+      expect(typeof db?.batch?.execute).toBe("function");
+    });
 
-		it('should implement bulkInsert method', () => {
-			expect(typeof db?.batch?.bulkInsert).toBe('function');
-		});
+    it("should implement bulkInsert method", () => {
+      expect(typeof db?.batch?.bulkInsert).toBe("function");
+    });
 
-		it('should implement bulkUpdate method', () => {
-			expect(typeof db?.batch?.bulkUpdate).toBe('function');
-		});
+    it("should implement bulkUpdate method", () => {
+      expect(typeof db?.batch?.bulkUpdate).toBe("function");
+    });
 
-		it('should implement bulkDelete method', () => {
-			expect(typeof db?.batch?.bulkDelete).toBe('function');
-		});
+    it("should implement bulkDelete method", () => {
+      expect(typeof db?.batch?.bulkDelete).toBe("function");
+    });
 
-		it('should implement bulkUpsert method', () => {
-			expect(typeof db?.batch?.bulkUpsert).toBe('function');
-		});
-	});
+    it("should implement bulkUpsert method", () => {
+      expect(typeof db?.batch?.bulkUpsert).toBe("function");
+    });
+  });
 
-	describe('Query Builder Interface', () => {
-		it('should implement queryBuilder method', () => {
-			expect(typeof db?.queryBuilder).toBe('function');
-		});
+  describe("Query Builder Interface", () => {
+    it("should implement queryBuilder method", () => {
+      expect(typeof db?.queryBuilder).toBe("function");
+    });
 
-		it('should return QueryBuilder with required methods', async () => {
-			if (db?.queryBuilder) {
-				// Ensure collections are initialized before using queryBuilder
-				await db.ensureCollections?.();
-				const builder = db.queryBuilder('test_collection');
+    it("should return QueryBuilder with required methods", async () => {
+      if (db?.queryBuilder) {
+        // Ensure collections are initialized before using queryBuilder
+        await db.ensureCollections?.();
+        const builder = db.queryBuilder("test_collection");
 
-				// Filtering methods
-				expect(typeof builder.where).toBe('function');
-				expect(typeof builder.whereIn).toBe('function');
-				expect(typeof builder.whereNotIn).toBe('function');
+        // Filtering methods
+        expect(typeof builder.where).toBe("function");
+        expect(typeof builder.whereIn).toBe("function");
+        expect(typeof builder.whereNotIn).toBe("function");
 
-				// Pagination methods
-				expect(typeof builder.limit).toBe('function');
-				expect(typeof builder.skip).toBe('function');
-				expect(typeof builder.paginate).toBe('function');
+        // Pagination methods
+        expect(typeof builder.limit).toBe("function");
+        expect(typeof builder.skip).toBe("function");
+        expect(typeof builder.paginate).toBe("function");
 
-				// Sorting methods
-				expect(typeof builder.sort).toBe('function');
-				expect(typeof builder.orderBy).toBe('function');
+        // Sorting methods
+        expect(typeof builder.sort).toBe("function");
+        expect(typeof builder.orderBy).toBe("function");
 
-				// Field selection methods
-				expect(typeof builder.select).toBe('function');
-				expect(typeof builder.exclude).toBe('function');
+        // Field selection methods
+        expect(typeof builder.select).toBe("function");
+        expect(typeof builder.exclude).toBe("function");
 
-				// Execution methods
-				expect(typeof builder.count).toBe('function');
-				expect(typeof builder.exists).toBe('function');
-				expect(typeof builder.execute).toBe('function');
-				expect(typeof builder.findOne).toBe('function');
-			}
-		});
-	});
+        // Execution methods
+        expect(typeof builder.count).toBe("function");
+        expect(typeof builder.exists).toBe("function");
+        expect(typeof builder.execute).toBe("function");
+        expect(typeof builder.findOne).toBe("function");
+      }
+    });
+  });
 
-	describe('Content Management Interface', () => {
-		it('should implement content node operations', () => {
-			expect(typeof db?.content?.nodes?.getStructure).toBe('function');
-			expect(typeof db?.content?.nodes?.create).toBe('function');
-			expect(typeof db?.content?.nodes?.createMany).toBe('function');
-			expect(typeof db?.content?.nodes?.update).toBe('function');
-			expect(typeof db?.content?.nodes?.delete).toBe('function');
-		});
+  describe("Content Management Interface", () => {
+    it("should implement content node operations", () => {
+      expect(typeof db?.content?.nodes?.getStructure).toBe("function");
+      expect(typeof db?.content?.nodes?.create).toBe("function");
+      expect(typeof db?.content?.nodes?.createMany).toBe("function");
+      expect(typeof db?.content?.nodes?.update).toBe("function");
+      expect(typeof db?.content?.nodes?.delete).toBe("function");
+    });
 
-		it('should implement draft operations', () => {
-			expect(typeof db?.content?.drafts?.create).toBe('function');
-			expect(typeof db?.content?.drafts?.update).toBe('function');
-			expect(typeof db?.content?.drafts?.publish).toBe('function');
-			expect(typeof db?.content?.drafts?.getForContent).toBe('function');
-			expect(typeof db?.content?.drafts?.delete).toBe('function');
-		});
+    it("should implement draft operations", () => {
+      expect(typeof db?.content?.drafts?.create).toBe("function");
+      expect(typeof db?.content?.drafts?.update).toBe("function");
+      expect(typeof db?.content?.drafts?.publish).toBe("function");
+      expect(typeof db?.content?.drafts?.getForContent).toBe("function");
+      expect(typeof db?.content?.drafts?.delete).toBe("function");
+    });
 
-		it('should implement revision operations', () => {
-			expect(typeof db?.content?.revisions?.create).toBe('function');
-			expect(typeof db?.content?.revisions?.getHistory).toBe('function');
-			expect(typeof db?.content?.revisions?.restore).toBe('function');
-			expect(typeof db?.content?.revisions?.cleanup).toBe('function');
-		});
-	});
+    it("should implement revision operations", () => {
+      expect(typeof db?.content?.revisions?.create).toBe("function");
+      expect(typeof db?.content?.revisions?.getHistory).toBe("function");
+      expect(typeof db?.content?.revisions?.restore).toBe("function");
+      expect(typeof db?.content?.revisions?.cleanup).toBe("function");
+    });
+  });
 
-	describe('Media Management Interface', () => {
-		it('should implement file operations', () => {
-			expect(typeof db?.media?.files?.upload).toBe('function');
-			expect(typeof db?.media?.files?.uploadMany).toBe('function');
-			expect(typeof db?.media?.files?.delete).toBe('function');
-			expect(typeof db?.media?.files?.deleteMany).toBe('function');
-			expect(typeof db?.media?.files?.search).toBe('function');
-		});
+  describe("Media Management Interface", () => {
+    it("should implement file operations", () => {
+      expect(typeof db?.media?.files?.upload).toBe("function");
+      expect(typeof db?.media?.files?.uploadMany).toBe("function");
+      expect(typeof db?.media?.files?.delete).toBe("function");
+      expect(typeof db?.media?.files?.deleteMany).toBe("function");
+      expect(typeof db?.media?.files?.search).toBe("function");
+    });
 
-		it('should implement folder operations', () => {
-			expect(typeof db?.media?.folders?.create).toBe('function');
-			expect(typeof db?.media?.folders?.delete).toBe('function');
-			expect(typeof db?.media?.folders?.getTree).toBe('function');
-			expect(typeof db?.media?.folders?.move).toBe('function');
-		});
-	});
+    it("should implement folder operations", () => {
+      expect(typeof db?.media?.folders?.create).toBe("function");
+      expect(typeof db?.media?.folders?.delete).toBe("function");
+      expect(typeof db?.media?.folders?.getTree).toBe("function");
+      expect(typeof db?.media?.folders?.move).toBe("function");
+    });
+  });
 
-	describe('Theme Management Interface', () => {
-		it('should implement theme operations', () => {
-			expect(typeof db?.system?.themes?.getActive).toBe('function');
-			expect(typeof db?.system?.themes?.setDefault).toBe('function');
-			expect(typeof db?.system?.themes?.install).toBe('function');
-			expect(typeof db?.system?.themes?.uninstall).toBe('function');
-			expect(typeof db?.system?.themes?.update).toBe('function');
-			expect(typeof db?.system?.themes?.getAllThemes).toBe('function');
-		});
-	});
+  describe("Theme Management Interface", () => {
+    it("should implement theme operations", () => {
+      expect(typeof db?.system?.themes?.getActive).toBe("function");
+      expect(typeof db?.system?.themes?.setDefault).toBe("function");
+      expect(typeof db?.system?.themes?.install).toBe("function");
+      expect(typeof db?.system?.themes?.uninstall).toBe("function");
+      expect(typeof db?.system?.themes?.update).toBe("function");
+      expect(typeof db?.system?.themes?.getAllThemes).toBe("function");
+    });
+  });
 
-	describe('Widget Management Interface', () => {
-		it('should implement widget operations', () => {
-			expect(typeof db?.system?.widgets?.register).toBe('function');
-			expect(typeof db?.system?.widgets?.findAll).toBe('function');
-			expect(typeof db?.system?.widgets?.getActiveWidgets).toBe('function');
-			expect(typeof db?.system?.widgets?.activate).toBe('function');
-			expect(typeof db?.system?.widgets?.deactivate).toBe('function');
-			expect(typeof db?.system?.widgets?.update).toBe('function');
-		});
-	});
+  describe("Widget Management Interface", () => {
+    it("should implement widget operations", () => {
+      expect(typeof db?.system?.widgets?.register).toBe("function");
+      expect(typeof db?.system?.widgets?.findAll).toBe("function");
+      expect(typeof db?.system?.widgets?.getActiveWidgets).toBe("function");
+      expect(typeof db?.system?.widgets?.activate).toBe("function");
+      expect(typeof db?.system?.widgets?.deactivate).toBe("function");
+      expect(typeof db?.system?.widgets?.update).toBe("function");
+    });
+  });
 
-	describe('System Preferences Interface', () => {
-		it('should implement preference operations', () => {
-			expect(typeof db?.system?.preferences?.get).toBe('function');
-			expect(typeof db?.system?.preferences?.getMany).toBe('function');
-			expect(typeof db?.system?.preferences?.set).toBe('function');
-			expect(typeof db?.system?.preferences?.setMany).toBe('function');
-			expect(typeof db?.system?.preferences?.delete).toBe('function');
-			expect(typeof db?.system?.preferences?.clear).toBe('function');
-		});
-	});
+  describe("System Preferences Interface", () => {
+    it("should implement preference operations", () => {
+      expect(typeof db?.system?.preferences?.get).toBe("function");
+      expect(typeof db?.system?.preferences?.getMany).toBe("function");
+      expect(typeof db?.system?.preferences?.set).toBe("function");
+      expect(typeof db?.system?.preferences?.setMany).toBe("function");
+      expect(typeof db?.system?.preferences?.delete).toBe("function");
+      expect(typeof db?.system?.preferences?.clear).toBe("function");
+    });
+  });
 
-	describe('Utility Methods Interface', () => {
-		it('should implement utility methods', () => {
-			expect(typeof db?.utils?.generateId).toBe('function');
-			expect(typeof db?.utils?.validateId).toBe('function');
-			expect(typeof db?.utils?.normalizePath).toBe('function');
-		});
+  describe("Utility Methods Interface", () => {
+    it("should implement utility methods", () => {
+      expect(typeof db?.utils?.generateId).toBe("function");
+      expect(typeof db?.utils?.validateId).toBe("function");
+      expect(typeof db?.utils?.normalizePath).toBe("function");
+    });
 
-		it('should generate valid UUIDs', () => {
-			if (db?.utils?.generateId) {
-				const id = db.utils.generateId();
-				expect(id).toBeDefined();
-				expect(typeof id).toBe('string');
-				expect(id.length).toBeGreaterThan(0);
-			}
-		});
-	});
+    it("should generate valid UUIDs", () => {
+      if (db?.utils?.generateId) {
+        const id = db.utils.generateId();
+        expect(id).toBeDefined();
+        expect(typeof id).toBe("string");
+        expect(id.length).toBeGreaterThan(0);
+      }
+    });
+  });
 
-	describe('Performance Monitoring Interface', () => {
-		it('should implement performance methods', () => {
-			expect(typeof db?.monitoring?.performance?.getMetrics).toBe('function');
-			expect(typeof db?.monitoring?.performance?.clearMetrics).toBe('function');
-			expect(typeof db?.monitoring?.performance?.enableProfiling).toBe('function');
-			expect(typeof db?.monitoring?.performance?.getSlowQueries).toBe('function');
-		});
-	});
+  describe("Performance Monitoring Interface", () => {
+    it("should implement performance methods", () => {
+      expect(typeof db?.monitoring?.performance?.getMetrics).toBe("function");
+      expect(typeof db?.monitoring?.performance?.clearMetrics).toBe("function");
+      expect(typeof db?.monitoring?.performance?.enableProfiling).toBe("function");
+      expect(typeof db?.monitoring?.performance?.getSlowQueries).toBe("function");
+    });
+  });
 
-	describe('Cache Integration Interface', () => {
-		it('should implement cache methods', () => {
-			expect(typeof db?.monitoring?.cache?.get).toBe('function');
-			expect(typeof db?.monitoring?.cache?.set).toBe('function');
-			expect(typeof db?.monitoring?.cache?.delete).toBe('function');
-			expect(typeof db?.monitoring?.cache?.clear).toBe('function');
-		});
-	});
+  describe("Cache Integration Interface", () => {
+    it("should implement cache methods", () => {
+      expect(typeof db?.monitoring?.cache?.get).toBe("function");
+      expect(typeof db?.monitoring?.cache?.set).toBe("function");
+      expect(typeof db?.monitoring?.cache?.delete).toBe("function");
+      expect(typeof db?.monitoring?.cache?.clear).toBe("function");
+    });
+  });
 });

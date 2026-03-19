@@ -1,18 +1,18 @@
 ---
-path: 'docs/guides/live-preview-architecture.mdx'
-title: 'Live Preview Architecture'
-description: 'Enterprise guide to implementing Headless Live Preview with secure handshake, multi-tenancy, and A/B testing.'
+path: "docs/guides/live-preview-architecture.mdx"
+title: "Live Preview Architecture"
+description: "Enterprise guide to implementing Headless Live Preview with secure handshake, multi-tenancy, and A/B testing."
 order: 11
-icon: 'mdi:eye-refresh-outline'
-author: 'admin'
-created: '2025-02-02'
-updated: '2026-02-03'
+icon: "mdi:eye-refresh-outline"
+author: "admin"
+created: "2025-02-02"
+updated: "2026-02-03"
 tags:
-  - 'guide'
-  - 'preview'
-  - 'architecture'
-  - 'security'
-  - 'enterprise'
+  - "guide"
+  - "preview"
+  - "architecture"
+  - "security"
+  - "enterprise"
 ---
 
 # Live Preview Architecture
@@ -94,45 +94,45 @@ Create a server-side route in your SvelteKit frontend to handle the handshake.
 **File: `src/routes/api/preview/+server.ts`**
 
 ```typescript
-import { redirect, error } from '@sveltejs/kit';
-import { PREVIEW_SECRET } from '$env/static/private';
+import { redirect, error } from "@sveltejs/kit";
+import { PREVIEW_SECRET } from "$env/static/private";
 
 export async function GET({ url, cookies }) {
-	const secret = url.searchParams.get('secret');
-	const slug = url.searchParams.get('slug');
-	const variant = url.searchParams.get('ab_variant');
+  const secret = url.searchParams.get("secret");
+  const slug = url.searchParams.get("slug");
+  const variant = url.searchParams.get("ab_variant");
 
-	// 1. Security Check
-	if (secret !== PREVIEW_SECRET) {
-		throw error(401, 'Invalid Token');
-	}
+  // 1. Security Check
+  if (secret !== PREVIEW_SECRET) {
+    throw error(401, "Invalid Token");
+  }
 
-	if (!slug) {
-		throw error(400, 'Missing Slug');
-	}
+  if (!slug) {
+    throw error(400, "Missing Slug");
+  }
 
-	// 2. Set Draft Mode Cookie
-	// This allows your load functions to fetch draft data
-	cookies.set('cms_draft_mode', 'true', {
-		path: '/',
-		httpOnly: true,
-		sameSite: 'none', // Critical for Iframes
-		secure: true, // Critical for SameSite=None
-		maxAge: 60 * 60 // 1 hour session
-	});
+  // 2. Set Draft Mode Cookie
+  // This allows your load functions to fetch draft data
+  cookies.set("cms_draft_mode", "true", {
+    path: "/",
+    httpOnly: true,
+    sameSite: "none", // Critical for Iframes
+    secure: true, // Critical for SameSite=None
+    maxAge: 60 * 60, // 1 hour session
+  });
 
-	// 3. Set A/B Testing Cookie (Optional)
-	if (variant) {
-		cookies.set('ab_test_variant', variant, {
-			path: '/',
-			httpOnly: true,
-			secure: true,
-			sameSite: 'none'
-		});
-	}
+  // 3. Set A/B Testing Cookie (Optional)
+  if (variant) {
+    cookies.set("ab_test_variant", variant, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+  }
 
-	// 4. Redirect to the actual page to render
-	throw redirect(307, slug);
+  // 4. Redirect to the actual page to render
+  throw redirect(307, slug);
 }
 ```
 
@@ -147,8 +147,8 @@ Update `src/databases/auth/apiPermissions.ts` or your whitelist logic:
 ```typescript
 // Allow public access to the preview endpoint
 export const API_PERMISSIONS = {
-	// ... existing permissions ...
-	'api:preview': ['*'] // Allow all (guarded by Secret inside the endpoint)
+  // ... existing permissions ...
+  "api:preview": ["*"], // Allow all (guarded by Secret inside the endpoint)
 };
 ```
 
@@ -156,12 +156,12 @@ Or update `handleApiRequests.ts` logic:
 
 ```typescript
 function isPublicApiRoute(pathname: string, method?: string): boolean {
-	// ... existing checks ...
+  // ... existing checks ...
 
-	// Allow Handshake Endpoint
-	if (pathname === '/api/preview') return true;
+  // Allow Handshake Endpoint
+  if (pathname === "/api/preview") return true;
 
-	return false;
+  return false;
 }
 ```
 
@@ -174,16 +174,16 @@ Your page load functions should check for the cookie set by the handshake.
 ```typescript
 // src/routes/posts/[slug]/+page.server.ts
 export const load = async ({ cookies, params }) => {
-	const isDraft = cookies.get('cms_draft_mode') === 'true';
-	const variant = cookies.get('ab_test_variant') || 'A';
+  const isDraft = cookies.get("cms_draft_mode") === "true";
+  const variant = cookies.get("ab_test_variant") || "A";
 
-	// Fetch from CMS
-	const post = await cms.getPost(params.slug, {
-		draft: isDraft, // Fetch draft if cookie exists
-		variant: variant
-	});
+  // Fetch from CMS
+  const post = await cms.getPost(params.slug, {
+    draft: isDraft, // Fetch draft if cookie exists
+    variant: variant,
+  });
 
-	return { post };
+  return { post };
 };
 ```
 
@@ -196,7 +196,7 @@ After the initial load (handled by the handshake + SSR), use the `useLivePreview
 ```typescript
 // src/lib/useLivePreview.ts
 export function useLivePreview<T>(initialData: T) {
-	// ... standard postMessage listener implementation ...
+  // ... standard postMessage listener implementation ...
 }
 ```
 

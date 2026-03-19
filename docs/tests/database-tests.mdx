@@ -1,18 +1,18 @@
 ---
-path: 'docs/tests/database-tests.mdx'
-title: 'Database & Authentication Testing Guide'
-description: 'Comprehensive guide for testing the database layer, authentication system, and multi-database support in SveltyCMS.'
+path: "docs/tests/database-tests.mdx"
+title: "Database & Authentication Testing Guide"
+description: "Comprehensive guide for testing the database layer, authentication system, and multi-database support in SveltyCMS."
 order: 4
-icon: 'mdi:database-check'
-author: 'admin'
-created: '2025-11-08'
-updated: '2026-03-15'
+icon: "mdi:database-check"
+author: "admin"
+created: "2025-11-08"
+updated: "2026-03-15"
 tags:
-  - 'testing'
-  - 'database'
-  - 'authentication'
-  - 'sqlite'
-  - 'mongodb'
+  - "testing"
+  - "database"
+  - "authentication"
+  - "sqlite"
+  - "mongodb"
 ---
 
 # Database & Authentication Testing Guide
@@ -125,7 +125,7 @@ npx playwright test --workers=4
 
 ## Troubleshooting
 
-### "UNIQUE constraint failed: roles._id"
+### "UNIQUE constraint failed: roles.\_id"
 
 This usually happens if multiple workers share the same database file.
 **Fix**: Ensure your request includes the `x-test-worker-index` and `x-test-secret` headers.

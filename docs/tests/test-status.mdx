@@ -1,18 +1,18 @@
 ---
-path: 'docs/tests/test-status.mdx'
-title: 'Test Suite Status Report'
-description: 'Comprehensive status report of all SveltyCMS tests including unit, integration, and E2E tests with current pass rates and known issues.'
+path: "docs/tests/test-status.mdx"
+title: "Test Suite Status Report"
+description: "Comprehensive status report of all SveltyCMS tests including unit, integration, and E2E tests with current pass rates and known issues."
 order: 2
-icon: 'mdi:chart-box'
-author: 'admin'
-created: '2025-11-08'
-updated: '2026-03-15'
+icon: "mdi:chart-box"
+author: "admin"
+created: "2025-11-08"
+updated: "2026-03-15"
 tags:
-  - 'testing'
-  - 'status'
-  - 'coverage'
-  - 'bun'
-  - 'playwright'
+  - "testing"
+  - "status"
+  - "coverage"
+  - "bun"
+  - "playwright"
 ---
 
 # SveltyCMS Test Suite Status
@@ -31,32 +31,36 @@ The testing suite has been fully optimized for **Enterprise-grade reliability an
 
 ### Test Coverage by Category
 
-| Category                    | Status       | Pass Rate | Tests   |
-| --------------------------- | ------------ | --------- | ------- |
-| **Triple-Lock Security**    | ✅ Verified  | 100%      | 12/12   |
-| **Parallel Isolation**      | ✅ Verified  | 100%      | 8/8     |
-| **Server Hooks (Latencies)**| ✅ Excellent | 100%      | 287/287 |
-| **Preview Token System**    | ✅ Verified  | 100%      | 4/4     |
-| **Database Micro-Telemetry**| ✅ Verified  | 100%      | 8/8     |
-| **API - User**              | ✅ Complete  | 100%      | 47/47   |
-| **Encryption & Crypto**     | ✅ Excellent | 100%      | 14/14   |
-| **Auth & Lockout Security** | ✅ Excellent | 100%      | 23/23   |
+| Category                     | Status       | Pass Rate | Tests   |
+| ---------------------------- | ------------ | --------- | ------- |
+| **Triple-Lock Security**     | ✅ Verified  | 100%      | 12/12   |
+| **Parallel Isolation**       | ✅ Verified  | 100%      | 8/8     |
+| **Server Hooks (Latencies)** | ✅ Excellent | 100%      | 287/287 |
+| **Preview Token System**     | ✅ Verified  | 100%      | 4/4     |
+| **Database Micro-Telemetry** | ✅ Verified  | 100%      | 8/8     |
+| **API - User**               | ✅ Complete  | 100%      | 47/47   |
+| **Encryption & Crypto**      | ✅ Excellent | 100%      | 14/14   |
+| **Auth & Lockout Security**  | ✅ Excellent | 100%      | 23/23   |
 
 ---
 
 ## ✅ Passing Tests (Latest Wins)
 
 ### 1. Triple-Lock Security 🛡️
+
 The test infrastructure is now guarded by physical and cryptographic locks:
+
 - ✅ **Build Stripping**: Verified that `/api/testing` is removed from production builds.
 - ✅ **Secure Handshake**: All test requests now require a high-entropy UUID secret.
 - ✅ **Network Lock**: Testing utilities strictly restricted to `127.0.0.1`.
 
 ### 2. Database-per-Worker Isolation ⚡
+
 - ✅ **Parallel Speed**: E2E tests now run with `workers: 4` without SQLite locking issues.
 - ✅ **Atomic State**: Each worker operates on a unique `.db` file, ensuring total data isolation.
 
 ### 3. Explicit Forbidden State 🚫
+
 - ✅ **RBAC Reliability**: Added dedicated `/forbidden` route with `data-testid="access-denied"` for stable RBAC assertions.
 - ✅ **Atomic Auth**: Login helpers now perform a "clean slate" clear of cookies and storage.
 
@@ -65,12 +69,14 @@ The test infrastructure is now guarded by physical and cryptographic locks:
 ## 🚀 Running Tests
 
 ### Parallel E2E Suite
+
 ```bash
 # Run with 4 concurrent workers
 npx playwright test --workers=4
 ```
 
 ### Unit Tests (Dual Suite)
+
 ```bash
 # Component & Browser logic (jsdom)
 bun run test:unit

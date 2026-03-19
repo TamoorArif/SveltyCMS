@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/token-api-endpoints.mdx'
-title: 'Token API Endpoints Reference'
-description: 'Complete reference for invitation token management endpoints in SveltyCMS.'
+path: "docs/api/token-api-endpoints.mdx"
+title: "Token API Endpoints Reference"
+description: "Complete reference for invitation token management endpoints in SveltyCMS."
 order: 14
-icon: 'mdi:key-chain'
-author: 'admin'
-created: '2025-11-08'
-updated: '2025-11-08'
+icon: "mdi:key-chain"
+author: "admin"
+created: "2025-11-08"
+updated: "2025-11-08"
 tags:
-  - 'api'
-  - 'tokens'
-  - 'invitations'
-  - 'authentication'
+  - "api"
+  - "tokens"
+  - "invitations"
+  - "authentication"
 ---
 
 # Token API Endpoints Reference
@@ -35,13 +35,13 @@ The Token API provides endpoints for managing user invitation tokens. These toke
 
 ## Endpoints Summary
 
-| Method   | Endpoint                 | Description                             | Auth Required |
-| -------- | ------------------------ | --------------------------------------- | ------------- |
+| Method   | Endpoint                  | Description                             | Auth Required |
+| -------- | ------------------------- | --------------------------------------- | ------------- |
 | `POST`   | `/api/token/create-token` | Create new invitation token             | ✅ Admin      |
-| `GET`    | `/api/token`             | List all tokens                         | ✅ Admin      |
-| `PUT`    | `/api/token/[tokenID]`   | Update token details                    | ✅ Admin      |
-| `DELETE` | `/api/token/[tokenID]`   | Delete a token                          | ✅ Admin      |
-| `POST`   | `/api/token/batch`       | Batch operations (delete/block/unblock) | ✅ Admin      |
+| `GET`    | `/api/token`              | List all tokens                         | ✅ Admin      |
+| `PUT`    | `/api/token/[tokenID]`    | Update token details                    | ✅ Admin      |
+| `DELETE` | `/api/token/[tokenID]`    | Delete a token                          | ✅ Admin      |
+| `POST`   | `/api/token/batch`        | Batch operations (delete/block/unblock) | ✅ Admin      |
 
 ---
 
@@ -59,9 +59,9 @@ POST /api/token/create-token
 
 ```json
 {
-	"email": "newuser@example.com",
-	"role": "editor",
-	"expiresIn": "2 days"
+  "email": "newuser@example.com",
+  "role": "editor",
+  "expiresIn": "2 days"
 }
 ```
 
@@ -88,13 +88,13 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": true,
-	"message": "Token created and email sent successfully.",
-	"token": {
-		"value": "abc123def456...",
-		"expires": "2025-11-10T12:00:00.000Z"
-	},
-	"email_sent": true
+  "success": true,
+  "message": "Token created and email sent successfully.",
+  "token": {
+    "value": "abc123def456...",
+    "expires": "2025-11-10T12:00:00.000Z"
+  },
+  "email_sent": true
 }
 ```
 
@@ -102,15 +102,15 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": true,
-	"message": "Token created; email not sent - SMTP not configured.",
-	"token": {
-		"value": "abc123def456...",
-		"expires": "2025-11-10T12:00:00.000Z"
-	},
-	"email_sent": false,
-	"smtp_not_configured": true,
-	"user_message": "Please configure email settings in System Settings."
+  "success": true,
+  "message": "Token created; email not sent - SMTP not configured.",
+  "token": {
+    "value": "abc123def456...",
+    "expires": "2025-11-10T12:00:00.000Z"
+  },
+  "email_sent": false,
+  "smtp_not_configured": true,
+  "user_message": "Please configure email settings in System Settings."
 }
 ```
 
@@ -118,14 +118,14 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": true,
-	"message": "Token created; email sending skipped (development mode).",
-	"token": {
-		"value": "abc123def456...",
-		"expires": "2025-11-10T12:00:00.000Z"
-	},
-	"email_sent": false,
-	"dev_mode": true
+  "success": true,
+  "message": "Token created; email sending skipped (development mode).",
+  "token": {
+    "value": "abc123def456...",
+    "expires": "2025-11-10T12:00:00.000Z"
+  },
+  "email_sent": false,
+  "dev_mode": true
 }
 ```
 
@@ -135,8 +135,8 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": false,
-	"message": "A user with this email address already exists in this tenant."
+  "success": false,
+  "message": "A user with this email address already exists in this tenant."
 }
 ```
 
@@ -144,8 +144,8 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": false,
-	"message": "An invitation token for this email already exists in this tenant."
+  "success": false,
+  "message": "An invitation token for this email already exists in this tenant."
 }
 ```
 
@@ -153,8 +153,8 @@ POST /api/token/create-token
 
 ```json
 {
-	"success": false,
-	"message": "Invalid role selected."
+  "success": false,
+  "message": "Invalid role selected."
 }
 ```
 
@@ -176,30 +176,30 @@ curl -X POST https://cms.example.com/api/token/create-token \
 #### JavaScript (Fetch)
 
 ```javascript
-const response = await fetch('/api/token/create-token', {
-	method: 'POST',
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	body: JSON.stringify({
-		email: 'newuser@example.com',
-		role: 'editor',
-		expiresIn: '1 week'
-	})
+const response = await fetch("/api/token/create-token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    email: "newuser@example.com",
+    role: "editor",
+    expiresIn: "1 week",
+  }),
 });
 
 const result = await response.json();
 if (result.success) {
-	console.log('Token created:', result.token.value);
-	console.log('Expires:', result.token.expires);
+  console.log("Token created:", result.token.value);
+  console.log("Expires:", result.token.expires);
 
-	if (!result.email_sent) {
-		if (result.smtp_not_configured) {
-			console.warn('SMTP not configured - email not sent');
-		} else if (result.dev_mode) {
-			console.info('Development mode - email skipped');
-		}
-	}
+  if (!result.email_sent) {
+    if (result.smtp_not_configured) {
+      console.warn("SMTP not configured - email not sent");
+    } else if (result.dev_mode) {
+      console.info("Development mode - email skipped");
+    }
+  }
 }
 ```
 
@@ -221,34 +221,34 @@ GET /api/token
 
 ```json
 {
-	"success": true,
-	"data": {
-		"tokens": [
-			{
-				"_id": "token123",
-				"token": "abc123def456...",
-				"email": "user1@example.com",
-				"role": "editor",
-				"expires": "2025-11-10T12:00:00.000Z",
-				"type": "invite",
-				"blocked": false,
-				"consumed": false,
-				"tenantId": "tenant1"
-			},
-			{
-				"_id": "token456",
-				"token": "xyz789ghi012...",
-				"email": "user2@example.com",
-				"role": "user",
-				"expires": "2025-11-15T12:00:00.000Z",
-				"type": "invite",
-				"blocked": false,
-				"consumed": false,
-				"tenantId": "tenant1"
-			}
-		],
-		"count": 2
-	}
+  "success": true,
+  "data": {
+    "tokens": [
+      {
+        "_id": "token123",
+        "token": "abc123def456...",
+        "email": "user1@example.com",
+        "role": "editor",
+        "expires": "2025-11-10T12:00:00.000Z",
+        "type": "invite",
+        "blocked": false,
+        "consumed": false,
+        "tenantId": "tenant1"
+      },
+      {
+        "_id": "token456",
+        "token": "xyz789ghi012...",
+        "email": "user2@example.com",
+        "role": "user",
+        "expires": "2025-11-15T12:00:00.000Z",
+        "type": "invite",
+        "blocked": false,
+        "consumed": false,
+        "tenantId": "tenant1"
+      }
+    ],
+    "count": 2
+  }
 }
 ```
 
@@ -264,14 +264,14 @@ curl -X GET https://cms.example.com/api/token \
 #### JavaScript (Fetch)
 
 ```javascript
-const response = await fetch('/api/token');
+const response = await fetch("/api/token");
 const result = await response.json();
 
 if (result.success) {
-	console.log(`Found ${result.data.count} tokens`);
-	result.data.tokens.forEach((token) => {
-		console.log(`${token.email} - ${token.role} - Expires: ${token.expires}`);
-	});
+  console.log(`Found ${result.data.count} tokens`);
+  result.data.tokens.forEach((token) => {
+    console.log(`${token.email} - ${token.role} - Expires: ${token.expires}`);
+  });
 }
 ```
 
@@ -291,11 +291,11 @@ PUT /api/token/[tokenID]
 
 ```json
 {
-	"newTokenData": {
-		"email": "updated@example.com",
-		"role": "admin",
-		"expiresInHours": 168
-	}
+  "newTokenData": {
+    "email": "updated@example.com",
+    "role": "admin",
+    "expiresInHours": 168
+  }
 }
 ```
 
@@ -323,8 +323,8 @@ PUT /api/token/[tokenID]
 
 ```json
 {
-	"success": true,
-	"message": "Token updated successfully."
+  "success": true,
+  "message": "Token updated successfully."
 }
 ```
 
@@ -334,8 +334,8 @@ PUT /api/token/[tokenID]
 
 ```json
 {
-	"success": false,
-	"message": "Token not found or not modified"
+  "success": false,
+  "message": "Token not found or not modified"
 }
 ```
 
@@ -343,8 +343,8 @@ PUT /api/token/[tokenID]
 
 ```json
 {
-	"success": false,
-	"message": "Forbidden: You can only edit tokens within your own tenant."
+  "success": false,
+  "message": "Forbidden: You can only edit tokens within your own tenant."
 }
 ```
 
@@ -369,22 +369,22 @@ curl -X PUT https://cms.example.com/api/token/abc123def456 \
 
 ```javascript
 const response = await fetch(`/api/token/${tokenId}`, {
-	method: 'PUT',
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	body: JSON.stringify({
-		newTokenData: {
-			email: 'updated@example.com',
-			role: 'admin',
-			expiresInHours: 168 // 1 week
-		}
-	})
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    newTokenData: {
+      email: "updated@example.com",
+      role: "admin",
+      expiresInHours: 168, // 1 week
+    },
+  }),
 });
 
 const result = await response.json();
 if (result.success) {
-	console.log('Token updated successfully');
+  console.log("Token updated successfully");
 }
 ```
 
@@ -406,8 +406,8 @@ DELETE /api/token/[tokenID]
 
 ```json
 {
-	"success": true,
-	"message": "Token deleted successfully."
+  "success": true,
+  "message": "Token deleted successfully."
 }
 ```
 
@@ -417,8 +417,8 @@ DELETE /api/token/[tokenID]
 
 ```json
 {
-	"success": false,
-	"message": "Token not found"
+  "success": false,
+  "message": "Token not found"
 }
 ```
 
@@ -426,8 +426,8 @@ DELETE /api/token/[tokenID]
 
 ```json
 {
-	"success": false,
-	"message": "Forbidden: Token not found."
+  "success": false,
+  "message": "Forbidden: Token not found."
 }
 ```
 
@@ -444,12 +444,12 @@ curl -X DELETE https://cms.example.com/api/token/abc123def456 \
 
 ```javascript
 const response = await fetch(`/api/token/${tokenId}`, {
-	method: 'DELETE'
+  method: "DELETE",
 });
 
 const result = await response.json();
 if (result.success) {
-	console.log('Token deleted successfully');
+  console.log("Token deleted successfully");
 }
 ```
 
@@ -469,8 +469,8 @@ POST /api/token/batch
 
 ```json
 {
-	"tokenIds": ["token1", "token2", "token3"],
-	"action": "delete"
+  "tokenIds": ["token1", "token2", "token3"],
+  "action": "delete"
 }
 ```
 
@@ -487,8 +487,8 @@ POST /api/token/batch
 
 ```json
 {
-	"success": true,
-	"message": "Tokens deleted successfully."
+  "success": true,
+  "message": "Tokens deleted successfully."
 }
 ```
 
@@ -500,8 +500,8 @@ Permanently removes tokens from the database.
 
 ```json
 {
-	"tokenIds": ["token1", "token2"],
-	"action": "delete"
+  "tokenIds": ["token1", "token2"],
+  "action": "delete"
 }
 ```
 
@@ -511,8 +511,8 @@ Prevents tokens from being used for registration (without deleting).
 
 ```json
 {
-	"tokenIds": ["token1", "token2"],
-	"action": "block"
+  "tokenIds": ["token1", "token2"],
+  "action": "block"
 }
 ```
 
@@ -522,8 +522,8 @@ Re-enables previously blocked tokens.
 
 ```json
 {
-	"tokenIds": ["token1", "token2"],
-	"action": "unblock"
+  "tokenIds": ["token1", "token2"],
+  "action": "unblock"
 }
 ```
 
@@ -544,20 +544,20 @@ curl -X POST https://cms.example.com/api/token/batch \
 #### JavaScript (Fetch)
 
 ```javascript
-const response = await fetch('/api/token/batch', {
-	method: 'POST',
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	body: JSON.stringify({
-		tokenIds: ['token1', 'token2', 'token3'],
-		action: 'delete'
-	})
+const response = await fetch("/api/token/batch", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    tokenIds: ["token1", "token2", "token3"],
+    action: "delete",
+  }),
 });
 
 const result = await response.json();
 if (result.success) {
-	console.log('Batch operation completed');
+  console.log("Batch operation completed");
 }
 ```
 
@@ -576,13 +576,13 @@ All token endpoints support multi-tenancy:
 
 ```javascript
 // Admin in Tenant A
-const response = await fetch('/api/token');
+const response = await fetch("/api/token");
 // Returns only tokens for Tenant A
 
 // Attempt to edit Tenant B's token (will fail)
-const editResponse = await fetch('/api/token/tenant-b-token', {
-	method: 'PUT',
-	body: JSON.stringify({ newTokenData: { role: 'admin' } })
+const editResponse = await fetch("/api/token/tenant-b-token", {
+  method: "PUT",
+  body: JSON.stringify({ newTokenData: { role: "admin" } }),
 });
 // Response: 403 Forbidden
 ```
@@ -644,8 +644,8 @@ graph LR
 
 ```json
 {
-	"success": false,
-	"message": "Detailed error message here"
+  "success": false,
+  "message": "Detailed error message here"
 }
 ```
 
@@ -688,16 +688,16 @@ Choose appropriate expiration times based on use case:
 
 ```javascript
 // Quick onboarding
-expiresIn: '2 hrs'; // For immediate registration
+expiresIn: "2 hrs"; // For immediate registration
 
 // Standard invitation
-expiresIn: '2 days'; // Default, recommended
+expiresIn: "2 days"; // Default, recommended
 
 // Long-term invitation
-expiresIn: '1 week'; // For flexible scheduling
+expiresIn: "1 week"; // For flexible scheduling
 
 // Extended invitation
-expiresIn: '1 month'; // For rare cases
+expiresIn: "1 month"; // For rare cases
 ```
 
 ### 2. Role Assignment
@@ -706,13 +706,13 @@ Assign the minimum required role:
 
 ```javascript
 // Most users
-role: 'user';
+role: "user";
 
 // Content creators
-role: 'editor';
+role: "editor";
 
 // Administrators (careful!)
-role: 'admin';
+role: "admin";
 ```
 
 ### 3. Email Validation
@@ -722,7 +722,7 @@ Always validate email before creating token:
 ```javascript
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 if (!emailRegex.test(email)) {
-	throw new Error('Invalid email format');
+  throw new Error("Invalid email format");
 }
 ```
 
@@ -731,25 +731,25 @@ if (!emailRegex.test(email)) {
 Handle all response types:
 
 ```javascript
-const result = await fetch('/api/token/create-token', {
-	method: 'POST',
-	body: JSON.stringify(tokenData)
+const result = await fetch("/api/token/create-token", {
+  method: "POST",
+  body: JSON.stringify(tokenData),
 }).then((res) => res.json());
 
 if (!result.success) {
-	// Handle error
-	console.error(result.message);
-	return;
+  // Handle error
+  console.error(result.message);
+  return;
 }
 
 if (!result.email_sent) {
-	if (result.smtp_not_configured) {
-		// Provide manual token delivery option
-		showManualTokenDialog(result.token.value);
-	} else if (result.dev_mode) {
-		// Log token for development
-		console.log('Dev token:', result.token.value);
-	}
+  if (result.smtp_not_configured) {
+    // Provide manual token delivery option
+    showManualTokenDialog(result.token.value);
+  } else if (result.dev_mode) {
+    // Log token for development
+    console.log("Dev token:", result.token.value);
+  }
 }
 ```
 

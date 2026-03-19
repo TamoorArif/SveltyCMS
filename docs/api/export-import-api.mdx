@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/export-import-api.mdx'
-title: 'Data Export and Import API'
-description: 'Complete API reference for exporting and importing data, collections, and settings in SveltyCMS.'
+path: "docs/api/export-import-api.mdx"
+title: "Data Export and Import API"
+description: "Complete API reference for exporting and importing data, collections, and settings in SveltyCMS."
 order: 7
-icon: 'mdi:database-export-outline'
-author: 'admin'
-created: '2025-10-05'
-updated: '2025-10-05'
+icon: "mdi:database-export-outline"
+author: "admin"
+created: "2025-10-05"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'export'
-  - 'import'
-  - 'backup'
-  - 'migration'
+  - "api"
+  - "export"
+  - "import"
+  - "backup"
+  - "migration"
 ---
 
 # Data Export and Import API
@@ -107,13 +107,13 @@ Returns an encrypted JSON file or plain JSON depending on format parameter.
 
 ```json
 {
-	"success": true,
-	"data": "encrypted-base64-string...",
-	"metadata": {
-		"exportedAt": "2025-10-05T14:30:00Z",
-		"encrypted": true,
-		"algorithm": "aes-256-gcm"
-	}
+  "success": true,
+  "data": "encrypted-base64-string...",
+  "metadata": {
+    "exportedAt": "2025-10-05T14:30:00Z",
+    "encrypted": true,
+    "algorithm": "aes-256-gcm"
+  }
 }
 ```
 
@@ -176,19 +176,19 @@ Cookie: session=your-session-id
 
 ```json
 {
-	"success": true,
-	"collection": "posts",
-	"data": [
-		{
-			"_id": "post123",
-			"title": "Hello World",
-			"content": "Post content...",
-			"author": "user123",
-			"createdAt": "2025-10-01T10:00:00Z"
-		}
-	],
-	"count": 42,
-	"exportedAt": "2025-10-05T14:30:00Z"
+  "success": true,
+  "collection": "posts",
+  "data": [
+    {
+      "_id": "post123",
+      "title": "Hello World",
+      "content": "Post content...",
+      "author": "user123",
+      "createdAt": "2025-10-01T10:00:00Z"
+    }
+  ],
+  "count": 42,
+  "exportedAt": "2025-10-05T14:30:00Z"
 }
 ```
 
@@ -224,27 +224,27 @@ Content-Type: application/json
 
 ```json
 {
-	"collections": {
-		"posts": [
-			{
-				"title": "Imported Post",
-				"content": "Content...",
-				"author": "user123"
-			}
-		],
-		"pages": [
-			{
-				"title": "Imported Page",
-				"slug": "imported-page"
-			}
-		]
-	},
-	"options": {
-		"overwrite": false,
-		"validate": true,
-		"skipInvalid": true,
-		"batchSize": 100
-	}
+  "collections": {
+    "posts": [
+      {
+        "title": "Imported Post",
+        "content": "Content...",
+        "author": "user123"
+      }
+    ],
+    "pages": [
+      {
+        "title": "Imported Page",
+        "slug": "imported-page"
+      }
+    ]
+  },
+  "options": {
+    "overwrite": false,
+    "validate": true,
+    "skipInvalid": true,
+    "batchSize": 100
+  }
 }
 ```
 
@@ -322,6 +322,7 @@ Content-Type: application/json
 ```
 
 ---
+
 ### 2. Full System Import
 
 Restores a full system backup.
@@ -357,15 +358,15 @@ Content-Type: application/json
 
 ```json
 {
-	"sourceType": "drupal", // or "wordpress"
-	"sourceUrl": "https://old-site.com",
-	"apiKey": "Bearer ...",
-	"sourceTypeIdentifier": "article",
-	"targetCollection": "blog_posts",
-	"mapping": {
-		"title": { "target": "title" },
-		"field_image": { "target": "thumbnail", "transform": "media" }
-	}
+  "sourceType": "drupal", // or "wordpress"
+  "sourceUrl": "https://old-site.com",
+  "apiKey": "Bearer ...",
+  "sourceTypeIdentifier": "article",
+  "targetCollection": "blog_posts",
+  "mapping": {
+    "title": { "target": "title" },
+    "field_image": { "target": "thumbnail", "transform": "media" }
+  }
 }
 ```
 
@@ -377,12 +378,11 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"importedCount": 42,
-	"errors": []
+  "success": true,
+  "importedCount": 42,
+  "errors": []
 }
 ```
-
 
 ---
 
@@ -406,11 +406,11 @@ Encrypted backup using AES-256-GCM:
 
 ```json
 {
-	"encrypted": true,
-	"algorithm": "aes-256-gcm",
-	"data": "base64-encrypted-data",
-	"iv": "initialization-vector",
-	"tag": "authentication-tag"
+  "encrypted": true,
+  "algorithm": "aes-256-gcm",
+  "data": "base64-encrypted-data",
+  "iv": "initialization-vector",
+  "tag": "authentication-tag"
 }
 ```
 
@@ -470,7 +470,7 @@ GET /api/export/full?tenantId=tenant-abc
 ```typescript
 // Validates tenant context during import
 if (entry.tenantId !== user.tenantId) {
-	throw error(403, 'Cannot import data from different tenant');
+  throw error(403, "Cannot import data from different tenant");
 }
 ```
 
@@ -594,35 +594,35 @@ curl -X POST https://new-cms.example.com/api/system-settings/import \
 
 ```javascript
 // Export full system
-const exportResponse = await fetch('/api/export/full', {
-	method: 'POST',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({ includeCollections: true })
+const exportResponse = await fetch("/api/export/full", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ includeCollections: true }),
 });
 const exportData = await exportResponse.json();
 
 // Download as file
 const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-	type: 'application/json'
+  type: "application/json",
 });
 const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
+const a = document.createElement("a");
 a.href = url;
 a.download = `backup-${new Date().toISOString()}.json`;
 a.click();
 
 // Import data
-const importResponse = await fetch('/api/system-settings/import', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		data: exportData,
-		options: {
-			validate: true,
-			skipInvalid: true
-		}
-	})
+const importResponse = await fetch("/api/system-settings/import", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    data: exportData,
+    options: {
+      validate: true,
+      skipInvalid: true,
+    },
+  }),
 });
 
 const result = await importResponse.json();

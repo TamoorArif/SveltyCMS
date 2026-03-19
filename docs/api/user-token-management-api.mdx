@@ -1,18 +1,18 @@
 ---
-path: 'docs/api/user-token-management-api.mdx'
-title: 'User & Token Management API'
-description: 'Complete API reference for user and token management endpoints in SveltyCMS.'
+path: "docs/api/user-token-management-api.mdx"
+title: "User & Token Management API"
+description: "Complete API reference for user and token management endpoints in SveltyCMS."
 order: 3
-icon: 'mdi:account-key'
-author: 'admin'
-created: '2025-07-11'
-updated: '2025-10-05'
+icon: "mdi:account-key"
+author: "admin"
+created: "2025-07-11"
+updated: "2025-10-05"
 tags:
-  - 'api'
-  - 'user-management'
-  - 'tokens'
-  - 'authentication'
-  - 'permissions'
+  - "api"
+  - "user-management"
+  - "tokens"
+  - "authentication"
+  - "permissions"
 ---
 
 # User & Token Management API
@@ -45,20 +45,20 @@ GET /api/user
 
 ```json
 {
-	"success": true,
-	"users": [
-		{
-			"_id": "user123",
-			"username": "johndoe",
-			"email": "john@example.com",
-			"role": "user",
-			"blocked": false,
-			"activeSessions": 2,
-			"lastAccess": "2025-07-11T10:30:00Z",
-			"createdAt": "2025-01-15T09:00:00Z",
-			"updatedAt": "2025-07-11T10:30:00Z"
-		}
-	]
+  "success": true,
+  "users": [
+    {
+      "_id": "user123",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "role": "user",
+      "blocked": false,
+      "activeSessions": 2,
+      "lastAccess": "2025-07-11T10:30:00Z",
+      "createdAt": "2025-01-15T09:00:00Z",
+      "updatedAt": "2025-07-11T10:30:00Z"
+    }
+  ]
 }
 ```
 
@@ -83,20 +83,20 @@ POST /api/user/batch
 
 ```json
 {
-	"success": true,
-	"message": "Users blocked successfully",
-	"results": [
-		{
-			"id": "user1",
-			"success": true,
-			"message": "User blocked"
-		},
-		{
-			"id": "user2",
-			"success": false,
-			"message": "User not found"
-		}
-	]
+  "success": true,
+  "message": "Users blocked successfully",
+  "results": [
+    {
+      "id": "user1",
+      "success": true,
+      "message": "User blocked"
+    },
+    {
+      "id": "user2",
+      "success": false,
+      "message": "User not found"
+    }
+  ]
 }
 ```
 
@@ -112,10 +112,10 @@ PUT /api/user/[userId]
 
 ```json
 {
-	"username": "newusername",
-	"email": "newemail@example.com",
-	"role": "editor",
-	"blocked": false
+  "username": "newusername",
+  "email": "newemail@example.com",
+  "role": "editor",
+  "blocked": false
 }
 ```
 
@@ -123,16 +123,16 @@ PUT /api/user/[userId]
 
 ```json
 {
-	"success": true,
-	"message": "User updated successfully",
-	"user": {
-		"_id": "user123",
-		"username": "newusername",
-		"email": "newemail@example.com",
-		"role": "editor",
-		"blocked": false,
-		"updatedAt": "2025-07-11T10:30:00Z"
-	}
+  "success": true,
+  "message": "User updated successfully",
+  "user": {
+    "_id": "user123",
+    "username": "newusername",
+    "email": "newemail@example.com",
+    "role": "editor",
+    "blocked": false,
+    "updatedAt": "2025-07-11T10:30:00Z"
+  }
 }
 ```
 
@@ -156,21 +156,21 @@ GET /api/token
 
 ```json
 {
-	"success": true,
-	"tokens": [
-		{
-			"_id": "token123",
-			"token": "abc123def456...",
-			"email": "newuser@example.com",
-			"username": "newuser",
-			"role": "user",
-			"type": "user-invite",
-			"blocked": false,
-			"expires": "2025-07-18T23:59:59Z",
-			"createdAt": "2025-07-11T10:00:00Z",
-			"updatedAt": "2025-07-11T10:00:00Z"
-		}
-	]
+  "success": true,
+  "tokens": [
+    {
+      "_id": "token123",
+      "token": "abc123def456...",
+      "email": "newuser@example.com",
+      "username": "newuser",
+      "role": "user",
+      "type": "user-invite",
+      "blocked": false,
+      "expires": "2025-07-18T23:59:59Z",
+      "createdAt": "2025-07-11T10:00:00Z",
+      "updatedAt": "2025-07-11T10:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -186,11 +186,11 @@ POST /api/token
 
 ```json
 {
-	"email": "newuser@example.com",
-	"username": "newuser",
-	"role": "user",
-	"type": "user-invite",
-	"expires": "7d"
+  "email": "newuser@example.com",
+  "username": "newuser",
+  "role": "user",
+  "type": "user-invite",
+  "expires": "7d"
 }
 ```
 
@@ -206,14 +206,14 @@ POST /api/token
 
 ```json
 {
-	"success": true,
-	"message": "Token created and email sent",
-	"token": {
-		"_id": "token123",
-		"token": "abc123def456...",
-		"email": "newuser@example.com",
-		"expires": "2025-07-18T23:59:59Z"
-	}
+  "success": true,
+  "message": "Token created and email sent",
+  "token": {
+    "_id": "token123",
+    "token": "abc123def456...",
+    "email": "newuser@example.com",
+    "expires": "2025-07-18T23:59:59Z"
+  }
 }
 ```
 
@@ -229,11 +229,11 @@ PUT /api/token/[tokenId]
 
 ```json
 {
-	"email": "updated@example.com",
-	"username": "updateduser",
-	"role": "editor",
-	"expires": "2025-08-11T23:59:59Z",
-	"blocked": false
+  "email": "updated@example.com",
+  "username": "updateduser",
+  "role": "editor",
+  "expires": "2025-08-11T23:59:59Z",
+  "blocked": false
 }
 ```
 
@@ -241,17 +241,17 @@ PUT /api/token/[tokenId]
 
 ```json
 {
-	"success": true,
-	"message": "Token updated successfully",
-	"token": {
-		"_id": "token123",
-		"email": "updated@example.com",
-		"username": "updateduser",
-		"role": "editor",
-		"blocked": false,
-		"expires": "2025-08-11T23:59:59Z",
-		"updatedAt": "2025-07-11T10:30:00Z"
-	}
+  "success": true,
+  "message": "Token updated successfully",
+  "token": {
+    "_id": "token123",
+    "email": "updated@example.com",
+    "username": "updateduser",
+    "role": "editor",
+    "blocked": false,
+    "expires": "2025-08-11T23:59:59Z",
+    "updatedAt": "2025-07-11T10:30:00Z"
+  }
 }
 ```
 
@@ -282,20 +282,20 @@ POST /api/token/batch
 
 ```json
 {
-	"success": true,
-	"message": "Tokens blocked successfully",
-	"results": [
-		{
-			"id": "token1",
-			"success": true,
-			"message": "Token blocked"
-		},
-		{
-			"id": "token2",
-			"success": true,
-			"message": "Token blocked"
-		}
-	]
+  "success": true,
+  "message": "Tokens blocked successfully",
+  "results": [
+    {
+      "id": "token1",
+      "success": true,
+      "message": "Token blocked"
+    },
+    {
+      "id": "token2",
+      "success": true,
+      "message": "Token blocked"
+    }
+  ]
 }
 ```
 
@@ -311,8 +311,8 @@ POST /api/token/validate
 
 ```json
 {
-	"token": "abc123def456...",
-	"type": "user-invite"
+  "token": "abc123def456...",
+  "type": "user-invite"
 }
 ```
 
@@ -320,15 +320,15 @@ POST /api/token/validate
 
 ```json
 {
-	"isValid": true,
-	"message": "Token is valid",
-	"details": {
-		"_id": "token123",
-		"email": "user@example.com",
-		"username": "username",
-		"role": "user",
-		"expires": "2025-07-18T23:59:59Z"
-	}
+  "isValid": true,
+  "message": "Token is valid",
+  "details": {
+    "_id": "token123",
+    "email": "user@example.com",
+    "username": "username",
+    "role": "user",
+    "expires": "2025-07-18T23:59:59Z"
+  }
 }
 ```
 
@@ -336,8 +336,8 @@ POST /api/token/validate
 
 ```json
 {
-	"isValid": false,
-	"message": "Token is expired, blocked, or invalid"
+  "isValid": false,
+  "message": "Token is expired, blocked, or invalid"
 }
 ```
 
@@ -353,8 +353,8 @@ POST /api/token/consume
 
 ```json
 {
-	"token": "abc123def456...",
-	"userId": "user123"
+  "token": "abc123def456...",
+  "userId": "user123"
 }
 ```
 
@@ -362,8 +362,8 @@ POST /api/token/consume
 
 ```json
 {
-	"success": true,
-	"message": "Token consumed successfully"
+  "success": true,
+  "message": "Token consumed successfully"
 }
 ```
 
@@ -381,11 +381,11 @@ POST /api/auth/signup
 
 ```json
 {
-	"username": "newuser",
-	"email": "newuser@example.com",
-	"password": "securepassword123",
-	"confirm_password": "securepassword123",
-	"token": "abc123def456..."
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "password": "securepassword123",
+  "confirm_password": "securepassword123",
+  "token": "abc123def456..."
 }
 ```
 
@@ -393,14 +393,14 @@ POST /api/auth/signup
 
 ```json
 {
-	"success": true,
-	"message": "User created successfully",
-	"user": {
-		"_id": "user123",
-		"username": "newuser",
-		"email": "newuser@example.com",
-		"role": "user"
-	}
+  "success": true,
+  "message": "User created successfully",
+  "user": {
+    "_id": "user123",
+    "username": "newuser",
+    "email": "newuser@example.com",
+    "role": "user"
+  }
 }
 ```
 
@@ -420,12 +420,12 @@ Initiates OAuth flow with invitation token attached.
 
 ```json
 {
-	"success": false,
-	"message": "Error description",
-	"code": "ERROR_CODE",
-	"details": {
-		"field": "validation error message"
-	}
+  "success": false,
+  "message": "Error description",
+  "code": "ERROR_CODE",
+  "details": {
+    "field": "validation error message"
+  }
 }
 ```
 
@@ -499,24 +499,24 @@ X-RateLimit-Reset: 1625097600
 ### JavaScript/TypeScript
 
 ```typescript
-import { SveltyCMSClient } from '@svelty/cms-client';
+import { SveltyCMSClient } from "@svelty/cms-client";
 
 const client = new SveltyCMSClient({
-	baseURL: 'https://your-cms.com',
-	sessionToken: 'your-session-token'
+  baseURL: "https://your-cms.com",
+  sessionToken: "your-session-token",
 });
 
 // Create invitation token
 const token = await client.tokens.create({
-	email: 'newuser@example.com',
-	role: 'user',
-	expires: '7d'
+  email: "newuser@example.com",
+  role: "user",
+  expires: "7d",
 });
 
 // Block multiple users
 const result = await client.users.batchOperation({
-	action: 'block',
-	ids: ['user1', 'user2']
+  action: "block",
+  ids: ["user1", "user2"],
 });
 ```
 
@@ -564,19 +564,19 @@ Configure webhooks to receive notifications about user and token events:
 
 ```json
 {
-	"event": "user.created",
-	"timestamp": "2025-07-11T10:30:00Z",
-	"data": {
-		"user": {
-			"_id": "user123",
-			"username": "newuser",
-			"email": "newuser@example.com",
-			"role": "user"
-		},
-		"token": {
-			"_id": "token123",
-			"consumed": true
-		}
-	}
+  "event": "user.created",
+  "timestamp": "2025-07-11T10:30:00Z",
+  "data": {
+    "user": {
+      "_id": "user123",
+      "username": "newuser",
+      "email": "newuser@example.com",
+      "role": "user"
+    },
+    "token": {
+      "_id": "token123",
+      "consumed": true
+    }
+  }
 }
 ```

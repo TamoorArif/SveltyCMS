@@ -1,21 +1,21 @@
 ---
-path: 'docs/architecture/initialization-workflow.mdx'
-title: 'SveltyCMS Complete Workflow Guide'
-description: 'Comprehensive guide covering installation, initialization, testing, and CI/CD workflows for SveltyCMS'
+path: "docs/architecture/initialization-workflow.mdx"
+title: "SveltyCMS Complete Workflow Guide"
+description: "Comprehensive guide covering installation, initialization, testing, and CI/CD workflows for SveltyCMS"
 order: 10
-icon: 'mdi:workflow'
-author: 'admin'
-created: '2025-10-14'
-updated: '2025-10-25'
+icon: "mdi:workflow"
+author: "admin"
+created: "2025-10-14"
+updated: "2025-10-25"
 tags:
-  - 'architecture'
-  - 'initialization'
-  - 'setup'
-  - 'workflow'
-  - 'collections'
-  - 'installation'
-  - 'testing'
-  - 'ci-cd'
+  - "architecture"
+  - "initialization"
+  - "setup"
+  - "workflow"
+  - "collections"
+  - "installation"
+  - "testing"
+  - "ci-cd"
 ---
 
 # SveltyCMS Complete Workflow Guide
@@ -243,23 +243,23 @@ bun add pg
 Create `config/private.ts` in the project root:
 
 ```typescript
-import { createPrivateConfig } from '../src/utils/config';
+import { createPrivateConfig } from "../src/utils/config";
 
 export const privateEnv = createPrivateConfig({
-	// Database Configuration
-	DB_TYPE: 'mongodb',
-	DB_HOST: 'localhost',
-	DB_PORT: 27017,
-	DB_NAME: 'sveltycms',
-	DB_USER: 'admin',
-	DB_PASSWORD: 'your_secure_password',
+  // Database Configuration
+  DB_TYPE: "mongodb",
+  DB_HOST: "localhost",
+  DB_PORT: 27017,
+  DB_NAME: "sveltycms",
+  DB_USER: "admin",
+  DB_PASSWORD: "your_secure_password",
 
-	// Security (generate with: openssl rand -hex 32)
-	JWT_SECRET_KEY: 'your_generated_secret_here',
-	ENCRYPTION_KEY: 'your_encryption_key_here',
+  // Security (generate with: openssl rand -hex 32)
+  JWT_SECRET_KEY: "your_generated_secret_here",
+  ENCRYPTION_KEY: "your_encryption_key_here",
 
-	// Multi-Tenancy (optional)
-	MULTI_TENANT: false
+  // Multi-Tenancy (optional)
+  MULTI_TENANT: false,
 });
 ```
 
@@ -668,15 +668,15 @@ sequenceDiagram
 
 ```typescript
 export const privateEnv = createPrivateConfig({
-	DB_TYPE: 'mongodb',
-	DB_HOST: '', // ← Empty values
-	DB_PORT: 27017,
-	DB_NAME: '', // ← Empty values
-	DB_USER: '',
-	DB_PASSWORD: '',
-	JWT_SECRET_KEY: '', // ← Empty
-	ENCRYPTION_KEY: '', // ← Empty
-	MULTI_TENANT: false
+  DB_TYPE: "mongodb",
+  DB_HOST: "", // ← Empty values
+  DB_PORT: 27017,
+  DB_NAME: "", // ← Empty values
+  DB_USER: "",
+  DB_PASSWORD: "",
+  JWT_SECRET_KEY: "", // ← Empty
+  ENCRYPTION_KEY: "", // ← Empty
+  MULTI_TENANT: false,
 });
 ```
 
@@ -832,13 +832,13 @@ Body: {
 
 ```json
 {
-	"success": true,
-	"message": "Connection successful",
-	"details": {
-		"authenticated": true,
-		"dbStats": { "collections": 0, "dataSize": 0 },
-		"warnings": []
-	}
+  "success": true,
+  "message": "Connection successful",
+  "details": {
+    "authenticated": true,
+    "dbStats": { "collections": 0, "dataSize": 0 },
+    "warnings": []
+  }
 }
 ```
 
@@ -889,18 +889,18 @@ Called when user clicks "Next" after successful DB test. This process now runs i
 // File: src/routes/setup?/seedDatabase.ts
 
 export async function seedCollectionsForSetup(dbAdapter) {
-	// 1. Scan filesystem for compiled collections
-	const { scanCompiledCollections } = await import('@src/content/collectionScanner');
-	const collections = await scanCompiledCollections();
+  // 1. Scan filesystem for compiled collections
+  const { scanCompiledCollections } = await import("@src/content/collectionScanner");
+  const collections = await scanCompiledCollections();
 
-	// 2. Register each collection as a model
-	for (const schema of collections) {
-		await dbAdapter.collection.createModel(schema);
-		// ⚠️ Creates MongoDB collection: collection_<uuid>
-	}
+  // 2. Register each collection as a model
+  for (const schema of collections) {
+    await dbAdapter.collection.createModel(schema);
+    // ⚠️ Creates MongoDB collection: collection_<uuid>
+  }
 
-	// 3. Return first collection for fast redirect
-	return { firstCollection: { name: 'Posts', path: '/Collections/Posts' } };
+  // 3. Return first collection for fast redirect
+  return { firstCollection: { name: "Posts", path: "/Collections/Posts" } };
 }
 ```
 
@@ -992,12 +992,12 @@ Called when user submits admin user form.
 
 ```json
 {
-	"success": true,
-	"message": "Setup complete! Welcome to SveltyCMS! 🎉",
-	"redirectPath": "/en/Collections/Posts",
-	"loggedIn": true,
-	"requiresHardReload": false,
-	"requiresServerRestart": false
+  "success": true,
+  "message": "Setup complete! Welcome to SveltyCMS! 🎉",
+  "redirectPath": "/en/Collections/Posts",
+  "loggedIn": true,
+  "requiresHardReload": false,
+  "requiresServerRestart": false
 }
 ```
 
@@ -1078,13 +1078,13 @@ The compilation system uses **content hashing** and **UUID preservation** to avo
 // __HASH__:a7f3e9c2d8b1f4a6e3c9d2b8f1a4e6c3
 
 export const schema = {
-	_id: '550e8400-e29b-41d4-a716-446655440000', // ← UUID preserved!
-	name: 'Posts',
-	icon: 'bi:file-text',
-	fields: [
-		{ label: 'Title', db_fieldName: 'title', widget: 'text' },
-		{ label: 'Content', db_fieldName: 'content', widget: 'richtext' }
-	]
+  _id: "550e8400-e29b-41d4-a716-446655440000", // ← UUID preserved!
+  name: "Posts",
+  icon: "bi:file-text",
+  fields: [
+    { label: "Title", db_fieldName: "title", widget: "text" },
+    { label: "Content", db_fieldName: "content", widget: "richtext" },
+  ],
 };
 ```
 
@@ -1182,14 +1182,14 @@ UUIDs are assigned **once** at compilation and **preserved** across restarts.
 ```typescript
 // Extract UUID from compiled JS file
 function extractUUIDFromJs(content: string): string | null {
-	const match = content.match(/_id:\s*["']([^"']+)["']/);
-	return match ? match[1] : null;
+  const match = content.match(/_id:\s*["']([^"']+)["']/);
+  return match ? match[1] : null;
 }
 
 // Extract hash from compiled JS file
 function extractHashFromJs(content: string): string | null {
-	const match = content.match(/__HASH__:(\w+)/);
-	return match ? match[1] : null;
+  const match = content.match(/__HASH__:(\w+)/);
+  return match ? match[1] : null;
 }
 ```
 
@@ -1198,13 +1198,13 @@ function extractHashFromJs(content: string): string | null {
 ```typescript
 // Injects UUID into schema during compilation
 const schemaUuidTransformer =
-	(uuid: string): ts.TransformerFactory<ts.SourceFile> =>
-	(context) =>
-	(sourceFile) => {
-		// Finds: export const schema = { ... }
-		// Injects: _id: "uuid-here"
-		// Result: export const schema = { _id: "uuid-here", ... }
-	};
+  (uuid: string): ts.TransformerFactory<ts.SourceFile> =>
+  (context) =>
+  (sourceFile) => {
+    // Finds: export const schema = { ... }
+    // Injects: _id: "uuid-here"
+    // Result: export const schema = { _id: "uuid-here", ... }
+  };
 ```
 
 ---
@@ -1271,14 +1271,14 @@ IDLE → INITIALIZING → READY → DEGRADED → FAILED
 // File: src/stores/system.ts
 
 export function transitionTo(newState: SystemState, reason?: string) {
-	const oldState = state.overallState;
-	state.overallState = newState;
-	state.performanceMetrics.stateTransitions.push({
-		from: oldState,
-		to: newState,
-		timestamp: Date.now(),
-		reason
-	});
+  const oldState = state.overallState;
+  state.overallState = newState;
+  state.performanceMetrics.stateTransitions.push({
+    from: oldState,
+    to: newState,
+    timestamp: Date.now(),
+    reason,
+  });
 }
 ```
 
@@ -1317,8 +1317,8 @@ collection_550e8400-e29b-41d4-a716-446655440000  (Only one table)
 // File: src/routes/setup?/seedDatabase.ts
 
 for (const schema of collections) {
-	await dbAdapter.collection.createModel(schema);
-	// ⚠️ Potential race condition here
+  await dbAdapter.collection.createModel(schema);
+  // ⚠️ Potential race condition here
 }
 ```
 
@@ -1328,10 +1328,10 @@ for (const schema of collections) {
 // Add mutex or serial execution
 const results = [];
 for (const schema of collections) {
-	const result = await dbAdapter.collection.createModel(schema);
-	results.push(result);
-	// Add small delay to avoid race conditions
-	await new Promise((resolve) => setTimeout(resolve, 100));
+  const result = await dbAdapter.collection.createModel(schema);
+  results.push(result);
+  // Add small delay to avoid race conditions
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 ```
 
@@ -1532,15 +1532,15 @@ tests/bun/
 ### Writing Tests
 
 ```typescript
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from "bun:test";
 
-describe('ContentService', () => {
-	it('should create content', async () => {
-		const content = await service.create({
-			title: 'Test Post'
-		});
-		expect(content.title).toBe('Test Post');
-	});
+describe("ContentService", () => {
+  it("should create content", async () => {
+    const content = await service.create({
+      title: "Test Post",
+    });
+    expect(content.title).toBe("Test Post");
+  });
 });
 ```
 
@@ -1683,33 +1683,33 @@ For CI/CD environments, SveltyCMS provides scripts that replicate the setup wiza
 Mimics `/setup?/seedDatabase` endpoint:
 
 ```javascript
-import { writePrivateConfig } from '../src/routes/setup/writePrivateConfig.js';
-import { initSystemFromSetup } from '../src/routes/setup/seed.js';
-import { getSetupDatabaseAdapter } from '../src/routes/setup/utils.js';
+import { writePrivateConfig } from "../src/routes/setup/writePrivateConfig.js";
+import { initSystemFromSetup } from "../src/routes/setup/seed.js";
+import { getSetupDatabaseAdapter } from "../src/routes/setup/utils.js";
 
 async function main() {
-	const dbConfig = {
-		type: 'mongodb',
-		host: process.env.MONGO_HOST || 'localhost',
-		port: parseInt(process.env.MONGO_PORT || '27017'),
-		name: process.env.MONGO_DB || 'SveltyCMS',
-		user: process.env.MONGO_USER || '',
-		password: process.env.MONGO_PASS || ''
-	};
+  const dbConfig = {
+    type: "mongodb",
+    host: process.env.MONGO_HOST || "localhost",
+    port: parseInt(process.env.MONGO_PORT || "27017"),
+    name: process.env.MONGO_DB || "SveltyCMS",
+    user: process.env.MONGO_USER || "",
+    password: process.env.MONGO_PASS || "",
+  };
 
-	// Write config/private.ts
-	await writePrivateConfig(dbConfig);
+  // Write config/private.ts
+  await writePrivateConfig(dbConfig);
 
-	// Connect and seed
-	const { dbAdapter } = await getSetupDatabaseAdapter(dbConfig);
-	await initSystemFromSetup(dbAdapter);
+  // Connect and seed
+  const { dbAdapter } = await getSetupDatabaseAdapter(dbConfig);
+  await initSystemFromSetup(dbAdapter);
 
-	await dbAdapter.disconnect();
+  await dbAdapter.disconnect();
 }
 
 main().catch((err) => {
-	console.error('❌ Seeding failed:', err);
-	process.exit(1);
+  console.error("❌ Seeding failed:", err);
+  process.exit(1);
 });
 ```
 
@@ -1730,43 +1730,43 @@ MONGO_HOST=localhost MONGO_PORT=27017 bun run scripts/seed-cms.js
 Mimics `/setup?/completeSetup` endpoint:
 
 ```javascript
-import { Auth } from '../src/databases/auth/index.js';
-import { getSetupDatabaseAdapter } from '../src/routes/setup/utils.js';
+import { Auth } from "../src/databases/auth/index.js";
+import { getSetupDatabaseAdapter } from "../src/routes/setup/utils.js";
 
 async function main() {
-	const dbConfig = {
-		/* same as seed-cms.js */
-	};
-	const admin = {
-		username: process.env.ADMIN_USER || 'admin',
-		email: process.env.ADMIN_EMAIL || 'admin@example.com',
-		password: process.env.ADMIN_PASS || 'Admin123!'
-	};
+  const dbConfig = {
+    /* same as seed-cms.js */
+  };
+  const admin = {
+    username: process.env.ADMIN_USER || "admin",
+    email: process.env.ADMIN_EMAIL || "admin@example.com",
+    password: process.env.ADMIN_PASS || "Admin123!",
+  };
 
-	const { dbAdapter } = await getSetupDatabaseAdapter(dbConfig);
-	const auth = new Auth(dbAdapter);
+  const { dbAdapter } = await getSetupDatabaseAdapter(dbConfig);
+  const auth = new Auth(dbAdapter);
 
-	try {
-		await auth.createUser({
-			...admin,
-			role: 'admin',
-			isActive: true
-		});
-		console.log('✅ Admin user created!');
-	} catch (error) {
-		if (error.message?.includes('duplicate')) {
-			console.log('ℹ️  Admin user already exists');
-		} else {
-			throw error;
-		}
-	}
+  try {
+    await auth.createUser({
+      ...admin,
+      role: "admin",
+      isActive: true,
+    });
+    console.log("✅ Admin user created!");
+  } catch (error) {
+    if (error.message?.includes("duplicate")) {
+      console.log("ℹ️  Admin user already exists");
+    } else {
+      throw error;
+    }
+  }
 
-	await dbAdapter.disconnect();
+  await dbAdapter.disconnect();
 }
 
 main().catch((err) => {
-	console.error('❌ Admin creation failed:', err);
-	process.exit(1);
+  console.error("❌ Admin creation failed:", err);
+  process.exit(1);
 });
 ```
 

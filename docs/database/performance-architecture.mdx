@@ -1,19 +1,19 @@
 ---
-path: 'docs/database/performance-architecture.mdx'
-title: 'Performance Architecture'
-description: 'Production-ready performance architecture with dual-layer caching, database indexing, field selection, and enterprise features delivering 95-99% improvement.'
+path: "docs/database/performance-architecture.mdx"
+title: "Performance Architecture"
+description: "Production-ready performance architecture with dual-layer caching, database indexing, field selection, and enterprise features delivering 95-99% improvement."
 order: 3
-icon: 'mdi:rocket-launch'
-author: 'admin'
-created: '2024-01-15'
-updated: '2026-02-09'
+icon: "mdi:rocket-launch"
+author: "admin"
+created: "2024-01-15"
+updated: "2026-02-09"
 tags:
-  - 'performance'
-  - 'optimization'
-  - 'caching'
-  - 'indexing'
-  - 'database'
-  - 'architecture'
+  - "performance"
+  - "optimization"
+  - "caching"
+  - "indexing"
+  - "database"
+  - "architecture"
 ---
 
 ---
@@ -127,12 +127,12 @@ await this.createIndexes(model, schema);
 
 ```typescript
 // List view: Show only essential + display fields
-getDisplayfields(collection, 'list');
+getDisplayfields(collection, "list");
 // Returns: ['_id', 'status', 'createdAt', 'title', 'thumbnail']
 // Skips: 15+ other fields not shown in table view
 
 // Edit view: Load all fields for full editing
-getDisplayfields(collection, 'edit');
+getDisplayfields(collection, "edit");
 // Returns: all fields for comprehensive editing
 ```
 
@@ -161,10 +161,10 @@ The system uses a unified QueryBuilder pattern across all adapters.
 ```typescript
 // Only load display fields for list views
 if (!editEntryId) {
-	const displayfields = getDisplayfields(currentCollection, 'list', {
-		maxDisplayfields: 5
-	});
-	query = query.select(displayfields);
+  const displayfields = getDisplayfields(currentCollection, "list", {
+    maxDisplayfields: 5,
+  });
+  query = query.select(displayfields);
 }
 ```
 
@@ -451,14 +451,14 @@ TTL settings managed via UI at `/config/system-settings` (Cache tab):
 
 ```typescript
 // Automatic caching in API endpoints
-import { cacheService } from '@src/databases/cache/cache-service';
+import { cacheService } from "@src/databases/cache/cache-service";
 
 // Query results cached
-const cached = await cacheService.get('query:posts:published');
+const cached = await cacheService.get("query:posts:published");
 if (cached) return cached;
 
-const data = await db.find('posts', { status: 'published' });
-await cacheService.set('query:posts:published', data, null, 'query');
+const data = await db.find("posts", { status: "published" });
+await cacheService.set("query:posts:published", data, null, "query");
 ```
 
 **Documentation:** See `/docs/architecture/cache-system.mdx` for complete guide
@@ -535,12 +535,12 @@ await cacheService.set('query:posts:published', data, null, 'query');
   - Client-side subscription support
   ```graphql
   subscription {
-  	postAdded {
-  		_id
-  		title
-  		createdAt
-  		updatedAt
-  	}
+    postAdded {
+      _id
+      title
+      createdAt
+      updatedAt
+    }
   }
   ```
 - **Not Yet Implemented:**
@@ -604,12 +604,12 @@ Enable detailed logging:
 
 ```typescript
 // In collectionMethods.ts
-logger.setLevel('debug');
+logger.setLevel("debug");
 
 // Shows performance metrics:
-('Creating indexes for collection: posts');
-('Created index on status for posts');
-('Field Selection: List view loading only: _id, status, title');
+("Creating indexes for collection: posts");
+("Created index on status for posts");
+("Field Selection: List view loading only: _id, status, title");
 ```
 
 ---

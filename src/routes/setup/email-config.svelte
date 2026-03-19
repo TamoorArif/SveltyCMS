@@ -322,7 +322,7 @@ const displayErrors = $derived.by(() => {
 // Mark field as touched on blur
 function handleBlur(fieldName: string) {
 	touchedFields.add(fieldName);
-	touchedFields = touchedFields;
+	touchedFields = new Set(touchedFields); // Trigger reactivity
 }
 
 // Legacy hostname validation for UI feedback

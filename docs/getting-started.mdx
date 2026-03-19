@@ -1,16 +1,16 @@
 ---
-path: 'docs/getting-started'
-title: 'Getting Started'
-description: 'Quick start guide to begin using SveltyCMS - from installation to creating your first content.'
+path: "docs/getting-started"
+title: "Getting Started"
+description: "Quick start guide to begin using SveltyCMS - from installation to creating your first content."
 order: 0
-icon: 'mdi:rocket-launch'
-author: 'SveltyCMS Team'
-created: '2025-10-05'
-updated: '2026-03-04'
+icon: "mdi:rocket-launch"
+author: "SveltyCMS Team"
+created: "2025-10-05"
+updated: "2026-03-04"
 tags:
-  - 'getting-started'
-  - 'quickstart'
-  - 'tutorial'
+  - "getting-started"
+  - "quickstart"
+  - "tutorial"
 ---
 
 # Getting Started with SveltyCMS
@@ -209,8 +209,8 @@ SveltyCMS provides both REST and GraphQL APIs.
 **Fetch all posts:**
 
 ```javascript
-const response = await fetch('http://localhost:5173/api/collections/posts', {
-	credentials: 'include'
+const response = await fetch("http://localhost:5173/api/collections/posts", {
+  credentials: "include",
 });
 const { data } = await response.json();
 console.log(data);
@@ -219,15 +219,15 @@ console.log(data);
 **Create a new post:**
 
 ```javascript
-const response = await fetch('http://localhost:5173/api/collections/posts', {
-	method: 'POST',
-	credentials: 'include',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({
-		title: 'New Post',
-		content: 'Content here...',
-		status: 'published'
-	})
+const response = await fetch("http://localhost:5173/api/collections/posts", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title: "New Post",
+    content: "Content here...",
+    status: "published",
+  }),
 });
 ```
 
@@ -237,15 +237,15 @@ const response = await fetch('http://localhost:5173/api/collections/posts', {
 
 ```graphql
 query GetPosts {
-	posts(limit: 10) {
-		_id
-		title
-		content
-		author {
-			username
-		}
-		createdAt
-	}
+  posts(limit: 10) {
+    _id
+    title
+    content
+    author {
+      username
+    }
+    createdAt
+  }
 }
 ```
 
@@ -311,7 +311,7 @@ http://localhost:5173/api/graphql
 
 3. **Query by Language**
    ```javascript
-   fetch('/api/collections/posts?lang=de');
+   fetch("/api/collections/posts?lang=de");
    ```
 
 ---

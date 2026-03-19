@@ -1,25 +1,25 @@
 ---
-path: 'docs/api/media-api.mdx'
-title: 'Media API Reference'
-description: 'Complete API reference for uploading, managing, and serving media files in SveltyCMS with support for local and cloud storage.'
+path: "docs/api/media-api.mdx"
+title: "Media API Reference"
+description: "Complete API reference for uploading, managing, and serving media files in SveltyCMS with support for local and cloud storage."
 order: 5
-icon: 'mdi:image-multiple'
-author: 'admin'
-created: '2025-10-05'
-updated: '2026-01-01'
+icon: "mdi:image-multiple"
+author: "admin"
+created: "2025-10-05"
+updated: "2026-01-01"
 tags:
-  - 'api'
-  - 'media'
-  - 'upload'
-  - 'files'
-  - 'images'
-  - 'cloud-storage'
-  - 's3'
-  - 'r2'
-  - 'cloudinary'
-  - 'transform'
-  - 'focal-point'
-  - 'watermark'
+  - "api"
+  - "media"
+  - "upload"
+  - "files"
+  - "images"
+  - "cloud-storage"
+  - "s3"
+  - "r2"
+  - "cloudinary"
+  - "transform"
+  - "focal-point"
+  - "watermark"
 ---
 
 # Media API Reference
@@ -63,32 +63,32 @@ When a file is uploaded, it is stored as a `MediaItem` document in the database.
 
 ```typescript
 interface MediaItem {
-	_id: string; // Unique database ID
-	filename: string; // Original filename
-	hash: string; // SHA-256 hash of the file content
-	path: string; // Relative storage path (e.g., "global/original/image-hash.jpg")
-	url: string; // Publicly accessible URL
-	mimeType: string; // File MIME type
-	size: number; // File size in bytes
-	createdBy: string; // ID of the user who uploaded the file
-	createdAt: string; // ISODateString of creation time
-	updatedAt: string; // ISODateString of last update time
-	thumbnails: {
-		// Auto-generated for images (except SVG)
-		[key: string]: {
-			url: string;
-			width: number;
-			height: number;
-		};
-	};
-	metadata: {
-		// Additional metadata
-		originalFilename: string;
-		uploadedBy: string;
-		uploadTimestamp: string;
-		[key: string]: any;
-	};
-	access: MediaAccess[]; // Access control rules
+  _id: string; // Unique database ID
+  filename: string; // Original filename
+  hash: string; // SHA-256 hash of the file content
+  path: string; // Relative storage path (e.g., "global/original/image-hash.jpg")
+  url: string; // Publicly accessible URL
+  mimeType: string; // File MIME type
+  size: number; // File size in bytes
+  createdBy: string; // ID of the user who uploaded the file
+  createdAt: string; // ISODateString of creation time
+  updatedAt: string; // ISODateString of last update time
+  thumbnails: {
+    // Auto-generated for images (except SVG)
+    [key: string]: {
+      url: string;
+      width: number;
+      height: number;
+    };
+  };
+  metadata: {
+    // Additional metadata
+    originalFilename: string;
+    uploadedBy: string;
+    uploadTimestamp: string;
+    [key: string]: any;
+  };
+  access: MediaAccess[]; // Access control rules
 }
 ```
 
@@ -188,31 +188,31 @@ A `MediaItem` object for each successfully uploaded file.
 
 ```json
 {
-	"success": true,
-	"files": [
-		{
-			"_id": "db_id_string",
-			"filename": "photo.jpg",
-			"hash": "a1b2c3d4e5f6",
-			"path": "global/original/photo-a1b2c3d4e5f6.jpg",
-			"url": "https://cdn.example.com/global/original/photo-a1b2c3d4e5f6.jpg",
-			"mimeType": "image/jpeg",
-			"size": 123456,
-			"createdBy": "user_id_string",
-			"createdAt": "2025-11-06T10:00:00.000Z",
-			"updatedAt": "2025-11-06T10:00:00.000Z",
-			"thumbnails": {
-				"small": { "url": "...", "width": 400, "height": 300 },
-				"medium": { "url": "...", "width": 800, "height": 600 }
-			},
-			"metadata": {
-				"originalFilename": "photo.jpg",
-				"uploadedBy": "user_id_string",
-				"uploadTimestamp": "2025-11-06T10:00:00.000Z"
-			}
-		}
-	],
-	"message": "Files uploaded successfully"
+  "success": true,
+  "files": [
+    {
+      "_id": "db_id_string",
+      "filename": "photo.jpg",
+      "hash": "a1b2c3d4e5f6",
+      "path": "global/original/photo-a1b2c3d4e5f6.jpg",
+      "url": "https://cdn.example.com/global/original/photo-a1b2c3d4e5f6.jpg",
+      "mimeType": "image/jpeg",
+      "size": 123456,
+      "createdBy": "user_id_string",
+      "createdAt": "2025-11-06T10:00:00.000Z",
+      "updatedAt": "2025-11-06T10:00:00.000Z",
+      "thumbnails": {
+        "small": { "url": "...", "width": 400, "height": 300 },
+        "medium": { "url": "...", "width": 800, "height": 600 }
+      },
+      "metadata": {
+        "originalFilename": "photo.jpg",
+        "uploadedBy": "user_id_string",
+        "uploadTimestamp": "2025-11-06T10:00:00.000Z"
+      }
+    }
+  ],
+  "message": "Files uploaded successfully"
 }
 ```
 
@@ -241,11 +241,11 @@ GET /api/media
 
 ```json
 {
-	"success": true,
-	"media": [
-		// Array of MediaItem objects
-	],
-	"total": 42
+  "success": true,
+  "media": [
+    // Array of MediaItem objects
+  ],
+  "total": 42
 }
 ```
 
@@ -269,10 +269,10 @@ A single `MediaItem` object.
 
 ```json
 {
-	"success": true,
-	"data": {
-		// A MediaItem object
-	}
+  "success": true,
+  "data": {
+    // A MediaItem object
+  }
 }
 ```
 
@@ -292,11 +292,11 @@ PATCH /api/media/[id]
 
 ```json
 {
-	"filename": "A Better Name.jpg",
-	"metadata": {
-		"alt": "A descriptive alt text.",
-		"tags": ["nature", "mountain"]
-	}
+  "filename": "A Better Name.jpg",
+  "metadata": {
+    "alt": "A descriptive alt text.",
+    "tags": ["nature", "mountain"]
+  }
 }
 ```
 
@@ -306,8 +306,8 @@ PATCH /api/media/[id]
 
 ```json
 {
-	"success": true,
-	"message": "Media file updated successfully"
+  "success": true,
+  "message": "Media file updated successfully"
 }
 ```
 
@@ -329,8 +329,8 @@ DELETE /api/media/[id]
 
 ```json
 {
-	"success": true,
-	"message": "Media deleted successfully"
+  "success": true,
+  "message": "Media deleted successfully"
 }
 ```
 
@@ -351,25 +351,25 @@ Content-Type: application/json
 
 ```json
 {
-	"criteria": {
-		"filename": "photo",
-		"tags": ["nature", "landscape"],
-		"minWidth": 1920,
-		"maxWidth": 3840,
-		"minHeight": 1080,
-		"aspectRatio": "landscape",
-		"minSize": 1048576,
-		"maxSize": 10485760,
-		"fileTypes": ["image/jpeg", "image/png"],
-		"uploadedAfter": "2024-01-01T00:00:00.000Z",
-		"uploadedBefore": "2024-12-31T23:59:59.999Z",
-		"hasEXIF": true,
-		"camera": "Canon",
-		"location": "New York",
-		"dominantColor": "#FF5733",
-		"showDuplicatesOnly": false,
-		"hashMatch": "a1b2c3d4e5f6"
-	}
+  "criteria": {
+    "filename": "photo",
+    "tags": ["nature", "landscape"],
+    "minWidth": 1920,
+    "maxWidth": 3840,
+    "minHeight": 1080,
+    "aspectRatio": "landscape",
+    "minSize": 1048576,
+    "maxSize": 10485760,
+    "fileTypes": ["image/jpeg", "image/png"],
+    "uploadedAfter": "2024-01-01T00:00:00.000Z",
+    "uploadedBefore": "2024-12-31T23:59:59.999Z",
+    "hasEXIF": true,
+    "camera": "Canon",
+    "location": "New York",
+    "dominantColor": "#FF5733",
+    "showDuplicatesOnly": false,
+    "hashMatch": "a1b2c3d4e5f6"
+  }
 }
 ```
 
@@ -402,21 +402,26 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"files": [
-		{
-			"_id": "file_id_1",
-			"filename": "photo-nature.jpg",
-			"hash": "a1b2c3d4e5f6",
-			"width": 1920,
-			"height": 1080,
-			"size": 2458624,
-			"mimeType": "image/jpeg",
-			"tags": ["nature", "landscape"]
-		}
-	],
-	"totalCount": 42,
-	"matchedCriteria": ["filename: \"photo\"", "tags: nature, landscape", "minWidth: 1920px", "aspectRatio: landscape"]
+  "success": true,
+  "files": [
+    {
+      "_id": "file_id_1",
+      "filename": "photo-nature.jpg",
+      "hash": "a1b2c3d4e5f6",
+      "width": 1920,
+      "height": 1080,
+      "size": 2458624,
+      "mimeType": "image/jpeg",
+      "tags": ["nature", "landscape"]
+    }
+  ],
+  "totalCount": 42,
+  "matchedCriteria": [
+    "filename: \"photo\"",
+    "tags: nature, landscape",
+    "minWidth: 1920px",
+    "aspectRatio: landscape"
+  ]
 }
 ```
 
@@ -438,22 +443,22 @@ GET /api/media/search
 
 ```json
 {
-	"success": true,
-	"suggestions": {
-		"tags": ["nature", "landscape", "portrait", "urban"],
-		"cameras": ["Canon EOS 5D", "Nikon D850", "Sony A7III"],
-		"dimensions": [
-			{ "width": 1920, "height": 1080 },
-			{ "width": 3840, "height": 2160 }
-		],
-		"sizesRanges": [
-			{ "min": 0, "max": 102400, "label": "< 100 KB" },
-			{ "min": 102400, "max": 1048576, "label": "100 KB - 1 MB" },
-			{ "min": 1048576, "max": 5242880, "label": "1 MB - 5 MB" },
-			{ "min": 5242880, "max": 10485760, "label": "5 MB - 10 MB" },
-			{ "min": 10485760, "max": null, "label": "> 10 MB" }
-		]
-	}
+  "success": true,
+  "suggestions": {
+    "tags": ["nature", "landscape", "portrait", "urban"],
+    "cameras": ["Canon EOS 5D", "Nikon D850", "Sony A7III"],
+    "dimensions": [
+      { "width": 1920, "height": 1080 },
+      { "width": 3840, "height": 2160 }
+    ],
+    "sizesRanges": [
+      { "min": 0, "max": 102400, "label": "< 100 KB" },
+      { "min": 102400, "max": 1048576, "label": "100 KB - 1 MB" },
+      { "min": 1048576, "max": 5242880, "label": "1 MB - 5 MB" },
+      { "min": 5242880, "max": 10485760, "label": "5 MB - 10 MB" },
+      { "min": 10485760, "max": null, "label": "> 10 MB" }
+    ]
+  }
 }
 ```
 
@@ -474,7 +479,7 @@ Content-Type: application/json
 
 ```json
 {
-	"fileIds": ["file_id_1", "file_id_2", "file_id_3"]
+  "fileIds": ["file_id_1", "file_id_2", "file_id_3"]
 }
 ```
 
@@ -501,17 +506,17 @@ Content-Length: 12582912
 **Example Usage (Client-side):**
 
 ```javascript
-const response = await fetch('/api/media/bulk-download', {
-	method: 'POST',
-	headers: { 'Content-Type': 'application/json' },
-	body: JSON.stringify({ fileIds: ['id1', 'id2'] })
+const response = await fetch("/api/media/bulk-download", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ fileIds: ["id1", "id2"] }),
 });
 
 const blob = await response.blob();
 const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
+const a = document.createElement("a");
 a.href = url;
-a.download = 'media_files.tar.gz';
+a.download = "media_files.tar.gz";
 a.click();
 URL.revokeObjectURL(url);
 ```
@@ -533,7 +538,7 @@ Content-Type: application/json
 
 ```json
 {
-	"fileId": "file_id_to_trash"
+  "fileId": "file_id_to_trash"
 }
 ```
 
@@ -543,9 +548,9 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "File moved to trash",
-	"trashPath": ".trash/global/original/image-hash.jpg"
+  "success": true,
+  "message": "File moved to trash",
+  "trashPath": ".trash/global/original/image-hash.jpg"
 }
 ```
 
@@ -568,24 +573,24 @@ Content-Type: application/json
 
 ```json
 {
-	"operations": [
-		{
-			"type": "resize",
-			"width": 800,
-			"height": 600,
-			"fit": "cover"
-		},
-		{
-			"type": "rotate",
-			"angle": 90
-		},
-		{
-			"type": "blur",
-			"sigma": 5
-		}
-	],
-	"outputFormat": "webp",
-	"quality": 85
+  "operations": [
+    {
+      "type": "resize",
+      "width": 800,
+      "height": 600,
+      "fit": "cover"
+    },
+    {
+      "type": "rotate",
+      "angle": 90
+    },
+    {
+      "type": "blur",
+      "sigma": 5
+    }
+  ],
+  "outputFormat": "webp",
+  "quality": 85
 }
 ```
 
@@ -606,12 +611,12 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"message": "Image manipulated successfully",
-	"newFile": {
-		"_id": "new_file_id",
-		"url": "https://cdn.example.com/manipulated-image.webp"
-	}
+  "success": true,
+  "message": "Image manipulated successfully",
+  "newFile": {
+    "_id": "new_file_id",
+    "url": "https://cdn.example.com/manipulated-image.webp"
+  }
 }
 ```
 
@@ -639,10 +644,10 @@ GET /api/media/exists?filename=photo.jpg
 
 ```json
 {
-	"success": true,
-	"exists": true,
-	"fileId": "existing_file_id",
-	"filename": "photo.jpg"
+  "success": true,
+  "exists": true,
+  "fileId": "existing_file_id",
+  "filename": "photo.jpg"
 }
 ```
 
@@ -669,8 +674,8 @@ Content-Type: application/json
 
 ```json
 {
-	"url": "https://example.com/image.jpg",
-	"access": "public"
+  "url": "https://example.com/image.jpg",
+  "access": "public"
 }
 ```
 
@@ -683,14 +688,14 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"file": {
-		"_id": "new_file_id",
-		"filename": "image.jpg",
-		"url": "https://cdn.example.com/global/original/image-hash.jpg",
-		"mimeType": "image/jpeg",
-		"size": 245862
-	}
+  "success": true,
+  "file": {
+    "_id": "new_file_id",
+    "filename": "image.jpg",
+    "url": "https://cdn.example.com/global/original/image-hash.jpg",
+    "mimeType": "image/jpeg",
+    "size": 245862
+  }
 }
 ```
 
@@ -763,8 +768,8 @@ Content-Type: application/json
 
 ```json
 {
-	"x": 60,
-	"y": 30
+  "x": 60,
+  "y": 30
 }
 ```
 
@@ -781,10 +786,10 @@ Content-Type: application/json
 
 ```json
 {
-	"success": true,
-	"data": {
-		"focalPoint": { "x": 60, "y": 30 }
-	}
+  "success": true,
+  "data": {
+    "focalPoint": { "x": 60, "y": 30 }
+  }
 }
 ```
 
@@ -812,9 +817,9 @@ Content-Type: application/json
 
 **Parameters:**
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `mediaId` | string | ID of the media item to transcode |
+| Field          | Type   | Description                                   |
+| -------------- | ------ | --------------------------------------------- |
+| `mediaId`      | string | ID of the media item to transcode             |
 | `targetFormat` | string | Target format: `hls` (default), `mp4`, `webm` |
 
 **Permissions Required:** `media:update` or admin.
@@ -845,9 +850,9 @@ All endpoints may return standard error responses:
 
 ```json
 {
-	"success": false,
-	"error": "Invalid request parameters",
-	"details": "File size exceeds 50MB limit"
+  "success": false,
+  "error": "Invalid request parameters",
+  "details": "File size exceeds 50MB limit"
 }
 ```
 
@@ -855,8 +860,8 @@ All endpoints may return standard error responses:
 
 ```json
 {
-	"success": false,
-	"error": "Authentication required"
+  "success": false,
+  "error": "Authentication required"
 }
 ```
 
@@ -864,9 +869,9 @@ All endpoints may return standard error responses:
 
 ```json
 {
-	"success": false,
-	"error": "Insufficient permissions",
-	"required": "media:write"
+  "success": false,
+  "error": "Insufficient permissions",
+  "required": "media:write"
 }
 ```
 
@@ -874,9 +879,9 @@ All endpoints may return standard error responses:
 
 ```json
 {
-	"success": false,
-	"error": "Media file not found",
-	"fileId": "requested_file_id"
+  "success": false,
+  "error": "Media file not found",
+  "fileId": "requested_file_id"
 }
 ```
 
@@ -884,9 +889,9 @@ All endpoints may return standard error responses:
 
 ```json
 {
-	"success": false,
-	"error": "Server error occurred",
-	"message": "Failed to process image"
+  "success": false,
+  "error": "Server error occurred",
+  "message": "Failed to process image"
 }
 ```
 

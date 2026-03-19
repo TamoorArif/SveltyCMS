@@ -1,13 +1,13 @@
 ---
-path: 'docs/tests/utility-test-coverage.mdx'
-title: 'Utility Function Test Coverage'
-description: 'Comprehensive test coverage documentation for SveltyCMS utility functions'
+path: "docs/tests/utility-test-coverage.mdx"
+title: "Utility Function Test Coverage"
+description: "Comprehensive test coverage documentation for SveltyCMS utility functions"
 order: 7
-icon: 'mdi:tools'
-author: 'Test Suite'
-created: '2025-01-20'
-updated: '2025-01-20'
-tags: ['testing', 'utilities', 'coverage', 'unit-tests']
+icon: "mdi:tools"
+author: "Test Suite"
+created: "2025-01-20"
+updated: "2025-01-20"
+tags: ["testing", "utilities", "coverage", "unit-tests"]
 ---
 
 # Utility Function Test Coverage
@@ -242,23 +242,23 @@ bun test --watch tests/bun/utils/
 
 ```typescript
 -isISODateString() -
-	dateToISODateString() -
-	stringToISODateString() -
-	toISOString() -
-	normalizeDateInput() -
-	nowISODateString() -
-	isoDateStringToDate() -
-	formatDisplayDate() -
-	formatRelativeDate();
+  dateToISODateString() -
+  stringToISODateString() -
+  toISOString() -
+  normalizeDateInput() -
+  nowISODateString() -
+  isoDateStringToDate() -
+  formatDisplayDate() -
+  formatRelativeDate();
 ```
 
 ### Cryptography
 
 ```typescript
 -hashPassword() - // Argon2id
-	verifyPassword() - // Argon2id verification
-	generateRandomToken() - // Secure random tokens
-	createChecksum(); // SHA-256 checksums
+  verifyPassword() - // Argon2id verification
+  generateRandomToken() - // Secure random tokens
+  createChecksum(); // SHA-256 checksums
 ```
 
 ### Error Handling
@@ -332,7 +332,7 @@ The following utilities still need test coverage:
 
 ```typescript
 // Always verify type guards
-expect(isISODateString('2025-01-20T12:00:00.000Z')).toBe(true);
+expect(isISODateString("2025-01-20T12:00:00.000Z")).toBe(true);
 expect(isAppError(appError)).toBe(true);
 ```
 
@@ -340,27 +340,27 @@ expect(isAppError(appError)).toBe(true);
 
 ```typescript
 // Test boundary conditions
-expect(hashPassword('')).resolves.toBeTruthy(); // Empty
-expect(hashPassword('a'.repeat(1000))).resolves.toBeTruthy(); // Long
-expect(hashPassword('🔒密码')).resolves.toBeTruthy(); // Unicode
+expect(hashPassword("")).resolves.toBeTruthy(); // Empty
+expect(hashPassword("a".repeat(1000))).resolves.toBeTruthy(); // Long
+expect(hashPassword("🔒密码")).resolves.toBeTruthy(); // Unicode
 ```
 
 ### 3. Security Properties
 
 ```typescript
 // Verify security guarantees
-const hash1 = await hashPassword('test');
-const hash2 = await hashPassword('test');
+const hash1 = await hashPassword("test");
+const hash2 = await hashPassword("test");
 expect(hash1).not.toBe(hash2); // Different salts
-expect(hash.startsWith('$argon2id$')).toBe(true); // Correct algorithm
+expect(hash.startsWith("$argon2id$")).toBe(true); // Correct algorithm
 ```
 
 ### 4. Error Handling
 
 ```typescript
 // Test both success and failure paths
-expect(() => stringToISODateString('invalid')).toThrow();
-expect(getLanguageName('invalid-code')).toBeTruthy(); // Graceful fallback
+expect(() => stringToISODateString("invalid")).toThrow();
+expect(getLanguageName("invalid-code")).toBeTruthy(); // Graceful fallback
 ```
 
 ---

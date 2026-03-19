@@ -1,17 +1,17 @@
 ---
-path: 'docs/tests/e2e-stabilization-report.mdx'
-title: 'E2E Stabilization Report'
-description: 'Detailed report on the fixes implemented to restore passing E2E tests across MongoDB, MariaDB, and PostgreSQL.'
+path: "docs/tests/e2e-stabilization-report.mdx"
+title: "E2E Stabilization Report"
+description: "Detailed report on the fixes implemented to restore passing E2E tests across MongoDB, MariaDB, and PostgreSQL."
 order: 5
-icon: 'mdi:bug-check'
-author: 'admin'
-created: '2026-02-14'
-updated: '2026-02-14'
+icon: "mdi:bug-check"
+author: "admin"
+created: "2026-02-14"
+updated: "2026-02-14"
 tags:
-  - 'testing'
-  - 'e2e'
-  - 'playwright'
-  - 'fix-report'
+  - "testing"
+  - "e2e"
+  - "playwright"
+  - "fix-report"
 ---
 
 # E2E Test Fix Report
@@ -34,7 +34,7 @@ E2E tests were disabled (`if: false`) since commit `67c94ffa`. This report docum
 
 ```ts
 await page.addInitScript(() => {
-	sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
+  sessionStorage.setItem("sveltycms_welcome_modal_shown", "true");
 });
 ```
 
@@ -111,8 +111,8 @@ This caused the `handleSetup` hook to redirect ALL requests to `/setup` (includi
 **Fix:** Changed the hook to only redirect GET requests away from `/setup` when setup is complete. POST requests (form actions) are allowed through so the setup wizard can finish its multi-step flow:
 
 ```ts
-if (isSetupRoute && event.request.method === 'GET') {
-	throw redirect(302, '/');
+if (isSetupRoute && event.request.method === "GET") {
+  throw redirect(302, "/");
 }
 ```
 

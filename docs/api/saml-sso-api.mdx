@@ -1,17 +1,17 @@
 ---
-path: 'docs/api/saml-sso-api.mdx'
-title: 'SAML 2.0 / Enterprise SSO API'
-description: 'SAML 2.0 integration for enterprise identity providers with multi-tenant isolation.'
+path: "docs/api/saml-sso-api.mdx"
+title: "SAML 2.0 / Enterprise SSO API"
+description: "SAML 2.0 integration for enterprise identity providers with multi-tenant isolation."
 order: 54
-icon: 'mdi:security'
-author: 'admin'
-created: '2026-03-18'
-updated: '2026-03-18'
+icon: "mdi:security"
+author: "admin"
+created: "2026-03-18"
+updated: "2026-03-18"
 tags:
-  - 'api'
-  - 'saml'
-  - 'sso'
-  - 'enterprise'
+  - "api"
+  - "saml"
+  - "sso"
+  - "enterprise"
 ---
 
 # SAML 2.0 / Enterprise SSO API
@@ -21,6 +21,7 @@ SveltyCMS provides a robust SAML 2.0 integration for enterprise identity provide
 ## Endpoints
 
 ### 1. Configure SAML Connection
+
 **POST** `/api/auth/saml/config`
 
 Configures or updates a SAML connection for a specific tenant.
@@ -28,12 +29,14 @@ Configures or updates a SAML connection for a specific tenant.
 **Authentication**: Required (Admin role)
 
 **Body Parameters**:
+
 - `tenant` (string): The tenant identifier.
 - `product` (string): The product identifier (usually `sveltycms`).
 - `rawMetadata` (string): The XML metadata from the IdP.
 - `defaultRedirectUrl` (string): The URL to redirect to after successful SSO.
 
 **Example Request**:
+
 ```json
 {
   "tenant": "my-tenant",
@@ -44,6 +47,7 @@ Configures or updates a SAML connection for a specific tenant.
 ```
 
 ### 2. Initiate SAML Login
+
 **GET** `/api/auth/saml/login`
 
 Initiates the SAML SSO flow by redirecting the user to their configured Identity Provider.
@@ -51,12 +55,14 @@ Initiates the SAML SSO flow by redirecting the user to their configured Identity
 **Authentication**: Public
 
 **Query Parameters**:
+
 - `tenant` (string): Required. The tenant identifier.
 - `product` (string): Optional. Defaults to `sveltycms`.
 
 **Example**: `GET /api/auth/saml/login?tenant=my-tenant`
 
 ### 3. Assertion Consumer Service (ACS)
+
 **POST** `/api/auth/saml/acs`
 
 The callback endpoint where the IdP sends the SAML assertion.
@@ -66,6 +72,7 @@ The callback endpoint where the IdP sends the SAML assertion.
 **Body**: Multipart/Form-Data (SAMLResponse, RelayState)
 
 **Features**:
+
 - **Just-In-Time (JIT) Provisioning**: Automatically creates users on first login if enabled.
 - **Tenant Isolation**: Strictly enforces that users are logged into the correct tenant.
 - **Security**: Validates signatures, audiences, and expirations.
@@ -73,6 +80,7 @@ The callback endpoint where the IdP sends the SAML assertion.
 ## Multi-Tenant Considerations
 
 When `MULTI_TENANT` is enabled:
+
 - Admins can only configure SAML for their own `tenantId`.
 - Login requests must include the `tenant` parameter.
 - The ACS endpoint validates that the assertion belongs to the requested tenant.
@@ -80,6 +88,7 @@ When `MULTI_TENANT` is enabled:
 ## Just-In-Time (JIT) Provisioning
 
 If `SAML_JIT_PROVISIONING` is set to `true` in system settings:
+
 - New users will be created automatically upon successful SAML authentication.
 - Default role for JIT users is `VIEWER` (configurable).
 - Users are automatically associated with the authenticated tenant.

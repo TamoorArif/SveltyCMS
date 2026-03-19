@@ -1,17 +1,17 @@
 ---
-path: 'docs/widgets/index.mdx'
-title: 'Widget System Overview'
-description: 'Complete widget system overview covering 3-pillar architecture, management, and simplified navigation.'
+path: "docs/widgets/index.mdx"
+title: "Widget System Overview"
+description: "Complete widget system overview covering 3-pillar architecture, management, and simplified navigation."
 order: 1
-icon: 'mdi:widgets'
-author: 'admin'
-created: '2025-10-17'
-updated: '2026-03-03'
+icon: "mdi:widgets"
+author: "admin"
+created: "2025-10-17"
+updated: "2026-03-03"
 tags:
-  - 'developer'
-  - 'widgets'
-  - 'documentation'
-  - 'architecture'
+  - "developer"
+  - "widgets"
+  - "documentation"
+  - "architecture"
 ---
 
 # Widget System Overview
@@ -74,24 +74,24 @@ graph TB
 Defined in your collection schema `fields` array:
 
 ```typescript
-import { widgets } from '@widgets';
+import { widgets } from "@widgets";
 
 export default {
-	fields: [
-		widgets.Input({
-			label: 'Title',
-			required: true,
-			translated: true // Enable multilingual support
-		}),
-		widgets.RichText({
-			label: 'Content',
-			toolbar: 'full'
-		}),
-		widgets.MediaUpload({
-			label: 'Featured Image',
-			accept: 'image/*'
-		})
-	]
+  fields: [
+    widgets.Input({
+      label: "Title",
+      required: true,
+      translated: true, // Enable multilingual support
+    }),
+    widgets.RichText({
+      label: "Content",
+      toolbar: "full",
+    }),
+    widgets.MediaUpload({
+      label: "Featured Image",
+      accept: "image/*",
+    }),
+  ],
 };
 ```
 
@@ -101,25 +101,25 @@ Use the `createWidget` factory:
 
 ```typescript
 // src/widgets/custom/rating/index.ts
-import { createWidget } from '@widgets/widgetFactory';
-import * as v from 'valibot';
+import { createWidget } from "@widgets/widgetFactory";
+import * as v from "valibot";
 
 export default createWidget({
-	Name: 'Rating',
-	Icon: 'mdi:star',
-	Description: '5-star rating widget',
-	inputComponent: () => import('./input.svelte'),
-	displayComponent: () => import('./display.svelte'),
+  Name: "Rating",
+  Icon: "mdi:star",
+  Description: "5-star rating widget",
+  inputComponent: () => import("./input.svelte"),
+  displayComponent: () => import("./display.svelte"),
 
-	// Validation
-	validationSchema: v.number([v.minValue(1), v.maxValue(5)]),
+  // Validation
+  validationSchema: v.number([v.minValue(1), v.maxValue(5)]),
 
-	defaults: {
-		value: 0
-	},
+  defaults: {
+    value: 0,
+  },
 
-	// Enable AI-native generative layout support
-	jsonRender: true
+  // Enable AI-native generative layout support
+  jsonRender: true,
 });
 ```
 
