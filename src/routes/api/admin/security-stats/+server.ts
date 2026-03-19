@@ -8,6 +8,7 @@
  */
 
 import { securityResponseService } from '@src/services/security-response-service';
+import type { SecurityIncident } from '@src/services/security-types';
 import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { AppError } from '@utils/error-handling';
@@ -25,12 +26,12 @@ export const GET = apiHandler(async ({ locals }) => {
 		throw new AppError('Forbidden: Access restricted', 403, 'FORBIDDEN');
 	}
 
-	const stats = securityResponseService.getSecurityStats();
-	const activeIncidents = securityResponseService.getActiveIncidents();
+	const stats = await securityResponseService.getSecurityStats();
+	const activeIncidents = await securityResponseService.getActiveIncidents();
 
 	return json({
 		...stats,
-		recentIncidents: activeIncidents.slice(0, 20).map((inc) => ({
+		recentIncidents: activeIncidents.slice(0, 20).map((inc: SecurityIncident) => ({
 			id: inc.id,
 			clientIp: inc.clientIp,
 			threatLevel: inc.threatLevel,

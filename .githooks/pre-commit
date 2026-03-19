@@ -1,29 +1,29 @@
 #!/usr/bin/env sh
+set -e
 
 echo "🔍 Running pre-commit checks (Native Git Hook)..."
 
-# 0. Format (Biome)
-echo "✨ Formatting..."
-bun run format || exit 1
+# Find staged files (filters out deleted files) to pass to linters
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|js|svelte|json|md)$' || true)
 
-# 1. Lint (Biome)
-echo "⚡ Linting..."
-bun run lint || exit 1
+if [ -n "$STAGED_FILES" ]; then
+    # 0. & 1. Format and Lint (Biome)
+    # Biome has a native flag to only check staged files, which is lightning fast.
+    echo "✨ Formatting & ⚡ Linting (Biome on staged files)..."
+    bunx @biomejs/biome check --write --staged
+
+    # Re-stage files in case Biome fixed formatting/linting issues automatically
+    git add $STAGED_FILES
+else
+    echo "⏩ No relevant staged files found for formatting/linting."
+fi
 
 # 2. Type Check (Svelte Check)
 echo "✅ Type Checking..."
-bun run check || exit 1
+bun run check
 
-# 3. Unit Tests (Exhaustive Vitest/jsdom) - Disabled (using Bun for stability)
-# echo "🧪 Testing (Vitest/jsdom)..."
-# bun run test:unit || exit 1
-
-# 4. Unit Tests (Fast Bun)
+# 3. Unit Tests (Fast Bun)
 echo "🧪 Testing (Bun Native)..."
-bun run test:unit:bun || exit 1
-
-# 5. Integration Tests (API/Middleware) - Disabled
-# echo "🧪 Testing (Integration)..."
-# bun run test:integration || exit 1
+bun run test:unit:bun
 
 echo "✨ Pre-commit checks passed!"

@@ -12,6 +12,16 @@
  * - Response Handling
  */
 
+// Mock database to avoid $app/environment issues
+vi.mock('@src/databases/db', () => ({
+	dbAdapter: {
+		settings: {
+			get: vi.fn().mockResolvedValue({})
+		}
+	},
+	dbInitPromise: Promise.resolve()
+}));
+
 import { securityResponseService } from '@src/services/security-response-service';
 
 describe('SecurityResponseService', () => {
@@ -29,6 +39,14 @@ describe('SecurityResponseService', () => {
 	};
 
 	describe('XSS Pattern Detection', () => {
+		test('checkValue should detect script tags in raw strings', async () => {
+			// Access private method via any cast for testing
+			const checkValue = (securityResponseService as any).checkValue.bind(securityResponseService);
+			expect(checkValue('<script>alert(1)</script>')).toBe('high');
+			expect(checkValue('javascript:alert(1)')).toBe('high');
+			expect(checkValue('<img src=x onerror=alert(1)>')).toBe('high');
+		});
+
 		test('should detect simple script tags and return high status', async () => {
 			const mockRequest = createMockRequest('/?q=<script>alert(1)</script>');
 			const status = await securityResponseService.analyzeRequest(mockRequest, '127.0.0.1');

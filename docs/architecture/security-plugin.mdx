@@ -44,47 +44,30 @@ SveltyCMS implements a **multi-layered, enterprise-grade security system** that 
 
 ```typescript
 export class SecurityResponseService {
-	private threats: Map<string, ThreatProfile> = new Map();
-	private blockedIPs: Set<string> = new Set();
-	private rateLimits: Map<string, RateLimit> = new Map();
+	// Centralized security analysis
+	public async analyzeRequest(request: Request, clientIp: string): Promise<SecurityStatus> {
+		// 1. IP Block check (Persistent Redis state)
+		if (await securityStore.isBlocked(clientIp)) return { level: 'critical', action: 'block' };
 
-	async analyzeRequest(request: SecurityRequest): Promise<ThreatLevel> {
-		const threats = [
-			this.detectSQLInjection(request),
-			this.detectXSSAttempt(request),
-			this.detectCSRFAttack(request),
-			this.detectBruteForce(request),
-			this.detectAnomalousPatterns(request)
-		];
+		// 2. Rate Limit check (Per-endpoint + Global)
+		const rateLimit = await this.checkRateLimit(clientIp, new URL(request.url).pathname);
+		if (rateLimit.action !== 'allow') return rateLimit;
 
-		const maxThreat = Math.max(...threats);
-		return this.classifyThreat(maxThreat);
-	}
-
-	async executeResponse(threatLevel: ThreatLevel, clientIP: string): Promise<void> {
-		switch (threatLevel) {
-			case 'critical':
-				await this.blockIP(clientIP, '24h');
-				await this.alertSecurityTeam(threatLevel, clientIP);
-				break;
-			case 'high':
-				await this.blockIP(clientIP, '1h');
-				await this.increaseSurveillance(clientIP);
-				break;
-			case 'medium':
-				await this.applyRateLimit(clientIP, { requests: 10, window: '1m' });
-				break;
-		}
+		// 3. Payload pattern analysis (XSS, SQLi, ReDoS-safe)
+		const threatLevel = await this.analyzePayload(request);
+		
+		// 4. Automated Decision Engine
+		return this.mapThreatToResponse(threatLevel, clientIp);
 	}
 }
 ```
 
 **Key Features**:
 
-- **Multi-Vector Threat Detection**: SQL injection, XSS, CSRF, brute force analysis
-- **Dynamic Response**: Automated blocking, rate limiting, and alerting
-- **Threat Correlation**: Pattern recognition across multiple requests
-- **Escalation Management**: Graduated response based on threat severity
+- **Distributed Rate Limiting**: Redis-backed limits for high-availability clusters.
+- **ReDoS-Safe Patterns**: Bounded regex quantifiers and length-capped payload scanning.
+- **Structured Analysis**: Recursive JSON scanning and multipart value inspection.
+- **Multi-Tenant Isolation**: Automated security response scoped by `tenantId`.
 
 ### MetricsService - Security Analytics
 

@@ -34,10 +34,9 @@ vi.mock('@src/databases/cache/cache-service', () => ({
 	REDIS_TTL_S: 300
 }));
 
+// Use dynamic import for services to ensure mocks are applied correctly
+const { metricsService } = await import('@src/services/metrics-service');
 const { cacheService } = await import('@src/databases/cache/cache-service');
-
-// Use global mocks from setup.ts
-const metricsService = (globalThis as any).metricsService;
 
 // --- Test Utilities ---
 

@@ -1,54 +1,65 @@
 /**
  * @file scripts/run-bun-tests.ts
- * @description Isolated test runner for Bun to prevent module pollution/caching issues.
+ * @description Isolated test runner for Bun leveraging native Bun APIs.
  */
 
-import { spawnSync } from 'node:child_process';
-import { globSync } from 'glob';
+import { Glob } from 'bun';
 
 async function run() {
-	console.log('🧪 Running Bun Unit Tests in Isolated Mode...');
+	console.log('\x1b[36m🧪 Running Bun Unit Tests in Isolated Mode...\x1b[0m');
 
-	const files = globSync('tests/unit/**/*.test.ts').sort();
+	// 1. Use native Bun.Glob instead of npm 'glob'
+	const glob = new Glob('tests/unit/**/*.test.ts');
+	const files = Array.from(glob.scanSync('.'))
+		.filter((file) => !file.includes('sample')) // Filter cleanly
+		.sort();
+
 	let totalPassed = 0;
-	let totalFailed = 0;
 	const failedFiles: string[] = [];
 
 	for (const file of files) {
-		// Skip samples or templates if any
-		if (file.includes('sample')) continue;
-
-		console.log(`\n---------------------------------------------------------`);
+		console.log(`
+---------------------------------------------------------`);
 		console.log(`📂 Testing ${file}`);
 		console.log(`---------------------------------------------------------`);
 
-		const result = spawnSync('bun', ['test', '--preload', './tests/unit/setup.ts', '--timeout', '20000', file], {
-			stdio: 'inherit',
-			shell: true
+		// 2. Use native Bun.spawnSync instead of node:child_process
+		const proc = Bun.spawnSync(['bun', 'test', '--preload', './tests/unit/setup.ts', '--timeout', '20000', file], {
+			stdio: ['inherit', 'inherit', 'inherit']
 		});
 
-		if (result.status === 0) {
+		// Bun's spawnSync returns a convenient boolean for success
+		if (proc.success) {
 			totalPassed++;
 		} else {
-			totalFailed++;
 			failedFiles.push(file);
 		}
 	}
 
-	console.log(`\n\n=========================================================`);
+	const totalFailed = failedFiles.length;
+
+	// 3. Add terminal colors for better DX
+	console.log(`
+
+=========================================================`);
 	console.log(`📊 Bun Test Summary:`);
-	console.log(`✅ Passed: ${totalPassed}`);
-	console.log(`❌ Failed: ${totalFailed}`);
+	console.log(`\x1b[32m✅ Passed: ${totalPassed}\x1b[0m`);
+
 	if (totalFailed > 0) {
-		console.log(`\nFailed Files:`);
+		console.log(`\x1b[31m❌ Failed: ${totalFailed}\x1b[0m
+`);
+		console.log(`Failed Files:`);
 		failedFiles.forEach((f) => console.log(`  - ${f}`));
+		console.log(`=========================================================`);
 		process.exit(1);
+	} else {
+		console.log(`\x1b[32m❌ Failed: 0\x1b[0m`);
+		console.log(`=========================================================`);
+		process.exit(0);
 	}
-	console.log(`=========================================================`);
-	process.exit(0);
 }
 
 run().catch((err) => {
-	console.error('Test runner failed:', err);
+	console.error('\x1b[31mTest runner failed:\x1b[0m', err);
 	process.exit(1);
 });

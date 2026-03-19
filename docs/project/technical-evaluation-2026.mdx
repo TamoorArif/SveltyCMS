@@ -60,7 +60,11 @@ In March 2026, SveltyCMS implemented several enterprise-grade infrastructure opt
     - **GraphQL Isolation:** Eliminated schema leakage by deploying isolated per-tenant Yoga server instances.
     - **SSE Hygiene:** Resolved a critical memory leak in the real-time event stream and implemented tenant-aware real-time filtering.
     - **Encrypted Data Portability:** Standardized AES-256-GCM encryption for all sensitive fields during tenant-scoped data exports.
-    - **Infrastructure Hardening:** Implemented native SSRF protection, command injection prevention, and directory traversal validation for media and system operations.
+    - **Automated Security Response (v2026)**: Implemented a unified `SecurityResponseService` providing:
+        - **Structured Payload Scanning**: JSON and Form-data aware parsing, avoiding the overhead of raw string scanning on binary/multipart payloads.
+        - **Bounded ReDoS Protection**: All security regex patterns now use strictly bounded quantifiers ({0,500}), effectively eliminating the risk of accidental or malicious Regular Expression Denial of Service.
+        - **Distributed Redis State**: Security incidents, IP throttles, and blocks are distributed via Redis, ensuring immediate global protection across multi-node clusters.
+        - **Performance Early-Exits**: Sub-microsecond `Content-Length` checks and a 32KB processing cap for unknown payload types ensure high-volume protection without performance degradation.
 ### 2.3 The Typed Widget Revolution (March 2026)
 
 One of the most significant architectural leaps in 2026 was the migration of the "Three Pillars" widget system from string-based paths to **Type-Safe Component Loaders**.

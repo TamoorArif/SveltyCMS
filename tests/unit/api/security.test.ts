@@ -2,45 +2,42 @@
  * @file tests/unit/api/security.test.ts
  * @description Unit tests for unified security API endpoints, focusing on stats and reporting.
  */
+/**
+ * @file tests/unit/api/security.test.ts
+ */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type {} from 'vitest';
 
-// 1. Local mocks definition
-const mockStats = {
-	totalIncidents: 10,
-	activeIncidents: 2,
-	blockedIPs: 5,
-	threatLevelDistribution: { none: 20, low: 5, medium: 3, high: 1, critical: 1 },
-	metrics: { cspViolations: 0, rateLimitViolations: 0, authFailures: 0 },
-	overallStatus: 'stable'
-};
+const vi = (globalThis as any).vi;
 
-// Mock services that might be used by the handler
-const mockMetricsService = (globalThis as any).metricsService || {
-	incrementCSPViolations: vi.fn(),
-	getReport: vi.fn(() => ({ security: { cspViolations: 0, rateLimitViolations: 0, authFailures: 0 } }))
-};
-
-const mockSecurityResponseService = (globalThis as any).securityResponseService || {
-	getSecurityStats: vi.fn(() => mockStats),
-	getActiveIncidents: vi.fn(() => []),
-	analyzeRequest: vi.fn(() => Promise.resolve({ level: 'none', action: 'allow' }))
-};
-
-// Set up the module mocks BEFORE importing handlers
-vi.mock('@src/services/metrics-service', () => ({ metricsService: mockMetricsService }));
-vi.mock('@src/services/security-response-service', () => ({ securityResponseService: mockSecurityResponseService }));
-
-// 2. Import handlers dynamically AFTER mocks
+// 2. Import handlers and services dynamically AFTER mocks
 const { GET: getStats } = await import('@src/routes/api/security/stats/+server');
 const { POST: postCspReport } = await import('@src/routes/api/security/csp-report/+server');
 
-// Import services for verification in tests
-import { metricsService } from '@src/services/metrics-service';
+// Import services for verification in tests - dynamic for mocking
+const { metricsService: testMetricsService } = await import('@src/services/metrics-service');
+const { securityResponseService: testSecurityService } = await import('@src/services/security-response-service');
 
 describe('Security API Unit Tests', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		// Setup default mock behaviors for this test file
+		(testMetricsService.getReport as any).mockReturnValue({
+			security: {
+				rateLimitViolations: 5,
+				cspViolations: 10,
+				authFailures: 2
+			}
+		});
+
+		(testSecurityService.getSecurityStats as any).mockResolvedValue({
+			activeIncidents: 10,
+			totalIncidentsLast24h: 50,
+			threatDistribution: { low: 5, medium: 2, high: 2, critical: 1 }
+		});
+
+		(testSecurityService.getActiveIncidents as any).mockResolvedValue([]);
 	});
 
 	describe('GET /api/security/stats', () => {
@@ -101,16 +98,18 @@ describe('Security API Unit Tests', () => {
 			expect(data.status).toBe('received');
 
 			// Verify it tracked the violation
-			expect(metricsService.incrementCSPViolations).toHaveBeenCalledWith('tenant1');
+			expect(testMetricsService.incrementCSPViolations).toHaveBeenCalledWith('tenant1');
 		});
 
 		it('should ignore false positives', async () => {
+			(testMetricsService.incrementCSPViolations as any).mockClear();
+
 			const report = {
 				'csp-report': {
 					'document-uri': 'http://localhost/page',
 					'violated-directive': 'script-src',
 					'original-policy': "script-src 'self'",
-					'blocked-uri': 'chrome-extension://malicious/script.js',
+					'blocked-uri': 'chrome-extension://mgijgjocnepluclmbiolglitmbebeonv/script.js',
 					disposition: 'enforce'
 				}
 			};
@@ -122,16 +121,17 @@ describe('Security API Unit Tests', () => {
 					},
 					json: vi.fn().mockResolvedValue(report)
 				},
-				locals: { tenantId: 'tenant1' },
-				getClientAddress: () => '127.0.0.1'
+				getClientAddress: () => '127.0.0.1',
+				locals: { tenantId: 'tenant1' }
 			} as any;
 
 			const response = await postCspReport(event);
+
 			expect(response.status).toBe(200);
 
 			const data = await response.json();
 			expect(data.status).toBe('ignored');
-			expect(metricsService.incrementCSPViolations).not.toHaveBeenCalled();
+			expect(testMetricsService.incrementCSPViolations).not.toHaveBeenCalled();
 		});
 	});
 });

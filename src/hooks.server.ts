@@ -32,8 +32,7 @@ import { handleStaticAssetCaching } from './hooks/handle-static-asset-caching';
 import { handleCompression } from './hooks/handle-compression';
 import { handleTestIsolation } from './hooks/handle-test-isolation';
 import { handleSystemState } from './hooks/handle-system-state';
-import { handleFirewall } from './hooks/handle-firewall';
-import { handleRateLimit } from './hooks/handle-rate-limit';
+import { handleSecurity } from './hooks/handle-security';
 import { handleSetup } from './hooks/handle-setup';
 import { handleLocale } from './hooks/handle-locale';
 import { handleTheme } from './hooks/handle-theme';
@@ -99,8 +98,7 @@ const middleware: Handle[] = [
 	handleStaticAssetCaching, // 3. highest hit-rate early exit
 	handleCompression, // 4. streaming-safe after static
 	handleSystemState, // 5. readiness gate
-	handleFirewall, // 5. threat detection
-	handleRateLimit, // 6. abuse prevention
+	handleSecurity, // 6. Unified firewall & rate limiting
 	handleSetup, // 7. setup gate
 	handleLocale, // 8. i18n
 	handleTheme, // 9. SSR theme

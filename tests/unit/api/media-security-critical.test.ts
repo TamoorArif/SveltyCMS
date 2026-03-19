@@ -3,76 +3,82 @@
  * @description Unit tests for critical Media API security fixes (Command Injection, SSRF, Directory Traversal).
  */
 
-// --- Mocks must be at the top level ---
+import type {} from 'vitest';
 
-const actualChildProcess = require('node:child_process');
-const mockSpawn = vi.fn(() => ({
-	on: vi.fn((event, cb) => {
-		if (event === 'exit') cb(0);
-	}),
-	stderr: { on: vi.fn() }
-}));
+const vi = (globalThis as any).vi;
 
-vi.mock('node:child_process', () => ({
-	...actualChildProcess,
-	spawn: mockSpawn,
-	default: { ...actualChildProcess, spawn: mockSpawn }
-}));
-
-const actualDns = require('node:dns/promises');
-const mockLookup = vi.fn().mockImplementation(async (hostname: string) => {
-	let ip = '8.8.8.8';
-	if (hostname.includes('loopback') || hostname.includes('localhost')) ip = '127.0.0.1';
-	else if (hostname.includes('internal')) ip = '10.0.1.5';
-	console.log(`--- mockLookup called for: [${hostname}] -> returning ${ip}`);
-	return { address: ip, family: 4 };
+vi.mock('node:fs/promises', () => {
+	const mockReadFile = vi.fn().mockResolvedValue(Buffer.from('ok'));
+	const mockMkdir = vi.fn().mockResolvedValue(undefined);
+	const mockWriteFile = vi.fn().mockResolvedValue(undefined);
+	const mockAccess = vi.fn().mockResolvedValue(undefined);
+	const mockUnlink = vi.fn().mockResolvedValue(undefined);
+	return {
+		readFile: mockReadFile,
+		mkdir: mockMkdir,
+		writeFile: mockWriteFile,
+		access: mockAccess,
+		unlink: mockUnlink,
+		default: {
+			readFile: mockReadFile,
+			mkdir: mockMkdir,
+			writeFile: mockWriteFile,
+			access: mockAccess,
+			unlink: mockUnlink
+		}
+	};
 });
-vi.mock('node:dns/promises', () => ({
-	...actualDns,
-	lookup: mockLookup,
-	default: { ...actualDns, lookup: mockLookup }
+
+vi.mock('@src/databases/db', () => {
+	const mockDbAdapter = {
+		crud: { findOne: vi.fn(), updateOne: vi.fn() },
+		media: { findOne: vi.fn(), updateOne: vi.fn() },
+		auth: { getUserById: vi.fn() }
+	};
+	return {
+		dbAdapter: mockDbAdapter,
+		dbInitPromise: Promise.resolve(),
+		getDb: () => mockDbAdapter,
+		getAuth: () => mockDbAdapter.auth
+	};
+});
+
+vi.mock('@src/services/settings-service', () => ({
+	getSettings: (globalThis as any).vi.fn().mockResolvedValue({
+		media: {
+			allowedExtensions: ['jpg', 'png', 'gif'],
+			maxSize: 10 * 1024 * 1024
+		}
+	}),
+	getPublicSettingSync: (globalThis as any).vi.fn().mockReturnValue('mediaFolder')
 }));
-
-const actualFs = require('node:fs/promises');
-const fsMocks = {
-	readFile: vi.fn().mockResolvedValue(Buffer.from('ok')),
-	mkdir: vi.fn(),
-	writeFile: vi.fn(),
-	access: vi.fn()
-};
-vi.mock('node:fs/promises', () => ({
-	...actualFs,
-	...fsMocks,
-	default: { ...actualFs, ...fsMocks }
-}));
-
-// 4. Mock App dependencies
-// Mock db, settings, error-handling, and logger are handled by setup.ts
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { spawn } from 'node:child_process';
-import { isPrivateIP, validateRemoteUrl } from '@src/utils/security/url-validator';
-import * as storage from '@src/utils/media/media-storage.server';
 
 vi.mock('@src/utils/media/media-service.server', () => {
 	class MockMediaService {
-		ensureInitialized = vi.fn();
-		getMedia = vi.fn();
-		updateMedia = vi.fn().mockResolvedValue({ success: true, metadata: {} });
-		deleteMedia = vi.fn();
-		saveMedia = vi.fn();
-		manipulateMedia = vi.fn();
-		saveRemoteMedia = vi.fn();
-		batchProcessImages = vi.fn();
+		ensureInitialized = (globalThis as any).vi.fn();
+		getMedia = (globalThis as any).vi.fn();
+		updateMedia = (globalThis as any).vi.fn().mockResolvedValue({ success: true, metadata: {} });
+		deleteMedia = (globalThis as any).vi.fn();
+		saveMedia = (globalThis as any).vi.fn();
+		manipulateMedia = (globalThis as any).vi.fn();
+		saveRemoteMedia = (globalThis as any).vi.fn();
+		batchProcessImages = (globalThis as any).vi.fn();
 	}
 	return {
 		MediaService: MockMediaService
 	};
 });
 
-// Import the handler AFTER everything is mocked
-import { POST as transcodePOST } from '@src/routes/api/media/transcode/+server';
-import { dbAdapter } from '@src/databases/db';
+// 3. Import modules dynamically AFTER mocks for Bun compatibility
+const { spawn } = await import('node:child_process');
+const { lookup } = await import('node:dns/promises');
+const { isPrivateIP, validateRemoteUrl } = await import('@src/utils/security/url-validator');
+const storage = await import('@src/utils/media/media-storage.server');
+const { POST: transcodePOST } = await import('@src/routes/api/media/transcode/+server');
+const { dbAdapter } = await import('@src/databases/db');
+
+// Use Vitest's mocked helper for typed mocks
+const mockLookup = lookup as any;
 
 describe('Critical Security Fixes Verification', () => {
 	beforeEach(() => {
@@ -153,7 +159,14 @@ describe('Critical Security Fixes Verification', () => {
 
 		it('should allow legitimate deep paths within mediaFolder', async () => {
 			const safePath = 'sub/folder/image.jpg';
-			await expect(storage.getFile(safePath)).resolves.toBeDefined();
+			console.log('--- getFile debug:', {
+				hasStorage: !!storage,
+				getFileType: typeof storage.getFile,
+				safePath
+			});
+			const res = await storage.getFile(safePath);
+			console.log('--- getFile res:', { res: !!res, resType: typeof res });
+			expect(res).toBeDefined();
 		});
 	});
 });

@@ -287,7 +287,11 @@ export const dbConfigSchema = pipe(
 		if (input.type === 'postgresql' || input.type === 'mysql' || input.type === 'mariadb') {
 			return input.user.length > 0 && input.password.length > 0;
 		}
-		// For MongoDB (both standard and Atlas), authentication is optional
+		// For MongoDB Atlas, authentication is essentially mandatory
+		if (input.type === 'mongodb+srv') {
+			return input.user.length > 0 && input.password.length > 0;
+		}
+		// For MongoDB standard (local/Docker), authentication is optional
 		// This allows local development without auth (e.g., MongoDB Compass)
 		return true;
 	}, 'Username and password are required for this database type.')

@@ -1,97 +1,19 @@
 /**
  * @file src/services/security-response-service.ts
  * @description Enterprise-grade automated security response system with dynamic threat detection
- *
- * ### Features
- * - Real-time threat detection and classification (SQLi, XSS, command injection, path traversal, LDAP injection)
- * - OWASP-aligned pattern matching with anomaly scoring
- * - Sliding window per-IP rate limiting with per-endpoint overrides
- * - Header and payload anomaly detection (oversized bodies, unusual Content-Types, missing UA)
- * - Automated IP blocking, throttling, and blacklisting
- * - Webhook alerting for critical incidents (Slack/generic JSON)
- * - Security incident reporting, metrics, and admin API
- * - Configurable security policies with escalation
- * - Graceful cleanup with process signal handling
- *
- * @enterprise Advanced threat detection for production environments
  */
 
 import { logger } from '@utils/logger.server';
 import { building } from '$app/environment';
 import { metricsService } from './metrics-service';
+import { SECURITY_PATTERNS } from './security-patterns';
+import { securityStore } from './security-state-store';
+import { RateLimiterMemory, RateLimiterRedis } from 'rate-limiter-flexible';
+import { cacheService } from '@src/databases/cache/cache-service';
+import type { SecurityIncident, SecurityPolicy, SecurityStatus, ThreatIndicator, ThreatLevel, AnomalyResult } from './security-types';
 
 // ============================================================================
-// TYPES
-// ============================================================================
-
-export type ThreatLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
-export type ResponseAction = 'monitor' | 'warn' | 'throttle' | 'block' | 'blacklist' | 'challenge' | 'allow';
-
-export interface SecurityStatus {
-	action: ResponseAction;
-	level: ThreatLevel;
-	reason?: string;
-}
-
-export interface ThreatIndicator {
-	evidence: string;
-	metadata?: Record<string, unknown>;
-	severity: number; // 1-10 scale
-	timestamp: number;
-	type:
-		| 'rate_limit'
-		| 'auth_failure'
-		| 'csp_violation'
-		| 'sql_injection'
-		| 'xss_attempt'
-		| 'brute_force'
-		| 'suspicious_ua'
-		| 'ip_reputation'
-		| 'command_injection'
-		| 'ldap_injection'
-		| 'path_traversal'
-		| 'header_anomaly'
-		| 'payload_anomaly';
-}
-
-export interface SecurityIncident {
-	clientIp: string;
-	id: string;
-	indicators: ThreatIndicator[];
-	notes?: string;
-	resolved: boolean;
-	responseActions: ResponseAction[];
-	threatLevel: ThreatLevel;
-	timestamp: number;
-	userAgent?: string;
-	tenantId?: string;
-}
-
-export interface SecurityPolicy {
-	cooldownPeriod: number;
-	name: string;
-	responses: ResponseAction[];
-	threatLevel: ThreatLevel;
-	triggers: {
-		indicatorThreshold: number;
-		timeWindow: number;
-		severityThreshold: number;
-	};
-}
-
-/** Sliding window rate limit tracking */
-interface RateLimitEntry {
-	timestamps: number[];
-}
-
-/** Anomaly detection result */
-interface AnomalyResult {
-	detected: boolean;
-	indicators: ThreatIndicator[];
-}
-
-// ============================================================================
-// SECURITY POLICIES
+// CONSTANTS & POLICIES
 // ============================================================================
 
 const DEFAULT_POLICIES: SecurityPolicy[] = [
@@ -113,12 +35,11 @@ const DEFAULT_POLICIES: SecurityPolicy[] = [
 		name: 'Critical Threat Response',
 		threatLevel: 'critical',
 		triggers: { indicatorThreshold: 3, timeWindow: 5 * 60 * 1000, severityThreshold: 9 },
-		responses: ['warn', 'blacklist'],
+		responses: ['warn', 'block'],
 		cooldownPeriod: 60 * 60 * 1000
 	}
 ];
 
-/** Per-endpoint rate limit overrides (requests per minute) */
 const ENDPOINT_RATE_LIMITS: Record<string, number> = {
 	'/api/auth/login': 5,
 	'/api/auth/saml/acs': 10,
@@ -127,159 +48,83 @@ const ENDPOINT_RATE_LIMITS: Record<string, number> = {
 	'/api/scim/v2': 30
 };
 
-/** Default global rate limit: requests per minute per IP */
 const GLOBAL_RATE_LIMIT = 100;
-
-/** Maximum request body size for non-media endpoints (10MB) */
-const MAX_BODY_SIZE = 10 * 1024 * 1024;
-
-/** Warning threshold for body size (1MB) */
-const WARN_BODY_SIZE = 1 * 1024 * 1024;
-
-/** Allowed content types for API endpoints */
-const ALLOWED_CONTENT_TYPES = ['application/json', 'application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain'];
+const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10MB
+const SCAN_BODY_MAX_SIZE = 32768; // 32KB
 
 // ============================================================================
 // SECURITY RESPONSE SERVICE
 // ============================================================================
 
 class SecurityResponseService {
-	private readonly incidents = new Map<string, SecurityIncident>();
-	private readonly blockedIPs = new Set<string>();
-	private readonly throttledIPs = new Map<string, { until: number; factor: number }>();
 	private readonly policies: SecurityPolicy[] = [];
-	private cleanupInterval: NodeJS.Timeout | null = null;
-
-	// Sliding window rate limiter storage
-	private readonly rateLimitStore = new Map<string, RateLimitEntry>();
-
-	// Alert rate limiting (prevent alert fatigue)
+	private readonly limiters = new Map<string, RateLimiterMemory | RateLimiterRedis>();
 	private readonly lastAlertTime = new Map<string, number>();
-	private readonly ALERT_COOLDOWN = 5 * 60 * 1000; // 5 minutes between alerts per IP
-
-	// Pre-compiled regex patterns — OWASP-aligned, ReDoS-safe
-	private readonly patterns = {
-		// SQL Injection patterns (UNION, boolean, time-based, stacked, comment)
-		sqli: [
-			/(%27)|(')|(--)|(%23)|(#)/i,
-			/((%3D)|(=))[^\n]*((%27)|(')|(--)|(%3B)|(;))/i,
-			/\w*((%27)|('))((%6F)|o|(%4F))((%72)|r|(%52))/i,
-			/((%27)|('))union/i,
-			/exec(\s|\+)+(s|x)p\w+/i,
-			/\b(union\s+(all\s+)?select|select\s+.*from|insert\s+into|update\s+.*set|delete\s+from|drop\s+(table|database))\b/i,
-			/\b(or|and)\s+\d+=\d+/i,
-			/\b(waitfor|benchmark|sleep|pg_sleep)\s*\(/i,
-			/;\s*(drop|alter|create|truncate|exec)\b/i,
-			/\/\*.*\*\//i
-		],
-		// XSS patterns (tags, event handlers, javascript: URIs, encoded)
-		xss: [
-			/((%3C)|<)((%2F)|\/)*[a-z0-9%]+((%3E)|>)/i,
-			/((%3C)|<)((%69)|i|(%49))((%6D)|m|(%4D))((%67)|g|(%47))[^\n]+((%3E)|>)/i,
-			/((%3C)|<)[^\n]+((%3E)|>)/i,
-			/\b(on(load|error|click|mouseover|focus|blur|submit|change|input|keyup|keydown))\s*=/i,
-			/javascript\s*:/i,
-			/\beval\s*\(/i,
-			/\bdocument\.(cookie|domain|write|location)/i,
-			/\bwindow\.(location|open|eval)/i,
-			/<script[^>]*>/i,
-			/<iframe[^>]*>/i,
-			/<object[^>]*>/i,
-			/<embed[^>]*>/i
-		],
-		// Path traversal
-		pathTraversal: [/(\.\.(\/|\\))/i, /(%2e%2e(%2f|%5c))/i, /\.\.(\/|\\){2,}/i],
-		// Command injection (pipe, backtick, $(), &&, ||)
-		commandInjection: [
-			/[;|`]\s*(cat|ls|dir|whoami|id|uname|passwd|shadow|wget|curl|nc|ncat|bash|sh|cmd|powershell)\b/i,
-			/\$\([^)]+\)/i,
-			/\b(&&|\|\|)\s*(cat|ls|rm|mv|cp|wget|curl)\b/i,
-			/`[^`]*`/i
-		],
-		// LDAP injection
-		ldapInjection: [/[()\\*|&]/, /\\x00/, /\b(objectClass|cn|uid|sn|givenName|mail)\s*[=~><]/i], // Suspicious user agents (scanners, attack tools)
-		suspicious_ua: [
-			/sqlmap/i,
-			/nikto/i,
-			/burpsuite/i,
-			/nmap/i,
-			/masscan/i,
-			/dirbuster/i,
-			/gobuster/i,
-			/wfuzz/i,
-			/hydra/i,
-			/metasploit/i,
-			/acunetix/i,
-			/nessus/i,
-			/openvas/i,
-			/w3af/i,
-			/skipfish/i
-		]
-	};
+	private readonly ALERT_COOLDOWN = 5 * 60 * 1000;
 
 	constructor() {
 		this.policies = [...DEFAULT_POLICIES];
-
-		if (!building) {
-			this.cleanupInterval = setInterval(
-				() => {
-					this.cleanupOldIncidents();
-					this.cleanupRateLimitStore();
-				},
-				60 * 60 * 1000
-			);
-		}
 	}
 
-	// ========================================================================
-	// THREAT DETECTION
-	// ========================================================================
+	private async getOrCreateLimiter(endpoint: string): Promise<RateLimiterMemory | RateLimiterRedis> {
+		// Use explicit 'global' scope for fallback readability
+		const scope = ENDPOINT_RATE_LIMITS[endpoint] ? endpoint : 'global';
+		const limit = ENDPOINT_RATE_LIMITS[scope] || GLOBAL_RATE_LIMIT;
+
+		const cached = this.limiters.get(scope);
+		if (cached) return cached;
+
+		const options = {
+			points: limit,
+			duration: 60, // 1 minute window
+			keyPrefix: `svelty:sec:rl:${scope.replace(/\//g, '_').replace(/^_/, '')}`
+		};
+
+		const redisClient = cacheService.getRedisClient();
+		let limiter: RateLimiterMemory | RateLimiterRedis;
+
+		if (redisClient) {
+			limiter = new RateLimiterRedis({ storeClient: redisClient, ...options });
+		} else {
+			limiter = new RateLimiterMemory(options);
+		}
+
+		this.limiters.set(scope, limiter);
+		return limiter;
+	}
 
 	/** Analyzes a request for potential security threats. */
 	public async analyzeRequest(request: Request, clientIp: string): Promise<SecurityStatus> {
-		// 1. Blocklist check (fastest)
-		if (this.isBlocked(clientIp)) {
-			return { level: 'critical', action: 'block', reason: 'IP is in blocklist' };
-		}
-
-		// 2. Rate limit check (fast, per-endpoint aware)
 		const url = new URL(request.url);
-		const rateLimitResult = this.checkRateLimit(clientIp, url.pathname);
+		const pathname = url.pathname;
 
-		// In SveltyCMS, we use the tenant context even for rate limiting if available
-		const { getTenantIdFromHostname } = await import('@utils/tenant-utils');
-		const { getPrivateSettingSync } = await import('@src/services/settings-service');
-		const multiTenant = getPrivateSettingSync('MULTI_TENANT') ?? false;
-		const tenantId = getTenantIdFromHostname(url.hostname, !!multiTenant);
-
-		if (!rateLimitResult.allowed) {
-			this.reportSecurityEvent(
-				clientIp,
-				'rate_limit',
-				6,
-				`Rate limit exceeded for ${url.pathname}`,
-				{
-					endpoint: url.pathname,
-					limit: rateLimitResult.limit,
-					count: rateLimitResult.count
-				},
-				tenantId || undefined
-			);
-			return { level: 'high', action: 'throttle', reason: `Rate limit exceeded (${rateLimitResult.count}/${rateLimitResult.limit}/min)` };
+		// 1. IP Block check
+		if (await securityStore.isBlocked(clientIp)) {
+			return { level: 'critical', action: 'block', reason: 'IP is blocked' };
 		}
 
-		// 3. Header/payload anomaly detection (fast)
+		// 2. Rate Limit check
+		const rateLimit = await this.checkRateLimit(clientIp, pathname);
+		if (rateLimit.action !== 'allow') return rateLimit;
+
+		// 3. Throttling check
+		const throttle = await securityStore.getThrottle(clientIp);
+		if (throttle && throttle.until > Date.now()) {
+			return { level: 'medium', action: 'throttle', reason: 'IP is throttled' };
+		}
+
+		// 4. Anomaly detection
 		const anomaly = this.detectAnomalies(request);
 		if (anomaly.detected) {
 			for (const ind of anomaly.indicators) {
-				this.processIndicator(clientIp, ind, tenantId || undefined);
+				await this.processIndicator(clientIp, ind);
 			}
 			if (anomaly.indicators.some((i) => i.severity >= 8)) {
 				return { level: 'high', action: 'challenge', reason: 'Request anomaly detected' };
 			}
 		}
 
-		// 4. Payload pattern analysis (slower, CPU intensive)
+		// 5. Payload pattern analysis
 		const threatLevel = await this.analyzePayload(request);
 		if (threatLevel === 'critical') {
 			await this.blockIp(clientIp, 'Critical threat detected in payload');
@@ -292,229 +137,182 @@ class SecurityResponseService {
 		return { level: 'none', action: 'allow' };
 	}
 
-	/** Analyzes the request payload for attack patterns. */
 	private async analyzePayload(request: Request): Promise<ThreatLevel> {
 		const url = new URL(request.url);
-		const queryString = url.search;
-		const body = request.method !== 'GET' ? await request.clone().text() : '';
-		const allContent = `${url.pathname} ${queryString} ${body}`;
+		let maxThreat: ThreatLevel = 'none';
+
+		// Scan URL
+		const urlThreat = this.checkValue(`${url.pathname} ${url.search}`, url.pathname.includes('/scim/'));
+		if (urlThreat === 'critical') return 'critical';
+		maxThreat = this.upgradeThreat(maxThreat, urlThreat);
+
+		// Scan User Agent
 		const userAgent = request.headers.get('user-agent') || '';
-
-		// SQL injection (critical)
-		for (const pattern of this.patterns.sqli) {
-			if (pattern.test(allContent)) return 'critical';
-		}
-
-		// Command injection (critical)
-		for (const pattern of this.patterns.commandInjection) {
-			if (pattern.test(allContent)) return 'critical';
-		}
-
-		// XSS (high)
-		for (const pattern of this.patterns.xss) {
-			if (pattern.test(allContent)) return 'high';
-		}
-
-		// Path traversal (high)
-		for (const pattern of this.patterns.pathTraversal) {
-			if (pattern.test(allContent)) return 'high';
-		}
-
-		// LDAP injection (high — relevant for SCIM endpoints)
-		if (url.pathname.includes('/scim/')) {
-			for (const pattern of this.patterns.ldapInjection) {
-				if (pattern.test(allContent)) return 'high';
+		for (const pattern of SECURITY_PATTERNS.suspicious_ua) {
+			if (pattern.test(userAgent)) {
+				maxThreat = this.upgradeThreat(maxThreat, 'medium');
+				break;
 			}
 		}
 
-		// Suspicious user agents (medium)
-		for (const pattern of this.patterns.suspicious_ua) {
-			if (pattern.test(userAgent)) return 'medium';
+		// Scan Body (Structured)
+		if (request.method !== 'GET' && request.method !== 'HEAD' && request.body) {
+			const contentLength = parseInt(request.headers.get('content-length') || '0', 10);
+			if (contentLength > MAX_BODY_SIZE) return 'high'; // Early reject oversized payloads
+
+			if (contentLength > 0) {
+				try {
+					const contentType = request.headers.get('content-type') || '';
+					const clone = request.clone();
+
+					if (contentType.includes('application/json')) {
+						const json = await clone.json();
+						maxThreat = this.upgradeThreat(maxThreat, this.scanRecursive(json));
+					} else if (contentType.includes('application/x-www-form-urlencoded')) {
+						const formData = await clone.formData();
+						for (const value of formData.values()) {
+							if (typeof value === 'string') {
+								maxThreat = this.upgradeThreat(maxThreat, this.checkValue(value));
+								if (maxThreat === 'critical') break;
+							}
+						}
+					} else {
+						// Fallback text scan for unknown types, with strict length cap
+						const text = await clone.text();
+						maxThreat = this.upgradeThreat(maxThreat, this.checkValue(text.substring(0, SCAN_BODY_MAX_SIZE)));
+					}
+				} catch (err) {
+					logger.debug('Payload scan failed', { error: err });
+				}
+			}
+		}
+
+		// App-specific threats
+		const fullUrl = url.pathname + url.search;
+		for (const pattern of SECURITY_PATTERNS.app_threats) {
+			if (pattern.test(fullUrl)) {
+				maxThreat = this.upgradeThreat(maxThreat, 'high');
+				break;
+			}
+		}
+
+		return maxThreat;
+	}
+
+	private scanRecursive(obj: any, depth = 0): ThreatLevel {
+		if (depth > 10 || !obj) return 'none';
+		let maxThreat: ThreatLevel = 'none';
+
+		if (typeof obj === 'string') return this.checkValue(obj);
+		if (Array.isArray(obj)) {
+			for (const item of obj) {
+				maxThreat = this.upgradeThreat(maxThreat, this.scanRecursive(item, depth + 1));
+				if (maxThreat === 'critical') break;
+			}
+		} else if (typeof obj === 'object') {
+			for (const value of Object.values(obj)) {
+				maxThreat = this.upgradeThreat(maxThreat, this.scanRecursive(value, depth + 1));
+				if (maxThreat === 'critical') break;
+			}
+		}
+		return maxThreat;
+	}
+
+	private checkValue(value: string, checkLdap = false): ThreatLevel {
+		if (!value || value.length > SCAN_BODY_MAX_SIZE) return 'none';
+		const decoded = this.tryDecode(value);
+		const content = (value + ' ' + decoded).substring(0, SCAN_BODY_MAX_SIZE);
+
+		for (const pattern of SECURITY_PATTERNS.sqli) if (pattern.test(content)) return 'critical';
+		for (const pattern of SECURITY_PATTERNS.commandInjection) if (pattern.test(content)) return 'critical';
+		for (const pattern of SECURITY_PATTERNS.xss) if (pattern.test(content)) return 'high';
+		for (const pattern of SECURITY_PATTERNS.pathTraversal) if (pattern.test(content)) return 'high';
+		if (checkLdap) {
+			for (const pattern of SECURITY_PATTERNS.ldapInjection) if (pattern.test(content)) return 'high';
 		}
 
 		return 'none';
 	}
 
-	// ========================================================================
-	// SLIDING WINDOW RATE LIMITER
-	// ========================================================================
-
-	/** Per-IP sliding window rate limiter with per-endpoint overrides. */
-	public checkRateLimit(ip: string, pathname: string): { allowed: boolean; limit: number; count: number } {
-		// Check if throttled first
-		const throttle = this.throttledIPs.get(ip);
-		if (throttle && Date.now() < throttle.until) {
-			return { allowed: false, limit: 0, count: 0 };
-		}
-
-		// Determine limit for this endpoint
-		let limit = GLOBAL_RATE_LIMIT;
-		for (const [prefix, endpointLimit] of Object.entries(ENDPOINT_RATE_LIMITS)) {
-			if (pathname.startsWith(prefix)) {
-				limit = endpointLimit;
-				break;
-			}
-		}
-
-		const key = `${ip}:${pathname}`;
-		const now = Date.now();
-		const windowMs = 60 * 1000; // 1 minute
-
-		// Get or create entry
-		let entry = this.rateLimitStore.get(key);
-		if (!entry) {
-			entry = { timestamps: [] };
-			this.rateLimitStore.set(key, entry);
-		}
-
-		// Filter to window
-		entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
-
-		// Check limit
-		if (entry.timestamps.length >= limit) {
-			return { allowed: false, limit, count: entry.timestamps.length };
-		}
-
-		// Record this request
-		entry.timestamps.push(now);
-		return { allowed: true, limit, count: entry.timestamps.length };
-	}
-
-	/** Cleanup expired rate limit entries. */
-	private cleanupRateLimitStore(): void {
-		const now = Date.now();
-		const windowMs = 60 * 1000;
-		for (const [key, entry] of this.rateLimitStore.entries()) {
-			entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
-			if (entry.timestamps.length === 0) {
-				this.rateLimitStore.delete(key);
-			}
+	private tryDecode(value: string): string {
+		try {
+			return decodeURIComponent(value);
+		} catch {
+			return '';
 		}
 	}
 
-	// ========================================================================
-	// ANOMALY DETECTION
-	// ========================================================================
+	private upgradeThreat(current: ThreatLevel, next: ThreatLevel): ThreatLevel {
+		const lvls: Record<ThreatLevel, number> = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
+		return lvls[next] > lvls[current] ? next : current;
+	}
 
-	/** Detects header and payload anomalies. */
 	private detectAnomalies(request: Request): AnomalyResult {
 		const indicators: ThreatIndicator[] = [];
 		const now = Date.now();
 
-		// Missing User-Agent
 		const ua = request.headers.get('user-agent');
 		if (!ua || ua.trim() === '') {
-			indicators.push({
-				type: 'header_anomaly',
-				severity: 4,
-				evidence: 'Missing User-Agent header',
-				timestamp: now
-			});
+			indicators.push({ type: 'header_anomaly', severity: 4, evidence: 'Missing UA', timestamp: now });
 		}
 
-		// Unusual Content-Type for non-GET/HEAD requests
-		if (request.method !== 'GET' && request.method !== 'HEAD') {
-			const contentType = request.headers.get('content-type');
-			if (contentType) {
-				const baseType = contentType.split(';')[0].trim().toLowerCase();
-				if (!ALLOWED_CONTENT_TYPES.some((t) => baseType.startsWith(t))) {
-					indicators.push({
-						type: 'header_anomaly',
-						severity: 6,
-						evidence: `Unusual Content-Type: ${baseType}`,
-						timestamp: now,
-						metadata: { contentType: baseType }
-					});
-				}
-			}
-		}
-
-		// Oversized Content-Length
-		const contentLength = request.headers.get('content-length');
-		if (contentLength) {
-			const size = parseInt(contentLength, 10);
+		const contentLengthHeader = request.headers.get('content-length');
+		if (contentLengthHeader) {
+			const size = parseInt(contentLengthHeader, 10);
 			if (size > MAX_BODY_SIZE) {
-				indicators.push({
-					type: 'payload_anomaly',
-					severity: 8,
-					evidence: `Oversized payload: ${(size / 1024 / 1024).toFixed(1)}MB (max ${MAX_BODY_SIZE / 1024 / 1024}MB)`,
-					timestamp: now,
-					metadata: { size }
-				});
-			} else if (size > WARN_BODY_SIZE) {
-				indicators.push({
-					type: 'payload_anomaly',
-					severity: 3,
-					evidence: `Large payload: ${(size / 1024).toFixed(0)}KB`,
-					timestamp: now,
-					metadata: { size }
-				});
+				indicators.push({ type: 'payload_anomaly', severity: 8, evidence: `Oversized: ${size}`, timestamp: now });
 			}
-		}
-
-		// Oversized Cookie header (session fixation/cookie bomb detection)
-		const cookie = request.headers.get('cookie');
-		if (cookie && cookie.length > 8192) {
-			indicators.push({
-				type: 'header_anomaly',
-				severity: 7,
-				evidence: `Oversized Cookie header: ${cookie.length} bytes`,
-				timestamp: now
-			});
-		}
-
-		// Proxy header spoofing attempt
-		const xff = request.headers.get('x-forwarded-for');
-		if (xff && xff.split(',').length > 10) {
-			indicators.push({
-				type: 'header_anomaly',
-				severity: 5,
-				evidence: `Excessive X-Forwarded-For entries: ${xff.split(',').length}`,
-				timestamp: now
-			});
 		}
 
 		return { detected: indicators.length > 0, indicators };
 	}
 
 	// ========================================================================
-	// INCIDENT MANAGEMENT
+	// STATE & RATE LIMITING
 	// ========================================================================
 
-	/** Blocks an IP address. */
 	public async blockIp(ip: string, reason: string, tenantId?: string): Promise<void> {
-		this.blockedIPs.add(ip);
-		logger.warn(`IP blocked: ${ip}. Reason: ${reason} [Tenant: ${tenantId || 'global'}]`);
-		this.reportSecurityEvent(ip, 'ip_reputation', 10, reason, undefined, tenantId);
+		await securityStore.blockIp(ip, reason, 24 * 60 * 60);
+		logger.warn(`IP Blocked: ${ip} | Reason: ${reason}`);
+		metricsService.incrementSecurityViolations(tenantId);
 		await this.dispatchAlert(ip, 'critical', reason, tenantId);
 	}
 
-	/** Report a security event. */
-	reportSecurityEvent(
-		ip: string,
-		eventType: ThreatIndicator['type'],
-		severity: number,
-		evidence: string,
-		metadata?: Record<string, unknown>,
-		tenantId?: string
-	): void {
-		const indicator: ThreatIndicator = {
-			type: eventType,
-			severity,
-			evidence,
-			timestamp: Date.now(),
-			metadata
-		};
-		this.processIndicator(ip, indicator, tenantId);
+	public async checkRateLimit(ip: string, endpoint: string): Promise<SecurityStatus> {
+		if (building || process.env.TEST_MODE === 'true') return { level: 'none', action: 'allow' };
+
+		try {
+			const limiter = await this.getOrCreateLimiter(endpoint);
+			await limiter.consume(ip);
+			return { level: 'none', action: 'allow' };
+		} catch (rej: any) {
+			const retryAfter = Math.ceil((rej.msBeforeNext || 1000) / 1000);
+			return {
+				level: 'low',
+				action: 'throttle',
+				reason: `Rate limit exceeded (Retry after ${retryAfter}s)`
+			};
+		}
 	}
 
-	/** Process an indicator and accumulate into incidents. */
-	private processIndicator(ip: string, indicator: ThreatIndicator, tenantId?: string): void {
-		const key = tenantId ? `${ip}:${tenantId}` : ip;
-		let incident = this.incidents.get(key);
+	public async reportSecurityEvent(
+		ip: string,
+		type: ThreatIndicator['type'],
+		severity: number,
+		evidence: string,
+		metadata?: any,
+		tenantId?: string
+	): Promise<void> {
+		await this.processIndicator(ip, { type, severity, evidence, timestamp: Date.now(), metadata }, tenantId);
+	}
+
+	private async processIndicator(ip: string, indicator: ThreatIndicator, tenantId?: string): Promise<void> {
+		const incidents = await securityStore.getIncidents(tenantId);
+		let incident = incidents.find((inc) => inc.clientIp === ip && !inc.resolved);
+
 		if (!incident) {
 			incident = {
-				id: `inc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+				id: `inc_${Date.now()}`,
 				clientIp: ip,
 				threatLevel: 'none',
 				indicators: [],
@@ -523,296 +321,119 @@ class SecurityResponseService {
 				resolved: false,
 				tenantId
 			};
-			this.incidents.set(key, incident);
 		}
+
 		incident.indicators.push(indicator);
-		this.evaluateIncident(incident);
+		await this.evaluateIncident(incident);
+		await securityStore.addIncident(incident);
 	}
 
-	/** Evaluate an incident and trigger policy responses. */
-	private evaluateIncident(incident: SecurityIncident): void {
+	private async evaluateIncident(incident: SecurityIncident): Promise<void> {
 		const now = Date.now();
 		for (const policy of this.policies) {
-			const recentIndicators = incident.indicators.filter(
-				(ind) => now - ind.timestamp <= policy.triggers.timeWindow && ind.severity >= policy.triggers.severityThreshold
+			const active = incident.indicators.filter(
+				(i) => now - i.timestamp <= policy.triggers.timeWindow && i.severity >= policy.triggers.severityThreshold
 			);
-
-			if (recentIndicators.length >= policy.triggers.indicatorThreshold) {
+			if (active.length >= policy.triggers.indicatorThreshold) {
 				incident.threatLevel = policy.threatLevel;
 				incident.responseActions = [...policy.responses];
-				this.executeResponse(incident.clientIp, incident);
+				await this.executeResponse(incident.clientIp, incident);
 				break;
 			}
 		}
 	}
 
-	/** Executes response actions for an incident. */
 	private async executeResponse(ip: string, incident: SecurityIncident): Promise<void> {
-		for (const actionName of incident.responseActions) {
-			switch (actionName) {
-				case 'monitor':
-					break;
-				case 'warn':
-					logger.warn('Security incident detected', {
-						ip,
-						threatLevel: incident.threatLevel,
-						indicatorCount: incident.indicators.length,
-						incidentId: incident.id,
-						tenantId: incident.tenantId
-					});
-					break;
-				case 'throttle': {
-					const throttleUntil = Date.now() + 300_000; // 5 minute default
-					this.throttledIPs.set(ip, {
-						until: throttleUntil,
-						factor: this.getThrottleFactor(incident.threatLevel)
-					});
-					logger.warn('IP throttled', { ip, until: new Date(throttleUntil), tenantId: incident.tenantId });
-					break;
-				}
-				case 'block': {
-					await this.blockIp(ip, 'Security policy violation', incident.tenantId);
-					break;
-				}
-				case 'challenge':
-					// MFA or CAPTCHA logic goes here
-					break;
-			}
+		for (const action of incident.responseActions) {
+			if (action === 'block') await this.blockIp(ip, 'Automated policy block', incident.tenantId);
+			if (action === 'throttle') await securityStore.setThrottle(ip, 5, Date.now() + 5 * 60 * 1000);
+			if (action === 'warn') logger.warn(`Incident Escalation: ${ip} -> ${incident.threatLevel}`);
 		}
-
-		// Dispatch alerting for high+ threats
 		if (incident.threatLevel === 'high' || incident.threatLevel === 'critical') {
-			this.dispatchAlert(ip, incident.threatLevel, `Incident "${incident.id}" reached ${incident.threatLevel} threat level`, incident.tenantId).catch(
-				() => {}
-			);
+			await this.dispatchAlert(ip, incident.threatLevel, `Escalated to ${incident.threatLevel}`, incident.tenantId);
 		}
-
-		metricsService.incrementSecurityViolations(incident.tenantId);
 	}
 
-	// ========================================================================
-	// WEBHOOK ALERTING
-	// ========================================================================
-
-	/** Dispatches a webhook alert for security incidents. Rate-limited to prevent alert fatigue. */
-	public async dispatchAlert(ip: string, threatLevel: ThreatLevel, reason: string, tenantId?: string): Promise<void> {
-		const webhookUrl = this.getWebhookUrl();
-		if (!webhookUrl) return;
-
-		// Rate limit alerts per IP
-		const lastAlert = this.lastAlertTime.get(ip);
-		if (lastAlert && Date.now() - lastAlert < this.ALERT_COOLDOWN) return;
+	public async dispatchAlert(ip: string, level: ThreatLevel, reason: string, tenantId?: string): Promise<void> {
+		const last = this.lastAlertTime.get(ip);
+		if (last && Date.now() - last < this.ALERT_COOLDOWN) return;
 		this.lastAlertTime.set(ip, Date.now());
 
-		const key = tenantId ? `${ip}:${tenantId}` : ip;
-		const incident = this.incidents.get(key);
-		const payload = {
-			type: 'security_alert',
-			timestamp: new Date().toISOString(),
-			threatLevel,
-			clientIp: ip,
-			tenantId,
-			reason,
-			incidentId: incident?.id,
-			indicatorCount: incident?.indicators.length || 0,
-			activeIncidents: this.getActiveIncidents(tenantId).length,
-			blockedIPs: this.blockedIPs.size
-		};
+		const webhook = process.env.SECURITY_WEBHOOK_URL;
+		if (!webhook) return;
 
 		try {
-			// Generic JSON webhook
-			await fetch(webhookUrl, {
+			const incidents = await securityStore.getIncidents(tenantId);
+			const incident = incidents.find((inc) => inc.clientIp === ip && !inc.resolved);
+
+			const payload = {
+				type: 'security_alert',
+				level,
+				ip,
+				reason,
+				tenantId,
+				incidentId: incident?.id,
+				indicatorsCount: incident?.indicators.length || 0,
+				timestamp: new Date().toISOString()
+			};
+
+			await fetch(webhook, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(webhookUrl.includes('slack') ? this.formatSlackPayload(payload) : payload),
+				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(5000)
 			});
-			logger.info('Security alert dispatched', { ip, threatLevel });
 		} catch (e) {
-			logger.warn('Failed to dispatch security alert', { error: e });
+			logger.warn('Alert failed', e);
 		}
 	}
 
-	/** Formats payload for Slack webhook. */
-	private formatSlackPayload(payload: Record<string, unknown>): Record<string, unknown> {
-		const emoji = payload.threatLevel === 'critical' ? '🚨' : '⚠️';
+	/** Periodically called by the admin UI to fetch global security telemetry. */
+	public async getSecurityStats(tenantId?: string): Promise<any> {
+		const incidents = await securityStore.getIncidents(tenantId);
+		const last24h = Date.now() - 24 * 60 * 60 * 1000;
+
 		return {
-			text: `${emoji} *SveltyCMS Security Alert*\n*Level:* ${payload.threatLevel}\n*IP:* ${payload.clientIp}\n*Reason:* ${payload.reason}\n*Active Incidents:* ${payload.activeIncidents}`,
-			blocks: [
-				{
-					type: 'section',
-					text: {
-						type: 'mrkdwn',
-						text:
-							`${emoji} *Security Alert — ${String(payload.threatLevel).toUpperCase()}*\n` +
-							`IP: \`${payload.clientIp}\`\nReason: ${payload.reason}\n` +
-							`Indicators: ${payload.indicatorCount} | Active: ${payload.activeIncidents} | Blocked: ${payload.blockedIPs}`
-					}
-				}
-			]
+			activeIncidents: incidents.filter((i) => !i.resolved).length,
+			totalIncidentsLast24h: incidents.filter((i) => i.timestamp >= last24h).length,
+			threatDistribution: {
+				low: incidents.filter((i) => i.threatLevel === 'low').length,
+				medium: incidents.filter((i) => i.threatLevel === 'medium').length,
+				high: incidents.filter((i) => i.threatLevel === 'high').length,
+				critical: incidents.filter((i) => i.threatLevel === 'critical').length
+			}
 		};
 	}
 
-	/** Gets the webhook URL from environment. */
-	private getWebhookUrl(): string | null {
-		try {
-			return process.env.SECURITY_WEBHOOK_URL || null;
-		} catch {
-			return null;
-		}
+	/** Returns unresolved security incidents. */
+	public async getActiveIncidents(tenantId?: string): Promise<SecurityIncident[]> {
+		const incidents = await securityStore.getIncidents(tenantId);
+		return incidents.filter((i) => !i.resolved);
 	}
 
-	// ========================================================================
-	// PUBLIC API
-	// ========================================================================
-
-	private getThrottleFactor(threatLevel: ThreatLevel): number {
-		switch (threatLevel) {
-			case 'low':
-				return 2;
-			case 'medium':
-				return 5;
-			case 'high':
-				return 10;
-			case 'critical':
-				return 20;
-			default:
-				return 1;
-		}
-	}
-
-	isBlocked(ip: string): boolean {
-		return this.blockedIPs.has(ip);
-	}
-
-	getThrottleStatus(ip: string): { throttled: boolean; factor: number } {
-		const throttle = this.throttledIPs.get(ip);
-		if (!throttle || Date.now() > throttle.until) {
-			this.throttledIPs.delete(ip);
-			return { throttled: false, factor: 1 };
-		}
-		return { throttled: true, factor: throttle.factor };
-	}
-
-	getActiveIncidents(tenantId?: string): SecurityIncident[] {
-		return Array.from(this.incidents.values()).filter((inc) => {
-			if (tenantId && inc.tenantId !== tenantId) return false;
-			return !inc.resolved;
-		});
-	}
-
-	getSecurityStats(tenantId?: string): {
-		activeIncidents: number;
-		blockedIPs: number;
-		throttledIPs: number;
-		totalIncidents: number;
-		rateLimitEntries: number;
-		threatLevelDistribution: Record<ThreatLevel, number>;
-	} {
-		const incidents = Array.from(this.incidents.values()).filter((inc) => {
-			if (tenantId && inc.tenantId !== tenantId) return false;
-			return true;
-		});
-		const threatDistribution: Record<ThreatLevel, number> = { none: 0, low: 0, medium: 0, high: 0, critical: 0 };
-		incidents.forEach((inc) => {
-			threatDistribution[inc.threatLevel]++;
-		});
-
-		return {
-			activeIncidents: incidents.filter((inc) => !inc.resolved).length,
-			blockedIPs: this.blockedIPs.size, // IPs are blocked globally for security
-			throttledIPs: this.throttledIPs.size,
-			totalIncidents: incidents.length,
-			rateLimitEntries: this.rateLimitStore.size,
-			threatLevelDistribution: threatDistribution
-		};
-	}
-
-	resolveIncident(incidentId: string, notes?: string): boolean {
-		for (const incident of this.incidents.values()) {
-			if (incident.id === incidentId) {
-				incident.resolved = true;
-				incident.notes = notes;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	unblockIP(ip: string): boolean {
-		if (this.blockedIPs.has(ip)) {
-			this.blockedIPs.delete(ip);
-			this.throttledIPs.delete(ip);
-			logger.info('IP manually unblocked', { ip });
-			return true;
-		}
-		return false;
-	}
-
-	// ========================================================================
-	// CLEANUP
-	// ========================================================================
-
-	private cleanupOldIncidents(): void {
-		const now = Date.now();
-		const maxAge = 24 * 60 * 60 * 1000;
-
-		for (const [ip, incident] of this.incidents.entries()) {
-			if (now - incident.timestamp > maxAge && incident.resolved) {
-				this.incidents.delete(ip);
-			}
-		}
-
-		for (const [ip, throttle] of this.throttledIPs.entries()) {
-			if (now > throttle.until) {
-				this.throttledIPs.delete(ip);
-			}
-		}
-
-		// Clean up old alert timestamps
-		for (const [ip, time] of this.lastAlertTime.entries()) {
-			if (now - time > this.ALERT_COOLDOWN * 10) {
-				this.lastAlertTime.delete(ip);
-			}
-		}
-
-		logger.trace('Security cleanup completed');
-	}
-
-	destroy(): void {
-		if (this.cleanupInterval) {
-			clearInterval(this.cleanupInterval);
-			this.cleanupInterval = null;
-		}
+	public destroy(): void {
+		// No manual cleanup needed
 	}
 }
 
 // ============================================================================
-// SINGLETON INSTANCE
+// EXPORT & LIFECYCLE
 // ============================================================================
 
-const globalWithSecurity = globalThis as typeof globalThis & {
-	__SVELTY_SECURITY_RESPONSE_INSTANCE__?: SecurityResponseService;
-	__SVELTY_SECURITY_CLEANUP_REGISTERED__?: boolean;
-};
-
-if (globalWithSecurity.__SVELTY_SECURITY_RESPONSE_INSTANCE__) {
-	globalWithSecurity.__SVELTY_SECURITY_RESPONSE_INSTANCE__.destroy();
+const g = globalThis as any;
+if (g.__SVELTY_SECURITY_INSTANCE__) {
+	try {
+		g.__SVELTY_SECURITY_INSTANCE__.destroy();
+	} catch (e) {}
 }
 
 export const securityResponseService = (() => {
-	if (!globalWithSecurity.__SVELTY_SECURITY_RESPONSE_INSTANCE__) {
-		globalWithSecurity.__SVELTY_SECURITY_RESPONSE_INSTANCE__ = new SecurityResponseService();
-	}
-	return globalWithSecurity.__SVELTY_SECURITY_RESPONSE_INSTANCE__;
+	if (!g.__SVELTY_SECURITY_INSTANCE__) g.__SVELTY_SECURITY_INSTANCE__ = new SecurityResponseService();
+	return g.__SVELTY_SECURITY_INSTANCE__;
 })();
 
-export const cleanupSecurityService = (): void => {
-	securityResponseService.destroy();
-};
-
-if (!(building || globalWithSecurity.__SVELTY_SECURITY_CLEANUP_REGISTERED__)) {
-	process.on('SIGTERM', cleanupSecurityService);
-	process.on('SIGINT', cleanupSecurityService);
-	globalWithSecurity.__SVELTY_SECURITY_CLEANUP_REGISTERED__ = true;
+if (!(building || g.__SVELTY_SECURITY_READY__)) {
+	process.on('SIGTERM', () => securityResponseService.destroy());
+	process.on('SIGINT', () => securityResponseService.destroy());
+	g.__SVELTY_SECURITY_READY__ = true;
 }

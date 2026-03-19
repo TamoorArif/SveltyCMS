@@ -14,6 +14,7 @@
 import { json } from '@sveltejs/kit';
 import { apiHandler } from '@utils/api-handler';
 import { securityResponseService } from '@src/services/security-response-service';
+import type { SecurityIncident, ThreatIndicator } from '@src/services/security-types';
 import { metricsService } from '@src/services/metrics-service';
 import { hasApiPermission } from '@src/databases/auth/api-permissions';
 import { AppError } from '@utils/error-handling';
@@ -61,12 +62,12 @@ export const GET = apiHandler(async ({ locals }) => {
 			rateLimitViolations: metricsReport.security?.rateLimitViolations || 0,
 			authFailures: metricsReport.security?.authFailures || 0
 		},
-		recentEvents: activeIncidents.slice(0, 10).map((incident) => ({
+		recentEvents: activeIncidents.slice(0, 10).map((incident: SecurityIncident) => ({
 			id: incident.id,
 			timestamp: incident.timestamp,
 			type: incident.threatLevel === 'critical' ? 'attack' : 'incident',
 			severity: incident.threatLevel,
-			description: incident.indicators.map((i) => i.evidence).join(', '),
+			description: incident.indicators.map((i: ThreatIndicator) => i.evidence).join(', '),
 			clientIp: incident.clientIp,
 			status: incident.resolved ? 'resolved' : 'active'
 		}))

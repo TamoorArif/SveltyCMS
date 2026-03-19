@@ -14,6 +14,7 @@
 
 import { hasApiPermission } from '@src/databases/auth/api-permissions';
 import { securityResponseService } from '@src/services/security-response-service';
+import type { SecurityIncident } from '@src/services/security-types';
 import { json } from '@sveltejs/kit';
 // Unified Error Handling
 import { apiHandler } from '@utils/api-handler';
@@ -69,11 +70,11 @@ export const GET = apiHandler(async ({ locals, url }) => {
 	const offset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
 
 	// Get incidents from security service
-	let incidents = securityResponseService.getActiveIncidents();
+	let incidents = await securityResponseService.getActiveIncidents();
 
 	// Apply filters
 	if (threatLevel && threatLevel !== 'all') {
-		incidents = incidents.filter((inc) => inc.threatLevel === threatLevel);
+		incidents = incidents.filter((inc: SecurityIncident) => inc.threatLevel === threatLevel);
 	}
 
 	if (resolved === 'true') {
@@ -82,7 +83,7 @@ export const GET = apiHandler(async ({ locals, url }) => {
 	}
 
 	// Sort by timestamp (newest first)
-	incidents.sort((a, b) => b.timestamp - a.timestamp);
+	incidents.sort((a: SecurityIncident, b: SecurityIncident) => b.timestamp - a.timestamp);
 
 	// Apply pagination
 	const paginatedIncidents = incidents.slice(offset, offset + limit);
