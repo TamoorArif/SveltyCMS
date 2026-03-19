@@ -3,6 +3,7 @@
 </p>
 
 <h1 align="center"><strong>SveltyCMS - Headless CMS with Sveltekit Power</strong></h1>
+<p align="center"><strong><a href="https://sveltycms.com">sveltycms.com</a></strong></p>
 <p align="center"><strong>(Still in Development — your support is appreciated!)</strong></p>
 
 <div align="center">
@@ -19,6 +20,7 @@
 <div align="center">
 
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-V2-FF3E00?logo=svelte)](https://kit.svelte.dev)
+[![Vite+](https://img.shields.io/badge/Toolchain-Vite%2B-646CFF?logo=vite)](https://voidzero.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwindcss](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC)](https://tailwindcss.com/)
 
@@ -192,10 +194,15 @@ bun run dev  # or npm run dev / pnpm run dev
 
 ### Development and Production
 
-See our `package.json` for more information about development, build, preview, fast Biome formatting, hybrid Biome/ESLint linting & testing commands.
+We use the unified **Vite+ Alpha (VoidZero)** toolchain for an ultra-fast development experience.
 
-- Development server runs on `localhost:5173`
-- Preview server runs on `localhost:4173`
+- **Development**: `vp dev` (runs on `localhost:5173`)
+- **Production Build**: `vp build` (Rust-based Rolldown bundler)
+- **Preview**: `vp preview` (runs on `localhost:4173`)
+- **Linting**: `oxlint` (project-wide checks in <50ms)
+- **Formatting**: `oxfmt` (blazing fast Rust-based formatter)
+
+See our `package.json` for all available commands.
 
 ## 🔒 Authentication & Security
 
@@ -380,10 +387,10 @@ If your PR makes a change that should be noted in one or more packages' changelo
 Before submitting Pull Requests, ensure your changes pass all checks by running:
 
 ```bash
-bun run lint && bun run check && bun run test
+bun run lint && bun run check && bun run test:unit:bun
 ```
 
-This runs the linter (ESLint), type checker (Svelte-Check), and the full unit test suite (Bun Test) exactly as the GitHub Actions CI pipeline does.
+This runs the linter (`oxlint`), type checker (`svelte-check`), and the full unit test suite (`bun test`) exactly as the CI pipeline does.
 
 Please prefix changeset messages with `feat:`, `fix:`, or `chore:`.
 
