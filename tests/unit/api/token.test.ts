@@ -44,7 +44,7 @@ vi.mock('@src/paraglide/runtime', () => ({
 }));
 
 // Import after mocks are set up
-const tokenIDHandlers = await import('@src/routes/api/token/[tokenId]/+server.ts');
+const tokenIDHandlers = await import('@src/routes/api/token/[tokenID]/+server.ts');
 const listHandlers = await import('@src/routes/api/token/+server.ts');
 const createHandlers = await import('@src/routes/api/token/create-token/+server.ts');
 const batchHandlers = await import('@src/routes/api/token/batch/+server.ts');
