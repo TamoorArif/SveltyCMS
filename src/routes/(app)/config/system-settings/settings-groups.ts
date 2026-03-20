@@ -15,6 +15,7 @@ export interface SettingField {
   placeholder?: string;
   readonly?: boolean;
   required?: boolean;
+  sensitive?: boolean;
   rows?: number;
   type:
     | "text"
@@ -64,6 +65,7 @@ export const settingsGroups: SettingGroup[] = [
           "Required if your organization revenue exceeds $1M USD (BSL 1.1). Leave empty for free usage.",
         type: "password", // Masked for security
         category: "private",
+        sensitive: true,
         placeholder: "SK-XXXX-XXXX-XXXX",
       },
       {
@@ -239,6 +241,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "Password for database authentication (optional for some setups)",
         type: "password",
         category: "private",
+        sensitive: true,
       },
       {
         key: "DB_RETRY_ATTEMPTS",
@@ -315,6 +318,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "Password for Redis authentication (optional - no default)",
         type: "password",
         category: "private",
+        sensitive: true,
       },
     ],
   },
@@ -360,6 +364,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "Password or app-specific password for SMTP",
         type: "password",
         category: "private",
+        sensitive: true,
       },
       {
         key: "SMTP_MAIL_FROM",
@@ -398,6 +403,7 @@ export const settingsGroups: SettingGroup[] = [
         category: "private",
         required: true,
         readonly: true,
+        sensitive: true,
       },
       {
         key: "ENCRYPTION_KEY",
@@ -406,6 +412,7 @@ export const settingsGroups: SettingGroup[] = [
         type: "password",
         category: "private",
         required: true,
+        sensitive: true,
         validation: (value) => {
           if (!value || typeof value !== "string" || value.length < 32) {
             return "Encryption Key must be at least 32 characters long";
@@ -469,6 +476,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "OAuth 2.0 client secret from Google Cloud Console (optional - no default)",
         type: "password",
         category: "private",
+        sensitive: true,
       },
       {
         key: "GOOGLE_API_KEY",
@@ -476,6 +484,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "API key for Google services (optional - no default)",
         type: "password",
         category: "private",
+        sensitive: true,
       },
       {
         key: "GOOGLE_MAPS_API_KEY",
@@ -483,6 +492,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "API Key for Google Maps integration (optional)",
         type: "password",
         category: "public",
+        sensitive: true,
         placeholder: "AIza...",
       },
     ],
@@ -630,6 +640,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "Access token for Twitch API",
         type: "password",
         category: "private",
+        sensitive: true,
       },
       {
         key: "TIKTOK_TOKEN",
@@ -637,6 +648,7 @@ export const settingsGroups: SettingGroup[] = [
         description: "Access token for TikTok API",
         type: "password",
         category: "private",
+        sensitive: true,
       },
     ],
   },

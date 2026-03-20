@@ -21,6 +21,27 @@ tags:
 
 The Settings API provides endpoints for managing system-wide configuration in SveltyCMS. All settings are stored in the database using a database-agnostic adapter, supporting multi-tenancy when enabled.
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Settings Dashboard
+    participant API as Settings API
+    participant Cache as Server Cache
+    participant DB as Database
+
+    User->>UI: Update Setting (e.g. SMTP_HOST)
+    UI->>API: POST /api/settings/update
+    API->>API: Validate Data
+    API->>DB: Persist Settings
+    DB-->>API: Success
+    API->>Cache: Invalidate & Reload Cache
+    API->>API: Log Audit Event
+    API-->>UI: 200 OK (Success Message)
+    UI-->>User: Show Toast Success
+```
+
+## Authentication
+
 **Base Path:** `/api/settings`
 
 ## Authentication
@@ -37,7 +58,46 @@ Most operations also require admin permissions.
 
 ## Endpoints
 
-### 1. Get Settings by Group
+### 1. Get All Settings (Batch)
+
+Retrieves values for all enabled configuration groups authorized for the current user.
+
+#### Request
+
+```http
+GET /api/settings/all
+```
+
+**Headers:**
+
+```http
+Cookie: session=your-session-id
+```
+
+**Permissions Required:** Authenticated user (results filtered by permissions)
+
+#### Response
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "groups": {
+    "site": {
+      "SITE_NAME": "My CMS",
+      "SITE_URL": "https://example.com"
+    },
+    "cache": {
+      "CACHE_TTL_SCHEMA": 600
+    }
+  }
+}
+```
+
+---
+
+### 2. Get Settings by Group
 
 Retrieves settings for a specific configuration group.
 
@@ -252,20 +312,24 @@ GET /api/settings/site
 
 ### Sensitive Settings
 
-Some settings contain sensitive data:
+Some settings contain sensitive data (e.g., `JWT_SECRET_KEY`, `DB_PASSWORD`):
 
-- Database credentials
-- API keys
-- SMTP passwords
-- Encryption keys
+- **Masking:** Sensitive fields are automatically masked in the UI with `********`.
+- **Environment Overrides:** Fields marked as `readonly` (like `JWT_SECRET_KEY`) are typically managed via environment variables and cannot be modified through the API.
+- **API Response:** Sensitive fields are included in API responses but should be handled securely.
 
-**Best Practices:**
+### Audit Logging
 
-1. Never expose sensitive settings in client-side code
-2. Use environment variables for critical secrets
-3. Implement proper role-based access control
-4. Audit all settings changes
-5. Encrypt sensitive values at rest
+All modifications to system settings are logged for security auditing.
+
+- **PUT /api/settings/[group]**: Logs the group ID, user ID, tenant ID, and the specific changes made.
+- **DELETE /api/settings/[group]**: Logs the reset action.
+
+Example log entry:
+
+```
+info: Settings group 'email' updated by user user123 for tenant default { changes: { SMTP_HOST: "smtp.new-host.com" } }
+```
 
 ### Settings Validation
 

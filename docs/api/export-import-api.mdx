@@ -201,6 +201,40 @@ post123,"Hello World","Post content...","user123","2025-10-01T10:00:00Z"
 
 ---
 
+### 3. Batch Settings Export
+
+Exports values for all accessible configuration groups.
+
+#### Request
+
+```http
+GET /api/settings/all
+```
+
+**Headers:**
+
+```http
+Cookie: session=your-session-id
+```
+
+**Permissions Required:** Authenticated user
+
+#### Response
+
+**Success (200):**
+
+```json
+{
+  "success": true,
+  "groups": {
+    "site": { ... },
+    "cache": { ... }
+  }
+}
+```
+
+---
+
 ## Import Endpoints
 
 ### 1. Import Data

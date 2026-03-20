@@ -252,6 +252,7 @@ export const PUT = apiHandler(async ({ request, locals, params, url }) => {
 
     logger.info(
       `Settings group '${groupId}' updated by user ${locals.user._id} for tenant ${targetTenantId}`,
+      { changes: updates },
     );
 
     return json({
@@ -342,6 +343,7 @@ export const DELETE = apiHandler(async ({ locals, params, url }) => {
 
     logger.info(
       `Settings group '${groupId}' reset to defaults by user ${locals.user._id} for tenant ${targetTenantId}`,
+      { action: "reset_to_defaults" },
     );
 
     return json({

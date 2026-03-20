@@ -44,7 +44,21 @@ let values = $state<Record<string, unknown>>({});
 let originalValues = $state<Record<string, unknown>>({}); // Track original values
 let errors = $state<Record<string, string>>({});
 let hasEmptyRequiredFields = $state(false);
-let hasUnsavedChanges = $state(false);
+
+// Optimize: Use $derived instead of $effect for unsaved changes
+let hasUnsavedChanges = $derived(
+	Object.keys(values).some((key) => {
+		return JSON.stringify(values[key]) !== JSON.stringify(originalValues[key]);
+	})
+);
+
+// Notify parent component when hasUnsavedChanges changes
+$effect(() => {
+	if (onUnsavedChanges) {
+		onUnsavedChanges(hasUnsavedChanges);
+	}
+});
+
 const showPassword = $state<Record<string, boolean>>({}); // Track password visibility per field
 const showLanguagePicker = $state<Record<string, boolean>>({}); // Track language picker visibility per field
 const languageSearch = $state<Record<string, string>>({}); // Track search input per field
@@ -71,20 +85,6 @@ async function loadAllowedLocales() {
 		allowedLocales = [];
 	}
 }
-
-// Track if values have changed
-$effect(() => {
-	// Compare current values with original values
-	const changed = Object.keys(values).some((key) => {
-		return JSON.stringify(values[key]) !== JSON.stringify(originalValues[key]);
-	});
-	hasUnsavedChanges = changed;
-
-	// Notify parent component
-	if (onUnsavedChanges) {
-		onUnsavedChanges(hasUnsavedChanges);
-	}
-});
 
 // Check if there are empty or placeholder values that need configuration
 function checkForEmptyFields() {
@@ -386,6 +386,17 @@ async function saveSettings() {
 	} finally {
 		saving = false;
 	}
+}
+
+// Export current group settings
+function exportGroup() {
+	const blob = new Blob([JSON.stringify({ [group.id]: values }, null, 2)], { type: 'application/json' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `sveltycms-settings-${group.id}-${new Date().toISOString().slice(0, 10)}.json`;
+	a.click();
+	URL.revokeObjectURL(url);
 }
 
 // Reset to defaults (with confirmation)
@@ -945,14 +956,16 @@ onMount(() => {
 										type={showPassword[field.key] ? 'text' : 'password'}
 										class="input w-full max-w-full min-h-[44px] pr-10"
 										bind:value={values[field.key]}
-										placeholder={field.placeholder}
+										placeholder={field.sensitive ? '********' : field.placeholder}
 										required={field.required}
 										disabled={field.readonly}
 										oninput={() => (errors[field.key] = '')}
 										autocomplete="current-password"
 										aria-invalid={!!errors[field.key]}
 									/>
-									{#if !field.readonly}
+									{#if field.sensitive && field.readonly}
+										<div class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-surface-500 italic">Configured in .env</div>
+									{:else if !field.readonly}
 										<button
 											type="button"
 											class="absolute right-2 top-1/2 -translate-y-1/2 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-50"
@@ -1193,25 +1206,47 @@ onMount(() => {
 			{/if}
 
 			<!-- Actions -->
-			<div class="flex flex-col justify-between gap-2 pt-4 sm:flex-row max-w-full overflow-visible">
-				<button
-					type="button"
-					class="preset-filled-surface-500 btn w-full sm:w-auto min-w-fit px-4 sm:min-h-[48px]"
-					onclick={resetToDefaults}
-					disabled={saving}
-				>
-					<span>🔄</span>
-					<span>Reset to Defaults</span>
-				</button>
+			<div
+				class="fixed bottom-0 left-0 right-0 z-50 border-t bg-surface-50 p-4 dark:bg-surface-900 md:static md:z-auto md:mb-10 md:border-t-0 md:bg-transparent md:p-0"
+			>
+				<div class="mx-auto flex max-w-4xl flex-col justify-between gap-3 sm:flex-row overflow-visible">
+					<div class="flex flex-1 gap-3">
+						<button
+							type="button"
+							class="preset-filled-surface-500 btn w-full sm:w-auto min-w-fit px-4 sm:min-h-[48px]"
+							onclick={resetToDefaults}
+							disabled={saving}
+						>
+							<span>🔄</span>
+							<span class="hidden sm:inline">Reset to Defaults</span>
+							<span class="sm:hidden">Reset</span>
+						</button>
 
-				<button type="submit" class="preset-filled-primary-500 btn w-full sm:w-auto min-w-fit px-4 sm:min-h-[48px]" disabled={saving}>
-					{#if saving}
-						<span>Saving...</span>
-					{:else}
-						<span>💾</span>
-						<span>Save Changes</span>
-					{/if}
-				</button>
+						<button
+							type="button"
+							class="preset-filled-surface-500 btn w-full sm:w-auto min-w-fit px-4 sm:min-h-[48px]"
+							onclick={exportGroup}
+							disabled={loading}
+						>
+							<span>📤</span>
+							<span class="hidden sm:inline">Export Group</span>
+							<span class="sm:hidden">Export</span>
+						</button>
+					</div>
+
+					<button
+						type="submit"
+						class="preset-filled-primary-500 btn w-full sm:w-auto min-w-fit px-6 sm:min-h-[48px]"
+						disabled={saving || !hasUnsavedChanges}
+					>
+						{#if saving}
+							<span>Saving...</span>
+						{:else}
+							<span>💾</span>
+							<span>{hasUnsavedChanges ? 'Save Changes' : 'Saved'}</span>
+						{/if}
+					</button>
+				</div>
 			</div>
 		</form>
 	{/if}

@@ -28,6 +28,7 @@ import GenericSettingsGroup from './generic-settings-group.svelte';
 import type { SettingGroup } from './settings-groups';
 // Import settings structure
 import { getSettingGroupsByRole } from './settings-groups';
+import { beforeNavigate } from '$app/navigation';
 
 // Get user admin status from page data (set by +page.server.ts)
 const { data } = $props();
@@ -35,6 +36,17 @@ const isAdmin = $derived(data.isAdmin);
 
 //  Use $state for all component state
 let availableGroups: SettingGroup[] = $state([]);
+let searchTerm = $state('');
+let hasUnsavedChanges = $state(false);
+
+// Unsaved changes guard
+beforeNavigate(({ cancel }) => {
+	if (hasUnsavedChanges) {
+		if (!confirm('You have unsaved changes. Leave anyway?')) {
+			cancel();
+		}
+	}
+});
 
 // Derived selection from URL
 const selectedGroupId = $derived(page.url.searchParams.get('group'));
@@ -42,28 +54,29 @@ const selectedGroupId = $derived(page.url.searchParams.get('group'));
 // Track which groups need configuration
 const unconfiguredCount = $derived(groupsNeedingConfig.size);
 
-// Remove filteredGroups logic as sidebar manages it externally
+// Filter groups based on search term
+const filteredGroups = $derived(
+	availableGroups.filter((g) => g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.description.toLowerCase().includes(searchTerm.toLowerCase()))
+);
 
-// Check all groups for empty fields on page load
+// Check all groups for empty fields on page load using batch endpoint
 async function checkAllGroupsForEmptyFields() {
-	const groupsWithEmptyFields = new SvelteSet<string>();
+	try {
+		const response = await fetch('/api/settings/all');
+		const data = await response.json();
 
-	// Check each available group
-	for (const group of availableGroups) {
-		try {
-			const response = await fetch(`/api/settings/${group.id}`);
-			const data = await response.json();
+		if (data.success && data.groups) {
+			const groupsWithEmptyFields = new SvelteSet<string>();
 
-			if (data.success && data.values) {
-				// Check if this group has empty required/critical fields
+			for (const group of availableGroups) {
+				const values = data.groups[group.id];
+				if (!values) continue;
+
 				const hasEmptyFields = group.fields.some((field) => {
-					const value = data.values[field.key];
-
-					// Check for empty strings in critical fields
+					const value = values[field.key];
 					if (typeof value === 'string') {
 						return value === '' && (field.required || field.key.includes('HOST') || field.key.includes('EMAIL'));
 					}
-
 					return false;
 				});
 
@@ -71,14 +84,32 @@ async function checkAllGroupsForEmptyFields() {
 					groupsWithEmptyFields.add(group.id);
 				}
 			}
-		} catch (err) {
-			logger.error(`Failed to check group ${group.id}:`, err);
-		}
-	}
 
-	// Update the store with all groups that need configuration
-	groupsNeedingConfig.clear();
-	groupsWithEmptyFields.forEach((id) => groupsNeedingConfig.add(id));
+			// Update the store with all groups that need configuration
+			groupsNeedingConfig.clear();
+			groupsWithEmptyFields.forEach((id) => groupsNeedingConfig.add(id));
+		}
+	} catch (err) {
+		logger.error(`Failed to check groups:`, err);
+	}
+}
+
+async function exportAll() {
+	try {
+		const res = await fetch('/api/settings/all');
+		const data = await res.json();
+		if (data.success) {
+			const blob = new Blob([JSON.stringify(data.groups, null, 2)], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `sveltycms-settings-${new Date().toISOString().slice(0, 10)}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
+		}
+	} catch (err) {
+		logger.error('Failed to export settings:', err);
+	}
 }
 
 onMount(() => {
@@ -103,11 +134,41 @@ onMount(() => {
 	helpUrl="/docs/guides/configuration/system-settings"
 />
 
-<p class="mb-6 px-2 text-surface-600 dark:text-surface-300">
-	These are critical system settings loaded dynamically from the database. Most changes take effect immediately, though settings marked with "Restart
-	Required" need a server restart. Settings are organized into <span class="font-bold text-primary-500">{availableGroups.length}</span>
-	logical groups for easy management.
-</p>
+<div class="mb-6 flex flex-col gap-4 px-2 md:flex-row md:items-center md:justify-between">
+	<p class="text-surface-600 dark:text-surface-300">
+		These are critical system settings loaded dynamically from the database. Most changes take effect immediately, though settings marked with
+		"Restart Required" need a server restart. Settings are organized into <span class="font-bold text-primary-500">{availableGroups.length}</span>
+		logical groups for easy management.
+	</p>
+	<button onclick={exportAll} class="btn preset-filled-surface-500 w-full md:w-auto">
+		<span>📤</span>
+		<span>Export All JSON</span>
+	</button>
+</div>
+
+<!-- Mobile Navigation Tabs & Search -->
+<div class="mb-6 space-y-4 px-2">
+	<input bind:value={searchTerm} placeholder="Search settings..." class="input w-full" />
+
+	<div class="flex gap-2 overflow-x-auto pb-2 snap-x scrollbar-hide md:hidden">
+		{#each filteredGroups as g}
+			<button
+				onclick={() => {
+					const url = new URL(window.location.href);
+					url.searchParams.set('group', g.id);
+					goto(url.toString());
+				}}
+				class="btn {selectedGroupId === g.id ? 'preset-filled-primary-500' : 'preset-tonal-surface'} whitespace-nowrap snap-start"
+			>
+				<span>{g.icon}</span>
+				<span>{g.name}</span>
+				{#if groupsNeedingConfig.has(g.id)}
+					<span class="ml-1 text-xs">⚠️</span>
+				{/if}
+			</button>
+		{/each}
+	</div>
+</div>
 
 {#if unconfiguredCount > 0}
 	<div class="wrapper preset-filled-error-500 text-surface-600 dark:text-surface-300 mb-6">
@@ -141,7 +202,7 @@ onMount(() => {
 					{#if group.id === 'gdpr'}
 						<GDPRSettings {group} />
 					{:else}
-						<GenericSettingsGroup {group} {groupsNeedingConfig} />
+						<GenericSettingsGroup {group} {groupsNeedingConfig} onUnsavedChanges={(val) => (hasUnsavedChanges = val)} />
 					{/if}
 				</div>
 			{:else}
