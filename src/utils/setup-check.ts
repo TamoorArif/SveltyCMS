@@ -103,22 +103,25 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
       return true;
     }
 
-    // 4. Data Verification: Check if users and roles exist
-    // We check for both to ensure a consistent system state
-    const [userResult, roles] = await Promise.all([
+    // 4. Data Verification: Check if users, roles, and critical settings exist
+    // We check for all three to ensure a consistent system state before going READY
+    const [userResult, roles, hostConfig] = await Promise.all([
       dbAdapter.auth.getAllUsers({ limit: 1 }, { bypassTenantCheck: true }),
       dbAdapter.auth.getAllRoles(undefined, { bypassTenantCheck: true }),
+      dbAdapter.system.preferences.get("HOST_PROD", "system"),
     ]);
 
     const hasUsers = userResult.success && userResult.data && userResult.data.length > 0;
     const hasRoles = Array.isArray(roles) && roles.length > 0;
+    const hasConfig = hostConfig.success && hostConfig.data;
 
-    if (!hasUsers || !hasRoles) {
+    if (!hasUsers || !hasRoles || !hasConfig) {
       const missing = [];
       if (!hasUsers) missing.push("USERS");
       if (!hasRoles) missing.push("ROLES");
+      if (!hasConfig) missing.push("SITE_CONFIG (HOST_PROD)");
       console.warn(
-        `[setupCheck] Config exists but NO ${missing.join(" and ")} found in DB. System will stay in setup mode.`,
+        `[setupCheck] Config exists but NO ${missing.join(", ")} found in DB. System will stay in setup mode.`,
       );
       setupStatus = false;
       setupStatusCheckedDb = true;
@@ -174,27 +177,42 @@ export function invalidateSetupCache(
  * Used by hooks to allow non-blocking initialization.
  */
 export function isBootstrapRoute(pathname: string): boolean {
-  const bootstrapPaths = [
-    "/setup",
-    "/login",
-    "/api/auth",
-    "/api/system",
-    "/api/debug",
-    "/api/settings/public",
-    "/api/content/version",
-    "/api/dashboard/health",
-    "/_",
-    "/static",
-    "/assets",
-    "/.well-known",
-    "/favicon.ico",
-  ];
+  // 1. Setup flow (fresh install)
+  if (pathname.startsWith("/setup") || pathname.startsWith("/api/setup")) {
+    return true;
+  }
 
+  // 2. Auth flow (login, register, logout)
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
+    return true;
+  }
+
+  // 3. System core endpoints (health, debug, system state)
+  if (
+    pathname.startsWith("/api/system") ||
+    pathname.startsWith("/api/debug") ||
+    pathname.startsWith("/api/settings/public") ||
+    pathname.startsWith("/api/content/version") ||
+    pathname.startsWith("/api/dashboard/health") ||
+    pathname === "/"
+  ) {
+    return true;
+  }
+
+  // 4. Static assets and Vite internal paths (fast bypass)
+  if (
+    pathname.startsWith("/_") ||
+    pathname.startsWith("/static") ||
+    pathname.startsWith("/assets") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/.well-known") ||
+    pathname.includes(".") // Extension check for other assets
+  ) {
+    return true;
+  }
+
+  // 5. Localized versions of core routes
   const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
 
-  return (
-    bootstrapPaths.some((prefix) => pathname.startsWith(prefix)) ||
-    pathname === "/" ||
-    isLocalizedSetup
-  );
+  return isLocalizedSetup;
 }

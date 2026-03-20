@@ -71,15 +71,11 @@ export class SessionAdapter {
       mongoose.model<Session>("auth_sessions", SessionSchema);
 
     // Clean up old ObjectId-based sessions (migration)
-    this.migrateToUuidSessions().catch((err) => {
-      logger.warn("Failed to migrate sessions to UUID format", {
-        error: err.message,
-      });
-    });
+    // Note: This only registers the intent; the actual migration is now triggered
+    // via migrateToUuidSessions() which should be called after connection success.
   }
 
-  // Migration: Remove old ObjectId-based sessions
-  private async migrateToUuidSessions(): Promise<void> {
+  async migrateToUuidSessions(): Promise<void> {
     try {
       // Delete all sessions with ObjectId format (24-char hex strings)
       // UUID format is 32 chars without dashes

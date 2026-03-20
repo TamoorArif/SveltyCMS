@@ -638,6 +638,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
       tenantId?: string | null;
       bypassTenantCheck?: boolean;
       includeDeleted?: boolean;
+      silent?: boolean;
     } = {},
   ): Promise<DatabaseResult<number>> {
     try {
@@ -655,6 +656,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
           error,
           "COUNT_ERROR",
           `Failed to count documents in ${this.model.modelName}`,
+          options.silent,
         ),
       };
     }

@@ -70,6 +70,7 @@ function getRoleModel(): mongoose.Model<Role> {
       groupName: String,
       icon: String,
       color: String,
+      isDeleted: { type: Boolean, default: false },
     },
     {
       _id: false,

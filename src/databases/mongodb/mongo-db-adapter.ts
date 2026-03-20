@@ -104,7 +104,12 @@ export class MongoDBAdapter implements IDBAdapter {
       return {
         success: false,
         message: err.message,
-        error: { code: "DB_CONNECTION_FAILED", message: err.message },
+        error: {
+          code: "DB_CONNECTION_FAILED",
+          message: err.message,
+          originalCode: err.code || (err as any).originalError?.code,
+          details: err,
+        },
       };
     }
   }
@@ -187,6 +192,75 @@ export class MongoDBAdapter implements IDBAdapter {
     } finally {
       session.endSession();
     }
+  }
+
+  /**
+   * Initializes system models and methods.
+   */
+  async ensureSystem(): Promise<void> {
+    const { SystemSettingModel, SystemPreferencesModel, ThemeModel, SystemVirtualFolderModel } =
+      await import("./models");
+    const { MongoSystemMethods } = await import("./methods/system-methods");
+    const { MongoThemeMethods } = await import("./methods/theme-methods");
+
+    this.system.preferences = new MongoSystemMethods(SystemPreferencesModel, SystemSettingModel);
+    this.system.themes = new MongoThemeMethods(ThemeModel);
+    this.system.virtualFolder = {
+      ensure: async (data: any) => {
+        // Strip timestamps and ID to let Mongoose handle them or avoid conflicts with $setOnInsert
+        const { _id, createdAt: _, updatedAt: __, ...rest } = data;
+        const result = await SystemVirtualFolderModel.findOneAndUpdate(
+          { name: data.name },
+          {
+            $setOnInsert: {
+              ...rest,
+              _id: _id || new mongoose.Types.ObjectId().toHexString(),
+            },
+          },
+          { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
+        )
+          .lean()
+          .exec();
+        return result;
+      },
+    };
+
+    // Initialize tenants
+    const { TenantModel } = await import("./models/tenant");
+    this.system.tenants = {
+      create: (t: any) => new TenantModel(t).save().then((r: any) => r.toObject()),
+      getById: (id: string) => TenantModel.findById(id).lean().exec(),
+      update: (id: string, d: any) =>
+        TenantModel.findByIdAndUpdate(id, { $set: d }, { new: true }).lean().exec(),
+      delete: (id: string) => TenantModel.findByIdAndDelete(id).exec().then(() => {}),
+      list: () => TenantModel.find().lean().exec(),
+    };
+  }
+
+  /**
+   * Initializes auth models and methods.
+   */
+  async ensureAuth(): Promise<void> {
+    if (this.auth && typeof (this.auth as any).setupAuthModels === "function") {
+      await (this.auth as any).setupAuthModels();
+    }
+  }
+
+  /**
+   * Initializes media models and methods.
+   */
+  async ensureMedia(): Promise<void> {
+    const { MediaModel } = await import("./models/media");
+    const { MongoMediaMethods } = await import("./methods/media-methods");
+    this.media.methods = new MongoMediaMethods(MediaModel as any);
+  }
+
+  /**
+   * Initializes content models and methods.
+   */
+  async ensureContent(): Promise<void> {
+    // Content structure is already handled by generic crud and lazy discriminators
+    // but we can add any specific initialization here if needed.
   }
 
   utils: any = {

@@ -42,6 +42,13 @@ export class MongoAuthModelRegistrar {
       this.registerModel("auth_sessions", SessionSchema);
       this.registerModel("auth_tokens", TokenSchema);
 
+      // Run non-critical session UUID migration after registration
+      this.migrateSessions().catch((err) => {
+        logger.debug("Session migration check completed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+
       logger.info("Authentication models registered successfully.");
     } catch (error) {
       throw createDatabaseError(
@@ -64,6 +71,24 @@ export class MongoAuthModelRegistrar {
     } else {
       this.mongoose.model(name, schema);
       logger.debug(`Model '${name}' was registered`);
+    }
+  }
+
+  /**
+   * Migration: Remove old ObjectId-based sessions (from before the UUID migration).
+   * This is a non-critical background task.
+   */
+  private async migrateSessions(): Promise<void> {
+    const SessionModel = this.mongoose.model("auth_sessions");
+    const result = await SessionModel.deleteMany({
+      $or: [
+        { _id: { $type: "objectId" } }, // MongoDB ObjectId type
+        { _id: { $regex: /^[0-9a-f]{24}$/ } }, // 24-char hex string (ObjectId format)
+      ],
+    });
+
+    if (result.deletedCount && result.deletedCount > 0) {
+      logger.info(`🔄 Migrated sessions: Removed ${result.deletedCount} old ObjectId-based sessions`);
     }
   }
 }

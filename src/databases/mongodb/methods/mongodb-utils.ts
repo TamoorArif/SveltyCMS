@@ -25,14 +25,22 @@ const ID_VALIDATION_REGEX =
  * @param message A human-readable message describing the error.
  * @returns A standardized DatabaseError object.
  */
-export function createDatabaseError(error: unknown, code: string, message: string): DatabaseError {
+export function createDatabaseError(
+  error: unknown,
+  code: string,
+  message: string,
+  silent = false,
+): DatabaseError {
   const details = error instanceof Error ? error.message : String(error);
   const stack = error instanceof Error ? error.stack : undefined;
+  const originalCode = (error as any)?.code;
 
-  // Log with structured context for better diagnostics.
-  logger.error(`[${code}] ${message}`, { details, stack });
+  // Log with structured context for better diagnostics, unless silent is requested.
+  if (!silent) {
+    logger.error(`[${code}] ${message}`, { details, stack, originalCode });
+  }
 
-  return { code, message, details, stack };
+  return { code, message, details, stack, originalCode };
 }
 
 // ===================================================================================

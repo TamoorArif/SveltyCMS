@@ -19,7 +19,15 @@
 
 import SiteName from '@src/components/site-name.svelte';
 import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
-import { error_gofrontpage, error_page_moved, error_pagenotfound, error_skip_content, error_wrong } from '@src/paraglide/messages';
+import {
+	db_error_description,
+	db_error_title,
+	error_gofrontpage,
+	error_page_moved,
+	error_pagenotfound,
+	error_skip_content,
+	error_wrong
+} from '@src/paraglide/messages';
 import { app } from '@src/stores/store.svelte';
 import { page } from '$app/state';
 
@@ -37,9 +45,18 @@ function isCMSChar(index: number): boolean {
 	const posInPattern = index % patternLength;
 	return posInPattern >= patternLength - 4 && posInPattern < patternLength - 1;
 }
+
+// Dynamic Error Handling logic
+const msg = (page.error?.message || '').toLowerCase();
+const isDatabaseError = page.status === 503 && (msg.includes('database') || msg.includes('connection') || msg.includes('failed to initialize'));
+const isSetupMode = page.status === 503 && msg.includes('setup');
+
+const errorTitle = isDatabaseError ? db_error_title() : page.status === 404 ? error_pagenotfound() : 'Error';
+
+const errorSummary = isDatabaseError ? db_error_description() : isSetupMode ? 'System in Setup Mode' : page.status === 404 ? error_pagenotfound() : error_wrong();
 </script>
 
-<svelte:head><title>{page.status} - {error_pagenotfound()} | {siteName}</title></svelte:head>
+<svelte:head><title>{page.status} - {errorTitle} | {siteName}</title></svelte:head>
 
 {#if page}
 	<main
@@ -85,7 +102,7 @@ function isCMSChar(index: number): boolean {
 					aria-label="Error type"
 				>
 					<div class="max-w-[280px] truncate" title={page.url.toString()}>{page.url}</div>
-					<div class="whitespace-nowrap">{error_pagenotfound()}</div>
+					<div class="whitespace-nowrap">{errorSummary}</div>
 				</div>
 			</div>
 

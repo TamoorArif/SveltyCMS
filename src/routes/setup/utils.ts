@@ -7,7 +7,7 @@
  * such as building connection strings and initializing database adapters during the setup phase.
  */
 
-import type { IDBAdapter } from "@src/databases/db-interface";
+import type { DatabaseError, IDBAdapter } from "@src/databases/db-interface";
 import type { DatabaseConfig } from "@src/databases/schemas";
 import { logger } from "@utils/logger";
 
@@ -151,13 +151,28 @@ export async function getSetupDatabaseAdapter(
     }
   }
 
-  // Initialize auth models with error handling
+  // Initialize models and interfaces for all domain modules
   try {
-    // Ensure auth module is initialized before accessing it
+    // 1. Auth: setup models and register schemas
     if (dbAdapter.ensureAuth) {
       await dbAdapter.ensureAuth();
-    } else {
+    } else if (dbAdapter.auth?.setupAuthModels) {
       await dbAdapter.auth.setupAuthModels();
+    }
+
+    // 2. System: initialize preferences, themes, etc.
+    if (dbAdapter.ensureSystem) {
+      await dbAdapter.ensureSystem();
+    }
+
+    // 3. Media: initialize media methods
+    if (dbAdapter.ensureMedia) {
+      await dbAdapter.ensureMedia();
+    }
+
+    // 4. Content: initialize content-specific methods/models
+    if (dbAdapter.ensureContent) {
+      await dbAdapter.ensureContent();
     }
   } catch (err) {
     logger.error(
@@ -200,38 +215,99 @@ async function setupMongoDB(
     if (config.password) {
       connectionOptions.pass = config.password;
     }
-    if (connectionString.startsWith("mongodb+srv://")) {
-      connectionOptions.authSource = "admin";
-    }
   }
 
+  /** Helper to verify authentication via a count probe or connect error */
+  const checkAuthFailure = (error: any) => {
+    if (!error) return false;
+    const code = error.originalCode;
+    const msg = (error.message || "").toLowerCase();
+    const details = (typeof error.details === "string" ? error.details : "").toLowerCase();
+
+    return (
+      code === 18 ||
+      code === 13 ||
+      code === "18" ||
+      code === "13" ||
+      msg.includes("auth") ||
+      msg.includes("unauthorized") ||
+      msg.includes("credentials") ||
+      msg.includes("authentication") ||
+      msg.includes("command denied") ||
+      details.includes("auth") ||
+      details.includes("unauthorized") ||
+      details.includes("credentials") ||
+      details.includes("authentication") ||
+      details.includes("requires authentication") ||
+      details.includes("command denied")
+    );
+  };
+
   try {
-    const connectResult = await dbAdapter.connect(connectionString, connectionOptions);
+    // Stage 1: Attempt connection with default settings
+    logger.info("Attempting MongoDB connection (Stage 1: default auth)...", { correlationId });
+    let connectResult = await dbAdapter.connect(connectionString, connectionOptions);
+
+    let needsRetry = false;
     if (!connectResult.success) {
-      throw new Error(connectResult.error.message);
+      if (checkAuthFailure(connectResult.error) && config.user && connectionOptions.authSource !== "admin") {
+        needsRetry = true;
+      } else {
+        const isAuth = checkAuthFailure(connectResult.error);
+        const hint = getDatabaseHint(connectResult.error as DatabaseError, "mongodb");
+        const mainMsg = isAuth ? "Authentication failed" : connectResult.error.message;
+        throw new Error(`${mainMsg}\n${hint}`);
+      }
+    } else {
+      // If connection succeeded, verify with a probe
+      const probeResult = await dbAdapter.crud.count("system_content_structure", {}, { silent: true });
+      if (!probeResult.success) {
+        if (checkAuthFailure(probeResult.error) && config.user && connectionOptions.authSource !== "admin") {
+          needsRetry = true;
+        } else {
+          const isAuth = checkAuthFailure(probeResult.error);
+          const hint = getDatabaseHint(probeResult.error as DatabaseError, "mongodb");
+          const mainMsg = isAuth ? "Authentication required" : probeResult.error.message;
+          throw new Error(`${mainMsg}\n${hint}`);
+        }
+      }
     }
 
-    logger.info("Running authentication verification probe for MongoDB...", { correlationId });
-
-    try {
-      // Revert to using the adapter's CRUD method to avoid dependency on global mongoose
-      // and to avoid needing cluster-wide 'listDatabases' permissions.
-      await dbAdapter.crud.count("system_content_structure", {});
-    } catch (probeErr: any) {
-      logger.warn(`⚠️ Auth probe warning: ${probeErr.message} (code: ${probeErr.code})`, {
+    // Stage 2: If Stage 1 failed due to AUTH, and we haven't tried 'admin' authSource yet, retry.
+    if (needsRetry) {
+      logger.info("Auth failed in Stage 1. Retrying with authSource: admin...", {
         correlationId,
       });
 
-      // MongoDB numeric codes: 18 = AuthenticationFailed, 13 = Unauthorized
-      if (probeErr.code === 18 || probeErr.code === 13) {
-        throw new Error("Authentication failed: Please check your MongoDB user credentials.");
-      }
+      await dbAdapter.disconnect();
+      connectionOptions.authSource = "admin";
 
-      const msg = probeErr.message.toLowerCase();
-      if (msg.includes("auth") || msg.includes("unauthorized") || msg.includes("credentials")) {
-        throw new Error(`Authentication failed: ${probeErr.message}`);
+      connectResult = await dbAdapter.connect(connectionString, connectionOptions);
+
+      if (connectResult.success) {
+        // Verify Stage 2 with a probe
+        const secondProbeResult = await dbAdapter.crud.count(
+          "system_content_structure",
+          {},
+          { silent: true },
+        );
+        if (secondProbeResult.success) {
+          logger.info("✅ MongoDB authenticated successfully via 'admin' authSource.", {
+            correlationId,
+          });
+          return dbAdapter;
+        }
+
+        // If Stage 2 also fails, we throw the specific error from Stage 2
+        const isAuth = checkAuthFailure(secondProbeResult.error);
+        const hint = getDatabaseHint(secondProbeResult.error as DatabaseError, "mongodb");
+        const mainMsg = isAuth ? "Authentication failed" : secondProbeResult.error.message;
+        throw new Error(`${mainMsg}\n${hint}`);
+      } else {
+        // Stage 2 connect failed
+        const hint = getDatabaseHint(connectResult.error as DatabaseError, "mongodb");
+        throw new Error(`${connectResult.error.message}\n${hint}`);
       }
-      // If it's another error (like table not found), we are connected and authenticated.
     }
 
     return dbAdapter;
@@ -239,6 +315,71 @@ async function setupMongoDB(
     logger.error(`MongoDB setup failed: ${err.message}`, { correlationId });
     throw err;
   }
+}
+
+/**
+ * Provides a human-readable hint based on the database error and type.
+ */
+function getDatabaseHint(error: DatabaseError, type: string): string {
+  const code = error.originalCode?.toString() || "";
+  const details = typeof error.details === "string" ? error.details.toLowerCase() : "";
+  const msg = (error.message.toLowerCase() + " " + details).trim();
+
+  // 1. Connection Refused / Network issues (Generic)
+  if (msg.includes("econnrefused") || msg.includes("etimedout") || msg.includes("enotfound")) {
+    const portMapping: Record<string, string> = {
+      mongodb: "27017",
+      mariadb: "3306",
+      postgresql: "5432",
+    };
+    const defaultPort = portMapping[type] || "default port";
+    return `Hint: Check if the ${type.toUpperCase()} service is running and accessible. Ensure ${
+      msg.includes("enotfound") ? "the host address is correct" : `port ${defaultPort} is open`
+    } and not blocked by a firewall.`;
+  }
+
+  // 2. Auth Errors
+  if (
+    msg.includes("auth") ||
+    msg.includes("denied") ||
+    msg.includes("password") ||
+    msg.includes("login") ||
+    msg.includes("identity")
+  ) {
+    // MariaDB/MySQL: 1045 = ER_ACCESS_DENIED_ERROR
+    if (type === "mariadb" && code === "1045") {
+      return "Hint: Access denied. Double-check your MariaDB username and password.";
+    }
+    // PostgreSQL: 28P01 = invalid_password, 28000 = invalid_authorization_specification
+    if (type === "postgresql" && (code === "28P01" || code === "28000")) {
+      return "Hint: Authentication failed. Verify your PostgreSQL username and password.";
+    }
+    // MongoDB: 18 = AuthenticationFailed, 13 = Unauthorized
+    if (type === "mongodb") {
+      if (code === "18" || code === "13" || msg.includes("requires authentication") || msg.includes("command denied")) {
+        if (!msg.includes("admin") && (msg.includes("admin") || details.includes("admin"))) {
+           return "Hint: Authentication failed via 'admin'. Please check your root credentials.";
+        }
+        return "Hint: Authentication failed. If this database is secured (like Docker), please provide a username and password.";
+      }
+    }
+    return "Hint: Authentication failed. Please verify your credentials.";
+  }
+
+  // 3. Missing Database
+  if (msg.includes("database") && (msg.includes("not exist") || msg.includes("unknown"))) {
+    // MariaDB: 1049 = ER_BAD_DB_ERROR
+    // PostgreSQL: 3D000 = invalid_catalog_name
+    return `Hint: The database may not exist. Please manually create it or check the name capitalization.`;
+  }
+
+  // 4. SQLite specific
+  if (type === "sqlite") {
+    if (msg.includes("cantopen")) return "Hint: Cannot open database file. Check directory permissions.";
+    if (msg.includes("perm")) return "Hint: Permission denied. Ensure the process can write to the file.";
+  }
+
+  return "Hint: Please check your configuration and ensure the database server is reachable.";
 }
 
 // Strategy: setup MariaDB adapter
@@ -252,19 +393,20 @@ async function setupMariaDB(
 
   const connectResult = await dbAdapter.connect(connectionString);
   if (!connectResult.success) {
-    throw new Error(connectResult.error?.message || "Failed to connect to MariaDB");
+    const hint = getDatabaseHint(connectResult.error, "mariadb");
+    throw new Error(`${connectResult.error.message}\n${hint}`);
   }
 
-  try {
-    await dbAdapter.crud.count("system_content_structure", {});
-    return dbAdapter;
-  } catch (probeErr: any) {
-    // MariaDB/MySQL numeric code 1045 = ER_ACCESS_DENIED_ERROR
-    if (probeErr.code === "ER_ACCESS_DENIED_ERROR" || probeErr.errno === 1045) {
-      throw new Error("Authentication failed: Please check your MariaDB credentials.");
+  // For MariaDB, we do a simple query to verify permissions
+  const probeResult = await dbAdapter.crud.count("system_content_structure", {});
+  if (!probeResult.success) {
+    const hint = getDatabaseHint(probeResult.error, "mariadb");
+    if (probeResult.error.message.includes("denied") || probeResult.error.message.includes("auth")) {
+      throw new Error(`Authentication failed: ${probeResult.error.message}\n${hint}`);
     }
-    return dbAdapter; // Ignore other errors for now (e.g. table not found)
   }
+
+  return dbAdapter;
 }
 
 // Strategy: setup PostgreSQL adapter
@@ -278,19 +420,18 @@ async function setupPostgreSQL(
 
   const connectResult = await dbAdapter.connect(connectionString);
   if (!connectResult.success) {
-    throw new Error(connectResult.error?.message || "Failed to connect to PostgreSQL");
+    const hint = getDatabaseHint(connectResult.error, "postgresql");
+    throw new Error(`${connectResult.error.message}\n${hint}`);
   }
 
-  try {
-    await dbAdapter.crud.count("system_content_structure", {});
-    return dbAdapter;
-  } catch (probeErr: any) {
-    // Postgres standard SQLSTATE codes: 28P01 = invalid_password, 28000 = invalid_authorization_specification
-    if (probeErr.code === "28P01" || probeErr.code === "28000") {
-      throw new Error("Authentication failed: Please check your PostgreSQL username and password.");
+  const probeResult = await dbAdapter.crud.count("system_content_structure", {});
+  if (!probeResult.success) {
+    const hint = getDatabaseHint(probeResult.error, "postgresql");
+    if (probeResult.error.message.includes("denied") || probeResult.error.message.includes("auth")) {
+      throw new Error(`Authentication failed: ${probeResult.error.message}\n${hint}`);
     }
-    return dbAdapter;
   }
+  return dbAdapter;
 }
 
 // Strategy: setup SQLite adapter
@@ -301,12 +442,18 @@ async function setupSQLite(
   correlationId: string,
 ): Promise<IDBAdapter> {
   try {
-    const { existsSync, writeFileSync } = await import("node:fs");
+    const { existsSync, writeFileSync, mkdirSync } = await import("node:fs");
+    const { dirname } = await import("node:path");
     if (!existsSync(connectionString)) {
       if (options.createIfMissing) {
         logger.info(`[setupSQLite] Creating missing SQLite database file: ${connectionString}`, {
           correlationId,
         });
+        // Ensure directory exists
+        const dir = dirname(connectionString);
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
         // Create an empty file to allow the adapter to connect and run migrations
         writeFileSync(connectionString, "");
       } else {
@@ -318,7 +465,8 @@ async function setupSQLite(
     const dbAdapter = new SQLiteAdapter() as IDBAdapter;
     const connectResult = await dbAdapter.connect(connectionString);
     if (!connectResult.success) {
-      throw new Error(connectResult.error?.message || "Failed to connect to SQLite");
+      const hint = getDatabaseHint(connectResult.error, "sqlite");
+      throw new Error(`${connectResult.error.message}\n${hint}`);
     }
     return dbAdapter;
   } catch (err: any) {

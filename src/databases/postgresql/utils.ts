@@ -10,11 +10,13 @@ import type { DatabaseError, DatabaseId } from "../db-interface";
 export function createDatabaseError(
   code: string,
   message: string,
-  _originalError?: unknown,
+  originalError?: any,
 ): DatabaseError {
   return {
     code,
     message,
+    originalCode: originalError?.code || originalError?.sqlState || (originalError as any)?.originalError?.code,
+    details: originalError,
   };
 }
 

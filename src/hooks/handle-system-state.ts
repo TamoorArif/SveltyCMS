@@ -21,10 +21,12 @@ import { logger } from "@utils/logger.server";
 import { isBootstrapRoute, isSetupComplete } from "@utils/setup-check";
 import { STATIC_ASSET_REGEX } from "./handle-static-asset-caching";
 
-/**
- * Validates if the request is coming from a trusted host during bootstrap/restricted states.
- */
 function isTrustedHost(event: RequestEvent): boolean {
+  // Always trust any host if setup is not complete
+  if (!isSetupComplete()) {
+    return true;
+  }
+
   const { host } = event.url;
 
   // Always trust localhost/loopback

@@ -176,6 +176,7 @@ export interface DatabaseError {
   message: string;
   stack?: string;
   statusCode?: number;
+  originalCode?: string | number;
 }
 
 export interface QueryMeta {
@@ -554,7 +555,12 @@ export interface ICrudAdapter {
   count<T extends BaseEntity>(
     collection: string,
     query?: QueryFilter<T>,
-    options?: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean },
+    options?: {
+      tenantId?: string | null;
+      bypassTenantCheck?: boolean;
+      includeDeleted?: boolean;
+      silent?: boolean;
+    },
   ): Promise<DatabaseResult<number>>;
   delete(
     collection: string,

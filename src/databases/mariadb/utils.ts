@@ -56,13 +56,14 @@ export function isoToDate(iso: ISODateString | null | undefined): Date | undefin
 export function createDatabaseError(
   code: string,
   message: string,
-  details?: unknown,
+  details?: any,
   statusCode?: number,
 ): DatabaseError {
   return {
     code,
     message,
     statusCode,
+    originalCode: details?.errno || details?.code || (details as any)?.originalError?.code,
     details,
   };
 }
