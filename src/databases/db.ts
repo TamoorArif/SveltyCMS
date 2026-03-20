@@ -622,6 +622,9 @@ async function initializeSystem(
     // Explicitly set system state to READY after all services are initialized
     setSystemState("READY", "All critical services initialized successfully");
 
+    // Start background system monitor (Heartbeat)
+    startSystemMonitor();
+
     const totalTime = performance.now() - systemStartTime;
     logger.info(
       `🚀 System initialization READY in ${totalTime.toFixed(2)}ms (Background tasks still running)`,
@@ -634,6 +637,66 @@ async function initializeSystem(
     auth = null; // Reset auth on error
     setSystemState("FAILED", message);
     throw new Error(message);
+  }
+}
+
+// --- Heartbeat & Background Monitoring ---
+let monitorInterval: any = null;
+
+/**
+ * Starts a background heartbeat monitor for system services.
+ * Performs a lightweight ping every 30 seconds to track latency and availability.
+ */
+export function startSystemMonitor() {
+  if (monitorInterval) return;
+
+  // Wait a bit after initialization before starting the steady-state heartbeat
+  setTimeout(() => {
+    if (monitorInterval) return;
+
+    logger.info("💓 Starting System Health Heartbeat (30s interval)");
+
+    monitorInterval = setInterval(async () => {
+      if (!isConnected || !dbAdapter) return;
+
+      try {
+        const start = performance.now();
+        // Use the existing adapter connection check as a lightweight ping
+        const connected = await dbAdapter.isConnected?.();
+        const latency = performance.now() - start;
+
+        const { updateServiceLatency } = await import("@src/stores/system/state");
+
+        if (connected) {
+          updateServiceLatency("database", latency);
+        } else {
+          updateServiceHealth(
+            "database",
+            "unhealthy",
+            "Database heartbeat failed: Connection lost",
+          );
+        }
+      } catch (err) {
+        logger.warn("Database heartbeat error:", err);
+      }
+    }, 30_000);
+
+    // Handle process shutdown
+    if (typeof process !== "undefined") {
+      process.once("SIGTERM", () => stopSystemMonitor());
+      process.once("SIGINT", () => stopSystemMonitor());
+    }
+  }, 5000); // 5s delay after init
+}
+
+/**
+ * Stops the background heartbeat monitor.
+ */
+export function stopSystemMonitor() {
+  if (monitorInterval) {
+    clearInterval(monitorInterval);
+    monitorInterval = null;
+    logger.info("🛑 System Health Heartbeat stopped");
   }
 }
 

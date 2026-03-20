@@ -76,8 +76,8 @@
     "test:bench:database": "bun run tests/benchmarks/database-performance.ts",
     "test:bench:hooks": "bun run tests/benchmarks/hooks-performance.ts",
     "test:bench:media": "bun run tests/benchmarks/media-performance.ts",
-    "test:bench:rest": "bun run tests/benchmarks/rest-api-performance.ts",
-    "test:bench:graphql": "bun run tests/benchmarks/graphql-api-performance.ts",
+    "test:bench:rest": "bun run scripts/run-benchmarks.ts tests/benchmarks/rest-api-performance.ts",
+    "test:bench:graphql": "bun run scripts/run-benchmarks.ts tests/benchmarks/graphql-api-performance.ts",
     "test:bench:all": "bun run test:bench:database && bun run test:bench:hooks && bun run test:bench:media && bun run test:bench:rest && bun run test:bench:graphql",
     "-- LINT & FORMAT -------------------------------------": "",
     "lint": "oxlint",
@@ -141,7 +141,7 @@
     "graphql-yoga": "^5.18.1",
     "iconify-icon": "^3.0.2",
     "isomorphic-dompurify": "^3.5.1",
-    "jsdom": "^29.0.0",
+    "jsdom": "^29.0.1",
     "json-render-svelte": "^0.6.1",
     "lru-cache": "^11.2.7",
     "lucide-svelte": "^0.577.0",
@@ -205,7 +205,7 @@
     "tailwindcss": "^4.2.2",
     "tslib": "^2.8.1",
     "ultracite": "^7.3.2",
-    "vite-plus": "^0.1.13-alpha.4",
+    "vite-plus": "^0.1.13",
     "wait-on": "^9.0.4"
   },
   "optionalDependencies": {

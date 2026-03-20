@@ -181,12 +181,12 @@ import * as v from "valibot";
 
 // Database configuration schema
 export const dbConfigSchema = v.object({
-  type: v.string(),
+  type: v.picklist(["mongodb", "mongodb+srv", "mariadb", "postgresql", "sqlite"]),
   host: v.pipe(v.string(), v.minLength(1, "Host is required")),
-  port: v.string(),
+  port: v.pipe(v.number(), v.minValue(1)),
   name: v.pipe(v.string(), v.minLength(1, "Database name is required")),
-  user: v.string(),
-  password: v.string(),
+  user: v.optional(v.string()),
+  password: v.optional(v.string()),
 });
 
 // Admin user schema

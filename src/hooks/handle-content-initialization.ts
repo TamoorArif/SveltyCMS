@@ -4,18 +4,27 @@
  */
 
 import { redirect, type Handle } from "@sveltejs/kit";
+import { isBootstrapRoute } from "@utils/setup-check";
 import { contentManager } from "@src/content/content-manager";
 import { logger } from "@utils/logger.server";
 
 export const handleContentInitialization: Handle = async ({ event, resolve }) => {
   const { locals, url } = event;
+  const { pathname } = url;
   const tenantId = locals.tenantId ?? null;
 
   // Initialize content system for the resolved tenant if not already ready
   // Reconciliation is handled only on server startup or forced refresh
   if (!contentManager.isInitializedForTenant(tenantId)) {
     // Set skipReconciliation to false to ensure stale DB nodes are cleaned up
-    await contentManager.initialize(tenantId, false);
+    const initPromise = contentManager.initialize(tenantId, false);
+
+    // 🚀 OPTIMIZATION: Don't block the first byte for bootstrap page requests!
+    if (isBootstrapRoute(pathname)) {
+      logger.debug(`[handleContentInitialization] Fast-tracking bootstrap page: ${pathname}`);
+    } else {
+      await initPromise;
+    }
   }
 
   // FRESH INSTALL: If no collections exist, redirect authenticated users to builder or dashboard

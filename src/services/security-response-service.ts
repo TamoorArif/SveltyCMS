@@ -27,21 +27,33 @@ const DEFAULT_POLICIES: SecurityPolicy[] = [
   {
     name: "Moderate Threat Response",
     threatLevel: "medium",
-    triggers: { indicatorThreshold: 3, timeWindow: 5 * 60 * 1000, severityThreshold: 5 },
+    triggers: {
+      indicatorThreshold: 3,
+      timeWindow: 5 * 60 * 1000,
+      severityThreshold: 5,
+    },
     responses: ["warn", "throttle"],
     cooldownPeriod: 15 * 60 * 1000,
   },
   {
     name: "High Threat Response",
     threatLevel: "high",
-    triggers: { indicatorThreshold: 5, timeWindow: 10 * 60 * 1000, severityThreshold: 7 },
+    triggers: {
+      indicatorThreshold: 5,
+      timeWindow: 10 * 60 * 1000,
+      severityThreshold: 7,
+    },
     responses: ["warn", "block"],
     cooldownPeriod: 30 * 60 * 1000,
   },
   {
     name: "Critical Threat Response",
     threatLevel: "critical",
-    triggers: { indicatorThreshold: 3, timeWindow: 5 * 60 * 1000, severityThreshold: 9 },
+    triggers: {
+      indicatorThreshold: 3,
+      timeWindow: 5 * 60 * 1000,
+      severityThreshold: 9,
+    },
     responses: ["warn", "block"],
     cooldownPeriod: 60 * 60 * 1000,
   },
@@ -129,7 +141,11 @@ class SecurityResponseService {
         await this.processIndicator(clientIp, ind);
       }
       if (anomaly.indicators.some((i) => i.severity >= 8)) {
-        return { level: "high", action: "challenge", reason: "Request anomaly detected" };
+        return {
+          level: "high",
+          action: "challenge",
+          reason: "Request anomaly detected",
+        };
       }
     }
 
@@ -137,10 +153,18 @@ class SecurityResponseService {
     const threatLevel = await this.analyzePayload(request);
     if (threatLevel === "critical") {
       await this.blockIp(clientIp, "Critical threat detected in payload");
-      return { level: "critical", action: "block", reason: "Malicious payload detected" };
+      return {
+        level: "critical",
+        action: "block",
+        reason: "Malicious payload detected",
+      };
     }
     if (threatLevel === "high") {
-      return { level: "high", action: "challenge", reason: "Suspicious payload detected" };
+      return {
+        level: "high",
+        action: "challenge",
+        reason: "Suspicious payload detected",
+      };
     }
 
     return { level: "none", action: "allow" };
@@ -260,7 +284,13 @@ class SecurityResponseService {
   }
 
   private upgradeThreat(current: ThreatLevel, next: ThreatLevel): ThreatLevel {
-    const lvls: Record<ThreatLevel, number> = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
+    const lvls: Record<ThreatLevel, number> = {
+      none: 0,
+      low: 1,
+      medium: 2,
+      high: 3,
+      critical: 4,
+    };
     return lvls[next] > lvls[current] ? next : current;
   }
 
@@ -306,7 +336,12 @@ class SecurityResponseService {
   }
 
   public async checkRateLimit(ip: string, endpoint: string): Promise<SecurityStatus> {
-    if (building || process.env.TEST_MODE === "true") return { level: "none", action: "allow" };
+    if (building || process.env.TEST_MODE === "true") {
+      logger.debug(
+        `[SecurityResponseService] Rate limit check skipped: TEST_MODE=${process.env.TEST_MODE}, building=${building}`,
+      );
+      return { level: "none", action: "allow" };
+    }
 
     try {
       const limiter = await this.getOrCreateLimiter(endpoint);
@@ -314,6 +349,9 @@ class SecurityResponseService {
       return { level: "none", action: "allow" };
     } catch (rej: any) {
       const retryAfter = Math.ceil((rej.msBeforeNext || 1000) / 1000);
+      logger.warn(
+        `[SecurityResponseService] Rate limit exceeded for IP: ${ip} on endpoint: ${endpoint}. Retry after ${retryAfter}s`,
+      );
       return {
         level: "low",
         action: "throttle",

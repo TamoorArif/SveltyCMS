@@ -111,6 +111,10 @@ export class AdapterCore {
 
       this.sql = postgres(options);
       this.db = drizzle(this.sql, { schema });
+
+      // Verification: Ensure the connection is actually established
+      await this.sql`SELECT 1`;
+
       this.connected = true;
       logger.info("Connected to PostgreSQL");
       return { success: true, data: undefined };

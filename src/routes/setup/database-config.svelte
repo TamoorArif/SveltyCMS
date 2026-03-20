@@ -36,10 +36,10 @@ import {
 import type { ValidationErrors } from '@src/stores/setup-store.svelte';
 import { setupStore } from '@src/stores/setup-store.svelte.ts';
 import { dbConfigSchema } from '@utils/form-schemas';
-import { logger } from '@utils/logger';
 import { showConfirm } from '@utils/modal-utils';
 import { safeParse } from 'valibot';
 import { deserialize } from '$app/forms';
+import { parseConnectionString } from '@utils/connection-parser';
 
 // Popup settings (click to toggle)
 
@@ -113,59 +113,45 @@ const displayErrors = $derived.by(() => {
 		...errors,
 		...validationErrors
 	};
-}); // Handle field blur to mark as touched
+}); 
+
+// Handle field blur to mark as touched
 function handleBlur(fieldName: string) {
 	touchedFields.add(fieldName);
 	touchedFields = new Set(touchedFields); // Trigger reactivity
-} // Parse MongoDB connection string (Atlas or standard)
-function parseMongoConnectionString(
-	connStr: string
-): { host: string; user: string; password: string; database?: string; authSource?: string } | null {
-	try {
-		// Built-in URL parser is more robust for MongoDB URIs
-		const url = new URL(connStr.replace('mongodb+srv://', 'http://').replace('mongodb://', 'http://'));
-
-		const user = url.username ? decodeURIComponent(url.username) : '';
-		const password = url.password ? decodeURIComponent(url.password) : '';
-		const host = url.host;
-		const database = url.pathname.slice(1);
-		const authSource = url.searchParams.get('authSource') || (connStr.startsWith('mongodb+srv') ? undefined : 'admin');
-
-		return {
-			host,
-			user,
-			password: password === '<db_password>' || password === '<password>' ? '' : password,
-			database: database || '',
-			authSource
-		};
-	} catch (error) {
-		logger.error('Error parsing connection string:', error);
-		return null;
-	}
 }
 
 // Handle paste event to detect connection strings
 function handleHostPaste(event: ClipboardEvent) {
 	const pastedText = event.clipboardData?.getData('text') || '';
+	const parsed = parseConnectionString(pastedText);
 
-	if (pastedText.startsWith('mongodb://') || pastedText.startsWith('mongodb+srv://')) {
+	if (parsed) {
 		event.preventDefault();
-		const parsed = parseMongoConnectionString(pastedText);
+		
+		// Update dbConfig with parsed values
+		dbConfig.type = parsed.type;
+		dbConfig.host = parsed.host;
+		dbConfig.user = parsed.user;
+		dbConfig.password = parsed.password;
 
-		if (parsed) {
-			// Update dbConfig with parsed values
-			dbConfig.type = pastedText.startsWith('mongodb+srv://') ? 'mongodb+srv' : 'mongodb';
-			dbConfig.host = parsed.host;
-			dbConfig.user = parsed.user;
-			dbConfig.password = parsed.password;
-
-			if (parsed.database) {
-				dbConfig.name = parsed.database;
-			}
-
-			// Clear any previous test errors
-			clearDbTestError();
+		if (parsed.port) {
+			dbConfig.port = parsed.port;
 		}
+		if (parsed.database) {
+			dbConfig.name = parsed.database;
+		}
+		if (parsed.authSource) {
+			dbConfig.authSource = parsed.authSource;
+		}
+
+		// Clear any previous test errors
+		clearDbTestError();
+		
+		showConnectionStringHelper = true;
+		setTimeout(() => {
+			showConnectionStringHelper = false;
+		}, 6000);
 	}
 }
 
@@ -403,35 +389,35 @@ $effect(() => {
 					<option value="postgresql">PostgreSQL (via Drizzle) (Beta)</option>
 					<option value="sqlite">SQLite (via Drizzle) (Beta)</option>
 				</select>
-			</div>
 
-			{#if isInstallingDriver}
-				<div class="mt-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400" role="status">
-					<iconify-icon icon="mdi:loading" class="animate-spin" width="16" aria-hidden="true"></iconify-icon>
-					<span>Installing database driver...</span>
-				</div>
-			{/if}
-			{#if installSuccess}
-				<div class="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400" role="status">
-					<iconify-icon icon="mdi:check-circle" width="16" aria-hidden="true"></iconify-icon>
-					<span>{installSuccess}</span>
-				</div>
-			{/if}
-			{#if installError}
-				<div
-					class="mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
-					role="alert"
-				>
-					<div class="flex items-center gap-2">
-						<iconify-icon icon="mdi:alert-circle" width="16" aria-hidden="true"></iconify-icon>
-						<span class="font-medium">Driver Installation Failed</span>
+				{#if isInstallingDriver}
+					<div class="mt-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400" role="status">
+						<iconify-icon icon="mdi:loading" class="animate-spin" width="16" aria-hidden="true"></iconify-icon>
+						<span>Installing database driver...</span>
 					</div>
-					<p class="mt-1">{installError}</p>
-					<p class="mt-2 text-xs">
-						You can install the driver manually or continue with the setup (connection test will show installation instructions).
-					</p>
-				</div>
-			{/if}
+				{/if}
+				{#if installSuccess}
+					<div class="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400" role="status">
+						<iconify-icon icon="mdi:check-circle" width="16" aria-hidden="true"></iconify-icon>
+						<span>{installSuccess}</span>
+					</div>
+				{/if}
+				{#if installError}
+					<div
+						class="mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+						role="alert"
+					>
+						<div class="flex items-center gap-2">
+							<iconify-icon icon="mdi:alert-circle" width="16" aria-hidden="true"></iconify-icon>
+							<span class="font-medium">Driver Installation Failed</span>
+						</div>
+						<p class="mt-1">{installError}</p>
+						<p class="mt-2 text-xs">
+							You can install the driver manually or continue with the setup (connection test will show installation instructions).
+						</p>
+					</div>
+				{/if}
+			</div>
 			<div>
 				<label for="db-host" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:server-network" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>

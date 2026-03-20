@@ -168,3 +168,33 @@ export function invalidateSetupCache(
       });
   }
 }
+
+/**
+ * Checks if a route is part of the core bootstrap process (setup, login, system APIs).
+ * Used by hooks to allow non-blocking initialization.
+ */
+export function isBootstrapRoute(pathname: string): boolean {
+  const bootstrapPaths = [
+    "/setup",
+    "/login",
+    "/api/auth",
+    "/api/system",
+    "/api/debug",
+    "/api/settings/public",
+    "/api/content/version",
+    "/api/dashboard/health",
+    "/_",
+    "/static",
+    "/assets",
+    "/.well-known",
+    "/favicon.ico",
+  ];
+
+  const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
+
+  return (
+    bootstrapPaths.some((prefix) => pathname.startsWith(prefix)) ||
+    pathname === "/" ||
+    isLocalizedSetup
+  );
+}

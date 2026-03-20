@@ -27,6 +27,8 @@ import { SessionAdapter } from "../models/auth-session";
 import { TokenAdapter } from "../models/auth-token";
 import { UserAdapter } from "../models/auth-user";
 
+import { MongoAuthModelRegistrar } from "./auth-methods";
+
 // Type helper to extract the auth interface from IDBAdapter
 type AuthInterface = IDBAdapter["auth"];
 
@@ -87,8 +89,12 @@ export function composeMongoAuthAdapter(): AuthInterface {
   const userAdapter = new UserAdapter();
   const sessionAdapter = new SessionAdapter();
   const tokenAdapter = new TokenAdapter();
+  const modelRegistrar = new MongoAuthModelRegistrar(mongoose);
 
   const adapter = {
+    // Setup method
+    setupAuthModels: modelRegistrar.setupAuthModels.bind(modelRegistrar),
+
     // User Management Methods
     createUser: userAdapter.createUser.bind(userAdapter),
     updateUserAttributes: userAdapter.updateUserAttributes.bind(userAdapter),

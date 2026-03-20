@@ -6,7 +6,7 @@ order: 99
 icon: "mdi:map-clock-outline"
 author: "admin"
 created: "2026-01-18"
-updated: "2026-03-19"
+updated: "2026-03-20"
 tags:
   - "roadmap"
   - "planning"
@@ -34,6 +34,7 @@ SveltyCMS has transitioned from a high-performance CMS into the first **Intellig
 - ✅ **Multi-Adapter Database Parity** - Production-ready support for MongoDB, MariaDB, PostgreSQL, and SQLite.
 - ✅ **Enterprise Security & Automated Response** - Unified `SecurityResponseService` with Redis-backed state and ReDoS-safe patterns.
 - ✅ **CI Pipeline Restoration** - Playwright E2E suite stabilized across all supported databases.
+- ✅ **Active Database Driver Validation** - Eliminated "lazy connection" false positives in setup via mandatory `SELECT 1` pings.
 
 #### **Visual Intelligence & Enterprise Collaboration (Q2 - Q3 2026)**
 
@@ -54,6 +55,7 @@ _Focus: Evolution from "Intelligent Tool" to "Proactive Agent Ecosystem."_
 - 🚀 **Enterprise Monitor UI** - Unified auditing dashboard for trash recovery, security incidents, and webhook health.
 - 🚀 **AI-Driven Layout Optimization** - Automated A/B testing of `json-render` layouts based on engagement metrics.
 - 🚀 **Autonomous Maintenance** - Self-healing cache fragmentation and automated database index optimization.
+- 🚀 **Svelte 5 Native UI Migration** - Eliminating dependency debt (Skeleton/Zag) to solve "ESM Storm" (<150 requests); see [UI Migration Roadmap](./ui_migration_roadmap.md.resolved).
 - 🔜 **Multi-DB CI/CD Parity** - Containerized E2E testing for PRs across all 4 database targets.
 
 ---

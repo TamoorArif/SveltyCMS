@@ -74,6 +74,10 @@ export class AdapterCore {
         this.pool = mysql.createPool(connection);
       }
       this.db = drizzle(this.pool, { schema, mode: "default" });
+
+      // Verification: Ensure the connection is actually established
+      await this.pool.query("SELECT 1");
+
       this.connected = true;
       logger.info("Connected to MariaDB");
       return { success: true, data: undefined };

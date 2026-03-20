@@ -40,22 +40,24 @@ The middleware architecture is built on **core enterprise principles**:
 
 ## Current Middleware Sequence
 
-```typescript
 // src/hooks.server.ts (simplified)
 const middleware: Handle[] = [
-  handleStaticAssetCaching, // 1. Static assets FIRST (skip all processing)
-  handleCompression, // 2. Compression (GZIP/Brotli)
-  handleSystemState, // 3. System readiness & state validation
-  handleSecurity, // 4. Consolidated Security (Firewall + Rate Limit + Payload Scan)
-  handleSetup, // 5. Setup completion enforcement
-  handleLocale, // 6. Language preferences (i18n)
-  handleTheme, // 7. Theme management (SSR)
-  handleAuthentication, // 8. Session validation & multi-tenancy
-  handleAuthorization, // 9. Role-based access control
-  handleContentInitialization, // 10. Content + Redirects
-  handleApiRequests, // 11. API Authorization & Caching
-  handleTokenResolution, // 12. RBAC-Aware Token Processing
-  addSecurityHeaders, // 13. Security headers (defense in depth)
+addSecurityHeaders, // 1. MUST be first → headers on ALL responses
+handleTestIsolation, // 2. Test context & worker isolation
+handleStaticAssetCaching, // 3. Highest hit-rate early exit
+handleCompression, // 4. Streaming-safe compression
+handleSystemState, // 5. Readiness gate & auto-init
+handleSecurity, // 6. Unified firewall & rate limiting
+handleSetup, // 7. Setup gate
+handleLocale, // 8. i18n
+handleTheme, // 9. SSR theme
+handleAuthentication, // 10. identity
+handleAuthorization, // 11. permissions
+handleLocalSdk, // 12. native server-side SDK injection
+handleContentInitialization, // 13. content + redirects
+handleApiRequests, // 14. API caching
+handleAuditLogging, // 15. async audit trails
+handleTokenResolution, // 16. token processing
 ];
 
 export const handle: Handle = sequence(...middleware);

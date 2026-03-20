@@ -819,6 +819,27 @@ const mockSetupCheck = {
   setSetupComplete: mock((val: boolean) => {
     isSetupCompleteValue = val;
   }),
+  isBootstrapRoute: mock((path: string) => {
+    return (
+      path === "/" ||
+      path === "/setup" ||
+      path.startsWith("/setup/") ||
+      path === "/login" ||
+      path.startsWith("/login/") ||
+      path.startsWith("/api/system/") ||
+      path.startsWith("/api/dashboard/") ||
+      path.startsWith("/api/setup/") ||
+      path.startsWith("/api/auth/") ||
+      path.startsWith("/api/content/version") ||
+      path.startsWith("/api/settings/public") ||
+      path.startsWith("/api/debug/") ||
+      path.startsWith("/_") ||
+      path.startsWith("/static") ||
+      path.startsWith("/assets") ||
+      path.startsWith("/.well-known") ||
+      path === "/favicon.ico"
+    );
+  }),
 };
 moduleMock("@utils/setup-check", () => mockSetupCheck);
 setGlobal("mockSetupCheck", mockSetupCheck);

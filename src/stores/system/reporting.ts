@@ -34,6 +34,8 @@ export function getHealthCheckReport() {
             avgInitTime: service.metrics.averageInitTime,
             minInitTime: service.metrics.minInitTime,
             maxInitTime: service.metrics.maxInitTime,
+            latency: service.metrics.lastLatency, // Added
+            avgLatency: service.metrics.averageLatency, // Added
             healthChecks: service.metrics.healthCheckCount,
             failures: service.metrics.failureCount,
             consecutiveFailures: service.metrics.consecutiveFailures,
@@ -69,6 +71,7 @@ export function getHealthCheckReport() {
             thresholds: {
               maxStartupTime: service.metrics.anomalyThresholds.maxStartupTime,
               maxShutdownTime: service.metrics.anomalyThresholds.maxShutdownTime,
+              maxLatency: service.metrics.anomalyThresholds.maxLatency, // Added
               calibrationCount: service.metrics.anomalyThresholds.calibrationCount,
             },
           },

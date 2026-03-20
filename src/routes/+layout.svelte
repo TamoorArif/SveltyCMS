@@ -112,6 +112,24 @@ onMount(() => {
 	}
 
 	isMounted = true;
+
+	// Hide cold-start splash screen after hydration
+	if (browser) {
+		const splash = document.getElementById('svelty-splash');
+		if (splash) {
+			// 🚀 OPTIMIZATION: Remove loading class to restore theme background
+			document.documentElement.classList.remove('svelty-loading');
+			
+			// Start fade-out
+			splash.style.opacity = '0';
+			splash.style.visibility = 'hidden';
+			
+			// Clean up DOM after transition
+			setTimeout(() => {
+				splash.remove();
+			}, 150);
+		}
+	}
 });
 
 /**

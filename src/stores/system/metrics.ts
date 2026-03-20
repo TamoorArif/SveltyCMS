@@ -153,6 +153,11 @@ export function calibrateAnomalyThresholds(
       thresholds.minUptimePercentage = 80; // Lower bar for struggling services
     }
 
+    // Calibrate latency threshold (use 2x average or 1.2x max, min 50ms)
+    if (metrics.averageLatency && metrics.averageLatency > 0) {
+      thresholds.maxLatency = Math.max(metrics.averageLatency * 2, 50);
+    }
+
     thresholds.lastCalibrated = Date.now();
     thresholds.calibrationCount++;
 
@@ -246,6 +251,22 @@ export function detectAnomalies(
       details: {
         uptime: `${metrics.uptimePercentage.toFixed(1)}%`,
         threshold: `${thresholds.minUptimePercentage}%`,
+      },
+    });
+  }
+
+  // Check latency (Heartbeat) - NEW
+  if (metrics.lastLatency && metrics.lastLatency > (thresholds.maxLatency || 50)) {
+    const maxLat = thresholds.maxLatency || 50;
+    const excessPercent = (metrics.lastLatency / maxLat - 1) * 100;
+    anomalies.push({
+      type: "slow_response",
+      severity: excessPercent > 100 ? "high" : "medium",
+      message: `Service ${String(serviceName)} response is slower than enterprise standards`,
+      details: {
+        actual: `${metrics.lastLatency.toFixed(1)}ms`,
+        threshold: `${maxLat.toFixed(0)}ms`,
+        excess: `${excessPercent.toFixed(0)}%`,
       },
     });
   }

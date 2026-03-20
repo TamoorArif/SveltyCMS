@@ -44,7 +44,7 @@ export const handleSecurity: Handle = async ({ event, resolve }) => {
 
     // 2. Additional Rate Limiting Check (if not already handled by analyzeRequest)
     const rateLimit = await securityResponseService.checkRateLimit(clientIp, url.pathname);
-    if (!rateLimit.allowed) {
+    if (rateLimit.action !== "allow") {
       metricsService.incrementRateLimitViolations();
       logger.warn(`Rate limit exceeded: ${clientIp}`, { url: url.pathname });
       throw new AppError("Too Many Requests", 429, "RATE_LIMIT_EXCEEDED");

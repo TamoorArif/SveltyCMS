@@ -18,39 +18,8 @@ import type { Handle, RequestEvent } from "@sveltejs/kit";
 import { error } from "@sveltejs/kit";
 import { AppError, handleApiError } from "@utils/error-handling";
 import { logger } from "@utils/logger.server";
-import { isSetupComplete } from "@utils/setup-check";
+import { isBootstrapRoute, isSetupComplete } from "@utils/setup-check";
 import { STATIC_ASSET_REGEX } from "./handle-static-asset-caching";
-
-// --- HELPERS ---
-
-/**
- * Checks if a route is part of the core bootstrap process (setup, login, system APIs).
- */
-function isBootstrapRoute(pathname: string): boolean {
-  const bootstrapPaths = [
-    "/setup",
-    "/login",
-    "/api/auth", // ✨ Allow authentication (login/logout/session)
-    "/api/system",
-    "/api/debug",
-    "/api/settings/public",
-    "/api/content/version",
-    "/api/dashboard/health", // ✨ Allow dashboard health checks
-    "/_",
-    "/static",
-    "/assets",
-    "/.well-known",
-    "/favicon.ico",
-  ];
-
-  const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register)/.test(pathname);
-
-  return (
-    bootstrapPaths.some((prefix) => pathname.startsWith(prefix)) ||
-    pathname === "/" ||
-    isLocalizedSetup
-  );
-}
 
 /**
  * Validates if the request is coming from a trusted host during bootstrap/restricted states.
@@ -170,181 +139,92 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
   }
 
   try {
-    // ============================================================================
-    // CRITICAL: Initialization MUST happen FIRST, before allowing any routes
-    // ============================================================================
-
     // --- Phase 1: Attempt Initialization (if needed) ---
     if (systemState.overallState === "IDLE") {
       if (initializationState === "pending") {
         if (setupComplete) {
-          // Start initialization
           initializationState = "in-progress";
           initStartTime = Date.now();
           logger.info("System is IDLE and setup is complete. Starting initialization...");
 
-          try {
-            // Add timeout wrapper
-            await Promise.race([
-              dbInitPromise,
-              new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Initialization timeout")), INIT_TIMEOUT_MS),
-              ),
-            ]);
+          // 🚀 OPTIMIZATION: Don't block the first byte for bootstrap page requests!
+          const initPromise = (async () => {
+            try {
+              await Promise.race([
+                dbInitPromise,
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error("Initialization timeout")), INIT_TIMEOUT_MS),
+                ),
+              ]);
+              initializationState = "complete";
+            } catch (err) {
+              initializationState = "failed";
+              initError = err instanceof Error ? err : new Error(String(err));
+              logger.error("Initialization failed:", initError);
+            }
+          })();
 
-            systemState = getSystemState(); // Re-fetch state after init
-            initializationState = "complete";
-            const duration = Date.now() - initStartTime;
-            logger.info(
-              `Initialization complete in ${duration}ms. System state: ${systemState.overallState}`,
-            );
-          } catch (err) {
-            initializationState = "failed";
-            initError = err instanceof Error ? err : new Error(String(err));
-            logger.error("Initialization failed:", initError);
-            throw new AppError(
-              "Service initialization failed. Please check server logs.",
-              503,
-              "INIT_FAILED",
-            );
+          if (!event.isDataRequest && isBootstrapRoute(pathname)) {
+            logger.debug(`[handleSystemState] Fast-tracking bootstrap page: ${pathname}`);
+          } else {
+            await initPromise;
+            if ((initializationState as string) === "failed") {
+              throw new AppError("Service initialization failed.", 503, "INIT_FAILED");
+            }
           }
         } else {
-          // Setup not complete - skip initialization to prevent retry loops
-          if ((initializationState as string) !== "complete") {
-            logger.info("System is IDLE and setup is not complete. Skipping DB initialization.");
-            initializationState = "complete";
-          }
-        }
-      } else if (initializationState === "complete" && setupComplete) {
-        // EDGE CASE: Setup completed recently, but previous request skipped init.
-        // We must force restart initialization!
-        logger.info(
-          "System is IDLE, init was skipped, but Setup is now COMPLETE. Restarting initialization...",
-        );
-        initializationState = "in-progress";
-        initStartTime = Date.now();
-
-        try {
-          // Add timeout wrapper
-          await Promise.race([
-            dbInitPromise,
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Initialization timeout")), INIT_TIMEOUT_MS),
-            ),
-          ]);
-
-          systemState = getSystemState(); // Re-fetch state after init
           initializationState = "complete";
-          const duration = Date.now() - initStartTime;
-          logger.info(
-            `Initialization complete in ${duration}ms. System state: ${systemState.overallState}`,
-          );
-        } catch (err) {
-          initializationState = "failed";
-          initError = err instanceof Error ? err : new Error(String(err));
-          logger.error("Initialization failed:", initError);
-          throw new AppError(
-            "Service initialization failed. Please check server logs.",
-            503,
-            "INIT_FAILED",
-          );
         }
       } else if (initializationState === "in-progress") {
-        // Another request is already initializing, wait for it
-        const elapsed = Date.now() - initStartTime;
-
-        // Check if initialization is taking too long
-        if (elapsed > INIT_TIMEOUT_MS) {
-          initializationState = "failed";
-          initError = new Error(`Initialization exceeded timeout (${INIT_TIMEOUT_MS}ms)`);
-          logger.error("Initialization timeout:", initError);
-          throw new AppError(
-            "Service initialization timed out. Please check server logs.",
-            503,
-            "INIT_TIMEOUT",
-          );
-        }
-
-        logger.debug(
-          `[handleSystemState] Request to ${pathname} waiting for ongoing initialization (${elapsed}ms elapsed)...`,
-        );
-        try {
-          await Promise.race([
-            dbInitPromise,
-            new Promise((_, reject) =>
-              setTimeout(
-                () => reject(new Error("Initialization wait timeout")),
-                INIT_TIMEOUT_MS - elapsed,
-              ),
-            ),
-          ]);
-          systemState = getSystemState(); // Re-fetch state after wait
-        } catch (err) {
-          logger.error("Initialization wait failed:", err);
-          throw new AppError(
-            "Service initialization is taking longer than expected.",
-            503,
-            "INIT_WAIT_TIMEOUT",
-          );
+        if (!event.isDataRequest && isBootstrapRoute(pathname)) {
+          // Fast-track bootstrap page
+        } else {
+          const elapsed = Date.now() - initStartTime;
+          if (elapsed > INIT_TIMEOUT_MS) {
+            initializationState = "failed";
+            throw new AppError("Initialization timeout", 503, "INIT_TIMEOUT");
+          }
+          await dbInitPromise;
         }
       } else if (initializationState === "failed") {
         // Self-Healing: Check if we should retry initialization
-        const RETRY_COOLDOWN_MS = 5000; // Retry every 5 seconds
+        const RETRY_COOLDOWN_MS = 5000;
         const timeSinceFailure = Date.now() - (initStartTime || 0);
 
         if (timeSinceFailure > RETRY_COOLDOWN_MS) {
-          logger.info(
-            `[Self-Healing] Attempting to recover from previous initialization failure (failed ${timeSinceFailure}ms ago)...`,
-          );
-          initializationState = "in-progress"; // Take lock immediately
+          logger.info(`[Self-Healing] Attempting recovery...`);
+          initializationState = "in-progress";
           initStartTime = Date.now();
 
           try {
-            logger.info("[Self-Healing] Restarting initialization sequence...");
             const { resetDbInitPromise } = await import("@src/databases/db");
             await resetDbInitPromise();
-
             const { dbInitPromise: newPromise } = await import("@src/databases/db");
 
             await Promise.race([
               newPromise,
               new Promise((_, reject) =>
-                setTimeout(
-                  () => reject(new Error("Recovery initialization timeout")),
-                  INIT_TIMEOUT_MS,
-                ),
+                setTimeout(() => reject(new Error("Recovery timeout")), INIT_TIMEOUT_MS),
               ),
             ]);
-
-            systemState = getSystemState();
             initializationState = "complete";
-            logger.info(
-              `[Self-Healing] System successfully recovered! State: ${systemState.overallState}`,
-            );
           } catch (recoveryErr) {
             initializationState = "failed";
             initError = recoveryErr instanceof Error ? recoveryErr : new Error(String(recoveryErr));
-            logger.error("[Self-Healing] Recovery failed:", initError);
-            throw new AppError(
-              "Service Unavailable: System recovery failed. Retrying in 5s...",
-              503,
-              "RECOVERY_FAILED",
-            );
+            throw new AppError("System recovery failed.", 503, "RECOVERY_FAILED");
           }
         } else {
-          // Cooldown active
-          logger.warn(
-            `System initialization failed. Cooldown active (${RETRY_COOLDOWN_MS - timeSinceFailure}ms remaining). Error: ${initError?.message}`,
-          );
           throw new AppError(
-            `Service Unavailable: System starting up... (${Math.ceil((RETRY_COOLDOWN_MS - timeSinceFailure) / 1000)}s)`,
+            `System starting up... (${Math.ceil((RETRY_COOLDOWN_MS - timeSinceFailure) / 1000)}s)`,
             503,
             "INIT_COOLDOWN",
           );
         }
       }
-      // If 'complete', continue to route checks below
+      // Re-fetch state
+      systemState = getSystemState();
     }
+    // If 'complete', continue to route checks below
 
     // --- Phase 2: Handle Bootstrap Routes (Restricted States) ---
     // These routes are allowed during IDLE, INITIALIZING, or SETUP if host is trusted.

@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
-import type { Plugin, UserConfig, ViteDevServer } from "vite";
+import type { Plugin, ViteDevServer } from "vite";
 import { defineConfig } from "vitest/config";
 import { compile } from "./src/utils/compilation/compile";
 import { isSetupComplete } from "./src/utils/is-setup-complete";
@@ -590,7 +590,7 @@ function buildMetadataPlugin(): Plugin {
 const setupComplete = isSetupComplete();
 const isBuild = process.env.NODE_ENV === "production" || process.argv.includes("build");
 
-export default defineConfig((): UserConfig => {
+export default defineConfig((): any => {
   // Only log during dev mode, not during builds
   if (!isBuild) {
     if (setupComplete) {
@@ -679,7 +679,7 @@ export default defineConfig((): UserConfig => {
         // Tree-shaking with preserved side effects for critical packages
         treeshake: {
           // Preserve side-effect imports for packages that need them
-          moduleSideEffects: (id) => {
+          moduleSideEffects: (id: string) => {
             // These packages have important side effects that must not be removed
             if (id.includes("paraglide") || id.includes("iconify-icon")) {
               return true;
@@ -690,7 +690,7 @@ export default defineConfig((): UserConfig => {
           propertyReadSideEffects: false, // Allow property reads to be removed
         },
         output: {
-          manualChunks: (id) => {
+          manualChunks: (id: string) => {
             // Group Svelte internal modules to avoid circular dependencies between chunks.
             // Server-only packages (mongoose, @aws-sdk, googleapis, etc.) are now
             // stubbed by stubServerModulesPlugin and should never reach the client.
@@ -703,7 +703,7 @@ export default defineConfig((): UserConfig => {
             }
           },
         },
-        onwarn(warning, warn) {
+        onwarn(warning: any, warn: any) {
           // Suppress circular dependency warnings from third-party libraries
           if (warning.code === "CIRCULAR_DEPENDENCY" && warning.message.includes("node_modules")) {
             return;
@@ -744,6 +744,8 @@ export default defineConfig((): UserConfig => {
         ...builtinModules.map((m) => `node:${m}`),
         "redis",
         "@src/databases/cache/cache-service",
+      ],
+      include: [
         "@skeletonlabs/skeleton-svelte",
         "@skeletonlabs/skeleton",
         "@iconify/svelte",
@@ -753,7 +755,6 @@ export default defineConfig((): UserConfig => {
         "svelte-awesome-color-picker",
         "json-render-svelte",
       ],
-      include: [],
       entries: ["!tests/**/*", "!**/*.server.ts", "!**/*.server.js"],
     },
   };

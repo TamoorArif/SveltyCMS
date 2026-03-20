@@ -28,6 +28,7 @@ export const DEFAULT_ANOMALY_THRESHOLDS: AnomalyThresholds = {
   maxShutdownTime: 2000, // 2 seconds default
   maxConsecutiveFailures: 3,
   minUptimePercentage: 95,
+  maxLatency: 50, // 50ms default threshold for Enterprise Readiness
   calibrationCount: 0,
 };
 
@@ -46,6 +47,8 @@ export const initialServiceMetrics: ServicePerformanceMetrics = {
     idle: { count: 0, totalTime: 0 },
     active: { count: 0, totalTime: 0 },
   },
+  lastLatency: 0,
+  averageLatency: 0,
   anomalyThresholds: { ...DEFAULT_ANOMALY_THRESHOLDS },
 };
 

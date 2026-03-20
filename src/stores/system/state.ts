@@ -220,6 +220,49 @@ export function updateServiceHealth(
 }
 
 /**
+ * Update a service's latency metrics (Heartbeat) and check for performance anomalies.
+ */
+export function updateServiceLatency(
+  serviceName: keyof SystemStateStore["services"],
+  latency: number,
+): void {
+  systemStateStore.update((state) => {
+    const service = state.services[serviceName];
+    if (!service) return state;
+
+    const metrics = { ...service.metrics };
+    metrics.lastLatency = latency;
+
+    // Update average latency using EMA (Exponential Moving Average)
+    const alpha = 0.1;
+    if (metrics.averageLatency && metrics.averageLatency > 0) {
+      metrics.averageLatency = alpha * latency + (1 - alpha) * metrics.averageLatency;
+    } else {
+      metrics.averageLatency = latency;
+    }
+
+    // Check against threshold
+    const threshold = metrics.anomalyThresholds.maxLatency || 50;
+    if (latency > threshold) {
+      logger.warn(
+        `⚠️ High latency detected for ${serviceName}: ${latency.toFixed(2)}ms (Threshold: ${threshold}ms)`,
+      );
+    }
+
+    return {
+      ...state,
+      services: {
+        ...state.services,
+        [serviceName]: {
+          ...service,
+          metrics,
+        },
+      },
+    };
+  });
+}
+
+/**
  * Set the overall system state with transition tracking
  */
 export function setSystemState(state: SystemState, reason?: string): void {

@@ -22,7 +22,9 @@ export async function writePrivateConfig(
 
   // Support TEST_MODE for isolated testing
   const configFileName = process.env.TEST_MODE ? "private.test.ts" : "private.ts";
-  const privateConfigPath = path.resolve(process.cwd(), "config", configFileName);
+  const cwd = process.cwd();
+  const privateConfigPath = path.resolve(cwd, "config", configFileName);
+  logger.info(`DEBUG: [writePrivateConfig] process.cwd()=${cwd}, writing to ${privateConfigPath}`);
 
   // Prevent overwrite after setup complete (unless in TEST_MODE)
   if (isSetupComplete() && !process.env.TEST_MODE) {
@@ -131,7 +133,11 @@ export async function updatePrivateConfigMode(modes: {
 
   // Support TEST_MODE for isolated testing
   const configFileName = process.env.TEST_MODE ? "private.test.ts" : "private.ts";
-  const privateConfigPath = path.resolve(process.cwd(), "config", configFileName);
+  const cwd = process.cwd();
+  const privateConfigPath = path.resolve(cwd, "config", configFileName);
+  logger.info(
+    `DEBUG: [updatePrivateConfigMode] process.cwd()=${cwd}, writing to ${privateConfigPath}`,
+  );
 
   try {
     logger.debug("DEBUG: [updatePrivateConfigMode] CALLED with:", JSON.stringify(modes));

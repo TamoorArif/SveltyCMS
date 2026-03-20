@@ -66,6 +66,7 @@ export interface AnomalyThresholds {
   maxShutdownTime: number; // Max acceptable shutdown time
   maxStartupTime: number; // Max acceptable startup time
   minUptimePercentage: number; // Min acceptable uptime %
+  maxLatency: number; // Max acceptable latency (ms)
 }
 
 // Performance metrics for a service lifecycle
@@ -83,6 +84,10 @@ export interface ServicePerformanceMetrics {
   maxInitTime?: number; // Slowest initialization time
   minInitTime?: number; // Fastest initialization time
   restartCount: number; // Number of times service was restarted
+
+  // Latency metrics (Heartbeat)
+  lastLatency?: number; // Most recent response latency (ms)
+  averageLatency?: number; // Running average response latency (ms)
 
   // Enhanced state-specific metrics
   stateTimings: StateTimingMetrics;
@@ -158,5 +163,6 @@ export interface AnomalyDetection {
     | "slow_shutdown"
     | "consecutive_failures"
     | "low_uptime"
-    | "degrading_performance";
+    | "degrading_performance"
+    | "slow_response";
 }

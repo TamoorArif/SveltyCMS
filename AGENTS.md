@@ -297,7 +297,7 @@ Hybrid code/GUI with TS → JS → DB sync.
 
 ### Middleware Pipeline (hooks.server.ts)
 
-Order: Compression → Caching → System State (self-healing) → Rate Limit → Firewall → Setup → Locale → Theme → Auth → Authorization → API Logic → Token Resolution → Security Headers.
+Order: Compression → Caching → System State (self-healing) → Security (Firewall + Rate Limit) → Setup → Locale → Theme → Auth → Authorization → API Logic → Token Resolution → Security Headers.
 
 ### Multi-Tenant Architecture
 
