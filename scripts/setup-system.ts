@@ -54,7 +54,8 @@ async function postAction(actionName: string, formData: FormData) {
     },
   });
   if (!res.ok) {
-    throw new Error(`Action ${actionName} failed with status ${res.status}`);
+    const text = await res.text();
+    throw new Error(`Action ${actionName} failed with status ${res.status}. Body: ${text}`);
   }
   return await res.json();
 }
@@ -64,7 +65,7 @@ async function waitForReady() {
   for (let i = 0; i < 60; i++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
-      if (res.ok) {
+      if (res.ok || res.status === 503) {
         const data = (await res.json()) as any;
         // In setup mode, status might be 'IDLE' or 'SETUP'
         // We just need it to be responsive and not 'INITIALIZING'
@@ -114,6 +115,7 @@ async function main() {
     console.log("🔗 Testing database connection...");
     const testForm = new FormData();
     testForm.append("config", JSON.stringify(dbConfig));
+    testForm.append("createIfMissing", "true");
     const testRes = await postAction("testDatabase", testForm);
     const testData = parseActionResult(testRes);
 

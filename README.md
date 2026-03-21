@@ -3,27 +3,22 @@
 </p>
 
 <h1 align="center"><strong>SveltyCMS - Headless CMS with Sveltekit Power</strong></h1>
-<p align="center"><strong><a href="https://sveltycms.com">sveltycms.com</a></strong></p>
+<p align="center"><strong><a href="https://SveltyCMS.com">SveltyCMS.com</a></strong> <img src="https://img.shields.io/github/package-json/v/SveltyCMS/SveltyCMS?color=blue&style=flat-square&label=" alt="Version" style="vertical-align: middle;"></p>
 <p align="center"><strong>(Still in Development — your support is appreciated!)</strong></p>
 
 <div align="center">
-
-[![Chat](https://img.shields.io/discord/1369537436656603188?label=chat&logo=discord&color=7289da)](https://discord.gg/qKQRB6mP)
-[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1%20Fair%20Source-blue.svg)](LICENSE.md)
-<img alt="Latest SemVer" src="https://img.shields.io/github/v/tag/SveltyCMS/SveltyCMS">
-<img alt="GitHub issues" src="https://img.shields.io/github/issues/SveltyCMS/SveltyCMS">
-![Secure](https://img.shields.io/badge/Security-Fortress-blue)
-<img alt="Bundle Size" src="https://img.shields.io/badge/Bundle-508%20KB%20Brotli-success?style=flat">
-
+  <a href="https://discord.gg/qKQRB6mP"><img src="https://img.shields.io/discord/1369537436656603188?label=chat&logo=discord&color=7289da" alt="Chat"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-BSL%201.1%20Fair%20Source-blue.svg" alt="License: BSL 1.1"></a>
+  <img src="https://img.shields.io/github/issues/SveltyCMS/SveltyCMS" alt="GitHub issues">
+  <a href="docs/security/tested-security-features.mdx"><img src="https://img.shields.io/badge/Security-Tested%20Fortress-blue?style=flat-square&labelColor=1e293b" alt="Security: Tested Fortress"></a>
+  <img src="https://img.shields.io/badge/Bundle-843%20KB%20Brotli%20/%203.02%20MB%20Total-success?style=flat-square&labelColor=1e293b" alt="Bundle Size">
 </div>
 
 <div align="center">
-
-[![SvelteKit](https://img.shields.io/badge/SvelteKit-V2-FF3E00?logo=svelte)](https://kit.svelte.dev)
-[![Vite+](https://img.shields.io/badge/Toolchain-Vite%2B-646CFF?logo=vite)](https://voidzero.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwindcss](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC)](https://tailwindcss.com/)
-
+  <a href="https://kit.svelte.dev"><img src="https://img.shields.io/badge/SvelteKit-V2-FF3E00?logo=svelte" alt="SvelteKit"></a>
+  <a href="https://voidzero.dev"><img src="https://img.shields.io/badge/Toolchain-Vite%2B-646CFF?logo=vite" alt="Vite+"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript" alt="TypeScript"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC" alt="Tailwindcss"></a>
 </div>
 
 <p align="center">
@@ -32,7 +27,7 @@
   <a href="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/auto-release.yaml"><img alt="Auto Release" src="https://github.com/SveltyCMS/SveltyCMS/actions/workflows/auto-release.yaml/badge.svg"></a>
 </p>
 
-<h2 align="center">A powerful Headless CMS with Sveltekit Power</h2>
+<h2 align="center">A powerful Enterprise Headless CMS with Sveltekit Power</h2>
 
 <h3 align="center"><strong>It's lightning fast, flexible and an easy to use modern content management system to provide a headless backend</strong></h3>
 
@@ -239,7 +234,7 @@ If a language has not yet been defined, reach out to us, so that you can help ex
 
 ## ♿ Accessibility & Inclusivity
 
-SveltyCMS is designed with inclusivity at its core, aiming for **WCAG 2.2 AA** and **ATAG 2.0** compliance.
+SveltyCMS is designed with inclusivity at its core, strictly following **WCAG 2.2 AA** and **ATAG 2.0** standards, and proactively moving towards **WCAG 3.0 (Functional Performance)**.
 
 - **Screen Reader Ready**: Semantic HTML landmarks, ARIA live regions for status updates, and descriptive labels.
 - **Keyboard Navigation**: Full support for keyboard-only users, including complex widgets like tree views and drag-and-drop interfaces.
@@ -255,28 +250,19 @@ Full Typescript support to display all available widgets, options to create full
 
 Build and send emails using [Svelty Email](https://svelte-email.vercel.app/) and TypeScript.
 
-## 📦 Optimized Bundle Size
+📦 Optimized Bundle Size
+SveltyCMS is built with modern optimization techniques resulting in a compact bundle compared to traditional CMS platforms:
 
-SveltyCMS is built with modern optimization techniques resulting in a **compact bundle** compared to traditional CMS platforms:
+| CMS Platform    | Total Asset Size | Bundle Size (Brotli) | Technology Stack |
+| :-------------- | :--------------- | :------------------- | :--------------- |
+| **SveltyCMS**   | **3.02 MB**      | **843 KB ⚡**        | Svelte 5 + Vite+ |
+| WordPress Admin | ~12.5 MB         | ~950 KB              | jQuery + PHP     |
+| Drupal Admin    | ~15.0 MB         | ~1.2 MB              | jQuery + Drupal  |
+| Payload CMS     | ~8.5 MB          | ~1.1 MB              | React + Next.js  |
+| Directus        | ~6.5 MB          | ~1.0 MB              | Vue.js           |
 
-<div align="center">
-
-| CMS Platform    | Bundle Size (gzipped) | Bundle Size (Brotli) | Technology Stack   |
-| --------------- | --------------------- | -------------------- | ------------------ |
-| **SveltyCMS**   | **604 KB**            | **508 KB** ⚡        | SvelteKit 5 + Vite |
-| WordPress Admin | ~800 KB               | ~675 KB              | jQuery + PHP       |
-| Drupal Admin    | ~1.1 MB               | ~930 KB              | jQuery + Drupal    |
-| Payload CMS     | ~2.5 MB               | ~850 KB              | React + Next.js    |
-| Directus        | ~1.5 MB               | ~750 KB              | Vue.js             |
-
-</div>
-
-**What this means:**
-
-- ✅ **Smaller downloads** = Faster initial load
-- ✅ **Lower bandwidth costs** = Savings at scale
-- ✅ **Better mobile experience** = Works well on slower connections
-- ✅ **Brotli compression** = Automatically served by modern servers
+> [!NOTE]
+> **Secure-by-Design Architecture**: The 843 KB figure represents the total Brotli-compressed assets for the standard admin dashboard. By leveraging Svelte 5's zero-runtime reactivity and the Vite+ tree-shaking compiler, we achieve a highly optimized delivery where the client only receives exactly what it needs to render.
 
 ## ⚡ Performance Benchmarks
 

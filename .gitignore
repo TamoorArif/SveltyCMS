@@ -77,3 +77,4 @@ src/paraglide/**/*.js
 .compiledCollections/Menu/Menu.js
 .mcp.json
 LOCAL.md
+bundle-report.json

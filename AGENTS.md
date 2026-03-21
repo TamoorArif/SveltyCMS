@@ -30,8 +30,9 @@ SveltyCMS is a powerful headless CMS built with SvelteKit 2, Svelte 5, TypeScrip
 ## Core Philosophy & Focus
 
 - **Data Security & Ownership**: Security is paramount—users always own their data. Implement strict protocols (e.g., no direct DB access outside adapters, secure headers).
-- **Performance & Optimization**: Target sub-millisecond latency with tree-shaking, SSR-first architecture, SvelteKit 5 Server Functions, Valibot, Vite optimizations, and <1s cold starts via progressive initialization.
-- **Universal Accessibility**: WCAG 2.2 AA and ATAG 2.0 compliant (full keyboard support, ARIA-live regions).
+- **Performance & Optimization**: Target sub-millisecond latency with tree-shaking, SSR-first architecture, SvelteKit 5 Server Functions, Valibot, Vite optimizations, and <1s cold starts via progressive initialization. **We continuously monitor benchmarks (see `docs/project/benchmarks.mdx`) to ensure we remain the fastest Java-enterprise-ready CMS, aiming for sub-10ms persistence and outperforming traditional enterprise platforms.**
+
+- **Universal Accessibility**: WCAG 2.2 AA and ATAG 2.0 compliant (full keyboard support, ARIA-live regions); **striving for WCAG 3.0 Functional Performance standards.**
 - **Premium Design**: Modern UX with Skeleton.dev v4 for white-labeling and deep theming.
 - **Maximum Flexibility**: Hybrid code/GUI schemas with bi-directional sync.
 - **Developer First**: Support contributors with clear docs, tools, and Svelte 5 runes for efficient reactivity.
@@ -168,6 +169,7 @@ When generating/modifying code:
 7. **File Headers**: Always include as defined.
 8. **Roadmap Alignment**: Prioritize gaps like full SAML/SCIM hardening; optimize for enterprise (e.g., lighter SAML deps).
 9. **MCP Knowledge Base (CRITICAL)**: Always query the hosted MCP server at `https://mcp.sveltycms.com/mcp` when in doubt about SveltyCMS architecture, schema conventions, or widget syntax, as it holds the verified source of truth. Utilize MCP connections for dynamic generation flows.
+10. **Performance Awareness**: Every change must consider the "sub-10ms persistence" goal. Avoid heavy runtime dependencies and prioritize Svelte 5 runes for fine-grained reactivity.
 
 ### Mandatory Documentation Updates
 

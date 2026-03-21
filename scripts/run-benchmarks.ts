@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
 // ✨ Configuration Constants
-const HOST = "127.0.0.1";
+const HOST = process.env.HOST || (process.env.CI ? "127.0.0.1" : "localhost");
 const PORT = "4173";
 const API_BASE_URL = `http://${HOST}:${PORT}`;
 const pkgManager = process.env.npm_execpath || "bun";
@@ -170,15 +170,14 @@ async function startPreviewServer() {
 
     const logFile = join(rootDir, "benchmark-server.log");
     const out = openSync(logFile, "a");
-
-    previewProcess = spawn("node", [serverPath], {
+    previewProcess = spawn("bun", ["run", "dev", "--port", PORT], {
       cwd: rootDir,
       stdio: ["ignore", out, out],
       detached: process.platform !== "win32",
       shell: process.platform === "win32",
       env: {
         ...process.env,
-        NODE_ENV: "production",
+        NODE_ENV: "development",
         TEST_MODE: "true",
         TEST_API_SECRET,
         PORT,
@@ -213,7 +212,7 @@ async function waitForServer() {
   for (let i = 0; i < 30; i++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
-      if (res.ok) return;
+      if (res.ok || res.status === 503) return;
     } catch {
       // Ignore errors while waiting
     }

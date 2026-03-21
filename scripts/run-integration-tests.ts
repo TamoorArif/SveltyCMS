@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
 // ✨ Configuration Constants
-const HOST = "127.0.0.1";
+const HOST = process.env.HOST || (process.env.CI ? "127.0.0.1" : "localhost");
 const PORT = "4173";
 const API_BASE_URL = process.env.API_BASE_URL || `http://${HOST}:${PORT}`;
 const pkgManager = process.env.npm_execpath || "bun";
@@ -258,25 +258,22 @@ async function startPreviewServer(dbHost?: string) {
     console.log(`📦 Spawning preview server (${HOST}:${PORT})...`);
     const logFd = require("node:fs").openSync(join(rootDir, "preview.log"), "a");
 
-    previewProcess = spawn(
-      pkgManager,
-      ["run", "preview", "--port", PORT, "--host", HOST, "--strictPort"],
-      {
-        cwd: rootDir,
-        stdio: ["ignore", logFd, logFd],
-        detached: process.platform !== "win32", // Detach to create a new process group for clean killing
-        shell: process.platform === "win32",
-        env: {
-          ...process.env,
-          NODE_ENV: "production",
-          DB_TYPE: process.env.DB_TYPE || "sqlite",
-          DB_HOST: dbHost || process.env.DB_HOST || HOST,
-          TEST_MODE: "true",
-          TEST_API_SECRET,
-          ORIGIN: API_BASE_URL,
-        },
+    previewProcess = spawn("bun", ["run", "dev", "--port", PORT, "--host", HOST, "--strictPort"], {
+      cwd: rootDir,
+      stdio: ["ignore", logFd, logFd],
+      detached: process.platform !== "win32", // Detach to create a new process group for clean killing
+      shell: process.platform === "win32",
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+        DB_TYPE: process.env.DB_TYPE || "sqlite",
+        DB_HOST: dbHost || process.env.DB_HOST || HOST,
+        TEST_MODE: "true",
+        TEST_API_SECRET,
+        ORIGIN: API_BASE_URL,
+        SUPPRESS_JEST_WARNINGS: "true",
       },
-    );
+    });
 
     let resolved = false;
     const timeout = setTimeout(() => {
@@ -304,7 +301,7 @@ async function waitForServer() {
   for (let i = 0; i < 30; i++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
-      if (res.ok) return;
+      if (res.ok || res.status === 503) return;
     } catch {
       // Ignore fetch errors while waiting for boot
     }
@@ -347,6 +344,7 @@ function runTest(file: string): Promise<number> {
     TEST_MODE: "true",
     API_BASE_URL,
     TEST_API_SECRET,
+    SUPPRESS_JEST_WARNINGS: "true",
   });
 }
 
