@@ -50,7 +50,9 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
 
     // Note: tenantId validation is handled by hooks in multi-tenant mode
 
-    const body = await request.json();
+    const body = await request.json().catch(() => {
+      throw new AppError("Invalid JSON in request body", 400, "INVALID_JSON");
+    });
     logger.debug("Received token creation request:", { ...body, tenantId }); // Validate input using the Valibot schema
 
     const validatedData = parse(addUserTokenSchema, body);

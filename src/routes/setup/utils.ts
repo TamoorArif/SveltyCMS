@@ -479,8 +479,8 @@ async function setupSQLite(
         if (!existsSync(dir)) {
           mkdirSync(dir, { recursive: true });
         }
-        // Create an empty file to allow the adapter to connect and run migrations
-        writeFileSync(connectionString, "");
+        // Create an empty file to allow the adapter to connect and run migrations (use empty Buffer for robustness)
+        writeFileSync(connectionString, Buffer.alloc(0));
       } else {
         throw new Error(`SQLite database file "${connectionString}" does not exist.`);
       }
