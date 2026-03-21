@@ -260,6 +260,7 @@ describe("Token API Unit Tests", () => {
   describe("PUT /api/token/[tokenID] - Update Token", () => {
     it("should update token and invalidate cache successfully", async () => {
       (mockAuth.getTokenByValue as ReturnType<typeof vi.fn>).mockResolvedValue({
+        _id: "token-xyz",
         tenantId: "tenant-1",
       });
       (mockAuth.updateToken as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
@@ -272,7 +273,11 @@ describe("Token API Unit Tests", () => {
       );
       const response = await PUT_TOKEN(event);
 
-      expect(mockAuth.updateToken).toHaveBeenCalledWith("token-xyz", { role: "editor" });
+      expect(mockAuth.updateToken).toHaveBeenCalledWith(
+        "token-xyz",
+        { role: "editor" },
+        "tenant-1",
+      );
       expect(mockCacheDelete).toHaveBeenCalledWith("tokens", "tenant-1");
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -342,7 +347,7 @@ describe("Token API Unit Tests", () => {
       const event = createMockPutEvent("token-val", undefined, "admin", "tenant-1");
       const response = await DELETE_TOKEN(event);
 
-      expect(mockAuth.deleteTokens).toHaveBeenCalledWith(["real-id-123"]);
+      expect(mockAuth.deleteTokens).toHaveBeenCalledWith(["real-id-123"], "tenant-1");
       expect(mockCacheDelete).toHaveBeenCalledWith("tokens", "tenant-1");
       expect(response.status).toBe(200);
     });
@@ -640,7 +645,7 @@ describe("Token API Unit Tests", () => {
       (mockAuth.checkUser as ReturnType<typeof vi.fn>).mockResolvedValue(null);
       (mockAuth.getAllTokens as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        data: [{ _id: "existing-token" }],
+        data: [{ _id: "existing-token", email: "existing@example.com" }],
       });
 
       const event = createMockCreateEvent({
@@ -788,7 +793,10 @@ describe("Token API Unit Tests", () => {
     it("should delete multiple tokens", async () => {
       (mockAuth.getAllTokens as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        data: [{ token: "token1" }, { token: "token2" }],
+        data: [
+          { _id: "token1", token: "token1" },
+          { _id: "token2", token: "token2" },
+        ],
       });
       (mockAuth.deleteTokens as ReturnType<typeof vi.fn>).mockResolvedValue(2);
 

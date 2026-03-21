@@ -15,7 +15,8 @@ export function createDatabaseError(
   return {
     code,
     message,
-    originalCode: originalError?.code || originalError?.sqlState || (originalError as any)?.originalError?.code,
+    originalCode:
+      originalError?.code || originalError?.sqlState || (originalError as any)?.originalError?.code,
     details: originalError,
   };
 }

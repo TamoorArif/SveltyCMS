@@ -242,18 +242,7 @@ Benchmarks were conducted on the following production hardware:
 
 ### Performance Matrix
 
-The following metrics represent benchmarks across different environments. High-level gains like the **99.9% steady-state cache hit rate** apply across all supported databases due to the agnostic infrastructure.
-
-| Metric                       | MongoDB    | MariaDB     | PostgreSQL  | SQLite (Drizzle) | Why it matters                 |
-| :--------------------------- | :--------- | :---------- | :---------- | :--------------- | :----------------------------- |
-| **Cache Hit Rate (Warmed)**  | **99.9%**  | **99.9%**   | **99.9%**   | **99.9%**        | **Steady-state serving**       |
-| **Cache Hit Rate (Cold)**    | <5%        | <5%         | <5%         | <5%              | **Initial bootstrap misses**   |
-| **Response Time (Warmed)**   | <0.1ms     | 1.2ms       | 1.8ms       | 0.2ms            | **In-memory content serving**  |
-| **Response Time (Cold)**     | 50-100ms   | 120-200ms   | 150-250ms   | 10-30ms          | **First-request latency**      |
-| **P99 Latency (Batch Init)** | <15ms      | <6ms        | <8ms        | <5ms             | **Structural hydration speed** |
-| **Storage Engine**           | WiredTiger | InnoDB      | Heap/B-Tree | SQLite WAL       | Data integrity and speed       |
-| **JSON Performance**         | Excellent  | Good        | Excellent   | JSON1 Enabled    | Native document handling       |
-| **Scaling**                  | Sharding   | Replication | Clustering  | Local/Embedded   | Expansion strategy             |
+SveltyCMS delivers consistent, sub-millisecond performance across all supported database adapters thanks to our [Unified Caching Layer](#unified-caching-flow). For the full breakdown of response times, cold-start latencies, and scalability metrics, please refer to the [Performance Benchmarks](/docs/project/benchmarks) document.
 
 ### Cache Performance: In-Memory vs. Redis
 

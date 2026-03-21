@@ -201,7 +201,8 @@ async function ensureStream() {
 }
 
 async function rotate() {
-  const file = path.join("logs", "app.log");
+  const dir = "logs";
+  const file = path.join(dir, "app.log");
   try {
     const stat = await promises.stat(file);
     if (stat.size < 5 * 1024 * 1024) {
@@ -221,6 +222,20 @@ async function rotate() {
     const dst = fs.createWriteStream(`${rotated}.gz`);
     await sp.pipeline(src, zlib.createGzip(), dst);
     await promises.unlink(rotated);
+
+    // Retention Policy: Keep only the 5 most recent rotated logs
+    const files = await promises.readdir(dir);
+    const logFiles = files
+      .filter((f) => f.startsWith("app.log.") && f.endsWith(".gz"))
+      .map((f) => ({ name: f, time: fs.statSync(path.join(dir, f)).mtime.getTime() }))
+      .sort((a, b) => b.time - a.time);
+
+    if (logFiles.length > 5) {
+      for (const f of logFiles.slice(5)) {
+        await promises.unlink(path.join(dir, f.name));
+        console.debug(`[logger] Deleted old log file: ${f.name}`);
+      }
+    }
   } catch (e: unknown) {
     if (e && typeof e === "object" && "code" in e && e.code !== "ENOENT") {
       console.error("Rotation failed:", e);

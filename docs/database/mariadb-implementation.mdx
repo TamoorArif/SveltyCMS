@@ -578,20 +578,13 @@ See `MARIADB_IMPLEMENTATION.md` in repository root for detailed implementation g
 
 ## Performance Benchmarks
 
-The MariaDB adapter is optimized for relational data integrity and high-concurrency connection pooling.
+The MariaDB adapter is optimized for relational data integrity and high-concurrency connection pooling. For detailed performance metrics and comparisons, please refer to the [Performance Benchmarks](/docs/project/benchmarks) document.
 
-| Operation              | Response Time | Cache Hit Rate |
-| ---------------------- | ------------- | -------------- |
-| User lookup (cached)   | 0.6ms         | 85-95%         |
-| User lookup (uncached) | 5.8ms         | -              |
-| Collection list (100)  | 4.2ms         | 85-95%         |
-| Collection list (1K)   | 8.5ms         | 85-95%         |
-| Collection (cached)    | 0.6ms         | 85-95%         |
-| Pagination (page 50)   | 1.5ms         | -              |
-| Payload size (list)    | 105 KB        | -              |
-| Content tree           | 4.8ms         | 85-95%         |
-| Dashboard (cached)     | 6ms           | 85-95%         |
-| Streaming 100k records | 55MB RAM      | -              |
+Key MariaDB optimizations include:
+
+- **Relational Efficiency**: Optimized schema with secondary indexes on `tenantId`, `status`, and `createdAt`.
+- **mysql2 Pooling**: High-performance connection pooling for sub-millisecond handshakes.
+- **Idempotent Migrations**: Zero-downtime schema updates.
 
 ### Key Optimizations
 

@@ -45,6 +45,7 @@ export interface WidgetConfig<TProps extends WidgetProps = WidgetProps> {
     field: unknown;
     label: string;
     collection: unknown;
+    collections?: unknown[];
     collectionNameMapping?: Map<string, string>;
   }) => {
     typeID: string | null;

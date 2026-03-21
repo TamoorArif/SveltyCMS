@@ -106,6 +106,57 @@ export class TenantService {
   }
 
   /**
+   * Delete a tenant and all its associated data (cascade delete).
+   * Ensures data sovereignty by completely purging the tenant's footprint.
+   */
+  public async deleteTenant(tenantId: string): Promise<void> {
+    if (!tenantId) return;
+    const dbAdapter = await this.getDbAdapter();
+    if (!dbAdapter) throw new Error("Database adapter not initialized");
+
+    try {
+      // Execute a cascade delete of all data matching this tenant ID via CRUD layer
+      const options = { bypassTenantCheck: true };
+
+      const tablesToDelete = [
+        "auth_users",
+        "auth_sessions",
+        "auth_tokens",
+        "roles",
+        "content_nodes",
+        "content_drafts",
+        "content_revisions",
+        "themes",
+        "widgets",
+        "media_items",
+        "system_virtual_folders",
+        "system_preferences",
+        "svelty_jobs",
+        "website_tokens",
+        "plugin_pagespeed_results",
+        "plugin_states",
+        "plugin_migrations",
+        "audit_logs",
+      ];
+
+      // Note: we run deletions in parallel for efficiency
+      await Promise.allSettled(
+        tablesToDelete.map((table) =>
+          dbAdapter.crud.deleteMany(table, { tenantId } as any, options),
+        ),
+      );
+
+      // Finally, delete the tenant record itself
+      await dbAdapter.system.tenants.delete(tenantId as any);
+
+      logger.info(`Tenant ${tenantId} and all associated data successfully deleted.`);
+    } catch (err) {
+      logger.error(`Failed to cascade delete tenant ${tenantId}`, err);
+      throw new AppError("Failed to delete organization and its data", 500, "DELETE_TENANT_ERROR");
+    }
+  }
+
+  /**
    * Get a tenant by its ID.
    */
   public async getTenant(tenantId: string): Promise<Tenant | null> {

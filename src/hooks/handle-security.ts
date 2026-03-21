@@ -9,6 +9,8 @@ import { securityResponseService } from "@src/services/security-response-service
 import { error, type Handle, type RequestEvent } from "@sveltejs/kit";
 import { AppError, handleApiError } from "@utils/error-handling";
 import { logger } from "@utils/logger.server";
+import { getTenantIdFromHostname } from "@utils/tenant-utils";
+import { getPrivateSettingSync } from "@src/services/settings-service";
 
 /**
  * Consolidated security hook that performs:
@@ -29,21 +31,44 @@ export const handleSecurity: Handle = async ({ event, resolve }) => {
     return await resolve(event);
   }
 
+  let tenantId: string | undefined = undefined;
+  try {
+    if (getPrivateSettingSync("MULTI_TENANT") && !getPrivateSettingSync("DEMO")) {
+      tenantId = getTenantIdFromHostname(url.hostname, true) || undefined;
+    }
+  } catch {
+    // Ignore tenant miss
+  }
+
   try {
     // 1. Analyze request for threats (Firewall + Payload Scan)
-    const securityStatus = await securityResponseService.analyzeRequest(request, clientIp);
+    const securityStatus = await securityResponseService.analyzeRequest(
+      request,
+      clientIp,
+      tenantId,
+    );
 
-    if (securityStatus.action === "block") {
+    if (securityStatus.action === "block" || securityStatus.action === "challenge") {
       metricsService.incrementSecurityViolations();
-      logger.warn(`Security block triggered: ${securityStatus.reason}`, {
-        ip: clientIp,
-        url: url.pathname,
-      });
+      logger.warn(
+        `Security action triggered: ${securityStatus.action} - ${securityStatus.reason}`,
+        {
+          ip: clientIp,
+          url: url.pathname,
+        },
+      );
       throw new AppError(securityStatus.reason || "Forbidden", 403, "SECURITY_BLOCK");
     }
 
+    const forceSecurity = request.headers.get("x-test-security") === "true";
+
     // 2. Additional Rate Limiting Check (if not already handled by analyzeRequest)
-    const rateLimit = await securityResponseService.checkRateLimit(clientIp, url.pathname);
+    const rateLimit = await securityResponseService.checkRateLimit(
+      clientIp,
+      url.pathname,
+      tenantId,
+      forceSecurity,
+    );
     if (rateLimit.action !== "allow") {
       metricsService.incrementRateLimitViolations();
       logger.warn(`Rate limit exceeded: ${clientIp}`, { url: url.pathname });

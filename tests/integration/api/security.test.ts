@@ -32,13 +32,19 @@ describe("Security Enhancements Verification", () => {
     }
 
     // HeadlessChrome is in ADVANCED_BOT_PATTERNS
-    const res = await fetch(`${BASE_URL}/`, {
+    const res = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      body: JSON.stringify({ email: `test@example.com`, password: "wrong" }),
       headers: {
+        "Content-Type": "application/json",
         "User-Agent": "HeadlessChrome",
-        // Support for bypassing test-mode exemption in hooks
-        "X-Test-Security": "true",
+        "X-Test-Security": "true", // Support for bypassing test-mode exemption in hooks
       },
     });
+
+    if (res.status !== 403) {
+      console.log("Firewall bypassed! Status:", res.status, await res.text());
+    }
     expect(res.status).toBe(403);
   });
 

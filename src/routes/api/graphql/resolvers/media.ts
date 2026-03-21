@@ -4,7 +4,7 @@
  */
 
 import type { User } from "@src/databases/auth/types";
-import type { BaseEntity, DatabaseAdapter } from "@src/databases/db-interface";
+import type { BaseEntity, DatabaseAdapter, DatabaseId } from "@src/databases/db-interface";
 import { getPrivateSettingSync } from "@src/services/settings-service";
 import { logger } from "@utils/logger.server";
 
@@ -57,6 +57,7 @@ interface PaginationArgs {
 
 interface GraphQLContext {
   tenantId?: string | null;
+  bypassTenantIsolation?: boolean;
   user?: User;
 }
 
@@ -94,6 +95,34 @@ export function mediaResolvers(dbAdapter: DatabaseAdapter) {
     const { page = 1, limit = 50 } = pagination || {};
 
     try {
+      // Strict boundary bypass check
+      if (getPrivateSettingSync("MULTI_TENANT")) {
+        const userTenant = context.user.tenantId;
+        if (userTenant && userTenant !== context.tenantId) {
+          if (!context.bypassTenantIsolation) {
+            throw new Error("Forbidden: Tenant isolation mismatch");
+          } else {
+            import("@src/services/audit-log-service")
+              .then((module) => {
+                module.auditLogService.logEvent({
+                  action: "security_bypass",
+                  actorId: (context.user?._id || "system") as DatabaseId,
+                  eventType: module.AuditEventType.UNAUTHORIZED_ACCESS,
+                  severity: "medium",
+                  result: "success",
+                  details: {
+                    description: "Global admin bypassed tenant isolation in GraphQL Media",
+                    targetTenant: context.tenantId || "",
+                    userTenant: userTenant || "",
+                  },
+                  tenantId: context.tenantId,
+                });
+              })
+              .catch(() => {});
+          }
+        }
+      }
+
       // Build filter for multi-tenant and media type
       const filter: Record<string, unknown> = {};
       if (getPrivateSettingSync("MULTI_TENANT") && context.tenantId) {

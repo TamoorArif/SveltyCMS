@@ -695,3 +695,17 @@ export const pascalToCamelCase = (str: string): string => {
 export function asAny<T>(value: unknown): T {
   return value as T;
 }
+/**
+ * Creates a clean GraphQL type name from collection info
+ * Uses collection name + short UUID suffix for uniqueness and readability
+ */
+export function createCleanTypeName(collection: { _id?: string; name?: string | unknown }): string {
+  const rawName = typeof collection.name === "string" ? collection.name : "";
+  const baseName = rawName.split("/").pop() || rawName;
+  const cleanName = baseName
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .replace(/^[0-9]/, "Collection$&")
+    .replace(/^[a-z]/, (c) => c.toUpperCase());
+  const shortId = (collection._id ?? "").substring(0, 8);
+  return `${cleanName}_${shortId}`;
+}

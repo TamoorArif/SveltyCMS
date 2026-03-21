@@ -7,8 +7,8 @@
 export const SECURITY_PATTERNS = {
   // SQL Injection patterns (UNION, boolean, time-based, stacked, comment)
   sqli: [
-    /(%27)|(')|(--)|(%23)|(#)/i,
-    /((%3D)|(=))[^<>\n]{0,500}((%27)|(')|(--)|(%3B)|(;))/i,
+    /(%27)|(')|(--\s+)|(%23\s+)/i,
+    /((%3D)|(=))[^<>\n]{0,500}((%27)|(')|(--\s+)|(%3B)|(;))/i,
     /\w*((%27)|('))((%6F)|o|(%4F))((%72)|r|(%52))/i,
     /((%27)|('))union/i,
     /exec(\s|\+)+(s|x)p\w+/i,

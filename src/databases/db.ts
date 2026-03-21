@@ -654,7 +654,7 @@ export function startSystemMonitor() {
   setTimeout(() => {
     if (monitorInterval) return;
 
-    logger.info("💓 Starting System Health Heartbeat (30s interval)");
+    logger.debug("💓 Starting System Health Heartbeat (30s interval)");
 
     monitorInterval = setInterval(async () => {
       if (!isConnected || !dbAdapter) return;

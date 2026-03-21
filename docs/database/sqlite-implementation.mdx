@@ -47,20 +47,13 @@ graph TD
 
 ## 🚀 Performance Benchmarks (Verified)
 
-High-level improvements like the **94% cache hit rate** for SQLite are inherited from the [Unified Caching Layer](./index.mdx#unified-caching-flow).
+SQLite delivers exceptional response times for local and edge deployments. For detailed performance metrics, stress test results, and cross-database comparisons, please refer to the [Performance Benchmarks](/docs/project/benchmarks) document.
 
-| Operation              | Response Time | Cache Hit Rate |
-| ---------------------- | ------------- | -------------- |
-| User lookup (cached)   | 0.2ms         | 85-95%         |
-| User lookup (uncached) | 4.5ms         | -              |
-| Collection list (100)  | 0.5ms         | 85-95%         |
-| Collection list (1K)   | 1.2ms         | 85-95%         |
-| Collection (cached)    | 0.2ms         | 85-95%         |
-| Pagination (page 50)   | 0.8ms         | -              |
-| Payload size (list)    | 85 KB         | -              |
-| Content tree           | 1.2ms         | 85-95%         |
-| Dashboard (cached)     | 4ms           | 85-95%         |
-| Streaming 100k records | 35MB RAM      | -              |
+Key SQLite highlights:
+
+- **Sub-millisecond latency** for cached reads (~0.2ms).
+- **WAL Mode** enabled by default for concurrent read/write performance.
+- **Runtime Agnostic**: Optimized for both `bun:sqlite` and `better-sqlite3`.
 
 ### Key Optimizations
 

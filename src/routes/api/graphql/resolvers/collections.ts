@@ -26,7 +26,7 @@ import { contentManager } from "@src/content/content-manager";
 import type { FieldInstance, Schema } from "@src/content/types";
 // Types
 import type { User } from "@src/databases/auth/types";
-import type { CollectionModel, DatabaseAdapter } from "@src/databases/db-interface";
+import type { DatabaseAdapter, DatabaseId, CollectionModel } from "@src/databases/db-interface";
 import { getPrivateSettingSync } from "@src/services/settings-service";
 // Token Engine
 import { replaceTokens } from "@src/services/token/engine";
@@ -35,7 +35,7 @@ import { widgets } from "@src/stores/widget-store.svelte.ts";
 
 // System Logger
 import { logger } from "@utils/logger.server";
-import { getFieldName } from "@utils/utils";
+import { createCleanTypeName, getFieldName } from "@utils/utils";
 // deepmerge import removed
 import type { GraphQLFieldResolver } from "graphql";
 
@@ -57,21 +57,6 @@ function getLocalizedValue(value: unknown, locale = "en"): unknown {
     }
   }
   return value;
-}
-
-/**
- * Creates a clean GraphQL type name from collection info
- * Uses collection name + short UUID suffix for uniqueness and readability
- */
-export function createCleanTypeName(collection: { _id?: string; name?: string | unknown }): string {
-  const rawName = typeof collection.name === "string" ? collection.name : "";
-  const baseName = rawName.split("/").pop() || rawName;
-  const cleanName = baseName
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .replace(/^[0-9]/, "Collection$&")
-    .replace(/^[a-z]/, (c) => c.toUpperCase());
-  const shortId = (collection._id ?? "").substring(0, 8);
-  return `${cleanName}_${shortId}`;
 }
 
 interface WidgetSchema {
@@ -182,10 +167,11 @@ export async function registerCollections(tenantId?: string | null) {
       if (typeof widget.GraphqlSchema !== "function") {
         continue;
       }
-      const schema = widget.GraphqlSchema({
+      const schema = (widget.GraphqlSchema as any)({
         field,
         label: `${cleanTypeName}_${getFieldName(field)}`,
         collection,
+        collections,
         collectionNameMapping,
       }) as WidgetSchema | undefined;
 
@@ -333,15 +319,45 @@ export async function collectionsResolvers(
       const ctx = context as {
         user?: User;
         tenantId?: string | null;
+        bypassTenantIsolation?: boolean;
         locale?: string;
       };
       if (!ctx.user) {
         throw new Error("Authentication required");
       }
 
-      if (getPrivateSettingSync("MULTI_TENANT") && ctx.tenantId !== tenantId) {
-        logger.error(`Resolver tenantId mismatch. Expected ${tenantId}, got ${ctx.tenantId}`);
-        throw new Error("Internal server error: Tenant context mismatch.");
+      if (getPrivateSettingSync("MULTI_TENANT")) {
+        if (ctx.tenantId !== tenantId) {
+          logger.error(`Resolver tenantId mismatch. Expected ${tenantId}, got ${ctx.tenantId}`);
+          throw new Error("Internal server error: Tenant context mismatch.");
+        }
+
+        const userTenant = ctx.user.tenantId;
+        if (userTenant && userTenant !== ctx.tenantId) {
+          if (!ctx.bypassTenantIsolation) {
+            throw new Error("Forbidden: Tenant isolation mismatch");
+          } else {
+            // Global admin bypass
+            import("@src/services/audit-log-service")
+              .then((module) => {
+                module.auditLogService.logEvent({
+                  action: "security_bypass",
+                  actorId: (ctx.user?._id || "system") as DatabaseId,
+                  eventType: module.AuditEventType.UNAUTHORIZED_ACCESS,
+                  severity: "medium",
+                  result: "success",
+                  details: {
+                    description: "Global admin bypassed tenant isolation in GraphQL Collections",
+                    targetTenant: ctx.tenantId || "",
+                    userTenant: userTenant || "",
+                    collection: collection._id,
+                  },
+                  tenantId: ctx.tenantId,
+                });
+              })
+              .catch(() => {});
+          }
+        }
       }
 
       if (!dbAdapter) {

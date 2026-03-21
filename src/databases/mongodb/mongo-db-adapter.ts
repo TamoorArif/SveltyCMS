@@ -232,7 +232,10 @@ export class MongoDBAdapter implements IDBAdapter {
       getById: (id: string) => TenantModel.findById(id).lean().exec(),
       update: (id: string, d: any) =>
         TenantModel.findByIdAndUpdate(id, { $set: d }, { new: true }).lean().exec(),
-      delete: (id: string) => TenantModel.findByIdAndDelete(id).exec().then(() => {}),
+      delete: (id: string) =>
+        TenantModel.findByIdAndDelete(id)
+          .exec()
+          .then(() => {}),
       list: () => TenantModel.find().lean().exec(),
     };
   }

@@ -86,7 +86,14 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
       );
     }
 
-    if (existingTokens?.success && existingTokens.data && existingTokens.data.length > 0) {
+    const emailMatch =
+      existingTokens?.success && existingTokens.data
+        ? existingTokens.data.some(
+            (t) => t.email?.toLowerCase() === validatedData.email.toLowerCase(),
+          )
+        : false;
+
+    if (emailMatch) {
       logger.warn("Attempted to create a token for an email that already has one in this tenant", {
         email: validatedData.email,
         tenantId,
@@ -240,7 +247,10 @@ export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
       email_sent: true,
     });
   } catch (err) {
-    if (err instanceof AppError) {
+    if (
+      err instanceof AppError ||
+      (err && typeof err === "object" && "status" in err && "code" in err)
+    ) {
       throw err;
     }
     if (err instanceof Error && err.name === "ValiError") {

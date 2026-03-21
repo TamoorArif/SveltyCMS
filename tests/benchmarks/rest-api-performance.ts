@@ -1,6 +1,7 @@
 /**
  * @file tests/benchmarks/rest-api-performance.ts
  * @description Benchmark for SveltyCMS REST API.
+ *
  * Measures throughput (RPS) and latency for common endpoints.
  */
 
@@ -93,17 +94,23 @@ async function runRestBenchmark() {
 
     // 2. Authenticated Me (Auth Middleware cost)
     results.push(
-      await measureEndpoint("User Me (Authenticated)", "/api/user/me", { headers: authHeaders }),
+      await measureEndpoint("User Me (Authenticated)", "/api/user/me", {
+        headers: authHeaders,
+      }),
     );
 
     // 3. List Collections (Database + Auth)
     results.push(
-      await measureEndpoint("List Collections (DB)", "/api/collections", { headers: authHeaders }),
+      await measureEndpoint("List Collections (DB)", "/api/collections", {
+        headers: authHeaders,
+      }),
     );
 
     // 4. List Users (Admin only + DB)
     results.push(
-      await measureEndpoint("List Users (Admin)", "/api/user", { headers: authHeaders }),
+      await measureEndpoint("List Users (Admin)", "/api/user", {
+        headers: authHeaders,
+      }),
     );
 
     console.log("\n📊 REST API Benchmark Results:");

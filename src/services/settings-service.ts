@@ -1,4 +1,13 @@
-/** @file src/services/settings-service.ts @description Server-only settings cache and management features: [server-side cache, type-safe getters, database synchronization, settings import/export] */
+/**
+ * @file src/services/settings-service.ts
+ * @description Server-only settings cache and management
+ *
+ * Features:
+ * - server-side cache
+ * - type-safe getters
+ * - database synchronization
+ * - settings import/export
+ */
 
 import { privateConfigSchema, publicConfigSchema } from "@src/databases/schemas";
 import { logger } from "@utils/logger";
@@ -148,15 +157,32 @@ export async function loadSettingsCache(tenantId: string = GLOBAL_TENANT): Promi
       }
     }
 
-    // Merge: infrastructure settings from config + dynamic settings from DB
+    // Load global fallback if this is a specific tenant
+    let globalPublic = {};
+    let globalPrivate = {};
+    if (tenantId !== GLOBAL_TENANT) {
+      // Use internal function to recurse without triggering infinite loop if misconfigured
+      const globalCache = await loadSettingsCache(GLOBAL_TENANT);
+      globalPublic = globalCache.public;
+      globalPrivate = globalCache.private;
+    }
+
+    // Merge: global public + tenant dynamic public
+    const mergedPublic = {
+      ...globalPublic,
+      ...publicSettings,
+    };
+
+    // Merge: global private + infrastructure settings from config + dynamic settings from DB
     const mergedPrivate = {
+      ...globalPrivate,
       ...privateConfig,
       ...privateDynamic,
     };
 
     // Update cache with merged data
     cache.private = mergedPrivate as PrivateEnv;
-    cache.public = publicSettings as PublicEnv;
+    cache.public = mergedPublic as PublicEnv;
     cache.public.PKG_VERSION = await loadPkgVersion();
     cache.loaded = true;
     cache.loadedAt = Date.now();
@@ -295,7 +321,12 @@ export async function updateSettingsFromSnapshot(
   const settings: SnapshotRecord =
     (snap as { settings?: SnapshotRecord }).settings ?? (snap as SnapshotRecord);
 
-  const ops: Array<{ key: string; value: unknown; scope: "user" | "system"; userId?: any }> = [];
+  const ops: Array<{
+    key: string;
+    value: unknown;
+    scope: "user" | "system";
+    userId?: any;
+  }> = [];
 
   function isValueWrapper(v: unknown): v is { value: unknown } {
     return typeof v === "object" && v !== null && "value" in (v as Record<string, unknown>);

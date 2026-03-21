@@ -1,6 +1,7 @@
 /**
  * @file src/content/content-reconciler.ts
  * @description
+ *
  * Orchestrator for content reconciliation (File system ↔ Database).
  * Delegates to specialized sub-modules in ./content-reconciler/
  */
@@ -330,7 +331,10 @@ export const contentReconciler = {
           const { _id, createdAt: _, ...changeableFields } = node as any;
           bulkUpdates.push({
             path: node.path,
-            changes: { ...changeableFields, updatedAt: dateToISODateString(new Date()) },
+            changes: {
+              ...changeableFields,
+              updatedAt: dateToISODateString(new Date()),
+            },
           });
           contentStructure.setNode(node._id, node);
           break;
@@ -342,9 +346,41 @@ export const contentReconciler = {
       }
     }
 
-    if (bulkCreates.length > 0) await dbAdapter.content.nodes.createMany(bulkCreates);
-    if (bulkUpdates.length > 0)
-      await dbAdapter.content.nodes.bulkUpdate(bulkUpdates, { tenantId, bypassTenantCheck: true });
+    if (bulkCreates.length > 0) {
+      await dbAdapter.content.nodes.createMany(bulkCreates);
+      // Register models for new collections to ensure CRUD API is ready immediately
+      for (const node of bulkCreates) {
+        if (node.nodeType === "collection" && node.collectionDef) {
+          try {
+            await dbAdapter.collection.createModel(node.collectionDef);
+          } catch (error) {
+            logger.error(
+              `[ContentReconciler] Failed to register model for new collection ${node.name}:`,
+              error,
+            );
+          }
+        }
+      }
+    }
+    if (bulkUpdates.length > 0) {
+      await dbAdapter.content.nodes.bulkUpdate(bulkUpdates, {
+        tenantId,
+        bypassTenantCheck: true,
+      });
+      // Re-register models for updated collections in case fields changed
+      for (const op of bulkUpdates) {
+        if (op.changes.nodeType === "collection" && op.changes.collectionDef) {
+          try {
+            await dbAdapter.collection.createModel(op.changes.collectionDef);
+          } catch (error) {
+            logger.error(
+              `[ContentReconciler] Failed to re-register model for updated collection ${op.changes.name}:`,
+              error,
+            );
+          }
+        }
+      }
+    }
 
     const result = await dbAdapter.content.nodes.getStructure("flat", {
       tenantId,
@@ -369,7 +405,12 @@ export const contentReconciler = {
       if (typeof node.parentId === "string") parentId = node.parentId;
       else if (node.parentId) parentId = String((node.parentId as any).id || node.parentId);
 
-      return { id: node._id, parentId, order: node.order || 0, path: node.path || "" };
+      return {
+        id: node._id,
+        parentId,
+        order: node.order || 0,
+        path: node.path || "",
+      };
     });
 
     await dbAdapter.content.nodes.reorderStructure(reorderItems);

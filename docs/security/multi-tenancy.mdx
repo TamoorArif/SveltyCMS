@@ -2,6 +2,13 @@
 path: "docs/security/multi-tenancy.mdx"
 title: "Multi-Tenant Security Architecture"
 description: "In-depth documentation of the security boundaries and tenant isolation in SveltyCMS."
+author: "admin"
+created: "2026-03-20"
+updated: "2026-03-21"
+tags:
+  - security
+  - multi-tenancy
+  - architecture
 order: 2
 icon: "mdi:shield-home-outline"
 ---
@@ -10,42 +17,31 @@ icon: "mdi:shield-home-outline"
 
 SveltyCMS employs a rigorous "Defense in Depth" strategy for multi-tenant environments. This document outlines the architectural boundaries, isolation mechanisms, and security protocols that prevent cross-tenant data leakage and unauthorized access.
 
-## 1. Core Isolation Principles
+## 1. Core Isolation Principles (Vite+ Optimized)
 
-The system is built on the principle of **Universal Tenant Context**. Every request that enters the system is tagged with a `tenantId` via middleware, which is then propagated through every layer of the application.
+SveltyCMS leverages the **Vite+** middleware pipeline to enforce hard isolation at every request:
 
-### 1.1 The middleware layer
+- **Middleware Gating**: All requests pass through `handleSystemState` and `handleAuthorization`.
+- **Tenant Context**: The `tenantId` is resolved early and injected into the SvelteKit `locals` and GraphQL context.
+- **Adapter Scoping**: Every database operation is automatically scoped by the resolved `tenantId`.
 
-- **Tenant Identification**: The `handleAuthentication` hook identifies the tenant based on the hostname or a specific header.
-- **Context Injection**: The `tenantId` is injected into `event.locals`, making it available to all downstream handlers.
-- **Boundary Enforcement**: If `MULTI_TENANT` mode is enabled, requests without a valid `tenantId` are rejected before they reach the API handlers.
+## 2. API Security Boundaries
 
-## 2. API Hardening & IDOR Prevention
+Both REST and GraphQL APIs are subject to tenant-level security checks:
 
-All SveltyCMS APIs are hardened against Insecure Direct Object Reference (IDOR) attacks.
+- **REST CRUD**: All routes (`/api/crud/[collection]`) append a mandatory `tenantId` filter to every query.
+- **GraphQL Yoga**: The schema is filtered based on the requester's tenant permissions, and resolvers utilize the **Vite+** context to ensure data isolation.
+- **Performance Quotas**: Rate limiting is applied per-tenant to prevent resource exhaustion.
 
-### 2.1 Explicit Scoping
-
-Every database query explicitly includes the `tenantId` in its filter or options. This ensures that even if a user knows the UUID of an object belonging to another tenant, the database will return no results because the `tenantId` does not match.
-
-```typescript
-// Standard IDOR Prevention Pattern
-const result = await dbAdapter.crud.findOne(collectionName, {
-  _id: targetId,
-  tenantId, // ✨ Enforces the tenant boundary at the DB level
-});
-```
-
-### 2.2 Role-Based Overrides (RBAC)
-
-- **Tenant Admins**: Can only access and modify data within their own `tenantId`.
-- **Super-Admins**: Have global visibility. They can override the `tenantId` via query parameters (e.g., `?tenantId=target-tenant`) for system-wide maintenance. This override is strictly protected and returns a `403 Forbidden` for any other role.
-
-## 3. Specialized Service Isolation
-
-### 3.1 GraphQL Schema Isolation
+### 3.1 GraphQL Schema Isolation & Protection
 
 SveltyCMS prevents "Schema Leakage" by maintaining isolated `YogaServer` instances per tenant. This ensures that custom collections or fields defined by one tenant are never visible in the introspection query of another.
+
+Furthermore, SveltyCMS protects the GraphQL interface with:
+
+- **AST Depth Limitation**: Limits query depth (default 7) to prevent nested relation Denial of Service (DoS) attacks.
+- **Strict Tenant Enforcement**: All GraphQL resolvers strictly check that the request's context `tenantId` precisely matches the entity's `tenantId`. Mismatches result in immediate query termination and an audit log event, unless triggered by a Super-Admin with `bypassTenantIsolation`.
+- **Tenant-Scoped Rate Limits**: Leverages Redis-backed rate-limiters scoped directly to `rate:tenant:${tenantId}:graphql:minute` ensuring fair usage and protecting infrastructure from tenant-specific floods.
 
 ### 3.2 Real-Time Event Stream (SSE)
 

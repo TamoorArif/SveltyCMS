@@ -383,7 +383,7 @@ export class CrudModule {
         const now = new Date(nowISODateString());
         const values = data.map((d) => ({
           ...d,
-          _id: utils.generateId() as DatabaseId,
+          _id: (d as any)._id || (utils.generateId() as DatabaseId),
           tenantId: tenantId || (d as any).tenantId,
           createdAt: now,
           updatedAt: now,

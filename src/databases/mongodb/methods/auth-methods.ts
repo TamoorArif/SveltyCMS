@@ -88,7 +88,9 @@ export class MongoAuthModelRegistrar {
     });
 
     if (result.deletedCount && result.deletedCount > 0) {
-      logger.info(`🔄 Migrated sessions: Removed ${result.deletedCount} old ObjectId-based sessions`);
+      logger.info(
+        `🔄 Migrated sessions: Removed ${result.deletedCount} old ObjectId-based sessions`,
+      );
     }
   }
 }

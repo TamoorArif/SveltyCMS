@@ -128,6 +128,13 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
     }
   }
 
+  // First resolve the value to _id
+  let targetId = tokenId;
+  const tokenObj = await auth.getTokenByValue(tokenId);
+  if (tokenObj) {
+    targetId = tokenObj._id;
+  }
+
   // Use database-agnostic interface if available, with graceful fallback
   let updateResult: unknown = null;
   const possibleAuth: unknown = auth as unknown;
@@ -138,8 +145,8 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
     typeof (possibleAuth as { updateToken: unknown }).updateToken === "function"
   ) {
     updateResult = await (
-      possibleAuth as { updateToken: (id: string, data: unknown) => unknown }
-    ).updateToken(tokenId, newTokenData);
+      possibleAuth as { updateToken: (id: string, data: unknown, tenantId?: string) => unknown }
+    ).updateToken(targetId, newTokenData, tenantId || undefined);
   } else {
     // Fallback (should not normally execute once interface is standardized)
     const { TokenAdapter } = await import("@src/databases/mongodb/models/auth-token");
@@ -222,9 +229,9 @@ export const DELETE = apiHandler(async ({ params, locals }) => {
       "deleteTokens" in maybeAuth &&
       typeof (maybeAuth as { deleteTokens: unknown }).deleteTokens === "function"
     ) {
-      const result = await (maybeAuth as { deleteTokens: (ids: string[]) => unknown }).deleteTokens(
-        [targetId],
-      );
+      const result = await (
+        maybeAuth as { deleteTokens: (ids: string[], tenantId?: string) => unknown }
+      ).deleteTokens([targetId], tenantId || undefined);
       if (typeof result === "number") {
         deletedCount = result;
       } else if (result && typeof result === "object") {

@@ -730,7 +730,8 @@ export const actions: Actions = {
     // Note: First-user registration is handled by /setup (enforced by handleSetup hook)
     // This action only handles invited user registration
 
-    if (process.env.TEST_MODE !== "true" && (await limiter.isLimited(event))) {
+    const isTestSecurity = event.request.headers.get("x-test-security") === "true";
+    if ((process.env.TEST_MODE !== "true" || isTestSecurity) && (await limiter.isLimited(event))) {
       return fail(429, {
         message: "Too many requests. Please try again later.",
       });
@@ -984,7 +985,8 @@ export const actions: Actions = {
 
     const startTime = performance.now();
 
-    if (process.env.TEST_MODE !== "true" && (await limiter.isLimited(event))) {
+    const isTestSecurity = event.request.headers.get("x-test-security") === "true";
+    if ((process.env.TEST_MODE !== "true" || isTestSecurity) && (await limiter.isLimited(event))) {
       return fail(429, {
         message: "Too many requests. Please try again later.",
       });
@@ -1106,7 +1108,8 @@ export const actions: Actions = {
         : (publicEnv.BASE_LOCALE as Locale);
     // --- END: Language Validation Logic ---
 
-    if (process.env.TEST_MODE !== "true" && (await limiter.isLimited(event))) {
+    const isTestSecurity = event.request.headers.get("x-test-security") === "true";
+    if ((process.env.TEST_MODE !== "true" || isTestSecurity) && (await limiter.isLimited(event))) {
       return fail(429, {
         message: "Too many requests. Please try again later.",
       });

@@ -64,11 +64,12 @@ import { createSchema, createYoga } from "graphql-yoga";
 import { useGraphQlJit } from "@envelop/graphql-jit";
 // GraphQL Subscriptions
 import { WebSocketServer } from "ws";
-import {
-  collectionsResolvers,
-  createCleanTypeName,
-  registerCollections,
-} from "./resolvers/collections";
+import { NoSchemaIntrospectionCustomRule } from "graphql";
+import { dev } from "$app/environment";
+
+import { createDepthLimitRule, createMaxAliasesRule } from "./rules";
+import { collectionsResolvers, registerCollections } from "./resolvers/collections";
+import { createCleanTypeName } from "@utils/utils";
 import { mediaResolvers, mediaTypeDefs } from "./resolvers/media";
 import { systemResolvers, systemTypeDefs } from "./resolvers/system";
 import { userResolvers, userTypeDefs } from "./resolvers/users";
@@ -271,18 +272,31 @@ async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string | null
       graphiql: {
         subscriptionsProtocol: "WS",
       },
+      parserAndValidationCache: true,
+      validationRules: [
+        createDepthLimitRule(8),
+        createMaxAliasesRule(15),
+        ...(dev ? [] : [NoSchemaIntrospectionCustomRule]),
+      ],
       // @ts-expect-error Yoga schema type mismatch due to context generics
       schema: createSchema({ typeDefs, resolvers }),
       context: async ({ request }) => {
         // Extract the context from the request if it was passed
         const contextData = (
           request as Request & {
-            contextData?: { user: unknown; tenantId?: string | null };
+            contextData?: {
+              user: unknown;
+              dbAdapter?: DatabaseAdapter;
+              tenantId?: string | null;
+              bypassTenantIsolation?: boolean;
+            };
           }
         ).contextData;
         return {
           user: contextData?.user,
+          dbAdapter: contextData?.dbAdapter,
           tenantId: contextData?.tenantId,
+          bypassTenantIsolation: contextData?.bypassTenantIsolation,
           locale: request.headers.get("accept-language")?.split(",")[0]?.trim().slice(0, 2) || "en", // Simple locale extraction
           pubSub,
         };
@@ -464,11 +478,18 @@ const handler = apiHandler(async (event: RequestEvent) => {
     // Add context data to the request object for GraphQL Yoga
     (
       compatibleRequest as Request & {
-        contextData?: { user: unknown; tenantId?: string | null };
+        contextData?: {
+          user: unknown;
+          dbAdapter: DatabaseAdapter;
+          tenantId?: string | null;
+          bypassTenantIsolation?: boolean;
+        };
       }
     ).contextData = {
       user: locals.user,
+      dbAdapter: locals.dbAdapter,
       tenantId: locals.tenantId,
+      bypassTenantIsolation: locals.isAdmin === true,
     };
 
     // Use GraphQL Yoga's handleRequest method

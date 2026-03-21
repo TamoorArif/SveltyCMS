@@ -71,7 +71,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
         if (!(tokensResult.success && tokensResult.data)) {
           throw new Error("Failed to retrieve tokens");
         }
-        const tokenSet = new Set(tokensResult.data.map((t) => t.token));
+        const tokenSet = new Set(
+          tokensResult.data.map((t) => (t as any)._id || (t as any).token || (t as any).value),
+        );
         const allOwned = tokenIds.every((id) => tokenSet.has(id));
         if (!allOwned) {
           logger.warn("Attempt to act on tokens outside of tenant", {
@@ -98,20 +100,36 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
     let successMessage = "";
 
+    let targetTokenIds = tokenIds;
+    // Map token values to their real _ids if possible, by retrieving them all
+    try {
+      const tokensResult = await auth.getAllTokens({ tenantId });
+      if (tokensResult.success && tokensResult.data) {
+        targetTokenIds = tokenIds.map((val) => {
+          const matched = tokensResult.data!.find(
+            (t) => t._id === val || (t as any).token === val || (t as any).value === val,
+          );
+          return matched ? (matched as any)._id || val : val;
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+
     // Directly invoke database-agnostic methods (now bound in auth adapter)
     switch (action) {
       case "delete": {
-        await auth.deleteTokens(tokenIds, tenantId);
+        await auth.deleteTokens(targetTokenIds, tenantId || undefined);
         successMessage = "Tokens deleted successfully.";
         break;
       }
       case "block": {
-        await auth.blockTokens(tokenIds, tenantId);
+        await auth.blockTokens(targetTokenIds, tenantId || undefined);
         successMessage = "Tokens blocked successfully.";
         break;
       }
       case "unblock": {
-        await auth.unblockTokens(tokenIds, tenantId);
+        await auth.unblockTokens(targetTokenIds, tenantId || undefined);
         successMessage = "Tokens unblocked successfully.";
         break;
       }

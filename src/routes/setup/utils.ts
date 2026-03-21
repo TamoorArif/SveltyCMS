@@ -250,7 +250,11 @@ async function setupMongoDB(
 
     let needsRetry = false;
     if (!connectResult.success) {
-      if (checkAuthFailure(connectResult.error) && config.user && connectionOptions.authSource !== "admin") {
+      if (
+        checkAuthFailure(connectResult.error) &&
+        config.user &&
+        connectionOptions.authSource !== "admin"
+      ) {
         needsRetry = true;
       } else {
         const isAuth = checkAuthFailure(connectResult.error);
@@ -260,9 +264,17 @@ async function setupMongoDB(
       }
     } else {
       // If connection succeeded, verify with a probe
-      const probeResult = await dbAdapter.crud.count("system_content_structure", {}, { silent: true });
+      const probeResult = await dbAdapter.crud.count(
+        "system_content_structure",
+        {},
+        { silent: true },
+      );
       if (!probeResult.success) {
-        if (checkAuthFailure(probeResult.error) && config.user && connectionOptions.authSource !== "admin") {
+        if (
+          checkAuthFailure(probeResult.error) &&
+          config.user &&
+          connectionOptions.authSource !== "admin"
+        ) {
           needsRetry = true;
         } else {
           const isAuth = checkAuthFailure(probeResult.error);
@@ -356,9 +368,14 @@ function getDatabaseHint(error: DatabaseError, type: string): string {
     }
     // MongoDB: 18 = AuthenticationFailed, 13 = Unauthorized
     if (type === "mongodb") {
-      if (code === "18" || code === "13" || msg.includes("requires authentication") || msg.includes("command denied")) {
+      if (
+        code === "18" ||
+        code === "13" ||
+        msg.includes("requires authentication") ||
+        msg.includes("command denied")
+      ) {
         if (!msg.includes("admin") && (msg.includes("admin") || details.includes("admin"))) {
-           return "Hint: Authentication failed via 'admin'. Please check your root credentials.";
+          return "Hint: Authentication failed via 'admin'. Please check your root credentials.";
         }
         return "Hint: Authentication failed. If this database is secured (like Docker), please provide a username and password.";
       }
@@ -375,8 +392,10 @@ function getDatabaseHint(error: DatabaseError, type: string): string {
 
   // 4. SQLite specific
   if (type === "sqlite") {
-    if (msg.includes("cantopen")) return "Hint: Cannot open database file. Check directory permissions.";
-    if (msg.includes("perm")) return "Hint: Permission denied. Ensure the process can write to the file.";
+    if (msg.includes("cantopen"))
+      return "Hint: Cannot open database file. Check directory permissions.";
+    if (msg.includes("perm"))
+      return "Hint: Permission denied. Ensure the process can write to the file.";
   }
 
   return "Hint: Please check your configuration and ensure the database server is reachable.";
@@ -401,7 +420,10 @@ async function setupMariaDB(
   const probeResult = await dbAdapter.crud.count("system_content_structure", {});
   if (!probeResult.success) {
     const hint = getDatabaseHint(probeResult.error, "mariadb");
-    if (probeResult.error.message.includes("denied") || probeResult.error.message.includes("auth")) {
+    if (
+      probeResult.error.message.includes("denied") ||
+      probeResult.error.message.includes("auth")
+    ) {
       throw new Error(`Authentication failed: ${probeResult.error.message}\n${hint}`);
     }
   }
@@ -427,7 +449,10 @@ async function setupPostgreSQL(
   const probeResult = await dbAdapter.crud.count("system_content_structure", {});
   if (!probeResult.success) {
     const hint = getDatabaseHint(probeResult.error, "postgresql");
-    if (probeResult.error.message.includes("denied") || probeResult.error.message.includes("auth")) {
+    if (
+      probeResult.error.message.includes("denied") ||
+      probeResult.error.message.includes("auth")
+    ) {
       throw new Error(`Authentication failed: ${probeResult.error.message}\n${hint}`);
     }
   }

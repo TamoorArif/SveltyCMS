@@ -150,20 +150,13 @@ public readonly crud = {
 
 ## Performance Benchmarks
 
-The PostgreSQL adapter is optimized for relational efficiency and JSONB search performance.
+The PostgreSQL adapter is optimized for relational efficiency and JSONB search performance. For detailed performance metrics and comparisons, please refer to the [Performance Benchmarks](/docs/project/benchmarks) document.
 
-| Operation              | Response Time | Cache Hit Rate |
-| ---------------------- | ------------- | -------------- |
-| User lookup (cached)   | 0.7ms         | 85-95%         |
-| User lookup (uncached) | 3ms           | -              |
-| Collection list (100)  | 2.5ms         | 85-95%         |
-| Collection list (1K)   | 4.2ms         | 85-95%         |
-| Collection (cached)    | 0.7ms         | 85-95%         |
-| Pagination (page 50)   | 2.1ms         | -              |
-| Payload size (list)    | 112 KB        | -              |
-| Content tree           | 3.5ms         | 85-95%         |
-| Dashboard (cached)     | 8ms           | 85-95%         |
-| Streaming 100k records | 65MB RAM      | -              |
+Key PostgreSQL highlights:
+
+- **JSONB with GIN Indexing**: Sub-10ms search on complex containment queries.
+- **Partial Indexes**: Optimized performance for active sessions and tokens.
+- **Connection Health**: Robust pooling via `postgres.js` with integrated health checks.
 
 ### Key Optimizations
 

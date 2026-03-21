@@ -1,4 +1,15 @@
-/** @file src/utils/logger.ts @description Universal logger (client + server) with formatting and tree-shaking features: [level-based logging, smart token highlighting, sensitive data masking, channel support, dump helper, build-time stripping] */
+/**
+ * @file src/utils/logger.ts
+ * @description Universal logger (client + server) with formatting and tree-shaking
+ *
+ * Features:
+ * - level-based logging
+ * - smart token highlighting
+ * - sensitive data masking
+ * - channel support
+ * - dump helper
+ * - build-time stripping
+ */
 const IS_BROWSER = typeof window !== "undefined";
 
 export type LoggableValue = string | number | boolean | null | undefined | object | Date | Error;

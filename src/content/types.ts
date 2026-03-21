@@ -190,6 +190,8 @@ export interface FieldInstance {
   translated: boolean; // Now required (factory sets default)
   type?: string; // Optional field type
   unique?: boolean;
+  disableUnique?: boolean;
+  tenantScopedUnique?: boolean;
 
   // Functions
   validate?: (value: FieldValue) => boolean | Promise<boolean>;
@@ -239,6 +241,7 @@ export interface Schema {
   status?: StatusType;
   strict?: boolean;
   tenantId?: string | null; // For multi-tenant support
+  tenantScopedUnique?: boolean; // If true, unique schema-level indexes include tenantId
   translations?: Translation[]; // Optional translations with enhanced metadata
   displaySpec?: Record<string, unknown>; // json-render-svelte display specification
 }
@@ -484,5 +487,5 @@ export interface TablePaginationProps {
 }
 
 /* AUTOGEN_START: ContentTypes */
-export type ContentTypes = "Authors" | "Categories" | "Posts";
+export type ContentTypes = never;
 /* AUTOGEN_END: ContentTypes */

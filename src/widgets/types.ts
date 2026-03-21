@@ -81,6 +81,7 @@ export interface WidgetDefinition<
     field: unknown;
     label: string;
     collection: unknown;
+    collections?: unknown[];
     collectionNameMapping?: Map<string, string>;
   }) => {
     typeID: string | null;

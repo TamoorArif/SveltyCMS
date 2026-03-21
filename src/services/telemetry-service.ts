@@ -75,7 +75,7 @@ export const telemetryService = {
       return activeCheckPromise;
     }
 
-    logger.info("📡 Starting Telemetry check (Background)...");
+    logger.debug("📡 Starting Telemetry check (Background)...");
 
     // Start the check in a truly non-blocking way
     activeCheckPromise = (async () => {

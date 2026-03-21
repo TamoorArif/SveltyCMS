@@ -360,11 +360,18 @@ export class MongoCollectionMethods {
             }
 
             // Unique index
-            if (fieldObj.unique) {
-              indexes.push({
-                fields: { [fieldKey]: 1 },
-                options: { unique: true, sparse: true },
-              });
+            if (fieldObj.unique && !fieldObj.disableUnique) {
+              if (fieldObj.tenantScopedUnique || schema.tenantScopedUnique) {
+                indexes.push({
+                  fields: { tenantId: 1, [fieldKey]: 1 },
+                  options: { unique: true, sparse: true },
+                });
+              } else {
+                indexes.push({
+                  fields: { [fieldKey]: 1 },
+                  options: { unique: true, sparse: true },
+                });
+              }
             }
 
             // Regular index for searchable/filterable fields

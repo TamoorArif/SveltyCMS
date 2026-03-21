@@ -87,18 +87,25 @@ class SecurityResponseService {
 
   private async getOrCreateLimiter(
     endpoint: string,
+    tenantId?: string,
   ): Promise<RateLimiterMemory | RateLimiterRedis> {
-    // Use explicit 'global' scope for fallback readability
-    const scope = ENDPOINT_RATE_LIMITS[endpoint] ? endpoint : "global";
+    const isGraphql = endpoint.includes("/api/graphql");
+    const scope = ENDPOINT_RATE_LIMITS[endpoint] ? endpoint : isGraphql ? "graphql" : "global";
     const limit = ENDPOINT_RATE_LIMITS[scope] || GLOBAL_RATE_LIMIT;
 
-    const cached = this.limiters.get(scope);
+    const cacheKey = tenantId ? `${scope}_${tenantId}` : scope;
+    const cached = this.limiters.get(cacheKey);
     if (cached) return cached;
+
+    const keyPrefix =
+      tenantId && isGraphql
+        ? `rate:tenant:${tenantId}:graphql:minute`
+        : `svelty:sec:rl:${scope.replace(/\//g, "_").replace(/^_/, "")}`;
 
     const options = {
       points: limit,
       duration: 60, // 1 minute window
-      keyPrefix: `svelty:sec:rl:${scope.replace(/\//g, "_").replace(/^_/, "")}`,
+      keyPrefix,
     };
 
     const redisClient = cacheService.getRedisClient();
@@ -115,7 +122,11 @@ class SecurityResponseService {
   }
 
   /** Analyzes a request for potential security threats. */
-  public async analyzeRequest(request: Request, clientIp: string): Promise<SecurityStatus> {
+  public async analyzeRequest(
+    request: Request,
+    clientIp: string,
+    tenantId?: string,
+  ): Promise<SecurityStatus> {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
@@ -124,8 +135,10 @@ class SecurityResponseService {
       return { level: "critical", action: "block", reason: "IP is blocked" };
     }
 
+    const forceSecurity = request.headers.get("x-test-security") === "true";
+
     // 2. Rate Limit check
-    const rateLimit = await this.checkRateLimit(clientIp, pathname);
+    const rateLimit = await this.checkRateLimit(clientIp, pathname, tenantId, forceSecurity);
     if (rateLimit.action !== "allow") return rateLimit;
 
     // 3. Throttling check
@@ -186,7 +199,7 @@ class SecurityResponseService {
     const userAgent = request.headers.get("user-agent") || "";
     for (const pattern of SECURITY_PATTERNS.suspicious_ua) {
       if (pattern.test(userAgent)) {
-        maxThreat = this.upgradeThreat(maxThreat, "medium");
+        maxThreat = this.upgradeThreat(maxThreat, "high");
         break;
       }
     }
@@ -204,7 +217,10 @@ class SecurityResponseService {
           if (contentType.includes("application/json")) {
             const json = await clone.json();
             maxThreat = this.upgradeThreat(maxThreat, this.scanRecursive(json));
-          } else if (contentType.includes("application/x-www-form-urlencoded")) {
+          } else if (
+            contentType.includes("application/x-www-form-urlencoded") ||
+            contentType.includes("multipart/form-data")
+          ) {
             const formData = await clone.formData();
             for (const value of formData.values()) {
               if (typeof value === "string") {
@@ -335,8 +351,13 @@ class SecurityResponseService {
     await this.dispatchAlert(ip, "critical", reason, tenantId);
   }
 
-  public async checkRateLimit(ip: string, endpoint: string): Promise<SecurityStatus> {
-    if (building || process.env.TEST_MODE === "true") {
+  public async checkRateLimit(
+    ip: string,
+    endpoint: string,
+    tenantId?: string,
+    forceSecurity = false,
+  ): Promise<SecurityStatus> {
+    if ((building || process.env.TEST_MODE === "true") && !forceSecurity) {
       logger.debug(
         `[SecurityResponseService] Rate limit check skipped: TEST_MODE=${process.env.TEST_MODE}, building=${building}`,
       );
@@ -344,7 +365,7 @@ class SecurityResponseService {
     }
 
     try {
-      const limiter = await this.getOrCreateLimiter(endpoint);
+      const limiter = await this.getOrCreateLimiter(endpoint, tenantId);
       await limiter.consume(ip);
       return { level: "none", action: "allow" };
     } catch (rej: any) {

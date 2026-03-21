@@ -1,0 +1,75 @@
+---
+path: docs/project/competitive-comparison.mdx
+title: Competitive Comparison
+description: A technical comparison of SveltyCMS vs Payload CMS, Strapi, and Directus.
+author: SveltyCMS Team
+created: 2026-03-21
+updated: 2026-03-21
+tags:
+  - comparison
+  - benchmarks
+  - payload
+  - strapi
+  - directus
+---
+
+# Competitive Comparison
+
+SveltyCMS is designed for developers who prioritize performance, security, and accessibility. By using Svelte 5 (Runes) and a database-agnostic architecture, we offer a highly competitive alternative to traditional React-based or GUI-heavy CMS platforms.
+
+## Comparison Matrix (2026)
+
+| Feature           | **SveltyCMS**               | Payload CMS (v3)      | Strapi (v5)      | Directus         |
+| :---------------- | :-------------------------- | :-------------------- | :--------------- | :--------------- |
+| **Core Tech**     | Svelte 5 (Runes)            | React / Next.js       | React            | Vue.js / Node.js |
+| **Reactivity**    | Fine-grained (No VDOM)      | Virtual DOM           | Virtual DOM      | Virtual DOM      |
+| **Throughput**    | **1,100+ RPS** (Concurrent) | ~900-1,200 RPS (Est.) | ~30-50 RPS       | ~50-80 RPS       |
+| **Avg Latency**   | **46-97 ms** (Under Load)   | ~15 ms (Sequential\*) | 102 ms           | 45 ms            |
+| **Cached Path**   | **< 10ms** (Hot Paths)      | < 10ms                | ~20ms            | ~15ms            |
+| **Edge Ready**    | ✅ Native                   | 🔶 Complex (Next)     | ❌ Restricted    | ❌ No            |
+| **i18n**          | Paraglide (Zero-runtime)    | i18next (Runtime)     | Custom (Runtime) | Custom (Runtime) |
+| **Audit Logs**    | Crypto-chained (SHA-256)    | Standard              | Plugin-based     | Standard         |
+| **Accessibility** | **WCAG 2.2 AA+ Baseline**   | Standard              | Standard         | Standard         |
+
+_\*Payload's 15ms figure from 2022 blog post refers to sequential requests, not concurrent load._
+
+## Technical Advantages
+
+### 1. Concurrent Throughput & Scalability
+
+In real-world production scenarios, SveltyCMS excels at handling simultaneous traffic. Our authenticated, tenant-aware GraphQL stress tests sustain **over 1,100 requests per second** at 120 users on standard Linux hardware.
+
+While competitors have made significant strides in performance—with some 2026 third-party estimates placing them around 900-1,200 RPS—SveltyCMS **performs competitively at the high end** due to its lack of VDOM overhead and efficient state management.
+
+### 2. Svelte 5 & Zero-Runtime Overhead
+
+The architectural choice of **Svelte 5 Runes** provides fundamental advantages:
+
+- **No Hydration Tax**: SveltyCMS minimizes the JavaScript sent to the client, leading to faster Time-to-Interactive.
+- **Fine-Grained Reactivity**: State updates are surgical, avoiding the "re-rendering everything" problem common in React/Vue platforms.
+- **Small Footprint**: Our core build remains highly optimized at ~800 KB (Brotli), making it ideal for edge deployments.
+
+### 3. Native Enterprise Security
+
+SveltyCMS treats security as a core feature, not a plugin:
+
+- **Crypto-Chained Audit Logs**: Tamper-evident logs (SHA-256) are standard, ensuring compliance with SOC 2 and GDPR.
+- **SCIM 2.0 & SAML**: Native support for automated user provisioning and enterprise SSO.
+- **Multi-Tenancy**: Native `tenantId` isolation at the database adapter level, preventing cross-tenant data leaks.
+
+### 4. Accessibility Foundation
+
+We prioritize accessibility as a functional requirement. Our UI components are built on a strong **WCAG 2.2 AA+** foundation, and we are actively adopting **WCAG 3.0 Functional Performance** patterns as the standard evolves.
+
+## Competitive Context
+
+### Payload CMS
+
+Payload is a mature and powerful ecosystem, particularly with its v3 Next.js integration. It offers excellent developer experience and a robust cloud offering. SveltyCMS positions itself as a lighter, faster alternative for teams who prefer the Svelte ecosystem and require absolute performance at the edge.
+
+### Strapi & Directus
+
+Strapi and Directus excel at GUI-first content modeling and have large plugin marketplaces. SveltyCMS is a better fit for developers who prefer a **code-centric** approach with bi-directional GUI sync and sub-millisecond core logic.
+
+> [!NOTE]
+> All SveltyCMS metrics are based on our **[Performance Benchmarks](./benchmarks.mdx)** conducted on dedicated Ubuntu hardware. For raw results and methodology, visit the **[Benchmarks page](./benchmarks.mdx)**.
