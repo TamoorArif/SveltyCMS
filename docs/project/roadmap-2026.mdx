@@ -35,11 +35,15 @@ SveltyCMS has transitioned from a high-performance CMS into the first **Intellig
 - ✅ **Enterprise Security & Automated Response** - Unified `SecurityResponseService` with Redis-backed state and ReDoS-safe patterns.
 - ✅ **CI Pipeline Restoration** - Playwright E2E suite stabilized across all supported databases.
 - ✅ **Active Database Driver Validation** - Eliminated "lazy connection" false positives in setup via mandatory `SELECT 1` pings.
+- ✅ **GraphQL JIT Execution Engine** - Multi-fold increase in RPS via `@envelop/graphql-jit`.
+- ✅ **API Benchmarking Suite** - Native tests (`test:bench:rest`, `test:bench:graphql`) to prove performance superiority.
 
 #### **Visual Intelligence & Enterprise Collaboration (Q2 - Q3 2026)**
 
 - ✅ **In-Context Live Preview** - Visual DnD, pulses, and editable highlights within the live site frame.
 - ✅ **AI-as-a-Field-Type** - Native `AIEnrichment` widget and LLM-driven Smart Translation.
+- ✅ **Native Local AI Media Tagging** - Privacy-first automatic Ollama image tagging upon upload.
+- ✅ **Multi-Cloud Storage Engine** - Universal strategy adapters for S3, R2, and Cloudinary.
 - ✅ **Hosted MCP Server** - Model Context Protocol server live at `mcp.sveltycms.com`.
 - ✅ **Enterprise Content Workflows** - Multi-stage approval cycles with secure, short-lived handshake tokens.
 - ✅ **Multi-Tenant Isolation 2.0** - Mathematical data separation via Universal Tenant Context.
@@ -56,6 +60,7 @@ _Focus: Evolution from "Intelligent Tool" to "Proactive Agent Ecosystem."_
 - 🚀 **AI-Driven Layout Optimization** - Automated A/B testing of `json-render` layouts based on engagement metrics.
 - 🚀 **Autonomous Maintenance** - Self-healing cache fragmentation and automated database index optimization.
 - 🚀 **Svelte 5 Native UI Migration** - Eliminating dependency debt (Skeleton/Zag) to solve "ESM Storm" (<150 requests); see [UI Migration Roadmap](./ui_migration_roadmap.md.resolved).
+- ✅ **Essential Utilities** - Added high-performance `cn`, `pluralize`, and `slugify` utilities to improve UX reliability and UI Component foundation.
 - 🔜 **Multi-DB CI/CD Parity** - Containerized E2E testing for PRs across all 4 database targets.
 
 ---
@@ -78,6 +83,15 @@ While SveltyCMS has surpassed competitors on performance, there are two engineer
 
 1.  **Deep Draft/Versioning Integration**: Maturing the "Enterprise Handshake Protocol" to seamlessly bind Live Preview with complex document revision histories.
 2.  **Nested UI Logic**: Stabilizing the nested drag-and-drop treeview layer for ultra-complex hierarchy management without UI flicker.
+
+### 🚀 Competitive Leapfrog Opportunities (The "Untouchable in 2026" Strategy)
+
+Based on recent update drops from Strapi (v5.33-v5.40) and Directus (v11.13-v11.16), here is our tactical plan to push our Svelte 5 architecture so far ahead that competitors cannot catch up without rewriting their entire tech stacks:
+
+1. **Autonomous Schema-Aware AI Co-Pilot**: Directus recently attached visual editor context and file uploads to their AI chat. **The SveltyCMS Leapfrog**: Move beyond "chat." Our client-side MCP AI seamlessly reads `$state.snapshot()` and the active Valibot schema. If an author writes a recipe, the AI _autonomously spawns_ the required "Ingredients" block UI natively via Svelte 5 snippets. It inserts "Ghost" data (grayed-out text/images). You hit `Tab`, and complex block structures (images, relations, text) instantly materialize inside the drag-and-drop hierarchy.
+2. **AI-Verified Zero-Downtime Deployments**: Directus just added basic Vercel and Netlify deployment trigger buttons. **The SveltyCMS Leapfrog**: We will integrate Deployments into the Visual Automation Builder to create _Self-Healing Pipelines_. A deployment triggers an edge preview → SveltyCMS runs dynamic Lighthouse CI/visual regression tests → If the build degrades Core Web Vitals by >5% or throws console errors, the pipeline _autonomously halts, rolls back the content state_, and pings Discord with the exact schema change that caused the failure.
+3. **"Time-Travel" Git-Style Content Branching**: Directus added side-by-side revision comparisons. **The SveltyCMS Leapfrog**: Treat CMS content exactly like Git. Agencies can create a "Black Friday Sale" content branch encompassing _multiple collections at once_ (Products, Banners, Blog Posts). Stakeholders review the entire branched state via Live Preview. When approved, zero-runtime visual diffs in Svelte 5 identify conflicts, and the entire branch is mathematically merged into `main` without locking the database.
+4. **Decentralized WebGPU Media Engine**: Strapi introduced focal point picking and retroactive paid-API AI metadata. **The SveltyCMS Leapfrog**: We utilize the user's raw hardware via **WebGPU/WASM** directly in the browser to immediately compress, focal-crop, and generate blurhashes _before_ the file hits the network. During upload, our local zero-cost Ollama AI not only tags the image, but utilizes Paraglide i18n to dynamically generate accessible `alt` text and ARIA descriptions perfectly tailored to the language of the surrounding article content.
 
 ---
 

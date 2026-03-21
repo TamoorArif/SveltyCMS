@@ -41,15 +41,15 @@ The GraphQL API provides a powerful, flexible query language for accessing and m
 
 ## Security & Threat Protection
 
-SveltyCMS employs robust, native GraphQL security features to prevent Denial of Service (DoS) and resource exhaustion attacks, without relying on external dependencies.
+SveltyCMS employs an enterprise-grade, native **Security Response Service** (`src/services/security-response-service.ts`) to prevent Denial of Service (DoS), payload anomalies, and injection attacks.
 
-### Server-Side Architecture (Vite+)
+### Why a Custom "GraphQL Armor"?
 
-The GraphQL engine is integrated into the **Vite+** middleware pipeline, ensuring high performance and security:
+Rather than relying on generic third-party middleware (like `@escape.tech/graphql-armor`), SveltyCMS implements a proprietary security layer specifically optimized for our high-speed Vite+ routing:
 
-- **AST Validation**: Depth and alias limiting to prevent DoS.
-- **Envelop Plugins**: JIT execution for sub-millisecond resolution.
-- **Adapter Context**: Direct access to `dbAdapter` for efficient nested resolution (e.g. `Relation` widgets).
+1. **Deep Payload Anomaly Detection**: The custom `SecurityResponseService` performs recursive JSON payload scanning _before_ queries hit the GraphQL engine. It actively detects SQLi, Command Injection, XSS, Path Traversal, and LDAP Injection.
+2. **Unified Threat Perimeter**: Rate limits, IP blocking, and threat monitoring (via Redis) are shared across _all_ endpoints (REST, Auth, SCIM, GraphQL). A malicious payload in GraphQL instantly blocks that IP from hitting the authentication endpoints.
+3. **Escalation State Machine**: The service groups threats by IP/Tenant and escalates incidents dynamically (Moderate, High, Critical) based on indicator frequency and severity, triggering automatic webhooks and cooldown periods.
 
 ### AST Validation Rules
 
@@ -64,6 +64,17 @@ To prevent malicious batching attacks where an attacker requests the same expens
 ### Schema Introspection
 
 By default, schema introspection is **disabled in production** to prevent attackers from mapping the API structure. It is automatically enabled in development environments and when using the `dev` mode.
+
+---
+
+## Performance & Execution Engine
+
+To meet enterprise throughput demands, the GraphQL implementation utilizes a **Just-In-Time (JIT) Execution Engine** via the `@envelop/graphql-jit` plugin.
+
+- **JIT Compilation**: GraphQL queries are compiled down to optimized JavaScript functions on their first execution.
+- **Microsecond Resolution**: Subsequent identical queries execute significantly faster by bypassing the standard GraphQL AST validation and resolution phases.
+- **Memory Efficiency**: Reduces overhead for complex queries, keeping garbage collection (GC) pressure low under high concurrency.
+- **Benchmark Proven**: Combined with our native routing, this achieves sub-millisecond API response overhead for hot paths.
 
 ---
 

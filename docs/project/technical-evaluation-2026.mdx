@@ -82,6 +82,14 @@ One of the most significant architectural leaps in 2026 was the migration of the
   - **Perfect Tree-Shaking:** Vite no longer bundles unused widgets; only the components for enabled widgets are loaded.
   - **AI Integrity:** The `jsonRender` catalog now has "cryptographic certainty" that referenced components exist, enabling 100% reliable generative UI.
 
+### 2.4 Core Utilities Standardization (March 2026)
+
+To support the UI migration and global dynamic content, SveltyCMS standardized its core utility belt:
+
+- **`cn`**: High-performance Tailwind class merging (powered by `tailwind-merge` and `clsx`) resolving "ESM Storms" in UI components.
+- **`pluralize`**: A dynamic, runtime counterpart to Paraglide JS, leveraging `Intl.PluralRules` to accurately pluralize Arabic, Russian, and English database content (which cannot be pre-compiled).
+- **`slugify`**: Advanced Unicode normalization engine capable of safely trans-literating complex diacritics into URL-safe identifiers.
+
 ### Competitive Benchmark Analysis (2026)
 
 Verified performance metrics from the SveltyCMS CI pipeline (March 2026). These represent raw database driver latencies and compiled middleware overhead in a standard production environment.
@@ -135,6 +143,12 @@ Having secured the "Engine War" with superior performance and security, SveltyCM
 
 - **Status: ✅ 100% Implemented**
 - **Features:** Recursive JSON-based conditional engine supporting nested AND/OR groups for complex `showIf` and `requiredIf` dependencies.
+
+### 4.6 Real-Time Collaboration & Concurrency
+
+- **Status: ✅ 100% Implemented**
+- **Features:** CRDT-based (Conflict-free Replicated Data Type) concurrent editing powered by Yjs over standard HTTP. Multiple editors can seamlessly collaborate on the same document without WebSockets, utilizing hybrid SSE (Server-Sent Events) and aggressive state synchronization.
+- **Result:** Puts SveltyCMS on par with Google Docs for collaborative multi-author enterprise environments.
 
 ## 5. Phase 3: The Enterprise Leap (Q3 2026)
 

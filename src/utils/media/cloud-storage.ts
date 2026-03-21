@@ -238,3 +238,52 @@ export async function exists(relativePath: string): Promise<boolean> {
   }
   return false;
 }
+
+/** Download file */
+export async function download(relativePath: string): Promise<Buffer> {
+  const config = getConfig();
+  const fullPath = getPath(relativePath);
+
+  logger.debug("Cloud download start", {
+    type: config.storageType,
+    path: fullPath,
+  });
+
+  if (config.storageType === "s3" || config.storageType === "r2") {
+    const client = await getS3Client(config);
+    const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+
+    try {
+      const response = await client.send(
+        new GetObjectCommand({ Bucket: config.bucketName, Key: fullPath }),
+      );
+
+      const stream = response.Body as any;
+      if (!stream) throw error(500, "No body returned from S3/R2");
+
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
+    } catch (e: any) {
+      logger.error("S3 download failed", { error: e });
+      throw error(500, `Failed to download from S3/R2: ${e.message}`);
+    }
+  }
+
+  if (config.storageType === "cloudinary") {
+    try {
+      const url = getUrl(relativePath);
+      if (!url) throw error(500, "Cannot determine URL for Cloudinary download");
+      const res = await fetch(url);
+      if (!res.ok) throw error(res.status, `Failed to fetch from Cloudinary: ${res.statusText}`);
+      return Buffer.from(await res.arrayBuffer());
+    } catch (e: any) {
+      logger.error("Cloudinary download failed", { error: e });
+      throw error(500, `Failed to download from Cloudinary: ${e.message}`);
+    }
+  }
+
+  throw error(500, "Invalid storage type for cloud download");
+}

@@ -39,13 +39,17 @@ All tests run on a dedicated server:
 
 Our performance tests are located in `tests/benchmarks/` and cover the following areas:
 
-| Service        | Test Script                                                            | Description                                              |
-| :------------- | :--------------------------------------------------------------------- | :------------------------------------------------------- |
-| **Database**   | [database-performance.ts](../tests/benchmarks/database-performance.ts) | Raw CRUD operations via `dbAdapter` (Agnostic).          |
-| **GraphQL**    | [graphql-stress.ts](../tests/benchmarks/graphql-stress.ts)             | High-concurrency stress testing with AST validation.     |
-| **REST API**   | [rest-api-performance.ts](../tests/benchmarks/rest-api-performance.ts) | Standard RESTful endpoint latency and throughput.        |
-| **Middleware** | [hooks-performance.ts](../tests/benchmarks/hooks-performance.ts)       | Sequential execution overhead of the SvelteKit pipeline. |
-| **Media**      | [media-performance.ts](../tests/benchmarks/media-performance.ts)       | Image processing, storage, and retrieval throughput.     |
+| Service        | Test Script                                                            | Description                                                           |
+| :------------- | :--------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| **Database**   | [database-performance.ts](../tests/benchmarks/database-performance.ts) | Raw CRUD operations via `dbAdapter` (Agnostic).                       |
+| **GraphQL**    | [graphql-stress.ts](../tests/benchmarks/graphql-stress.ts)             | High-concurrency stress testing with AST validation.                  |
+| **REST API**   | [rest-api-performance.ts](../tests/benchmarks/rest-api-performance.ts) | Standard RESTful endpoint latency and throughput (`test:bench:rest`). |
+| **Middleware** | [hooks-performance.ts](../tests/benchmarks/hooks-performance.ts)       | Sequential execution overhead of the SvelteKit pipeline.              |
+| **Media**      | [media-performance.ts](../tests/benchmarks/media-performance.ts)       | Image processing, storage, and retrieval throughput.                  |
+
+### The GraphQL JIT Engine
+
+With the introduction of `@envelop/graphql-jit`, the GraphQL benchmark suite now resolves operations via dynamically compiled JavaScript functions in memory instead of constantly re-evaluating the AST. This significantly lowers GC overhead and accelerates deeply nested queries.
 
 ## Baseline Results (MongoDB)
 
@@ -135,7 +139,16 @@ Measured via `tests/benchmarks/hooks-performance.ts` (Middleware chain overhead)
 
 ### Media Engine Performance
 
-Measured via `tests/benchmarks/media-performance.ts` (Sharp-based processing).
+Measured via `tests/benchmarks/media-performance.ts` (Sharp-based processing). The transition to a background job queue (Phase 3) has revolutionized the media ingestion experience by deferring heavy resizing tasks.
+
+| Task                            | Sync Flow (Legacy) | Async Flow (Phase 3)   |
+| :------------------------------ | :----------------- | :--------------------- |
+| Hashing (SHA-256)               | 0.02 ms            | 0.02 ms                |
+| Metadata Extraction             | 0.15 ms            | 0.15 ms                |
+| Multi-scale Resizing + Compress | 58.55 ms           | **0.00 ms (Deferred)** |
+| **Total Block Time**            | **58.72 ms**       | **0.17 ms**            |
+
+_Background Worker Throughput:_
 
 | Task                       | Throughput (img/s) | Avg Latency (ms) |
 | :------------------------- | :----------------- | :--------------- |
@@ -185,7 +198,14 @@ To execute the full performance suite:
 # Start the production/preview server
 bun run build && bun run preview
 
-# Run stress tests
+# Run the API Benchmarking Suite
+bun run test:bench:all
+
+# Run specific API stress tests
+bun run test:bench:graphql
+bun run test:bench:rest
+
+# Alternatively, manual load levels
 LOAD_LEVEL=EXTREME bun run tests/benchmarks/graphql-stress.ts
 ```
 

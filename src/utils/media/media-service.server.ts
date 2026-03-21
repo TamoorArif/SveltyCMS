@@ -442,6 +442,44 @@ export class MediaService {
 
       const savedMedia = result.data as unknown as MediaItem;
 
+      // Automatically tag images with AI if enabled
+      if (isImage && !mimeType.includes("svg")) {
+        try {
+          const { getPrivateSetting } = await import("@src/services/settings-service");
+          const useAi = await getPrivateSetting("USE_AI_TAGGING");
+          if (useAi) {
+            logger.debug(`Dispatching automatic AI tagging for media ${savedMedia._id}`);
+            const { aiService } = await import("@src/services/ai-service");
+            aiService
+              .tagImage(buffer)
+              .then(async (aiTags) => {
+                if (aiTags && aiTags.length > 0) {
+                  const existingAiTags = (savedMedia.metadata?.aiTags as string[]) || [];
+                  const updatedAiTags = Array.from(new Set([...existingAiTags, ...aiTags]));
+                  await this.updateMedia(
+                    savedMedia._id as string,
+                    {
+                      metadata: {
+                        ...savedMedia.metadata,
+                        aiTags: updatedAiTags,
+                      },
+                    },
+                    tenantId,
+                  );
+                  logger.info(
+                    `Successfully auto-tagged media ${savedMedia._id} with ${aiTags.length} tags.`,
+                  );
+                }
+              })
+              .catch((err) => {
+                logger.error(`Failed to auto-tag media ${savedMedia._id}`, err);
+              });
+          }
+        } catch (e) {
+          logger.error(`Error checking USE_AI_TAGGING or auto-tagging`, e);
+        }
+      }
+
       // 2. Dispatch background processing job
       const isPdf = mimeType === "application/pdf";
       if ((isImage && !mimeType.includes("svg")) || isVideo || isPdf) {

@@ -1,20 +1,21 @@
 ---
 path: "docs/architecture/media-system.mdx"
-title: "Media System Architecture"
-description: "In-depth technical architecture of the SveltyCMS Media & DAM Engine."
+title: "Media System Architecture & Guide"
+description: "In-depth technical architecture and feature guide of the SveltyCMS Media & DAM Engine."
 order: 10
 icon: "mdi:sitemap"
 author: "admin"
 created: "2026-02-16"
-updated: "2026-03-14"
+updated: "2026-03-21"
 tags:
   - "architecture"
   - "media"
   - "dam"
   - "svelte5"
+  - "ai-tagging"
 ---
 
-# Media System Architecture
+# Media System Architecture & Guide
 
 The SveltyCMS Media system is a decoupled, high-performance engine optimized for Svelte 5 and Sharp.js. It balances enterprise-grade Digital Asset Management (DAM) requirements with a seamless, accessible user experience.
 
@@ -50,7 +51,7 @@ graph TB
     subgraph "External Services"
         AIS[AIService.ts]
         DB[(Database)]
-        STORE[Storage: Local/S3/R2]
+        STORE[Storage: Local/S3/R2/Cloudinary]
     end
 
     UI --> VGRID
@@ -64,6 +65,70 @@ graph TB
     MS --> DB
     CS --> STORE
 ```
+
+---
+
+## 📤 Media Upload & AI Processing Pipeline
+
+The ingestion pipeline is designed to never block the user UI. Uploads execute critical persistence instantly, while heavy lifting (like AI tagging and image variants) runs asynchronously.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Gallery as Media Gallery / Upload
+    participant API as /api/media/process
+    participant Engine as MediaEngine
+    participant Storage as S3 / Local
+    participant AI as Local Ollama AI
+
+    User->>Gallery: Drop Image
+    Gallery->>API: POST multipart/form-data
+    API->>Engine: Validate & Hash (SHA-256)
+    Engine->>Storage: Save Original File
+    Engine-->>API: ⚡ Return Success (0.17ms)
+    API-->>Gallery: Render Thumbnail
+
+    note over Engine, AI: Background Job Processing
+    Engine->>Engine: Generate Variants (Sharp.js)
+    Engine->>AI: Analyze Image Content
+    AI-->>Engine: Return Tags & Descriptions
+    Engine->>Database: Update MediaItem Metadata
+```
+
+### 1. High-Performance Client Rendering
+
+- **Virtual Scrolling**: `virtual-media-grid.svelte` handles 10,000+ files by rendering only visible items.
+- **Lazy Loading**: Images load only when visible using Intersection Observer.
+- **On-the-Fly Transforms**: Responsive images via `GET /api/media/transform` using Sharp.js.
+
+### 2. AI-Native Tagging (Ollama Integration)
+
+Unlike standard CMS platforms that use simple keyword matching, SveltyCMS features **native AI image analysis**.
+
+- **Fully Automated**: Triggers automatically during background job processing (`MediaService.saveMedia`).
+- **Privacy-First**: Uses local Ollama inference (`llava`), analyzing on your own infrastructure without exposing raw images to third-party APIs.
+
+### 3. Enterprise DAM Capabilities
+
+- **Batch Image Processor**: Apply Vivid, B&W, Sepia, and HDR filters to 100+ images simultaneously.
+- **Deep Metadata Extraction**: Automatically parses **EXIF, IPTC, and XMP** data into searchable database fields.
+- **Document Thumbnails**: Automated extraction of the first page of PDFs as a high-quality preview (Requires `imagemagick` and `ghostscript`).
+
+---
+
+## 🎨 Image Editor Integration
+
+The gallery is deeply integrated with the canvas-based Image Editor:
+
+- **Non-Destructive Editing**: Originals are preserved; edits are saved as variants.
+- **Interactive Focal Points**: Visual crosshair selection for art-directed cropping. This focal point is injected natively into our GraphQL API delivery.
+- **Watermarking**: Automatic application of collection-level watermark presets.
+
+---
+
+## ⚡ Performance Benchmarks
+
+For comprehensive performance details regarding media hashing, metadata extraction, and multi-scale resizing block times, please reference the central [Benchmarks Report](../project/benchmarks.mdx).
 
 ---
 
@@ -82,52 +147,6 @@ The Media System implements **WCAG 3.0 Functional Performance** principles via a
 
 ---
 
-## 📤 Processing Pipeline (Enterprise-Grade)
+## 📚 API Reference
 
-The pipeline is split between **Synchronous Critical Path** (for instant feedback) and **Asynchronous Background Jobs** (for heavy lifting).
-
-### 1. Synchronous Path (Hot Path)
-
-Executed during the initial `POST` request. Goal: `< 5ms` block time.
-
-- **Binary Validation**: Buffer inspection via `file-type`.
-- **Deduplication**: SHA-256 content hashing.
-- **Persistence**: Save original file to storage (Local/S3).
-- **Metadata**: Basic technical metadata extraction.
-
-### 2. Asynchronous Path (Background Jobs)
-
-Offloaded to `JobQueueService`.
-
-- **Transformation (Sharp.js)**: Parallel generation of multi-scale variants (`sm`, `md`, `lg`).
-- **AI Analysis**: Descriptive tagging via local models.
-- **Video Transcoding**: HLS/Dash segmenting via `ffmpeg`.
-
----
-
-## ⚡ Performance Benchmarks (March 2026)
-
-The transition to a background job queue has revolutionized the media ingestion experience.
-
-| Task                            | Sync Flow (Legacy) | Async Flow (Phase 3)   |
-| :------------------------------ | :----------------- | :--------------------- |
-| Hashing (SHA-256)               | 0.02 ms            | 0.02 ms                |
-| Metadata Extraction             | 0.15 ms            | 0.15 ms                |
-| Multi-scale Resizing + Compress | 58.55 ms           | **0.00 ms (Deferred)** |
-| **Total Block Time**            | **58.72 ms**       | **0.17 ms**            |
-
-**Impact:**
-
-- **99.7% reduction** in API block time during media uploads.
-- **Zero UI stuttering**: Large bulk uploads (100+ images) finish in-process instantly while the worker handles the CPU-intensive resizing.
-
-> [!NOTE]
-> Measured on 24-core machine (Node v24.3.0); production results vary with hardware, thread pool size, and image complexity.
-
----
-
-## 🖼️ Responsive Rendering
-
-1.  **Virtualization**: Large galleries (100+ items) use `VirtualMediaGrid.svelte` to render only visible assets, maintaining 60FPS.
-2.  **Blur-up Thumbnails**: Low-resolution placeholders are served while Sharp.js variants load.
-3.  **Edge-Ready Proxy**: `/api/media/transform` supports on-the-fly resizing with aggressive CDN caching headers.
+For detailed developer endpoints (upload, transform, AI-tag, focal points), read the comprehensive [**Media API Reference**](../api/media-api.mdx).

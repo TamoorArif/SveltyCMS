@@ -19,7 +19,7 @@ import { publicEnv } from "@src/stores/global-settings.svelte";
 import mime from "mime-types";
 import { logger } from "@utils/logger.server";
 
-import { exists, getConfig, getUrl, isCloud, remove, upload } from "./cloud-storage";
+import { exists, getConfig, getUrl, isCloud, remove, upload, download } from "./cloud-storage";
 
 import type { ResizedImage } from "./media-models";
 
@@ -156,15 +156,17 @@ export async function fileExists(rel: string): Promise<boolean> {
 
 /** Get file buffer */
 export async function getFile(rel: string): Promise<Buffer> {
+  if (isCloud()) {
+    return await download(rel);
+  }
+
   const MEDIA_ROOT_FULL = path.resolve(process.cwd(), MEDIA_ROOT) + path.sep;
   const fullPath = path.resolve(process.cwd(), MEDIA_ROOT, rel);
 
   if (!fullPath.startsWith(MEDIA_ROOT_FULL)) {
     throw new Error("Invalid path: Potential traversal attack");
   }
-  if (isCloud()) {
-    throw new Error("getFile not implemented for cloud");
-  }
+
   const fs = await import("node:fs/promises");
   return await fs.readFile(fullPath);
 }
