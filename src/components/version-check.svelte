@@ -25,6 +25,7 @@ latest version available on GitHub with comprehensive status reporting.
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { onDestroy, onMount } from 'svelte';
 import { browser } from '$app/environment';
+import { toast } from '@src/stores/toast.svelte.ts';
 import SystemTooltip from './system/system-tooltip.svelte';
 
 // Types
@@ -171,12 +172,36 @@ function updateStatus(data: VersionApiResponse) {
 			versionStatusMessage = data.message || `Critical security update to v${githubVersion} available!`;
 			statusIcon = 'mdi:shield-alert';
 			statusSeverity = 'critical';
+
+			if (browser) {
+				toast.error({
+					title: 'Security Alert',
+					message: versionStatusMessage,
+					duration: Infinity,
+					action: {
+						label: "What's New?",
+						onClick: () => window.open(`${GITHUB_RELEASES_URL}/tag/v${githubVersion}`, '_blank')
+					}
+				});
+			}
 		} else if (comparison === 'major') {
 			badgeVariant = 'variant-filled';
 			badgeColor = 'bg-error-500 text-white';
 			versionStatusMessage = `Major update to v${githubVersion} available`;
 			statusIcon = 'mdi:alert-circle';
 			statusSeverity = 'critical';
+
+			if (browser) {
+				toast.warning({
+					title: 'New Major Version',
+					message: `SveltyCMS v${githubVersion} is now available with significant changes.`,
+					duration: 10000,
+					action: {
+						label: 'View Release',
+						onClick: () => window.open(`${GITHUB_RELEASES_URL}/tag/v${githubVersion}`, '_blank')
+					}
+				});
+			}
 		} else if (comparison === 'minor' || comparison === 'patch') {
 			badgeVariant = 'variant-filled';
 			badgeColor = 'bg-warning-500 text-black';

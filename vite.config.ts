@@ -72,7 +72,9 @@ function testBackdoorStripperPlugin(): Plugin {
           normalizedId.includes("src/routes/api/testing") ||
           normalizedId.includes("src/hooks/handle-test-isolation")
         ) {
-          log.warn(`[Stripper] Physically removing test module from production build: ${id}`);
+          log.warn(
+            `[Stripper] Physically removing test module from production build: ${id}`,
+          );
           return "\0virtual:test-noop";
         }
       }
@@ -148,7 +150,9 @@ function testConfigAliasPlugin(): Plugin {
         const testConfigPath = path.resolve(cwd, "config/private.test.ts");
         // Only alias if the test config actually exists
         if (existsSync(testConfigPath)) {
-          log.info("Test Mode: Aliasing @config/private to config/private.test.ts");
+          log.info(
+            "Test Mode: Aliasing @config/private to config/private.test.ts",
+          );
           return testConfigPath;
         }
       }
@@ -190,7 +194,10 @@ function privateConfigFallbackPlugin(): Plugin {
       let result: string | null = null;
 
       // Check for production config
-      if (normalizedId.endsWith("config/private") || normalizedId.endsWith("config/private.ts")) {
+      if (
+        normalizedId.endsWith("config/private") ||
+        normalizedId.endsWith("config/private.ts")
+      ) {
         const prodPath = path.resolve(cwd, "config/private.ts");
         result = existsSync(prodPath) ? null : resolvedVirtualModuleId;
       }
@@ -207,7 +214,10 @@ function privateConfigFallbackPlugin(): Plugin {
       return result;
     },
     load(id) {
-      if (id === resolvedVirtualModuleId || id === resolvedVirtualTestModuleId) {
+      if (
+        id === resolvedVirtualModuleId ||
+        id === resolvedVirtualTestModuleId
+      ) {
         // Provide fallback that reads from environment variables
         return `
 export const privateEnv = {
@@ -235,7 +245,10 @@ const CWD = process.cwd();
 const paths = {
   configDir: path.resolve(CWD, "config"),
   privateConfig: path.resolve(CWD, "config/private.ts"),
-  userCollections: path.resolve(CWD, process.env.COLLECTIONS_DIR || "config/collections"),
+  userCollections: path.resolve(
+    CWD,
+    process.env.COLLECTIONS_DIR || "config/collections",
+  ),
   compiledCollections: path.resolve(
     CWD,
     process.env.COMPILED_COLLECTIONS_DIR || ".compiledCollections",
@@ -255,10 +268,14 @@ const log = {
   info: (message: string) => console.log(`${TAG} ${message}`),
   // Custom success level for clarity in build process
   success: (message: string) =>
-    console.log(`${TAG} ${useColor ? `✅ \x1b[32m${message}\x1b[0m` : `✅ ${message}`}`),
+    console.log(
+      `${TAG} ${useColor ? `✅ \x1b[32m${message}\x1b[0m` : `✅ ${message}`}`,
+    ),
   // Corresponds to 'warn' level
   warn: (message: string) =>
-    console.warn(`${TAG} ${useColor ? `⚠️ \x1b[33m${message}\x1b[0m` : `⚠️ ${message}`}`),
+    console.warn(
+      `${TAG} ${useColor ? `⚠️ \x1b[33m${message}\x1b[0m` : `⚠️ ${message}`}`,
+    ),
   // Corresponds to 'error' level
   error: (message: string, error?: unknown) =>
     console.error(
@@ -280,13 +297,18 @@ async function initializeCollectionsStructure() {
   await fs.mkdir(paths.userCollections, { recursive: true });
   await fs.mkdir(paths.compiledCollections, { recursive: true });
 
-  const sourceFiles = (await fs.readdir(paths.userCollections, { recursive: true })).filter(
+  const sourceFiles = (
+    await fs.readdir(paths.userCollections, { recursive: true })
+  ).filter(
     (file): file is string =>
-      typeof file === "string" && (file.endsWith(".ts") || file.endsWith(".js")),
+      typeof file === "string" &&
+      (file.endsWith(".ts") || file.endsWith(".js")),
   );
 
   if (sourceFiles.length > 0) {
-    log.info(`Found \x1b[32m${sourceFiles.length}\x1b[0m collection(s), compiling...`);
+    log.info(
+      `Found \x1b[32m${sourceFiles.length}\x1b[0m collection(s), compiling...`,
+    );
     await compile({
       userCollections: paths.userCollections,
       compiledCollections: paths.compiledCollections,
@@ -324,7 +346,8 @@ function suppressThirdPartyWarningsPlugin(): Plugin {
         isIntercepted = true;
         originalConsoleWarn = console.warn;
         console.warn = (...args: unknown[]) => {
-          const message = typeof args[0] === "string" ? args[0] : String(args[0] ?? "");
+          const message =
+            typeof args[0] === "string" ? args[0] : String(args[0] ?? "");
           // Explicitly ignore circular dependency warnings for the build page/status components
           if (
             message.includes("Circular dependency") &&
@@ -452,19 +475,29 @@ function sveltyCmsPlugin(): Plugin {
               );
               if (dbAdapter?.collection) {
                 const { scanCompiledCollections } = await server.ssrLoadModule(
-                  path.join(CWD, "src/content/content-reconciler/scan-files.ts"),
+                  path.join(
+                    CWD,
+                    "src/content/content-reconciler/scan-files.ts",
+                  ),
                 );
                 const collections = await scanCompiledCollections();
-                log.info(`Found ${collections.length} collections, registering models...`);
+                log.info(
+                  `Found ${collections.length} collections, registering models...`,
+                );
 
                 for (const schema of collections) {
                   await dbAdapter.collection.createModel(schema);
                   await new Promise((resolve) => setTimeout(resolve, 50));
                 }
-                log.success(`Collection models registered! (${collections.length} total)`);
+                log.success(
+                  `Collection models registered! (${collections.length} total)`,
+                );
               }
             } catch (dbError) {
-              log.error("Failed to register collection models (non-fatal):", dbError);
+              log.error(
+                "Failed to register collection models (non-fatal):",
+                dbError,
+              );
             }
           }
 
@@ -526,7 +559,8 @@ function sveltyCmsPlugin(): Plugin {
           result.then(() => {
             setTimeout(() => {
               const address = server.httpServer?.address();
-              const resolvedPort = typeof address === "object" && address ? address.port : 5173;
+              const resolvedPort =
+                typeof address === "object" && address ? address.port : 5173;
               const setupUrl = `http://127.0.0.1:${resolvedPort}/setup`;
               log.info(`Opening setup wizard: ${setupUrl}`);
               openUrl(setupUrl);
@@ -574,7 +608,10 @@ function buildMetadataPlugin(): Plugin {
       };
 
       const filename = `build-metadata-${isSSR ? "server" : "client"}.json`;
-      await fs.writeFile(path.resolve(outputPath, filename), JSON.stringify(metadata, null, 2));
+      await fs.writeFile(
+        path.resolve(outputPath, filename),
+        JSON.stringify(metadata, null, 2),
+      );
 
       // Log explicitly to console for immediate visibility
       const color = isSSR ? "\x1b[36m" : "\x1b[32m"; // Cyan for server, Green for client
@@ -588,7 +625,8 @@ function buildMetadataPlugin(): Plugin {
 
 // --- Main Vite Configuration ---
 const setupComplete = isSetupComplete();
-const isBuild = process.env.NODE_ENV === "production" || process.argv.includes("build");
+const isBuild =
+  process.env.NODE_ENV === "production" || process.argv.includes("build");
 
 export default defineConfig((): any => {
   // Only log during dev mode, not during builds
@@ -654,9 +692,15 @@ export default defineConfig((): any => {
       alias: [
         { find: "@root", replacement: path.resolve(CWD, "./") },
         { find: "@src", replacement: path.resolve(CWD, "./src") },
-        { find: "@components", replacement: path.resolve(CWD, "./src/components") },
+        {
+          find: "@components",
+          replacement: path.resolve(CWD, "./src/components"),
+        },
         { find: "@content", replacement: path.resolve(CWD, "./src/content") },
-        { find: "@databases", replacement: path.resolve(CWD, "./src/databases") },
+        {
+          find: "@databases",
+          replacement: path.resolve(CWD, "./src/databases"),
+        },
         { find: "@config", replacement: path.resolve(CWD, "config") },
         { find: "@utils", replacement: path.resolve(CWD, "./src/utils") },
         { find: "@stores", replacement: path.resolve(CWD, "./src/stores") },
@@ -667,7 +711,8 @@ export default defineConfig((): any => {
       __FRESH_INSTALL__: false, // Default, may be overridden by setupWizardPlugin
       global: "globalThis", // `global` polyfill for libraries that expect it (e.g., older crypto libs)
       "import.meta.env.VITE_LOG_LEVELS": JSON.stringify(
-        process.env.LOG_LEVELS || (isBuild ? "info,warn,error" : "info,warn,error,debug"),
+        process.env.LOG_LEVELS ||
+          (isBuild ? "info,warn,error" : "info,warn,error,debug"),
       ),
     },
     build: {
@@ -698,14 +743,20 @@ export default defineConfig((): any => {
               return "vendor-svelte";
             }
             // Move heavy editor dependencies to their own chunk
-            if (id.includes("node_modules/@tiptap") || id.includes("node_modules/prosemirror")) {
+            if (
+              id.includes("node_modules/@tiptap") ||
+              id.includes("node_modules/prosemirror")
+            ) {
               return "vendor-editor";
             }
           },
         },
         onwarn(warning: any, warn: any) {
           // Suppress circular dependency warnings from third-party libraries
-          if (warning.code === "CIRCULAR_DEPENDENCY" && warning.message.includes("node_modules")) {
+          if (
+            warning.code === "CIRCULAR_DEPENDENCY" &&
+            warning.message.includes("node_modules")
+          ) {
             return;
           }
           // Suppress unused external import warnings
@@ -718,10 +769,18 @@ export default defineConfig((): any => {
           }
           // Suppress "dynamic import will not move module" warnings for specific files where this is intentional.
           // See /docs/architecture/state-management.mdx for details.
-          if (warning.message?.includes("dynamic import will not move module")) {
-            const isWidgetStore = warning.id?.includes("widget-store.svelte.ts");
-            const isRichTextInput = warning.id?.includes("rich-text/input.svelte");
-            const isSettingsService = warning.id?.includes("services/settings-service.ts");
+          if (
+            warning.message?.includes("dynamic import will not move module")
+          ) {
+            const isWidgetStore = warning.id?.includes(
+              "widget-store.svelte.ts",
+            );
+            const isRichTextInput = warning.id?.includes(
+              "rich-text/input.svelte",
+            );
+            const isSettingsService = warning.id?.includes(
+              "services/settings-service.ts",
+            );
             const isDb = warning.id?.includes("databases/db.ts");
             if (isWidgetStore || isRichTextInput || isSettingsService || isDb) {
               return;

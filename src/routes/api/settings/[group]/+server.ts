@@ -10,7 +10,7 @@ import { dbAdapter } from "@src/databases/db";
 import { getSettingGroup } from "@src/routes/(app)/config/system-settings/settings-groups";
 import { getPrivateSettingSync, invalidateSettingsCache } from "@src/services/settings-service";
 import { setRestartNeeded } from "@src/utils/server/restart-required";
-import { updateVersion } from "@src/utils/server/settings-version";
+import { triggerSync } from "@src/utils/server/settings-sync";
 import { json } from "@sveltejs/kit";
 /**
  * GET - Retrieve current settings for a group
@@ -245,7 +245,7 @@ export const PUT = apiHandler(async ({ request, locals, params, url }) => {
     const { loadSettingsFromDB } = await import("@src/databases/db");
     await loadSettingsFromDB();
 
-    updateVersion();
+    triggerSync();
     if (groupDef.requiresRestart) {
       setRestartNeeded(true);
     }
@@ -336,7 +336,7 @@ export const DELETE = apiHandler(async ({ locals, params, url }) => {
     const { loadSettingsFromDB } = await import("@src/databases/db");
     await loadSettingsFromDB();
 
-    updateVersion();
+    triggerSync();
     if (groupDef.requiresRestart) {
       setRestartNeeded(true);
     }

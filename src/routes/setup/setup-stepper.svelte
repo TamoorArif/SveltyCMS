@@ -4,7 +4,6 @@
 Shows horizontal stepper on mobile, vertical stepper on desktop with legend.
 -->
 <script lang="ts">
-import VersionCheck from '@src/components/version-check.svelte';
 
 const { steps, currentStep, stepCompleted, stepClickable, legendItems, onselectStep = () => {} } = $props();
 
@@ -162,8 +161,6 @@ function handleStepHover(_stepIndex: number) {
 					</ul>
 				</div>
 
-				<!-- Version Check  -->
-				<div class="flex shrink-0 items-center"><VersionCheck /></div>
 			</div>
 		</div>
 	</div>

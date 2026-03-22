@@ -6,7 +6,11 @@ Replace heavy third-party UI libraries (Skeleton v4, Zag.js) with lightweight, n
 ---
 
 ## Phase 1: Core Primitives (Zero-Dependency)
-**Objective**: Replace the most frequently used small components.
+**Objective**: Replace the most frequently used#### [NEW] [src/components/ui/](file:///var/www/vhosts/asset-trade.de/svelte.asset-trade.de/SveltyCMS/src/components/ui/)
+- Import the entire `src/components/ui/` directory from the `UI` branch.
+- This includes Phase 1 core primitives and several other started components part of the migration roadmap.
+- Ensure all imported files are strictly lowercase (kebab-case) per project rules.
+small components.
 - **Technology**: Svelte 5 Runes (`$state`, `$props`), Tailwind 4 CSS variables.
 - **Components**:
   - `Button`, `IconButton`
@@ -14,6 +18,7 @@ Replace heavy third-party UI libraries (Skeleton v4, Zag.js) with lightweight, n
   - `Card`, `Badge`, `Avatar`
 - **Themeable Architecture**: Decouple logic (Svelte 5 functions) from visuals (Tailwind 4). Components must remain functional even when a completely new "Admin Theme" is swapped in.
 - **Benefit**: Immediate reduction in initial network requests as these are used on every page.
+- **Status**: [x] Core Primitives implemented and imported. Fine-tuning theme parity.
 
 ## Phase 2: Accessibility as Actions
 **Objective**: Replace Zag.js state machines with lightweight Svelte actions for behavioral accessibility.
@@ -23,6 +28,7 @@ Replace heavy third-party UI libraries (Skeleton v4, Zag.js) with lightweight, n
   - `ariaAnnounce`: For live regions.
   - `keyboardNav`: Generic tab/arrow key handling.
 - **Benefit**: Decouples UI logic from rendering, massively simplifying the component tree.
+- **Status**: [x] Actions and behavioral primitives implemented.
 
 ## Phase 3: Theming & Design System
 **Objective**: Migrate from Skeleton design tokens to native Tailwind 4 / CSS variables while preserving `@app.css`.
@@ -39,6 +45,7 @@ Replace heavy third-party UI libraries (Skeleton v4, Zag.js) with lightweight, n
   - `DataGrid` (custom lightweight table with virtualization).
   - `Sidebar`, `AppBar`.
 - **Optimization**: Use Svelte 5's fine-grained reactivity to update only changed cells in large tables.
+- **Status**: [/] Complex components implemented; optimizing performance and deep state reactivity.
 
 ---
 

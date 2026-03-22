@@ -6,7 +6,7 @@
  * Much more efficient than polling every 5 seconds.
  */
 
-import { subscribeToSettingsChanges } from "@src/utils/server/settings-version";
+import { onSync } from "@src/utils/server/settings-sync";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async () => {
@@ -15,10 +15,10 @@ export const GET: RequestHandler = async () => {
       // Send initial connection message
       controller.enqueue(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
 
-      // Subscribe to settings changes
-      const unsubscribe = subscribeToSettingsChanges((version) => {
+      // Subscribe to settings sync events
+      const unsubscribe = onSync((syncId) => {
         try {
-          controller.enqueue(`data: ${JSON.stringify({ type: "update", version })}\n\n`);
+          controller.enqueue(`data: ${JSON.stringify({ type: "update", version: syncId })}\n\n`);
         } catch {
           // Controller likely closed, subscription will be cleaned up by return function
         }

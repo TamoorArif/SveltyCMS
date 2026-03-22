@@ -4,8 +4,6 @@
 **Professional multi-step setup wizard for SveltyCMS**
 -->
 <script lang="ts">
-// Stores
-
 // Skeleton v4
 import DialogManager from '@src/components/system/dialog-manager.svelte';
 // ParaglideJS
@@ -34,16 +32,16 @@ import {
 	setup_step_system_desc
 } from '@src/paraglide/messages';
 import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
+// Stores
 import { setupStore } from '@src/stores/setup-store.svelte.ts';
 import { app } from '@src/stores/store.svelte';
 // Utils
 import { getLanguageName } from '@utils/language-utils';
 import { modalState } from '@utils/modal-state.svelte';
-// Utils
 import { showConfirm } from '@utils/modal-utils';
-// Using iconify-icon web component
 import { onMount, tick } from 'svelte';
 import { goto } from '$app/navigation';
+// Components
 import AdminConfig from './admin-config.svelte';
 import DatabaseConfig from './database-config.svelte';
 import EmailConfig from './email-config.svelte';

@@ -255,17 +255,24 @@ async function startPreviewServer(dbHost?: string) {
   }
 
   return new Promise<void>((resolve, reject) => {
-    console.log(`📦 Spawning preview server (${HOST}:${PORT})...`);
+    // 💡 CI OPTIMIZATION: Use 'preview' if 'build/' exists (much faster than 'dev')
+    const buildExists = existsSync(join(rootDir, "build"));
+    const usePreview = buildExists && (process.env.CI === "true" || process.env.USE_PREVIEW === "true");
+    const cmd = usePreview ? "preview" : "dev";
+    
+    console.log(`📦 Spawning ${cmd} server (${HOST}:${PORT})...`);
     const logFd = require("node:fs").openSync(join(rootDir, "preview.log"), "a");
 
-    previewProcess = spawn("bun", ["run", "dev", "--port", PORT, "--host", HOST, "--strictPort"], {
+    const spawnArgs = ["run", cmd, "--port", PORT, "--host", HOST, "--strictPort"];
+
+    previewProcess = spawn("bun", spawnArgs, {
       cwd: rootDir,
       stdio: ["ignore", logFd, logFd],
       detached: process.platform !== "win32", // Detach to create a new process group for clean killing
       shell: process.platform === "win32",
       env: {
         ...process.env,
-        NODE_ENV: "development",
+        NODE_ENV: usePreview ? "production" : "development",
         DB_TYPE: process.env.DB_TYPE || "sqlite",
         DB_HOST: dbHost || process.env.DB_HOST || HOST,
         TEST_MODE: "true",
@@ -276,9 +283,10 @@ async function startPreviewServer(dbHost?: string) {
     });
 
     let resolved = false;
+    const timeoutMs = process.env.CI === "true" ? 120000 : 60000;
     const timeout = setTimeout(() => {
-      if (!resolved) reject(new Error("Timeout waiting for preview server health check"));
-    }, 60000);
+      if (!resolved) reject(new Error(`Timeout waiting for ${cmd} server health check (${timeoutMs}ms)`));
+    }, timeoutMs);
 
     waitForServer()
       .then(() => {
@@ -298,7 +306,8 @@ async function startPreviewServer(dbHost?: string) {
 
 async function waitForServer() {
   console.log(`⏳ Waiting for server health check at ${API_BASE_URL}...`);
-  for (let i = 0; i < 30; i++) {
+  const maxRetries = process.env.CI === "true" ? 60 : 30;
+  for (let i = 0; i < maxRetries; i++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
       if (res.ok || res.status === 503) return;

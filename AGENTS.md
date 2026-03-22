@@ -218,7 +218,24 @@ From the 2026 roadmap (v0.0.6, target A+ grade), prioritize these for parity/lea
 - [/] **Image Editor Enhancement**: Current implementation stabilized; adding cropping, filters, and focal point management.
 - [/] **Collection Builder Enhancement**: UX improvements and ergonomic field management in progress.
 - [x] **CI Pipeline Restoration**: Playwright E2E suite stabilized across MongoDB, MariaDB, and PostgreSQL.
-- [ ] **Svelte 5 / Skeleton v4 Migration**: Ongoing hardening of UI components using the latest runes and design tokens.
+- [x] **Svelte 5 / Skeleton v4 Migration**: Ongoing hardening of UI components using the latest runes and design tokens.
+- [x] **Automated Upgrade CLI (v0.0.7)**: Integrated `scripts/upgrade.ts` for safe, automated core updates.
+
+## Upgrading SveltyCMS
+
+SveltyCMS provides an automated script to fetch updates from the upstream repository, merge changes, and refresh dependencies.
+
+### How to Upgrade
+
+1. **Ensure your working directory is clean** (commit or stash changes).
+2. **Run the upgrade script**:
+   ```bash
+   bun run scripts/upgrade.ts
+   ```
+3. **Resolve conflicts if any**: The script will pause if there are merge conflicts. Resolve them in your IDE, then run `bun install` again.
+
+> [!TIP]
+> Always run `bun run check && bun run test:unit` after an upgrade to ensure system integrity.
 
 ## Common Development Issues
 
