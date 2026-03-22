@@ -15,7 +15,7 @@
 -->
 
 <script lang="ts">
-import { Avatar } from '@skeletonlabs/skeleton-svelte';
+import Avatar from '@components/ui/avatar.svelte';
 import PageTitle from '@src/components/page-title.svelte';
 import PermissionGuard from '@src/components/permission-guard.svelte';
 // ParaglideJS
@@ -208,10 +208,11 @@ function modalConfirm(): void {
 			<!-- Avatar with user info -->
 			<div class="relative flex flex-col items-center justify-center gap-1">
 				<div class="relative group">
-					<Avatar class="w-32 h-32 rounded-full border border-white shadow-lg dark:border-surface-800">
-						<Avatar.Image src={normalizeAvatarUrl(avatarSrc.value)} class="object-cover" />
-						<Avatar.Fallback>AV</Avatar.Fallback>
-					</Avatar>
+					<Avatar 
+						src={normalizeAvatarUrl(avatarSrc.value)} 
+						initials="AV"
+						class="w-32 h-32 rounded-full border border-white shadow-lg dark:border-surface-800"
+					/>
 
 					<!-- Edit button - icon overlay -->
 					<button

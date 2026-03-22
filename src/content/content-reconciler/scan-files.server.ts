@@ -53,10 +53,12 @@ export async function scanAndProcessFiles(): Promise<Schema[]> {
           .split(path.sep)
           .join("/");
 
+      const name = schema.name || path.basename(filePath, extension);
       return {
         ...schema,
+        _id: schema._id || name,
         path: cleanPath,
-        name: schema.name || path.basename(filePath, extension),
+        name: name,
       } as Schema;
     } catch (error) {
       logger.warn(`Failed to process collection file: ${filePath}`, error);

@@ -28,7 +28,7 @@ Interactive star rating with hover states and click selection
 -->
 
 <script lang="ts">
-import { RatingGroup } from '@skeletonlabs/skeleton-svelte';
+import Rating from '@components/ui/rating.svelte';
 import type { FieldType } from './';
 
 let {
@@ -64,22 +64,13 @@ $effect(() => {
 	class:invalid={!!error}
 >
 	<div class={error ? ' text-error-500' : ''}>
-		<RatingGroup value={ratingValue} onValueChange={(e) => (ratingValue = e.value)} aria-label={field.label}>
-			<RatingGroup.Control>
-				{@const iconFull = ((field.iconFull as string) || 'star').replace('material-symbols:', '')}
-				{@const iconEmpty = ((field.iconEmpty as string) || 'star-outline').replace('material-symbols:', '').replace('-outline', '')}
-				{#each { length: Number(field.max) || 5 } as _, i (i)}
-					<RatingGroup.Item index={i + 1}>
-						{#snippet empty()}
-							<iconify-icon icon={iconEmpty} width="24" class="text-surface-400"></iconify-icon>
-						{/snippet}
-						{#snippet full()}
-							<iconify-icon icon={iconFull} width="24" class={error ? 'text-error-500' : 'text-warning-500'}></iconify-icon>
-						{/snippet}
-					</RatingGroup.Item>
-				{/each}
-			</RatingGroup.Control>
-		</RatingGroup>
+		<Rating 
+			bind:value={ratingValue} 
+			count={Number(field.max) || 5} 
+			icon={((field.iconFull as string) || 'star').replace('material-symbols:', '')}
+			iconEmpty={((field.iconEmpty as string) || 'star-outline').replace('material-symbols:', '').replace('-outline', '')}
+			class={error ? 'text-error-500' : 'text-warning-500'}
+		/>
 	</div>
 
 	{#if error}

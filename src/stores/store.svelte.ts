@@ -131,7 +131,7 @@ export class AppStore {
   _contentLanguage = $state<Locale>("en" as Locale);
 
   // Rendering & UI Elements
-  headerActionButton = $state<Component<Record<string, unknown>> | undefined>(undefined);
+  headerActionButton = $state<any>(undefined);
   headerActionButton2 = $state<Component<Record<string, unknown>> | undefined>(undefined);
   pkgBgColor = $state("preset-filled-primary-500");
   file = $state<File | null>(null);

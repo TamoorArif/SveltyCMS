@@ -5,7 +5,7 @@ Horizontal snap-scroll preset carousel for selecting project blueprints.
 Default value is 'blank'.
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import type { Preset } from './presets';
 
 let { presets, selected = $bindable('blank') } = $props<{
@@ -103,11 +103,11 @@ $effect(() => {
 		<div class="flex gap-2.5 items-center">
 			<iconify-icon icon="mdi:package-variant-closed" width="22" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 			<h3 class="text-[1.05rem] font-semibold text-dark dark:text-white">Project Blueprint</h3>
-			<SystemTooltip title="Select a starting template for your CMS. This will pre-configure collections, roles, and settings.">
+			<Tooltip title="Select a starting template for your CMS. This will pre-configure collections, roles, and settings.">
 				<button type="button" class="text-slate-400 hover:text-tertiary-500" aria-label="Help: Project Blueprint">
 					<iconify-icon icon="mdi:help-circle-outline" width="16"></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 		</div>
 
 		<div class="flex gap-1.5">

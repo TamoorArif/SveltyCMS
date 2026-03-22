@@ -25,7 +25,7 @@ latest version available on GitHub with comprehensive status reporting.
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { onDestroy, onMount } from 'svelte';
 import { browser } from '$app/environment';
-import SystemTooltip from './system/system-tooltip.svelte';
+import Tooltip from './ui/tooltip.svelte';
 
 // Types
 interface VersionStatus {
@@ -290,7 +290,7 @@ const statusAriaLabel = $derived.by(() => {
 	{@render children(versionStatus)}
 {:else}
 	<!-- Default UI -->
-	<SystemTooltip title={versionStatusMessage}>
+	<Tooltip title={versionStatusMessage}>
 		<a
 			href={GITHUB_RELEASES_URL}
 			target="_blank"
@@ -342,7 +342,7 @@ const statusAriaLabel = $derived.by(() => {
 				{/if}
 			{/if}
 		</a>
-	</SystemTooltip>
+	</Tooltip>
 
 	<!-- Error toast/message (optional - only shown if critical) -->
 	{#if error && statusSeverity === 'critical' && !compact && !transparent}

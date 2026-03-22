@@ -44,7 +44,7 @@ import { app } from '@src/stores/store.svelte';
 import { initializeDarkMode } from '@src/stores/theme-store.svelte.ts';
 import { ui } from '@src/stores/ui-store.svelte';
 import { widgets } from '@src/stores/widget-store.svelte.ts';
-import { Portal } from '@skeletonlabs/skeleton-svelte';
+import Portal from '@components/ui/portal.svelte';
 // Utils
 import { isSearchVisible } from '@utils/global-search-index';
 import { getTextDirection } from '@utils/utils';
@@ -303,7 +303,7 @@ afterNavigate(() => {
 					</aside>
 				{/if}
 
-				<main class="relative z-0 flex w-full min-w-0 flex-1 flex-col">
+				<main class="relative z-0 flex w-full min-w-0 flex-1 flex-col bg-surface-50 dark:bg-surface-900">
 					{#if ui.state.pageheader !== 'hidden'}
 						<header class="sticky top-0 z-20 w-full"><HeaderEdit /></header>
 					{/if}

@@ -14,7 +14,7 @@ Handles all field types and validation automatically
 -->
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { toast } from '@src/stores/toast.svelte.ts';
 import iso6391 from '@utils/iso639-1.json';
 import { getLanguageName } from '@utils/language-utils';
@@ -580,11 +580,11 @@ onMount(() => {
 									{#if defaultLangField.required}
 										<span class="text-error-500">*</span>
 									{/if}
-									<SystemTooltip title={defaultLangField.description}>
+									<Tooltip title={defaultLangField.description}>
 										<button type="button" class="ml-1 text-slate-400 hover:text-primary-500" aria-label="Field information">
 											<iconify-icon icon="mdi:help-circle-outline" width="16"></iconify-icon>
 										</button>
-									</SystemTooltip>
+									</Tooltip>
 								</label>
 								<select
 									id={defaultLangField.key}
@@ -618,11 +618,11 @@ onMount(() => {
 									{#if availableLangsField.required}
 										<span class="text-error-500">*</span>
 									{/if}
-									<SystemTooltip title={availableLangsField.description}>
+									<Tooltip title={availableLangsField.description}>
 										<button type="button" class="ml-1 text-slate-400 hover:text-primary-500" aria-label="Field information">
 											<iconify-icon icon="mdi:help-circle-outline" width="14"></iconify-icon>
 										</button>
-									</SystemTooltip>
+									</Tooltip>
 								</div>
 								<div class="relative">
 									<div
@@ -734,11 +734,11 @@ onMount(() => {
 									{#if baseLocaleField.required}
 										<span class="text-error-500">*</span>
 									{/if}
-									<SystemTooltip title={baseLocaleField.description}>
+									<Tooltip title={baseLocaleField.description}>
 										<button type="button" class="ml-1 text-slate-400 hover:text-primary-500" aria-label="Field information">
 											<iconify-icon icon="mdi:help-circle-outline" width="16"></iconify-icon>
 										</button>
-									</SystemTooltip>
+									</Tooltip>
 								</label>
 								<select
 									id={baseLocaleField.key}
@@ -770,11 +770,11 @@ onMount(() => {
 									{#if localesField.required}
 										<span class="text-error-500">*</span>
 									{/if}
-									<SystemTooltip title={localesField.description}>
+									<Tooltip title={localesField.description}>
 										<button type="button" class="ml-1 text-slate-400 hover:text-primary-500" aria-label="Field information">
 											<iconify-icon icon="mdi:help-circle-outline" width="14"></iconify-icon>
 										</button>
-									</SystemTooltip>
+									</Tooltip>
 								</div>
 								<div class="relative">
 									<div
@@ -896,7 +896,7 @@ onMount(() => {
 						>
 							<label for={field.key} class="mb-2 block">
 								<!-- Label wrapped with tooltip -->
-								<SystemTooltip title={field.description} positioning={{ placement: 'top' }}>
+								<Tooltip title={field.description} positioning={{ placement: 'top' }}>
 									<span class="flex items-center gap-2 cursor-help">
 										<iconify-icon icon={getFieldIcon(field)} width="18" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 										<span class="text-sm font-semibold text-tertiary-500 dark:text-primary-500 md:text-base">{field.label}</span>
@@ -906,7 +906,7 @@ onMount(() => {
 										<iconify-icon icon="material-symbols:info-outline" width="16" class="text-surface-500 dark:text-surface-50 opacity-60"
 										></iconify-icon>
 									</span>
-								</SystemTooltip>
+								</Tooltip>
 							</label>
 
 							<!-- Text Input -->

@@ -13,7 +13,8 @@ Efficiently handles avatar uploads with validation, deletion, and real-time prev
 <script lang="ts">
 // Lucide icons
 
-import { Avatar, FileUpload } from '@skeletonlabs/skeleton-svelte';
+import Avatar from '@components/ui/avatar.svelte';
+import FileUpload from '@components/ui/file-upload.svelte';
 // ParaglideJS
 import { button_cancel, button_delete, button_save, modaledit_avatarfilesallowed, modaledit_avatarfilesize } from '@src/paraglide/messages';
 // Stores
@@ -101,9 +102,8 @@ const avatarSchema = object({
 });
 
 // Handle file input change
-function onFileChange(details: { acceptedFiles: File[] }) {
-	// v4 FileUpload passes details with acceptedFiles array
-	const inputFiles = details.acceptedFiles;
+function onFileChange(inputFiles: File[]) {
+	// Our native FileUpload passes the array of files directly
 	if (!inputFiles || inputFiles.length === 0) {
 		return;
 	}
@@ -356,43 +356,41 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 </script>
 
 <div class="modal-avatar space-y-4">
-	<form class="modal-form {cForm}">
-		<div class="grid grid-cols-1 grid-rows-{avatarSrc.value ? '1' : '2'} items-center justify-center">
-			<FileUpload acceptedFiles={files} accept={acceptMime} maxFiles={1} {onFileChange} class="w-full flex flex-col items-center gap-4">
-				<!-- Hidden Input -->
-				<FileUpload.HiddenInput />
+	<div class="modal-form {cForm}">
+		<div class="grid grid-cols-1 items-center justify-center">
+			<FileUpload 
+				bind:files 
+				accept={acceptMime} 
+				onchange={onFileChange}
+				class="w-full"
+			>
+				{#snippet children()}
+					<div class="flex flex-col items-center gap-4 py-4 cursor-pointer">
+						<div class="relative group">
+							<Avatar
+								src={displayAvatar}
+								initials="AB"
+								class="size-32 border-4 border-surface-200 dark:border-surface-700 shadow-xl"
+							/>
 
-				<!-- Avatar Trigger (Clickable) -->
-				<FileUpload.Trigger class="outline-none relative mx-auto mb-3 cursor-pointer rounded-full focus:ring-2 focus:ring-primary-500">
-					<Avatar
-						class="size-32 flex items-center justify-center rounded-full overflow-hidden border-4 border-surface-200 dark:border-surface-700 shadow-xl bg-surface-100 dark:bg-surface-800 aspect-square"
-					>
-						<Avatar.Image src={displayAvatar} alt="User avatar" class="size-full object-cover" />
-						<Avatar.Fallback class="flex size-full items-center justify-center bg-surface-500 text-3xl font-bold uppercase text-white">
-							AB
-						</Avatar.Fallback>
-					</Avatar>
-
-					<!-- Hover/Focus overlay cue when not uploading -->
-					{#if !isUploading}
-						<div class="absolute inset-0 hidden items-center justify-center rounded-full bg-black/30 text-white focus-within:flex hover:flex">
-							<span class="text-xs font-medium">Click to upload</span>
+							{#if !isUploading}
+								<div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+									<span class="text-xs font-medium">Click to upload</span>
+								</div>
+							{/if}
+							{#if isUploading}
+								<div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
+									<div class="text-sm font-medium text-white">...</div>
+								</div>
+							{/if}
 						</div>
-					{/if}
-					{#if isUploading}
-						<div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
-							<div class="text-sm font-medium text-white">...</div>
-						</div>
-					{/if}
-				</FileUpload.Trigger>
 
-				<!-- Dropzone Area -->
-				<FileUpload.Dropzone class="w-full">
-					<div class="flex flex-col items-center justify-center p-4">
-						<iconify-icon icon="mdi:cloud-upload" width={24}></iconify-icon>
-						<p class="text-sm">{modaledit_avatarfilesallowed()}</p>
+						<div class="flex flex-col items-center justify-center text-center">
+							<iconify-icon icon="mdi:cloud-upload" width={24}></iconify-icon>
+							<p class="text-sm tracking-tight">{modaledit_avatarfilesallowed()}</p>
+						</div>
 					</div>
-				</FileUpload.Dropzone>
+				{/snippet}
 			</FileUpload>
 		</div>
 		{#if !files.length && !isUploading}
@@ -400,7 +398,7 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 		{/if}
 		<!-- Progress Bar -->
 		{#if isUploading}
-			<div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+			<div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl z-10">
 				<div class="flex flex-col items-center gap-2">
 					<div class="h-16 w-16 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
 					{#if uploadProgress > 0}
@@ -409,7 +407,7 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 				</div>
 			</div>
 		{/if}
-	</form>
+	</div>
 
 	<footer class="modal-footer justify-between pt-4 border-t border-surface-500/20">
 		<!-- Delete Avatar -->

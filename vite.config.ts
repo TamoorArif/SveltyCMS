@@ -746,8 +746,6 @@ export default defineConfig((): any => {
         "@src/databases/cache/cache-service",
       ],
       include: [
-        "@skeletonlabs/skeleton-svelte",
-        "@skeletonlabs/skeleton",
         "@iconify/svelte",
         "svelte-confetti",
         "svelte-canvas",

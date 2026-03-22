@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import Icon from '@iconify/svelte';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { app, validationStore } from '@src/stores/store.svelte';
@@ -265,7 +265,7 @@ export const WidgetData = async () => value;
 </script>
 
 <div class="relative mb-4 min-h-10 w-full">
-	<SystemTooltip title={validationError || ''} wFull={true}>
+	<Tooltip title={validationError || ''} wFull={true}>
 		<div class="flex w-full overflow-hidden rounded border border-surface-400 dark:border-surface-600" role="group">
 			{#if field?.prefix}
 				<div
@@ -357,7 +357,7 @@ export const WidgetData = async () => value;
 				</div>
 			{/if}
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 
 	<!-- Helper Text removed (moved to label tooltip) -->
 

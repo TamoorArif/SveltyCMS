@@ -29,8 +29,8 @@ import { page } from '$app/state';
 const user = $derived(page.data?.user);
 const tenantId = $derived(page.data?.tenantId);
 
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tabs from '@components/ui/tabs';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { applayout_version, button_edit, Fields_no_widgets_found, form_required } from '@src/paraglide/messages';
 import type { Locale } from '@src/paraglide/runtime';
 // Types
@@ -470,17 +470,17 @@ $effect(() => {
 											{/if}
 										</p>
 										{#if field.helper}
-											<SystemTooltip title={field.helper} positioning={{ placement: 'top' }}>
+											<Tooltip title={field.helper} positioning={{ placement: 'top' }}>
 												<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
-											</SystemTooltip>
+											</Tooltip>
 										{/if}
 									</div>
 									<div class="flex items-center gap-2">
-										<SystemTooltip title="Insert Token">
+										<Tooltip title="Insert Token">
 											<button type="button" onclick={(e) => openTokenPicker(field, e)} class="" aria-label="Insert token into {field.label}">
 												<iconify-icon icon="mdi:code-braces" width="16" class="font-bold text-tertiary-500 dark:text-primary-500"></iconify-icon>
 											</button>
-										</SystemTooltip>
+										</Tooltip>
 										<!-- Translation status -->
 										{#if field.translated}
 											{@const percentage = getFieldTranslationPercentage(field)}

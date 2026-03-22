@@ -6,7 +6,7 @@ Displays a preview of the shared link for different platforms.
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // Using iconify-icon web component
 interface Props {
 	hostUrl: string;
@@ -74,7 +74,7 @@ const platforms = [
 	<!-- Platform Tabs -->
 	<div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
 		{#each platforms as platform (platform.id)}
-			<SystemTooltip title={platform.label}>
+			<Tooltip title={platform.label}>
 				<button
 					type="button"
 					class="btn btn-icon btn-icon-sm transition-all {activePlatform === platform.id
@@ -86,7 +86,7 @@ const platforms = [
 					<iconify-icon icon={platform.icon} width="24" class="text-xl {activePlatform === platform.id ? 'text-white' : platform.color}"
 					></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 		{/each}
 	</div>
 

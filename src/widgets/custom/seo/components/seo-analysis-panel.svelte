@@ -8,7 +8,7 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 
 <script lang="ts">
 import { slide } from 'svelte/transition';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // Using iconify-icon web component
 import type { SeoAnalysisResult } from '../seo-types';
 
@@ -99,16 +99,16 @@ let { analysisResult, class: className = '', expanded = $bindable(false), isAnal
 									></iconify-icon>
 								</div>
 								<div class="flex-1 min-w-0">
-									<SystemTooltip title={suggestion.title}>
+									<Tooltip title={suggestion.title}>
 										<div class="font-bold text-sm truncate dark:text-surface-50">
 											{suggestion.title}
 										</div>
-									</SystemTooltip>
-									<SystemTooltip title={suggestion.description}>
+									</Tooltip>
+									<Tooltip title={suggestion.description}>
 										<p class="text-xs opacity-80 line-clamp-2 dark:text-surface-200">
 											{suggestion.description}
 										</p>
-									</SystemTooltip>
+									</Tooltip>
 									{#if suggestion.fix}
 										<div class="mt-1.5 text-[10px] font-mono bg-surface-100 dark:bg-surface-700 p-1.5 rounded opacity-80">
 											<strong>Fix:</strong>

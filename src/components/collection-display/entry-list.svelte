@@ -45,13 +45,11 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 
 <script lang="ts">
 	// Components
-	import FloatingInput from '@components/system/inputs/floating-input.svelte';
-	import SystemTooltip from '@components/system/system-tooltip.svelte';
-	import Status from '@components/system/table/status.svelte';
-	// import SystemTooltip from '@components/system/system-tooltip.svelte';
-	import TableFilter from '@components/system/table/table-filter.svelte';
-	import TableIcons from '@components/system/table/table-icons.svelte';
-	import TablePagination from '@components/system/table/table-pagination.svelte';
+	import FloatingInput from '@components/ui/floating-input.svelte';
+	import Tooltip from '@components/ui/tooltip.svelte';
+	import StatusBadge from '@components/ui/status-badge.svelte';
+	import TableFilter from '@components/ui/table/filter.svelte';
+	import TablePagination from '@components/ui/table/pagination.svelte';
 	import PluginComponent from '@src/components/plugins/plugin-component.svelte';
 	// Types
 	// =================================================================
@@ -84,7 +82,6 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 	import { cloneEntries, setEntriesStatus } from '@utils/entry-actions';
 	// Using iconify-icon web component
 	import { logger } from '@utils/logger';
-	// Skeleton
 	import { showDeleteConfirm, showStatusChangeConfirm } from '@utils/modal-utils';
 	import { preloadEntry, reflectModeInURL } from '@utils/navigation-utils';
 	import { toast } from '@src/stores/toast.svelte.ts';
@@ -597,8 +594,9 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 			const newFilters: Record<string, string> = { ...entryListPaginationSettings.filters };
 			let filtersChanged = false;
 			for (const th of tableHeaders) {
-				if (!(th.name in newFilters)) {
-					newFilters[th.name] = '';
+				const key = th.name || th.key;
+				if (key && !(key in newFilters)) {
+					newFilters[key] = '';
 					filtersChanged = true;
 				}
 			}
@@ -620,23 +618,26 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 
 		if (tableHeaders.length > 0) {
 			if (settings.collectionId === currentCollId && Array.isArray(settings.displayTableHeaders) && settings.displayTableHeaders.length > 0) {
-				const schemaHeaderMap = new SvelteMap(tableHeaders.map((th) => [th.name, th]));
+				const schemaHeaderMap = new SvelteMap(tableHeaders.map((th) => [th.name || th.key || '', th]));
 				const reconciledHeaders: TableHeader[] = [];
-				const addedNames = new SvelteSet();
+				const addedNames = new SvelteSet<string>();
 
 				for (const savedHeader of settings.displayTableHeaders) {
-					const schemaHeader = schemaHeaderMap.get(savedHeader.name);
+					const headerKey = savedHeader.name || savedHeader.key;
+					if (!headerKey) continue;
+					const schemaHeader = schemaHeaderMap.get(headerKey);
 					if (schemaHeader) {
 						reconciledHeaders.push({
 							...schemaHeader,
 							id: savedHeader.id || schemaHeader.id,
 							visible: typeof savedHeader.visible === 'boolean' ? savedHeader.visible : schemaHeader.visible
 						});
-						addedNames.add(savedHeader.name);
+						addedNames.add(headerKey);
 					}
 				}
 				for (const schemaHeader of tableHeaders) {
-					if (!addedNames.has(schemaHeader.name)) {
+					const headerKey = schemaHeader.name || schemaHeader.key;
+					if (headerKey && !addedNames.has(headerKey)) {
 						reconciledHeaders.push({ ...schemaHeader, visible: true });
 					}
 				}
@@ -1032,12 +1033,11 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 										<FloatingInput
 											type="text"
 											icon="material-symbols:search-rounded"
-											label={`Filter ${(header as TableHeader).label}`}
-											name={(header as TableHeader).name}
-											value={entryListPaginationSettings.filters[(header as TableHeader).name] || ''}
-											onInput={(value: string) => onFilterChange((header as TableHeader).name, value)}
+											label={`Filter ${header.label}`}
+											name={header.name || header.key || ''}
+											value={entryListPaginationSettings.filters[header.name || header.key || ''] || ''}
+											onInput={(value: string) => onFilterChange(header.name || header.key || '', value)}
 											inputClass="text-xs dark:text-primary-500"
-											textColor=""
 											labelClass="dark:text-white"
 										/>
 									</div>
@@ -1047,18 +1047,19 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 					{/if}
 
 					<tr class="divide-x divide-surface-400 border-b border-black dark:border-white">
-						<TableIcons
-							cellClass={`w-10 ${hasSelections ? 'bg-primary-500/10 dark:bg-secondary-500/20' : ''}`}
-							checked={SelectAll.value}
-							onCheck={(checked: boolean) => {
-								SelectAll.value = checked;
-							}}
-						/>
+						<th class={`w-10 text-center ${hasSelections ? 'bg-primary-500/10 dark:bg-secondary-500/20' : ''}`}>
+							<input
+								type="checkbox"
+								class="checkbox"
+								bind:checked={SelectAll.value}
+								aria-label="Select All"
+							/>
+						</th>
 
 						{#each visibleTableHeaders as header (header.id)}
 							<th
 								class="text-center text-xs sm:text-sm {cellPaddingClass}"
-								aria-sort={(header as TableHeader).name === entryListPaginationSettings.sorting.sortedBy
+								aria-sort={header.name === entryListPaginationSettings.sorting.sortedBy
 									? entryListPaginationSettings.sorting.isSorted === 1
 										? 'ascending'
 										: 'descending'
@@ -1066,14 +1067,14 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 							>
 								<button
 									type="button"
-									class="flex w-full items-center justify-center font-bold uppercase focus:outline-none {(header as TableHeader).name ===
+									class="flex w-full items-center justify-center font-bold uppercase focus:outline-none {header.name ===
 									entryListPaginationSettings.sorting.sortedBy
 										? 'text-primary-500 dark:text-secondary-400'
 										: 'text-tertiary-500 dark:text-primary-500'}"
-									onclick={() => onSortChange((header as TableHeader).name)}
+									onclick={() => onSortChange(header.name || header.key || '')}
 								>
-									{(header as TableHeader).label}
-									{#if (header as TableHeader).name === entryListPaginationSettings.sorting.sortedBy && entryListPaginationSettings.sorting.isSorted !== 0}
+									{header.label}
+									{#if header.name === entryListPaginationSettings.sorting.sortedBy && entryListPaginationSettings.sorting.isSorted !== 0}
 										{@const sortIcon = entryListPaginationSettings.sorting.isSorted === 1 ? 'mdi:arrow-up' : 'mdi:arrow-down'}
 										<iconify-icon icon={sortIcon} width="16" class="ml-1 origin-center"></iconify-icon>
 									{/if}
@@ -1090,21 +1091,22 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 								onmouseenter={() => entry._id && handleRowHoverStart(entry._id)}
 								onmouseleave={handleRowHoverEnd}
 							>
-								<TableIcons
-									cellClass={`w-10 text-center ${selectedMap[index] ? 'bg-primary-500/10 dark:bg-secondary-500/20' : ''}`}
-									checked={selectedMap[index]}
-									onCheck={(isChecked: boolean) => {
-										selectedMap[index] = isChecked;
-									}}
-								/>
+								<td class={`w-10 text-center ${selectedMap[index] ? 'bg-primary-500/10 dark:bg-secondary-500/20' : ''}`}>
+									<input
+										type="checkbox"
+										class="checkbox"
+										bind:checked={selectedMap[index]}
+										aria-label="Select Row"
+									/>
+								</td>
 								{#if visibleTableHeaders}
 									{#each visibleTableHeaders as header (header.id)}
 										<td
-											class="text-center {cellPaddingClass} text-xs font-bold sm:text-sm {(header as TableHeader).name !== 'status'
+											class="text-center {cellPaddingClass} text-xs font-bold sm:text-sm {header.name !== 'status'
 												? 'cursor-pointer transition-colors duration-200 hover:bg-primary-500/10 dark:hover:bg-secondary-500/20'
 												: 'hover:bg-warning-500/10 dark:hover:bg-warning-500/20'}"
 											onclick={async () => {
-												if ((header as TableHeader).name === 'status') {
+												if (header.name === 'status') {
 													// Handle single entry status change with modal (same style as multibutton)
 													const currentStatus = entry.status || entry.raw_status || 'draft';
 													let nextStatus;
@@ -1162,30 +1164,30 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 												}
 											}}
 										>
-											<SystemTooltip title={(header as TableHeader).name !== 'status' ? 'Click to edit this entry' : 'Click to change status'}>
-												{#if (header as TableHeader).name === 'status'}
-													<div class="flex w-full items-center justify-center"><Status value={entry.status || entry.raw_status || 'draft'} /></div>
-												{:else if (header as TableHeader).component}
+											<Tooltip title={header.name !== 'status' ? 'Click to edit this entry' : 'Click to change status'}>
+												{#if header.name === 'status'}
+													<div class="flex w-full items-center justify-center"><StatusBadge status={String(entry.status || entry.raw_status || 'draft')} /></div>
+												{:else if header.component}
 													<!-- Dynamic Plugin Component Injection -->
-													{@const pluginId = (header as TableHeader).id.split('-')[0]}
+													{@const pluginId = (header.id || '').split('-')[0]}
 
 													<PluginComponent
 														{pluginId}
-														componentName={(header as TableHeader).component || ''}
-														{...mapPluginProps((header as TableHeader).props, entry)}
+														componentName={header.component || ''}
+														{...mapPluginProps(header.props, entry)}
 														compact={true}
 													/>
-												{:else if (header as TableHeader).name === 'createdAt' || (header as TableHeader).name === 'updatedAt'}
+												{:else if header.name === 'createdAt' || header.name === 'updatedAt'}
 													<div class="flex flex-col text-xs">
 														<div class="font-semibold">
-															{formatDisplayDate(entry[(header as TableHeader).name] as string, 'en', {
+															{formatDisplayDate(entry[header.name] as string, 'en', {
 																year: 'numeric',
 																month: 'short',
 																day: 'numeric'
 															})}
 														</div>
 														<div class="text-surface-500 dark:text-surface-200">
-															{formatDisplayDate(entry[(header as TableHeader).name] as string, 'en', {
+															{formatDisplayDate(entry[header.name] as string, 'en', {
 																hour: '2-digit',
 																minute: '2-digit',
 																second: '2-digit',
@@ -1193,21 +1195,21 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 															})}
 														</div>
 													</div>
-												{:else if typeof entry[(header as TableHeader).name] === 'object' && entry[(header as TableHeader).name] !== null}
-													{@const fieldData = entry[(header as TableHeader).name] as Record<string, any>}
+												{:else if typeof entry[header.name || ''] === 'object' && entry[header.name || ''] !== null}
+													{@const fieldData = entry[header.name || ''] as Record<string, any>}
 													{@const translatedValue = fieldData[currentLanguage] || Object.values(fieldData)[0] || '-'}
-													{@const debugInfo = `Field: ${(header as TableHeader).name}, Lang: ${currentLanguage}, Data: ${JSON.stringify(fieldData)}, Value: ${translatedValue}`}
-													{#if (header as TableHeader).name === 'last_name'}
+													{@const debugInfo = `Field: ${header.name}, Lang: ${currentLanguage}, Data: ${JSON.stringify(fieldData)}, Value: ${translatedValue}`}
+													{#if header.name === 'last_name'}
 														<span title={debugInfo}><Sanitize html={translatedValue} profile="strict" /></span>
 													{:else}
 														<Sanitize html={translatedValue} profile="strict" />
 													{/if}
-												{:else if (header as TableHeader).name === 'plugin'}
+												{:else if header.name === 'plugin'}
 													<!-- <PluginComponent /> -->
 												{:else}
-													<Sanitize html={String(entry[(header as TableHeader).name] || '-')} profile="strict" />
+													<Sanitize html={String(entry[header.name || ''] || '-')} profile="strict" />
 												{/if}
-											</SystemTooltip>
+											</Tooltip>
 										</td>
 									{/each}
 								{/if}

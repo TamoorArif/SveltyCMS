@@ -77,7 +77,7 @@ onMount(() => {
 </script>
 
 {#if loading}
-	<!-- Loading skeleton -->
+	<!-- Loading -->
 	<div class="widget-loader-skeleton animate-pulse">
 		<div class="mb-2 h-4 w-1/3 rounded bg-surface-300 dark:bg-surface-600"></div>
 		<div class="h-10 w-full rounded bg-surface-200 dark:bg-surface-700"></div>

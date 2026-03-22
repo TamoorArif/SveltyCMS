@@ -2,7 +2,7 @@
 import type { FieldInstance } from '@src/content/types';
 import type { Locale } from '@src/paraglide/runtime';
 import { tokenTarget } from '@src/services/token/token-target';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 
 // Lucide Icons
 
@@ -63,14 +63,14 @@ const getLengthClass = () => {
 		<div class="flex items-center gap-2">
 			<label for={id} class="font-bold text-sm cursor-pointer dark:text-surface-50">{label}</label>
 			{@render icon?.()}
-			<SystemTooltip title={placeholder}>
+			<Tooltip title={placeholder}>
 				<span class="text-surface-400 dark:text-surface-300 cursor-help">
 					<iconify-icon icon="mdi:information-outline" width={16}></iconify-icon>
 				</span>
-			</SystemTooltip>
+			</Tooltip>
 		</div>
 		<div class="flex items-center gap-3 text-xs">
-			<SystemTooltip title="Insert Token">
+			<Tooltip title="Insert Token">
 				<button
 					type="button"
 					class=""
@@ -81,7 +81,7 @@ const getLengthClass = () => {
 				>
 					<iconify-icon icon="mdi:code-braces" width={16} class="dark:text-primary-500"></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 			{#if maxLength}
 				{#if type === 'input'}
 					<span class={getLengthClass()}>({value.length}/{maxLength})</span>

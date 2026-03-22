@@ -4,7 +4,7 @@
 Provides DB type, host, port, name, user, password inputs, validation display, test button, and change warning.
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import {
 	common_confirm_no,
 	common_confirm_yes,
@@ -370,7 +370,7 @@ $effect(() => {
 				<label for="db-type" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:database" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{setup_label_database_type()}</span>
-					<SystemTooltip title={setup_help_database_type()}>
+					<Tooltip title={setup_help_database_type()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -379,7 +379,7 @@ $effect(() => {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<select id="db-type" bind:value={dbConfig.type} onchange={handleTypeChange} class="input rounded">
@@ -422,7 +422,7 @@ $effect(() => {
 				<label for="db-host" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:server-network" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{isAtlas ? 'Atlas Cluster Host' : setup_database_host()}</span>
-					<SystemTooltip title={setup_help_database_host()}>
+					<Tooltip title={setup_help_database_host()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -431,7 +431,7 @@ $effect(() => {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<input
@@ -479,7 +479,7 @@ $effect(() => {
 					<label for="db-port" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:ethernet" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_database_port()}</span>
-						<SystemTooltip title={setup_help_database_port()}>
+						<Tooltip title={setup_help_database_port()}>
 							<button
 								type="button"
 								tabindex="-1"
@@ -488,7 +488,7 @@ $effect(() => {
 							>
 								<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<input
@@ -512,7 +512,7 @@ $effect(() => {
 				<label for="db-name" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:database-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{setup_database_name()}</span>
-					<SystemTooltip title={setup_help_database_name()}>
+					<Tooltip title={setup_help_database_name()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -521,7 +521,7 @@ $effect(() => {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<input
@@ -551,7 +551,7 @@ $effect(() => {
 					<label for="db-user" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:account-key" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_database_user()}</span>
-						<SystemTooltip title={setup_help_database_user()}>
+						<Tooltip title={setup_help_database_user()}>
 							<button
 								type="button"
 								tabindex="-1"
@@ -560,7 +560,7 @@ $effect(() => {
 							>
 								<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<input
@@ -590,7 +590,7 @@ $effect(() => {
 					<label for="db-password" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:key-variant" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_database_password()}</span>
-						<SystemTooltip title={setup_help_database_password()}>
+						<Tooltip title={setup_help_database_password()}>
 							<button
 								type="button"
 								tabindex="-1"
@@ -599,7 +599,7 @@ $effect(() => {
 							>
 								<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<div class="relative">

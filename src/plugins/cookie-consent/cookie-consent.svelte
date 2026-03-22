@@ -1,11 +1,11 @@
-﻿<!--
+<!--
 @file src\plugins\cookie-consent\cookie-consent.svelte
 @component
 **Cookie Consent Banner**
 Displays a GDPR-compliant cookie consent banner.
 -->
 <script lang="ts">
-import Toggles from '@src/components/system/inputs/toggles.svelte';
+import Toggle from '@components/ui/toggle.svelte';
 import {
 	cookie_analytics_desc,
 	cookie_analytics_title,
@@ -83,7 +83,7 @@ function handleSavePreferences() {
 							<div class="font-semibold text-sm">{cookie_necessary_title()}</div>
 							<div class="text-xs text-gray-500">{cookie_necessary_desc()}</div>
 						</div>
-						<Toggles value={true} disabled={true} />
+						<Toggle value={true} disabled={true} />
 					</div>
 
 					<div class="flex items-center justify-between">
@@ -91,7 +91,7 @@ function handleSavePreferences() {
 							<div class="font-semibold text-sm">{cookie_analytics_title()}</div>
 							<div class="text-xs text-gray-500">{cookie_analytics_desc()}</div>
 						</div>
-						<Toggles bind:value={preferences.analytics} />
+						<Toggle bind:value={preferences.analytics} />
 					</div>
 
 					<div class="flex items-center justify-between">
@@ -99,7 +99,7 @@ function handleSavePreferences() {
 							<div class="font-semibold text-sm">{cookie_marketing_title()}</div>
 							<div class="text-xs text-gray-500">{cookie_marketing_desc()}</div>
 						</div>
-						<Toggles bind:value={preferences.marketing} />
+						<Toggle bind:value={preferences.marketing} />
 					</div>
 				</div>
 			{/if}

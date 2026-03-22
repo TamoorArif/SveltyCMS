@@ -1,4 +1,4 @@
-﻿<!-- 
+<!-- 
 @file src/routes/(app)/user/components/modal-edit-form.svelte
 @component
 **A modal for editing user data like username, email, password, and role**
@@ -16,7 +16,7 @@ Efficiently manages user data updates with validation, role selection, and delet
 
 <script lang="ts">
 import PermissionGuard from '@src/components/permission-guard.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
 // Paraglide Messages
 import { button_cancel, button_delete, button_save, form_confirmpassword, modaleditform_newpassword } from '@src/paraglide/messages';
 import { toast } from '@src/stores/toast.svelte.ts';
@@ -265,7 +265,6 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 			disabled={isGivenData && user_id !== user?._id}
 			autocomplete="username"
 			icon="mdi:user-circle"
-			textColor="text-tertiary-500 dark:text-white"
 			invalid={!!editForm.errors.username?.length}
 			errorMessage={editForm.errors.username?.[0]}
 		/>
@@ -281,7 +280,6 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 			disabled
 			autocomplete="email"
 			icon="mdi:email"
-			textColor="text-tertiary-500 dark:text-white"
 			invalid={!!editForm.errors.email?.length}
 			errorMessage={editForm.errors.email?.[0]}
 		/>
@@ -317,8 +315,6 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 					}}
 					autocomplete="current-password"
 					icon="mdi:key"
-					textColor={isCurrentPasswordValidated ? 'text-primary-500' : 'text-tertiary-500 dark:text-white'}
-					passwordIconColor="text-tertiary-500 dark:text-white"
 					invalid={!!editForm.errors.currentPassword?.length}
 					errorMessage={editForm.errors.currentPassword?.[0]}
 				/>
@@ -336,8 +332,6 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 					onkeydown={() => (editForm.errors.password = [])}
 					autocomplete="new-password"
 					icon="mdi:password"
-					textColor="text-tertiary-500 dark:text-white"
-					passwordIconColor="text-tertiary-500 dark:text-white"
 					invalid={!!editForm.errors.password?.length}
 					errorMessage={editForm.errors.password?.[0]}
 					disabled={isOwnProfile && !isCurrentPasswordValidated}
@@ -356,8 +350,6 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 					onkeydown={() => (editForm.errors.confirmPassword = [])}
 					autocomplete="new-password"
 					icon="mdi:password"
-					textColor="text-tertiary-500 dark:text-white"
-					passwordIconColor="text-tertiary-500 dark:text-white"
 					invalid={!!editForm.errors.confirmPassword?.length}
 					errorMessage={editForm.errors.confirmPassword?.[0]}
 					disabled={isOwnProfile && !isCurrentPasswordValidated}

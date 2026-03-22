@@ -13,7 +13,7 @@ import { slide } from 'svelte/transition';
 // Data
 
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { tokenTarget } from '@src/services/token/token-target';
 // Stores
 import { app } from '@src/stores/store.svelte';
@@ -536,7 +536,7 @@ $effect(() => {
 						{#each group.buttons as btn (btn.label)}
 							{#if btn.type === 'dropdown'}
 								<div class="relative">
-									<SystemTooltip title={btn.label}>
+									<Tooltip title={btn.label}>
 										<button
 											type="button"
 											class="btn {editorStateVersion && activeDropdown === btn.label
@@ -552,7 +552,7 @@ $effect(() => {
 												<iconify-icon icon="mdi:chevron-down" width="14"></iconify-icon>
 											{/if}
 										</button>
-									</SystemTooltip>
+									</Tooltip>
 									{#if activeDropdown === btn.label}
 										<div
 											class="absolute top-full left-0 mt-1 min-w-[180px] rounded-lg border border-surface-200 bg-white p-1 shadow-xl dark:border-surface-700 dark:bg-surface-800 dark:text-white z-60 ring-1 ring-black/5"
@@ -699,7 +699,7 @@ $effect(() => {
 									{/if}
 								</div>
 							{:else}
-								<SystemTooltip title={btn.label}>
+								<Tooltip title={btn.label}>
 									<button
 										type="button"
 										aria-label={btn.label}
@@ -708,7 +708,7 @@ $effect(() => {
 									>
 										<iconify-icon icon="mdi:{btn.icon}" width="24"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							{/if}
 						{/each}
 					</div>

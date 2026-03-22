@@ -13,7 +13,7 @@ Features:
 - Roving tabindex for accessibility
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { screen } from '@src/stores/screen-size-store.svelte.ts';
 import { goto } from '$app/navigation';
 import type { TreeViewItem } from './tree-view-board.svelte';
@@ -193,7 +193,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 	<!-- Action Buttons -->
 	<div class="flex gap-1 ml-auto shrink-0 transition-opacity duration-200">
-		<SystemTooltip title="Edit">
+		<Tooltip title="Edit">
 			<button
 				type="button"
 				class="btn-icon preset-tonal-surface-500 hover:preset-filled-surface-500 rounded transition-all duration-200 hover:scale-110"
@@ -206,10 +206,10 @@ function handleKeyDown(e: KeyboardEvent) {
 			>
 				<iconify-icon icon="mdi:pencil" width={24} aria-hidden="true" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 
 		<!-- Duplicate -->
-		<SystemTooltip title="Duplicate">
+		<Tooltip title="Duplicate">
 			<button
 				type="button"
 				class="btn-icon preset-tonal-surface-500 hover:preset-filled-surface-500 rounded transition-all duration-200 hover:scale-110"
@@ -221,10 +221,10 @@ function handleKeyDown(e: KeyboardEvent) {
 			>
 				<iconify-icon icon="mdi:content-copy" width={24} aria-hidden="true"></iconify-icon>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 
 		<!-- Delete -->
-		<SystemTooltip title="Delete">
+		<Tooltip title="Delete">
 			<button
 				type="button"
 				class="btn-icon preset-tonal-surface-500 hover:preset-filled-surface-500 rounded transition-all duration-200 hover:scale-110"
@@ -236,10 +236,10 @@ function handleKeyDown(e: KeyboardEvent) {
 			>
 				<iconify-icon icon="mdi:delete" width={24} aria-hidden="true" class="text-error-500"></iconify-icon>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 
 		<!-- Drag Handle with Keyboard Support -->
-		<SystemTooltip title={keyboardReorderMode ? 'Exit reorder mode (Esc)' : 'Drag to reorder'}>
+		<Tooltip title={keyboardReorderMode ? 'Exit reorder mode (Esc)' : 'Drag to reorder'}>
 			<button
 				type="button"
 				class="drag-handle btn-icon preset-tonal-surface-500 rounded cursor-grab active:cursor-grabbing opacity-60 hover:opacity-100 flex items-center justify-center hover:bg-surface-300 dark:hover:bg-surface-600 transition-all duration-200 hover:scale-110"
@@ -256,7 +256,7 @@ function handleKeyDown(e: KeyboardEvent) {
 			>
 				<iconify-icon icon={keyboardReorderMode ? 'mdi:check' : 'mdi:drag-vertical'} width={24} aria-hidden="true"></iconify-icon>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 	</div>
 </div>
 

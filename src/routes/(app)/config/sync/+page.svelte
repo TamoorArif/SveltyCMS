@@ -7,7 +7,7 @@ Allows synchronization between filesystem and database, and full system backup/r
 <script lang="ts">
 import ImportExportManager from '@src/components/admin/import-export-manager.svelte';
 import PageTitle from '@src/components/page-title.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { toast } from '@src/stores/toast.svelte.ts';
 import { onMount } from 'svelte';
 import { fade, slide } from 'svelte/transition';
@@ -119,7 +119,7 @@ onMount(() => {
 		aria-label="Sync Options"
 	>
 		{#each ['sync', 'backups', 'debug'] as tab (tab)}
-			<SystemTooltip
+			<Tooltip
 				title={tab === 'sync' ? 'Deploy changes' : tab === 'backups' ? 'Import/Export Data' : 'Debug Info'}
 				positioning={{ placement: 'top' }}
 			>
@@ -139,7 +139,7 @@ onMount(() => {
 				>
 					{tab.charAt(0).toUpperCase() + tab.slice(1)}
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 		{/each}
 	</div>
 

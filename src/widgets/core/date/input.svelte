@@ -26,7 +26,7 @@ Part of the Three Pillars Architecture for widget system.
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { tokenTarget } from '@src/services/token/token-target';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { app, validationStore } from '@src/stores/store.svelte';
@@ -137,7 +137,7 @@ function handleBlur(): void {
 </script>
 
 <div class="relative mb-4 min-h-10 w-full">
-	<SystemTooltip title={error || ''} wFull={true}>
+	<Tooltip title={error || ''} wFull={true}>
 		<div class="flex w-full overflow-hidden rounded border border-surface-400 dark:border-surface-600" role="group">
 			<input
 				type="date"
@@ -164,7 +164,7 @@ function handleBlur(): void {
 				data-testid="date-input"
 			/>
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 
 	<!-- Screen Reader Only Label -->
 	<label for={field.db_fieldName} class="sr-only">

@@ -25,7 +25,7 @@
 -->
 <script lang="ts">
 import type { ContentNode, DatabaseId } from '@databases/db-interface';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { sortContentNodes } from '@src/content/content-utils';
 import { toast } from '@src/stores/toast.svelte.ts';
 import { tick } from 'svelte';
@@ -963,7 +963,7 @@ const flipDurationMs = 200;
 		{/if}
 	</div>
 	<div class="flex gap-2">
-		<SystemTooltip title="Expand all categories">
+		<Tooltip title="Expand all categories">
 			<button
 				type="button"
 				onclick={expandAll}
@@ -973,8 +973,8 @@ const flipDurationMs = 200;
 				<iconify-icon icon="mdi:unfold-more-horizontal" width={24} aria-hidden="true"></iconify-icon>
 				<span class="ml-1 uppercase text-xs font-bold">Expand All</span>
 			</button>
-		</SystemTooltip>
-		<SystemTooltip title="Collapse all categories">
+		</Tooltip>
+		<Tooltip title="Collapse all categories">
 			<button
 				type="button"
 				onclick={collapseAll}
@@ -984,7 +984,7 @@ const flipDurationMs = 200;
 				<iconify-icon icon="mdi:unfold-less-horizontal" width={24} aria-hidden="true"></iconify-icon>
 				<span class="ml-1 uppercase text-xs font-bold">Collapse All</span>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 	</div>
 </div>
 

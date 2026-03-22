@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @file src/widgets/richText/components/VideoDialog.svelte
 @component
 **VideoDialog for richText editor**
@@ -9,7 +9,7 @@
 -->
 
 <script lang="ts">
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
 // import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
 import { onMount } from 'svelte';
 import { fade } from 'svelte/transition';
@@ -84,7 +84,7 @@ onMount(() => {
 
 		{#if insertUrl}
 			<form onsubmit={handleSubmit} class="relative mt-2 flex flex-col items-center justify-center gap-4">
-				<FloatingInput bind:value={youtubeUrl} autofocus={true} textColor="black" name="Youtube URL" label="Youtube URL" />
+				<FloatingInput bind:value={youtubeUrl} autofocus={true} name="Youtube URL" label="Youtube URL" />
 				<button type="submit" class="preset-filled-primary-500 btn w-full">Add Video</button>
 			</form>
 		{:else}

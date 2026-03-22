@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import Tabs from '@components/ui/tabs';
 import PageTitle from '@src/components/page-title.svelte';
 import { system_permission, system_roles } from '@src/paraglide/messages';
 import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
@@ -157,39 +157,23 @@ beforeNavigate(({ cancel }) => {
 </div>
 
 <div class="flex flex-col">
-	<Tabs value={currentTab} onValueChange={(e) => (currentTab = e.value)} class="grow">
-		<Tabs.List class="flex justify-around text-tertiary-500 dark:text-primary-500 border-b border-surface-200-800">
-			<Tabs.Trigger value="0" class="flex-1" aria-current={currentTab === '0' ? 'page' : undefined}>
-				<div class="flex items-center justify-center gap-1 py-4">
-					<iconify-icon icon="mdi:shield-lock-outline" width={24}></iconify-icon>
-					<span class={currentTab === '0' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>{system_permission()}</span>
-				</div>
-			</Tabs.Trigger>
-			<Tabs.Trigger value="1" class="flex-1" aria-current={currentTab === '1' ? 'page' : undefined}>
-				<div class="flex items-center justify-center gap-1 py-4">
-					<iconify-icon icon="mdi:account-group" width={24}></iconify-icon>
-					<span class={currentTab === '1' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>{system_roles()}</span>
-				</div>
-			</Tabs.Trigger>
-			<Tabs.Trigger value="2" class="flex-1" aria-current={currentTab === '2' ? 'page' : undefined}>
-				<div class="flex items-center justify-center gap-1 py-4">
-					<iconify-icon icon="mdi:account-cog" width={24}></iconify-icon>
-					<span class={currentTab === '2' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>Admin</span>
-				</div>
-			</Tabs.Trigger>
-			<Tabs.Trigger value="3" class="flex-1" aria-current={currentTab === '3' ? 'page' : undefined}>
-				<div class="flex items-center justify-center gap-1 py-4">
-					<iconify-icon icon="mdi:web" width={24}></iconify-icon>
-					<span class={currentTab === '3' ? 'text-secondary-500 dark:text-tertiary-500 font-bold' : ''}>Website Tokens</span>
-				</div>
-			</Tabs.Trigger>
+	<Tabs bind:value={currentTab} class="grow">
+		<Tabs.List>
+			<Tabs.Trigger value="0">{system_permission()}</Tabs.Trigger>
+			<Tabs.Trigger value="1">{system_roles()}</Tabs.Trigger>
+			<Tabs.Trigger value="2">Admin</Tabs.Trigger>
+			<Tabs.Trigger value="3">Website Tokens</Tabs.Trigger>
 		</Tabs.List>
-
-		<Tabs.Content value="0"><div class="p-4"><Permissions roleData={rolesData} {setRoleData} {updateModifiedCount} /></div></Tabs.Content>
-		<Tabs.Content value="1"
-			><div class="p-4"><Roles roleData={rolesData} {setRoleData} {updateModifiedCount} permissions={page.data.permissions} /></div></Tabs.Content
-		>
-		<Tabs.Content value="2"><div class="p-4"><AdminRole roleData={rolesData} {setRoleData} /></div></Tabs.Content>
-		<Tabs.Content value="3"><div class="p-4"><WebsiteTokens permissions={page.data.permissions} /></div></Tabs.Content>
+		<div class="p-4">
+			{#if currentTab === '0'}
+				<Permissions roleData={rolesData} {setRoleData} {updateModifiedCount} />
+			{:else if currentTab === '1'}
+				<Roles roleData={rolesData} {setRoleData} {updateModifiedCount} permissions={page.data.permissions} />
+			{:else if currentTab === '2'}
+				<AdminRole roleData={rolesData} {setRoleData} />
+			{:else if currentTab === '3'}
+				<WebsiteTokens permissions={page.data.permissions} />
+			{/if}
+		</div>
 	</Tabs>
 </div>

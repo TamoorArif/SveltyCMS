@@ -10,7 +10,7 @@ Features:
 
 <script lang="ts">
 import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import type { MediaBase, MediaImage } from '@utils/media/media-models';
 import { formatBytes } from '@utils/utils';
 import type { SvelteSet } from 'svelte/reactivity';
@@ -113,7 +113,7 @@ function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
 
 			<!-- Actions overlay (visible on hover or focus) -->
 			<div class="absolute right-2 top-2 z-30 flex flex-col gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-				<SystemTooltip title="Edit" positioning={{ placement: 'left' }}>
+				<Tooltip title="Edit" positioning={{ placement: 'left' }}>
 					<button
 						onclick={(e) => { e.stopPropagation(); onEditImage(file as MediaImage); }}
 						class="btn-icon btn-icon-sm bg-white/90 dark:bg-surface-800/90 text-surface-600 dark:text-surface-300 shadow-md backdrop-blur-sm"
@@ -121,7 +121,7 @@ function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
 					>
 						<iconify-icon icon="mdi:pencil" width={16}></iconify-icon>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 				
 				<button
 					onclick={(e) => { e.stopPropagation(); ondeleteImage(file); }}

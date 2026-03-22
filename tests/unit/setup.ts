@@ -3,6 +3,7 @@
  * @description Master Unit Test Setup for Bun and Vitest.
  */
 
+import "@testing-library/jest-dom/vitest";
 console.log("--- Master Test Setup Loading... (Bun:", typeof Bun !== "undefined", ")");
 
 if (typeof Bun !== "undefined") {
@@ -405,6 +406,9 @@ const svelteCommon = {
   setContext: (_unused: any, v: any) => v,
   hasContext: () => false,
   createContext: () => [() => ({}), (v: any) => v],
+  mount: (component: any, options: any) => ({ component, options, unmount: () => {} }),
+  hydrate: (component: any, options: any) => ({ component, options, unmount: () => {} }),
+  unmount: () => {},
 };
 
 moduleMock("svelte", () => svelteCommon);

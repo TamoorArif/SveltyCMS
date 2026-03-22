@@ -11,8 +11,8 @@ import PermissionsSetting from "@components/permissions-setting.svelte";
 import CollectionPicker from "@components/system/builder/collection-picker.svelte";
 import FieldPicker from "@components/system/builder/field-picker.svelte";
 // System Components
-import Input from "@components/system/inputs/input.svelte";
-import Toggles from "@components/system/inputs/toggles.svelte";
+import Input from "@components/ui/input.svelte";
+import Toggles from "@components/ui/toggle.svelte";
 import type { Component } from "svelte";
 
 // Type for the registry

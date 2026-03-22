@@ -10,7 +10,7 @@
 
 <script lang="ts">
 // Components
-import Button from '@src/components/system/buttons/button.svelte';
+import Button from '@components/ui/button.svelte';
 import ImportExportManager from './import-export-manager.svelte';
 import { logger } from '@utils/logger';
 import { onMount, untrack } from 'svelte';

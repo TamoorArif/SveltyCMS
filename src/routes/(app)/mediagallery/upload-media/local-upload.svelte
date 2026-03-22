@@ -16,7 +16,7 @@
 	
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { toast } from '@src/stores/toast.svelte.ts';
 // Using iconify-icon web component
 import { logger } from '@utils/logger';
@@ -387,11 +387,11 @@ async function uploadLocalFiles() {
 				<div class="group relative overflow-hidden rounded border border-surface-200 shadow-sm transition-all hover:shadow-md dark:border-surface-50">
 					<!-- Delete button -->
 					<div class="absolute right-1 top-1 z-10 flex cursor-pointer shadow-sm">
-						<SystemTooltip title="Remove file" positioning={{ placement: 'top' }}>
+						<Tooltip title="Remove file" positioning={{ placement: 'top' }}>
 							<button type="button" onclick={() => handleDeleteFile(file)} class="btn-icon bg-error-500 rounded-full" aria-label="Remove file">
 								<iconify-icon icon="material-symbols:delete" width={24} class="text-white"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 
 					<!-- Preview -->
@@ -409,27 +409,27 @@ async function uploadLocalFiles() {
 
 					<!-- Media Filename -->
 					<div class="w-full px-2 py-1 text-center h-10 flex flex-col justify-center">
-						<SystemTooltip title={file.name} positioning={{ placement: 'top' }}>
+						<Tooltip title={file.name} positioning={{ placement: 'top' }}>
 							<div class="text-xs font-bold leading-tight line-clamp-2 overflow-hidden overflow-wrap-anywhere">{file.name}</div>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 
 					<!-- Media Type & Size (Footer) -->
 					<div class="flex grow items-center justify-between p-1 text-white font-bold">
 						<!-- Type -->
-						<SystemTooltip title={file.type} positioning={{ placement: 'top' }}>
+						<Tooltip title={file.type} positioning={{ placement: 'top' }}>
 							<div class="bg-tertiary-500 dark:bg-primary-500/50 badge flex items-center gap-1 overflow-hidden">
 								<iconify-icon icon={iconName} width="12"></iconify-icon>
 								<span class="truncate text-[10px] uppercase">{formatMimeType(file.type)}</span>
 							</div>
-						</SystemTooltip>
+						</Tooltip>
 						<!-- Size -->
-						<SystemTooltip title="Size" positioning={{ placement: 'top' }}>
+						<Tooltip title="Size" positioning={{ placement: 'top' }}>
 							<p class="bg-tertiary-500 dark:bg-primary-500/50 badge flex shrink-0 items-center gap-1 text-[10px]">
 								<span class="">{(file.size / 1024).toFixed(2)}</span>
 								KB
 							</p>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 				</div>
 			{/each}

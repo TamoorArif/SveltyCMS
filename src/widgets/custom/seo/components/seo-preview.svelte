@@ -21,7 +21,7 @@
 import { widget_seo_powerwords } from '@src/paraglide/messages';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { fade } from 'svelte/transition';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 
 // Logic for Heatmap
 const POWER_WORDS = new Set(
@@ -89,7 +89,7 @@ let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description go
 
 		<div class="btn-group border border-surface-500 overflow-hidden">
 			<!-- Device Toggle: Desktop -->
-			<SystemTooltip title="Desktop View">
+			<Tooltip title="Desktop View">
 				<button
 					type="button"
 					onclick={() => (SeoPreviewToggle = false)}
@@ -98,10 +98,10 @@ let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description go
 				>
 					<iconify-icon icon="mdi:monitor" width={24}></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 
 			<!-- Device Toggle: Mobile -->
-			<SystemTooltip title="Mobile View">
+			<Tooltip title="Mobile View">
 				<button
 					type="button"
 					onclick={() => (SeoPreviewToggle = true)}
@@ -110,10 +110,10 @@ let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description go
 				>
 					<iconify-icon icon="mdi:cellphone" width={24}></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 
 			<!-- Heatmap Toggle -->
-			<SystemTooltip title="Toggle Heatmap Visualization">
+			<Tooltip title="Toggle Heatmap Visualization">
 				<button
 					type="button"
 					class="btn {heatmapMode ? 'preset-filled-warning' : 'preset-filled-surface-500'}"
@@ -122,7 +122,7 @@ let heatmapDataDesc = $derived(renderHeatmap(description || 'Page description go
 					<iconify-icon icon="mdi:fire" width={24}></iconify-icon>
 					<span class="hidden sm:inline">Heatmap</span>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 		</div>
 	</div>
 

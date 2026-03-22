@@ -1,4 +1,4 @@
-﻿<!-- 
+<!-- 
 @src/routes/login/oauth/+page.svelte
 @description OAuth login page 
 -->
@@ -6,7 +6,7 @@
 <script lang="ts">
 // Components
 import SveltyCMSLogoFull from '@src/components/system/icons/svelty-cms-logo-full.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
 // ParaglideJS
 import { button_cancel, button_send, oauth_entertoken, oauth_signup, registration_token, signup_registrationtoken } from '@src/paraglide/messages';
 // Stores
@@ -69,8 +69,8 @@ function handleCancel() {
 
 		{#if data.requiresToken}
 			<!-- Token Input Form -->
-			<label>
-				<h2 class="mb-2 text-center text-xl font-bold text-primary-500">{oauth_entertoken()}</h2>
+			<div class="w-full">
+				<h2 class="mb-4 text-center text-xl font-bold text-primary-500">{oauth_entertoken()}</h2>
 				<FloatingInput
 					id="token"
 					name="token"
@@ -79,15 +79,12 @@ function handleCancel() {
 					bind:value={token}
 					label={registration_token?.() || signup_registrationtoken?.()}
 					icon="mdi:key-chain"
-					iconColor="white"
-					textColor="white"
-					passwordIconColor="white"
 					inputClass="text-white"
 					autocomplete="off"
 					minlength={16}
 					maxlength={48}
 				/>
-			</label>
+			</div>
 		{/if}
 
 		<!-- Error Message -->

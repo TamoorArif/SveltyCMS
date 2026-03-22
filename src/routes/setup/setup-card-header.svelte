@@ -4,7 +4,7 @@
 Displays the current step title and icon, and a reset button.
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 
 // Using iconify-icon web component
 const { currentStep, steps, onreset = () => {} } = $props();
@@ -19,7 +19,7 @@ const icons = $derived(['mdi:database', 'mdi:account', 'mdi:cog', 'mdi:email', '
 		{/if}
 		{steps[currentStep]?.label || 'Loading...'}
 	</h2>
-	<SystemTooltip title="Reset data">
+	<Tooltip title="Reset data">
 		<button
 			onclick={() => onreset()}
 			type="button"
@@ -29,5 +29,5 @@ const icons = $derived(['mdi:database', 'mdi:account', 'mdi:cog', 'mdi:email', '
 			<iconify-icon icon="mdi:backup-restore" width={24} class="mr-1"></iconify-icon>
 			<span class="">Reset Data</span>
 		</button>
-	</SystemTooltip>
+	</Tooltip>
 </div>

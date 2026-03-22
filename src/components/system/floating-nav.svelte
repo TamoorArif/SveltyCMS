@@ -16,7 +16,7 @@ import { fade } from 'svelte/transition';
 
 type Any = any;
 
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // Auth
 import type { User } from '@src/databases/auth/types';
 // Stores
@@ -458,7 +458,7 @@ onDestroy(() => {
 
 <!-- FloatingNav: Draggable button with radial menu, keyboard nav, reduced motion, ARIA -->
 
-<SystemTooltip
+<Tooltip
 	title="Open Navigation Menu"
 	contentClass="z-[99999999]"
 	positioning={{ placement: 'top' }}
@@ -487,7 +487,7 @@ onDestroy(() => {
 	>
 		<iconify-icon icon="tdesign:map-route-planning" width="36" style="color:white"></iconify-icon>
 	</div>
-</SystemTooltip>
+</Tooltip>
 
 {#if showRoutes}
 	<button out:keepAlive|local onclick={closeMenu} class="fixed left-0 top-0 z-9999999" aria-label="Close navigation overlay">
@@ -514,7 +514,7 @@ onDestroy(() => {
 			       height:{MENU_RADIUS * 2}px"
 		></div>
 
-		<SystemTooltip
+		<Tooltip
 			title={endpoints[0]?.tooltip || 'Home'}
 			contentClass="z-[99999999]"
 			positioning={{ placement: 'top' }}
@@ -534,10 +534,10 @@ onDestroy(() => {
 			>
 				<iconify-icon width="32" style="color:white" icon={endpoints[0]?.icon || 'solar:home-bold'}></iconify-icon>
 			</a>
-		</SystemTooltip>
+		</Tooltip>
 
 		{#each endpointsWithPos.slice(1) as endpoint, index (endpoint.tooltip)}
-			<SystemTooltip
+			<Tooltip
 				title={endpoint.tooltip}
 				contentClass="z-[99999999]"
 				positioning={{ placement: 'top' }}
@@ -558,7 +558,7 @@ onDestroy(() => {
 				>
 					<iconify-icon width="32" style="color:white" icon={endpoint.icon}></iconify-icon>
 				</a>
-			</SystemTooltip>
+			</Tooltip>
 		{/each}
 	</button>
 {/if}

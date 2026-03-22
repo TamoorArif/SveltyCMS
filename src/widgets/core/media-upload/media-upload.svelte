@@ -10,7 +10,7 @@ Features:
 -->
 <script lang="ts">
 import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
-import FileInput from '@src/components/system/inputs/file-input.svelte';
+import FileUpload from '@components/ui/file-upload.svelte';
 import { updateMediaMetadata } from '@utils/media/api';
 import type { MediaImage } from '@utils/media/media-models';
 import { convertTimestampToDateString } from '@utils/utils';
@@ -94,7 +94,12 @@ $effect(() => {
 
 <div class="relative mb-4 group min-h-[100px]">
 	{#if !value}
-		<FileInput bind:value bind:multiple={field.multiupload} onChange={undefined} />
+		<FileUpload 
+			onchange={(files) => { if (files.length > 0) value = files[0]; }} 
+			multiple={field.multiupload}
+			label="Upload Media"
+			helper="Drop images or click to select"
+		/>
 	{:else}
 		<div class="flex w-full flex-col border-2 border-dashed border-surface-600 bg-surface-50 dark:bg-surface-800 rounded-xl overflow-hidden shadow-sm transition-all hover:border-primary-500/50">
 			<div class="flex items-center justify-between p-3 border-b border-surface-200 dark:border-surface-700 bg-surface-100/50 dark:bg-surface-900/50">

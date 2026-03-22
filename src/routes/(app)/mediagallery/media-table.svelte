@@ -9,7 +9,7 @@ Features:
 -->
 
 <script lang="ts">
-import TablePagination from '@src/components/system/table/table-pagination.svelte';
+import TablePagination from '@components/ui/table/pagination.svelte';
 import type { MediaBase, MediaImage } from '@utils/media/media-models';
 import { formatBytes } from '@utils/utils';
 import type { SvelteSet } from 'svelte/reactivity';
@@ -27,7 +27,6 @@ let { filteredFiles = [], isSelectionMode = false, selectedFiles = $bindable(), 
 // Pagination
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
-const pagesCount = $derived(Math.ceil(filteredFiles.length / rowsPerPage) || 1);
 const paginatedFiles = $derived(filteredFiles.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage));
 
 function toggleSelection(file: MediaBase | MediaImage) {
@@ -138,10 +137,7 @@ function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
 		<TablePagination 
 			bind:currentPage 
 			bind:rowsPerPage 
-			{pagesCount} 
 			totalItems={filteredFiles.length}
-			onUpdatePage={(p: number) => currentPage = p}
-			onUpdateRowsPerPage={(r: number) => { rowsPerPage = r; currentPage = 1; }}
 		/>
 	</div>
 </div>

@@ -112,18 +112,20 @@ export const resetInitializationState = () => {
 
 export const handleSystemState: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
+
+  // 1. FAST BYPASS: Always allow assets and bootstrap routes (Setup, Login, System APIs)
+  const isAsset = STATIC_ASSET_REGEX.test(pathname);
+  if (isAsset || isBootstrapRoute(pathname)) {
+    return await resolve(event);
+  }
+
   const setupComplete = isSetupComplete() || process.env.TEST_MODE === "true";
 
   let systemState = getSystemState();
 
-  // Skip trace logging and heavy logic for static assets and health checks
+  // Skip trace logging for health checks
   const isHealthCheck =
     pathname.startsWith("/api/system/health") || pathname.startsWith("/api/dashboard/health");
-  const isAsset = STATIC_ASSET_REGEX.test(pathname);
-
-  if (isAsset) {
-    return await resolve(event);
-  }
 
   if (!isHealthCheck) {
     const requestType = event.isDataRequest ? "API" : "PAGE";

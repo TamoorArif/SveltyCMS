@@ -10,7 +10,7 @@
 - Clear explanation of why SMTP is needed
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import {
 	setup_email_aria_help_host,
 	setup_email_aria_help_password,
@@ -505,7 +505,7 @@ async function testConnection() {
 			<div class="mb-1 flex items-center gap-1 text-sm font-medium">
 				<iconify-icon icon="mdi:email-fast-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 				<span class="text-black dark:text-white">{setup_email_provider()}</span>
-				<SystemTooltip title={setup_email_help_provider()}>
+				<Tooltip title={setup_email_help_provider()}>
 					<button
 						type="button"
 						tabindex="-1"
@@ -514,7 +514,7 @@ async function testConnection() {
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			</div>
 			<select class="select" bind:value={selectedPreset} onchange={() => applyPreset(selectedPreset)} aria-label="Select an SMTP provider preset">
 				{#each presets as preset, index (index)}
@@ -540,7 +540,7 @@ async function testConnection() {
 			<div class="mb-1 flex items-center gap-1 text-sm font-medium">
 				<iconify-icon icon="mdi:server-network" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 				<span class="text-black dark:text-white">{setup_email_host()} <span class="text-error-500">*</span></span>
-				<SystemTooltip title={setup_email_help_host()}>
+				<Tooltip title={setup_email_help_host()}>
 					<button
 						type="button"
 						tabindex="-1"
@@ -549,7 +549,7 @@ async function testConnection() {
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			</div>
 			<input
 				type="text"
@@ -587,7 +587,7 @@ async function testConnection() {
 				<div class="flex items-center gap-1">
 					<iconify-icon icon="mdi:ethernet" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="font-medium text-black dark:text-white">{setup_email_port()} <span class="text-error-500">*</span></span>
-					<SystemTooltip title={setup_email_help_port()}>
+					<Tooltip title={setup_email_help_port()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -596,7 +596,7 @@ async function testConnection() {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</div>
 			</div>
 
@@ -687,7 +687,7 @@ async function testConnection() {
 			<div class="mb-1 flex items-center gap-1 text-sm font-medium">
 				<iconify-icon icon="mdi:account" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 				<span class="text-black dark:text-white">{setup_email_user()} <span class="text-error-500">*</span></span>
-				<SystemTooltip title={setup_email_help_user()}>
+				<Tooltip title={setup_email_help_user()}>
 					<button
 						type="button"
 						tabindex="-1"
@@ -696,7 +696,7 @@ async function testConnection() {
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			</div>
 			<input
 				type="text"
@@ -731,7 +731,7 @@ async function testConnection() {
 			<div class="mb-1 flex items-center gap-1 text-sm font-medium">
 				<iconify-icon icon="mdi:key-variant" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 				<span class="text-black dark:text-white">{setup_email_password()} <span class="text-error-500">*</span></span>
-				<SystemTooltip title={setup_email_help_password()}>
+				<Tooltip title={setup_email_help_password()}>
 					<button
 						type="button"
 						tabindex="-1"
@@ -740,7 +740,7 @@ async function testConnection() {
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			</div>
 			<div class="relative">
 				<input

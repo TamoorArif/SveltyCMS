@@ -20,7 +20,7 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import Tabs from '@components/ui/tabs';
 import PageTitle from '@src/components/page-title.svelte';
 import { uploadMedia_title } from '@src/paraglide/messages';
 import { goto } from '$app/navigation';
@@ -49,24 +49,17 @@ function handleUploadComplete() {
 </div>
 
 <div class="wrapper">
-	<Tabs value={tabSet} onValueChange={(e) => (tabSet = e.value)}>
-		<Tabs.List class="flex border-b border-surface-200-800 font-bold">
-			<Tabs.Trigger value="0" class="flex-1">
-				<div class="flex items-center justify-center gap-2 py-4">
-					<iconify-icon icon="mdi:database" width="24"></iconify-icon>
-					<p class="text-tertiary-500 dark:text-primary-500">Local Upload</p>
-				</div>
-			</Tabs.Trigger>
-			<Tabs.Trigger value="1" class="flex-1">
-				<div class="flex items-center justify-center gap-2 py-4">
-					<iconify-icon icon="mdi:radio" width="24"></iconify-icon>
-					<p class="text-tertiary-500 dark:text-primary-500">Remote Upload</p>
-				</div>
-			</Tabs.Trigger>
-			<Tabs.Indicator />
+	<Tabs bind:value={tabSet} class="w-full">
+		<Tabs.List>
+			<Tabs.Trigger value="0">Local Upload</Tabs.Trigger>
+			<Tabs.Trigger value="1">Remote Upload</Tabs.Trigger>
 		</Tabs.List>
-
-		<Tabs.Content value="0"><div class="p-4"><LocalUpload onUploadComplete={handleUploadComplete} /></div></Tabs.Content>
-		<Tabs.Content value="1"><div class="p-4"><RemoteUpload onUploadComplete={handleUploadComplete} /></div></Tabs.Content>
+		<div class="p-4">
+			{#if tabSet === '0'}
+				<LocalUpload onUploadComplete={handleUploadComplete} />
+			{:else}
+				<RemoteUpload onUploadComplete={handleUploadComplete} />
+			{/if}
+		</div>
 	</Tabs>
 </div>

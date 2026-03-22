@@ -15,8 +15,8 @@
 
 <script lang="ts">
 // Components
-import TableFilter from '@src/components/system/table/table-filter.svelte';
-import TablePagination from '@src/components/system/table/table-pagination.svelte';
+import TableFilter from '@components/ui/table/filter.svelte';
+import TablePagination from '@components/ui/table/pagination.svelte';
 import type { Permission, User } from '@src/databases/auth/types';
 import type { WebsiteToken } from '@src/databases/schemas';
 import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
@@ -56,7 +56,6 @@ let selectedTokens = $state(new Set<string>());
 
 // Filter state
 let globalSearchValue = $state('');
-let searchShow = $state(false);
 let filterShow = $state(false);
 let columnShow = $state(false);
 let density = $state('normal');
@@ -67,7 +66,7 @@ let sorting = $state({ sortedBy: 'createdAt', isSorted: -1 }); // Sort by create
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
 let totalItems = $state(0);
-const pagesCount = $derived(Math.ceil(totalItems / rowsPerPage) || 1);
+// const pagesCount = $derived(Math.ceil(totalItems / rowsPerPage) || 1);
 
 const tableHeaders = [
 	{ label: 'Name', key: 'name' },
@@ -440,7 +439,7 @@ $effect(() => {
 						</button>
 					{/if}
 				</div>
-				<div class="order-3 sm:order-2"><TableFilter {globalSearchValue} {searchShow} {filterShow} {columnShow} {density} /></div>
+				<div class="order-3 sm:order-2"><TableFilter {globalSearchValue} {filterShow} {columnShow} density={density as 'normal' | 'compact' | 'comfortable'} /></div>
 			</div>
 
 			{#if columnShow}
@@ -606,13 +605,9 @@ $effect(() => {
 					<TablePagination
 						bind:currentPage
 						bind:rowsPerPage
-						{pagesCount}
 						{totalItems}
-						onUpdatePage={(page: number) => (currentPage = page)}
-						onUpdateRowsPerPage={(rows: number) => {
-							rowsPerPage = rows;
-							currentPage = 1;
-						}}
+						onUpdatePage={() => fetchTokens()}
+						onUpdateRowsPerPage={() => fetchTokens()}
 					/>
 				</div>
 			</div>

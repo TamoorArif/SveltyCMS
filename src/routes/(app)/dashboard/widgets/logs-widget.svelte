@@ -23,8 +23,8 @@ export const widgetMeta = {
 </script>
 
 <script lang="ts">
-	import TablePagination from '@src/components/system/table/table-pagination.svelte';
-	import type { TablePaginationProps, WidgetSize } from '@src/content/types';
+	import TablePagination from '@components/ui/table/pagination.svelte';
+	import type { WidgetSize } from '@src/content/types';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import BaseWidget from '../base-widget.svelte';
 
@@ -111,18 +111,6 @@ export const widgetMeta = {
 			triggerFetchFlag++;
 		}, 300); // 300ms debounce
 	});
-
-	// Handle pagination changes
-	const onUpdatePage = (page: number) => {
-		currentPage = page;
-		triggerFetchFlag++;
-	};
-
-	const onUpdateRowsPerPage = (rows: number) => {
-		logsPerPage = rows;
-		currentPage = 1;
-		triggerFetchFlag++;
-	};
 
 	const handleFilterLevelChange = (newLevel: typeof filterLevel) => {
 		filterLevel = newLevel;
@@ -225,13 +213,11 @@ export const widgetMeta = {
 
 			<div class="mt-auto flex items-center justify-between pt-2">
 				<TablePagination
-					currentPage={(fetchedData.page || 1) as TablePaginationProps['currentPage']}
-					rowsPerPage={logsPerPage as TablePaginationProps['rowsPerPage']}
-					rowsPerPageOptions={[10, 20, 50, 100] as TablePaginationProps['rowsPerPageOptions']}
-					totalItems={(fetchedData.total || 0) as TablePaginationProps['totalItems']}
-					pagesCount={(fetchedData.hasMore ? (fetchedData.page || 1) + 1 : fetchedData.page || 1) as TablePaginationProps['pagesCount']}
-					onUpdatePage={onUpdatePage as TablePaginationProps['onUpdatePage']}
-					onUpdateRowsPerPage={onUpdateRowsPerPage as TablePaginationProps['onUpdateRowsPerPage']}
+					bind:currentPage
+					bind:rowsPerPage={logsPerPage}
+					totalItems={fetchedData.total || 0}
+					rowsPerPageOptions={[10, 20, 50, 100]}
+					onchange={() => triggerFetchFlag++}
 				/>
 			</div>
 		{:else}

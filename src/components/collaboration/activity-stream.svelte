@@ -11,7 +11,7 @@ with the AI collaboration assistant.
 import { collaboration } from '@src/stores/collaboration-store.svelte';
 import { screen } from '@src/stores/screen-size-store.svelte';
 import { registerHotkey } from '@src/utils/hotkeys';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { onMount, tick } from 'svelte';
 import { slide } from 'svelte/transition';
 import { page } from '$app/state';
@@ -110,7 +110,7 @@ function getEventIcon(event: string) {
 			{collaboration.currentRoom ? 'Room Collaboration' : 'Collaboration'}
 		</h3>
 		<div class="flex items-center gap-3">
-			<SystemTooltip
+			<Tooltip
 				title={collaboration.isConnected
 					? 'Connected to SveltyCMS Knowledge Core (MCP) for real-time AI assistance'
 					: 'Real-time collaboration is offline (Reconnecting...)'}
@@ -125,7 +125,7 @@ function getEventIcon(event: string) {
 						>{collaboration.isConnected ? 'MCP Live' : 'Offline'}</span
 					>
 				</div>
-			</SystemTooltip>
+			</Tooltip>
 
 			<button class="btn-icon preset-outlined rounded-full" onclick={() => collaboration.togglePanel()} aria-label="Close panel">
 				<iconify-icon icon="mdi:close" width="20"></iconify-icon>

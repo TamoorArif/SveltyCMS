@@ -1,4 +1,4 @@
-﻿<!-- 
+<!-- 
 @file src/routes/login/components/SignIn.svelte
 @component
 **SignIn component with OAuth support**
@@ -29,8 +29,9 @@ import SiteName from '@src/components/site-name.svelte';
 import FloatingPaths from '@src/components/system/floating-paths.svelte';
 import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
 import SveltyCMSLogoFull from '@src/components/system/icons/svelty-cms-logo-full.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
+import Button from '@components/ui/button.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // ParaglideJS
 import {
 	button_back,
@@ -91,7 +92,7 @@ const siteName = $derived(publicEnv.SITE_NAME || 'SveltyCMS');
 // State management
 let P_WFORGOT = $state(false);
 let P_WRESET = $state(false);
-const showPassword = $state(false);
+let showPassword = $state(false);
 let formElement: HTMLFormElement | null = $state(null);
 const tabIndex = $state(1);
 
@@ -517,11 +518,11 @@ $effect(() => {
 					{form_required()}
 
 					<div class="absolute right-0">
-						<SystemTooltip title="Go Back">
+						<Tooltip title="Go Back">
 							<button onclick={handleBack} aria-label="Back" class="btn-icon preset-outlined-secondary-500 rounded-full">
 								<iconify-icon icon="ri:arrow-right-line" width={24}></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 				</div>
 
@@ -550,11 +551,10 @@ $effect(() => {
 							label={email()}
 							required
 							icon="mdi:email"
-							iconColor="black"
-							textColor="black"
 							data-testid="signin-email"
 							invalid={!!loginForm.errors.email}
 							errorMessage={loginForm.errors.email?.[0] || ''}
+							white={true}
 						/>
 
 						<!-- Password field -->
@@ -566,33 +566,30 @@ $effect(() => {
 							tabindex={passwordTabIndex}
 							bind:value={loginForm.data.password}
 							required
-							{showPassword}
+							bind:showPassword
 							label={form_password()}
 							icon="mdi:lock"
-							iconColor="black"
-							textColor="black"
 							data-testid="signin-password"
 							invalid={!!loginForm.errors.password}
 							errorMessage={loginForm.errors.password?.[0] || ''}
+							white={true}
 						/>
 					</form>
 
 					<div class="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
 						<!-- Row 1 -->
 						<div class="flex w-full justify-between gap-2 sm:w-auto">
-							<button
+							<Button
 								type="submit"
 								form="signin-form"
-								class="preset-filled-surface-500 btn w-full text-white sm:w-auto"
+								variant="primary"
+								class="w-full sm:w-auto font-bold uppercase tracking-widest shadow-xl transition-all hover:scale-[1.05] active:scale-95"
 								aria-label={form_signin()}
 								data-testid="signin-submit"
+								loading={isSubmitting || isAuthenticating}
 							>
 								{form_signin()}
-								<!-- Optimized loading indicators -->
-								{#if isSubmitting || isAuthenticating}
-									<img src="/Spinner.svg" alt="" aria-hidden="true" decoding="async" class="ml-4 h-6 invert filter" />
-								{/if}
-							</button>
+							</Button>
 							<!-- OAuth Login -->
 							<OauthLogin showOAuth={pageData.showOAuth} />
 						</div>
@@ -781,12 +778,10 @@ $effect(() => {
 							tabindex={passwordTabIndex}
 							bind:value={resetForm.data.password}
 							required
-							{showPassword}
+							bind:showPassword
 							autocomplete="new-password"
 							label={form_password()}
 							icon="mdi:lock"
-							iconColor="black"
-							textColor="black"
 						/>
 						{#if resetForm.errors.password}
 							<span class="invalid text-xs text-error-500"> {resetForm.errors.password[0]} </span>
@@ -799,12 +794,10 @@ $effect(() => {
 							type="password"
 							tabindex={confirmPasswordTabIndex}
 							bind:value={resetForm.data.confirm_password}
-							{showPassword}
+							bind:showPassword
 							autocomplete="new-password"
 							label={confirm_password?.() || form_confirmpassword?.()}
 							icon="mdi:lock"
-							iconColor="black"
-							textColor="black"
 						/>
 
 						<!-- Password Strength Indicator -->
@@ -815,11 +808,9 @@ $effect(() => {
 							name="token"
 							type="password"
 							bind:value={resetForm.data.token}
-							{showPassword}
+							bind:showPassword
 							label={registration_token?.() || signin_registrationtoken?.()}
 							icon="mdi:lock"
-							iconColor="black"
-							textColor="black"
 							required
 						/>
 

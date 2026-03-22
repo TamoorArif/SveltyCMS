@@ -29,7 +29,7 @@
 
 <script lang="ts">
 import TranslationStatus from '@src/components/collection-display/translation-status.svelte';
-import Toggles from '@src/components/system/inputs/toggles.svelte';
+import Toggle from '@components/ui/toggle.svelte';
 import type { CollectionEntry } from '@src/content/types';
 import { StatusTypes } from '@src/content/types';
 // ParaglideJS
@@ -314,7 +314,18 @@ function next(): void {
 			<TranslationStatus />
 		{/if}
 
-		{#if !app.headerActionButton}
+		{#if app.headerActionButton}
+			<button
+				onclick={app.headerActionButton.onclick}
+				class={app.headerActionButton.class}
+				aria-label={app.headerActionButton.label}
+			>
+				{#if app.headerActionButton.icon}
+					<iconify-icon icon={app.headerActionButton.icon} width="20"></iconify-icon>
+				{/if}
+				<span>{app.headerActionButton.label}</span>
+			</button>
+		{:else}
 			<button onclick={cancel} class="btn-icon preset-outlined-surface-500" aria-label="Cancel">
 				<iconify-icon icon="material-symbols:close" width="24"></iconify-icon>
 			</button>
@@ -327,7 +338,7 @@ function next(): void {
 		<div class="flex justify-center gap-6">
 			<!-- Status Toggle -->
 			<div class="flex flex-col items-center">
-				<Toggles value={publishToggle} disabled={disableStatusToggle} onChange={toggleStatus} />
+				<Toggle value={publishToggle} disabled={disableStatusToggle} onToggle={toggleStatus} />
 				<span class="mt-1 text-xs" class:text-primary-500={publishToggle} class:text-error-500={!publishToggle}>
 					{publishToggle ? status_publish() : status_unpublish()}
 				</span>

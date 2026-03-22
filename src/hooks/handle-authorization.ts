@@ -46,6 +46,7 @@ function isPublicRoute(
     "/api/settings/public",
     "/api/preview",
     "/api/system/health",
+    "/ui-test",
   ];
 
   if (testMode === "true") {

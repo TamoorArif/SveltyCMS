@@ -3,7 +3,7 @@
  @component Modal form for configuring a single widget/field
  -->
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import Tabs from '@components/ui/tabs';
 import { button_cancel, button_delete, button_save, system_permission } from '@src/paraglide/messages';
 import { collectionValue, setCollectionValue, targetWidget } from '@src/stores/collection-store.svelte';
 import { widgets } from '@src/stores/widget-store.svelte.ts';
@@ -73,36 +73,32 @@ const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
 <div class="space-y-4">
 	<!-- Tabs Headers -->
 	<form class={cForm}>
-		<Tabs value={localTabSet} onValueChange={(e) => (localTabSet = e.value)}>
-			<Tabs.List class="flex justify-between lg:justify-start border-b border-surface-200-800">
+		<Tabs bind:value={localTabSet}>
+			<Tabs.List>
 				<Tabs.Trigger value="0">
-					<div class="flex items-center gap-1 py-2 px-4">
-						<iconify-icon icon="mdi:required" width={24}></iconify-icon>
-						<span>Default</span>
-					</div>
+					<iconify-icon icon="mdi:required" width="18"></iconify-icon>
+					<span>Default</span>
 				</Tabs.Trigger>
 				<Tabs.Trigger value="1">
-					<div class="flex items-center gap-1 py-2 px-4">
-						<iconify-icon icon="mdi:security-lock" width={24}></iconify-icon>
-						<span>{system_permission()}</span>
-					</div>
+					<iconify-icon icon="mdi:security-lock" width="18"></iconify-icon>
+					<span>{system_permission()}</span>
 				</Tabs.Trigger>
-
 				{#if specificOptions.length > 0}
 					<Tabs.Trigger value="2">
-						<div class="flex items-center gap-1 py-2 px-4">
-							<iconify-icon icon="ph:star-fill" width={24}></iconify-icon>
-							<span>Specific</span>
-						</div>
+						<iconify-icon icon="ph:star-fill" width="18"></iconify-icon>
+						<span>Specific</span>
 					</Tabs.Trigger>
 				{/if}
 			</Tabs.List>
-
-			<Tabs.Content value="0"><Default guiSchema={guiSchema as any} /></Tabs.Content>
-			<Tabs.Content value="1"><Permission roles={rolesProp} /></Tabs.Content>
-			{#if specificOptions.length > 0}
-				<Tabs.Content value="2"><Specific /></Tabs.Content>
-			{/if}
+			<div class="p-4">
+				{#if localTabSet === '0'}
+					<Default guiSchema={guiSchema as any} />
+				{:else if localTabSet === '1'}
+					<Permission roles={rolesProp} />
+				{:else if localTabSet === '2'}
+					<Specific />
+				{/if}
+			</div>
 		</Tabs>
 	</form>
 

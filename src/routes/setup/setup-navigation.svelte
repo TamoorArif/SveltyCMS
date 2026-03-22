@@ -13,7 +13,7 @@ Features:
 -->
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 
 // Paraglide Messages
 import { button_complete, button_next, button_previous, setup_progress_step_of } from '@src/paraglide/messages';
@@ -53,7 +53,7 @@ const {
 		<!-- Previous Button -->
 		<div class="flex-1">
 			{#if currentStep > 0}
-				<SystemTooltip title={button_previous()}>
+				<Tooltip title={button_previous()}>
 					<button
 						onclick={() => onprev()}
 						class="preset-filled-tertiary-500 btn dark:preset-filled-primary-500 flex items-center gap-1"
@@ -62,7 +62,7 @@ const {
 						<iconify-icon icon="mdi:arrow-left-bold" class="h-5 w-5"></iconify-icon>
 						<span class="inline">{button_previous()}</span>
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			{/if}
 		</div>
 
@@ -75,7 +75,7 @@ const {
 		<!-- Next/Complete Button -->
 		<div class="flex flex-1 justify-end">
 			{#if currentStep < totalSteps - 1}
-				<SystemTooltip title={button_next()}>
+				<Tooltip title={button_next()}>
 					<button
 						onclick={() => onnext()}
 						disabled={!canProceed || isLoading}
@@ -93,9 +93,9 @@ const {
 							<iconify-icon icon="mdi:arrow-right-bold" class="h-5 w-5"></iconify-icon>
 						{/if}
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			{:else if currentStep === totalSteps - 1}
-				<SystemTooltip title={button_complete?.() || 'Complete'}>
+				<Tooltip title={button_complete?.() || 'Complete'}>
 					<button
 						onclick={() => oncomplete()}
 						disabled={isLoading}
@@ -113,7 +113,7 @@ const {
 							<iconify-icon icon="mdi:check-bold" class="h-5 w-5"></iconify-icon>
 						{/if}
 					</button>
-				</SystemTooltip>
+				</Tooltip>
 			{/if}
 		</div>
 	</div>

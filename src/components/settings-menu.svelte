@@ -7,7 +7,7 @@ Sidebar navigation for System Settings
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import type { SettingGroup } from '@src/routes/(app)/config/system-settings/settings-groups';
 import { getSettingGroupsByRole } from '@src/routes/(app)/config/system-settings/settings-groups';
 // Stores
@@ -78,7 +78,7 @@ function handleGroupClick(groupId: string) {
 	<!-- Groups List -->
 	<div class="flex-1 overflow-y-auto px-1 space-y-1 flex flex-col settings-list">
 		{#each filteredGroups as group (group.id)}
-			<SystemTooltip title={group.name} positioning={{ placement: 'right', gutter: 15 }} contentClass="!text-sm" triggerClass="block w-full">
+			<Tooltip title={group.name} positioning={{ placement: 'right', gutter: 15 }} contentClass="!text-sm" triggerClass="block w-full">
 				<button
 					class="relative w-full cursor-pointer rounded-lg p-2 transition-colors flex items-center {isFullSidebar
 						? 'justify-between text-left'
@@ -105,7 +105,7 @@ function handleGroupClick(groupId: string) {
 						<div class="w-2 h-2 rounded-full bg-warning-500 absolute top-1 right-1"></div>
 					{/if}
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 		{/each}
 
 		{#if filteredGroups.length === 0}

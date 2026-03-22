@@ -28,7 +28,7 @@ Part of the Three Pillars Architecture for widget system.
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { publicEnv } from '@src/stores/global-settings.svelte';
 import { app, validationStore } from '@src/stores/store.svelte';
 import { logger } from '@utils/logger';
@@ -198,7 +198,7 @@ function handleUrlInput() {
 </script>
 
 <div class="input-container relative mb-4">
-	<SystemTooltip title={error || fetchError || ''} wFull={true}>
+	<Tooltip title={error || fetchError || ''} wFull={true}>
 		<div class="flex w-full overflow-hidden rounded border border-surface-400 dark:border-surface-600" role="group">
 			<input
 				type="url"
@@ -223,7 +223,7 @@ function handleUrlInput() {
 				</div>
 			{/if}
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 
 	{#if error || fetchError}
 		<p id={`${field.db_fieldName}-error`} class="absolute -bottom-4 left-0 w-full text-center text-xs text-error-500" role="alert">

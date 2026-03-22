@@ -574,14 +574,14 @@ onMount(() => {
 			<div class="relative">
 				{#if availableWidgets.length > 0}
 					<button
-						class="preset-filled-tertiary-500 btn dark:preset-filled-primary-500"
+						class="preset-filled-tertiary-500 dark:preset-filled-primary-500 btn"
 						onclick={() => (dropdownOpen = !dropdownOpen)}
 						aria-haspopup="true"
 						aria-expanded={dropdownOpen}
 						aria-label="Add Widget"
 					>
-						<iconify-icon icon="mdi:plus" width={18} class="mr-2"></iconify-icon>
-						Add Widget
+						<iconify-icon icon="mdi:plus" width={22}></iconify-icon>
+						<span>Add Widget</span>
 					</button>
 				{/if}
 				{#if dropdownOpen}

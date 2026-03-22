@@ -29,7 +29,7 @@ User types "1234.56" → displays "1.234,56 €" → stores 1234.56 as number
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { tokenTarget } from '@src/services/token/token-target';
 import { app, validationStore } from '@src/stores/store.svelte';
 import { getFieldName } from '@utils/utils';
@@ -140,7 +140,7 @@ function parseLocalizedNumber(str: string, locale: string): number {
 </script>
 
 <div class="input-container relative mb-4 min-h-10 w-full">
-	<SystemTooltip title={error || ''} wFull={true}>
+	<Tooltip title={error || ''} wFull={true}>
 		<div class="flex w-full overflow-hidden rounded border border-surface-400 dark:border-surface-600" role="group">
 			{#if field?.prefix}
 				<div
@@ -188,7 +188,7 @@ function parseLocalizedNumber(str: string, locale: string): number {
 				</div>
 			{/if}
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 
 	<!-- Error Message -->
 	{#if error}

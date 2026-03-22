@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @file src/routes/login/components/SignUp.svelte
 @component
 **SignUP with optional OAuth support**
@@ -26,11 +26,12 @@
 import PasswordStrength from '@src/components/password-strength.svelte';
 import SiteName from '@src/components/site-name.svelte';
 // Components
+import Button from '@components/ui/button.svelte';
 import FloatingPaths from '@src/components/system/floating-paths.svelte';
 import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
 import SveltyCMSLogoFull from '@src/components/system/icons/svelty-cms-logo-full.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // ParaglideJS
 import {
 	confirm_password,
@@ -297,11 +298,11 @@ $effect(() => {
 					{form_required()}
 
 					<div class="absolute right-0">
-						<SystemTooltip title="Go Back">
+						<Tooltip title="Go Back">
 							<button onclick={handleBack} aria-label="Back" class="btn-icon rounded-full preset-outlined-secondary-500">
 								<iconify-icon icon="ri:arrow-left-line" width={24}></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 				</div>
 
@@ -327,12 +328,11 @@ $effect(() => {
 						minlength={2}
 						maxlength={24}
 						icon="mdi:user-circle"
-						iconColor="white"
-						textColor="white"
 						inputClass="text-white"
 						autocomplete="username"
 						invalid={!!signUpForm.errors.username}
 						errorMessage={signUpForm.errors.username?.[0] || ''}
+						bgTransparent={true}
 					/>
 
 					<!-- Email field -->
@@ -350,12 +350,11 @@ $effect(() => {
 						minlength={5}
 						maxlength={50}
 						icon="mdi:email"
-						iconColor="white"
-						textColor="white"
 						inputClass="text-white {isInviteFlow ? 'opacity-70' : ''}"
 						disabled={isInviteFlow}
 						invalid={!!signUpForm.errors.email}
 						errorMessage={signUpForm.errors.email?.[0] || ''}
+						bgTransparent={true}
 					/>
 					{#if isInviteFlow}
 						<span class="text-xs text-primary-400">✓ Email pre-filled from invitation</span>
@@ -379,13 +378,11 @@ $effect(() => {
 						minlength={8}
 						maxlength={50}
 						icon="mdi:password"
-						iconColor="white"
-						textColor="white"
-						passwordIconColor="white"
 						inputClass="text-white"
 						autocomplete="new-password"
 						invalid={!!signUpForm.errors.password}
 						errorMessage={signUpForm.errors.password?.[0] || ''}
+						bgTransparent={true}
 					/>
 
 					<!-- Password Confirm -->
@@ -401,13 +398,11 @@ $effect(() => {
 						minlength={8}
 						maxlength={50}
 						icon="mdi:password"
-						iconColor="white"
-						textColor="white"
-						passwordIconColor="white"
 						inputClass="text-white"
 						autocomplete="new-password"
 						invalid={!!signUpForm.errors.confirm_password}
 						errorMessage={signUpForm.errors.confirm_password?.[0] || ''}
+						bgTransparent={true}
 					/>
 					<!-- Password Strength Indicator -->
 					<PasswordStrength password={signUpForm.data.password} confirmPassword={signUpForm.data.confirm_password} />
@@ -423,15 +418,13 @@ $effect(() => {
 							bind:value={signUpForm.data.token}
 							label="{registration_token()} (Optional)"
 							minlength={32}
-							maxlength={36}
+						    maxlength={36}
 							icon="mdi:key-chain"
-							iconColor="white"
-							textColor="white"
-							passwordIconColor="white"
 							inputClass="text-white"
 							autocomplete="one-time-code"
 							invalid={!!signUpForm.errors.token}
 							errorMessage={signUpForm.errors.token?.[0] || ''}
+							bgTransparent={true}
 						/>
 						{#if signUpForm.data.token && inviteError}
 							<span class="text-xs text-warning-400">⚠️ Token was pre-filled from URL and will be validated against the server</span>
@@ -452,26 +445,25 @@ $effect(() => {
 
 					{#if !showOAuth}
 						<!-- Email SignIn only -->
-						<button type="submit" class="btn bg-white text-black mt-4 uppercase" aria-label={isInviteFlow ? 'Accept Invitation' : form_signup()}>
+						<Button
+							type="submit"
+							class="w-full mt-4 uppercase rounded-none bg-white font-bold tracking-widest text-black transition-all hover:scale-[1.02] hover:bg-surface-100 active:scale-95"
+							aria-label={isInviteFlow ? 'Accept Invitation' : form_signup()}
+							loading={isSubmitting || isRedirecting}
+						>
 							{isInviteFlow ? 'Accept Invitation & Create Account' : form_signup()}
-							{#if isSubmitting || isRedirecting}
-								<img src="/Spinner.svg" alt="" aria-hidden="true" decoding="async" class="ml-4 h-6" />
-							{/if}
-						</button>
+						</Button>
 						<!-- Email + OAuth signin  -->
 					{:else}
 						<div class="btn-group mt-4 border border-secondary-500 text-white [&>*+*]:border-secondary-500">
-							<button
+							<Button
 								type="submit"
-								class="btn w-3/4 rounded-none bg-surface-200 text-black hover:text-white"
+								class="w-3/4 rounded-none bg-white font-bold uppercase tracking-widest text-black transition-all hover:scale-[1.02] hover:bg-surface-100 active:scale-95"
 								aria-label={isInviteFlow ? 'Accept Invitation' : form_signup()}
+								loading={isSubmitting || isRedirecting}
 							>
-								<span class="w-full text-black hover:text-white"> {isInviteFlow ? 'Accept Invitation' : form_signup()} </span>
-								<!-- Loading indicators -->
-								{#if isSubmitting || isRedirecting}
-									<img src="/Spinner.svg" alt="" aria-hidden="true" decoding="async" class="ml-4 h-6" />
-								{/if}
-							</button>
+								{isInviteFlow ? 'Accept Invitation' : form_signup()}
+							</Button>
 
 							<button type="button" onclick={handleOAuth} aria-label="OAuth" class="btn flex w-1/4 items-center justify-center">
 								<iconify-icon icon="flat-color-icons:google" width={24}></iconify-icon>

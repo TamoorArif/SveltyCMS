@@ -13,7 +13,7 @@ Features:
 -->
 <script lang="ts">
 import Autocomplete from '@src/components/autocomplete.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // Paraglide Messages
 import {
 	button_add,
@@ -313,11 +313,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="site-name" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:web" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_system_site_name?.() || 'CMS Name'}</span>
-						<SystemTooltip title={setup_help_site_name()}>
+						<Tooltip title={setup_help_site_name()}>
 							<button type="button" tabindex="-1" aria-label="Help: Site Name" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="16" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<input
@@ -340,11 +340,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="host-prod" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:earth" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_system_host_prod?.() || 'Production URL'}</span>
-						<SystemTooltip title={setup_help_host_prod?.() || 'The production URL...'}>
+						<Tooltip title={setup_help_host_prod?.() || 'The production URL...'}>
 							<button type="button" tabindex="-1" aria-label="Help: Production URL" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="16" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<input
@@ -367,11 +367,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="timezone" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:clock-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_system_timezone?.() || 'Timezone'}</span>
-						<SystemTooltip title={setup_help_timezone?.() || 'Default system timezone'}>
+						<Tooltip title={setup_help_timezone?.() || 'Default system timezone'}>
 							<button type="button" tabindex="-1" aria-label="Help: Timezone" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="16" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<Autocomplete
@@ -392,11 +392,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="media-storage-type" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:cloud-outline" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_system_media_type?.() || 'Media Storage Type'}</span>
-						<SystemTooltip title={setup_help_media_type?.() || setup_help_media_path()}>
+						<Tooltip title={setup_help_media_type?.() || setup_help_media_path()}>
 							<button type="button" tabindex="-1" aria-label="Help: Media Storage Type" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<select id="media-storage-type" bind:value={systemSettings.mediaStorageType} class="input w-full rounded">
@@ -416,11 +416,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 								? setup_system_media_folder_local?.() || 'Media Folder Path'
 								: setup_system_media_folder_cloud?.() || 'Bucket/Cloud Name'}
 						</span>
-						<SystemTooltip title={setup_help_media_type?.() || 'Storage path configuration'}>
+						<Tooltip title={setup_help_media_type?.() || 'Storage path configuration'}>
 							<button type="button" tabindex="-1" aria-label="Help: Media Folder" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<input
@@ -453,11 +453,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="default-system-lang" class="mb-1 flex items-center gap-1 text-sm font-medium">
 						<iconify-icon icon="mdi:translate" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 						<span class="text-black dark:text-white">{setup_label_default_system_language?.() || 'Default System Language'}</span>
-						<SystemTooltip title={setup_help_default_system_language()}>
+						<Tooltip title={setup_help_default_system_language()}>
 							<button tabindex="-1" type="button" aria-label="Help: Default System Language" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="16" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</label>
 
 					<p class="text-[10px] text-slate-500 dark:text-white/40" id="system-lang-help">Select the primary language for the admin interface.</p>
@@ -471,11 +471,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 						<div class="mb-1 flex items-center gap-1 text-sm font-medium tracking-wide">
 							<iconify-icon icon="mdi:translate-variant" width="14" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 							<span class="text-black dark:text-white">{setup_label_system_languages?.() || 'System Languages'}</span>
-							<SystemTooltip title={setup_help_system_languages()}>
+							<Tooltip title={setup_help_system_languages()}>
 								<button tabindex="-1" type="button" aria-label="Help: System Languages" class="ml-1 text-slate-400 hover:text-tertiary-500">
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</div>
 
 						<div class="relative flex min-h-[42px] flex-wrap items-center gap-2 rounded border border-surface-200 dark:border-white/5 p-2 pr-16">
@@ -551,11 +551,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 						<iconify-icon icon="mdi:book-open-page-variant" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"
 						></iconify-icon>
 						<span class="text-black dark:text-white">{setup_label_default_content_language?.() || 'Default Content Language'}</span>
-						<SystemTooltip title={setup_help_default_content_language()}>
+						<Tooltip title={setup_help_default_content_language()}>
 							<button tabindex="-1" type="button" aria-label="Help: Default Content Language" class="ml-1 text-slate-400 hover:text-tertiary-500">
 								<iconify-icon icon="mdi:help-circle-outline" width="16" aria-hidden="true"></iconify-icon>
 							</button>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 					<p class="text-[10px] text-slate-500 dark:text-white/40" id="system-lang-help">Select the primary language for your content.</p>
 					<select
@@ -576,11 +576,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 						<div class="mb-1 flex items-center gap-1 text-sm font-medium tracking-wide">
 							<iconify-icon icon="mdi:book-multiple" width="14" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 							<span class="text-black dark:text-white">{setup_label_content_languages?.() || 'Content Languages'}</span>
-							<SystemTooltip title={setup_help_content_languages()}>
+							<Tooltip title={setup_help_content_languages()}>
 								<button tabindex="-1" type="button" aria-label="Help: Content Languages" class="ml-1 text-slate-400 hover:text-tertiary-500">
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</div>
 
 						<div
@@ -673,11 +673,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<div class="flex items-center gap-2">
 						<iconify-icon icon="devicon-plain:redis" width="20" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 						<label for="use-redis" class="font-medium text-black dark:text-white text-sm"> Enable Redis Caching </label>
-						<SystemTooltip
+						<Tooltip
 							title="Significantly improves performance by caching database queries and session data in-memory. Recommended if Redis is available."
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="16" class="text-slate-400 hover:text-tertiary-500"></iconify-icon>
-						</SystemTooltip>
+						</Tooltip>
 					</div>
 				</div>
 
@@ -721,9 +721,9 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 					<label for="multi-tenant-mode" class="font-medium text-black dark:text-white">
 						{setup_system_multi_tenant?.() || 'Multi-Tenant Mode'}
 					</label>
-					<SystemTooltip title={setup_system_multi_tenant_desc?.() || 'Enables support for multiple isolated tenants...'}>
+					<Tooltip title={setup_system_multi_tenant_desc?.() || 'Enables support for multiple isolated tenants...'}>
 						<iconify-icon icon="mdi:help-circle-outline" width="16" class="text-slate-400 hover:text-tertiary-500"></iconify-icon>
-					</SystemTooltip>
+					</Tooltip>
 				</div>
 			</div>
 
@@ -738,11 +738,11 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 				<div class="flex items-center gap-2">
 					<iconify-icon icon="mdi:test-tube" width="18" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
 					<label for="demo-mode" class="font-medium text-black dark:text-white"> {setup_system_demo_mode?.() || 'Demo Mode'} </label>
-					<SystemTooltip
+					<Tooltip
 						title={(setup_system_demo_mode_desc?.() || 'Warning: Creates ephemeral environments for visitors.').replace(/<\/?[^>]+(>|$)/g, '')}
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="16" class="text-slate-400 hover:text-tertiary-500"></iconify-icon>
-					</SystemTooltip>
+					</Tooltip>
 					{#if systemSettings.demoMode && !systemSettings.multiTenant}
 						<span class="text-xs font-bold text-amber-600 dark:text-amber-400">
 							({setup_note_demo_requires_multitenant?.() || 'Enables Multi-Tenant'})

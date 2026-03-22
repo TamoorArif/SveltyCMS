@@ -12,7 +12,7 @@ This component presents a summary of all configuration steps before finalizing t
 
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 // ParaglideJS
 import {
 	form_email,
@@ -97,7 +97,7 @@ function redact(value: string | undefined): string {
 					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_label_database_type ? setup_label_database_type() : 'Type'}:
-							<SystemTooltip title={setup_help_database_type?.() || 'Database type'}>
+							<Tooltip title={setup_help_database_type?.() || 'Database type'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -106,14 +106,14 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{dbConfig.type}</dd>
 
 						{#if dbConfig.host}
 							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 								{label_host?.() || 'Host'}:
-								<SystemTooltip title={setup_help_database_host?.() || 'Database host'}>
+								<Tooltip title={setup_help_database_host?.() || 'Database host'}>
 									<button
 										type="button"
 										tabindex="-1"
@@ -122,7 +122,7 @@ function redact(value: string | undefined): string {
 									>
 										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(dbConfig.host)}</dd>
 						{/if}
@@ -130,7 +130,7 @@ function redact(value: string | undefined): string {
 						{#if dbConfig.port}
 							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 								{label_port?.() || 'Port'}:
-								<SystemTooltip title={setup_help_database_port?.() || 'Database port'}>
+								<Tooltip title={setup_help_database_port?.() || 'Database port'}>
 									<button
 										type="button"
 										tabindex="-1"
@@ -139,7 +139,7 @@ function redact(value: string | undefined): string {
 									>
 										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{dbConfig.port}</dd>
 						{/if}
@@ -147,7 +147,7 @@ function redact(value: string | undefined): string {
 						{#if dbConfig.name}
 							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 								{label_database?.() || 'Database'}:
-								<SystemTooltip title={setup_help_database_name?.() || 'Database name'}>
+								<Tooltip title={setup_help_database_name?.() || 'Database name'}>
 									<button
 										type="button"
 										tabindex="-1"
@@ -156,7 +156,7 @@ function redact(value: string | undefined): string {
 									>
 										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{dbConfig.name}</dd>
 						{/if}
@@ -164,7 +164,7 @@ function redact(value: string | undefined): string {
 						{#if dbConfig.user}
 							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 								{form_username()}:
-								<SystemTooltip title={setup_help_database_user?.() || 'Database username'}>
+								<Tooltip title={setup_help_database_user?.() || 'Database username'}>
 									<button
 										type="button"
 										tabindex="-1"
@@ -173,7 +173,7 @@ function redact(value: string | undefined): string {
 									>
 										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(dbConfig.user)}</dd>
 						{/if}
@@ -189,7 +189,7 @@ function redact(value: string | undefined): string {
 					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{form_username()}:
-							<SystemTooltip title={setup_help_admin_username?.() || 'Admin username'}>
+							<Tooltip title={setup_help_admin_username?.() || 'Admin username'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -198,12 +198,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{adminUser.username}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{form_email()}:
-							<SystemTooltip title={setup_help_admin_email?.() || 'Admin email'}>
+							<Tooltip title={setup_help_admin_email?.() || 'Admin email'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -212,12 +212,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{redact(adminUser.email)}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{form_password()}:
-							<SystemTooltip title={setup_help_admin_password?.() || 'Admin password'}>
+							<Tooltip title={setup_help_admin_password?.() || 'Admin password'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -226,7 +226,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold text-lg leading-none pt-1">••••••••</dd>
 					</dl>
@@ -241,7 +241,7 @@ function redact(value: string | undefined): string {
 					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Storage Type:
-							<SystemTooltip title={setup_help_media_path?.() || 'The storage mechanism for user uploads.'}>
+							<Tooltip title={setup_help_media_path?.() || 'The storage mechanism for user uploads.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -250,7 +250,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500">
 							{#if systemSettings.mediaStorageType === 'local'}
@@ -265,7 +265,7 @@ function redact(value: string | undefined): string {
 						</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{systemSettings.mediaStorageType === 'local' ? 'Folder Path' : 'Bucket Name'}:
-							<SystemTooltip
+							<Tooltip
 								title="For local storage: specify the folder path (e.g., ./mediaFolder). For cloud storage: enter the bucket or container name."
 							>
 								<button
@@ -276,7 +276,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.mediaFolder}</dd>
 					</dl>
@@ -291,7 +291,7 @@ function redact(value: string | undefined): string {
 					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Status:
-							<SystemTooltip title="Shows if the SMTP configuration was successfully tested and saved, or skipped.">
+							<Tooltip title="Shows if the SMTP configuration was successfully tested and saved, or skipped.">
 								<button
 									type="button"
 									tabindex="-1"
@@ -300,7 +300,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">
 							{emailSettings.smtpConfigured ? '✅ Configured' : '❌ Not Configured (Skipped)'}
@@ -342,7 +342,7 @@ function redact(value: string | undefined): string {
 					<dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 text-sm">
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							CMS Name:
-							<SystemTooltip title={setup_help_site_name?.() || 'The name for your CMS instance.'}>
+							<Tooltip title={setup_help_site_name?.() || 'The name for your CMS instance.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -351,14 +351,14 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.siteName}</dd>
 
 						<!-- Added missing preset -->
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Project Blueprint:
-							<SystemTooltip title="The selected project blueprint/preset.">
+							<Tooltip title="The selected project blueprint/preset.">
 								<button
 									type="button"
 									tabindex="-1"
@@ -367,13 +367,13 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.preset}</dd>
 
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Production URL:
-							<SystemTooltip
+							<Tooltip
 								title="The production URL where your CMS will be accessible (e.g., https://mysite.com). Used for OAuth callbacks and email links."
 							>
 								<button
@@ -384,12 +384,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.hostProd}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_review_label_default_system_lang?.() || 'Default System Lang'}:
-							<SystemTooltip title={setup_help_default_system_language?.() || 'Primary language for the admin interface.'}>
+							<Tooltip title={setup_help_default_system_language?.() || 'Primary language for the admin interface.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -398,12 +398,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold uppercase">{systemSettings.defaultSystemLanguage}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_review_label_system_languages?.() || 'System Languages'}:
-							<SystemTooltip title={setup_help_system_languages?.() || 'Available languages for the admin interface.'}>
+							<Tooltip title={setup_help_system_languages?.() || 'Available languages for the admin interface.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -412,12 +412,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold uppercase">{systemSettings.systemLanguages.join(', ')}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_review_label_default_content_lang?.() || 'Default Content Lang'}:
-							<SystemTooltip title={setup_help_default_content_language?.() || 'Primary language for content creation.'}>
+							<Tooltip title={setup_help_default_content_language?.() || 'Primary language for content creation.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -426,12 +426,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold uppercase">{systemSettings.defaultContentLanguage}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_review_label_content_languages?.() || 'Content Languages'}:
-							<SystemTooltip title={setup_help_content_languages?.() || 'Available languages for content translations.'}>
+							<Tooltip title={setup_help_content_languages?.() || 'Available languages for content translations.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -440,12 +440,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold uppercase">{systemSettings.contentLanguages.join(', ')}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							{setup_review_label_timezone?.() || 'Timezone'}:
-							<SystemTooltip title="The default timezone for the system. Used for scheduling and date displays.">
+							<Tooltip title="The default timezone for the system. Used for scheduling and date displays.">
 								<button
 									type="button"
 									tabindex="-1"
@@ -454,12 +454,12 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.timezone}</dd>
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Multi-Tenant Mode:
-							<SystemTooltip title={setup_system_multi_tenant_desc?.() || 'Enables support for multiple isolated tenants on a single installation.'}>
+							<Tooltip title={setup_system_multi_tenant_desc?.() || 'Enables support for multiple isolated tenants on a single installation.'}>
 								<button
 									type="button"
 									tabindex="-1"
@@ -468,13 +468,13 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.multiTenant ? 'Enabled' : 'Disabled'}</dd>
 
 						<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 							Demo Mode:
-							<SystemTooltip
+							<Tooltip
 								title={setup_system_demo_mode_desc?.() || 'Warning: Creates ephemeral environments for visitors. Data is wiped automatically.'}
 							>
 								<button
@@ -485,7 +485,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.demoMode ? 'Enabled' : 'Disabled'}</dd>
 
@@ -493,7 +493,7 @@ function redact(value: string | undefined): string {
 							class="flex items-center justify-between font-medium text-black dark:text-white border-t border-slate-100 dark:border-slate-800 pt-1 mt-1"
 						>
 							Redis Caching:
-							<SystemTooltip title="In-memory caching for database queries and session data.">
+							<Tooltip title="In-memory caching for database queries and session data.">
 								<button
 									type="button"
 									tabindex="-1"
@@ -502,7 +502,7 @@ function redact(value: string | undefined): string {
 								>
 									<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 								</button>
-							</SystemTooltip>
+							</Tooltip>
 						</dt>
 						<dd class="text-tertiary-500 dark:text-primary-500 border-t border-slate-100 dark:border-slate-800 pt-1 mt-1 font-semibold">
 							{systemSettings.useRedis ? '🚀 Enabled' : 'Disabled'}
@@ -511,7 +511,7 @@ function redact(value: string | undefined): string {
 						{#if systemSettings.useRedis}
 							<dt class="flex items-center justify-between font-medium text-black dark:text-white">
 								Redis Host:
-								<SystemTooltip title="The connection address and port for your Redis instance.">
+								<Tooltip title="The connection address and port for your Redis instance.">
 									<button
 										type="button"
 										tabindex="-1"
@@ -520,7 +520,7 @@ function redact(value: string | undefined): string {
 									>
 										<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 									</button>
-								</SystemTooltip>
+								</Tooltip>
 							</dt>
 							<dd class="text-tertiary-500 dark:text-primary-500 font-semibold">{systemSettings.redisHost}:{systemSettings.redisPort}</dd>
 						{/if}

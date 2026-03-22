@@ -194,7 +194,8 @@ export function isBootstrapRoute(pathname: string): boolean {
     pathname.startsWith("/api/settings/public") ||
     pathname.startsWith("/api/content/version") ||
     pathname.startsWith("/api/dashboard/health") ||
-    pathname === "/"
+    pathname === "/" ||
+    pathname.startsWith("/ui-test")
   ) {
     return true;
   }

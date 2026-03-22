@@ -26,7 +26,7 @@ Renders: SEO icon + "Keyword: svelte cms" with hover tooltip showing full meta d
 
 <script lang="ts">
 import type { SeoData } from './types';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 
 const { value }: { value: SeoData | null | undefined } = $props();
 
@@ -41,12 +41,12 @@ const displayText = $derived.by(() => {
 </script>
 
 {#if value}
-	<SystemTooltip title="Title: {value.title} | Description: {value.description}">
+	<Tooltip title="Title: {value.title} | Description: {value.description}">
 		<div class="inline-flex items-center gap-0.5 text-surface-600 dark:text-surface-100">
 			<iconify-icon icon="tabler:seo" width="24" style="flex-shrink: 0"></iconify-icon>
 			<span>{displayText}</span>
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 {:else}
 	<span>–</span>
 {/if}

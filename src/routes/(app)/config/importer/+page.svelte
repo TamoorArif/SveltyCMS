@@ -8,7 +8,7 @@ import { onMount } from 'svelte';
 import { toast } from '@src/stores/toast.svelte';
 import { getCollections } from '@utils/api-client';
 import type { Schema } from '@src/content/types';
-import { Progress as ProgressBar } from '@skeletonlabs/skeleton-svelte';
+import ProgressBar from '@components/ui/progress.svelte';
 
 // State using Svelte 5 Runes
 let loading = $state(false);

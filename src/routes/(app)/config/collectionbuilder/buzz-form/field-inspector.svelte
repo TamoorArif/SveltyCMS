@@ -17,7 +17,7 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
+import Tabs from '@components/ui/tabs';
 import InputSwitch from '@src/components/system/builder/input-switch.svelte';
 import { collections } from '@src/stores/collection-store.svelte';
 import { widgets } from '@src/stores/widget-store.svelte.ts';
@@ -58,7 +58,7 @@ function handleUpdate(detail: { value: any }, property: string) {
 }
 </script>
 
-<div class="flex h-full flex-col border-l border-surface-200-800 bg-surface-50-950 w-80">
+<div class="flex h-full flex-col border-l border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-950 w-80">
 	{#if !target || !target.widget}
 		<div class="flex h-full flex-col items-center justify-center p-8 text-center text-surface-500">
 			<iconify-icon icon="mdi:form-select" width="48" class="mb-4 opacity-20"></iconify-icon>
@@ -67,7 +67,7 @@ function handleUpdate(detail: { value: any }, property: string) {
 		</div>
 	{:else}
 		<!-- Header -->
-		<div class="border-b border-surface-200-800 bg-surface-100/50 dark:bg-surface-800/30 p-4">
+		<div class="border-b border-surface-200 dark:border-surface-800 bg-surface-100/50 dark:bg-surface-800/30 p-4">
 			<div class="flex items-center gap-3">
 				<div class="relative">
 					<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-primary-700 text-white shadow-lg ring-2 ring-primary-500/20">
@@ -97,7 +97,7 @@ function handleUpdate(detail: { value: any }, property: string) {
 		</div>
 
 		<!-- Quick Info Strip -->
-		<div class="flex items-center justify-between border-b border-surface-200-800 bg-surface-50 dark:bg-surface-900 px-4 py-2 text-[10px] font-mono text-surface-500">
+		<div class="flex items-center justify-between border-b border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-900 px-4 py-2 text-[10px] font-mono text-surface-500">
 			<span class="truncate max-w-[150px]">{target.db_fieldName || 'no_name'}</span>
 			<div class="flex gap-2">
 				{#if target.required}<span class="text-error-500">Required</span>{/if}
@@ -107,17 +107,11 @@ function handleUpdate(detail: { value: any }, property: string) {
 
 		<!-- Tabs -->
 		<div class="flex-1 overflow-hidden flex flex-col">
-			<Tabs value={activeTab} onValueChange={(e: { value: string }) => (activeTab = e.value)} class="flex flex-col h-full">
-				<Tabs.List class="flex border-b border-surface-200-800 px-2 justify-between bg-surface-100/30 dark:bg-surface-800/20">
-					<Tabs.Trigger value="general" class="flex-1 px-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent data-[state=active]:border-primary-500 data-[state=active]:text-primary-500 transition-all">
-						Basic
-					</Tabs.Trigger>
-					<Tabs.Trigger value="specific" class="flex-1 px-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent data-[state=active]:border-primary-500 data-[state=active]:text-primary-500 transition-all" disabled={specificProperties.length === 0}>
-						Settings
-					</Tabs.Trigger>
-					<Tabs.Trigger value="auth" class="flex-1 px-1 py-3 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent data-[state=active]:border-primary-500 data-[state=active]:text-primary-500 transition-all">
-						Auth
-					</Tabs.Trigger>
+			<Tabs bind:value={activeTab}>
+				<Tabs.List class="px-4">
+					<Tabs.Trigger value="general">Basic</Tabs.Trigger>
+					<Tabs.Trigger value="specific" disabled={specificProperties.length === 0}>Settings</Tabs.Trigger>
+					<Tabs.Trigger value="auth">Auth</Tabs.Trigger>
 				</Tabs.List>
 
 				<div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -138,10 +132,12 @@ function handleUpdate(detail: { value: any }, property: string) {
 							{/each}
 						</div>
 					</Tabs.Content>
-
-					<Tabs.Content value="specific"><Specific /></Tabs.Content>
-
-					<Tabs.Content value="auth"><Permission roles={[]} /></Tabs.Content>
+					<Tabs.Content value="specific">
+						<Specific />
+					</Tabs.Content>
+					<Tabs.Content value="auth">
+						<Permission roles={[]} />
+					</Tabs.Content>
 				</div>
 			</Tabs>
 		</div>

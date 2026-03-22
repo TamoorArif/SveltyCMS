@@ -157,8 +157,8 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 
       if (result && typeof result === "object" && "fields" in result) {
         // Ensure _id is present (either from code or generated)
-        if (!result._id) {
-          result._id = (result.name || "unknown").toLowerCase();
+        if (!result._id && result.name) {
+          result._id = result.name.toLowerCase();
         }
         return { schema: result as Schema };
       }

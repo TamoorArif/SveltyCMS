@@ -23,7 +23,7 @@
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { StatusTypes } from '@src/content/types';
 import {
 	button_delete,
@@ -405,7 +405,7 @@ function handleMainButtonClick() {
 <div class="relative flex items-center" bind:this={dropdownRef}>
 	<div class="flex items-center gap-0">
 		<!-- Archive Toggle -->
-		<SystemTooltip title={showDeleted ? entrylist_multibutton_show_active() : entrylist_multibutton_show_archived()}>
+		<Tooltip title={showDeleted ? entrylist_multibutton_show_active() : entrylist_multibutton_show_archived()}>
 			<button
 				type="button"
 				onclick={() => (showDeleted = !showDeleted)}
@@ -417,7 +417,7 @@ function handleMainButtonClick() {
 			>
 				<iconify-icon icon={showDeleted ? 'ic:round-archive' : 'ic:round-unarchive'} width="24"></iconify-icon>
 			</button>
-		</SystemTooltip>
+		</Tooltip>
 
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->

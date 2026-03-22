@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { activeInput } from '@src/stores/active-input-store.svelte';
 import { collection } from '@src/stores/collection-store.svelte';
 import { publicEnv } from '@src/stores/global-settings.svelte';
@@ -179,7 +179,7 @@ export const WidgetData = async () => value;
 </script>
 
 <div class="input-container relative mb-4">
-	<SystemTooltip title={validationError || ''} wFull={true}>
+	<Tooltip title={validationError || ''} wFull={true}>
 		<div class="flex w-full overflow-hidden rounded border border-surface-400 dark:border-surface-600" role="group">
 			{#if field?.prefix}
 				<div
@@ -230,7 +230,7 @@ export const WidgetData = async () => value;
 				</div>
 			{/if}
 		</div>
-	</SystemTooltip>
+	</Tooltip>
 
 	<!-- Error Message -->
 	{#if validationError && isTouched}

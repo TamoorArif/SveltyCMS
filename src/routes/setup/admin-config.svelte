@@ -21,7 +21,7 @@
 
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import {
 	form_confirmpassword,
 	form_email,
@@ -118,7 +118,7 @@ function handleBlur(fieldName: string) {
 				<label for="admin-username" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:account" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{form_username?.() || 'Username'}</span>
-					<SystemTooltip title={setup_help_admin_username()}>
+					<Tooltip title={setup_help_admin_username()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -127,7 +127,7 @@ function handleBlur(fieldName: string) {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<input
@@ -158,7 +158,7 @@ function handleBlur(fieldName: string) {
 				<label for="admin-email" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:email" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{form_email?.() || 'Email'}</span>
-					<SystemTooltip title={setup_help_admin_email()}>
+					<Tooltip title={setup_help_admin_email()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -167,7 +167,7 @@ function handleBlur(fieldName: string) {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<input
@@ -198,7 +198,7 @@ function handleBlur(fieldName: string) {
 				<label for="admin-password" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:key-variant" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{form_password()}</span>
-					<SystemTooltip title={setup_help_admin_password()}>
+					<Tooltip title={setup_help_admin_password()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -207,7 +207,7 @@ function handleBlur(fieldName: string) {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<div class="relative">
@@ -264,7 +264,7 @@ function handleBlur(fieldName: string) {
 				<label for="admin-confirm-password" class="mb-1 flex items-center gap-1 text-sm font-medium">
 					<iconify-icon icon="mdi:key" width="18" class="text-tertiary-500 dark:text-primary-500" aria-hidden="true"></iconify-icon>
 					<span class="text-black dark:text-white">{form_confirmpassword?.() || 'Confirm Password'}</span>
-					<SystemTooltip title={setup_help_admin_confirm_password()}>
+					<Tooltip title={setup_help_admin_confirm_password()}>
 						<button
 							type="button"
 							tabindex="-1"
@@ -273,7 +273,7 @@ function handleBlur(fieldName: string) {
 						>
 							<iconify-icon icon="mdi:help-circle-outline" width="14" aria-hidden="true"></iconify-icon>
 						</button>
-					</SystemTooltip>
+					</Tooltip>
 				</label>
 
 				<div class="relative">

@@ -45,7 +45,7 @@
 - Fluid typography scaling
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { ui } from '@src/stores/ui-store.svelte.ts';
 
 type DefaultBehaviorFn = () => void;
@@ -138,7 +138,7 @@ function handleBackClick(event: Event) {
 			</span>
 
 			{#if helpUrl}
-				<SystemTooltip title="Open documentation">
+				<Tooltip title="Open documentation">
 					<a
 						href={helpUrl}
 						target="_blank"
@@ -148,7 +148,7 @@ function handleBackClick(event: Event) {
 					>
 						<iconify-icon icon="mdi:help-circle-outline" width="20"></iconify-icon>
 					</a>
-				</SystemTooltip>
+				</Tooltip>
 			{/if}
 
 			<span class="sr-only absolute inset-0 overflow-hidden whitespace-normal"> {name} </span>
@@ -163,7 +163,7 @@ function handleBackClick(event: Event) {
 
 		{#if showBackButton}
 			{#if backUrl}
-				<SystemTooltip title="Go back">
+				<Tooltip title="Go back">
 					<a
 						href={backUrl}
 						aria-label="Go back"
@@ -174,7 +174,7 @@ function handleBackClick(event: Event) {
 					>
 						<iconify-icon icon="ri:arrow-left-line" width="24" aria-hidden="true"></iconify-icon>
 					</a>
-				</SystemTooltip>
+				</Tooltip>
 			{:else}
 				<button
 					onclick={(e) => handleBackClick(e)}

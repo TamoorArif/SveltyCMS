@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @files src/routes/(app)/user/components/modal-edit-token.svelte
 @component
 **Modal for editing or creating user registration tokens**
@@ -17,7 +17,7 @@ It handles token creation, updates, and deletion with proper validation and erro
 -->
 
 <script lang="ts">
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
+import FloatingInput from '@components/ui/floating-input.svelte';
 // ParaglideJS
 import {
 	button_cancel,
@@ -240,7 +240,6 @@ function convertExpiresToHours(expires: string): number {
 			required
 			autocomplete="email"
 			icon="mdi:email"
-			textColor="text-tertiary-500 dark:text-white"
 			invalid={!!tokenForm.errors.email?.length}
 			errorMessage={tokenForm.errors.email?.[0]}
 		/>

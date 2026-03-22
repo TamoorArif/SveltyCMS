@@ -12,7 +12,7 @@ It relies entirely on the centralized `themeStore` for its state and logic.
 //Stores
 
 // Componets
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import { setThemePreference, themeStore, useSystemPreference } from '@src/stores/theme-store.svelte.ts';
 
 interface Props {
@@ -55,7 +55,7 @@ const getTooltipText = $derived(() => {
 </script>
 
 {#if showTooltip}
-	<SystemTooltip title={getTooltipText()} positioning={{ placement: tooltipPlacement }}>
+	<Tooltip title={getTooltipText()} positioning={{ placement: tooltipPlacement }}>
 		<button onclick={cycleTheme} aria-label="Toggle theme" class={buttonClass}>
 			{#if themeStore.themePreference === 'light'}
 				<iconify-icon icon="mdi:white-balance-sunny" width={iconSize}></iconify-icon>
@@ -65,7 +65,7 @@ const getTooltipText = $derived(() => {
 				<iconify-icon icon="mdi:theme-light-dark" width={iconSize}></iconify-icon>
 			{/if}
 		</button>
-	</SystemTooltip>
+	</Tooltip>
 {:else}
 	<button onclick={cycleTheme} aria-label="Toggle theme" class={buttonClass}>
 		{#if themeStore.themePreference === 'light'}

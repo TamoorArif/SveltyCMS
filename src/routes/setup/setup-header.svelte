@@ -4,13 +4,11 @@
 Middle-ground height (h-[38px]), fixed dropdown borders, and right-aligned mobile menu.
 -->
 <script lang="ts">
-// Skeleton V4
-import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-
 // Components
+import Dropdown from '@components/ui/dropdown.svelte';	
 import SiteName from '@src/components/site-name.svelte';
 import AccessibilityHelp from '@src/components/system/accessibility-help.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import Tooltip from '@components/ui/tooltip.svelte';
 import ThemeToggle from '@src/components/theme-toggle.svelte';
 import VersionCheck from '@src/components/version-check.svelte';
 // Paraglide Messages
@@ -62,75 +60,68 @@ function selectLanguage(lang: string) {
 		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
 			<!-- Language Selector -->
 			<div class="language-selector relative dark:text-white">
-				<Menu positioning={{ placement: 'bottom-end', gutter: 12 }}>
-					<SystemTooltip title={applayout_systemlanguage?.() || 'Change system language'}>
-						<div class="inline-block">
-							<!-- Height 9.5 Equivalent (38px) -->
-							<Menu.Trigger class="preset-outlined-surface-500 btn h-9.5 rounded-lg px-2 py-0 sm:h-10 sm:px-3">
+				<Dropdown 
+					position="bottom-end" 
+					class="z-50 w-[75vw] max-w-64 overflow-hidden rounded-xl border border-primary-500 bg-surface-50 p-0 shadow-2xl dark:bg-surface-800"
+				>
+					{#snippet trigger()}
+						<Tooltip title={applayout_systemlanguage?.() || 'Change system language'}>
+							<button class="preset-outlined-surface-500 btn h-9.5 rounded-lg px-2 py-0 sm:h-10 sm:px-3">
 								<span class="text-[10px] font-bold sm:text-sm">
 									<span class="hidden xs:inline">{getLanguageName(currentLanguageTag)}</span>
 									<span class="xs:hidden">{currentLanguageTag.toUpperCase()}</span>
 								</span>
 								<iconify-icon icon="mdi:chevron-down" class="ml-1 h-4 w-4 transition-transform group-data-[state=open]:rotate-180"></iconify-icon>
-							</Menu.Trigger>
+							</button>
+						</Tooltip>
+					{/snippet}
+
+					<!-- Header: Flush with the border -->
+					<div
+						class="border-b border-surface-200 dark:border-surface-600 bg-surface-100/90 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary-500 dark:bg-surface-900/90"
+					>
+						{applayout_systemlanguage()}
+					</div>
+
+					<!-- Search Input (Only if > 5 languages) -->
+					{#if systemLanguages.length > 5}
+						<div class="px-2 pb-2 mb-2 border-b border-surface-200 dark:text-surface-50">
+							<div class="relative">
+								<iconify-icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></iconify-icon>
+								<input
+									type="text"
+									bind:value={langSearch}
+									placeholder={setup_search_placeholder()}
+									class="w-full rounded-md bg-surface-50 dark:bg-surface-800 pl-9 pr-3 py-1.5 text-sm placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500 border border-surface-200 dark:text-surface-50"
+									aria-label={setup_search_placeholder?.() || 'Search languages'}
+									onclick={(e) => e.stopPropagation()}
+								/>
+							</div>
 						</div>
-					</SystemTooltip>
+					{/if}
 
-					<Portal>
-						<Menu.Positioner>
-							<!-- Dropdown: Single green border, no padding gap, right-aligned -->
-							<Menu.Content
-								class="z-50 w-[75vw] max-w-64 overflow-hidden rounded-xl border border-primary-500 bg-surface-50 p-0 shadow-2xl dark:bg-surface-800"
-							>
-								<!-- Header: Flush with the border -->
-								<div
-									class="border-b border-surface-200 dark:border-surface-600 bg-surface-100/90 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary-500 dark:bg-surface-900/90"
+					<!-- List -->
+					<div class="custom-scrollbar max-h-64 overflow-y-auto p-1 space-y-1">
+						{#if filteredLanguages.length > 0}
+							{#each filteredLanguages as lang (lang)}
+								<button
+									type="button"
+									onclick={() => selectLanguage(lang)}
+									class="flex w-full items-center justify-between px-3 py-2 text-left rounded-md cursor-pointer hover:bg-surface-200/60 dark:hover:bg-surface-700/60 transition-colors"
 								>
-									{applayout_systemlanguage()}
-								</div>
-
-								<!-- Search Input (Only if > 5 languages) -->
-								{#if systemLanguages.length > 5}
-									<div class="px-2 pb-2 mb-2 border-b border-surface-200 dark:text-surface-50">
-										<div class="relative">
-											<iconify-icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></iconify-icon>
-											<input
-												type="text"
-												bind:value={langSearch}
-												placeholder={setup_search_placeholder()}
-												class="w-full rounded-md bg-surface-50 dark:bg-surface-800 pl-9 pr-3 py-1.5 text-sm placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500 border border-surface-200 dark:text-surface-50"
-												aria-label={setup_search_placeholder?.() || 'Search languages'}
-												onclick={(e) => e.stopPropagation()}
-											/>
-										</div>
-									</div>
-								{/if}
-
-								<!-- List -->
-								<div class="custom-scrollbar max-h-64 overflow-y-auto">
-									{#if filteredLanguages.length > 0}
-										{#each filteredLanguages as lang (lang)}
-											<Menu.Item
-												value={lang}
-												onclick={() => selectLanguage(lang)}
-												class="flex w-full items-center justify-between px-3 py-2 text-left rounded-md cursor-pointer hover:bg-surface-200/60 dark:hover:bg-surface-700/60 transition-colors"
-											>
-												<span class="text-sm font-medium">{getLanguageName(lang)}</span>
-												<span class="text-xs font-bold text-tertiary-500 dark:text-primary-500">{lang.toUpperCase()}</span>
-											</Menu.Item>
-										{/each}
-									{:else}
-										<div class="px-3 py-4 text-center text-sm text-surface-500">No languages found</div>
-									{/if}
-								</div>
-							</Menu.Content>
-						</Menu.Positioner>
-					</Portal>
-				</Menu>
+									<span class="text-sm font-medium">{getLanguageName(lang)}</span>
+									<span class="text-xs font-bold text-tertiary-500 dark:text-primary-500">{lang.toUpperCase()}</span>
+								</button>
+							{/each}
+						{:else}
+							<div class="px-3 py-4 text-center text-sm text-surface-500">No languages found</div>
+						{/if}
+					</div>
+				</Dropdown>
 			</div>
 
 			<!-- Accessibility Button (h-[38px]) -->
-			<SystemTooltip title="Accessibility Help">
+			<Tooltip title="Accessibility Help">
 				<button
 					type="button"
 					class="btn preset-outlined-surface-500 h-9.5 w-9.5 rounded-lg text-black dark:text-white sm:h-10 sm:w-10"
@@ -139,7 +130,7 @@ function selectLanguage(lang: string) {
 				>
 					<iconify-icon icon="mdi:accessibility" width="20"></iconify-icon>
 				</button>
-			</SystemTooltip>
+			</Tooltip>
 
 			<!-- Theme Toggle (h-[38px]) -->
 			<ThemeToggle
