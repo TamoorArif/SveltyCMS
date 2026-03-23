@@ -8,7 +8,7 @@ icon: "mdi:arrow-up-bold-circle-outline"
 
 # Upgrading SveltyCMS
 
-SveltyCMS is designed to be upgraded easily while preserving your custom collections and configurations. We provide a CLI tool to automate the process.
+SveltyCMS is designed to be upgraded easily while preserving your custom collections and configurations. We provide a CLI tool to automate the process, including dependency updates, database migrations, and **automated code transformations (codemods)**.
 
 ## The Upgrade Process
 
@@ -23,15 +23,18 @@ graph TD
     E --> F{Conflicts?}
     F -- Yes --> G[Pause: User resolves]
     F -- No --> H[Run bun install]
-    H --> I[Run db:push]
-    I --> J[Run test:unit]
-    J --> K[Upgrade Complete]
+    H --> I[Run Codemods]
+    I --> J[Run db:push]
+    J --> K[Run test:unit]
+    K --> L[Upgrade Complete]
 ```
 
-1. **Git Verification**: Ensures you are in a valid Git repository.
-2. **Upstream Fetch**: Fetches the latest changes from the official SveltyCMS `next` branch.
+1. **Git Verification**: Ensures you are in a valid Git repository and have no uncommitted changes.
+2. **Upstream Fetch**: Fetches the latest changes from the official SveltyCMS repository.
 3. **Pre-commit Merge**: Merges changes into your local branch without committing, allowing you to review.
 4. **Dependency Refresh**: Runs `bun install` to ensure all new packages are installed.
+5. **Codemods**: Automatically executes scripts in `scripts/codemods/` to handle breaking changes.
+6. **Database & Tests**: Runs `db:push` and `test:unit` to ensure everything is working correctly.
 
 ## How to Run the Upgrade
 
@@ -41,26 +44,27 @@ Run the following command in your project root:
 bun run scripts/upgrade.ts
 ```
 
-### Handling Conflicts
+### Advanced Options
 
-If the upgrade script detects conflicts:
-1. Open your IDE (e.g., VS Code).
-2. Use the "Merge Editor" to resolve conflicts.
-3. Once resolved, stage the changes: `git add .`
-4. Run `bun install` to ensure everything is in sync.
-5. Finish the commit: `git commit -m "chore: upgrade SveltyCMS"`
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | See what would happen without making any changes. |
+| `--skip-tests` | Do not run the unit test suite after upgrade. |
+| `--skip-db` | Do not run `db:push` after upgrade. |
+| `--force` | Ignore uncommitted changes (not recommended). |
+| `--branch=NAME` | Upgrade from a specific branch (defaults to `next`). |
+
+## Codemods
+
+SveltyCMS uses "codemods" to automate the tedious parts of an upgrade. If a new version renames a property in a configuration file or changes a component's API, a codemod script will automatically update your local files during the upgrade.
+
+You can find available codemods or add your own in the `scripts/codemods/` directory.
 
 ## Best Practices
 
 - **Backup First**: While the script is safe, always ensure your important data is backed up.
-- **Run Tests**: After upgrading, run the full test suite:
-  ```bash
-  bun run check && bun run test:unit
-  ```
-- **Review migrations**: Check if there are any new database schema changes that need to be pushed:
-  ```bash
-  bun run db:push
-  ```
+- **Review Changes**: After the script finishes, use `git diff` to review the changes before committing.
+- **Resolve Conflicts**: If the merge fails, resolve conflicts in your IDE, then run `bun install` and `scripts/upgrade.ts` again.
 
 ## Troubleshooting
 

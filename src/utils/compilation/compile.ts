@@ -28,12 +28,7 @@ import {
   schemaUuidTransformer,
   widgetTransformer,
 } from "./transformers";
-import type {
-  CompilationResult,
-  CompileOptions,
-  ExistingFileData,
-  Logger,
-} from "./types";
+import type { CompilationResult, CompileOptions, ExistingFileData, Logger } from "./types";
 
 // Schema comparison (collectionSchemaWarnings.ts) runs at runtime in GUI/API when schemas are loaded
 // schemaWarnings in CompilationResult is populated by the collection save flow, not compilation
@@ -41,11 +36,9 @@ import type {
 // Default logger implementation
 const defaultLogger: Logger = {
   info: (msg) => console.log(`\x1b[34m[Compile]\x1b[0m ${msg}`),
-  success: (msg) =>
-    console.log(`\x1b[34m[Compile]\x1b[0m \x1b[32m${msg}\x1b[0m`),
+  success: (msg) => console.log(`\x1b[34m[Compile]\x1b[0m \x1b[32m${msg}\x1b[0m`),
   warn: (msg) => console.warn(`\x1b[34m[Compile]\x1b[0m \x1b[33m${msg}\x1b[0m`),
-  error: (msg, err) =>
-    console.error(`\x1b[34m[Compile]\x1b[0m \x1b[31m${msg}\x1b[0m`, err),
+  error: (msg, err) => console.error(`\x1b[34m[Compile]\x1b[0m \x1b[31m${msg}\x1b[0m`, err),
 };
 
 function logSuccess(logger: Logger, msg: string) {
@@ -56,9 +49,7 @@ function logSuccess(logger: Logger, msg: string) {
   }
 }
 
-export async function compile(
-  options: CompileOptions = {},
-): Promise<CompilationResult> {
+export async function compile(options: CompileOptions = {}): Promise<CompilationResult> {
   const startTime = Date.now();
   const logger = options.logger || defaultLogger;
 
@@ -68,8 +59,7 @@ export async function compile(
   }
 
   // Use tenant-aware paths (supports both legacy and multi-tenant modes)
-  const userCollections =
-    options.userCollections || getCollectionsPath(options.tenantId);
+  const userCollections = options.userCollections || getCollectionsPath(options.tenantId);
   const compiledCollections =
     options.compiledCollections || getCompiledCollectionsPath(options.tenantId);
   const concurrencyLimit = options.concurrency || 5;
@@ -89,8 +79,10 @@ export async function compile(
     await fs.mkdir(compiledCollections, { recursive: true });
 
     // 1. Scan existing state
-    const { existingFilesByPath, existingFilesByHash } =
-      await scanCompiledFiles(compiledCollections, logger);
+    const { existingFilesByPath, existingFilesByHash } = await scanCompiledFiles(
+      compiledCollections,
+      logger,
+    );
 
     // 2. Discover source files
     const sourceFiles = await getTypescriptAndJavascriptFiles(userCollections);
@@ -114,17 +106,10 @@ export async function compile(
         if (options.targetFile) {
           // Normalize paths for comparison (handle leading ./ or different separators)
           const normalizedTarget = path.normalize(options.targetFile);
-          const normalizedFile = path.normalize(
-            path.join(userCollections, file),
-          );
+          const normalizedFile = path.normalize(path.join(userCollections, file));
           // Check if this source file corresponds to the target file
           // The passed targetFile might be absolute or relative
-          if (
-            !(
-              normalizedFile.endsWith(normalizedTarget) ||
-              normalizedTarget.endsWith(file)
-            )
-          ) {
+          if (!(normalizedFile.endsWith(normalizedTarget) || normalizedTarget.endsWith(file))) {
             continue;
           }
         }
@@ -184,10 +169,7 @@ export async function compile(
     }
   } catch (error) {
     logger.error("Fatal compilation error", error);
-    if (
-      error instanceof Error &&
-      error.message.includes("Collection name conflict")
-    ) {
+    if (error instanceof Error && error.message.includes("Collection name conflict")) {
       throw error;
     }
     // Propagate but ensure error is logged
@@ -271,16 +253,8 @@ async function compileFile(
   return targetRel;
 }
 
-function wrapOutput(
-  code: string,
-  hash: string,
-  pathRel: string,
-  tenantId?: string | null,
-): string {
-  let out = code.replace(
-    /(\s*\*\s*@file\s+)(.*)/,
-    `$1.compiledCollections/${pathRel}`,
-  );
+function wrapOutput(code: string, hash: string, pathRel: string, tenantId?: string | null): string {
+  let out = code.replace(/(\s*\*\s*@file\s+)(.*)/, `$1.compiledCollections/${pathRel}`);
   out = out.replace(/^\/\/\s*(HASH|UUID|TENANT_ID):.*$/gm, "").trimStart();
 
   let header = `// WARNING: Generated file. Do not edit.\n// HASH: ${hash}\n`;
@@ -326,20 +300,14 @@ async function scanCompiledFiles(
       }
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT")
-        logger.error(
-          `Error scanning ${current}`,
-          e instanceof Error ? e : new Error(String(e)),
-        );
+        logger.error(`Error scanning ${current}`, e instanceof Error ? e : new Error(String(e)));
     }
   }
   await traverse(dir);
   return { existingFilesByPath: byPath, existingFilesByHash: byHash };
 }
 
-async function getTypescriptAndJavascriptFiles(
-  folder: string,
-  subdir = "",
-): Promise<string[]> {
+async function getTypescriptAndJavascriptFiles(folder: string, subdir = ""): Promise<string[]> {
   const files: string[] = [];
   try {
     const entries = await fs.readdir(path.posix.join(folder, subdir), {
@@ -349,9 +317,7 @@ async function getTypescriptAndJavascriptFiles(
     for (const entry of entries) {
       const relativePath = path.posix.join(subdir, entry.name);
       if (entry.isDirectory()) {
-        files.push(
-          ...(await getTypescriptAndJavascriptFiles(folder, relativePath)),
-        );
+        files.push(...(await getTypescriptAndJavascriptFiles(folder, relativePath)));
       } else if (entry.isFile() && /\.(ts|js)$/.test(entry.name)) {
         const name = entry.name.replace(/\.(ts|js)$/, "");
         if (collectionNames.has(name))
@@ -369,17 +335,10 @@ async function getTypescriptAndJavascriptFiles(
   return files;
 }
 
-async function createOutputDirectories(
-  files: string[],
-  baseDir: string,
-): Promise<void> {
-  const dirs = new Set(
-    files.map((f) => path.posix.dirname(f)).filter((d) => d !== "."),
-  );
+async function createOutputDirectories(files: string[], baseDir: string): Promise<void> {
+  const dirs = new Set(files.map((f) => path.posix.dirname(f)).filter((d) => d !== "."));
   await Promise.all(
-    Array.from(dirs).map((d) =>
-      fs.mkdir(path.posix.join(baseDir, d), { recursive: true }),
-    ),
+    Array.from(dirs).map((d) => fs.mkdir(path.posix.join(baseDir, d), { recursive: true })),
   );
 }
 
@@ -396,16 +355,12 @@ async function cleanupOrphanedFiles(
   compiledCollections: string,
   logger: Logger,
 ): Promise<string[]> {
-  const orphanedFiles = Array.from(existing.keys()).filter(
-    (f) => !kept.has(f) && f !== "SKIPPED",
-  );
+  const orphanedFiles = Array.from(existing.keys()).filter((f) => !kept.has(f) && f !== "SKIPPED");
   if (orphanedFiles.length > 0) {
     // Terminal-friendly formatted message with actionable guidance
     const divider = "─".repeat(60);
     logger.warn(`\n┌${divider}┐`);
-    logger.warn(
-      `│  ⚠️  Orphaned Compiled Collections Detected${" ".repeat(15)}│`,
-    );
+    logger.warn(`│  ⚠️  Orphaned Compiled Collections Detected${" ".repeat(15)}│`);
     logger.warn(`├${divider}┤`);
     for (const file of orphanedFiles) {
       const padding = 57 - file.length;
@@ -418,7 +373,7 @@ async function cleanupOrphanedFiles(
       try {
         await fs.unlink(path.join(compiledCollections, relativePath));
         logger.info(`Removed orphan: ${relativePath}`);
-      } catch (unlinkErr) {
+      } catch {
         logger.warn(`Could not remove orphaned file ${relativePath}`);
       }
     }
