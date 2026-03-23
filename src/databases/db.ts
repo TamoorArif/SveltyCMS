@@ -501,6 +501,9 @@ async function initializeSystem(
         if (dbAdapter?.ensureAuth) {
           await dbAdapter.ensureAuth();
         }
+        if (dbAdapter?.ensureCollections) {
+          await dbAdapter.ensureCollections();
+        }
         const [{ Auth }, { getDefaultSessionStore }] = await Promise.all([
           import("@src/databases/auth"),
           import("@src/databases/auth/session-manager"),
@@ -1129,6 +1132,17 @@ export async function initConnection(dbConfig: {
       throw new Error(
         `Database connection failed: ${connectResult.error?.message || "Unknown error"}`,
       );
+    }
+
+    // Ensure modules are initialized
+    if (tempAdapter.ensureCollections) {
+      await tempAdapter.ensureCollections();
+    }
+    if (tempAdapter.ensureSystem) {
+      await tempAdapter.ensureSystem();
+    }
+    if (tempAdapter.ensureAuth) {
+      await tempAdapter.ensureAuth();
     }
 
     // Set this as the global adapter for seeding

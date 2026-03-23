@@ -103,6 +103,9 @@ describe("Theme API Endpoints", () => {
 
   describe("POST /api/theme/set-default", () => {
     it("should set default theme with admin authentication", async () => {
+      // Use the seeded default theme ID
+      const DEFAULT_THEME_ID = "670e8b8c4d123456789abcde";
+
       const response = await fetch(`${API_BASE_URL}/api/theme/set-default`, {
         method: "POST",
         headers: {
@@ -110,12 +113,11 @@ describe("Theme API Endpoints", () => {
           Cookie: authCookie,
         },
         body: JSON.stringify({
-          themeId: "Modern",
+          themeId: DEFAULT_THEME_ID,
         }),
       });
 
-      // Might fail 404 if theme doesn't exist, but route should be valid
-      expect([200, 404, 500]).toContain(response.status);
+      expect([200, 204]).toContain(response.status);
     });
   });
 });

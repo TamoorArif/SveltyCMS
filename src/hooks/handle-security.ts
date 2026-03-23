@@ -23,10 +23,12 @@ export const handleSecurity: Handle = async ({ event, resolve }) => {
   const { request, url } = event;
   const clientIp = getClientIp(event);
 
-  // Skip for static assets and dev mode localhost (unless forced)
+  // Skip for static assets and dev mode/test mode localhost (unless forced)
   if (
     isStaticAsset(url.pathname) ||
-    (isLocalhost(clientIp) && dev && request.headers.get("x-test-security") !== "true")
+    (isLocalhost(clientIp) &&
+      (dev || process.env.TEST_MODE === "true") &&
+      request.headers.get("x-test-security") !== "true")
   ) {
     return await resolve(event);
   }

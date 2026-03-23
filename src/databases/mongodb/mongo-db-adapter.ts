@@ -27,11 +27,12 @@ export class MongoDBAdapter implements IDBAdapter {
   system: any = {};
   monitoring: any = {};
   batch: any = {};
-  collection: any = {};
+  collection: any;
 
   constructor() {
     this.auth = composeMongoAuthAdapter();
     this.crud = this._createCrudMethods();
+    this.collection = {}; // Placeholder until ensureCollections is called
     this.content = {
       drafts: { restore: (id: any) => this.crud.restore("content_drafts", id) },
       revisions: { restore: (id: any) => this.crud.restore("content_revisions", id) },
@@ -95,9 +96,36 @@ export class MongoDBAdapter implements IDBAdapter {
           ? connectionStringOrOptions
           : (connectionStringOrOptions as any).connectionString || "";
 
-      if (mongoose.connection.readyState === 0) {
-        await mongoose.connect(connectionString, (options as any) || {});
+      // If already connected, just return success
+      if (mongoose.connection.readyState === 1) {
+        this._connection = mongoose.connection;
+        return { success: true, data: undefined };
       }
+
+      // If already connecting, wait for it
+      if (mongoose.connection.readyState === 2) {
+        await new Promise((resolve, reject) => {
+          const onConnected = () => {
+            cleanup();
+            resolve(true);
+          };
+          const onError = (err: any) => {
+            cleanup();
+            reject(err);
+          };
+          const cleanup = () => {
+            mongoose.connection.removeListener("connected", onConnected);
+            mongoose.connection.removeListener("error", onError);
+          };
+          mongoose.connection.on("connected", onConnected);
+          mongoose.connection.on("error", onError);
+        });
+        this._connection = mongoose.connection;
+        return { success: true, data: undefined };
+      }
+
+      // Otherwise, initiate new connection
+      await mongoose.connect(connectionString, (options as any) || {});
       this._connection = mongoose.connection;
       return { success: true, data: undefined };
     } catch (err: any) {
@@ -247,6 +275,27 @@ export class MongoDBAdapter implements IDBAdapter {
     if (this.auth && typeof (this.auth as any).setupAuthModels === "function") {
       await (this.auth as any).setupAuthModels();
     }
+  }
+
+  /**
+   * Initializes collection models and methods.
+   */
+  async ensureCollections(): Promise<void> {
+    const { MongoCollectionMethods } = await import("./methods/collection-methods");
+    const collectionMethods = new MongoCollectionMethods();
+
+    this.collection = {
+      getModel: (id: string) => collectionMethods.getModel(id),
+      createModel: (schema: any, force?: boolean) => collectionMethods.createModel(schema, force),
+      updateModel: (schema: any) => collectionMethods.updateModel(schema),
+      deleteModel: (id: string) => collectionMethods.deleteModel(id),
+      getSchema: (name: string, tenantId?: string | null) =>
+        collectionMethods.getSchema(name, tenantId),
+      getSchemaById: (id: string, tenantId?: string | null) =>
+        collectionMethods.getSchemaById(id, tenantId),
+      listSchemas: (tenantId?: string | null) => collectionMethods.listSchemas(tenantId),
+      getMongooseModel: (id: string) => collectionMethods.getMongooseModel(id),
+    };
   }
 
   /**

@@ -165,12 +165,17 @@ export async function getSetupDatabaseAdapter(
       await dbAdapter.ensureSystem();
     }
 
-    // 3. Media: initialize media methods
+    // 3. Collections: initialize collection methods (dynamic schemas)
+    if (dbAdapter.ensureCollections) {
+      await dbAdapter.ensureCollections();
+    }
+
+    // 4. Media: initialize media methods
     if (dbAdapter.ensureMedia) {
       await dbAdapter.ensureMedia();
     }
 
-    // 4. Content: initialize content-specific methods/models
+    // 5. Content: initialize content-specific methods/models
     if (dbAdapter.ensureContent) {
       await dbAdapter.ensureContent();
     }
