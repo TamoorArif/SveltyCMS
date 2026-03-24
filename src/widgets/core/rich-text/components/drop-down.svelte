@@ -169,10 +169,11 @@ function getButtonIcon() {
 		aria-label={label || undefined}
 	>
 		{#if getButtonIcon()}
-			{#await import(`@lucide/svelte/icons/${getButtonIcon()}`) then _module}
-				{@const Icon = _module.default}
-				<Icon size={18} class={getActiveItem() ? 'text-tertiary-50 dark:text-tertiary-300' : 'text-surface-800 dark:text-surface-200'} />
-			{/await}
+			<iconify-icon
+				icon={getButtonIcon().includes(':') ? getButtonIcon() : `lucide:${getButtonIcon()}`}
+				width={18}
+				class={getActiveItem() ? 'text-tertiary-50 dark:text-tertiary-300' : 'text-surface-800 dark:text-surface-200'}
+			></iconify-icon>
 		{/if}
 		<span class="hidden text-sm sm:inline" class:text-tertiary-50={!!getActiveItem()} class:text-surface-800={!getActiveItem()}
 			>{getButtonText()}</span
@@ -230,10 +231,7 @@ function getButtonIcon() {
 					{#if item.active && item.active()}
 						<iconify-icon icon="mdi:check" width={16}></iconify-icon>
 					{:else if item.icon}
-						{#await import(`@lucide/svelte/icons/${item.icon}`) then _module}
-							{@const Icon = _module.default}
-							<Icon size={18} />
-						{/await}
+						<iconify-icon icon={item.icon.includes(':') ? item.icon : `lucide:${item.icon}`} width={18}></iconify-icon>
 					{/if}
 					<span class="whitespace-nowrap text-sm">{item.name || item.title || ''}</span>
 				</button>

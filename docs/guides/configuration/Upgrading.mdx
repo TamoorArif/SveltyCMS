@@ -46,12 +46,12 @@ bun run scripts/upgrade.ts
 
 ### Advanced Options
 
-| Flag | Description |
-|------|-------------|
-| `--dry-run` | See what would happen without making any changes. |
-| `--skip-tests` | Do not run the unit test suite after upgrade. |
-| `--skip-db` | Do not run `db:push` after upgrade. |
-| `--force` | Ignore uncommitted changes (not recommended). |
+| Flag            | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| `--dry-run`     | See what would happen without making any changes.    |
+| `--skip-tests`  | Do not run the unit test suite after upgrade.        |
+| `--skip-db`     | Do not run `db:push` after upgrade.                  |
+| `--force`       | Ignore uncommitted changes (not recommended).        |
 | `--branch=NAME` | Upgrade from a specific branch (defaults to `next`). |
 
 ## Codemods
@@ -69,7 +69,9 @@ You can find available codemods or add your own in the `scripts/codemods/` direc
 ## Troubleshooting
 
 ### "Not a git repository"
+
 The upgrade tool requires Git. If you downloaded SveltyCMS as a ZIP, initialize a repository first:
+
 ```bash
 git init
 git remote add origin https://github.com/SveltyCMS/SveltyCMS.git
@@ -78,7 +80,9 @@ git checkout -b next origin/next
 ```
 
 ### Dependency Errors
+
 If `bun install` fails after an upgrade, try clearing the cache:
+
 ```bash
 rm -rf node_modules/.vite
 bun install

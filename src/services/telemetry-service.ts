@@ -236,8 +236,12 @@ export const telemetryService = {
               : "production";
         const timestamp = Date.now();
 
+        // --- DYNAMIC HMAC SECRET ---
+        // Try to get the registered secret, fallback to default for legacy/unregistered
+        const clientSecret = await getPrivateSetting("TELEMETRY_CLIENT_SECRET");
+        const TELEMETRY_SALT = clientSecret || "sveltycms-telemetry";
+
         // 3. Generate HMAC Signature (Identifies this request as an authentic SveltyCMS instance)
-        const TELEMETRY_SALT = "sveltycms-telemetry";
         const cryptoSignature = (await import("node:crypto"))
           .createHmac("sha256", TELEMETRY_SALT)
           .update(`${installationId}:${pkg.version}:${timestamp}`)

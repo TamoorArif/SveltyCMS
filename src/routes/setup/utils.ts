@@ -146,7 +146,9 @@ export async function getSetupDatabaseAdapter(
     default: {
       // TypeScript ensures exhaustive checking
       const EXHAUSTIVE_CHECK: never = config.type;
-      logger.error(`Unsupported database type: ${EXHAUSTIVE_CHECK}`, { correlationId });
+      logger.error(`Unsupported database type: ${EXHAUSTIVE_CHECK}`, {
+        correlationId,
+      });
       throw new Error(`Database type '${EXHAUSTIVE_CHECK}' is not supported for setup.`);
     }
   }
@@ -225,7 +227,7 @@ async function setupMongoDB(
   /** Helper to verify authentication via a count probe or connect error */
   const checkAuthFailure = (error: any) => {
     if (!error) return false;
-    const code = error.originalCode;
+    const code = error.originalCode || error.code;
     const msg = (error.message || "").toLowerCase();
     const details = (typeof error.details === "string" ? error.details : "").toLowerCase();
 
@@ -234,6 +236,7 @@ async function setupMongoDB(
       code === 13 ||
       code === "18" ||
       code === "13" ||
+      code === "AuthenticationFailed" ||
       msg.includes("auth") ||
       msg.includes("unauthorized") ||
       msg.includes("credentials") ||
@@ -250,7 +253,9 @@ async function setupMongoDB(
 
   try {
     // Stage 1: Attempt connection with default settings
-    logger.info("Attempting MongoDB connection (Stage 1: default auth)...", { correlationId });
+    logger.info("Attempting MongoDB connection (Stage 1: default auth)...", {
+      correlationId,
+    });
     let connectResult = await dbAdapter.connect(connectionString, connectionOptions);
 
     let needsRetry = false;

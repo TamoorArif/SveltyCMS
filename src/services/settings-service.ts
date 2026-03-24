@@ -232,6 +232,31 @@ export function isCacheLoaded(tenantId: string = GLOBAL_TENANT): boolean {
 }
 
 /**
+ * Type-safe setter for a private setting (SERVER ONLY)
+ */
+export async function setPrivateSetting<K extends keyof PrivateEnv>(
+  key: K,
+  value: PrivateEnv[K],
+  tenantId: string = GLOBAL_TENANT,
+): Promise<void> {
+  const { dbAdapter } = await import("@src/databases/db");
+  if (!dbAdapter?.system.preferences) {
+    throw new Error("Database adapter not available");
+  }
+
+  const res = await dbAdapter.system.preferences.setMany([
+    { key: key as string, value, scope: "system", userId: tenantId as any },
+  ]);
+
+  if (!res.success) {
+    throw new Error(res.error?.message || `Failed to update private setting: ${key as string}`);
+  }
+
+  // Invalidate cache
+  invalidateSettingsCache(tenantId);
+}
+
+/**
  * Type-safe getter for a private setting (SERVER ONLY)
  */
 export async function getPrivateSetting<K extends keyof PrivateEnv>(

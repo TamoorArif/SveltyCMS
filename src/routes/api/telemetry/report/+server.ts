@@ -19,7 +19,7 @@
  */
 
 import { createHash, createHmac } from "node:crypto";
-import { getPrivateSettingSync } from "@src/services/settings-service";
+import { getPrivateSettingSync, setPrivateSetting } from "@src/services/settings-service";
 import { json } from "@sveltejs/kit";
 import { logger } from "@utils/logger.server";
 import {
@@ -85,12 +85,10 @@ const responseCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 const MAX_CACHE_SIZE = 100;
 const MAX_PAYLOAD_SIZE = 10_000; // 10KB
-const REQUEST_TIMEOUT = 5000; // 5 seconds
+const REQUEST_TIMEOUT = 10000; // 10 seconds (increased for registration)
 
 // Unified Error Handling
 import { apiHandler } from "@utils/api-handler";
-
-// ... (schema definition)
 
 export const POST = apiHandler(async ({ request }) => {
   // 0. Strict Test Mode Check (Environment Variables)
@@ -142,17 +140,52 @@ export const POST = apiHandler(async ({ request }) => {
       });
     }
 
-    // 5. Build forwarding payload with HMAC signature
+    // 5. Build forwarding payload with DYNAMIC HMAC signature
     const jwtSecret = (await getPrivateSettingSync("JWT_SECRET_KEY")) || "fallback_secret";
     const installationId =
       data.installation_id || createHash("sha256").update(jwtSecret).digest("hex");
     const timestamp = data.timestamp || Date.now();
-
     const current_version = data.current_version;
 
-    // Recompute signature to ensure authenticity
-    const TELEMETRY_SALT = "sveltycms-telemetry";
-    const signature = createHmac("sha256", TELEMETRY_SALT)
+    // --- NEW REGISTRATION LOGIC ---
+    let clientSecret = await getPrivateSettingSync("TELEMETRY_CLIENT_SECRET");
+    const telemetryBaseUrl =
+      process.env.TELEMETRY_ENDPOINT_BASE || "https://telemetry.sveltycms.com";
+
+    // If this is the first boot, register with the central server to get a unique secret
+    if (!clientSecret) {
+      logger.info("[Telemetry] Registering installation with central server...");
+      try {
+        const regResponse = await fetch(`${telemetryBaseUrl}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ installation_id: installationId }),
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+        });
+
+        if (!regResponse.ok) {
+          logger.error("[Telemetry] Failed to register installation with telemetry server.");
+          return json({ status: "error" }, { status: 200 }); // Fail silently
+        }
+
+        const regData = await regResponse.json();
+        clientSecret = regData.secret;
+
+        if (clientSecret) {
+          // IMPORTANT: Save this secret to your CMS database/settings so it persists!
+          await setPrivateSetting("TELEMETRY_CLIENT_SECRET", clientSecret);
+          logger.info("[Telemetry] Installation registered successfully.");
+        }
+      } catch (err) {
+        logger.error("[Telemetry] Registration error:", err);
+        return json({ status: "error" }, { status: 200 }); // Fail silently
+      }
+    }
+
+    // Sign the payload using the UNIQUE, PRIVATE secret (Bots don't know this!)
+    // Fallback to default salt if registration failed but we still want to try (though ideally clientSecret is now set)
+    const salt = clientSecret || "sveltycms-telemetry";
+    const signature = createHmac("sha256", salt)
       .update(`${installationId}:${current_version}:${timestamp}`)
       .digest("hex");
 
@@ -167,8 +200,7 @@ export const POST = apiHandler(async ({ request }) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-    const telemetryEndpoint =
-      process.env.TELEMETRY_ENDPOINT || "https://telemetry.sveltycms.com/api/check-update";
+    const telemetryEndpoint = `${telemetryBaseUrl}/api/check-update`;
     const response = await fetch(telemetryEndpoint, {
       method: "POST",
       headers: {

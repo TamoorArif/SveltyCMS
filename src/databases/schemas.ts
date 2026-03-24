@@ -64,6 +64,7 @@ export const privateConfigSchema = object({
   // --- Licensing & Telemetry (BSL 1.1 Support) ---
   LICENSE_KEY: optional(string()), // For Enterprise users to disable nags/tracking
   SVELTYCMS_TELEMETRY: optional(boolean()), // Usage tracking (default: true)
+  TELEMETRY_CLIENT_SECRET: optional(string()), // Dynamic HMAC Secret for Telemetry Auth
 
   // --- Optional service toggles (populated dynamically post-startup) ---
   USE_REDIS: optional(boolean()),

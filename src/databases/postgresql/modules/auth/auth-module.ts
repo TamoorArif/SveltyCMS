@@ -16,7 +16,7 @@
 import type { ISODateString } from "@src/content/types";
 import { isoDateStringToDate, nowISODateString } from "@src/utils/date-utils";
 import { logger } from "@src/utils/logger";
-import { and, asc, desc, eq, gt, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lt, or, sql } from "drizzle-orm";
 import type {
   DatabaseResult,
   PaginationOption,
@@ -715,28 +715,27 @@ export class AuthModule {
     tenantId?: string | null,
   ): Promise<DatabaseResult<{ deletedCount: number }>> {
     return this.core.wrap(async () => {
-      // Try matching by _id first, then fall back to token value
-      // (API endpoints pass token values, not _ids)
+      // API endpoints often pass token values instead of _ids
       const conditions: import("drizzle-orm").SQL[] = [];
       if (tenantId) {
         conditions.push(eq(schema.authTokens.tenantId, tenantId));
       }
 
-      // Try delete by _id
-      const byIdResults = await this.db
+      // Try delete by BOTH _id and token value simultaneously to be safe
+      const results = await this.db
         .delete(schema.authTokens)
-        .where(and(inArray(schema.authTokens._id, tokenIds), ...conditions))
+        .where(
+          and(
+            or(
+              inArray(schema.authTokens._id, tokenIds),
+              inArray(schema.authTokens.token, tokenIds),
+            ),
+            ...conditions,
+          ),
+        )
         .returning();
-      if (byIdResults.length > 0) {
-        return { deletedCount: byIdResults.length };
-      }
 
-      // Fall back to delete by token value
-      const byValueResults = await this.db
-        .delete(schema.authTokens)
-        .where(and(inArray(schema.authTokens.token, tokenIds as string[]), ...conditions))
-        .returning();
-      return { deletedCount: byValueResults.length };
+      return { deletedCount: results.length };
     }, "DELETE_TOKENS_FAILED");
   }
 

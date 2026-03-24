@@ -68,7 +68,7 @@ export const GET = apiHandler(async ({ params }) => {
   const token = await auth.getTokenByValue(tokenValue);
 
   if (!token) {
-    throw new AppError("Token not found", 404, "TOKEN_NOT_FOUND");
+    throw new AppError("Token not found or expired.", 404, "TOKEN_NOT_FOUND");
   }
 
   // Check if token is expired
