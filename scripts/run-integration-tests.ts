@@ -257,9 +257,10 @@ async function startPreviewServer(dbHost?: string) {
   return new Promise<void>((resolve, reject) => {
     // 💡 CI OPTIMIZATION: Use 'preview' if 'build/' exists (much faster than 'dev')
     const buildExists = existsSync(join(rootDir, "build"));
-    const usePreview = buildExists && (process.env.CI === "true" || process.env.USE_PREVIEW === "true");
+    const usePreview =
+      buildExists && (process.env.CI === "true" || process.env.USE_PREVIEW === "true");
     const cmd = usePreview ? "preview" : "dev";
-    
+
     console.log(`📦 Spawning ${cmd} server (${HOST}:${PORT})...`);
     const logFd = require("node:fs").openSync(join(rootDir, "preview.log"), "a");
 
@@ -285,7 +286,8 @@ async function startPreviewServer(dbHost?: string) {
     let resolved = false;
     const timeoutMs = process.env.CI === "true" ? 120000 : 60000;
     const timeout = setTimeout(() => {
-      if (!resolved) reject(new Error(`Timeout waiting for ${cmd} server health check (${timeoutMs}ms)`));
+      if (!resolved)
+        reject(new Error(`Timeout waiting for ${cmd} server health check (${timeoutMs}ms)`));
     }, timeoutMs);
 
     waitForServer()

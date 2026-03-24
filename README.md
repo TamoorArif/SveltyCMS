@@ -11,13 +11,13 @@
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-BSL%201.1%20Fair%20Source-blue.svg" alt="License: BSL 1.1"></a>
   <img src="https://img.shields.io/github/issues/SveltyCMS/SveltyCMS" alt="GitHub issues">
   <a href="docs/security/tested-security-features.mdx"><img src="https://img.shields.io/badge/Security-Tested%20Fortress-blue?style=flat-square&labelColor=1e293b" alt="Security: Tested Fortress"></a>
-  <img src="https://img.shields.io/badge/Bundle-843%20KB%20Brotli%20/%203.02%20MB%20Total-success?style=flat-square&labelColor=1e293b" alt="Bundle Size">
+  <img src="https://img.shields.io/badge/Bundle-842%20KB%20Brotli%20/%203.01%20MB%20Total-success?style=flat-square&labelColor=1e293b" alt="Bundle Size">
 </div>
 
 <div align="center">
   <a href="https://kit.svelte.dev"><img src="https://img.shields.io/badge/SvelteKit-V2-FF3E00?logo=svelte" alt="SvelteKit"></a>
   <a href="https://voidzero.dev"><img src="https://img.shields.io/badge/Toolchain-Vite%2B-646CFF?logo=vite" alt="Vite+"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript" alt="TypeScript"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript" alt="TypeScript"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC" alt="Tailwindcss"></a>
 </div>
 
@@ -255,14 +255,14 @@ SveltyCMS is built with modern optimization techniques resulting in a compact bu
 
 | CMS Platform    | Total Asset Size | Bundle Size (Brotli) | Technology Stack |
 | :-------------- | :--------------- | :------------------- | :--------------- |
-| **SveltyCMS**   | **3.02 MB**      | **843 KB ⚡**        | Svelte 5 + Vite+ |
+| **SveltyCMS**   | **3.01 MB**      | **842 KB ⚡**        | Svelte 5 + Vite+ |
 | WordPress Admin | ~12.5 MB         | ~950 KB              | jQuery + PHP     |
 | Drupal Admin    | ~15.0 MB         | ~1.2 MB              | jQuery + Drupal  |
 | Payload CMS     | ~8.5 MB          | ~1.1 MB              | React + Next.js  |
 | Directus        | ~6.5 MB          | ~1.0 MB              | Vue.js           |
 
 > [!NOTE]
-> **Secure-by-Design Architecture**: The 843 KB figure represents the total Brotli-compressed assets for the standard admin dashboard. By leveraging Svelte 5's zero-runtime reactivity and the Vite+ tree-shaking compiler, we achieve a highly optimized delivery where the client only receives exactly what it needs to render.
+> **Secure-by-Design Architecture**: The 842 KB figure represents the total Brotli-compressed assets for the standard admin dashboard. By leveraging Svelte 5's zero-runtime reactivity and the Vite+ tree-shaking compiler, we achieve a highly optimized delivery where the client only receives exactly what it needs to render.
 
 ## ⚡ Performance Benchmarks
 

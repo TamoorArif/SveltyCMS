@@ -4,7 +4,7 @@ title: Performance Benchmarks
 description: Comparative analysis and stress test results for SveltyCMS core components.
 author: SveltyCMS Team
 created: 2026-03-21
-updated: 2026-03-21
+updated: 2026-03-24
 tags:
   - performance
   - benchmarks
@@ -26,6 +26,20 @@ All performance metrics were gathered on the following hardware:
 - **OS**: Ubuntu 24.04
 - **Runtime**: Node.js 25.8.1 / Bun 1.3.11
 - **Tooling**: Vite+ Core Engine
+
+## Build & Bundle Performance (v0.0.7+)
+
+The transition to a dynamic Iconify-based architecture and the removal of heavy legacy component libraries (Lucide Svelte) has resulted in a monumental shift in build efficiency.
+
+| Metric                   | Baseline (v0.0.6) | Current (v0.0.7) | Delta         |
+| :----------------------- | :---------------- | :--------------- | :------------ |
+| **Full Build Duration**  | ~45.0s            | **8.69s**        | **80% ↓**     |
+| **Total Bundle Size**    | 17.39 MB          | **3.01 MB**      | **14.38 MB ↓** |
+| **Transfer Size (Gzip)** | 3.15 MB           | **0.97 MB**      | **69% ↓**     |
+| **Client Module Count**  | ~2,200            | **486**          | **78% ↓**     |
+
+> [!TIP]
+> **Sub-10s Build**: SveltyCMS now builds its entire frontend and backend in under 10 seconds, significantly improving CI/CD pipeline efficiency and developer iteration speed.
 
 ## Hardware Context & Comparison
 
@@ -51,15 +65,15 @@ Our performance tests are located in `tests/benchmarks/` and cover the following
 
 Measured via `tests/benchmarks/upgrade-performance.ts`. These metrics ensure that SveltyCMS remains maintainable even as the codebase grows.
 
-| Task | Execution Time | Description |
-| :--- | :--- | :--- |
-| **Upgrade Dry Run** | **~915 ms** | Full safety check (Git, remotes, dependency scan). |
-| **AST Codemod** | **~77 ms** | `ts-morph` based surgical transformation of collections. |
+| Task                | Execution Time | Description                                              |
+| :------------------ | :------------- | :------------------------------------------------------- |
+| **Upgrade Dry Run** | **~915 ms**    | Full safety check (Git, remotes, dependency scan).       |
+| **AST Codemod**     | **~77 ms**     | `ts-morph` based surgical transformation of collections. |
 
 > [!TIP]
 > **Sub-second Upgrades**: SveltyCMS can perform a full safety analysis and execute complex code migrations in under 1 second, ensuring zero friction during version transitions.
 
-| **Media**      | [media-performance.ts](../tests/benchmarks/media-performance.ts)       | Image processing, storage, and retrieval throughput.                  |
+| **Media** | [media-performance.ts](../tests/benchmarks/media-performance.ts) | Image processing, storage, and retrieval throughput. |
 
 ### The GraphQL JIT Engine
 

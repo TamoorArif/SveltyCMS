@@ -5,7 +5,7 @@ async function loadApp() {
   console.log("[SveltyCMS] Initializing application...");
 
   // Import the SvelteKit handler
-  const { handler } = await import("./handler.js");
+  const { handler } = await import("./build/handler.js");
   const http = await import("node:http");
 
   // Production configuration

@@ -45,19 +45,35 @@ function parseActionResult(result: any): any {
 }
 
 async function postAction(actionName: string, formData: FormData) {
-  const res = await fetch(`${API_BASE_URL}/setup?/${actionName}`, {
-    method: "POST",
-    body: formData,
-    headers: {
-      "x-sveltekit-action": "true",
-      Origin: API_BASE_URL,
-    },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Action ${actionName} failed with status ${res.status}. Body: ${text}`);
+  let lastError: any;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/setup?/${actionName}`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "x-sveltekit-action": "true",
+          Origin: API_BASE_URL,
+        },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Action ${actionName} failed with status ${res.status}. Body: ${text}`);
+      }
+      return await res.json();
+    } catch (error: any) {
+      lastError = error;
+      if (error.code === "ConnectionRefused" || error.message?.includes("ConnectionRefused")) {
+        console.warn(
+          `⚠️ Connection refused on attempt ${attempt} for ${actionName}. Retrying in 2s...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+      throw error;
+    }
   }
-  return await res.json();
+  throw lastError;
 }
 
 async function waitForReady() {
@@ -136,6 +152,9 @@ async function main() {
       throw new Error(`Database seeding failed: ${seedData?.error || "Unknown error"}`);
     }
     console.log("✅ Database seeding started.");
+
+    // Small delay to ensure server handles background tasks smoothly before the next heavy call
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // 3. Complete Setup (Create Admin)
     console.log(

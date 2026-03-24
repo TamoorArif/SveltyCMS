@@ -94,11 +94,7 @@ const config = {
         "object-src": ["none"],
         "base-uri": ["self"],
         "form-action": ["self"],
-        "frame-src": [
-          "self",
-          "https://127.0.0.1:5173",
-          "https://localhost:5173",
-        ],
+        "frame-src": ["self", "https://127.0.0.1:5173", "https://localhost:5173"],
       },
     },
   },
