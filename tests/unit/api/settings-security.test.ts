@@ -4,25 +4,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  GET as getSettings,
-  PUT as updateSettings,
-  DELETE as resetSettings,
-} from "@src/routes/api/settings/[group]/+server";
-import { dbAdapter } from "@src/databases/db";
-
-// Mock db adapter
-vi.mock("@src/databases/db", () => ({
-  dbAdapter: {
-    system: {
-      preferences: {
-        getMany: vi.fn().mockResolvedValue({ success: true, data: {} }),
-        setMany: vi.fn().mockResolvedValue({ success: true }),
-        deleteMany: vi.fn().mockResolvedValue({ success: true }),
-      },
-    },
-  },
-}));
 
 // Mock settings service
 vi.mock("@src/services/settings-service", () => ({
@@ -41,6 +22,15 @@ vi.mock("@utils/logger.server", () => ({
     warn: vi.fn(),
     debug: vi.fn(),
   },
+}));
+
+// Mock server utils
+vi.mock("@src/utils/server/restart-required", () => ({
+  setRestartNeeded: vi.fn(),
+}));
+
+vi.mock("@src/utils/server/settings-sync", () => ({
+  triggerSync: vi.fn(),
 }));
 
 // Mock settings groups
@@ -62,6 +52,13 @@ vi.mock("../../../setup/seed", () => ({
   defaultPrivateSettings: [],
   defaultPublicSettings: [],
 }));
+
+import {
+  GET as getSettings,
+  PUT as updateSettings,
+  DELETE as resetSettings,
+} from "@src/routes/api/settings/[group]/+server";
+import { dbAdapter } from "@src/databases/db";
 
 describe("Settings API Security - Tenant Isolation and RBAC", () => {
   const mockAdmin = { _id: "admin1", role: "admin", email: "admin@tenant1.com" };

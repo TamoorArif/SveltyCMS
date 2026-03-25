@@ -63,6 +63,7 @@ In March 2026, SveltyCMS implemented several enterprise-grade infrastructure opt
   - **Universal Tenant Context:** Implemented a rigorous middleware-driven `tenantId` propagation system, ensuring every database mutation and query is explicitly scoped to the correct tenant.
   - **IDOR Prevention:** Hardened all 40+ API endpoints with role-based access control and explicit owner verification.
   - **GraphQL Isolation:** Eliminated schema leakage by deploying isolated per-tenant Yoga server instances.
+  - **Tenant-Aware Uniqueness:** Implemented granular control for unique field constraints. The `tenantScopedUnique` flag ensures that identifiers like slugs (e.g., `/about`) remain unique within a tenant but can safely overlap across different tenants, preventing cross-tenant namespace collisions.
   - **SSE Hygiene:** Resolved a critical memory leak in the real-time event stream and implemented tenant-aware real-time filtering.
   - **Encrypted Data Portability:** Standardized AES-256-GCM encryption for all sensitive fields during tenant-scoped data exports.
   - **Automated Security Response (v2026)**: Implemented a unified `SecurityResponseService` providing:
@@ -90,7 +91,24 @@ To support the UI migration and global dynamic content, SveltyCMS standardized i
 - **`pluralize`**: A dynamic, runtime counterpart to Paraglide JS, leveraging `Intl.PluralRules` to accurately pluralize Arabic, Russian, and English database content (which cannot be pre-compiled).
 - **`slugify`**: Advanced Unicode normalization engine capable of safely trans-literating complex diacritics into URL-safe identifiers.
 
-### Competitive Benchmark Analysis (2026)
+## 3. Performance & Competitive Analysis
+
+### 3.1 Competitive Feature Matrix (2026)
+
+The following matrix evaluates core engineering implementations where SveltyCMS provides a distinct technical advantage over legacy and contemporary competitors.
+
+| Feature | SveltyCMS (v2026) | Strapi 5 | Payload 3.0 | Directus 11 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Core Framework** | **Svelte 5 (Runes)** | React | Next.js / React | Vue / Node.js |
+| **Multi-Tenancy** | **Native Adapter-Level** | Paid (Enterprise) | Plugin-based | Native |
+| **Slug Uniqueness**| **Tenant-Scoped (Native)**| Global Only | Global Only | Manual Config |
+| **AI Architecture**| **Local (Ollama) + Cloud**| Cloud Only (Paid) | MCP Native (Cloud) | Cloud Only (Paid) |
+| **Real-time Sync** | **CRDT (Yjs) over HTTP** | WebSockets | None / Custom | WebSockets |
+| **RTL Detection** | **Automated (Native)** | Manual | Manual | Manual |
+| **SDK Latency** | **Zero (Local In-Memory)** | 2–5ms (Local HTTP) | ~1ms (Direct) | 3–8ms (Local HTTP) |
+| **Toolchain** | **VoidZero (Rust)** | Vite (JS/TS) | Vite (JS/TS) | Vite (JS/TS) |
+
+### 3.2 Competitive Benchmark Analysis (2026)
 
 Verified performance metrics from the SveltyCMS CI pipeline (March 2026). These represent raw database driver latencies and compiled middleware overhead in a standard production environment.
 
@@ -150,6 +168,14 @@ Having secured the "Engine War" with superior performance and security, SveltyCM
 - **Features:** CRDT-based (Conflict-free Replicated Data Type) concurrent editing powered by Yjs over standard HTTP. Multiple editors can seamlessly collaborate on the same document without WebSockets, utilizing hybrid SSE (Server-Sent Events) and aggressive state synchronization.
 - **Result:** Puts SveltyCMS on par with Google Docs for collaborative multi-author enterprise environments.
 
+### 4.7 CLI Maintenance Suite & Global Accessibility
+
+- **Status: ✅ 100% Implemented**
+- **Features:** 
+    - **CLI Cache Control:** Native `bun run cache:clear` utility supporting system-wide, all-tenant, or specific tenant invalidation.
+    - **Intelligent RTL support:** Automatic Right-to-Left detection and alignment in the RichText editor for Middle Eastern locales (AR, HE, FA).
+- **Result:** Reduces operational overhead for DevOps and ensures a first-class editorial experience for a global workforce.
+
 ## 5. Phase 3: The Enterprise Leap (Q3 2026)
 
 To cement its position as the undisputed category leader against platforms like Payload CMS, SveltyCMS is deploying three critical architectural features that transform it from a high-performance engine into a fully-fledged enterprise application platform.
@@ -200,10 +226,44 @@ To cement its position as the undisputed category leader against platforms like 
 
 **Verdict:** SveltyCMS is the most performant, secure, and intelligent self-hosted CMS engine available in 2026. The platform has successfully transitioned from an "Elite Engine" into an "Intelligent Content Platform."
 
+## 7. Strategic Milestone Accomplishments
+
+SveltyCMS has achieved several critical milestones in 2025 and early 2026, establishing it as a state-of-the-art intelligent content platform.
+
+### 7.1 Core Engine & High-Performance DX
+- **Ultra-Fast Toolchain**: Biome/Ultracite integration achieving <0.8s linting/formatting.
+- **Middleware Revolution**: <0.6ms overhead across the entire security/auth pipeline.
+- **Type-Safe Widget System**: Migration to `ComponentLoader` closures with perfect tree-shaking.
+- **Multi-Adapter Database Parity**: Production-ready support for MongoDB, MariaDB, PostgreSQL, and SQLite.
+- **Enterprise Security & Automated Response**: Unified `SecurityResponseService` with Redis-backed state and ReDoS-safe patterns.
+- **CI Pipeline Restoration**: Playwright E2E suite stabilized across all supported databases.
+- **Active Database Driver Validation**: Eliminated "lazy connection" false positives in setup via mandatory `SELECT 1` pings.
+- **GraphQL JIT Execution Engine**: Multi-fold increase in RPS via `@envelop/graphql-jit`.
+- **API Benchmarking Suite**: Native tests (`test:bench:rest`, `test:bench:graphql`) to prove performance superiority.
+- **Advanced Security Isolation**: Implementation of COOP/COEP headers and refined multi-tenant cookie security for cross-origin isolation.
+- **High-Performance GraphQL**: Resolver memoization and JIT execution reducing API latency and redundant database hits.
+- **CLI Maintenance Suite**: Native `cache:clear` utilities for system-wide and tenant-specific operations.
+- **Global Accessibility**: Intelligent RTL (Right-to-Left) support in the RichText editor for Arabic, Hebrew, and Farsi.
+- **Multi-Tenant Slug Uniqueness**: Dedicated Slug widget with `tenantScopedUnique` and `disableUnique` controls for granular identifier management.
+
+### 7.2 Visual Intelligence & Enterprise Collaboration
+- **In-Context Live Preview**: Visual DnD, pulses, and editable highlights within the live site frame.
+- **AI-as-a-Field-Type**: Native `AIEnrichment` widget and LLM-driven Smart Translation.
+- **Native Local AI Media Tagging**: Privacy-first automatic Ollama image tagging upon upload.
+- **Multi-Cloud Storage Engine**: Universal strategy adapters for S3, R2, and Cloudinary.
+- **Hosted MCP Server**: Model Context Protocol server live at `mcp.sveltycms.com`.
+- **Enterprise Content Workflows**: Multi-stage approval cycles with secure, short-lived handshake tokens.
+- **Multi-Tenant Isolation 2.0**: Mathematical data separation via Universal Tenant Context.
+- **Durable Jobs & Webhooks**: Redis-backed job queue (`svelty_jobs`) and DLQ-aware webhook engine.
+- **Asynchronous Background Imports**: Off-thread processing for large datasets with concurrency control.
+- **Real-Time Collaboration**: CRDT-based concurrent editing (Yjs) over standard HTTP.
+- **Formal Server-Side SDK**: Native `locals.cms` for zero-latency SvelteKit integration.
+- **Essential Utilities**: Standardized high-performance `cn`, `pluralize`, and `slugify` utilities for robust UX foundation.
+
 ---
 
 **References:**
 
 - [Performance Benchmarks](../../tests/benchmarks/hooks-performance.ts)
 - [Database Performance](../../tests/benchmarks/database-performance.ts)
-- [Live Preview Architecture](../guides/live-preview-architecture.mdx)
+- [Live Preview Architecture](../architecture/live-preview-architecture.mdx)

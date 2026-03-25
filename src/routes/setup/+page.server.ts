@@ -633,6 +633,23 @@ export const actions: Actions = {
 
       // Initialize global system
       const { initializeWithConfig } = await import("@src/databases/db");
+
+      // Load real keys from private.ts for correct session signing
+      let jwtSecret = "temp_secret";
+      let encryptionKey = "temp_key";
+      try {
+        const fs = await import("node:fs/promises");
+        const path = await import("node:path");
+        const privatePath = path.resolve(process.cwd(), "config", "private.ts");
+        const content = await fs.readFile(privatePath, "utf-8");
+        const jwtMatch = /JWT_SECRET_KEY\s*:\s*['"]([^'"]+)['"]/.exec(content);
+        const encMatch = /ENCRYPTION_KEY\s*:\s*['"]([^'"]+)['"]/.exec(content);
+        if (jwtMatch) jwtSecret = jwtMatch[1];
+        if (encMatch) encryptionKey = encMatch[1];
+      } catch (e) {
+        logger.warn("Failed to read keys from private.ts, using fallbacks:", e);
+      }
+
       await initializeWithConfig(
         {
           DB_TYPE: database.type,
@@ -641,8 +658,8 @@ export const actions: Actions = {
           DB_NAME: database.name,
           DB_USER: database.user || "",
           DB_PASSWORD: database.password || "",
-          JWT_SECRET_KEY: "temp_secret",
-          ENCRYPTION_KEY: "temp_key",
+          JWT_SECRET_KEY: jwtSecret,
+          ENCRYPTION_KEY: encryptionKey,
           USE_REDIS: system.useRedis,
           REDIS_HOST: system.redisHost,
           REDIS_PORT: Number(system.redisPort),

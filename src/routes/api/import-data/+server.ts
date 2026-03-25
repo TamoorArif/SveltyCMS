@@ -4,13 +4,14 @@
  */
 
 import { dbAdapter } from "@src/databases/db";
+import { jobQueue } from "@src/services/jobs/job-queue-service";
 import { json } from "@sveltejs/kit";
 import { apiHandler } from "@utils/api-handler";
 import { AppError } from "@utils/error-handling";
 import { logger } from "@utils/logger.server";
 
 export const POST = apiHandler(async ({ request, locals }) => {
-  const { user } = locals;
+  const { user, tenantId } = locals;
 
   // Require authentication
   if (!user) {
@@ -22,7 +23,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
   }
 
   const body = await request.json();
-  const { collectionName, data, mode = "merge", duplicateStrategy = "skip" } = body;
+  const { collectionName, data, mode = "merge", duplicateStrategy = "skip", async = false } = body;
 
   // Validate required parameters
   if (!collectionName) {
@@ -33,6 +34,37 @@ export const POST = apiHandler(async ({ request, locals }) => {
     throw new AppError("Data must be an array", 422, "INVALID_DATA_FORMAT");
   }
 
+  // Determine if we should process in background
+  // Default to background for more than 50 items to prevent timeouts
+  const shouldProcessInBackground = async || data.length > 50;
+
+  if (shouldProcessInBackground) {
+    const jobId = await jobQueue.dispatch(
+      "import-data",
+      {
+        collectionName,
+        data,
+        mode,
+        duplicateStrategy,
+        tenantId,
+      },
+      tenantId || undefined,
+    );
+
+    if (jobId) {
+      return json({
+        success: true,
+        message: "Import started in background",
+        jobId,
+        total: data.length,
+        status: "pending",
+      });
+    } else {
+      throw new AppError("Failed to dispatch background import job", 500, "JOB_DISPATCH_FAILED");
+    }
+  }
+
+  // Synchronous Processing (only for small batches)
   let imported = 0;
   let skipped = 0;
   let errors = 0;
@@ -40,7 +72,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
   // Handle replace mode
   if (mode === "replace") {
     // Delete all existing documents
-    const deleteResult = await dbAdapter.crud.deleteMany(collectionName, {});
+    const deleteResult = await dbAdapter.crud.deleteMany(collectionName, {}, { tenantId });
     if (!deleteResult.success) {
       logger.warn(`Failed to clear collection ${collectionName} for replace mode`);
     }
@@ -51,40 +83,31 @@ export const POST = apiHandler(async ({ request, locals }) => {
     try {
       // Check for duplicates if strategy is skip
       if (duplicateStrategy === "skip" && doc._id) {
-        const existing = await dbAdapter.crud.findOne(collectionName, {
-          _id: doc._id,
-        });
+        const existing = await dbAdapter.crud.findOne(
+          collectionName,
+          { _id: doc._id },
+          { tenantId },
+        );
         if (existing.success && existing.data) {
           skipped++;
           continue;
         }
       }
 
-      // Insert or update document (use supported CRUD methods)
+      // Insert or update document
       const result = doc._id
-        ? await dbAdapter.crud.upsert(collectionName, { _id: doc._id }, doc)
-        : await dbAdapter.crud.insert(collectionName, doc);
+        ? await dbAdapter.crud.upsert(collectionName, { _id: doc._id }, doc, tenantId)
+        : await dbAdapter.crud.insert(collectionName, doc, tenantId);
 
       if (result.success) {
         imported++;
       } else {
         errors++;
-        logger.warn("Failed to import document", {
-          collection: collectionName,
-          error: result.error,
-        });
       }
     } catch (error: any) {
       errors++;
-      logger.error("Error importing document", { error: error.message });
     }
   }
-
-  logger.info(`Import completed for ${collectionName}`, {
-    imported,
-    skipped,
-    errors,
-  });
 
   return json({
     success: true,
@@ -92,5 +115,6 @@ export const POST = apiHandler(async ({ request, locals }) => {
     skipped,
     errors,
     total: data.length,
+    status: "completed",
   });
 });

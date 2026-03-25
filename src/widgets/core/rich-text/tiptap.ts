@@ -89,7 +89,9 @@ export async function createEditor(
     TableCell,
     TextAlign.configure({
       types: ["heading", "paragraph", "image"],
-      defaultAlignment: "left",
+      alignments: ["left", "center", "right", "justify"],
+      defaultAlignment:
+        language === "ar" || language === "he" || language === "fa" ? "right" : "left",
     }),
     Youtube.configure({
       modestBranding: true,

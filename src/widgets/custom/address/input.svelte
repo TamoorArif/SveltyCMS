@@ -44,7 +44,6 @@ import { countryStore } from './country-store.svelte';
 import type { AddressData } from './types';
 
 // Define google namespace for TypeScript if not globally available
-/// <reference types="google.maps" />
 
 let {
 	field,

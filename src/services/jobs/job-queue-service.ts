@@ -11,6 +11,7 @@ import type { Job, DatabaseId } from "@src/databases/db-interface";
 import { logger } from "@utils/logger.server";
 import { processMediaHandler } from "./media-jobs";
 import { webhookDeliveryHandler } from "./webhook-jobs";
+import { importDataHandler } from "./import-jobs";
 
 export type JobHandler = (payload: any) => Promise<void>;
 
@@ -23,6 +24,7 @@ class JobQueueService {
     // Register core handlers
     this.registerHandler("process-media", processMediaHandler);
     this.registerHandler("webhook-delivery", webhookDeliveryHandler);
+    this.registerHandler("import-data", importDataHandler);
   }
 
   /**

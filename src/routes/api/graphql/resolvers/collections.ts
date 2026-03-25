@@ -31,51 +31,18 @@ import { getPrivateSettingSync } from "@src/services/settings-service";
 // Token Engine
 import { replaceTokens } from "@src/services/token/engine";
 import type { TokenContext } from "@src/services/token/types";
-import { widgets } from "@src/stores/widget-store.svelte.ts";
 
 // System Logger
 import { logger } from "@utils/logger.server";
 import { createCleanTypeName, getFieldName } from "@utils/utils";
 // deepmerge import removed
-import type { GraphQLFieldResolver } from "graphql";
-
-// Helper to extract localized value
-function getLocalizedValue(value: unknown, locale = "en"): unknown {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    // Check if it looks like a localized object (keys are language codes)
-    const valObj = value as Record<string, unknown>;
-    if (locale in valObj) {
-      return valObj[locale];
-    }
-    // Fallback to 'en' or first key
-    if ("en" in valObj) {
-      return valObj.en;
-    }
-    const keys = Object.keys(valObj);
-    if (keys.length > 0) {
-      return valObj[keys[0]];
-    }
-  }
-  return value;
-}
-
-interface WidgetSchema {
-  graphql: string;
-  resolver?: Record<string, GraphQLFieldResolver<unknown, unknown>>;
-  typeID: string;
-  typeName: string;
-}
+import { widgets } from "@src/stores/widget-store.svelte.ts";
 
 interface DocumentBase {
   _id: string;
   createdAt: string;
   updatedAt: string;
   [key: string]: unknown;
-}
-
-interface ResolverContext {
-  Query: Record<string, GraphQLFieldResolver<unknown, unknown>>;
-  [key: string]: Record<string, GraphQLFieldResolver<unknown, unknown>>;
 }
 
 // Interface compatible with CacheService wrapper
@@ -90,206 +57,96 @@ interface CacheClient {
   ): Promise<unknown>;
 }
 
+// Memoization for registerCollections results per tenant
+const schemaCache = new Map<string, { timestamp: number; result: any }>();
+const CACHE_EXPIRY_MS = 30000; // 30 seconds
+
 // Registers collection schemas dynamically, now tenant-aware
 export async function registerCollections(tenantId?: string | null) {
+  const cacheKey = tenantId || "system";
+  const now = Date.now();
+  const cached = schemaCache.get(cacheKey);
+
+  if (cached && now - cached.timestamp < CACHE_EXPIRY_MS) {
+    return cached.result;
+  }
+
   await contentManager.initialize(tenantId);
   const collections: Schema[] = await contentManager.getCollections(tenantId);
 
-  // Use lightweight metadata instead of full schemas where possible
-  const collectionStats = await Promise.all(
-    (await contentManager.getCollections(tenantId)).map(async (col) => ({
-      ...col,
-      stats: contentManager.getCollectionStats(col._id!, tenantId),
-    })),
-  );
-
-  logger.debug(
-    "Collections loaded for GraphQL:",
-    collectionStats.map((c) => ({
-      name: typeof c.name === "string" ? c.name : "",
-      id: c._id,
-      cleanTypeName: createCleanTypeName({
-        _id: c._id,
-        name: typeof c.name === "string" ? c.name : "",
-      }),
-      fieldCount: c.stats?.fieldCount,
-    })),
-  );
-
-  const typeIDs = new Set<string>();
   const typeDefsSet = new Set<string>();
-  const resolvers: ResolverContext = { Query: {} };
   const collectionSchemas: string[] = [];
-  const collectionNameMapping = new Map<string, string>();
-  for (const collection of collections) {
-    const name = typeof collection.name === "string" ? collection.name : "";
-    const cleanTypeName = createCleanTypeName({ _id: collection._id, name });
-    collectionNameMapping.set(name, cleanTypeName);
-  }
+  const resolvers: any = { Query: {} };
+
+  // Add common types
+  typeDefsSet.add(`
+    input PaginationInput {
+      page: Int
+      limit: Int
+    }
+  `);
 
   for (const collection of collections) {
+    if (!collection._id) {
+      continue;
+    }
+
     const name = typeof collection.name === "string" ? collection.name : "";
     const cleanTypeName = createCleanTypeName({ _id: collection._id, name });
-    resolvers[cleanTypeName] = {};
-    let collectionSchema = `
-			type ${cleanTypeName} {
-		`;
 
-    for (const field of collection.fields as FieldInstance[]) {
-      const widgetNameRaw = field.widget?.Name;
-      if (!widgetNameRaw || typeof widgetNameRaw !== "string") {
-        continue; // Skip fields with missing widget names silently
-      }
+    let collectionGQL = `type ${cleanTypeName} {\n`;
+    collectionGQL += `  _id: String!\n`;
+    collectionGQL += `  createdAt: String\n`;
+    collectionGQL += `  updatedAt: String\n`;
 
-      // Get widget functions map - Correctly accessed from store
-      const widgetFunctionsMap = widgets.widgetFunctions;
+    for (const field of (collection.fields as FieldInstance[]) || []) {
+      const fieldName = getFieldName(field);
+      const widgetName = field.widget.Name || field.widget.constructor.name;
+      const widget = widgets[widgetName];
 
-      // Try exact match first, then try camelCase conversion, then lowercase fallback
-      let widget = widgetFunctionsMap[widgetNameRaw];
+      if (widget && widget.GraphqlSchema) {
+        const { typeID, graphql, resolver } = widget.GraphqlSchema({
+          field,
+          label: fieldName,
+          collection,
+          collections,
+        });
 
-      if (!widget) {
-        const camelName = widgetNameRaw.charAt(0).toLowerCase() + widgetNameRaw.slice(1);
-        widget = widgetFunctionsMap[camelName];
-      }
-
-      if (!widget) {
-        const lowerName = widgetNameRaw.toLowerCase();
-        widget = widgetFunctionsMap[lowerName];
-      }
-
-      if (!widget) {
-        // Log warning but continue, missing widget shouldn't break entire API
-        const availableWidgets = Object.keys(widgetFunctionsMap).length;
-        logger.warn(`Widget not found: ${widgetNameRaw} (Available: ${availableWidgets})`);
-        continue;
-      }
-
-      if (typeof widget.GraphqlSchema !== "function") {
-        continue;
-      }
-      const schema = (widget.GraphqlSchema as any)({
-        field,
-        label: `${cleanTypeName}_${getFieldName(field)}`,
-        collection,
-        collections,
-        collectionNameMapping,
-      }) as WidgetSchema | undefined;
-
-      if (!schema) {
-        continue;
-      }
-
-      if (schema.resolver) {
-        Object.assign(resolvers[cleanTypeName], schema.resolver);
-      }
-
-      // Only add to typeDefsSet if there's actual GraphQL schema content
-      if (schema.graphql?.trim() && !typeIDs.has(schema.typeID)) {
-        typeIDs.add(schema.typeID);
-        typeDefsSet.add(schema.graphql);
-      } else if (!schema.graphql?.trim()) {
-        typeIDs.add(schema.typeID);
-      } else if (typeIDs.has(schema.typeID)) {
-        // Duplicate type ID warning suppressed
-      }
-
-      // Nested Fields Logic
-      if (
-        "extract" in field &&
-        Array.isArray((field as FieldInstance & { fields?: FieldInstance[] }).fields) &&
-        ((field as FieldInstance & { fields?: FieldInstance[] }).fields?.length ?? 0) > 0
-      ) {
-        for (const FIELD of (field as FieldInstance & { fields?: FieldInstance[] }).fields!) {
-          const nestedWidgetNameRaw = FIELD.widget?.Name;
-          if (!nestedWidgetNameRaw || typeof nestedWidgetNameRaw !== "string") {
-            continue;
-          }
-
-          const widgetFunctionsMap = widgets.widgetFunctions;
-          let nestedWidget = widgetFunctionsMap[nestedWidgetNameRaw];
-
-          if (!nestedWidget) {
-            const camelName =
-              nestedWidgetNameRaw.charAt(0).toLowerCase() + nestedWidgetNameRaw.slice(1);
-            nestedWidget = widgetFunctionsMap[camelName];
-          }
-
-          if (!nestedWidget) {
-            const lowerName = nestedWidgetNameRaw.toLowerCase();
-            nestedWidget = widgetFunctionsMap[lowerName];
-          }
-
-          if (!nestedWidget || typeof nestedWidget.GraphqlSchema !== "function") {
-            continue;
-          }
-
-          const nestedSchema = nestedWidget.GraphqlSchema({
-            field: FIELD,
-            label: `${cleanTypeName}_${getFieldName(FIELD)}`,
-            collection,
-            collectionNameMapping,
-          });
-
-          if (nestedSchema?.typeID) {
-            if (nestedSchema.graphql?.trim() && !typeIDs.has(nestedSchema.typeID)) {
-              typeIDs.add(nestedSchema.typeID);
-              typeDefsSet.add(nestedSchema.graphql);
-            } else if (!nestedSchema.graphql?.trim()) {
-              typeIDs.add(nestedSchema.typeID);
-            }
-            collectionSchema += `                ${getFieldName(FIELD)}: ${nestedSchema.typeID}\n`;
-
-            // Robustly handle potentially localized data even if not marked translated
-            const nestedResolverFn = (
-              parent: Record<string, unknown>,
-              _args: unknown,
-              ctx: { locale: string },
-            ) => getLocalizedValue(parent[getFieldName(FIELD)], ctx.locale);
-
-            if (nestedResolverFn) {
-              resolvers[cleanTypeName][getFieldName(FIELD)] =
-                nestedResolverFn as GraphQLFieldResolver<unknown, unknown>;
-            }
-          }
+        if (typeID) {
+          collectionGQL += `  ${fieldName}: ${typeID}\n`;
+        }
+        if (graphql) {
+          typeDefsSet.add(graphql);
+        }
+        if (resolver) {
+          resolvers[cleanTypeName] = {
+            ...resolvers[cleanTypeName],
+            ...resolver,
+          };
         }
       } else {
-        collectionSchema += `                ${getFieldName(field)}: ${schema.typeID}\n`;
-
-        // Robustly handle potentially localized data even if not marked translated
-        const resolverFn = (
-          parent: Record<string, unknown>,
-          _args: unknown,
-          ctx: { locale: string },
-        ) => getLocalizedValue(parent[getFieldName(field)], ctx.locale);
-
-        if (resolverFn) {
-          resolvers[cleanTypeName][getFieldName(field)] = resolverFn as GraphQLFieldResolver<
-            unknown,
-            unknown
-          >;
-        }
+        // Default mapping for basic widgets
+        collectionGQL += `  ${fieldName}: String\n`;
       }
     }
 
-    collectionSchema += `
-				_id: String
-				status: String
-				createdAt: String
-				updatedAt: String
-				createdBy: String
-				updatedBy: String
-			}`;
+    collectionGQL += `}\n`;
+    collectionSchemas.push(collectionGQL);
 
-    collectionSchemas.push(`${collectionSchema}\n`);
+    // Add query for this collection
+    typeDefsSet.add(
+      `extend type Query { ${cleanTypeName}(pagination: PaginationInput): [${cleanTypeName}] }\n`,
+    );
   }
 
-  const finalTypeDefs = Array.from(typeDefsSet).join("\n") + collectionSchemas.join("\n");
-
-  return {
-    typeDefs: finalTypeDefs,
+  const finalResult = {
+    typeDefs: Array.from(typeDefsSet).join("\n") + collectionSchemas.join("\n"),
     resolvers,
     collections,
   };
+
+  schemaCache.set(cacheKey, { timestamp: now, result: finalResult });
+  return finalResult;
 }
 
 // Builds resolvers for querying collection data.

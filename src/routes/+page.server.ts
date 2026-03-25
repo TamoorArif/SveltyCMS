@@ -55,7 +55,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     }
 
     // --- Start of Redirect Logic for the Root Route ('/') ---
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    // GLOBAL ADMIN EXEMPTION: Allow null tenantId for global administrators
+    const isGlobalAdmin = user.tenantId === null || user.tenantId === undefined;
+    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId && !isGlobalAdmin) {
       throw error(400, "Tenant could not be identified for this operation.");
     }
 

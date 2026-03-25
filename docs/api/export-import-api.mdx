@@ -237,14 +237,31 @@ Cookie: session=your-session-id
 
 ## Import Endpoints
 
+### Import Logic Flow
+
+```mermaid
+graph TD
+    A[Client: POST /api/import-data] --> B{Valid Request?}
+    B -- No --> C[Return 400/422 Error]
+    B -- Yes --> D{Items > 50 or async=true?}
+    
+    D -- "Yes (Async)" --> E[Dispatch to JobQueue]
+    E --> F[Return jobId + Status: 'pending']
+    F --> G[Background: Process in Chunks]
+    G --> H[Final: Job Completed]
+    
+    D -- "No (Sync)" --> I[Immediate Processing]
+    I --> J[Return Results + Status: 'completed']
+```
+
 ### 1. Import Data
 
-Imports data into collections from JSON.
+Imports data into collections from JSON. Large datasets (>50 items) are automatically processed in the background.
 
 #### Request
 
 ```http
-POST /api/import/full
+POST /api/import-data
 ```
 
 **Headers:**
@@ -258,100 +275,72 @@ Content-Type: application/json
 
 ```json
 {
-  "collections": {
-    "posts": [
-      {
-        "title": "Imported Post",
-        "content": "Content...",
-        "author": "user123"
-      }
-    ],
-    "pages": [
-      {
-        "title": "Imported Page",
-        "slug": "imported-page"
-      }
-    ]
-  },
-  "options": {
-    "overwrite": false,
-    "validate": true,
-    "skipInvalid": true,
-    "batchSize": 100
-  }
+  "collectionName": "posts",
+  "data": [
+    {
+      "title": "Imported Post",
+      "content": "Content...",
+      "author": "user123"
+    }
+  ],
+  "mode": "merge",
+  "duplicateStrategy": "skip",
+  "async": false
 }
 ```
 
-**Options:**
+**Parameters:**
 
-- `overwrite` (boolean) - Overwrite existing records - default: `false`
-- `validate` (boolean) - Validate data against schema - default: `true`
-- `skipInvalid` (boolean) - Skip invalid entries - default: `true`
-- `batchSize` (number) - Records per batch - default: `100`
+- `collectionName` (string, required) - The name of the collection to import into.
+- `data` (array, required) - Array of document objects to import.
+- `mode` (string, optional) - `merge` (default) or `replace` (clears collection first).
+- `duplicateStrategy` (string, optional) - `skip` (default) or `overwrite` (requires `_id`).
+- `async` (boolean, optional) - Force background processing. Defaults to `true` if `data.length > 50`.
 
 **Permissions Required:** `admin` or `data:import`
 
 #### Response
 
-**Success (200):**
+**Synchronous Success (200):**
+Returned for small datasets processed immediately.
 
 ```json
 {
   "success": true,
-  "message": "Data import completed successfully",
-  "results": [
-    {
-      "collection": "posts",
-      "imported": 42,
-      "skipped": 3,
-      "errors": [
-        {
-          "index": 5,
-          "error": "Missing required field: title",
-          "entry": { ... }
-        }
-      ]
-    },
-    {
-      "collection": "pages",
-      "imported": 15,
-      "skipped": 0,
-      "errors": []
-    }
-  ],
-  "totalImported": 57,
-  "totalSkipped": 3,
-  "totalErrors": 1,
-  "duration": 1245
+  "imported": 42,
+  "skipped": 3,
+  "errors": 0,
+  "total": 45,
+  "status": "completed"
+}
+```
+
+**Asynchronous Success (200):**
+Returned for large datasets or when `async: true` is provided.
+
+```json
+{
+  "success": true,
+  "message": "Import started in background",
+  "jobId": "job_12345",
+  "total": 1500,
+  "status": "pending"
 }
 ```
 
 **Error Responses:**
 
 ```json
-// 400 Bad Request - Invalid format
+// 400 Bad Request - Missing parameters
 {
   "success": false,
-  "message": "Invalid import data format. Expected collections object."
+  "message": "Collection name is required"
 }
 
-// 400 Bad Request - Validation errors
+// 422 Unprocessable Entity - Invalid data
 {
   "success": false,
-  "message": "Data validation failed",
-  "errors": [
-    {
-      "collection": "posts",
-      "index": 2,
-      "error": "Invalid field: publishedAt"
-    }
-  ]
-}
-
-// 500 Internal Server Error
-{
-  "success": false,
-  "message": "Import failed: Database write error"
+  "message": "Data must be an array"
 }
 ```
 

@@ -46,6 +46,26 @@ The setup wizard is a multi-step form that guides users through initial SveltyCM
 4. **Email Configuration** (Optional) - SMTP setup for notifications
 5. **Review & Complete** - Final review and system initialization
 
+### Setup Wizard Flow
+
+```mermaid
+flowchart TD
+    Start((Start)) --> DB[1. Database Config]
+    DB --> |Test Connection| DBCheck{Valid?}
+    DBCheck -->|No| DB
+    DBCheck -->|Yes| Admin[2. Admin Account]
+    Admin --> |Validate| AdminCheck{Valid?}
+    AdminCheck -->|No| Admin
+    AdminCheck -->|Yes| System[3. System Settings]
+    System --> |Validate| SystemCheck{Valid?}
+    SystemCheck -->|No| System
+    SystemCheck -->|Yes| Email[4. Email Config]
+    Email --> |Optional| Review[5. Review & Complete]
+    Review --> |Final Validation| Seed[Seed Database]
+    Seed --> Complete[Complete Setup]
+    Complete --> Redirect((Dashboard))
+```
+
 ### Quick Stats
 
 - **Total Steps**: 5 (4 required + 1 optional)
@@ -439,25 +459,37 @@ stateDiagram-v2
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant W as Wizard
-    participant Svr as Server Action
+    autonumber
+    participant U as User (Browser)
+    participant W as Setup Wizard
+    participant Svr as SvelteKit Server
+    participant FS as File System (private.ts)
     participant DB as Database
-    participant Sys as System
+    participant Sys as System State
 
-    U->>W: Click "Complete"
-    W->>W: Validate all steps
+    Note over U, Sys: Transitioning from IDLE to READY
+
+    U->>W: Click "Complete Setup"
+    W->>W: Final Validation
     W->>Svr: POST /setup?/completeSetup
-    Svr->>DB: Create admin user
-    Svr->>DB: Create session
-    Svr->>Sys: Initialize system
-    Sys->>Sys: Load settings
-    Sys->>Sys: Register collections
-    Svr->>Svr: Pre-warm cache (CollectionService)
-    Svr-->>W: Success + session cookie
+
+    Svr->>FS: Write private.ts (Keys, DB Config)
+    Svr->>FS: Read back real JWT_SECRET & ENCRYPTION_KEY
+
+    Svr->>DB: Create Admin User & Default Roles
+    Svr->>DB: Seed System Settings (per-tenant)
+
+    Svr->>Sys: initializeWithConfig(realKeys)
+    Sys->>Sys: Register Adapters
+    Sys->>Sys: Warm Content Cache
+
+    Svr->>Svr: Create Session Cookie (Signed with real JWT_SECRET)
+
+    Svr-->>W: Success Response
     W->>W: Clear localStorage
-    W->>W: Show success toast
-    W->>U: Redirect to dashboard (Immediate)
+    W-->>U: Redirect to Dashboard
+
+    Note over U, Sys: System is now READY (No restart occurred)
 ```
 
 ---

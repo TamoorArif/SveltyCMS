@@ -48,7 +48,9 @@ export class MongoSystemMethods {
   ): Promise<DatabaseResult<T | null>> {
     try {
       if (scope === "system") {
-        const setting = await this.SystemSettingModel.findOne({ key }).lean();
+        // In system scope, userId is used as tenantId
+        const tenantId = (userId as string) || null;
+        const setting = await this.SystemSettingModel.findOne({ key, tenantId }).lean();
         return { success: true, data: setting ? (setting.value as T) : null };
       }
 
@@ -109,14 +111,20 @@ export class MongoSystemMethods {
   ): Promise<DatabaseResult<void>> {
     try {
       if (scope === "system") {
+        const tenantId = (userId as string) || null;
         const updateData: Record<string, unknown> = {
           value,
           updatedAt: new Date(),
+          tenantId,
         };
         if (category) {
           updateData.category = category;
         }
-        await this.SystemSettingModel.updateOne({ key }, { $set: updateData }, { upsert: true });
+        await this.SystemSettingModel.updateOne(
+          { key, tenantId },
+          { $set: updateData },
+          { upsert: true },
+        );
         return { success: true, data: undefined };
       }
 
@@ -159,9 +167,12 @@ export class MongoSystemMethods {
   ): Promise<DatabaseResult<void>> {
     try {
       if (scope === "system") {
-        const result = await this.SystemSettingModel.deleteOne({ key });
+        const tenantId = (userId as string) || null;
+        const result = await this.SystemSettingModel.deleteOne({ key, tenantId });
         if (result.deletedCount === 0) {
-          logger.warn(`System setting '${key}' not found for deletion.`);
+          logger.warn(
+            `System setting '${key}' not found for deletion${tenantId ? ` in tenant ${tenantId}` : ""}.`,
+          );
         }
         return { success: true, data: undefined };
       }
@@ -216,9 +227,12 @@ export class MongoSystemMethods {
       }
 
       if (scope === "system") {
+        // In system scope, userId is used as tenantId
+        const tenantId = (userId as string) || null;
         // Single query with $in operator for all keys at once
         const settings = await this.SystemSettingModel.find({
           key: { $in: keys },
+          tenantId,
         }).lean();
         const result = settings.reduce(
           (acc, setting) => {
@@ -296,8 +310,10 @@ export class MongoSystemMethods {
   ): Promise<DatabaseResult<Record<string, T>>> {
     try {
       if (scope === "system") {
+        const tenantId = (userId as string) || null;
         const settings = await this.SystemSettingModel.find({
           category,
+          tenantId,
         }).lean();
         const result = settings.reduce(
           (acc, setting) => {
@@ -374,16 +390,18 @@ export class MongoSystemMethods {
       // Batch update system preferences
       if (systemPrefs.length > 0) {
         const operations = systemPrefs.map((pref) => {
+          const tenantId = (pref.userId as string) || null;
           const updateData: Record<string, unknown> = {
             value: pref.value,
             updatedAt: new Date(),
+            tenantId,
           };
           if (pref.category) {
             updateData.category = pref.category;
           }
           return {
             updateOne: {
-              filter: { key: pref.key },
+              filter: { key: pref.key, tenantId },
               update: { $set: updateData },
               upsert: true,
             },
@@ -458,8 +476,9 @@ export class MongoSystemMethods {
       }
 
       if (scope === "system") {
-        // Single deleteMany with $in operator
-        await this.SystemSettingModel.deleteMany({ key: { $in: keys } });
+        const tenantId = (userId as string) || null;
+        // Single deleteMany with $in operator and tenantId
+        await this.SystemSettingModel.deleteMany({ key: { $in: keys }, tenantId });
         return { success: true, data: undefined };
       }
 
@@ -509,7 +528,8 @@ export class MongoSystemMethods {
   ): Promise<DatabaseResult<void>> {
     try {
       if (scope === "system") {
-        await this.SystemSettingModel.deleteMany({});
+        const tenantId = (userId as string) || null;
+        await this.SystemSettingModel.deleteMany({ tenantId });
         return { success: true, data: undefined };
       }
 

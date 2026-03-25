@@ -69,6 +69,44 @@ let showSource = $state(false); // Source View Toggle
 let activeDropdown = $state<string | null>(null);
 let colorInput = $state<HTMLInputElement>();
 
+let translateLoading = $state(false);
+
+async function translateContent() {
+	const sourceLang = 'en'; // Should be dynamic from settings
+	const source = (value as Record<string, RichTextData>)?.[sourceLang];
+
+	if (!source?.content || sourceLang === lang) return;
+
+	translateLoading = true;
+	try {
+		const response = await fetch('/api/ai/enrich', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				text: source.content,
+				action: 'translate',
+				format: 'html',
+				language: lang
+			})
+		});
+		const data = await response.json();
+		if (data.result) {
+			if (field.translated) {
+				if (!value || typeof value !== 'object') value = {};
+				(value as any)[lang] = {
+					...(value as any)[lang],
+					content: data.result
+				};
+				editor?.commands.setContent(data.result);
+			}
+		}
+	} catch (err) {
+		console.error('[AI Translation] Error:', err);
+	} finally {
+		translateLoading = false;
+	}
+}
+
 // Table Picker State
 let hoverRows = $state(0);
 let hoverCols = $state(0);
@@ -420,6 +458,18 @@ const toolbarGroups: ToolbarGroup[] = [
 				label: 'Source View',
 				cmd: () => (showSource = !showSource),
 				active: () => showSource
+			}
+		]
+	},
+	{
+		condition: () => !!field.translated && lang !== 'default',
+		buttons: [
+			{
+				type: 'button',
+				icon: 'translate',
+				label: 'AI Translate',
+				cmd: translateContent,
+				active: () => translateLoading
 			}
 		]
 	}

@@ -747,6 +747,8 @@ const mockDbAdapter = {
       get: mock(() => Promise.resolve({ success: true, data: [] })),
       set: mock(() => Promise.resolve({ success: true })),
       getMany: mock(() => Promise.resolve({ success: true, data: {} })),
+      setMany: mock(() => Promise.resolve({ success: true })),
+      deleteMany: mock(() => Promise.resolve({ success: true })),
     },
   },
   crud: {
@@ -788,6 +790,7 @@ const dbMock = {
   initializeWithConfig: mock(() => Promise.resolve({ status: "success" })),
   initConnection: mock(() => Promise.resolve()),
   dbInitPromise: Promise.resolve(),
+  loadSettingsFromDB: mock(() => Promise.resolve(true)),
 };
 moduleMock("@src/databases/db", () => dbMock);
 moduleMock("@databases/db", () => dbMock);

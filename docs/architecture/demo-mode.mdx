@@ -61,6 +61,26 @@ Demo mode is strictly controlled via `config/private.ts` to prevent accidental d
 
 ### Tenant Lifecycle
 
+```mermaid
+stateDiagram-v2
+    [*] --> NewUser: Visits /login or /setup
+
+    state "Demo Mode Detection" as Detect {
+        NewUser --> NoCookie: No demo_tenant_id
+        NoCookie --> CheckSession: Session exists?
+        CheckSession --> GlobalAdmin: Yes (tenantId: null)
+        CheckSession --> GenTenant: No
+        GenTenant --> SeedTenant: Generate UUID
+        SeedTenant --> SetCookie: Seed Roles & Admin
+    }
+
+    SetCookie --> UserActive: Use CMS (Isolated)
+    GlobalAdmin --> UserActive: Manage All (Bypass)
+
+    UserActive --> Cleanup: After 60 Minutes
+    Cleanup --> [*]: Data Deleted
+```
+
 1.  **Creation**:
     - **Method A (No Token)**: User visits `/login` -> Click "Sign Up".
       - If `MULTI_TENANT=true` AND `DEMO=true`, they can register _without_ a token.

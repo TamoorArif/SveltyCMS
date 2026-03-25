@@ -273,12 +273,12 @@ async function setupGraphQL(dbAdapter: DatabaseAdapter, tenantId?: string | null
         subscriptionsProtocol: "WS",
       },
       parserAndValidationCache: true,
+      // @ts-expect-error Yoga server options type mismatch
       validationRules: [
         createDepthLimitRule(8),
         createMaxAliasesRule(15),
         ...(dev ? [] : [NoSchemaIntrospectionCustomRule]),
       ],
-      // @ts-expect-error Yoga schema type mismatch due to context generics
       schema: createSchema({ typeDefs, resolvers }),
       context: async ({ request }) => {
         // Extract the context from the request if it was passed

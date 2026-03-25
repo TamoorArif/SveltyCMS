@@ -31,12 +31,12 @@ All performance metrics were gathered on the following hardware:
 
 The transition to a dynamic Iconify-based architecture and the removal of heavy legacy component libraries (Lucide Svelte) has resulted in a monumental shift in build efficiency.
 
-| Metric                   | Baseline (v0.0.6) | Current (v0.0.7) | Delta         |
-| :----------------------- | :---------------- | :--------------- | :------------ |
-| **Full Build Duration**  | ~45.0s            | **8.69s**        | **80% ↓**     |
+| Metric                   | Baseline (v0.0.6) | Current (v0.0.7) | Delta          |
+| :----------------------- | :---------------- | :--------------- | :------------- |
+| **Full Build Duration**  | ~45.0s            | **8.69s**        | **80% ↓**      |
 | **Total Bundle Size**    | 17.39 MB          | **3.01 MB**      | **14.38 MB ↓** |
-| **Transfer Size (Gzip)** | 3.15 MB           | **0.97 MB**      | **69% ↓**     |
-| **Client Module Count**  | ~2,200            | **486**          | **78% ↓**     |
+| **Transfer Size (Gzip)** | 3.15 MB           | **0.97 MB**      | **69% ↓**      |
+| **Client Module Count**  | ~2,200            | **486**          | **78% ↓**      |
 
 > [!TIP]
 > **Sub-10s Build**: SveltyCMS now builds its entire frontend and backend in under 10 seconds, significantly improving CI/CD pipeline efficiency and developer iteration speed.

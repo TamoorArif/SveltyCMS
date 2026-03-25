@@ -20,6 +20,7 @@ export interface SystemSetting {
   isGlobal?: boolean;
   key: string;
   scope: string; // e.g., 'system', 'public', 'private'
+  tenantId?: string | null;
   updatedAt?: string; // ISODateString
   value: unknown;
 }
@@ -27,7 +28,8 @@ export interface SystemSetting {
 const SYSTEM_SETTING_SCHEMA = new Schema<SystemSetting>(
   {
     _id: { type: String, required: true, default: () => generateId() }, // UUID primary key
-    key: { type: String, required: true, index: true, unique: true },
+    key: { type: String, required: true },
+    tenantId: { type: String, default: null },
     value: { type: Schema.Types.Mixed, required: true },
     scope: { type: String, default: "system", index: true },
     category: {
@@ -46,6 +48,9 @@ const SYSTEM_SETTING_SCHEMA = new Schema<SystemSetting>(
     _id: false, // Disable Mongoose auto-ObjectId generation
   },
 );
+
+// Create compound unique index for key + tenantId
+SYSTEM_SETTING_SCHEMA.index({ key: 1, tenantId: 1 }, { unique: true });
 
 export const SystemSettingModel =
   (mongoose.models?.SystemSetting as mongoose.Model<SystemSetting> | undefined) ||

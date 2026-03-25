@@ -270,7 +270,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
       const result = await this.model.insertMany(docs);
       return {
         success: true,
-        data: result.map((doc) => (doc as mongoose.HydratedDocument<T>).toObject() as T),
+        data: result.map((doc) => (doc as unknown as mongoose.HydratedDocument<T>).toObject() as T),
         meta: { executionTime: performance.now() - startTime },
       };
     } catch (error) {

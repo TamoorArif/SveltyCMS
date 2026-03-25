@@ -15,7 +15,7 @@ import { isSetupComplete } from "@utils/setup-check";
 export async function writePrivateConfig(
   dbConfig: DatabaseConfig,
   system: { multiTenant?: boolean; demoMode?: boolean } = {},
-): Promise<void> {
+): Promise<{ jwtSecret: string; encryptionKey: string }> {
   const fs = await import("node:fs/promises");
   const path = await import("node:path");
   const { randomBytes } = await import("node:crypto");
@@ -112,6 +112,7 @@ export const privateEnv = {
     }
 
     logger.info("Private configuration file written and validated successfully");
+    return { jwtSecret, encryptionKey };
   } catch (error) {
     logger.error("Failed to write private config:", error);
     throw new Error(

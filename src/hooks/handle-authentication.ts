@@ -315,12 +315,14 @@ async function handleSessionRotation(
       const newSessionId = newSession._id;
 
       // Update cookie with new session ID
+      const isProd = !dev && process.env.TEST_MODE !== "true";
+      const isSecure =
+        event.url.protocol === "https:" || (event.url.hostname !== "localhost" && isProd);
+
       event.cookies.set(SESSION_COOKIE_NAME, newSessionId, {
         path: "/",
         httpOnly: true,
-        secure:
-          event.url.protocol === "https:" ||
-          (event.url.hostname !== "localhost" && !dev && process.env.TEST_MODE !== "true"),
+        secure: isSecure,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 30, // 30 days
       });
@@ -454,41 +456,49 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
         if (tenantId) {
           logger.trace(`Existing demo tenant from cookie: ${tenantId}`);
         } else {
-          // Server-side dedup: parallel requests from the same browser session
-          // arrive before the Set-Cookie response is sent back. Use the session
-          // cookie as a stable key to prevent multiple tenants being generated.
-          const sessionKey = cookies.get(SESSION_COOKIE_NAME) || url.hostname;
-          const existing = pendingDemoTenants.get(sessionKey);
-          if (existing) {
-            tenantId = existing;
-            logger.trace(`Reusing pending demo tenant for session: ${tenantId}`);
+          // Optimization: If a session exists, we delay demo tenant generation
+          // until we verify if it's a global admin session (which needs no tenant).
+          const sessionId = cookies.get(SESSION_COOKIE_NAME);
+          if (sessionId) {
+            logger.debug("Session exists, delaying demo tenant generation for global admin check");
+            tenantId = null; // Proceed with null tenant for validation
           } else {
-            tenantId = crypto.randomUUID();
-            pendingDemoTenants.set(sessionKey, tenantId);
-            // Clean up after cookie has had time to propagate
-            setTimeout(() => pendingDemoTenants.delete(sessionKey), 10_000);
-            logger.info(`New demo tenant generated: ${tenantId}`);
+            // Server-side dedup: parallel requests from the same browser session
+            // arrive before the Set-Cookie response is sent back. Use the session
+            // cookie as a stable key to prevent multiple tenants being generated.
+            const sessionKey = url.hostname; // Fallback since no session cookie exists
+            const existing = pendingDemoTenants.get(sessionKey);
+            if (existing) {
+              tenantId = existing;
+              logger.trace(`Reusing pending demo tenant for session: ${tenantId}`);
+            } else {
+              tenantId = crypto.randomUUID();
+              pendingDemoTenants.set(sessionKey, tenantId);
+              // Clean up after cookie has had time to propagate
+              setTimeout(() => pendingDemoTenants.delete(sessionKey), 10_000);
+              logger.info(`New demo tenant generated: ${tenantId}`);
 
-            // --- Trigger Tenant Seeding Here ---
-            try {
-              const { seedDemoTenant } = await import("@src/routes/setup/seed");
-              await seedDemoTenant(dbAdapter, tenantId);
-              logger.info(`✅ New demo tenant ${tenantId} seeded successfully.`);
-            } catch (e) {
-              logger.error(`Failed to seed demo tenant ${tenantId}:`, e);
+              // --- Trigger Tenant Seeding Here ---
+              try {
+                const { seedDemoTenant } = await import("@src/routes/setup/seed");
+                await seedDemoTenant(dbAdapter, tenantId);
+                logger.info(`✅ New demo tenant ${tenantId} seeded successfully.`);
+              } catch (e) {
+                logger.error(`Failed to seed demo tenant ${tenantId}:`, e);
+              }
             }
-          }
 
-          // Set the cookie for future requests in this session
-          cookies.set("demo_tenant_id", tenantId, {
-            path: "/",
-            httpOnly: true,
-            secure:
-              url.protocol === "https:" ||
-              (url.hostname !== "localhost" && !dev && process.env.TEST_MODE !== "true"),
-            sameSite: "lax",
-            maxAge: 60 * 60, // 60 minutes for a demo session to match cleanup TTL
-          });
+            // Set the cookie for future requests in this session
+            cookies.set("demo_tenant_id", tenantId, {
+              path: "/",
+              httpOnly: true,
+              secure:
+                url.protocol === "https:" ||
+                (url.hostname !== "localhost" && !dev && process.env.TEST_MODE !== "true"),
+              sameSite: "lax",
+              maxAge: 60 * 60, // 60 minutes for a demo session to match cleanup TTL
+            });
+          }
         }
       } else {
         // Standard multi-tenancy: resolve tenantId from hostname
@@ -502,7 +512,8 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
         logger.debug(`[Auth] Using isolated test-worker tenant: ${tenantId}`);
       }
 
-      if (!tenantId) {
+      // Allow tenantId to be null for global administration (non-demo) or during global admin check (demo)
+      if (!tenantId && !isDemoMode && url.hostname !== "localhost") {
         logger.error(`Tenant not found for hostname: ${url.hostname}`);
         throw new AppError(
           `Tenant not found for hostname: ${url.hostname}`,
@@ -511,7 +522,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
         );
       }
       locals.tenantId = tenantId;
-      logger.trace(`Tenant identified: ${tenantId}`);
+      if (tenantId) logger.trace(`Tenant identified: ${tenantId}`);
     }
 
     // Step 2: Session validation
@@ -529,9 +540,44 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
       }
 
       const user = await getUserFromSession(sessionId, locals.tenantId);
+
+      // Step 2.5: Late Demo Tenant Generation (if no tenant and no global admin session)
+      if (isDemoMode && !locals.tenantId && !user) {
+        const tenantId = crypto.randomUUID();
+        logger.info(`Late demo tenant generation for unauthenticated user: ${tenantId}`);
+
+        try {
+          const { seedDemoTenant } = await import("@src/routes/setup/seed");
+          await seedDemoTenant(dbAdapter, tenantId);
+          logger.info(`✅ Late demo tenant ${tenantId} seeded successfully.`);
+        } catch (e) {
+          logger.error(`Failed to seed late demo tenant ${tenantId}:`, e);
+        }
+
+        cookies.set("demo_tenant_id", tenantId, {
+          path: "/",
+          httpOnly: true,
+          secure:
+            url.protocol === "https:" ||
+            (url.hostname !== "localhost" && !dev && process.env.TEST_MODE !== "true"),
+          sameSite: "lax",
+          maxAge: 60 * 60,
+        });
+        locals.tenantId = tenantId;
+      }
+
       if (user) {
         // Tenant isolation check
-        if (locals.tenantId && user.tenantId && user.tenantId !== locals.tenantId) {
+        // GLOBAL ADMIN EXEMPTION: If the user is a global administrator (tenantId is null or undefined),
+        // they are allowed to access any tenant context.
+        const isGlobalAdmin = user.tenantId === null || user.tenantId === undefined;
+
+        if (
+          locals.tenantId &&
+          !isGlobalAdmin &&
+          user.tenantId &&
+          user.tenantId !== locals.tenantId
+        ) {
           logger.warn(
             `Tenant isolation violation: User ${user._id} (tenant: ${user.tenantId}) tried ${locals.tenantId}`,
           );

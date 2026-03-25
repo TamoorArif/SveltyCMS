@@ -149,6 +149,7 @@ sequenceDiagram
     participant User as User/Browser
     participant Setup as /setup Wizard
     participant SF as Server Function: completeSetup
+    participant FS as File System (private.ts)
     participant DB as db.ts
     participant State as System State
     participant Cache as Server Cache
@@ -163,8 +164,10 @@ sequenceDiagram
     User->>Setup: Submit setup
 
     Setup->>SF: Call completeSetup()
-    SF->>SF: Write config/private.ts file
-    SF->>DB: initializeWithConfig(fullConfig)
+    SF->>FS: Write config/private.ts (Keys, DB Config)
+    SF->>FS: Read back real JWT_SECRET & ENCRYPTION_KEY
+
+    SF->>DB: initializeWithConfig(fullConfigWithRealKeys)
     Note over DB: In-memory config passed<br/>(bypasses Vite cache)
 
     DB->>DB: privateEnv = config
@@ -174,11 +177,11 @@ sequenceDiagram
     DB->>DB: Setup auth models
     State->>State: Set state = READY
 
-    API->>API: Create admin user
-    API->>Cache: Warm cache: fetch('/')
+    SF->>DB: Create admin user
+    SF->>Cache: Warm cache: fetch('/')
     Note over Cache: Pre-load homepage SSR
 
-    API-->>Setup: { success: true, redirect: '/login' }
+    SF-->>Setup: { success: true, redirect: '/login' }
     Setup->>User: Redirect to /login
 
     Note over User,State: ✅ System fully operational<br/>NO SERVER RESTART NEEDED
@@ -266,7 +269,7 @@ While the middleware pipeline enforces strict security and tenant isolation, som
 
 ## Performance & Throughput (2026 Benchmarks)
 
-SveltyCMS middleware is optimized for **world-class micro-latency**, utilizing fast-path short-circuiting for static assets and API requests. The entire pipeline overhead is effectively "free" in modern production environments.
+SveltyCMS middleware is optimized for **world-class micro-latency**, utilizing fast-path short-circuiting for static assets and API requests. The entire pipeline overhead is effectively "free" in modern production environments. For a full breakdown of system metrics, see the [Central Performance Benchmarks](../project/benchmarks.mdx).
 
 ### Middleware Pipeline Overhead (µs)
 

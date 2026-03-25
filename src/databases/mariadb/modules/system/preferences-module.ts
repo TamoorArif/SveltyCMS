@@ -12,7 +12,7 @@
  * - Clear preferences
  */
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { DatabaseId, DatabaseResult } from "../../../db-interface";
 import type { AdapterCore } from "../../adapter/adapter-core";
 import * as schema from "../../schema";
@@ -31,16 +31,20 @@ export class PreferencesModule {
 
   async get<T>(
     key: string,
-    scope?: "user" | "system",
+    scope: "user" | "system" = "system",
     userId?: DatabaseId,
   ): Promise<DatabaseResult<T | null>> {
     return this.core.wrap(async () => {
       const conditions: import("drizzle-orm").SQL[] = [eq(schema.systemPreferences.key, key)];
-      if (scope) {
-        conditions.push(eq(schema.systemPreferences.scope, scope));
-      }
-      if (userId) {
-        conditions.push(eq(schema.systemPreferences.userId, userId));
+      if (scope === "system") {
+        // In system scope, userId is used as tenantId
+        if (userId) {
+          conditions.push(eq(schema.systemPreferences.tenantId, userId as string));
+        } else {
+          conditions.push(isNull(schema.systemPreferences.tenantId));
+        }
+      } else if (userId) {
+        conditions.push(eq(schema.systemPreferences.userId, userId.toString()));
       }
 
       const [result] = await this.db
@@ -58,16 +62,19 @@ export class PreferencesModule {
 
   async getMany<T>(
     keys: string[],
-    scope?: "user" | "system",
+    scope: "user" | "system" = "system",
     userId?: DatabaseId,
   ): Promise<DatabaseResult<Record<string, T>>> {
     return this.core.wrap(async () => {
       const conditions: import("drizzle-orm").SQL[] = [inArray(schema.systemPreferences.key, keys)];
-      if (scope) {
-        conditions.push(eq(schema.systemPreferences.scope, scope));
-      }
-      if (userId) {
-        conditions.push(eq(schema.systemPreferences.userId, userId));
+      if (scope === "system") {
+        if (userId) {
+          conditions.push(eq(schema.systemPreferences.tenantId, userId as string));
+        } else {
+          conditions.push(isNull(schema.systemPreferences.tenantId));
+        }
+      } else if (userId) {
+        conditions.push(eq(schema.systemPreferences.userId, userId.toString()));
       }
 
       const results = await this.db
@@ -86,18 +93,21 @@ export class PreferencesModule {
 
   async getByCategory<T>(
     category: string,
-    scope?: "user" | "system",
+    scope: "user" | "system" = "system",
     userId?: DatabaseId,
   ): Promise<DatabaseResult<Record<string, T>>> {
     return this.core.wrap(async () => {
       const conditions: import("drizzle-orm").SQL[] = [
         eq(schema.systemPreferences.visibility, category),
       ];
-      if (scope) {
-        conditions.push(eq(schema.systemPreferences.scope, scope));
-      }
-      if (userId) {
-        conditions.push(eq(schema.systemPreferences.userId, userId));
+      if (scope === "system") {
+        if (userId) {
+          conditions.push(eq(schema.systemPreferences.tenantId, userId as string));
+        } else {
+          conditions.push(isNull(schema.systemPreferences.tenantId));
+        }
+      } else if (userId) {
+        conditions.push(eq(schema.systemPreferences.userId, userId.toString()));
       }
 
       const results = await this.db
@@ -117,28 +127,39 @@ export class PreferencesModule {
   async set<T>(
     key: string,
     value: T,
-    scope?: "user" | "system",
+    scope: "user" | "system" = "system",
     userId?: DatabaseId,
   ): Promise<DatabaseResult<void>> {
     return this.core.wrap(async () => {
+      const tenantId = scope === "system" ? (userId as string) || null : null;
+      const user_id = scope === "user" ? (userId as string) || null : null;
+
+      const conditions = [eq(schema.systemPreferences.key, key)];
+      if (tenantId) {
+        conditions.push(eq(schema.systemPreferences.tenantId, tenantId));
+      } else {
+        conditions.push(isNull(schema.systemPreferences.tenantId));
+      }
+
       const exists = await this.db
         .select()
         .from(schema.systemPreferences)
-        .where(eq(schema.systemPreferences.key, key))
+        .where(and(...conditions))
         .limit(1);
 
       if (exists.length > 0) {
         await this.db
           .update(schema.systemPreferences)
           .set({ value: value as unknown as Record<string, unknown>, updatedAt: new Date() })
-          .where(eq(schema.systemPreferences.key, key));
+          .where(and(...conditions));
       } else {
         await this.db.insert(schema.systemPreferences).values({
           _id: utils.generateId() as string,
           key,
           value: value as unknown as Record<string, unknown>,
           scope: scope || "system",
-          userId: (userId as string) || null,
+          userId: user_id,
+          tenantId,
           visibility: "private",
           createdAt: new Date(),
           updatedAt: new Date(),

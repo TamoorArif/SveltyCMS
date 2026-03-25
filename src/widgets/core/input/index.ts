@@ -120,6 +120,9 @@ const InputWidget = createWidget<InputProps>({
     prefix: { widget: "Input", required: false },
     suffix: { widget: "Input", required: false },
     count: { widget: "Input", required: false },
+    unique: { widget: "Toggles", required: false },
+    disableUnique: { widget: "Toggles", required: false },
+    tenantScopedUnique: { widget: "Toggles", required: false },
   },
 
   // Aggregations for text search and sorting.

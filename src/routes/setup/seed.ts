@@ -1061,7 +1061,6 @@ export async function seedSettings(
     category: "public" | "private";
     scope: "user" | "system";
     userId?: DatabaseId;
-    tenantId?: string | null;
   }> = [];
 
   for (const setting of settingsToSeed) {
@@ -1088,7 +1087,7 @@ export async function seedSettings(
       value, // Store the actual value directly
       category, // Add category field for proper classification
       scope: "system",
-      ...(tenantId && { tenantId }),
+      userId: tenantId as any, // In system scope, userId is used as tenantId
     });
   }
 
@@ -1262,8 +1261,11 @@ export async function seedDemoTenant(dbAdapter: DatabaseAdapter, tenantId: strin
   // 4. Create Admin User
   // We need to import auth service or use dbAdapter.auth directly
   if (dbAdapter.auth) {
-    const result = await dbAdapter.auth.getRoleById("admin", tenantId, { bypassTenantCheck: true });
-    const adminRole = result.success ? result.data : null;
+    // For demo tenants, we should find the role by its name "admin" within the tenant context
+    // because seedRoles creates tenant-scoped roles with random UUID IDs.
+    const roles = await dbAdapter.auth.getAllRoles(tenantId);
+    const adminRole = roles.find((r) => r.name === "admin") || null;
+
     if (adminRole) {
       const email = `demo-${tenantId.substring(0, 8)}@sveltycms.com`;
       const password = "demo"; // Simple password for demo

@@ -32,6 +32,11 @@ export const addSecurityHeaders: Handle = async ({ event, resolve }) => {
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Cross-Origin Isolation (Essential for WebGPU / SharedArrayBuffer / WASM performance)
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+
   response.headers.set(
     "Permissions-Policy",
     [

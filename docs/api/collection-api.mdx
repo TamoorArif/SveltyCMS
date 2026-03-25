@@ -501,6 +501,25 @@ const filter = {
 };
 ```
 
+### Tenant-Aware Uniqueness
+
+Field definitions support granular uniqueness control in multi-tenant environments:
+
+- **`unique`**: (boolean) Enables the uniqueness constraint for the field.
+- **`tenantScopedUnique`**: (boolean, default: `true`) If `true`, uniqueness is only enforced within the current tenant. This allows the same value (e.g., a slug like `/about`) to exist across different tenants.
+- **`disableUnique`**: (boolean, default: `false`) Forcefully disables the uniqueness check, even if `unique` is set. Useful for emergency overrides or specific migration scenarios.
+
+**Example Schema Fragment:**
+
+```typescript
+{
+  widget: "Slug",
+  db_fieldName: "slug",
+  unique: true,
+  tenantScopedUnique: true // Different tenants can share the same slug
+}
+```
+
 ### Tenant Isolation
 
 - **Data isolation**: Complete separation of tenant data
