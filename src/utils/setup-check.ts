@@ -103,8 +103,8 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
       return true;
     }
 
-    // 4. Data Verification: Check if users, roles, and critical settings exist
-    // We check for all three to ensure a consistent system state before going READY
+    // 4. Data Verification: Check if users and roles exist
+    // We check for these to ensure a consistent system state before going READY
     const [userResult, roles, hostConfig] = await Promise.all([
       dbAdapter.auth.getAllUsers({ limit: 1 }, { bypassTenantCheck: true }),
       dbAdapter.auth.getAllRoles(undefined, { bypassTenantCheck: true }),
@@ -115,11 +115,17 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
     const hasRoles = Array.isArray(roles) && roles.length > 0;
     const hasConfig = hostConfig.success && hostConfig.data;
 
-    if (!hasUsers || !hasRoles || !hasConfig) {
+    // Log status for easier debugging of setup state
+    console.log(
+      `[setupCheck] DB Status: users=${hasUsers}, roles=${hasRoles}, siteConfig=${hasConfig}`,
+    );
+
+    // RELAXED CHECK: If we have users and roles, we are basically ready.
+    // SITE_CONFIG (HOST_PROD) can be set in the first login.
+    if (!hasUsers || !hasRoles) {
       const missing = [];
       if (!hasUsers) missing.push("USERS");
       if (!hasRoles) missing.push("ROLES");
-      if (!hasConfig) missing.push("SITE_CONFIG (HOST_PROD)");
       console.warn(
         `[setupCheck] Config exists but NO ${missing.join(", ")} found in DB. System will stay in setup mode.`,
       );

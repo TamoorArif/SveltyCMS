@@ -578,11 +578,6 @@ async function initializeSystem(
             updateServiceHealth("themeManager", "healthy", "Theme manager initialized");
           })().catch((e) => logger.warn("Theme init failed:", e)),
           (async () => {
-            const { widgets } = await import("@src/stores/widget-store.svelte.ts");
-            await widgets.initialize(undefined, dbAdapter!);
-            updateServiceHealth("widgets", "healthy", "Widget store initialized");
-          })().catch((e) => logger.warn("Widget init failed:", e)),
-          (async () => {
             updateServiceHealth("cache", "healthy", "System cache warmed up");
           })(),
         ]);

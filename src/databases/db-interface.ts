@@ -965,7 +965,11 @@ export interface IMonitoringAdapter {
     set<T>(key: string, value: T, options?: CacheOptions): Promise<DatabaseResult<void>>;
     delete(key: string): Promise<DatabaseResult<void>>;
     clear(tags?: string[]): Promise<DatabaseResult<void>>;
-    invalidateCollection(collection: string): Promise<DatabaseResult<void>>;
+    invalidateCollection(
+      collection: string,
+      tenantId?: string | null,
+    ): Promise<DatabaseResult<void>>;
+    invalidateCategory(category: string, tenantId?: string | null): Promise<DatabaseResult<void>>;
   };
   getConnectionPoolStats?(): Promise<DatabaseResult<ConnectionPoolStats>>;
   performance: {
@@ -1057,6 +1061,8 @@ export interface IDBAdapter {
       limit?: number;
       offset?: number;
       fields?: string[];
+      sort?: { field: string; direction: "asc" | "desc" };
+      filter?: Record<string, unknown>;
       includeMetadata?: boolean;
     },
   ): Promise<

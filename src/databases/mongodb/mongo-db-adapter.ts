@@ -25,6 +25,9 @@ import type {
 } from "../db-interface";
 import { MongoCrudMethods } from "./methods/crud-methods";
 import { composeMongoAuthAdapter } from "./methods/auth-composition";
+import { MongoQueryBuilder } from "./mongo-query-builder";
+import { cacheService } from "@src/databases/cache/cache-service";
+import { CacheCategory } from "@src/databases/cache/types";
 
 export class MongoDBAdapter implements IDBAdapter {
   private _connection: mongoose.Connection | null = null;
@@ -206,8 +209,64 @@ export class MongoDBAdapter implements IDBAdapter {
     };
   }
 
-  async getCollectionData(): Promise<DatabaseResult<{ data: unknown[] }>> {
-    return { success: true, data: { data: [] } };
+  async getCollectionData(
+    collectionName: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      fields?: string[];
+      sort?: { field: string; direction: "asc" | "desc" };
+      filter?: Record<string, unknown>;
+      includeMetadata?: boolean;
+    },
+  ): Promise<
+    DatabaseResult<{
+      data: unknown[];
+      metadata?: { totalCount: number; schema?: unknown; indexes?: string[] };
+    }>
+  > {
+    try {
+      const model = this._getOrCreateModel(collectionName);
+      let query = model.find(options?.filter || {});
+
+      if (options?.fields) {
+        query = query.select(options.fields.join(" "));
+      }
+
+      if (options?.sort) {
+        query = query.sort({ [options.sort.field]: options.sort.direction === "asc" ? 1 : -1 });
+      }
+
+      if (options?.offset) {
+        query = query.skip(options.offset);
+      }
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const [data, total] = await Promise.all([
+        query.lean().exec(),
+        options?.includeMetadata ? model.countDocuments(options?.filter || {}) : Promise.resolve(0),
+      ]);
+
+      return {
+        success: true,
+        data: {
+          data: data as unknown[],
+          metadata: options?.includeMetadata ? { totalCount: total } : undefined,
+        },
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: `Failed to get collection data for ${collectionName}`,
+        error: {
+          code: "COLLECTION_DATA_ERROR",
+          message: error.message,
+        },
+      };
+    }
   }
 
   async getConnectionHealth(): Promise<
@@ -227,12 +286,9 @@ export class MongoDBAdapter implements IDBAdapter {
     return { success: true, data: {} };
   }
 
-  queryBuilder<T extends BaseEntity>(_collection: string): QueryBuilder<T> {
-    // Basic implementation for MongoDB query builder
-    return {
-      where: () => ({}) as any,
-      execute: () => Promise.resolve({ success: true, data: [] }),
-    } as unknown as QueryBuilder<T>;
+  queryBuilder<T extends BaseEntity>(collection: string): QueryBuilder<T> {
+    const model = this._getOrCreateModel(collection);
+    return new MongoQueryBuilder<T>(model as any);
   }
 
   async transaction<T>(
@@ -355,12 +411,57 @@ export class MongoDBAdapter implements IDBAdapter {
    * Initializes media models and methods.
    */
   async ensureMedia(): Promise<void> {
-    const { MediaModel } = await import("./models/media");
+    const { mediaSchema } = await import("./models/media");
+    const { SystemVirtualFolderModel } = await import("./models/system-virtual-folder");
     const { MongoMediaMethods } = await import("./methods/media-methods");
+
+    // Register media model directly
+    if (!mongoose.models.media) {
+      mongoose.model("media", mediaSchema);
+    }
+
+    // Register media_folders model if not already present
+    if (!mongoose.models.media_folders) {
+      mongoose.model("media_folders", SystemVirtualFolderModel.schema);
+    }
+
+    const MediaModel = mongoose.models.media;
     const mediaMethods = new MongoMediaMethods(MediaModel as any);
     this.media = {
-      ...this.media,
-      ...mediaMethods,
+      files: {
+        ...this.media.files,
+        upload: (file: any, tenantId?: string | null) =>
+          mediaMethods.uploadMany([file], tenantId).then((res) => ({
+            ...res,
+            data: res.success ? res.data[0] : (undefined as any),
+          })),
+        uploadMany: mediaMethods.uploadMany.bind(mediaMethods),
+        delete: (id: DatabaseId, tenantId?: string | null) =>
+          mediaMethods.deleteMany([id], tenantId).then((res) => ({
+            ...res,
+            data: undefined,
+          })),
+        deleteMany: mediaMethods.deleteMany.bind(mediaMethods),
+        getMetadata: mediaMethods.getMetadata.bind(mediaMethods),
+        updateMetadata: mediaMethods.updateMetadata.bind(mediaMethods),
+        move: mediaMethods.move.bind(mediaMethods),
+        duplicate: mediaMethods.duplicate.bind(mediaMethods),
+        getByFolder: mediaMethods.getFiles.bind(mediaMethods),
+        search: (query: string, options?: any, tenantId?: string | null) =>
+          mediaMethods.getFiles(undefined, { ...options, search: query }, false, tenantId),
+      },
+      folders: {
+        getTree: (maxDepth?: number, tenantId?: string | null) =>
+          mediaMethods.getFolders(undefined, tenantId),
+        getFolderContents: mediaMethods.getFolders.bind(mediaMethods),
+        // Placeholder methods for other folder operations
+        create: (_folder: any) => Promise.resolve({ success: true, data: {} as any }),
+        createMany: (_folders: any) => Promise.resolve({ success: true, data: [] }),
+        delete: (_id: any) => Promise.resolve({ success: true, data: undefined }),
+        deleteMany: (_ids: any) => Promise.resolve({ success: true, data: { deletedCount: 0 } }),
+        move: (_id: any, _target: any) => Promise.resolve({ success: true, data: {} as any }),
+      },
+      setupMediaModels: () => Promise.resolve(),
     } as unknown as IMediaAdapter;
   }
 
@@ -391,7 +492,9 @@ export class MongoDBAdapter implements IDBAdapter {
         create: (n: any) => contentMethods.upsertNodeByPath(n),
         createMany: (_n: any) => Promise.resolve({ success: true, data: [] }), // Placeholder
         update: (_p: any, _c: any) => Promise.resolve({ success: true, data: {} as any }), // Placeholder
-        delete: (_p: any) => Promise.resolve({ success: true, data: undefined }), // Placeholder
+        delete: (path: string) => contentMethods.deleteNodeByPath(path),
+        deleteMany: (paths: string[], options?: { tenantId?: string | null }) =>
+          contentMethods.deleteNodesByPaths(paths, options),
         bulkUpdate: contentMethods.bulkUpdateNodes.bind(contentMethods),
         reorderStructure: contentMethods.reorderStructure.bind(contentMethods),
       },
@@ -416,11 +519,27 @@ export class MongoDBAdapter implements IDBAdapter {
   async ensureMonitoring(): Promise<void> {
     this.monitoring = {
       cache: {
-        get: (_k: string) => Promise.resolve({ success: true, data: null }),
-        set: (_k: string, _v: any) => Promise.resolve({ success: true, data: undefined }),
-        delete: (_k: string) => Promise.resolve({ success: true, data: undefined }),
-        clear: () => Promise.resolve({ success: true, data: undefined }),
-        invalidateCollection: () => Promise.resolve({ success: true, data: undefined }),
+        get: (key: string, tenantId?: string | null) =>
+          cacheService.get(key, tenantId).then((data) => ({ success: true, data })),
+        set: (key: string, value: any, options?: any) =>
+          cacheService
+            .set(key, value, options?.ttl || 300, options?.tenantId, options?.category)
+            .then(() => ({ success: true, data: undefined })),
+        delete: (key: string, tenantId?: string | null) =>
+          cacheService.delete(key, tenantId).then(() => ({ success: true, data: undefined })),
+        clear: (tags?: string[], tenantId?: string | null) =>
+          (tags
+            ? cacheService.clearByTags(tags, tenantId)
+            : cacheService.invalidateAll(tenantId)
+          ).then(() => ({ success: true, data: undefined })),
+        invalidateCollection: (collection: string, tenantId?: string | null) =>
+          cacheService
+            .clearByPattern(`collection:${collection}:*`, tenantId)
+            .then(() => ({ success: true, data: undefined })),
+        invalidateCategory: (category: string, tenantId?: string | null) =>
+          cacheService
+            .clearByPattern(`*:${category}:*`, tenantId || "*")
+            .then(() => ({ success: true, data: undefined })),
       },
       performance: {
         getMetrics: () => Promise.resolve({ success: true, data: {} as PerformanceMetrics }),

@@ -114,7 +114,7 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
       return null;
     }
 
-    const widgetsMap = widgetRegistryService.getAllWidgets();
+    const widgetsMap = await widgetRegistryService.getAllWidgets();
     const widgetsObject = Object.fromEntries(widgetsMap.entries());
 
     // Create a case-insensitive proxy for widgets to handle things like widgets.Seo vs widgets.SEO

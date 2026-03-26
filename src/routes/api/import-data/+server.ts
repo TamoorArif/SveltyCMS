@@ -113,7 +113,7 @@ export const POST = apiHandler(async ({ request, locals }) => {
       } else {
         errors++;
       }
-    } catch (error: any) {
+    } catch {
       errors++;
     }
   }

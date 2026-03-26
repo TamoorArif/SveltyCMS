@@ -244,12 +244,12 @@ graph TD
     A[Client: POST /api/import-data] --> B{Valid Request?}
     B -- No --> C[Return 400/422 Error]
     B -- Yes --> D{Items > 50 or async=true?}
-    
+
     D -- "Yes (Async)" --> E[Dispatch to JobQueue]
     E --> F[Return jobId + Status: 'pending']
     F --> G[Background: Process in Chunks]
     G --> H[Final: Job Completed]
-    
+
     D -- "No (Sync)" --> I[Immediate Processing]
     I --> J[Return Results + Status: 'completed']
 ```

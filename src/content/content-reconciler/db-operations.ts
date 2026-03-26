@@ -8,15 +8,6 @@ import { CacheCategory } from "@src/databases/cache/types";
 import type { ContentNode, Schema, DatabaseId } from "../types";
 import type { IDBAdapter } from "@src/databases/db-interface";
 
-const invalidateCategoryCache = async (
-  ...args: Parameters<
-    typeof import("@src/databases/mongodb/methods/mongodb-cache-utils").invalidateCategoryCache
-  >
-) =>
-  (await import("@src/databases/mongodb/methods/mongodb-cache-utils")).invalidateCategoryCache(
-    ...args,
-  );
-
 /**
  * Registers schema models in the database.
  */
@@ -94,5 +85,5 @@ export async function bulkUpsertWithParentIds(
     }
   }
 
-  await invalidateCategoryCache(CacheCategory.CONTENT);
+  await dbAdapter.monitoring.cache.invalidateCategory(CacheCategory.CONTENT, tenantId);
 }

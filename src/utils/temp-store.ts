@@ -16,7 +16,7 @@ const TEMP_DIR = path.join(process.cwd(), "tmp", "job-payloads");
 async function ensureDir() {
   try {
     await fs.mkdir(TEMP_DIR, { recursive: true });
-  } catch (err) {
+  } catch {
     // Ignore
   }
 }
@@ -53,7 +53,7 @@ export async function deleteTempPayload(id: string): Promise<void> {
   const filePath = path.join(TEMP_DIR, `${id}.json`);
   try {
     await fs.unlink(filePath);
-  } catch (err) {
+  } catch {
     // Ignore
   }
 }

@@ -266,23 +266,27 @@ export class MongoContentMethods {
           }
         }
 
-        // Build setOnInsert with _id if provided (for collections, use their UUID as document _id)
-        const setOnInsert: Record<string, unknown> = {
-          createdAt: new Date().toISOString() as unknown as ISODateString,
-        };
+        // Prepare base filter: prioritize _id if available to ensure correct upsert matching
         const targetId = id || _id;
-
-        if (targetId) {
-          setOnInsert._id = targetId;
-        }
-
-        // Prepare base filter: use ID if available, otherwise path
         const baseFilter: Record<string, unknown> = targetId ? { _id: targetId } : { path };
 
         // Wrap filter with safeQuery to enforce tenant context
         const secureFilter = safeQuery(baseFilter as any, tenantId, {
           bypassTenantCheck: options?.bypassTenantCheck,
         }) as MongoQueryFilter<ContentNode>;
+
+        // If we are filtering by _id, we don't need to set it on insert
+        const setOnInsert: Record<string, unknown> = {
+          createdAt: new Date().toISOString() as unknown as ISODateString,
+        };
+
+        if (!targetId) {
+          // Only generate a new ID if we don't have one and are filtering by path
+          setOnInsert._id = generateId();
+        } else if (targetId && !secureFilter._id) {
+          // If we have an ID but safeQuery stripped it (unlikely but possible), put it back for the upsert
+          secureFilter._id = targetId as any;
+        }
 
         return {
           updateOne: {
@@ -322,6 +326,65 @@ export class MongoContentMethods {
           error,
           "NODE_BULK_UPDATE_ERROR",
           "Failed to perform bulk update on nodes.",
+        ),
+      };
+    }
+  }
+
+  /**
+   * Deletes a content node by its path.
+   */
+  async deleteNodeByPath(path: string): Promise<DatabaseResult<void>> {
+    try {
+      const result = await this.nodesRepo.model.deleteOne({ path }).exec();
+      if (result.deletedCount === 0) {
+        logger.warn(`[deleteNodeByPath] Node not found for path="${path}".`);
+      }
+      // Invalidate content structure caches
+      await invalidateCategoryCache(CacheCategory.CONTENT);
+      return { success: true, data: undefined };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to delete content structure node.",
+        error: createDatabaseError(
+          error,
+          "NODE_DELETE_ERROR",
+          "Failed to delete content structure node.",
+        ),
+      };
+    }
+  }
+
+  /**
+   * Deletes multiple content nodes by their paths.
+   */
+  async deleteNodesByPaths(
+    paths: string[],
+    options: { tenantId?: string | null } = {},
+  ): Promise<DatabaseResult<{ deletedCount: number }>> {
+    if (paths.length === 0) {
+      return { success: true, data: { deletedCount: 0 } };
+    }
+    try {
+      const { tenantId = null } = options;
+      const baseFilter = { path: { $in: paths } };
+      const secureFilter = safeQuery(baseFilter as any, tenantId) as MongoQueryFilter<ContentNode>;
+
+      const result = await this.nodesRepo.model.deleteMany(secureFilter).exec();
+
+      // Invalidate content structure caches
+      await invalidateCategoryCache(CacheCategory.CONTENT);
+
+      return { success: true, data: { deletedCount: result.deletedCount } };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to delete multiple content structure nodes.",
+        error: createDatabaseError(
+          error,
+          "NODE_DELETE_MANY_ERROR",
+          "Failed to delete multiple content structure nodes.",
         ),
       };
     }

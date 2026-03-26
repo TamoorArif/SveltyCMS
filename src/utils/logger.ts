@@ -62,7 +62,7 @@ function mask(v: unknown, depth = 0): unknown {
   if (v === null || typeof v !== "object") {
     return v;
   }
-  if (v instanceof Date || v instanceof RegExp) {
+  if (v instanceof Date || v instanceof RegExp || v instanceof Error) {
     return v;
   }
   if (Array.isArray(v)) {
@@ -181,7 +181,12 @@ function log(level: LogLevel, msg: string, args: unknown[]) {
       masked.length > 0
         ? " " +
           masked
-            .map((a) => (typeof a === "object" ? JSON.stringify(a) : String(a)))
+            .map((a) => {
+              if (a instanceof Error) {
+                return `[Error: ${a.message}]\n${a.stack}`;
+              }
+              return typeof a === "object" ? JSON.stringify(a) : String(a);
+            })
             .join(" ")
             .replace(/\n/g, " ")
         : "";

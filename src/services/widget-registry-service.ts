@@ -124,16 +124,20 @@ class WidgetRegistryService {
     return this.initializationPromise;
   }
 
-  public getWidget(name: string): WidgetFactory | undefined {
+  public async getWidget(name: string): Promise<WidgetFactory | undefined> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
     return this.widgets.get(name);
   }
 
-  public getAllWidgets(): Map<string, WidgetFactory> {
+  public async getAllWidgets(): Promise<Map<string, WidgetFactory>> {
     if (!this.isInitialized) {
-      logger.warn("getAllWidgets() called before initialization! Returning empty map.");
+      await this.initialize();
     }
     return this.widgets;
   }
+
   private _processWidgetModule(
     path: string,
     module: WidgetModule,
