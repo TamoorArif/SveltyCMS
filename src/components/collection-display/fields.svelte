@@ -662,22 +662,25 @@ $effect(() => {
 					{:then Component}
 						{#if Component.default}
 							<Component.default
-								{collection}
-								{currentCollectionValue}
-								{user}
-								tenantId={tenantId || contentContext.tenantId}
-								contentLanguage={currentContentLanguage}
-								{...slot.props}
-							/>
-						{:else}
-							<Component
-								{collection}
-								{currentCollectionValue}
-								{user}
-								tenantId={tenantId || contentContext.tenantId}
-								contentLanguage={currentContentLanguage}
-								{...slot.props}
-							/>
+									{collection}
+									{currentCollectionValue}
+									{user}
+									tenantId={tenantId || contentContext.tenantId}
+									contentLanguage={currentContentLanguage}
+									active={localTabSet === slot.id}
+									{...slot.props}
+								/>
+							{:else}
+								<Component
+									{collection}
+									{currentCollectionValue}
+									{user}
+									tenantId={tenantId || contentContext.tenantId}
+									contentLanguage={currentContentLanguage}
+									active={localTabSet === slot.id}
+									{...slot.props}
+								/>
+
 						{/if}
 					{:catch error}
 						<div class="p-4">

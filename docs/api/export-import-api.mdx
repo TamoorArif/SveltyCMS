@@ -256,7 +256,7 @@ graph TD
 
 ### 1. Import Data
 
-Imports data into collections from JSON. Large datasets (>50 items) are automatically processed in the background.
+Imports data into collections from JSON. Large datasets (>50 items) are automatically processed in the background with enhanced enterprise features.
 
 #### Request
 
@@ -296,6 +296,12 @@ Content-Type: application/json
 - `mode` (string, optional) - `merge` (default) or `replace` (clears collection first).
 - `duplicateStrategy` (string, optional) - `skip` (default) or `overwrite` (requires `_id`).
 - `async` (boolean, optional) - Force background processing. Defaults to `true` if `data.length > 50`.
+
+**Enterprise Features (March 2026):**
+
+- **Progress Tracking**: Background jobs update their `progress` field (0-100) and `metadata` (imported/skipped/errors) every 100 items.
+- **Temp Store Backing**: Datasets larger than 1000 items are automatically offloaded to a temporary file-store to prevent database index bloat and payload limits.
+- **Concurrency Guard**: The system respects `IMPORT_CONCURRENT_MAX` (default: 5) to prevent resource exhaustion during simultaneous large imports.
 
 **Permissions Required:** `admin` or `data:import`
 

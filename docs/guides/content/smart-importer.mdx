@@ -85,11 +85,13 @@ Review the summary and click **Start Import**. The system will:
 
 ---
 
-## 🔒 Security & Performance
+## 🔒 Security & Performance (v2026 Enhanced)
 
 - **Tenant Isolation**: Imports are strictly scoped to your current `tenantId`.
 - **Validation**: All imported data is run through your widget's Valibot schemas to ensure integrity.
-- **Batch Processing**: Prevents server timeouts by processing items in chunks.
+- **Durable Batch Processing**: Large migrations use the **JobQueueService** to process items in background chunks.
+- **Progress Feedback**: Editors get real-time status updates (0-100%) as the migration worker moves through the dataset.
+- **Concurrency Protection**: The importer automatically yields if the server's `IMPORT_CONCURRENT_MAX` limit is reached, ensuring site stability for other users.
 
 ## 📡 API Reference
 

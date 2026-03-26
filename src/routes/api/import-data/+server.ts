@@ -9,6 +9,7 @@ import { json } from "@sveltejs/kit";
 import { apiHandler } from "@utils/api-handler";
 import { AppError } from "@utils/error-handling";
 import { logger } from "@utils/logger.server";
+import { saveTempPayload } from "@utils/temp-store";
 
 export const POST = apiHandler(async ({ request, locals }) => {
   const { user, tenantId } = locals;
@@ -39,17 +40,25 @@ export const POST = apiHandler(async ({ request, locals }) => {
   const shouldProcessInBackground = async || data.length > 50;
 
   if (shouldProcessInBackground) {
-    const jobId = await jobQueue.dispatch(
-      "import-data",
-      {
-        collectionName,
-        data,
-        mode,
-        duplicateStrategy,
-        tenantId,
-      },
-      tenantId || undefined,
-    );
+    let jobPayload: any = {
+      collectionName,
+      mode,
+      duplicateStrategy,
+      tenantId,
+    };
+
+    // For very large datasets, use the temporary store to avoid DB bloat
+    if (data.length > 1000) {
+      const tempPayloadId = await saveTempPayload(data);
+      jobPayload.tempPayloadId = tempPayloadId;
+      logger.info(
+        `[ImportAPI] Large payload (${data.length} items) saved to temp store: ${tempPayloadId}`,
+      );
+    } else {
+      jobPayload.data = data;
+    }
+
+    const jobId = await jobQueue.dispatch("import-data", jobPayload, tenantId || undefined);
 
     if (jobId) {
       return json({

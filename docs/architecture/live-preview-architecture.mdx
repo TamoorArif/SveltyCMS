@@ -202,7 +202,17 @@ export function useLivePreview<T>(initialData: T) {
 
 ---
 
-## 5. Enterprise Considerations
+## 5. Performance Optimization: Deferred Rendering
+
+In 2026, SveltyCMS implemented **Deferred Rendering** to maximize Admin UI performance.
+
+- **Lazy Handshake**: The preview iframe and authorized URL handshake are deferred until the user first clicks the "Live Preview" tab. This saves significant CPU and network resources on initial page loads.
+- **Dormant State**: When a user switches away from the Live Preview tab, the iframe remains mounted but enters a "Dormant" (paused) state. This ensures that switching back to the preview is instantaneous without re-triggering the handshake.
+- **Manual Override**: A manual "Initialize Preview Now" button is available if an editor needs to force-start the preview before switching tabs.
+
+---
+
+## 6. Enterprise Considerations
 
 ### A/B Testing Stability
 

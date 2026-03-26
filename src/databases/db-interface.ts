@@ -354,6 +354,8 @@ export interface Job extends BaseEntity {
   taskType: string;
   payload: Record<string, unknown>;
   status: "pending" | "running" | "completed" | "failed";
+  progress?: number;
+  metadata?: Record<string, unknown>;
   attempts: number;
   maxAttempts: number;
   nextRunAt: Date | ISODateString;

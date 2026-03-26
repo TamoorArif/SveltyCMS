@@ -692,6 +692,7 @@ export class AuthModule {
   async getAllTokens(filter?: Record<string, unknown>): Promise<DatabaseResult<Token[]>> {
     return this.core.wrap(async () => {
       const conditions: import("drizzle-orm").SQL[] = [];
+
       if (filter?.email) {
         conditions.push(eq(schema.authTokens.email, filter.email as string));
       }
@@ -703,6 +704,24 @@ export class AuthModule {
       }
       if (filter?.tenantId) {
         conditions.push(eq(schema.authTokens.tenantId, filter.tenantId as string));
+      }
+
+      // Handle MongoDB-style $or for search (mapped from API route)
+      if (filter?.$or && Array.isArray(filter.$or)) {
+        const orConditions: import("drizzle-orm").SQL[] = [];
+        for (const part of filter.$or) {
+          const field = Object.keys(part)[0];
+          const val = part[field];
+          const searchVal = typeof val === "object" && val.$regex ? `%${val.$regex}%` : `%${val}%`;
+
+          const column = (schema.authTokens as any)[field];
+          if (column) {
+            orConditions.push(sql`${column} LIKE ${searchVal}`);
+          }
+        }
+        if (orConditions.length > 0) {
+          conditions.push(or(...orConditions)!);
+        }
       }
 
       const results = await this.db
@@ -734,7 +753,6 @@ export class AuthModule {
       }
 
       // Try delete by BOTH _id and token value simultaneously to be safe
-      // (Using OR in WHERE or doing two passes)
       const result = await this.db
         .delete(schema.authTokens)
         .where(
@@ -756,14 +774,22 @@ export class AuthModule {
     tenantId?: string | null,
   ): Promise<DatabaseResult<{ modifiedCount: number }>> {
     return this.core.wrap(async () => {
-      const conditions = [inArray(schema.authTokens._id, tokenIds)];
+      const conditions: import("drizzle-orm").SQL[] = [];
       if (tenantId) {
         conditions.push(eq(schema.authTokens.tenantId, tenantId));
       }
       const result = await this.db
         .update(schema.authTokens)
         .set({ blocked: true, updatedAt: isoDateStringToDate(nowISODateString()) })
-        .where(and(...conditions));
+        .where(
+          and(
+            or(
+              inArray(schema.authTokens._id, tokenIds),
+              inArray(schema.authTokens.token, tokenIds),
+            ),
+            ...conditions,
+          ),
+        );
       return { modifiedCount: result[0].affectedRows };
     }, "BLOCK_TOKENS_FAILED");
   }
@@ -773,14 +799,22 @@ export class AuthModule {
     tenantId?: string | null,
   ): Promise<DatabaseResult<{ modifiedCount: number }>> {
     return this.core.wrap(async () => {
-      const conditions = [inArray(schema.authTokens._id, tokenIds)];
+      const conditions: import("drizzle-orm").SQL[] = [];
       if (tenantId) {
         conditions.push(eq(schema.authTokens.tenantId, tenantId));
       }
       const result = await this.db
         .update(schema.authTokens)
         .set({ blocked: false, updatedAt: isoDateStringToDate(nowISODateString()) })
-        .where(and(...conditions));
+        .where(
+          and(
+            or(
+              inArray(schema.authTokens._id, tokenIds),
+              inArray(schema.authTokens.token, tokenIds),
+            ),
+            ...conditions,
+          ),
+        );
       return { modifiedCount: result[0].affectedRows };
     }, "UNBLOCK_TOKENS_FAILED");
   }

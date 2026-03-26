@@ -12,19 +12,24 @@ import { logger } from "@utils/logger.server";
 import { processMediaHandler } from "./media-jobs";
 import { webhookDeliveryHandler } from "./webhook-jobs";
 import { importDataHandler } from "./import-jobs";
+import { bulkTranslateHandler } from "./translation-jobs";
+import { cleanupTempStore } from "@utils/temp-store";
 
-export type JobHandler = (payload: any) => Promise<void>;
+export type JobHandler = (payload: any, job: Job) => Promise<void>;
 
 class JobQueueService {
   private handlers: Map<string, JobHandler> = new Map();
   private isProcessing = false;
   private pollInterval: NodeJS.Timeout | null = null;
+  private currentRunning = 0;
+  private readonly CONCURRENT_MAX = 5; // Default max concurrency
 
   constructor() {
     // Register core handlers
     this.registerHandler("process-media", processMediaHandler);
     this.registerHandler("webhook-delivery", webhookDeliveryHandler);
     this.registerHandler("import-data", importDataHandler);
+    this.registerHandler("bulk-translate", bulkTranslateHandler);
   }
 
   /**
@@ -58,6 +63,8 @@ class JobQueueService {
         maxAttempts: 3,
         nextRunAt: new Date(),
         tenantId: tenantId as DatabaseId | undefined,
+        progress: 0,
+        metadata: {},
       };
 
       const result = await db.system.jobs.create(jobData);
@@ -96,7 +103,14 @@ class JobQueueService {
 
     try {
       // 1. Fetch pending jobs ready to run
-      const readyJobsResult = await db.system.jobs.getNextReady(batchSize);
+      // Only fetch up to the remaining concurrency capacity
+      const capacity = Math.max(0, this.CONCURRENT_MAX - this.currentRunning);
+      if (capacity === 0) {
+        this.isProcessing = false;
+        return;
+      }
+
+      const readyJobsResult = await db.system.jobs.getNextReady(Math.min(batchSize, capacity));
       if (!readyJobsResult.success || !readyJobsResult.data || readyJobsResult.data.length === 0) {
         this.isProcessing = false;
         return;
@@ -104,9 +118,14 @@ class JobQueueService {
 
       const jobs = readyJobsResult.data;
 
-      // 2. Process each job
+      // 2. Process jobs (don't await them all here to allow concurrency)
       for (const job of jobs) {
-        await this.executeJob(job, db);
+        this.currentRunning++;
+        this.executeJob(job, db)
+          .catch((err) => logger.error(`[JobQueue] Critical error in job ${job._id}:`, err))
+          .finally(() => {
+            this.currentRunning--;
+          });
       }
     } catch (error) {
       logger.error("[JobQueue] Error during batch processing:", error);
@@ -135,10 +154,10 @@ class JobQueueService {
 
     try {
       logger.debug(`[JobQueue] Executing job ${job._id} (${job.taskType})`);
-      await handler(job.payload);
+      await handler(job.payload, job);
 
       // Mark as completed
-      await db.system.jobs.update(job._id, { status: "completed" });
+      await db.system.jobs.update(job._id, { status: "completed", progress: 100 });
       logger.info(`[JobQueue] Job ${job._id} completed successfully`);
     } catch (error) {
       const errMessage = error instanceof Error ? error.message : String(error);
@@ -183,7 +202,13 @@ class JobQueueService {
     }
     logger.info(`[JobQueue] Starting background worker (interval: ${intervalMs}ms)`);
     this.pollInterval = setInterval(() => {
+      // 1. Process jobs
       this.processNextBatch().catch((err) => logger.error("[JobQueue] Polling error", err));
+
+      // 2. Clean up temp store every 10 cycles
+      if (Math.random() > 0.9) {
+        cleanupTempStore().catch((err) => logger.error("[JobQueue] TempStore cleanup error", err));
+      }
     }, intervalMs);
   }
 

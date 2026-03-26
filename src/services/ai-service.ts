@@ -334,9 +334,43 @@ ${contextRules}`;
   }
 
   /**
-   * Generic text processing for enrichment
+   * Generic text enrichment service (translate, summarize, seo, tags).
+   * @param text - The source text to enrich
+   * @param action - The action to perform (translate, summarize, seo, tags)
+   * @param language - The target language for translation
+   */
+  public async enrichText(text: string, action: string, language?: string): Promise<string> {
+    if (!text) return "";
+
+    let prompt = "";
+    switch (action) {
+      case "translate":
+        if (!language) throw new Error("Target language is required for translation.");
+        return this.translate(text, "source", language);
+      case "summarize":
+        prompt = "Summarize the following text concisely. Keep the original language.";
+        break;
+      case "seo":
+        prompt =
+          "Optimize the following text for SEO. Provide a title, description, and keywords. Keep the original language.";
+        break;
+      case "tags":
+        prompt =
+          "Generate up to 5 descriptive tags for the following text. Return ONLY as a comma-separated list. Keep the original language.";
+        break;
+      default:
+        throw new Error(`Unsupported AI action: ${action}`);
+    }
+
+    return this.process(prompt, text);
+  }
+
+  /**
+   * Internal helper to process text with a specific prompt.
    */
   public async process(prompt: string, text: string): Promise<string> {
+    const systemPrompt = `${prompt}\n\nReturn ONLY the processed text.`;
+
     try {
       const ollamaUrl = await getPrivateSetting("OLLAMA_URL");
       const chatModel = (await getPrivateSetting("AI_MODEL_CHAT")) || "ministral-3:latest";
@@ -347,14 +381,14 @@ ${contextRules}`;
       const response = await localOllama.chat({
         model: chatModel,
         messages: [
-          { role: "system", content: prompt },
+          { role: "system", content: systemPrompt },
           { role: "user", content: text },
         ],
       });
       return response.message.content;
     } catch (err) {
-      console.error("AI Process Error:", err);
-      throw new Error("AI processing failed. Check Ollama connection.");
+      console.error("AI Text Processing Error:", err);
+      return text; // Fallback to original
     }
   }
 }

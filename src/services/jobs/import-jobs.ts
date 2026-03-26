@@ -3,18 +3,36 @@
  * @description Background job handler for large-scale data imports.
  */
 
-import { dbAdapter } from "@src/databases/db";
+import { dbAdapter, getDb } from "@src/databases/db";
 import { logger } from "@utils/logger.server";
 import type { JobHandler } from "./job-queue-service";
+import { getTempPayload, deleteTempPayload } from "@utils/temp-store";
+import type { Job } from "@src/databases/db-interface";
 
-export const importDataHandler: JobHandler = async (payload: {
-  collectionName: string;
-  data: any[];
-  mode: "merge" | "replace";
-  duplicateStrategy: "skip" | "overwrite";
-  tenantId?: string;
-}) => {
-  const { collectionName, data, mode, duplicateStrategy, tenantId } = payload;
+export const importDataHandler: JobHandler = async (
+  payload: {
+    collectionName: string;
+    data?: any[];
+    tempPayloadId?: string;
+    mode: "merge" | "replace";
+    duplicateStrategy: "skip" | "overwrite";
+    tenantId?: string;
+  },
+  job: Job,
+) => {
+  let { collectionName, data, tempPayloadId, mode, duplicateStrategy, tenantId } = payload;
+
+  const db = getDb();
+
+  // If data is missing but tempPayloadId is present, retrieve it
+  if (!data && tempPayloadId) {
+    logger.debug(`[ImportJob] Retrieving large payload from temp store: ${tempPayloadId}`);
+    data = await getTempPayload(tempPayloadId);
+  }
+
+  if (!data || !Array.isArray(data)) {
+    throw new Error("PERMANENT_FAILURE: No data provided for import");
+  }
 
   if (!dbAdapter) {
     throw new Error("PERMANENT_FAILURE: Database adapter not initialized");
@@ -23,6 +41,7 @@ export const importDataHandler: JobHandler = async (payload: {
   logger.info(
     `[ImportJob] Starting background import for ${collectionName} (${data.length} items)`,
     {
+      jobId: job._id,
       tenantId,
     },
   );
@@ -40,9 +59,11 @@ export const importDataHandler: JobHandler = async (payload: {
       }
     }
 
-    // Process in chunks to avoid memory pressure and allow progress tracking (future)
+    // Process in chunks to avoid memory pressure and allow progress tracking
     const chunkSize = 100;
-    for (let i = 0; i < data.length; i += chunkSize) {
+    const total = data.length;
+
+    for (let i = 0; i < total; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
 
       for (const doc of chunk) {
@@ -82,20 +103,36 @@ export const importDataHandler: JobHandler = async (payload: {
           });
         }
       }
+
+      // Update progress in DB
+      if (db?.system?.jobs) {
+        const progress = Math.round(((i + chunk.length) / total) * 100);
+        await db.system.jobs.update(job._id, {
+          progress,
+          metadata: { imported, skipped, errors, total },
+        });
+      }
+    }
+
+    // Clean up temp store if used
+    if (tempPayloadId) {
+      await deleteTempPayload(tempPayloadId);
     }
 
     logger.info(
       `[ImportJob] Completed: ${imported} imported, ${skipped} skipped, ${errors} errors`,
       {
+        jobId: job._id,
         collection: collectionName,
         tenantId,
       },
     );
   } catch (error: any) {
     logger.error(`[ImportJob] Critical failure during import: ${error.message}`, {
+      jobId: job._id,
       collection: collectionName,
       tenantId,
     });
-    throw error; // Re-throw to allow job queue to handle retries if applicable
+    throw error;
   }
 };
