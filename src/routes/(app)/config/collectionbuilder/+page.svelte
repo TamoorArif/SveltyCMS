@@ -589,7 +589,7 @@ $effect(() => {
 </PageTitle>
 
 {#if currentConfig.length > 0}
-	<div class="mb-4 flex flex-wrap gap-2 px-4" in:fade={{ duration: 300 }}>
+	<div class="mb-4 flex flex-wrap justify-center gap-2 px-4" in:fade={{ duration: 300 }}>
 		<button onclick={() => modalAddCategory()} class="group btn-lg rounded-full preset-filled-tertiary-500" disabled={isLoading}>
 			<iconify-icon icon="mdi:folder-plus" width="24" class="transition-transform group-hover:scale-110"></iconify-icon>
 			<span>{collection_addcategory()}</span>
@@ -612,14 +612,10 @@ $effect(() => {
 				<span class="hidden sm:inline">Clear selection</span>
 			</button>
 		{/if}
-
-		<div class="hidden sm:block">
-			{@render saveButton()}
-		</div>
 	</div>
 
 	<div class="max-h-[calc(100vh-120px)] overflow-auto p-4">
-		<div class="mx-auto w-full max-w-7xl">
+		<div class="mx-auto w-full max-w-screen-2xl">
 			{#if Object.keys(nodesToSave).length > 0}
 				<div
 					class="sticky top-0 z-50 mb-4 mt-0 rounded-lg border border-warning-500/30 bg-warning-500/15 px-4 py-3 text-center text-sm font-medium text-warning-600 shadow-sm dark:text-warning-400"

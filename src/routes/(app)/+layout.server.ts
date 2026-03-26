@@ -86,10 +86,10 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
   try {
     // Start initialization but don't await generic content loading for the main thread
     // This prevents the "blank white page" issue
-    const contentPromise = contentManager.initialize().then(() => {
+    const contentPromise = contentManager.initialize(tenantId).then(() => {
       return Promise.all([
-        contentManager.getNavigationStructure(),
-        contentManager.getFirstCollection(),
+        contentManager.getNavigationStructure(tenantId),
+        contentManager.getFirstCollection(tenantId),
       ]);
     });
 
@@ -107,6 +107,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 
     return {
       theme: theme || DEFAULT_THEME,
+      tenantId,
       // Streamed data (Promises)
       contentStructure: contentPromise.then(([structure]) =>
         structure ? JSON.parse(JSON.stringify(structure)) : structure,

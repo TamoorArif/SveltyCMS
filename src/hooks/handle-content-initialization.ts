@@ -20,7 +20,9 @@ export const handleContentInitialization: Handle = async ({ event, resolve }) =>
     const initPromise = contentManager.initialize(tenantId, false);
 
     // 🚀 OPTIMIZATION: Don't block the first byte for bootstrap page requests!
-    if (isBootstrapRoute(pathname)) {
+    // However, the root path '/' requires collections to be loaded to determine
+    // the correct redirect for authenticated users, so we must await it.
+    if (isBootstrapRoute(pathname) && pathname !== "/") {
       logger.debug(`[handleContentInitialization] Fast-tracking bootstrap page: ${pathname}`);
     } else {
       await initPromise;

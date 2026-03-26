@@ -442,16 +442,30 @@ export class TokenAdapter {
     tenantId?: string | null,
   ): Promise<DatabaseResult<Token>> {
     try {
-      const filter: Record<string, unknown> = { token: tokenId };
+      // Try matching by _id first, then by token value
+      const idFilter: Record<string, unknown> = { _id: tokenId };
       if (tenantId) {
-        filter.tenantId = tenantId;
+        idFilter.tenantId = tenantId;
       }
 
-      const result = await this.TokenModel.findOneAndUpdate(
-        filter as QueryFilter<TokenDocument>,
+      let result = await this.TokenModel.findOneAndUpdate(
+        idFilter as QueryFilter<TokenDocument>,
         { $set: tokenData },
         { returnDocument: "after", lean: true },
       );
+
+      if (!result) {
+        // Fall back to matching by token value
+        const valueFilter: Record<string, unknown> = { token: tokenId };
+        if (tenantId) {
+          valueFilter.tenantId = tenantId;
+        }
+        result = await this.TokenModel.findOneAndUpdate(
+          valueFilter as QueryFilter<TokenDocument>,
+          { $set: tokenData },
+          { returnDocument: "after", lean: true },
+        );
+      }
 
       if (result) {
         logger.debug("Token updated successfully", { token_id: tokenId });

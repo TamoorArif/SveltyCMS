@@ -245,7 +245,7 @@ async function compileFile(
     },
   });
 
-  const finalCode = wrapOutput(transpile.outputText, hash, targetRel, tenantId);
+  const finalCode = wrapOutput(transpile.outputText, hash, targetRel, uuid, tenantId);
 
   await fs.writeFile(targetAbs, finalCode);
   logSuccess(logger, `Compiled ${file} (${reason}: \x1b[33m${uuid}\x1b[0m)`);
@@ -253,11 +253,17 @@ async function compileFile(
   return targetRel;
 }
 
-function wrapOutput(code: string, hash: string, pathRel: string, tenantId?: string | null): string {
+function wrapOutput(
+  code: string,
+  hash: string,
+  pathRel: string,
+  uuid: string,
+  tenantId?: string | null,
+): string {
   let out = code.replace(/(\s*\*\s*@file\s+)(.*)/, `$1.compiledCollections/${pathRel}`);
   out = out.replace(/^\/\/\s*(HASH|UUID|TENANT_ID):.*$/gm, "").trimStart();
 
-  let header = `// WARNING: Generated file. Do not edit.\n// HASH: ${hash}\n`;
+  let header = `// WARNING: Generated file. Do not edit.\n// HASH: ${hash}\n// UUID: ${uuid}\n`;
 
   if (tenantId !== undefined) {
     header += `// TENANT_ID: ${tenantId === null ? "global" : tenantId}\n`;

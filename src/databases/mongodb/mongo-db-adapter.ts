@@ -427,7 +427,7 @@ export class MongoDBAdapter implements IDBAdapter {
 
     const MediaModel = mongoose.models.media;
     const mediaMethods = new MongoMediaMethods(MediaModel as any);
-    this.media = {
+    const mediaAdapter = {
       files: {
         ...this.media.files,
         upload: (file: any, tenantId?: string | null) =>
@@ -463,6 +463,8 @@ export class MongoDBAdapter implements IDBAdapter {
       },
       setupMediaModels: () => Promise.resolve(),
     } as unknown as IMediaAdapter;
+
+    this.media = mediaAdapter;
   }
 
   /**

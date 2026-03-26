@@ -75,15 +75,22 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
   }
 
   try {
-    // 3. Dynamic Import: Use relative path to avoid alias resolution issues in vite.config.ts
-    // We perform this check lazily to prevent circular dependencies during boot
+    // 3. Dynamic Import & Await Initialization
     const db = await import("../databases/db");
+
+    // Call the function instead of accessing the exported const to avoid circular dependency issues
+    if (typeof db.getDbInitPromise === "function") {
+      await db.getDbInitPromise(); // CRITICAL: Wait for initialization to complete
+    } else if (db.dbInitPromise) {
+      await db.dbInitPromise;
+    }
+
     const dbAdapter = db.dbAdapter;
 
     // Guard against uninitialized adapter
     if (!dbAdapter) {
-      // If adapter isn't ready but config exists, we stay in setup mode to allow finalization
-      return false;
+      console.log("[setupCheck] DB adapter not available after initialization promise.");
+      return false; // Stay in setup mode if adapter failed to init
     }
 
     // Check if database is connected before trying to access auth
@@ -140,6 +147,15 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("[SveltyCMS] ❌ Database validation failed during setup check:", error);
+    // Log adapter status for diagnostics
+    try {
+      const db = await import("../databases/db");
+      console.error(`[setupCheck Diagnostic] dbAdapter availability: ${!!db.dbAdapter}`);
+    } catch (e) {
+      console.error(
+        "[setupCheck Diagnostic] Could not even import db module during error handling.",
+      );
+    }
     // If config exists but DB check fails, we return false to stay in setup mode
     // This prevents blocking setup actions during transition.
     return false;

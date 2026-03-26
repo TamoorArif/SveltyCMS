@@ -28,21 +28,48 @@ describe("Database Interface Contract Tests", () => {
       const host = privateEnv.DB_HOST || process.env.DB_HOST || "127.0.0.1";
       const port = privateEnv.DB_PORT || process.env.DB_PORT || "27017";
       const dbName = privateEnv.DB_NAME || process.env.DB_NAME || "sveltycms_test";
-      const connectionString = `mongodb://${host}:${port}/${dbName}`;
+      const user = privateEnv.DB_USER || process.env.DB_USER || "";
+      const pass = privateEnv.DB_PASSWORD || process.env.DB_PASSWORD || "";
+
+      let connectionString = `mongodb://${host}:${port}/${dbName}`;
+      if (user && pass) {
+        connectionString = `mongodb://${user}:${pass}@${host}:${port}/${dbName}?authSource=admin`;
+      }
       await db.connect(connectionString);
     } else if (dbType === "mariadb") {
       const { MariaDBAdapter } = await import("../../../src/databases/mariadb/mariadb-adapter");
       db = new MariaDBAdapter();
-      await db.connect("mariadb://localhost:3306/sveltycms_test");
+      const host = privateEnv.DB_HOST || process.env.DB_HOST || "127.0.0.1";
+      const port = privateEnv.DB_PORT || process.env.DB_PORT || "3306";
+      const dbName = privateEnv.DB_NAME || process.env.DB_NAME || "sveltycms_test";
+      const user = privateEnv.DB_USER || process.env.DB_USER || "";
+      const pass = privateEnv.DB_PASSWORD || process.env.DB_PASSWORD || "";
+
+      let connectionString = `mariadb://${host}:${port}/${dbName}`;
+      if (user && pass) {
+        connectionString = `mariadb://${user}:${pass}@${host}:${port}/${dbName}`;
+      }
+      await db.connect(connectionString);
     } else if (dbType === "postgresql") {
       const { PostgreSQLAdapter } =
         await import("../../../src/databases/postgresql/postgres-adapter");
       db = new PostgreSQLAdapter();
-      await db.connect("postgres://localhost:5432/sveltycms_test");
+      const host = privateEnv.DB_HOST || process.env.DB_HOST || "127.0.0.1";
+      const port = privateEnv.DB_PORT || process.env.DB_PORT || "5432";
+      const dbName = privateEnv.DB_NAME || process.env.DB_NAME || "sveltycms_test";
+      const user = privateEnv.DB_USER || process.env.DB_USER || "";
+      const pass = privateEnv.DB_PASSWORD || process.env.DB_PASSWORD || "";
+
+      let connectionString = `postgres://${host}:${port}/${dbName}`;
+      if (user && pass) {
+        connectionString = `postgres://${user}:${pass}@${host}:${port}/${dbName}`;
+      }
+      await db.connect(connectionString);
     } else {
       const { SQLiteAdapter } = await import("../../../src/databases/sqlite/adapter/index");
       db = new SQLiteAdapter();
-      await db.connect("sveltycms_test.db");
+      const dbName = privateEnv.DB_NAME || process.env.DB_NAME || "sveltycms_test.db";
+      await db.connect(dbName);
     }
 
     try {

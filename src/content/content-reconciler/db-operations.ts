@@ -85,5 +85,7 @@ export async function bulkUpsertWithParentIds(
     }
   }
 
-  await dbAdapter.monitoring.cache.invalidateCategory(CacheCategory.CONTENT, tenantId);
+  if (dbAdapter.monitoring?.cache?.invalidateCategory) {
+    await dbAdapter.monitoring.cache.invalidateCategory(CacheCategory.CONTENT, tenantId);
+  }
 }

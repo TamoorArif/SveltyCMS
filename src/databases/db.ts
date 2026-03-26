@@ -504,6 +504,12 @@ async function initializeSystem(
         if (dbAdapter?.ensureCollections) {
           await dbAdapter.ensureCollections();
         }
+        if (dbAdapter?.ensureMedia) {
+          await dbAdapter.ensureMedia().catch((e) => logger.warn("Media activation issue:", e));
+        }
+        if (dbAdapter?.ensureMonitoring) {
+          await dbAdapter.ensureMonitoring();
+        }
         const [{ Auth }, { getDefaultSessionStore }] = await Promise.all([
           import("@src/databases/auth"),
           import("@src/databases/auth/session-manager"),
@@ -563,10 +569,6 @@ async function initializeSystem(
         updateServiceHealth("themeManager", "initializing", "Initializing themes...");
         updateServiceHealth("widgets", "initializing", "Initializing widgets...");
         updateServiceHealth("contentManager", "initializing", "Preparing content manager...");
-
-        if (dbAdapter?.ensureMedia) {
-          await dbAdapter.ensureMedia().catch((e) => logger.warn("Media activation issue:", e));
-        }
 
         await Promise.all([
           initializeMediaFolder().catch((e) => logger.warn("Media folder init failed:", e)),

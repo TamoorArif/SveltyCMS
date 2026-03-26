@@ -17,12 +17,10 @@ import { processModule } from "../module-processor.server";
  */
 export async function scanAndProcessFiles(): Promise<Schema[]> {
   // 1. Determine target directory
-  const collectionsDir =
-    dev || building
-      ? path.resolve(process.cwd(), "config/collections")
-      : path.resolve(process.cwd(), ".compiledCollections");
-
-  const extension = dev || building ? ".ts" : ".js";
+  // ALWAYS use .compiledCollections even in dev/building because processModule
+  // evaluates the code and raw .ts files might have type annotations that fail evaluation.
+  const collectionsDir = path.resolve(process.cwd(), ".compiledCollections");
+  const extension = ".js";
 
   logger.info(`🔍 Scanning collections in: ${collectionsDir} (ext: ${extension})`);
 
@@ -52,6 +50,16 @@ export async function scanAndProcessFiles(): Promise<Schema[]> {
           .replace(new RegExp(`\\${extension}$`), "")
           .split(path.sep)
           .join("/");
+
+      // --- ROBUST ID FALLBACK ---
+      // If schema doesn't have an _id from the transformer,
+      // generate one from the name or filename.
+      if (!schema._id) {
+        schema._id = (schema.name || path.basename(filePath, extension))
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+        logger.debug(`Generated fallback _id for collection: ${schema._id} (${filePath})`);
+      }
 
       return {
         ...schema,

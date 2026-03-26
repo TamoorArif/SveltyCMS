@@ -40,13 +40,13 @@ describe(
       let connectionString = `mongodb://${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
 
       if (privateEnv.DB_USER && privateEnv.DB_PASSWORD) {
-        connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}`;
+        connectionString = `mongodb://${privateEnv.DB_USER}:${privateEnv.DB_PASSWORD}@${privateEnv.DB_HOST}:${privateEnv.DB_PORT}/${dbName}?authSource=admin`;
       }
 
-      // Set short timeout to fail fast if config is wrong
+      // Set longer timeout for CI environments
       const connectOptions = {
-        serverSelectionTimeoutMS: 2000,
-        connectTimeoutMS: 2000,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
       };
 
       try {
