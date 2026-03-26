@@ -9,10 +9,10 @@
  */
 
 import { beforeAll, describe, expect, it } from "bun:test";
-import type { DatabaseResult } from "../../../src/databases/db-interface";
+import type { DatabaseResult, IDBAdapter } from "../../../src/databases/db-interface";
 
 describe("Database Interface Contract Tests", () => {
-  let db: any = null;
+  let db: IDBAdapter | null = null;
 
   beforeAll(async () => {
     // biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
@@ -33,19 +33,20 @@ describe("Database Interface Contract Tests", () => {
     } else if (dbType === "mariadb") {
       const { MariaDBAdapter } = await import("../../../src/databases/mariadb/mariadb-adapter");
       db = new MariaDBAdapter();
-      await db.connect();
+      await db.connect("mariadb://localhost:3306/sveltycms_test");
     } else if (dbType === "postgresql") {
       const { PostgreSQLAdapter } =
         await import("../../../src/databases/postgresql/postgres-adapter");
       db = new PostgreSQLAdapter();
-      await db.connect();
+      await db.connect("postgres://localhost:5432/sveltycms_test");
     } else {
       const { SQLiteAdapter } = await import("../../../src/databases/sqlite/adapter/index");
       db = new SQLiteAdapter();
-      await db.connect();
+      await db.connect("sveltycms_test.db");
     }
 
     try {
+      if (!db) throw new Error("Database adapter not initialized");
       // CRITICAL: Initialize lazy-loaded features for interface testing
       await Promise.all([
         db.ensureAuth?.(),
@@ -304,6 +305,23 @@ describe("Database Interface Contract Tests", () => {
       expect(typeof db?.system?.themes?.uninstall).toBe("function");
       expect(typeof db?.system?.themes?.update).toBe("function");
       expect(typeof db?.system?.themes?.getAllThemes).toBe("function");
+      expect(typeof db?.system?.themes?.storeThemes).toBe("function");
+      expect(typeof db?.system?.themes?.ensure).toBe("function");
+    });
+  });
+
+  describe("Virtual Folder Interface", () => {
+    it("should implement virtual folder operations", () => {
+      expect(typeof db?.system?.virtualFolder?.create).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.getById).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.getByParentId).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.getAll).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.update).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.addToFolder).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.getContents).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.ensure).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.delete).toBe("function");
+      expect(typeof db?.system?.virtualFolder?.exists).toBe("function");
     });
   });
 

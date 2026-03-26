@@ -214,7 +214,7 @@ export class MongoCrudMethods<T extends BaseEntity> {
       const now = nowISODateString();
       const doc = new this.model({
         ...secureData,
-        _id: generateId(),
+        _id: (secureData._id as string) || generateId(),
         createdAt: now,
         updatedAt: now,
         isDeleted: false,
@@ -257,16 +257,19 @@ export class MongoCrudMethods<T extends BaseEntity> {
     const startTime = performance.now();
     try {
       const now = nowISODateString();
-      const docs = data.map((d) => ({
-        ...safeQuery(d as Record<string, unknown>, tenantId, {
+      const docs = data.map((d) => {
+        const secureData = safeQuery(d as Record<string, unknown>, tenantId, {
           bypassTenantCheck,
           includeDeleted: true,
-        }),
-        _id: generateId(),
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      }));
+        });
+        return {
+          ...secureData,
+          _id: (secureData._id as string) || generateId(),
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+        };
+      });
       const result = await this.model.insertMany(docs);
       return {
         success: true,

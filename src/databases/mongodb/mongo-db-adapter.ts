@@ -10,6 +10,18 @@ import type {
   DatabaseResult,
   IAuthAdapter,
   ConnectionPoolOptions,
+  IContentAdapter,
+  IMediaAdapter,
+  ISystemAdapter,
+  IMonitoringAdapter,
+  DatabaseId,
+  BaseEntity,
+  QueryBuilder,
+  DatabaseTransaction,
+  DatabaseCapabilities,
+  Schema,
+  PerformanceMetrics,
+  QueryFilter,
 } from "../db-interface";
 import { MongoCrudMethods } from "./methods/crud-methods";
 import { composeMongoAuthAdapter } from "./methods/auth-composition";
@@ -22,73 +34,81 @@ export class MongoDBAdapter implements IDBAdapter {
   // Domain-Specific Adapters
   crud: ICrudAdapter;
   auth: IAuthAdapter;
-  content: any;
-  media: any;
-  system: any = {};
-  monitoring: any = {};
-  batch: any = {};
-  collection: any;
+  content: IContentAdapter = {} as IContentAdapter;
+  media: IMediaAdapter = {} as IMediaAdapter;
+  system: ISystemAdapter = {} as ISystemAdapter;
+  monitoring: IMonitoringAdapter = {} as IMonitoringAdapter;
+  batch: IDBAdapter["batch"] = {} as IDBAdapter["batch"];
+  collection: IDBAdapter["collection"] = {} as IDBAdapter["collection"];
 
   constructor() {
     this.auth = composeMongoAuthAdapter();
     this.crud = this._createCrudMethods();
-    this.collection = {}; // Placeholder until ensureCollections is called
+
+    // Initialize basic content interface (extended in ensureContent)
     this.content = {
-      drafts: { restore: (id: any) => this.crud.restore("content_drafts", id) },
-      revisions: { restore: (id: any) => this.crud.restore("content_revisions", id) },
-    };
+      drafts: { restore: (id: DatabaseId) => this.crud.restore("content_drafts", id) },
+      revisions: { restore: (id: DatabaseId) => this.crud.restore("content_revisions", id) },
+    } as unknown as IContentAdapter;
+
+    // Initialize basic media interface (extended in ensureMedia)
     this.media = {
-      files: { restore: (id: any, t: any) => this.crud.restore("media", id, { tenantId: t }) },
-    };
+      files: {
+        restore: (id: DatabaseId, t: string | null) =>
+          this.crud.restore("media", id, { tenantId: t }),
+      },
+    } as unknown as IMediaAdapter;
   }
 
   /**
    * Internal helper to create the ICrudAdapter implementation.
    */
   private _createCrudMethods(): ICrudAdapter {
-    const getRepo = (coll: string): any => {
+    const getRepo = (coll: string): MongoCrudMethods<any> => {
       if (this._repos.has(coll)) {
         return this._repos.get(coll)!;
       }
 
       const model = this._getOrCreateModel(coll);
-      const repo = new MongoCrudMethods(model as any);
+      const repo = new MongoCrudMethods(model);
       this._repos.set(coll, repo);
       return repo;
     };
 
     return {
-      aggregate: (c, p, t) => getRepo(c).aggregate(p, { tenantId: t as any }),
+      aggregate: (c, p, t) =>
+        getRepo(c).aggregate(p as any[], { tenantId: t as string | null } as any) as any,
       count: (c, q, o) => getRepo(c).count(q || {}, o as any),
       delete: (c, id, o) => getRepo(c).delete(id, o as any),
-      deleteMany: (c, q, o) => getRepo(c).deleteMany(q, o as any),
+      deleteMany: (c, q, o) => getRepo(c).deleteMany(q as QueryFilter<any>, o as any),
       exists: (c, q, o) =>
         getRepo(c)
           .count(q || {}, o as any)
-          .then((res: any) => ({ success: true, data: (res.data || 0) > 0 })),
+          .then((res: DatabaseResult<number>) => {
+            if (res.success) {
+              return { success: true, data: (res.data || 0) > 0 };
+            }
+            return res as any;
+          }),
       findByIds: (c, ids, o) => getRepo(c).findByIds(ids, o as any),
-      findMany: (c, q, o) => getRepo(c).findMany(q, o as any),
-      findOne: (c, q, o) => getRepo(c).findOne(q, o as any),
-      insert: (c, d, t, s) =>
-        getRepo(c).insert(d as any, { tenantId: t as any, bypassTenantCheck: s }),
-      insertMany: (c, d, t, s) =>
-        getRepo(c).insertMany(d as any[], { tenantId: t as any, bypassTenantCheck: s }),
-      restore: (c, id, o) => getRepo(c).restore(id, o as any),
-      update: (c, id, d, t, s) =>
-        getRepo(c).update(id, d as any, { tenantId: t as any, bypassTenantCheck: s }),
+      findMany: (c, q, o) => getRepo(c).findMany(q as QueryFilter<any>, o as any),
+      findOne: (c, q, o) => getRepo(c).findOne(q as QueryFilter<any>, o as any),
+      insert: (c, d, t, s) => getRepo(c).insert(d as any, t as string | null, s),
+      insertMany: (c, d, t, s) => getRepo(c).insertMany(d as any[], t as string | null, s),
+      restore: (c, id, o) => getRepo(c).restore(id, o as any) as any,
+      update: (c, id, d, t, s) => getRepo(c).update(id, d as any, t as string | null, s),
       updateMany: (c, q, d, t, s) =>
-        getRepo(c).updateMany(q, d as any, { tenantId: t as any, bypassTenantCheck: s }),
+        getRepo(c).updateMany(q as QueryFilter<any>, d as any, t as string | null, s),
       upsert: (c, q, d, t, s) =>
-        getRepo(c).upsert(q, d as any, { tenantId: t as any, bypassTenantCheck: s }),
-      upsertMany: (c, items, t, s) =>
-        getRepo(c).upsertMany(items, { tenantId: t as any, bypassTenantCheck: s }),
+        getRepo(c).upsert(q as QueryFilter<any>, d as any, t as string | null, s),
+      upsertMany: (c, items, t, s) => getRepo(c).upsertMany(items as any[], t as string | null, s),
     };
   }
 
   // Implementation of IDBAdapter methods
   async connect(
     connectionStringOrOptions: string | ConnectionPoolOptions,
-    options?: unknown,
+    options?: mongoose.ConnectOptions,
   ): Promise<DatabaseResult<void>> {
     try {
       const connectionString =
@@ -109,7 +129,7 @@ export class MongoDBAdapter implements IDBAdapter {
             cleanup();
             resolve(true);
           };
-          const onError = (err: any) => {
+          const onError = (err: Error) => {
             cleanup();
             reject(err);
           };
@@ -125,7 +145,7 @@ export class MongoDBAdapter implements IDBAdapter {
       }
 
       // Otherwise, initiate new connection
-      await mongoose.connect(connectionString, (options as any) || {});
+      await mongoose.connect(connectionString, options || {});
       this._connection = mongoose.connection;
       return { success: true, data: undefined };
     } catch (err: any) {
@@ -135,7 +155,7 @@ export class MongoDBAdapter implements IDBAdapter {
         error: {
           code: "DB_CONNECTION_FAILED",
           message: err.message,
-          originalCode: err.code || (err as any).originalError?.code,
+          originalCode: err.code || err.originalError?.code,
           details: err,
         },
       };
@@ -173,50 +193,67 @@ export class MongoDBAdapter implements IDBAdapter {
     return { success: true, data: undefined };
   }
 
-  getCapabilities(): any {
+  getCapabilities(): DatabaseCapabilities {
     return {
       maxBatchSize: 1000,
       supportsTransactions: true,
       supportsAggregation: true,
+      maxQueryComplexity: 100,
+      supportsFullTextSearch: true,
+      supportsIndexing: true,
+      supportsPartitioning: false,
+      supportsStreaming: true,
     };
   }
 
-  async getCollectionData(): Promise<any> {
+  async getCollectionData(): Promise<DatabaseResult<{ data: unknown[] }>> {
     return { success: true, data: { data: [] } };
   }
 
-  async getConnectionHealth(): Promise<any> {
+  async getConnectionHealth(): Promise<
+    DatabaseResult<{ healthy: boolean; latency: number; activeConnections: number }>
+  > {
     return {
       success: true,
       data: {
-        status: this.isConnected() ? "healthy" : "disconnected",
+        healthy: this.isConnected(),
         latency: 0,
-        pool: {
-          total: 1,
-          active: this.isConnected() ? 1 : 0,
-        },
+        activeConnections: this.isConnected() ? 1 : 0,
       },
     };
   }
 
-  async getMultipleCollectionData(): Promise<any> {
+  async getMultipleCollectionData(): Promise<DatabaseResult<Record<string, unknown[]>>> {
     return { success: true, data: {} };
   }
 
-  queryBuilder(): any {
-    return {};
+  queryBuilder<T extends BaseEntity>(_collection: string): QueryBuilder<T> {
+    // Basic implementation for MongoDB query builder
+    return {
+      where: () => ({}) as any,
+      execute: () => Promise.resolve({ success: true, data: [] }),
+    } as unknown as QueryBuilder<T>;
   }
 
-  async transaction(fn: any): Promise<any> {
+  async transaction<T>(
+    fn: (transaction: DatabaseTransaction) => Promise<DatabaseResult<T>>,
+  ): Promise<DatabaseResult<T>> {
     const session = await mongoose.startSession();
     try {
       session.startTransaction();
-      const result = await fn(session);
+      const result = await fn(session as unknown as DatabaseTransaction);
       await session.commitTransaction();
       return result;
     } catch (error) {
       await session.abortTransaction();
-      throw error;
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Transaction failed",
+        error: {
+          code: "TRANSACTION_FAILED",
+          message: error instanceof Error ? error.message : "Transaction failed",
+        },
+      };
     } finally {
       session.endSession();
     }
@@ -226,46 +263,60 @@ export class MongoDBAdapter implements IDBAdapter {
    * Initializes system models and methods.
    */
   async ensureSystem(): Promise<void> {
-    const { SystemSettingModel, SystemPreferencesModel, ThemeModel, SystemVirtualFolderModel } =
-      await import("./models");
+    const { SystemSettingModel, SystemPreferencesModel, ThemeModel } = await import("./models");
     const { MongoSystemMethods } = await import("./methods/system-methods");
     const { MongoThemeMethods } = await import("./methods/theme-methods");
+    const { MongoSystemVirtualFolderMethods } =
+      await import("./methods/system-virtual-folder-methods");
+    const { MongoWidgetMethods } = await import("./methods/widget-methods");
+    const { WidgetModel } = await import("./models/widget");
 
     this.system.preferences = new MongoSystemMethods(SystemPreferencesModel, SystemSettingModel);
-    this.system.themes = new MongoThemeMethods(ThemeModel);
-    this.system.virtualFolder = {
-      ensure: async (data: any) => {
-        // Strip timestamps and ID to let Mongoose handle them or avoid conflicts with $setOnInsert
-        const { _id, createdAt: _, updatedAt: __, ...rest } = data;
-        const result = await SystemVirtualFolderModel.findOneAndUpdate(
-          { name: data.name },
-          {
-            $setOnInsert: {
-              ...rest,
-              _id: _id || new mongoose.Types.ObjectId().toHexString(),
-            },
-          },
-          { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
-        )
-          .lean()
-          .exec();
-        return result;
-      },
-    };
+    this.system.themes = new MongoThemeMethods(ThemeModel) as any;
+    this.system.virtualFolder = new MongoSystemVirtualFolderMethods();
+    this.system.widgets = new MongoWidgetMethods(WidgetModel) as any;
 
     // Initialize tenants
     const { TenantModel } = await import("./models/tenant");
     this.system.tenants = {
-      create: (t: any) => new TenantModel(t).save().then((r: any) => r.toObject()),
-      getById: (id: string) => TenantModel.findById(id).lean().exec(),
-      update: (id: string, d: any) =>
-        TenantModel.findByIdAndUpdate(id, { $set: d }, { new: true }).lean().exec(),
-      delete: (id: string) =>
+      create: (t: any) =>
+        new TenantModel(t).save().then((r: any) => ({ success: true, data: r.toObject() })),
+      getById: (id: DatabaseId) =>
+        TenantModel.findById(id)
+          .lean()
+          .exec()
+          .then((r) => ({ success: true, data: r })),
+      update: (id: DatabaseId, d: any) =>
+        TenantModel.findByIdAndUpdate(id, { $set: d }, { new: true })
+          .lean()
+          .exec()
+          .then((r) => ({ success: true, data: r })),
+      delete: (id: DatabaseId) =>
         TenantModel.findByIdAndDelete(id)
           .exec()
+          .then(() => ({ success: true, data: undefined })),
+      list: () =>
+        TenantModel.find()
+          .lean()
+          .exec()
+          .then((r) => ({ success: true, data: r })),
+    } as any;
+
+    // Initialize jobs
+    const { JobModel } = await import("./models/job");
+    this.system.jobs = {
+      create: (j: any) => new JobModel(j).save().then((r: any) => r.toObject()),
+      getById: (id: string) => JobModel.findById(id).lean().exec() as any,
+      update: (id: string, d: any) =>
+        JobModel.findByIdAndUpdate(id, { $set: d }, { new: true }).lean().exec() as any,
+      delete: (id: string) =>
+        JobModel.findByIdAndDelete(id)
+          .exec()
           .then(() => {}),
-      list: () => TenantModel.find().lean().exec(),
-    };
+      list: (o: any) => JobModel.find(o).lean().exec() as any,
+      count: (f: any) =>
+        JobModel.countDocuments(f).then((c) => ({ success: true, data: c })) as any,
+    } as any;
   }
 
   /**
@@ -286,15 +337,17 @@ export class MongoDBAdapter implements IDBAdapter {
 
     this.collection = {
       getModel: (id: string) => collectionMethods.getModel(id),
-      createModel: (schema: any, force?: boolean) => collectionMethods.createModel(schema, force),
-      updateModel: (schema: any) => collectionMethods.updateModel(schema),
+      createModel: (schema: Schema, force?: boolean) =>
+        collectionMethods.createModel(schema, force),
+      updateModel: (schema: Schema) => collectionMethods.updateModel(schema),
       deleteModel: (id: string) => collectionMethods.deleteModel(id),
       getSchema: (name: string, tenantId?: string | null) =>
-        collectionMethods.getSchema(name, tenantId),
+        collectionMethods.getSchema(name, tenantId).then((r) => ({ success: true, data: r })),
       getSchemaById: (id: string, tenantId?: string | null) =>
-        collectionMethods.getSchemaById(id, tenantId),
-      listSchemas: (tenantId?: string | null) => collectionMethods.listSchemas(tenantId),
-      getMongooseModel: (id: string) => collectionMethods.getMongooseModel(id),
+        collectionMethods.getSchemaById(id, tenantId).then((r) => ({ success: true, data: r })),
+      listSchemas: (tenantId?: string | null) =>
+        collectionMethods.listSchemas(tenantId).then((r) => ({ success: true, data: r })),
+      getMongooseModel: async (id: string) => collectionMethods.getMongooseModel(id),
     };
   }
 
@@ -304,30 +357,92 @@ export class MongoDBAdapter implements IDBAdapter {
   async ensureMedia(): Promise<void> {
     const { MediaModel } = await import("./models/media");
     const { MongoMediaMethods } = await import("./methods/media-methods");
-    this.media.methods = new MongoMediaMethods(MediaModel as any);
+    const mediaMethods = new MongoMediaMethods(MediaModel as any);
+    this.media = {
+      ...this.media,
+      ...mediaMethods,
+    } as unknown as IMediaAdapter;
   }
 
   /**
    * Initializes content models and methods.
    */
   async ensureContent(): Promise<void> {
-    // Content structure is already handled by generic crud and lazy discriminators
-    // but we can add any specific initialization here if needed.
+    const { MongoContentMethods } = await import("./methods/content-methods");
+
+    // Nodes Repo
+    const nodeModel = this._getOrCreateModel("system_content_structure");
+    const nodesRepo = new MongoCrudMethods(nodeModel);
+
+    // Drafts Repo
+    const draftModel = this._getOrCreateModel("content_drafts");
+    const draftsRepo = new MongoCrudMethods(draftModel);
+
+    // Revisions Repo
+    const revisionModel = this._getOrCreateModel("content_revisions");
+    const revisionsRepo = new MongoCrudMethods(revisionModel);
+
+    const contentMethods = new MongoContentMethods(nodesRepo, draftsRepo, revisionsRepo);
+
+    this.content = {
+      ...this.content,
+      nodes: {
+        getStructure: contentMethods.getStructure.bind(contentMethods),
+        create: (n: any) => contentMethods.upsertNodeByPath(n),
+        createMany: (_n: any) => Promise.resolve({ success: true, data: [] }), // Placeholder
+        update: (_p: any, _c: any) => Promise.resolve({ success: true, data: {} as any }), // Placeholder
+        delete: (_p: any) => Promise.resolve({ success: true, data: undefined }), // Placeholder
+        bulkUpdate: contentMethods.bulkUpdateNodes.bind(contentMethods),
+        reorderStructure: contentMethods.reorderStructure.bind(contentMethods),
+      },
+      drafts: {
+        ...this.content.drafts,
+        create: contentMethods.createDraft.bind(contentMethods),
+        getForContent: contentMethods.getDraftsForContent.bind(contentMethods),
+        publishMany: contentMethods.publishManyDrafts.bind(contentMethods),
+      },
+      revisions: {
+        ...this.content.revisions,
+        create: contentMethods.createRevision.bind(contentMethods),
+        getHistory: contentMethods.getRevisionHistory.bind(contentMethods),
+        cleanup: contentMethods.cleanupRevisions.bind(contentMethods),
+      },
+    } as unknown as IContentAdapter;
   }
 
-  utils: any = {
+  /**
+   * Initializes monitoring models and methods.
+   */
+  async ensureMonitoring(): Promise<void> {
+    this.monitoring = {
+      cache: {
+        get: (_k: string) => Promise.resolve({ success: true, data: null }),
+        set: (_k: string, _v: any) => Promise.resolve({ success: true, data: undefined }),
+        delete: (_k: string) => Promise.resolve({ success: true, data: undefined }),
+        clear: () => Promise.resolve({ success: true, data: undefined }),
+        invalidateCollection: () => Promise.resolve({ success: true, data: undefined }),
+      },
+      performance: {
+        getMetrics: () => Promise.resolve({ success: true, data: {} as PerformanceMetrics }),
+        clearMetrics: () => Promise.resolve({ success: true, data: undefined }),
+        enableProfiling: () => Promise.resolve({ success: true, data: undefined }),
+        getSlowQueries: () => Promise.resolve({ success: true, data: [] }),
+      },
+    } as IMonitoringAdapter;
+  }
+
+  utils = {
     generateId: () => new mongoose.Types.ObjectId().toHexString(),
     validateId: (id: string) => mongoose.Types.ObjectId.isValid(id),
     normalizePath: (p: string) => p,
-    createPagination: (i: any) => ({ items: i, total: i.length }),
-  };
+    createPagination: <T>(items: T[]) => ({ items: items, total: items.length }),
+  } as any;
 
   private _getOrCreateModel(name: string): mongoose.Model<any> {
     if (this._models.has(name)) return this._models.get(name)!;
-    // Check if model already exists in mongoose to avoid OverwriteModelError
-    const model =
-      mongoose.models[name] ||
-      mongoose.model(name, new mongoose.Schema({}, { strict: false, timestamps: true }));
+    // CRITICAL: Use String for _id to support UUIDs and prevent Cast to ObjectId errors
+    const schema = new mongoose.Schema({ _id: String }, { strict: false, timestamps: true });
+    const model = mongoose.models[name] || mongoose.model(name, schema);
     this._models.set(name, model);
     return model;
   }

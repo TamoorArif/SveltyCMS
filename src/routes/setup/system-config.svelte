@@ -60,6 +60,7 @@ import { systemSettingsSchema } from '@utils/form-schemas';
 import iso6391 from '@utils/iso639-1.json';
 import { getLanguageName } from '@utils/language-utils';
 import { safeParse } from 'valibot';
+import { deserialize } from '$app/forms';
 // Components
 import PresetSelector from './preset-selector.svelte';
 import { PRESETS } from './presets';
@@ -68,6 +69,45 @@ const presets = PRESETS;
 
 // --- PROPS ---
 let { systemSettings = $bindable(), validationErrors, redisAvailable = $bindable() } = $props();
+
+let isTestingRedis = $state(false);
+let redisTestError = $state('');
+let redisTestSuccess = $state('');
+
+async function testRedisConnection() {
+	isTestingRedis = true;
+	redisTestError = '';
+	redisTestSuccess = '';
+
+	try {
+		const formData = new FormData();
+		formData.append('host', systemSettings.redisHost || 'localhost');
+		formData.append('port', systemSettings.redisPort || '6379');
+		formData.append('password', systemSettings.redisPassword || '');
+
+		const response = await fetch('?/testRedis', {
+			method: 'POST',
+			body: formData
+		});
+
+		const result = deserialize(await response.text());
+
+		if (result.type === 'success') {
+			const data = result.data as { success: boolean; message?: string };
+			if (data.success) {
+				redisTestSuccess = 'Redis connected successfully! 🚀';
+			} else {
+				redisTestError = data.message || 'Failed to connect to Redis';
+			}
+		} else {
+			redisTestError = 'An error occurred while testing Redis';
+		}
+	} catch (error) {
+		redisTestError = `Network error: ${error instanceof Error ? error.message : String(error)}`;
+	} finally {
+		isTestingRedis = false;
+	}
+}
 
 const availableLanguages: string[] = [...systemLocales];
 
@@ -701,6 +741,37 @@ const allTimezones = Intl.supportedValuesOf('timeZone');
 								class="input text-sm py-1.5 rounded"
 							/>
 						</div>
+					</div>
+
+					<!-- Redis Test Button & Results -->
+					<div class="mt-3 flex flex-col gap-2">
+						<button
+							type="button"
+							onclick={testRedisConnection}
+							disabled={isTestingRedis}
+							class="btn btn-sm variant-soft-tertiary dark:variant-soft-primary w-fit flex items-center gap-2"
+						>
+							{#if isTestingRedis}
+								<iconify-icon icon="mdi:loading" class="animate-spin"></iconify-icon>
+								Testing...
+							{:else}
+								<iconify-icon icon="mdi:connection"></iconify-icon>
+								Test Redis Connection
+							{/if}
+						</button>
+
+						{#if redisTestSuccess}
+							<div class="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+								<iconify-icon icon="mdi:check-circle"></iconify-icon>
+								{redisTestSuccess}
+							</div>
+						{/if}
+						{#if redisTestError}
+							<div class="text-xs text-error-500 flex items-center gap-1">
+								<iconify-icon icon="mdi:alert-circle"></iconify-icon>
+								{redisTestError}
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</div>

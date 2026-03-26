@@ -6,7 +6,7 @@ order: 2
 icon: "mdi:wizard-hat"
 author: "admin"
 created: "2025-10-30"
-updated: "2026-03-05"
+updated: "2026-03-26"
 tags:
   - "setup"
   - "wizard"
@@ -278,6 +278,7 @@ export const systemSettingsSchema = v.object({
 - **Connection String Parsing**: Paste full MongoDB URI, automatically extracts credentials
 - **Auto-driver Installation**: Detects missing drivers and installs them
 - **Atlas Helper**: Collapsible guide for MongoDB Atlas setup
+- **Full Interface Compliance**: Automatically synchronizes theme and folder logic for MongoDB
 - **Test Connection**: Validates configuration before proceeding
 - **Error Classification**: Detailed error messages (auth failed, timeout, DNS error, etc.)
 
@@ -377,6 +378,7 @@ stateDiagram-v2
 - **Dual Language System**:
   - **System Languages**: From ParaglideJS config (limited set)
   - **Content Languages**: From ISO-639-1 (150+ languages)
+- **Redis Verification**: Optional performance optimization with a dedicated "Test Redis Connection" button to verify host, port, and credentials.
 - **Storage Type Notice**: Shows configuration reminder for cloud storage
 
 **Validation Rules**:

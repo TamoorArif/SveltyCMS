@@ -532,3 +532,40 @@ export async function checkRedis(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Tests connection to a Redis server with provided credentials.
+ */
+export async function testRedisConnection(config: {
+  host: string;
+  port: number;
+  password?: string;
+}): Promise<{ success: boolean; message?: string }> {
+  const { createClient } = await import("redis");
+  const client = createClient({
+    socket: {
+      host: config.host,
+      port: config.port,
+      connectTimeout: 2000,
+    },
+    password: config.password || undefined,
+  });
+
+  try {
+    client.on("error", (err) => {
+      // Catch errors during connection attempt
+      logger.debug("Redis test connection error event:", err.message);
+    });
+
+    await client.connect();
+    await client.ping();
+    await client.quit();
+    return { success: true };
+  } catch (error: any) {
+    logger.error("Redis connection test failed:", error);
+    return {
+      success: false,
+      message: error.message || "Could not connect to Redis",
+    };
+  }
+}

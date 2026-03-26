@@ -7,7 +7,7 @@
 import { logger } from "@utils/logger";
 import type { Model } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
-import type { DatabaseId, Theme } from "../../db-interface";
+import type { DatabaseId, Theme, DatabaseResult } from "../../db-interface";
 import { CacheCategory, invalidateCategoryCache, withCache } from "./mongodb-cache-utils";
 import { createDatabaseError } from "./mongodb-utils";
 
@@ -48,22 +48,46 @@ export class MongoThemeMethods {
 
   /**
    * Retrieves the default theme.
-   * Cached with 300s TTL since default theme is frequently accessed
-   * @returns {Promise<Theme | null>} The default theme object or null if none is set.
-   * @throws {DatabaseError} If the database query fails.
+   * @param {string} tenantId - Optional tenant ID.
+   * @returns {Promise<DatabaseResult<Theme>>} The default theme.
    */
-  async getDefault(): Promise<Theme | null> {
+  async getDefaultTheme(tenantId?: string | null): Promise<DatabaseResult<Theme>> {
     return withCache(
-      "theme:default",
+      `theme:default:${tenantId || "global"}`,
       async () => {
         try {
-          return await this.themeModel.findOne({ isDefault: true }).lean().exec();
+          const theme = await this.themeModel.findOne({ isDefault: true }).lean().exec();
+          if (!theme) {
+            return {
+              success: false,
+              message: "Default theme not found",
+              error: { code: "THEME_NOT_FOUND", message: "Default theme not found" },
+            };
+          }
+          return { success: true, data: theme as Theme };
         } catch (error) {
-          throw createDatabaseError(error, "THEME_FETCH_FAILED", "Failed to get default theme");
+          return {
+            success: false,
+            message: "Failed to get default theme",
+            error: createDatabaseError(error, "THEME_FETCH_FAILED", "Failed to get default theme"),
+          };
         }
       },
       { category: CacheCategory.THEME },
     );
+  }
+
+  // Wrapper methods to match DatabaseResult interface requirement if needed by IDBAdapter
+  async getActiveTheme(): Promise<DatabaseResult<Theme>> {
+    const theme = await this.getActive();
+    if (!theme) {
+      return {
+        success: false,
+        message: "Active theme not found",
+        error: { code: "THEME_NOT_FOUND", message: "Active theme not found" },
+      };
+    }
+    return { success: true, data: theme };
   }
 
   /**
@@ -72,7 +96,7 @@ export class MongoThemeMethods {
    * @returns {Promise<Theme[]>} An array of theme objects.
    * @throws {DatabaseError} If the database query fails.
    */
-  async findAll(): Promise<Theme[]> {
+  async getAllThemes(): Promise<Theme[]> {
     return withCache(
       "theme:all",
       async () => {
@@ -84,6 +108,28 @@ export class MongoThemeMethods {
       },
       { category: CacheCategory.THEME },
     );
+  }
+
+  /**
+   * Stores multiple themes in the database.
+   * @param {Theme[]} themes - The themes to store.
+   */
+  async storeThemes(themes: Theme[]): Promise<void> {
+    try {
+      for (const theme of themes) {
+        await this.installOrUpdate(theme);
+      }
+    } catch (error) {
+      throw createDatabaseError(error, "THEME_STORE_FAILED", "Failed to store themes");
+    }
+  }
+
+  /**
+   * Placeholder for setupThemeModels if needed.
+   */
+  async setupThemeModels(): Promise<void> {
+    // Models are usually handled by the adapter ensureSystem, but this satisfies the interface
+    logger.trace("setupThemeModels called (MongoDB)");
   }
 
   /**

@@ -17,7 +17,7 @@ import nodemailer from "nodemailer";
 import { safeParse } from "valibot";
 import { version as pkgVersion } from "../../../package.json";
 import type { Actions, PageServerLoad } from "./$types";
-import { checkRedis } from "./utils";
+import { checkRedis, testRedisConnection } from "./utils";
 
 const execAsync = promisify(exec);
 
@@ -371,6 +371,25 @@ export const actions: Actions = {
     logger.info("DEBUG: extracted system data:", JSON.stringify(system, null, 2));
 
     try {
+      // --- REDIS VERIFICATION ---
+      if (system.useRedis) {
+        logger.info("📡 completeSetup: Verifying Redis connection...");
+        const redisCheck = await testRedisConnection({
+          host: system.redisHost || "localhost",
+          port: Number(system.redisPort) || 6379,
+          password: system.redisPassword,
+        });
+
+        if (!redisCheck.success) {
+          logger.error("❌ completeSetup: Redis verification failed:", redisCheck.message);
+          return {
+            success: false,
+            error: `Redis connection failed: ${redisCheck.message}. Please check your Redis settings or disable Redis caching.`,
+          };
+        }
+        logger.info("✅ completeSetup: Redis verified successfully");
+      }
+
       const adminValidation = safeParse(setupAdminSchema, admin);
       if (!adminValidation.success) {
         return { success: false, error: "Invalid admin user data" };
@@ -894,6 +913,29 @@ export const actions: Actions = {
         msg = "Connection refused. Check host/port.";
       }
       return { success: false, error: msg };
+    }
+  },
+
+  /**
+   * Tests Redis connection
+   */
+  testRedis: async ({ request }) => {
+    logger.info("🚀 Action: testRedis starting...");
+    try {
+      const formData = await request.formData();
+      const host = formData.get("host") as string;
+      const port = Number(formData.get("port"));
+      const password = formData.get("password") as string;
+
+      if (!host || !port) {
+        return { success: false, error: "Host and port are required" };
+      }
+
+      const result = await testRedisConnection({ host, port, password });
+      return result;
+    } catch (err: any) {
+      logger.error("❌ Redis test failed critically:", err);
+      return { success: false, error: err.message || String(err) };
     }
   },
 

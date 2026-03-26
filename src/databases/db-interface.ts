@@ -1026,7 +1026,12 @@ export interface IDBAdapter {
       collectionName: string,
       tenantId?: string | null,
     ): Promise<DatabaseResult<Schema | null>>;
+    getSchemaById(
+      collectionId: string,
+      tenantId?: string | null,
+    ): Promise<DatabaseResult<Schema | null>>;
     listSchemas(tenantId?: string | null): Promise<DatabaseResult<Schema[]>>;
+    getMongooseModel?(collectionId: string): Promise<any>;
   };
 
   // Connection Management with Pooling
