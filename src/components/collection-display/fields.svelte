@@ -19,29 +19,43 @@
 - `Alt + S`: Save currently edited entry (if focused)
 -->
 <script lang="ts">
-import { logger } from '@utils/logger';
-import { getFieldName } from '@utils/utils';
-import { untrack } from 'svelte';
+import { logger } from "@utils/logger";
+import { getFieldName } from "@utils/utils";
+import { untrack } from "svelte";
 
 // Auth & Page data
-import { page } from '$app/state';
+import { page } from "$app/state";
 
 const user = $derived(page.data?.user);
 const tenantId = $derived(page.data?.tenantId);
 
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { applayout_version, button_edit, Fields_no_widgets_found, form_required } from '@src/paraglide/messages';
-import type { Locale } from '@src/paraglide/runtime';
+import { Tabs } from "@skeletonlabs/skeleton-svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import {
+	applayout_version,
+	button_edit,
+	Fields_no_widgets_found,
+	form_required,
+} from "@src/paraglide/messages";
+import type { Locale } from "@src/paraglide/runtime";
 // Types
-import { collection, collectionValue, setCollectionValue } from '@src/stores/collection-store.svelte';
-import { useContent } from '@src/content/content-context.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { contentLanguage, dataChangeStore, translationProgress, validationStore } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { widgetFunctions as widgetFunctionsStore } from '@src/stores/widget-store.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import WidgetLoader from './widget-loader.svelte';
+import {
+	collection,
+	collectionValue,
+	setCollectionValue,
+} from "@src/stores/collection-store.svelte";
+import { useContent } from "@src/content/content-context.svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import {
+	contentLanguage,
+	dataChangeStore,
+	translationProgress,
+	validationStore,
+} from "@src/stores/store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { widgetFunctions as widgetFunctionsStore } from "@src/stores/widget-store.svelte";
+import { showConfirm } from "@utils/modal-utils";
+import WidgetLoader from "./widget-loader.svelte";
 
 // Content Context
 const contentContext = useContent();
@@ -49,14 +63,15 @@ const contentContext = useContent();
 // --- PERFORMANCE FIX: DYNAMIC WIDGET IMPORTS ---
 // Lazy-load widgets for code-splitting (eager: false is default)
 // Returns loader functions instead of eager-loaded components
-const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../widgets/**/*.svelte') as Record<
-	string,
-	() => Promise<{ default: any }>
->;
+const modules: Record<string, () => Promise<{ default: any }>> =
+	import.meta.glob("../../widgets/**/*.svelte") as Record<
+		string,
+		() => Promise<{ default: any }>
+	>;
 
 // Plugin Slot System
-import { slotRegistry } from '@src/plugins/slot-registry';
-import { activeInputStore } from '@src/stores/active-input-store.svelte';
+import { slotRegistry } from "@src/plugins/slot-registry";
+import { activeInputStore } from "@src/stores/active-input-store.svelte";
 
 // Token Picker
 // Token Picker
@@ -67,12 +82,14 @@ function openTokenPicker(field: any, e: MouseEvent) {
 
 	// Fallback: Try to find the input by ID (using db_fieldName as ID)
 	const id = field.db_fieldName;
-	const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+	const el = document.getElementById(id) as
+		| HTMLInputElement
+		| HTMLTextAreaElement;
 	if (el) {
 		el.focus();
 		activeInputStore.set({ element: el, field }); // Explicitly open picker on button click
 	} else {
-		console.warn('Could not find input for field', field);
+		console.warn("Could not find input for field", field);
 	}
 }
 // --- END PERFORMANCE FIX ---
@@ -88,23 +105,23 @@ $effect(() => {
 // --- 1. RECEIVE DATA AS PROPS ---
 let {
 	fields,
-	revisions = []
+	revisions = [],
 	// contentLanguage prop received but not directly used - widgets access contentLanguage store
 } = $props<{
-	fields?: NonNullable<(typeof collection)['value']>['fields'];
+	fields?: NonNullable<(typeof collection)["value"]>["fields"];
 	revisions?: any[];
 	contentLanguage?: string; // Passed for documentation, widgets use store directly
 }>();
 
 // --- 2. SIMPLIFIED STATE ---
-let localTabSet = $state('0');
-let apiUrl = $state('');
+let localTabSet = $state("0");
+let apiUrl = $state("");
 
 // This is form state, not fetched data, so it remains.
 let currentCollectionValue = $state<Record<string, any>>({});
 
 // Revisions State (now simpler)
-let selectedRevisionId = $state('');
+let selectedRevisionId = $state("");
 
 // Track the last entry ID to detect when switching entries
 let lastEntryId = $state<string | undefined>(undefined);
@@ -117,16 +134,23 @@ let currentContentLanguage = $state<Locale>(contentLanguage.value as Locale);
 $effect(() => {
 	const newLang = contentLanguage.value as Locale;
 	if (currentContentLanguage !== newLang) {
-		logger.debug('Language changed:', currentContentLanguage, '→', newLang);
-		logger.debug('Current collectionValue keys:', Object.keys(currentCollectionValue));
+		logger.debug("Language changed:", currentContentLanguage, "→", newLang);
+		logger.debug(
+			"Current collectionValue keys:",
+			Object.keys(currentCollectionValue),
+		);
 		// Update immediately to trigger {#key} block
 		currentContentLanguage = newLang;
-		logger.debug('Updated currentContentLanguage to:', currentContentLanguage);
+		logger.debug("Updated currentContentLanguage to:", currentContentLanguage);
 	}
 });
 
 // --- 3. DERIVED STATE FROM PROPS ---
-let selectedRevision = $derived(Array.isArray(revisions) ? revisions.find((r: any) => r._id === selectedRevisionId) || null : null);
+let selectedRevision = $derived(
+	Array.isArray(revisions)
+		? revisions.find((r: any) => r._id === selectedRevisionId) || null
+		: null,
+);
 
 // --- 4. SIMPLIFIED LOGIC ---
 let derivedFields = $derived(fields || []);
@@ -136,9 +160,11 @@ let currentTranslationProgress = $derived(translationProgress.value);
 
 // Track changes to translation progress for debugging
 $effect(() => {
-	logger.debug('Translation progress updated:', {
+	logger.debug("Translation progress updated:", {
 		showProgress: translationProgress.value?.show,
-		languages: Object.keys(translationProgress.value || {}).filter((k) => k !== 'show')
+		languages: Object.keys(translationProgress.value || {}).filter(
+			(k) => k !== "show",
+		),
 	});
 });
 
@@ -147,7 +173,7 @@ let availableLanguages = $derived.by<Locale[]>(() => {
 	// Wait for publicEnv to be initialized
 	const languages = publicEnv?.AVAILABLE_CONTENT_LANGUAGES;
 	if (!(languages && Array.isArray(languages))) {
-		return ['en'] as Locale[];
+		return ["en"] as Locale[];
 	}
 	return languages as Locale[];
 });
@@ -183,9 +209,9 @@ function getFieldTranslationPercentage(field: any): number {
 // Helper to get text color based on translation status
 function getTranslationTextColor(percentage: number): string {
 	if (percentage === 100) {
-		return 'text-tertiary-500 dark:text-primary-500';
+		return "text-tertiary-500 dark:text-primary-500";
 	}
-	return 'text-error-500';
+	return "text-error-500";
 }
 
 function ensureFieldProperties(field: any) {
@@ -195,8 +221,8 @@ function ensureFieldProperties(field: any) {
 	return {
 		...field,
 		db_fieldName: field.db_fieldName || getFieldName(field, true),
-		widget: field.widget || { Name: field.type || 'Input' },
-		permissions: field.permissions || {}
+		widget: field.widget || { Name: field.type || "Input" },
+		permissions: field.permissions || {},
 	};
 }
 
@@ -210,7 +236,7 @@ let filteredFields = $derived(
 			}
 			const rolePermissions = field.permissions[user.role];
 			return !rolePermissions || rolePermissions.read !== false;
-		})
+		}),
 );
 
 // Sync local form state with global store
@@ -222,7 +248,7 @@ $effect(() => {
 
 	// When a new entry is loaded (different ID), pull from global -> local
 	if (globalId && globalId !== lastEntryId) {
-		logger.debug('Loading entry data:', globalId);
+		logger.debug("Loading entry data:", globalId);
 		currentCollectionValue = { ...global } as any;
 		lastEntryId = globalId;
 		// Set initial snapshot for change tracking
@@ -232,7 +258,7 @@ $effect(() => {
 
 	// If creating new entry (no ID), initialize with global state
 	if (!(globalId || lastEntryId) && global && Object.keys(global).length > 0) {
-		logger.debug('Initializing new entry');
+		logger.debug("Initializing new entry");
 		currentCollectionValue = { ...global } as any;
 		// Set initial snapshot for change tracking
 		dataChangeStore.setInitialSnapshot(global as Record<string, any>);
@@ -241,12 +267,14 @@ $effect(() => {
 
 	// Otherwise, push local changes to global (user is editing)
 	// Use untrack to read currentCollectionValue without creating a dependency loop
-	const local = untrack(() => currentCollectionValue) as Record<string, unknown> | undefined;
+	const local = untrack(() => currentCollectionValue) as
+		| Record<string, unknown>
+		| undefined;
 	if (local && Object.keys(local).length > 0) {
 		const currentDataStr = JSON.stringify(local);
 		const globalDataStr = JSON.stringify(global ?? {});
 		if (currentDataStr !== globalDataStr) {
-			logger.debug('Pushing local changes to global store');
+			logger.debug("Pushing local changes to global store");
 			untrack(() => setCollectionValue({ ...local }));
 			// Track changes for save button state
 			dataChangeStore.compareWithCurrent(local as Record<string, any>);
@@ -256,19 +284,22 @@ $effect(() => {
 
 // Separate effect to detect changes in currentCollectionValue and sync to store
 // This is needed because the widget bind:value updates currentCollectionValue
-let lastLocalValueStr = $state<string>('');
+let lastLocalValueStr = $state<string>("");
 $effect(() => {
 	// React to currentCollectionValue changes (from widget inputs)
 	const localStr = JSON.stringify(currentCollectionValue);
 
 	// Skip if this is the initial load or empty
-	if (!currentCollectionValue || Object.keys(currentCollectionValue).length === 0) {
+	if (
+		!currentCollectionValue ||
+		Object.keys(currentCollectionValue).length === 0
+	) {
 		return;
 	}
 
 	// Only update if value actually changed
 	if (localStr !== lastLocalValueStr) {
-		logger.debug('currentCollectionValue changed, syncing to store');
+		logger.debug("currentCollectionValue changed, syncing to store");
 		lastLocalValueStr = localStr;
 
 		// Update the global store (using untrack to avoid creating dependency)
@@ -278,7 +309,9 @@ $effect(() => {
 		if (localStr !== globalStr) {
 			untrack(() => setCollectionValue({ ...currentCollectionValue }));
 			// Track changes for save button state
-			dataChangeStore.compareWithCurrent(currentCollectionValue as Record<string, any>);
+			dataChangeStore.compareWithCurrent(
+				currentCollectionValue as Record<string, any>,
+			);
 		}
 	}
 });
@@ -289,19 +322,19 @@ function handleRevert() {
 		return;
 	}
 	showConfirm({
-		title: 'Confirm Revert',
-		body: 'Are you sure you want to revert to this version? Any unsaved changes will be lost.',
-		confirmText: 'Revert',
+		title: "Confirm Revert",
+		body: "Are you sure you want to revert to this version? Any unsaved changes will be lost.",
+		confirmText: "Revert",
 		onConfirm: () => {
 			const revertData = {
 				...selectedRevision.data,
-				_id: (collectionValue as any).value?._id
+				_id: (collectionValue as any).value?._id,
 			};
 			setCollectionValue(revertData);
 			currentCollectionValue = revertData; // also update local state
-			toast.info('Content reverted. Please save your changes.');
-			localTabSet = '0';
-		}
+			toast.info("Content reverted. Please save your changes.");
+			localTabSet = "0";
+		},
 	});
 }
 
@@ -319,12 +352,18 @@ $effect(() => {
 			// Check for empty values
 			// Handle various types: string, array, null, undefined
 			const isEmpty =
-				value === null || value === undefined || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0);
+				value === null ||
+				value === undefined ||
+				(typeof value === "string" && value.trim() === "") ||
+				(Array.isArray(value) && value.length === 0);
 
 			if (isEmpty) {
 				// Only set error if it's not already set to avoid loop (though store handles this)
 				if (!validationStore.hasError(fieldName)) {
-					validationStore.setError(fieldName, `${field.label || fieldName} is required`);
+					validationStore.setError(
+						fieldName,
+						`${field.label || fieldName} is required`,
+					);
 				}
 			} else if (validationStore.hasError(fieldName)) {
 				validationStore.clearError(fieldName);
@@ -340,7 +379,7 @@ $effect(() => {
 });
 
 // --- 7. PLUGIN SLOTS ---
-const entryEditSlots = $derived(slotRegistry.getSlots('entry_edit'));
+const entryEditSlots = $derived(slotRegistry.getSlots("entry_edit"));
 
 // VISUAL EDITING: Focus field triggered from Live Preview
 $effect(() => {
@@ -351,19 +390,21 @@ $effect(() => {
 		logger.info(`[Visual Editing] Focusing field: ${fieldName}`);
 
 		// 1. Switch to Edit Tab (value "0")
-		localTabSet = '0';
+		localTabSet = "0";
 
 		// 2. Wait for DOM update, then scroll to field
 		setTimeout(() => {
 			// Find the element by ID (which is the field name) or data-field-name
-			const el = document.getElementById(fieldName) || document.querySelector(`[data-field-name="${fieldName}"]`);
+			const el =
+				document.getElementById(fieldName) ||
+				document.querySelector(`[data-field-name="${fieldName}"]`);
 			if (el) {
 				// Scroll the container or window
-				el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				el.scrollIntoView({ behavior: "smooth", block: "center" });
 
 				// Apply highlight effect
-				el.classList.add('svelty-highlight-pulse');
-				setTimeout(() => el.classList.remove('svelty-highlight-pulse'), 2000);
+				el.classList.add("svelty-highlight-pulse");
+				setTimeout(() => el.classList.remove("svelty-highlight-pulse"), 2000);
 
 				// Focus the input if possible
 				if (el instanceof HTMLElement) el.focus();
@@ -371,8 +412,9 @@ $effect(() => {
 		}, 100);
 	};
 
-	document.addEventListener('svelty:focus-field', handleFocusField);
-	return () => document.removeEventListener('svelty:focus-field', handleFocusField);
+	document.addEventListener("svelty:focus-field", handleFocusField);
+	return () =>
+		document.removeEventListener("svelty:focus-field", handleFocusField);
 });
 </script>
 

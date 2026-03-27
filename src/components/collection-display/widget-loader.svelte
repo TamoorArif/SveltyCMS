@@ -25,9 +25,9 @@ rather than bundling all widgets upfront.
 -->
 
 <script lang="ts">
-import type { FieldInstance } from '@src/content/types';
-import { logger } from '@utils/logger';
-import { onMount } from 'svelte';
+import type { FieldInstance } from "@src/content/types";
+import { logger } from "@utils/logger";
+import { onMount } from "svelte";
 
 interface Props {
 	collectionName?: string;
@@ -38,7 +38,14 @@ interface Props {
 	WidgetData?: Record<string, any>;
 }
 
-let { loader, field, WidgetData = {}, value = $bindable(), tenantId, collectionName }: Props = $props();
+let {
+	loader,
+	field,
+	WidgetData = {},
+	value = $bindable(),
+	tenantId,
+	collectionName,
+}: Props = $props();
 
 // Component state
 let component: any = $state(null);
@@ -54,16 +61,16 @@ async function loadComponent() {
 		const module = await loader();
 		component = module.default;
 
-		logger.debug('[WidgetLoader] Component loaded:', {
-			widget: field.widget?.Name || 'unknown',
-			field: field.label
+		logger.debug("[WidgetLoader] Component loaded:", {
+			widget: field.widget?.Name || "unknown",
+			field: field.label,
 		});
 	} catch (err) {
 		error = err instanceof Error ? err : new Error(String(err));
-		logger.error('[WidgetLoader] Failed to load component:', {
-			widget: field.widget?.Name || 'unknown',
+		logger.error("[WidgetLoader] Failed to load component:", {
+			widget: field.widget?.Name || "unknown",
 			field: field.label,
-			error: error.message
+			error: error.message,
 		});
 	} finally {
 		loading = false;

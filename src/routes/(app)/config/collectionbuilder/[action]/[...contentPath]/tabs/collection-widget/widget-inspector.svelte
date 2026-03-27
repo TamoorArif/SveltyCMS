@@ -4,20 +4,30 @@
 **Persistent Inspector panel for widget configuration**
 -->
 <script lang="ts">
-import { setTargetWidget, targetWidget } from '@src/stores/collection-store.svelte';
-import Button from '@src/components/ui/button.svelte';
-import SegmentedControl from '@src/components/ui/segmented-control.svelte';
-import Input from '@src/components/ui/input.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import type { Role } from '@src/databases/auth/types';
+import {
+	setTargetWidget,
+	targetWidget,
+} from "@src/stores/collection-store.svelte";
+import Button from "@src/components/ui/button.svelte";
+import SegmentedControl from "@src/components/ui/segmented-control.svelte";
+import Input from "@src/components/ui/input.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import type { Role } from "@src/databases/auth/types";
 
-let { roles = [], onSave } = $props<{ roles: Role[]; onSave: (updated: any) => void }>();
+let { roles = [], onSave } = $props<{
+	roles: Role[];
+	onSave: (updated: any) => void;
+}>();
 
-let activeTab = $state('general');
+let activeTab = $state("general");
 const tabs = [
-	{ value: 'general', label: 'General', icon: 'mdi:cog' },
-	{ value: 'special', label: 'Special', icon: 'mdi:star-outline' },
-	{ value: 'permissions', label: 'Permissions', icon: 'mdi:shield-lock-outline' }
+	{ value: "general", label: "General", icon: "mdi:cog" },
+	{ value: "special", label: "Special", icon: "mdi:star-outline" },
+	{
+		value: "permissions",
+		label: "Permissions",
+		icon: "mdi:shield-lock-outline",
+	},
 ];
 
 // Local state for editing to avoid immediate store sync if we want a "Save" button in Inspector
@@ -35,7 +45,7 @@ $effect(() => {
 function handleSave() {
 	if (!localWidget) return;
 	onSave(localWidget);
-	toast.success('Widget configured');
+	toast.success("Widget configured");
 }
 
 function closeInspector() {

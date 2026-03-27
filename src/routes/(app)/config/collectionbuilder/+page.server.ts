@@ -33,7 +33,9 @@ export const load: PageServerLoad = async ({ locals }) => {
     );
 
     if (!hasCollectionBuilderPermission) {
-      logger.warn("Permission denied for collection builder", { userId: user._id });
+      logger.warn("Permission denied for collection builder", {
+        userId: user._id,
+      });
       throw error(403, "Insufficient permissions");
     }
 
@@ -165,7 +167,10 @@ export const actions: Actions = {
       await compile();
       await contentManager.refresh(locals.tenantId);
 
-      return { success: true, message: `Preset ${presetId} installed successfully` };
+      return {
+        success: true,
+        message: `Preset ${presetId} installed successfully`,
+      };
     } catch (err) {
       logger.error("❌ Failed to install preset:", err);
       return fail(500, { message: "Failed to install preset" });

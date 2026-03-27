@@ -60,7 +60,10 @@ export class BatchModule {
             res = {
               success: false,
               message: `Unknown operation: ${op.operation}`,
-              error: { code: "UNKNOWN_OPERATION", message: `Unknown operation: ${op.operation}` },
+              error: {
+                code: "UNKNOWN_OPERATION",
+                message: `Unknown operation: ${op.operation}`,
+              },
             };
         }
         results.push(res as DatabaseResult<T>);
@@ -113,7 +116,11 @@ export class BatchModule {
         .delete(table as unknown as import("drizzle-orm/pg-core").PgTable)
         .where(
           inArray(
-            (table as unknown as { _id: import("drizzle-orm/pg-core").PgColumn })._id,
+            (
+              table as unknown as {
+                _id: import("drizzle-orm/pg-core").PgColumn;
+              }
+            )._id,
             ids as string[],
           ),
         )

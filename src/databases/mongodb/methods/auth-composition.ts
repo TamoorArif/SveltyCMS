@@ -183,7 +183,9 @@ export function composeMongoAuthAdapter(): AuthInterface {
           }
         } catch {
           // Non-fatal: just log and continue
-          logger.debug("Could not count sessions before deletion", { user_id: userId });
+          logger.debug("Could not count sessions before deletion", {
+            user_id: userId,
+          });
         }
 
         // Step 2: Delete all user sessions
@@ -300,7 +302,9 @@ export function composeMongoAuthAdapter(): AuthInterface {
     ): Promise<Role[]> => {
       try {
         const ROLE_MODEL = getRoleModel();
-        const filter = safeQuery({}, tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
+        const filter = safeQuery({}, tenantId, {
+          bypassTenantCheck: options?.bypassTenantCheck,
+        });
         return await ROLE_MODEL.find(filter).lean<Role[]>();
       } catch (err) {
         logger.error(`Error fetching roles: ${err instanceof Error ? err.message : String(err)}`);

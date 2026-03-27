@@ -29,15 +29,15 @@ keyboard navigation, search/filter, and full accessibility.
 -->
 
 <script module lang="ts">
-    export interface TreeItem {
-        id: string;
-        label: string;
-        icon?: string;
-        children?: TreeItem[];
-        disabled?: boolean;
-        metadata?: any;
-        [key: string]: any;
-    }
+export interface TreeItem {
+	id: string;
+	label: string;
+	icon?: string;
+	children?: TreeItem[];
+	disabled?: boolean;
+	metadata?: any;
+	[key: string]: any;
+}
 </script>
 
 <script lang="ts">

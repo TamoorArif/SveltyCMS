@@ -26,11 +26,11 @@ Advanced permission management interface with bulk actions and presets.
 -->
 
 <script lang="ts">
-import type { Role } from '@src/databases/auth/types';
-import { PermissionAction } from '@src/databases/auth/permission-constants';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+import type { Role } from "@src/databases/auth/types";
+import { PermissionAction } from "@src/databases/auth/permission-constants";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onMount } from "svelte";
+import { fade, slide } from "svelte/transition";
 
 type PermissionsMap = Record<string, Record<string, boolean>>;
 
@@ -44,7 +44,7 @@ const { permissions = {}, roles = [], onUpdate = () => {} }: Props = $props();
 
 // State
 let error = $state<string | null>(null);
-let searchQuery = $state('');
+let searchQuery = $state("");
 let showBulkActions = $state(false);
 let prefersReducedMotion = $state(false);
 let historyIndex = $state(-1);
@@ -52,22 +52,22 @@ let permissionsHistory = $state<PermissionsMap[]>([]);
 
 // Icons for permissions
 const actionIcons: Record<PermissionAction, string> = {
-	[PermissionAction.CREATE]: 'bi:plus-circle-fill',
-	[PermissionAction.READ]: 'bi:eye-fill',
-	[PermissionAction.WRITE]: 'bi:pencil-square',
-	[PermissionAction.UPDATE]: 'bi:pencil-fill',
-	[PermissionAction.DELETE]: 'bi:trash-fill',
-	[PermissionAction.MANAGE]: 'bi:gear-fill',
-	[PermissionAction.ACCESS]: 'bi:key-fill',
-	[PermissionAction.EXECUTE]: 'bi:play-fill',
-	[PermissionAction.SHARE]: 'bi:share-fill'
+	[PermissionAction.CREATE]: "bi:plus-circle-fill",
+	[PermissionAction.READ]: "bi:eye-fill",
+	[PermissionAction.WRITE]: "bi:pencil-square",
+	[PermissionAction.UPDATE]: "bi:pencil-fill",
+	[PermissionAction.DELETE]: "bi:trash-fill",
+	[PermissionAction.MANAGE]: "bi:gear-fill",
+	[PermissionAction.ACCESS]: "bi:key-fill",
+	[PermissionAction.EXECUTE]: "bi:play-fill",
+	[PermissionAction.SHARE]: "bi:share-fill",
 };
 
 // Permission presets
 const presets = {
-	'read-only': {
-		name: 'Read Only',
-		description: 'Can only view content',
+	"read-only": {
+		name: "Read Only",
+		description: "Can only view content",
 		permissions: {
 			read: true,
 			access: true,
@@ -77,12 +77,12 @@ const presets = {
 			delete: false,
 			manage: false,
 			execute: false,
-			share: false
-		}
+			share: false,
+		},
 	},
 	editor: {
-		name: 'Editor',
-		description: 'Can create and edit content',
+		name: "Editor",
+		description: "Can create and edit content",
 		permissions: {
 			read: true,
 			access: true,
@@ -92,23 +92,30 @@ const presets = {
 			share: true,
 			delete: false,
 			manage: false,
-			execute: false
-		}
+			execute: false,
+		},
 	},
 	admin: {
-		name: 'Administrator',
-		description: 'Full access to everything',
-		permissions: Object.fromEntries(Object.values(PermissionAction).map((action) => [action, true]))
-	}
+		name: "Administrator",
+		description: "Full access to everything",
+		permissions: Object.fromEntries(
+			Object.values(PermissionAction).map((action) => [action, true]),
+		),
+	},
 };
 
 // Initialize permissions with all roles
-function initializePermissions(currentPermissions: PermissionsMap, availableRoles: Role[]): PermissionsMap {
+function initializePermissions(
+	currentPermissions: PermissionsMap,
+	availableRoles: Role[],
+): PermissionsMap {
 	const initialized: PermissionsMap = { ...currentPermissions };
 
 	availableRoles.forEach((role) => {
 		if (!initialized[role._id]) {
-			initialized[role._id] = Object.fromEntries(Object.values(PermissionAction).map((action) => [action, true]));
+			initialized[role._id] = Object.fromEntries(
+				Object.values(PermissionAction).map((action) => [action, true]),
+			);
 		}
 	});
 
@@ -130,7 +137,9 @@ function saveToHistory() {
 function undo() {
 	if (historyIndex > 0) {
 		historyIndex--;
-		permissionsState = JSON.parse(JSON.stringify(permissionsHistory[historyIndex]));
+		permissionsState = JSON.parse(
+			JSON.stringify(permissionsHistory[historyIndex]),
+		);
 		updateParent();
 	}
 }
@@ -138,7 +147,9 @@ function undo() {
 function redo() {
 	if (historyIndex < permissionsHistory.length - 1) {
 		historyIndex++;
-		permissionsState = JSON.parse(JSON.stringify(permissionsHistory[historyIndex]));
+		permissionsState = JSON.parse(
+			JSON.stringify(permissionsHistory[historyIndex]),
+		);
 		updateParent();
 	}
 }
@@ -151,7 +162,7 @@ function togglePermission(roleId: string, action: PermissionAction) {
 	const role = roles.find((r: Role) => r._id === roleId);
 
 	if (role?.isAdmin) {
-		toast.warning('Cannot modify permissions for admin role');
+		toast.warning("Cannot modify permissions for admin role");
 		return;
 	}
 
@@ -169,15 +180,19 @@ function setAllPermissionsForRole(roleId: string, value: boolean) {
 	const role = roles.find((r: Role) => r._id === roleId);
 
 	if (role?.isAdmin) {
-		toast.warning('Cannot modify permissions for admin role');
+		toast.warning("Cannot modify permissions for admin role");
 		return;
 	}
 
-	permissionsState[roleId] = Object.fromEntries(Object.values(PermissionAction).map((action) => [action, value]));
+	permissionsState[roleId] = Object.fromEntries(
+		Object.values(PermissionAction).map((action) => [action, value]),
+	);
 
 	saveToHistory();
 	updateParent();
-	toast.success(`All permissions ${value ? 'enabled' : 'disabled'} for ${role?.name}`);
+	toast.success(
+		`All permissions ${value ? "enabled" : "disabled"} for ${role?.name}`,
+	);
 }
 
 function setPermissionForAllRoles(action: PermissionAction, value: boolean) {
@@ -189,7 +204,7 @@ function setPermissionForAllRoles(action: PermissionAction, value: boolean) {
 
 	saveToHistory();
 	updateParent();
-	toast.success(`${action} ${value ? 'enabled' : 'disabled'} for all roles`);
+	toast.success(`${action} ${value ? "enabled" : "disabled"} for all roles`);
 }
 
 // Apply preset
@@ -197,7 +212,7 @@ function applyPreset(roleId: string, presetKey: string) {
 	const role = roles.find((r: Role) => r._id === roleId);
 
 	if (role?.isAdmin) {
-		toast.warning('Cannot modify permissions for admin role');
+		toast.warning("Cannot modify permissions for admin role");
 		return;
 	}
 
@@ -212,13 +227,18 @@ function applyPreset(roleId: string, presetKey: string) {
 
 // Update parent
 function updateParent() {
-	const cleanedPermissions = Object.entries(permissionsState).reduce((acc, [roleId, perms]) => {
-		const hasRestrictions = Object.values(perms).some((value) => value === false);
-		if (hasRestrictions) {
-			acc[roleId] = perms;
-		}
-		return acc;
-	}, {} as PermissionsMap);
+	const cleanedPermissions = Object.entries(permissionsState).reduce(
+		(acc, [roleId, perms]) => {
+			const hasRestrictions = Object.values(perms).some(
+				(value) => value === false,
+			);
+			if (hasRestrictions) {
+				acc[roleId] = perms;
+			}
+			return acc;
+		},
+		{} as PermissionsMap,
+	);
 
 	onUpdate(cleanedPermissions);
 }
@@ -226,14 +246,14 @@ function updateParent() {
 // Export permissions
 function exportPermissions() {
 	const data = JSON.stringify(permissionsState, null, 2);
-	const blob = new Blob([data], { type: 'application/json' });
+	const blob = new Blob([data], { type: "application/json" });
 	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
+	const a = document.createElement("a");
 	a.href = url;
-	a.download = `permissions-${new Date().toISOString().split('T')[0]}.json`;
+	a.download = `permissions-${new Date().toISOString().split("T")[0]}.json`;
 	a.click();
 	URL.revokeObjectURL(url);
-	toast.success('Permissions exported');
+	toast.success("Permissions exported");
 }
 
 // Import permissions
@@ -251,18 +271,20 @@ async function importPermissions(event: Event) {
 		permissionsState = { ...permissionsState, ...imported };
 		saveToHistory();
 		updateParent();
-		toast.success('Permissions imported successfully');
+		toast.success("Permissions imported successfully");
 	} catch {
-		toast.error('Failed to import permissions');
-		error = 'Invalid permissions file';
+		toast.error("Failed to import permissions");
+		error = "Invalid permissions file";
 	}
 }
 
 // Filter roles
 const filteredRoles = $derived(
 	roles.filter(
-		(role) => role.name.toLowerCase().includes(searchQuery.toLowerCase()) || role.description?.toLowerCase().includes(searchQuery.toLowerCase())
-	)
+		(role) =>
+			role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			role.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+	),
 );
 
 // Count enabled permissions per role
@@ -274,19 +296,19 @@ const totalActions = $derived(Object.values(PermissionAction).length);
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
 
 	// Initialize history
 	saveToHistory();
 
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 </script>
 

@@ -59,7 +59,10 @@ export async function bulkUpsertWithParentIds(
     } as Partial<ContentNode>,
   }));
 
-  await dbAdapter.content.nodes.bulkUpdate(upsertOps, { tenantId, bypassTenantCheck: true });
+  await dbAdapter.content.nodes.bulkUpdate(upsertOps, {
+    tenantId,
+    bypassTenantCheck: true,
+  });
 
   // Orphan cleanup
   const currentPaths = new Set(operations.map((op) => op.path));

@@ -23,19 +23,19 @@
 
 -->
 <script lang="ts">
-import EntryList from '@src/components/collection-display/entry-list.svelte';
-import Fields from '@src/components/collection-display/fields.svelte';
-import type { Schema } from '@src/content/types';
-import { collections } from '@src/stores/collection-store.svelte';
-import { widgets } from '@src/stores/widget-store.svelte';
-import { app, validationStore } from '@src/stores/store.svelte.ts';
-import { logger } from '@utils/logger';
-import { parseURLToMode } from '@utils/navigation-utils';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { getFieldName } from '@utils/utils';
-import { onMount, untrack } from 'svelte';
-import { beforeNavigate, invalidateAll, replaceState } from '$app/navigation';
-import { page } from '$app/state';
+import EntryList from "@src/components/collection-display/entry-list.svelte";
+import Fields from "@src/components/collection-display/fields.svelte";
+import type { Schema } from "@src/content/types";
+import { collections } from "@src/stores/collection-store.svelte";
+import { widgets } from "@src/stores/widget-store.svelte";
+import { app, validationStore } from "@src/stores/store.svelte.ts";
+import { logger } from "@utils/logger";
+import { parseURLToMode } from "@utils/navigation-utils";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { getFieldName } from "@utils/utils";
+import { onMount, untrack } from "svelte";
+import { beforeNavigate, invalidateAll, replaceState } from "$app/navigation";
+import { page } from "$app/state";
 
 interface PageData {
 	collectionSchema: Schema;
@@ -60,25 +60,25 @@ const pagination = $derived(
 		currentPage: 1,
 		pageSize: 10,
 		totalItems: 0,
-		pagesCount: 1
-	}
+		pagesCount: 1,
+	},
 );
 const revisions = $derived(data?.revisions || []);
 const serverContentLanguage = $derived(data?.contentLanguage);
 
 // Debug: Monitor data prop changes
 $effect(() => {
-	logger.debug('[+page.svelte] Data changed:', {
+	logger.debug("[+page.svelte] Data changed:", {
 		schemaId: data?.collectionSchema?._id,
 		schemaName: data?.collectionSchema?.name,
 		entriesCount: data?.entries?.length,
 		storeId: collections.active?._id,
-		storeName: collections.active?.name
+		storeName: collections.active?.name,
 	});
 });
 
 // Track initial collectionValue to detect changes
-let initialCollectionValue = $state('');
+let initialCollectionValue = $state("");
 let userClickedCancel = $state(false);
 let isSavingDraft = $state(false);
 
@@ -91,9 +91,9 @@ let validationInitialized = $state(false);
 // Initialize validation IMMEDIATELY for create mode using $effect.pre()
 // This runs synchronously BEFORE DOM updates, ensuring button state is correct on first render
 $effect.pre(() => {
-	const createParam = page.url.searchParams.get('create');
+	const createParam = page.url.searchParams.get("create");
 
-	if (createParam === 'true' && collectionSchema && !validationInitialized) {
+	if (createParam === "true" && collectionSchema && !validationInitialized) {
 		// Clear all errors first to start fresh
 		validationStore.clearAllErrors();
 
@@ -104,18 +104,29 @@ $effect.pre(() => {
 			const fieldDef = field as any;
 			if (fieldDef.required) {
 				const fieldName = getFieldName(fieldDef, false);
-				validationStore.setError(fieldName, `${fieldDef.label || fieldName} is required`);
+				validationStore.setError(
+					fieldName,
+					`${fieldDef.label || fieldName} is required`,
+				);
 				errorCount++;
-				console.log('🔴 [Validation Init] Set error for required field:', fieldName);
+				console.log(
+					"🔴 [Validation Init] Set error for required field:",
+					fieldName,
+				);
 			}
 		}
 
 		validationInitialized = true;
-		console.log('✅ [Validation Init] Initialized', errorCount, 'required field errors, isValid:', validationStore.isValid);
-	} else if (createParam !== 'true') {
+		console.log(
+			"✅ [Validation Init] Initialized",
+			errorCount,
+			"required field errors, isValid:",
+			validationStore.isValid,
+		);
+	} else if (createParam !== "true") {
 		// Reset flag when leaving create mode
 		if (validationInitialized) {
-			console.log('🔄 [Validation Init] Resetting validation flag');
+			console.log("🔄 [Validation Init] Resetting validation flag");
 			validationInitialized = false;
 		}
 	}
@@ -131,10 +142,18 @@ $effect(() => {
 		if (serverContentLanguage !== lastServerLanguage) {
 			const currentStoreLanguage = app.contentLanguage;
 			if (currentStoreLanguage !== serverContentLanguage) {
-				logger.debug('[+page.svelte] Syncing contentLanguage from server:', currentStoreLanguage, '→', serverContentLanguage);
+				logger.debug(
+					"[+page.svelte] Syncing contentLanguage from server:",
+					currentStoreLanguage,
+					"→",
+					serverContentLanguage,
+				);
 				// Set without untrack to ensure all reactive subscribers are notified
 				app.contentLanguage = serverContentLanguage as any;
-				logger.debug('[+page.svelte] ContentLanguage store now:', app.contentLanguage);
+				logger.debug(
+					"[+page.svelte] ContentLanguage store now:",
+					app.contentLanguage,
+				);
 			}
 			lastServerLanguage = serverContentLanguage;
 		}
@@ -149,7 +168,13 @@ $effect(() => {
 		const schemaId = collectionSchema._id;
 		// Only update if different to avoid unnecessary re-renders
 		if (currentStoreId !== schemaId) {
-			logger.debug('[+page.svelte] Syncing collection store:', currentStoreId, '→', schemaId, collectionSchema.name);
+			logger.debug(
+				"[+page.svelte] Syncing collection store:",
+				currentStoreId,
+				"→",
+				schemaId,
+				collectionSchema.name,
+			);
 			collections.setCollection(collectionSchema);
 		}
 	}
@@ -161,25 +186,31 @@ onMount(() => {
 	isMounted = true;
 	// Ensure widgets are initialized if layout mount was skipped or delayed
 	if (!widgets.isLoaded) {
-		logger.debug('[+page.svelte] Initializing widgets on mount');
+		logger.debug("[+page.svelte] Initializing widgets on mount");
 		widgets.initialize();
 	}
 });
 
 $effect(() => {
-	if (isMounted && typeof window !== 'undefined') {
+	if (isMounted && typeof window !== "undefined") {
 		const currentPath = page.url.pathname;
-		const collectionIdFromPath = currentPath.split('/').pop() || '';
+		const collectionIdFromPath = currentPath.split("/").pop() || "";
 		const isUUID = /^[a-f0-9]{32}$/i.test(collectionIdFromPath);
 
 		// Only replace URL if:
 		// 1. The URL contains a UUID
 		// 2. We have a collection schema with a path
 		// 3. The collection schema ID matches the UUID in the URL (ensures data is loaded for correct collection)
-		if (isUUID && collectionSchema?.path && collectionSchema._id === collectionIdFromPath) {
+		if (
+			isUUID &&
+			collectionSchema?.path &&
+			collectionSchema._id === collectionIdFromPath
+		) {
 			const newPath = `/${serverContentLanguage}${collectionSchema.path}${page.url.search}`;
 			if (newPath !== currentPath) {
-				logger.debug(`[URL Update] Replacing UUID path with pretty path: ${newPath}`);
+				logger.debug(
+					`[URL Update] Replacing UUID path with pretty path: ${newPath}`,
+				);
 				// Use SvelteKit's replaceState to avoid interfering with navigation state
 				setTimeout(() => {
 					replaceState(newPath, {});
@@ -198,7 +229,7 @@ $effect(() => {
 // 3. Language changes in edit mode (URL language prefix changes but ?edit=id stays same)
 // 4. Collection changes (navigation between different collections)
 
-let lastUrlString: string = $state('');
+let lastUrlString: string = $state("");
 let lastEditParam: string | null = $state(null);
 let hasInitiallyLoaded = $state(false);
 let lastCollectionId: string | null = $state(null);
@@ -207,69 +238,85 @@ let lastCollectionId: string | null = $state(null);
 $effect(() => {
 	const currentCollectionId = collectionSchema?._id as string | undefined;
 	if (currentCollectionId && currentCollectionId !== lastCollectionId) {
-		logger.debug('[Collection Change] Detected collection switch:', lastCollectionId, '→', currentCollectionId);
-		logger.debug('[Collection Change] New entries count:', entries.length, 'pagination:', pagination);
+		logger.debug(
+			"[Collection Change] Detected collection switch:",
+			lastCollectionId,
+			"→",
+			currentCollectionId,
+		);
+		logger.debug(
+			"[Collection Change] New entries count:",
+			entries.length,
+			"pagination:",
+			pagination,
+		);
 
 		// CRITICAL: Sync collection store with server data
 		// This ensures collections.active is updated when navigating between collections
 		if (collectionSchema) {
 			collections.setCollection(collectionSchema);
-			logger.debug('[Collection Change] Store synced with server data:', collectionSchema.name);
+			logger.debug(
+				"[Collection Change] Store synced with server data:",
+				collectionSchema.name,
+			);
 		}
 
 		// Reset state tracking for the new collection
 		hasInitiallyLoaded = false;
 		lastEditParam = null;
-		lastUrlString = '';
+		lastUrlString = "";
 		// Update tracking
 		lastCollectionId = currentCollectionId;
 		// Set mode to view for new collection (unless URL says otherwise)
-		const editParam = page.url.searchParams.get('edit');
-		const createParam = page.url.searchParams.get('create');
+		const editParam = page.url.searchParams.get("edit");
+		const createParam = page.url.searchParams.get("create");
 		if (!(editParam || createParam)) {
-			collections.setMode('view');
+			collections.setMode("view");
 		}
 	}
 });
 
 $effect(() => {
 	const currentUrl = page.url.toString();
-	const editParam = page.url.searchParams.get('edit');
-	const createParam = page.url.searchParams.get('create');
+	const editParam = page.url.searchParams.get("edit");
+	const createParam = page.url.searchParams.get("create");
 
 	// CASE 1: Initial page load with ?edit=id
 	if (!hasInitiallyLoaded && editParam && entries && entries.length === 1) {
-		console.log('✅ [Debug Case 1] Edit mode detected', {
+		console.log("✅ [Debug Case 1] Edit mode detected", {
 			editParam,
-			entriesLen: entries.length
+			entriesLen: entries.length,
 		});
 		hasInitiallyLoaded = true;
 		lastEditParam = editParam;
 		const entryData = entries[0];
-		logger.debug('[Initial Load] Edit mode detected, loading entry:', entryData._id);
+		logger.debug(
+			"[Initial Load] Edit mode detected, loading entry:",
+			entryData._id,
+		);
 
-		collections.setMode('edit');
+		collections.setMode("edit");
 		collections.setCollectionValue(entryData);
 		initialCollectionValue = JSON.stringify(entryData);
 		lastUrlString = currentUrl;
 		return; // Exit early to avoid triggering URL change logic
 	}
 	if (!hasInitiallyLoaded && editParam) {
-		console.log('❌ [Debug Case 1] Failed condition', {
+		console.log("❌ [Debug Case 1] Failed condition", {
 			hasInitiallyLoaded,
 			editParam,
 			entriesExist: !!entries,
 			entriesLen: entries?.length,
-			entry0: entries?.[0]
+			entry0: entries?.[0],
 		});
 	}
 
 	// CASE 1b: Initial page load with ?create=true
-	if (!hasInitiallyLoaded && createParam === 'true') {
+	if (!hasInitiallyLoaded && createParam === "true") {
 		hasInitiallyLoaded = true;
 		lastUrlString = currentUrl;
 
-		collections.setMode('create');
+		collections.setMode("create");
 		const newEntry: Record<string, any | null> = {};
 		const fields = collections.active?.fields || [];
 
@@ -286,7 +333,7 @@ $effect(() => {
 		// Initialize change tracking
 		initialCollectionValue = JSON.stringify(newEntry);
 
-		logger.debug('[Initial Load] Create mode detected, entry initialized');
+		logger.debug("[Initial Load] Create mode detected, entry initialized");
 		return; // Exit early to avoid triggering URL change logic
 	}
 
@@ -294,13 +341,21 @@ $effect(() => {
 	if (currentUrl !== lastUrlString && hasInitiallyLoaded) {
 		// Check if only language changed (URL language prefix) but params stayed the same
 		const editParamChanged = editParam !== lastEditParam;
-		const wasInCreateMode = lastUrlString.includes('create=true');
-		const isInCreateMode = createParam === 'true';
+		const wasInCreateMode = lastUrlString.includes("create=true");
+		const isInCreateMode = createParam === "true";
 
 		// If we're in edit/create mode and only URL language changed, ignore the URL change
 		// This happens when user changes language in TranslationStatus dropdown
-		if ((collections.mode === 'edit' || collections.mode === 'create') && editParam === lastEditParam && isInCreateMode === wasInCreateMode) {
-			logger.debug('[URL Change] Language prefix changed, but staying in', collections.mode, 'mode (no reload needed)');
+		if (
+			(collections.mode === "edit" || collections.mode === "create") &&
+			editParam === lastEditParam &&
+			isInCreateMode === wasInCreateMode
+		) {
+			logger.debug(
+				"[URL Change] Language prefix changed, but staying in",
+				collections.mode,
+				"mode (no reload needed)",
+			);
 			lastUrlString = currentUrl;
 			return; // Don't reload data, just update URL tracking
 		}
@@ -312,30 +367,30 @@ $effect(() => {
 		logger.debug(`[URL Change] ${collections.mode} → ${parsed.mode}`, {
 			entryId: parsed.entryId,
 			hasEntries: entries.length,
-			editParamChanged
+			editParamChanged,
 		});
 
 		// Edit mode from URL change
-		if (parsed.mode === 'edit' && parsed.entryId && editParamChanged) {
+		if (parsed.mode === "edit" && parsed.entryId && editParamChanged) {
 			if (entries && entries.length === 1) {
 				// Data already loaded by server
 				const entryData = entries[0];
-				collections.setMode('edit');
+				collections.setMode("edit");
 				collections.setCollectionValue(entryData);
 				initialCollectionValue = JSON.stringify(entryData);
 			} else {
 				// Need to reload data
 				invalidateAll().then(() => {
-					collections.setMode('edit');
+					collections.setMode("edit");
 					logger.debug(`[URL Change] Reloaded entry ${parsed.entryId}`);
 				});
 			}
-		} else if (parsed.mode === 'view' && collections.mode === 'edit') {
+		} else if (parsed.mode === "view" && collections.mode === "edit") {
 			// Exiting edit mode
-			collections.setMode('view');
-		} else if (parsed.mode === 'create') {
+			collections.setMode("view");
+		} else if (parsed.mode === "create") {
 			// Create mode (URL change while already loaded)
-			collections.setMode('create');
+			collections.setMode("create");
 			const newEntry: Record<string, any | null> = {};
 			const fields = collections.active?.fields || [];
 
@@ -359,13 +414,16 @@ $effect(() => {
 					const value = newEntry[fieldName];
 
 					// Validate required field
-					if (value === null || value === undefined || value === '') {
-						validationStore.setError(fieldName, `${fieldDef.label || fieldName} is required`);
+					if (value === null || value === undefined || value === "") {
+						validationStore.setError(
+							fieldName,
+							`${fieldDef.label || fieldName} is required`,
+						);
 					}
 				}
 			}
 
-			logger.debug('[URL Change] Create mode validation initialized');
+			logger.debug("[URL Change] Create mode validation initialized");
 		} else if (collections.mode !== parsed.mode) {
 			// Other mode changes
 			collections.setMode(parsed.mode);
@@ -391,7 +449,7 @@ $effect(() => {
 // This runs AFTER collections.activeValue is set, but doesn't trigger when collections.activeValue changes
 $effect(() => {
 	const currentMode = collections.mode;
-	if (currentMode === 'edit' || currentMode === 'create') {
+	if (currentMode === "edit" || currentMode === "create") {
 		// Use untrack to read collections.activeValue without creating a dependency
 		const currentValue = untrack(() => collections.activeValue);
 		if (currentValue) {
@@ -421,25 +479,27 @@ async function autoSaveDraft(): Promise<boolean> {
 		// FORCE 'draft' status for auto-saves to bypass validation for required fields
 		const draftData = {
 			...entryData,
-			status: 'draft',
-			updatedAt: new Date().toISOString()
+			status: "draft",
+			updatedAt: new Date().toISOString(),
 		};
 
 		// Determine if creating new or updating existing
 		const isNewEntry = !entryData._id;
-		const endpoint = isNewEntry ? `/api/collections/${collectionId}` : `/api/collections/${collectionId}/${entryData._id}`;
+		const endpoint = isNewEntry
+			? `/api/collections/${collectionId}`
+			: `/api/collections/${collectionId}/${entryData._id}`;
 
-		const method = isNewEntry ? 'POST' : 'PUT';
+		const method = isNewEntry ? "POST" : "PUT";
 
 		const response = await fetch(endpoint, {
 			method,
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				data: draftData,
-				tenantId
-			})
+				tenantId,
+			}),
 		});
 
 		if (response.ok) {
@@ -450,13 +510,13 @@ async function autoSaveDraft(): Promise<boolean> {
 				collections.activeValue = { ...draftData, _id: result.data._id };
 			}
 
-			logger.debug('[Auto-save] Draft saved successfully');
+			logger.debug("[Auto-save] Draft saved successfully");
 			return true;
 		}
-		logger.error('[Auto-save] Failed to save draft:', response.statusText);
+		logger.error("[Auto-save] Failed to save draft:", response.statusText);
 		return false;
 	} catch (error) {
-		logger.error('[Auto-save] Error saving draft:', error);
+		logger.error("[Auto-save] Error saving draft:", error);
 		return false;
 	} finally {
 		isSavingDraft = false;
@@ -467,23 +527,23 @@ async function autoSaveDraft(): Promise<boolean> {
 $effect(() => {
 	const handleCancelClick = (_e: Event) => {
 		userClickedCancel = true;
-		logger.debug('[Auto-save] Cancel clicked - no draft will be saved');
+		logger.debug("[Auto-save] Cancel clicked - no draft will be saved");
 	};
 
 	const handleEntrySaved = (_e: Event) => {
 		// Update baseline to match current value, preventing unsaved changes detection
 		if (collections.activeValue) {
 			initialCollectionValue = JSON.stringify(collections.activeValue);
-			logger.debug('[Auto-save] Entry saved manually - baseline updated');
+			logger.debug("[Auto-save] Entry saved manually - baseline updated");
 		}
 	};
 
-	document.addEventListener('cancelEdit', handleCancelClick);
-	document.addEventListener('entrySaved', handleEntrySaved);
+	document.addEventListener("cancelEdit", handleCancelClick);
+	document.addEventListener("entrySaved", handleEntrySaved);
 
 	return () => {
-		document.removeEventListener('cancelEdit', handleCancelClick);
-		document.removeEventListener('entrySaved', handleEntrySaved);
+		document.removeEventListener("cancelEdit", handleCancelClick);
+		document.removeEventListener("entrySaved", handleEntrySaved);
 	};
 });
 
@@ -491,18 +551,23 @@ $effect(() => {
 beforeNavigate(async ({ cancel }) => {
 	// Skip if user clicked cancel button
 	if (userClickedCancel) {
-		logger.debug('[Auto-save] Skipping auto-save due to cancel');
+		logger.debug("[Auto-save] Skipping auto-save due to cancel");
 		userClickedCancel = false;
 		return;
 	}
 
 	// Only check if we're in edit/create mode and have unsaved changes
-	if (['edit', 'create'].includes(collections.mode) && collections.activeValue) {
+	if (
+		["edit", "create"].includes(collections.mode) &&
+		collections.activeValue
+	) {
 		const currentValue = JSON.stringify(collections.activeValue);
 		const hasUnsavedChanges = currentValue !== initialCollectionValue;
 
 		if (hasUnsavedChanges && !isSavingDraft) {
-			logger.debug('[Auto-save] Detected unsaved changes, auto-saving as draft...');
+			logger.debug(
+				"[Auto-save] Detected unsaved changes, auto-saving as draft...",
+			);
 
 			// Cancel navigation temporarily
 			cancel();
@@ -511,13 +576,13 @@ beforeNavigate(async ({ cancel }) => {
 			const saved = await autoSaveDraft();
 
 			if (saved) {
-				toast.success('Changes auto-saved as draft');
+				toast.success("Changes auto-saved as draft");
 				// Update initial value to prevent re-saving
 				initialCollectionValue = JSON.stringify(collections.activeValue);
 				// Allow navigation to continue
-				collections.setMode('view');
+				collections.setMode("view");
 			} else {
-				toast.error('Failed to auto-save. Please save manually.');
+				toast.error("Failed to auto-save. Please save manually.");
 			}
 		}
 	}

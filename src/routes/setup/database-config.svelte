@@ -4,7 +4,7 @@
 Provides DB type, host, port, name, user, password inputs, validation display, test button, and change warning.
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 import {
 	common_confirm_no,
 	common_confirm_yes,
@@ -31,15 +31,15 @@ import {
 	setup_help_database_port,
 	setup_help_database_type,
 	setup_help_database_user,
-	setup_label_database_type
-} from '@src/paraglide/messages';
-import type { ValidationErrors } from '@src/stores/setup-store.svelte';
-import { setupStore } from '@src/stores/setup-store.svelte.ts';
-import { dbConfigSchema } from '@utils/form-schemas';
-import { showConfirm } from '@utils/modal-utils';
-import { safeParse } from 'valibot';
-import { deserialize } from '$app/forms';
-import { parseConnectionString } from '@utils/connection-parser';
+	setup_label_database_type,
+} from "@src/paraglide/messages";
+import type { ValidationErrors } from "@src/stores/setup-store.svelte";
+import { setupStore } from "@src/stores/setup-store.svelte.ts";
+import { dbConfigSchema } from "@utils/form-schemas";
+import { showConfirm } from "@utils/modal-utils";
+import { safeParse } from "valibot";
+import { deserialize } from "$app/forms";
+import { parseConnectionString } from "@utils/connection-parser";
 
 // Popup settings (click to toggle)
 
@@ -54,14 +54,14 @@ let {
 	dbConfigChangedSinceTest,
 	clearDbTestError,
 	errorMessage,
-	successMessage
+	successMessage,
 } = $props();
 
 let unsupportedDbSelected = $state(false);
-const isAtlas = $derived(dbConfig.type === 'mongodb+srv');
+const isAtlas = $derived(dbConfig.type === "mongodb+srv");
 let isInstallingDriver = $state(false);
-let installError = $state('');
-let installSuccess = $state('');
+let installError = $state("");
+let installSuccess = $state("");
 let showConnectionStringHelper = $state(false);
 let showAtlasHelper = $state(true); // Collapsible Atlas helper
 let showTroubleshooting = $state(false); // Collapsible troubleshooting steps
@@ -80,8 +80,8 @@ const validationResult = $derived(
 		port: dbConfig.port,
 		name: dbConfig.name,
 		user: dbConfig.user,
-		password: dbConfig.password
-	})
+		password: dbConfig.password,
+	}),
 );
 
 // Update local validation errors when validation result changes
@@ -112,9 +112,9 @@ const displayErrors = $derived.by(() => {
 	// Parent validation errors always show (from API responses)
 	return {
 		...errors,
-		...validationErrors
+		...validationErrors,
 	};
-}); 
+});
 
 // Handle field blur to mark as touched
 function handleBlur(fieldName: string) {
@@ -124,12 +124,12 @@ function handleBlur(fieldName: string) {
 
 // Handle paste event to detect connection strings
 function handleHostPaste(event: ClipboardEvent) {
-	const pastedText = event.clipboardData?.getData('text') || '';
+	const pastedText = event.clipboardData?.getData("text") || "";
 	const parsed = parseConnectionString(pastedText);
 
 	if (parsed) {
 		event.preventDefault();
-		
+
 		// Update dbConfig with parsed values
 		dbConfig.type = parsed.type;
 		dbConfig.host = parsed.host;
@@ -148,7 +148,7 @@ function handleHostPaste(event: ClipboardEvent) {
 
 		// Clear any previous test errors
 		clearDbTestError();
-		
+
 		showConnectionStringHelper = true;
 		setTimeout(() => {
 			showConnectionStringHelper = false;
@@ -158,27 +158,32 @@ function handleHostPaste(event: ClipboardEvent) {
 
 // Expose installDatabaseDriver to parent
 export async function installDatabaseDriver(dbType: string) {
-	if (!dbType || dbType === 'mongodb' || dbType === 'mongodb+srv' || dbType === 'sqlite') {
+	if (
+		!dbType ||
+		dbType === "mongodb" ||
+		dbType === "mongodb+srv" ||
+		dbType === "sqlite"
+	) {
 		// MongoDB and SQLite drivers are always available, no installation needed
 		return;
 	}
 
 	isInstallingDriver = true;
-	installError = '';
-	installSuccess = '';
+	installError = "";
+	installSuccess = "";
 
 	try {
 		const formData = new FormData();
-		formData.append('dbType', dbType);
+		formData.append("dbType", dbType);
 
-		const response = await fetch('?/installDriver', {
-			method: 'POST',
-			body: formData
+		const response = await fetch("?/installDriver", {
+			method: "POST",
+			body: formData,
 		});
 
 		const result = deserialize(await response.text());
 
-		if (result.type === 'success') {
+		if (result.type === "success") {
 			const data = result.data as {
 				success: boolean;
 				message?: string;
@@ -186,7 +191,8 @@ export async function installDatabaseDriver(dbType: string) {
 				error?: string;
 			};
 			if (data.success) {
-				installSuccess = data.message || `Successfully installed driver for ${dbType}`;
+				installSuccess =
+					data.message || `Successfully installed driver for ${dbType}`;
 				if (data.alreadyInstalled) {
 					installSuccess = `Driver for ${dbType} is already installed`;
 				}
@@ -194,7 +200,9 @@ export async function installDatabaseDriver(dbType: string) {
 				installError = data.error || `Failed to install driver for ${dbType}`;
 			}
 		} else {
-			const errorMsg = (result as { data?: { error?: string } }).data?.error || `Failed to install driver for ${dbType}`;
+			const errorMsg =
+				(result as { data?: { error?: string } }).data?.error ||
+				`Failed to install driver for ${dbType}`;
 			installError = errorMsg;
 		}
 	} catch (error) {
@@ -217,7 +225,7 @@ async function handleTestConnection() {
 			cancelText: common_confirm_no(),
 			onConfirm: async () => {
 				await testDatabaseConnection(true);
-			}
+			},
 		});
 	}
 }
@@ -225,47 +233,51 @@ async function handleTestConnection() {
 function handleTypeChange() {
 	clearDbTestError();
 
-	const isAtlas = dbConfig.type === 'mongodb+srv';
+	const isAtlas = dbConfig.type === "mongodb+srv";
 
 	// Smart host selection
 	if (!(isAtlas || dbConfig.host)) {
-		dbConfig.host = 'localhost';
-	} else if (isAtlas && dbConfig.host === 'localhost') {
-		dbConfig.host = '';
+		dbConfig.host = "localhost";
+	} else if (isAtlas && dbConfig.host === "localhost") {
+		dbConfig.host = "";
 	}
 
 	// Smart port selection based on database type
 	switch (dbConfig.type) {
-		case 'mongodb':
-			dbConfig.port = '27017';
+		case "mongodb":
+			dbConfig.port = "27017";
 			if (!dbConfig.name) {
-				dbConfig.name = 'SveltyCMS';
+				dbConfig.name = "SveltyCMS";
 			}
 			break;
-		case 'mariadb':
-			dbConfig.port = '3306';
+		case "mariadb":
+			dbConfig.port = "3306";
 			if (!dbConfig.name) {
-				dbConfig.name = 'SveltyCMS';
+				dbConfig.name = "SveltyCMS";
 			}
 			break;
-		case 'postgresql':
-			dbConfig.port = '5432';
+		case "postgresql":
+			dbConfig.port = "5432";
 			if (!dbConfig.name) {
-				dbConfig.name = 'SveltyCMS';
+				dbConfig.name = "SveltyCMS";
 			}
 			break;
-		case 'sqlite':
+		case "sqlite":
 			// SQLite uses a file path, no port
-			dbConfig.host = 'config/database';
-			dbConfig.port = '';
-			if (!dbConfig.name || dbConfig.name === 'SveltyCMS' || dbConfig.name === 'SveltyCMS.db') {
-				dbConfig.name = 'SveltyCMS.db';
+			dbConfig.host = "config/database";
+			dbConfig.port = "";
+			if (
+				!dbConfig.name ||
+				dbConfig.name === "SveltyCMS" ||
+				dbConfig.name === "SveltyCMS.db"
+			) {
+				dbConfig.name = "SveltyCMS.db";
 			}
 			break;
-		case 'mongodb+srv':
-			dbConfig.port = '';
+		case "mongodb+srv":
+			dbConfig.port = "";
 			if (!dbConfig.name) {
-				dbConfig.name = 'SveltyCMS';
+				dbConfig.name = "SveltyCMS";
 			}
 			break;
 	}
@@ -274,7 +286,7 @@ function handleTypeChange() {
 $effect(() => {
 	// Set default database name if empty
 	if (!dbConfig.name) {
-		dbConfig.name = 'SveltyCMS';
+		dbConfig.name = "SveltyCMS";
 	}
 
 	unsupportedDbSelected = false; // All database types are now supported

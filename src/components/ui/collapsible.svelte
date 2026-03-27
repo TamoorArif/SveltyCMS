@@ -11,28 +11,28 @@
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import { slide } from 'svelte/transition';
-import type { Snippet } from 'svelte';
-import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from "@utils/cn";
+import { slide } from "svelte/transition";
+import type { Snippet } from "svelte";
+import type { HTMLAttributes } from "svelte/elements";
 
 type Props = HTMLAttributes<HTMLDivElement> & {
 	open?: boolean;
 	disabled?: boolean;
 	trigger: Snippet;
 	children: Snippet;
-	direction?: 'vertical' | 'horizontal';
+	direction?: "vertical" | "horizontal";
 	class?: string;
 };
 
-let { 
-	open = $bindable(false), 
-	disabled = false, 
-	trigger, 
-	children, 
-	direction = 'vertical',
+let {
+	open = $bindable(false),
+	disabled = false,
+	trigger,
+	children,
+	direction = "vertical",
 	class: className,
-	...rest 
+	...rest
 }: Props = $props();
 
 function toggle() {

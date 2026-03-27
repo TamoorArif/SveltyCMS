@@ -133,7 +133,9 @@ describe(
       it("should find document by ID", async () => {
         if (!isMongo) return;
         expect(createdId).toBeDefined();
-        const result = await db.crud.findOne("websiteTokens", { _id: createdId });
+        const result = await db.crud.findOne("websiteTokens", {
+          _id: createdId,
+        });
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
         expect((result.data as any).token).toBeDefined();
@@ -155,7 +157,9 @@ describe(
         expect(result.success).toBe(true);
 
         // Verify deletion
-        const check = await db.crud.findOne("websiteTokens", { _id: createdId });
+        const check = await db.crud.findOne("websiteTokens", {
+          _id: createdId,
+        });
         expect(check.success).toBe(true);
         expect(check.data).toBeNull();
       });

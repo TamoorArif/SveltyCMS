@@ -167,7 +167,9 @@ export const PUT: RequestHandler = apiHandler(async ({ request, locals, cookies 
       );
     }
     // Verify current password
-    const currentUserFull = await auth.getUserById(user._id, tenantId, { bypassTenantCheck: true });
+    const currentUserFull = await auth.getUserById(user._id, tenantId, {
+      bypassTenantCheck: true,
+    });
     if (!currentUserFull?.password) {
       throw new AppError("User record invalid.", 500, "USER_INVALID");
     }

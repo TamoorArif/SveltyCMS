@@ -50,7 +50,10 @@ export class MongoSystemMethods {
       if (scope === "system") {
         // In system scope, userId is used as tenantId
         const tenantId = (userId as string) || null;
-        const setting = await this.SystemSettingModel.findOne({ key, tenantId }).lean();
+        const setting = await this.SystemSettingModel.findOne({
+          key,
+          tenantId,
+        }).lean();
         return { success: true, data: setting ? (setting.value as T) : null };
       }
 
@@ -168,7 +171,10 @@ export class MongoSystemMethods {
     try {
       if (scope === "system") {
         const tenantId = (userId as string) || null;
-        const result = await this.SystemSettingModel.deleteOne({ key, tenantId });
+        const result = await this.SystemSettingModel.deleteOne({
+          key,
+          tenantId,
+        });
         if (result.deletedCount === 0) {
           logger.warn(
             `System setting '${key}' not found for deletion${tenantId ? ` in tenant ${tenantId}` : ""}.`,
@@ -478,7 +484,10 @@ export class MongoSystemMethods {
       if (scope === "system") {
         const tenantId = (userId as string) || null;
         // Single deleteMany with $in operator and tenantId
-        await this.SystemSettingModel.deleteMany({ key: { $in: keys }, tenantId });
+        await this.SystemSettingModel.deleteMany({
+          key: { $in: keys },
+          tenantId,
+        });
         return { success: true, data: undefined };
       }
 

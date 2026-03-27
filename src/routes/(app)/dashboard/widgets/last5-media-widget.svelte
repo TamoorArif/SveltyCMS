@@ -19,9 +19,9 @@
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Last 5 Media',
-	icon: 'mdi:image-multiple-outline',
-	defaultSize: { w: 1, h: 2 }
+	name: "Last 5 Media",
+	icon: "mdi:image-multiple-outline",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

@@ -4,8 +4,8 @@
 **This component displays a modal for selecting a preset**
 -->
 <script lang="ts">
-import PresetSelector from '@src/routes/setup/preset-selector.svelte';
-import { PRESETS } from '@src/routes/setup/presets';
+import PresetSelector from "@src/routes/setup/preset-selector.svelte";
+import { PRESETS } from "@src/routes/setup/presets";
 
 interface Props {
 	close?: (result?: any) => void;
@@ -13,12 +13,12 @@ interface Props {
 
 const { close }: Props = $props();
 
-let selectedPreset = $state('blank');
+let selectedPreset = $state("blank");
 let isSubmitting = $state(false);
 
 async function onSubmit(event: Event) {
 	event.preventDefault();
-	if (!selectedPreset || selectedPreset === 'blank') {
+	if (!selectedPreset || selectedPreset === "blank") {
 		close?.(null);
 		return;
 	}
@@ -28,7 +28,7 @@ async function onSubmit(event: Event) {
 }
 
 // Base Classes for Skeleton modal
-const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
+const cForm = "border border-surface-500 p-4 space-y-4 rounded-xl";
 </script>
 
 <div class="modal-example-form space-y-4">

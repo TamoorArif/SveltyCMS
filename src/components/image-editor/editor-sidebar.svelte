@@ -12,14 +12,14 @@ and proper active state indication.
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
-import { type EditorWidget, editorWidgets } from './widgets/registry';
+import { onMount } from "svelte";
+import { type EditorWidget, editorWidgets } from "./widgets/registry";
 
 // Props
 const {
 	activeState,
 	onToolSelect,
-	hasImage = false
+	hasImage = false,
 }: {
 	activeState: string;
 	onToolSelect: (tool: string) => void;
@@ -31,10 +31,10 @@ const tools = $derived(
 	editorWidgets.map((w: EditorWidget) => ({
 		id: w.key,
 		name: w.title,
-		icon: w.icon ?? 'mdi:cog',
-		description: w.description ?? '',
-		category: w.category ?? 'general'
-	}))
+		icon: w.icon ?? "mdi:cog",
+		description: w.description ?? "",
+		category: w.category ?? "general",
+	})),
 );
 
 // Keyboard navigation
@@ -57,18 +57,18 @@ function handleKeyDown(e: KeyboardEvent) {
 	}
 
 	switch (e.key) {
-		case 'ArrowDown':
+		case "ArrowDown":
 			e.preventDefault();
 			focusedIndex = (focusedIndex + 1) % tools.length;
 			focusToolButton(focusedIndex);
 			break;
-		case 'ArrowUp':
+		case "ArrowUp":
 			e.preventDefault();
 			focusedIndex = (focusedIndex - 1 + tools.length) % tools.length;
 			focusToolButton(focusedIndex);
 			break;
-		case 'Enter':
-		case ' ':
+		case "Enter":
+		case " ":
 			e.preventDefault();
 			handleToolClick(tools[focusedIndex]);
 			break;
@@ -76,7 +76,7 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 function focusToolButton(index: number) {
-	const buttons = sidebarRef?.querySelectorAll('button');
+	const buttons = sidebarRef?.querySelectorAll("button");
 	if (buttons?.[index]) {
 		(buttons[index] as HTMLElement).focus();
 	}

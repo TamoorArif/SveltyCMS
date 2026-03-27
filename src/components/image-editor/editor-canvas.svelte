@@ -3,9 +3,9 @@
  @component Image Editor Canvas using svelte-canvas
  -->
 <script lang="ts">
-import { Canvas, Layer, type Render } from 'svelte-canvas';
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { onMount, type Snippet } from 'svelte';
+import { Canvas, Layer, type Render } from "svelte-canvas";
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { onMount, type Snippet } from "svelte";
 
 interface Props {
 	children?: Snippet;
@@ -33,8 +33,8 @@ const render: Render = ({ context, width, height }) => {
 		`saturate(${100 + (adj.saturation || 0)}%)`,
 		`grayscale(${adj.grayscale || 0}%)`,
 		`sepia(${adj.sepia || 0}%)`,
-		`hue-rotate(${adj.temperature || 0}deg)`
-	].join(' ');
+		`hue-rotate(${adj.temperature || 0}deg)`,
+	].join(" ");
 
 	context.filter = filters;
 
@@ -49,7 +49,7 @@ const render: Render = ({ context, width, height }) => {
 	context.restore();
 
 	// Reset filter for overlays
-	context.filter = 'none';
+	context.filter = "none";
 };
 
 onMount(() => {
@@ -60,7 +60,7 @@ onMount(() => {
 		if (entry) {
 			imageEditorStore.state.canvasSize = {
 				width: entry.contentRect.width,
-				height: entry.contentRect.height
+				height: entry.contentRect.height,
 			};
 		}
 	});

@@ -25,27 +25,31 @@ Part of the Three Pillars Architecture for widget system.
 -->
 
 <script lang="ts">
-import { logger } from '@utils/logger';
-import type { DateWidgetData } from './';
+import { logger } from "@utils/logger";
+import type { DateWidgetData } from "./";
 
 interface Props {
-	format?: 'short' | 'medium' | 'long' | 'full';
+	format?: "short" | "medium" | "long" | "full";
 	showRelative?: boolean;
 	value: DateWidgetData;
 }
 
-const { value, format = 'medium', showRelative = true }: Props = $props();
+const { value, format = "medium", showRelative = true }: Props = $props();
 
 // Get the user's preferred language from the browser
-const userLocale = $derived(typeof document !== 'undefined' ? document.documentElement.lang || 'en-US' : 'en-US');
+const userLocale = $derived(
+	typeof document !== "undefined"
+		? document.documentElement.lang || "en-US"
+		: "en-US",
+);
 
 // Get date formatting options based on format prop
 const dateOptions = $derived.by(() => {
 	const optionsMap = {
-		short: { dateStyle: 'short' as const },
-		medium: { dateStyle: 'medium' as const },
-		long: { dateStyle: 'long' as const },
-		full: { dateStyle: 'full' as const }
+		short: { dateStyle: "short" as const },
+		medium: { dateStyle: "medium" as const },
+		long: { dateStyle: "long" as const },
+		full: { dateStyle: "full" as const },
 	};
 	return optionsMap[format];
 });
@@ -68,13 +72,13 @@ const relativeTime = $derived.by(() => {
 
 		// Return relative time for dates within a week
 		if (diffDays === 0) {
-			return 'Today';
+			return "Today";
 		}
 		if (diffDays === 1) {
-			return 'Yesterday';
+			return "Yesterday";
 		}
 		if (diffDays === -1) {
-			return 'Tomorrow';
+			return "Tomorrow";
 		}
 		if (diffDays > 1 && diffDays <= 7) {
 			return `${diffDays} days ago`;
@@ -92,19 +96,19 @@ const relativeTime = $derived.by(() => {
 // Format date using Intl.DateTimeFormat
 const formattedDate = $derived.by(() => {
 	if (!value) {
-		return '–';
+		return "–";
 	}
 
 	try {
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) {
-			return 'Invalid Date';
+			return "Invalid Date";
 		}
 
 		return new Intl.DateTimeFormat(userLocale, dateOptions).format(date);
 	} catch (e) {
-		logger.warn('Date formatting error:', e);
-		return 'Invalid Date';
+		logger.warn("Date formatting error:", e);
+		return "Invalid Date";
 	}
 });
 

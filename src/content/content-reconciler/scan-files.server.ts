@@ -6,7 +6,6 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import { building, dev } from "$app/environment";
 import { logger } from "@utils/logger.server";
 import type { Schema } from "../types";
 import { processModule } from "../module-processor.server";

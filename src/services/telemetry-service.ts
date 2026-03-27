@@ -190,8 +190,11 @@ export const telemetryService = {
             if (userCountResult.success) {
               userCount = userCountResult.data;
             }
-            roleCount = (await dbAdapter.auth.getAllRoles(undefined, { bypassTenantCheck: true }))
-              .length;
+            roleCount = (
+              await dbAdapter.auth.getAllRoles(undefined, {
+                bypassTenantCheck: true,
+              })
+            ).length;
           }
 
           // 4. Content Dependency

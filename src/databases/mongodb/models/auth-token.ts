@@ -324,7 +324,10 @@ export class TokenAdapter {
         deletedCount: valueResult.deletedCount,
         token_ids: tokenIds,
       });
-      return { success: true, data: { deletedCount: valueResult.deletedCount } };
+      return {
+        success: true,
+        data: { deletedCount: valueResult.deletedCount },
+      };
     } catch (err) {
       const message = `Error in TokenAdapter.deleteTokens: ${err instanceof Error ? err.message : String(err)}`;
       logger.error(message, { token_ids: tokenIds });
@@ -355,7 +358,10 @@ export class TokenAdapter {
           modifiedCount: idResult.modifiedCount,
           token_ids: tokenIds,
         });
-        return { success: true, data: { modifiedCount: idResult.modifiedCount } };
+        return {
+          success: true,
+          data: { modifiedCount: idResult.modifiedCount },
+        };
       }
 
       // Fall back to matching by token value
@@ -374,7 +380,10 @@ export class TokenAdapter {
         modifiedCount: valueResult.modifiedCount,
         token_ids: tokenIds,
       });
-      return { success: true, data: { modifiedCount: valueResult.modifiedCount } };
+      return {
+        success: true,
+        data: { modifiedCount: valueResult.modifiedCount },
+      };
     } catch (err) {
       const message = `Error in TokenAdapter.blockTokens: ${err instanceof Error ? err.message : String(err)}`;
       logger.error(message, { token_ids: tokenIds });
@@ -405,7 +414,10 @@ export class TokenAdapter {
           modifiedCount: idResult.modifiedCount,
           token_ids: tokenIds,
         });
-        return { success: true, data: { modifiedCount: idResult.modifiedCount } };
+        return {
+          success: true,
+          data: { modifiedCount: idResult.modifiedCount },
+        };
       }
 
       // Fall back to matching by token value
@@ -424,7 +436,10 @@ export class TokenAdapter {
         modifiedCount: valueResult.modifiedCount,
         token_ids: tokenIds,
       });
-      return { success: true, data: { modifiedCount: valueResult.modifiedCount } };
+      return {
+        success: true,
+        data: { modifiedCount: valueResult.modifiedCount },
+      };
     } catch (err) {
       const message = `Error in TokenAdapter.unblockTokens: ${err instanceof Error ? err.message : String(err)}`;
       logger.error(message, { token_ids: tokenIds });

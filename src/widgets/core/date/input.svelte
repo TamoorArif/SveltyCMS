@@ -26,12 +26,12 @@ Part of the Three Pillars Architecture for widget system.
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { tokenTarget } from '@src/services/token/token-target';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { app, validationStore } from '@src/stores/store.svelte';
-import { getFieldName } from '@src/utils/utils';
-import type { FieldType } from './';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { tokenTarget } from "@src/services/token/token-target";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { app, validationStore } from "@src/stores/store.svelte";
+import { getFieldName } from "@src/utils/utils";
+import type { FieldType } from "./";
 
 interface Props {
 	error?: string | null | undefined;
@@ -45,17 +45,25 @@ const fieldName = $derived(getFieldName(field));
 
 // Convert ISO string to YYYY-MM-DD format for native input
 
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
-const safeValue = $derived(field.translated ? ((value as Record<string, string>)?.[LANGUAGE] ?? '') : ((value as string) ?? ''));
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
+const safeValue = $derived(
+	field.translated
+		? ((value as Record<string, string>)?.[LANGUAGE] ?? "")
+		: ((value as string) ?? ""),
+);
 
 const inputValue = $derived.by(() => {
 	if (!safeValue) {
-		return '';
+		return "";
 	}
 	try {
 		return safeValue.substring(0, 10);
 	} catch {
-		return '';
+		return "";
 	}
 });
 
@@ -66,7 +74,9 @@ const minDate = $derived.by(() => {
 		return undefined;
 	}
 	try {
-		return new Date(field.minDate as string | Date).toISOString().substring(0, 10);
+		return new Date(field.minDate as string | Date)
+			.toISOString()
+			.substring(0, 10);
 	} catch {
 		return undefined;
 	}
@@ -78,7 +88,9 @@ const maxDate = $derived.by(() => {
 		return undefined;
 	}
 	try {
-		return new Date(field.maxDate as string | Date).toISOString().substring(0, 10);
+		return new Date(field.maxDate as string | Date)
+			.toISOString()
+			.substring(0, 10);
 	} catch {
 		return undefined;
 	}
@@ -94,14 +106,26 @@ function handleInput(event: Event & { currentTarget: HTMLInputElement }): void {
 			const selectedDate = new Date(dateStr);
 
 			// Validate min date constraint
-			if (field.minDate && selectedDate < new Date(field.minDate as string | Date)) {
-				validationStore.setError(fieldName, `Date must be on or after ${new Date(field.minDate as string | Date).toLocaleDateString()}`);
+			if (
+				field.minDate &&
+				selectedDate < new Date(field.minDate as string | Date)
+			) {
+				validationStore.setError(
+					fieldName,
+					`Date must be on or after ${new Date(field.minDate as string | Date).toLocaleDateString()}`,
+				);
 				return;
 			}
 
 			// Validate max date constraint
-			if (field.maxDate && selectedDate > new Date(field.maxDate as string | Date)) {
-				validationStore.setError(fieldName, `Date must be on or before ${new Date(field.maxDate as string | Date).toLocaleDateString()}`);
+			if (
+				field.maxDate &&
+				selectedDate > new Date(field.maxDate as string | Date)
+			) {
+				validationStore.setError(
+					fieldName,
+					`Date must be on or before ${new Date(field.maxDate as string | Date).toLocaleDateString()}`,
+				);
 				return;
 			}
 
@@ -109,17 +133,17 @@ function handleInput(event: Event & { currentTarget: HTMLInputElement }): void {
 			newValue = selectedDate.toISOString();
 			validationStore.clearError(fieldName);
 		} catch (_e) {
-			validationStore.setError(fieldName, 'Invalid date format');
+			validationStore.setError(fieldName, "Invalid date format");
 		}
 	} else if (field.required) {
-		validationStore.setError(fieldName, 'This field is required');
+		validationStore.setError(fieldName, "This field is required");
 	} else {
 		validationStore.clearError(fieldName);
 	}
 
 	// Update value based on translation status
 	if (field.translated) {
-		if (!value || typeof value !== 'object') {
+		if (!value || typeof value !== "object") {
 			value = {};
 		}
 		value = { ...(value as any), [LANGUAGE]: newValue };
@@ -131,7 +155,7 @@ function handleInput(event: Event & { currentTarget: HTMLInputElement }): void {
 // Handle blur for final validation
 function handleBlur(): void {
 	if (!value && field.required) {
-		validationStore.setError(fieldName, 'This field is required');
+		validationStore.setError(fieldName, "This field is required");
 	}
 }
 </script>

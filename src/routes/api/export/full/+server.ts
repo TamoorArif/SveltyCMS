@@ -25,7 +25,10 @@ async function createExport(
   options: ExportOptions,
   tenantId?: string,
 ): Promise<ExportData> {
-  logger.info(`Creating full export for tenant: ${tenantId || "global"}`, { userId, options });
+  logger.info(`Creating full export for tenant: ${tenantId || "global"}`, {
+    userId,
+    options,
+  });
 
   const exportData: ExportData = {
     metadata: createExportMetadata(userId),

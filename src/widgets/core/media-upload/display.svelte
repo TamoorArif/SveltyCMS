@@ -17,7 +17,7 @@ Renders selected media files as thumbnails for display purposes.
 - **Semantic Colors**: Uses theme-defined semantic colors for borders and backgrounds.
 -->
 <script lang="ts">
-import type { MediaFile } from './types';
+import type { MediaFile } from "./types";
 
 const { value }: { value: string | string[] | null | undefined } = $props();
 
@@ -42,7 +42,7 @@ $effect(() => {
 							size: found.size,
 							url: found.url,
 							thumbnailUrl: found.thumbnails?.sm?.url || found.url,
-							aiTags: found.metadata?.aiTags || []
+							aiTags: found.metadata?.aiTags || [],
 						} as any);
 					}
 				} catch (e) {

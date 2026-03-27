@@ -54,8 +54,8 @@ Advanced autocomplete component with fuzzy search, keyboard navigation, and acce
 -->
 
 <script lang="ts">
-import { onDestroy, onMount } from 'svelte';
-import { fade, scale, slide } from 'svelte/transition';
+import { onDestroy, onMount } from "svelte";
+import { fade, scale, slide } from "svelte/transition";
 
 interface Props {
 	allowCustomValue?: boolean;
@@ -72,19 +72,19 @@ interface Props {
 
 let {
 	options = [],
-	value = $bindable(''),
-	placeholder = 'Select an option',
+	value = $bindable(""),
+	placeholder = "Select an option",
 	disabled = false,
 	allowCustomValue = false,
 	showCreateOption = false,
 	fuzzySearch = true,
 	caseSensitive = false,
 	maxResults = 50,
-	onSelect = () => {}
+	onSelect = () => {},
 }: Props = $props();
 
 // State
-let keyword = $state('');
+let keyword = $state("");
 let showDropdown = $state(false);
 let selectedIndex = $state(-1);
 let listElement = $state<HTMLUListElement | null>(null);
@@ -148,7 +148,7 @@ const filteredOptions = $derived.by(() => {
 		return options
 			.map((option) => ({
 				option,
-				score: fuzzyMatchScore(option, keyword)
+				score: fuzzyMatchScore(option, keyword),
 			}))
 			.filter((item) => item.score > 0)
 			.sort((a, b) => b.score - a.score)
@@ -170,11 +170,19 @@ const shouldShowCreateOption = $derived(
 	showCreateOption &&
 		allowCustomValue &&
 		keyword.trim() &&
-		!filteredOptions.some((opt) => (caseSensitive ? opt === keyword : opt.toLowerCase() === keyword.toLowerCase()))
+		!filteredOptions.some((opt) =>
+			caseSensitive
+				? opt === keyword
+				: opt.toLowerCase() === keyword.toLowerCase(),
+		),
 );
 
 // Combined display options (filtered + create option)
-const displayOptions = $derived(shouldShowCreateOption ? [...filteredOptions, `Create: "${keyword}"`] : filteredOptions);
+const displayOptions = $derived(
+	shouldShowCreateOption
+		? [...filteredOptions, `Create: "${keyword}"`]
+		: filteredOptions,
+);
 
 const hasOptions = $derived(displayOptions.length > 0);
 const showNoResults = $derived(keyword.trim() && !hasOptions && !isLoading);
@@ -204,13 +212,16 @@ function selectOption(selectedOption: string) {
 
 // Add to recent selections
 function addToRecent(option: string) {
-	recentSelections = [option, ...recentSelections.filter((item) => item !== option)].slice(0, MAX_RECENT);
+	recentSelections = [
+		option,
+		...recentSelections.filter((item) => item !== option),
+	].slice(0, MAX_RECENT);
 }
 
 // Clear selection
 function clearSelection() {
-	keyword = '';
-	value = '';
+	keyword = "";
+	value = "";
 	showDropdown = false;
 	selectedIndex = -1;
 	inputElement?.focus();
@@ -225,8 +236,8 @@ function scrollIntoView(index: number) {
 	const selectedItem = listElement.children[index] as HTMLElement | undefined;
 	if (selectedItem) {
 		selectedItem.scrollIntoView({
-			block: 'nearest',
-			behavior: prefersReducedMotion ? 'auto' : 'smooth'
+			block: "nearest",
+			behavior: prefersReducedMotion ? "auto" : "smooth",
 		});
 	}
 }
@@ -240,7 +251,7 @@ function handleKeydown(event: KeyboardEvent) {
 	const optionsLength = displayOptions.length;
 
 	switch (event.key) {
-		case 'ArrowDown':
+		case "ArrowDown":
 			event.preventDefault();
 			if (showDropdown) {
 				selectedIndex = (selectedIndex + 1) % optionsLength;
@@ -251,7 +262,7 @@ function handleKeydown(event: KeyboardEvent) {
 			scrollIntoView(selectedIndex);
 			break;
 
-		case 'ArrowUp':
+		case "ArrowUp":
 			event.preventDefault();
 			if (showDropdown) {
 				selectedIndex = (selectedIndex - 1 + optionsLength) % optionsLength;
@@ -262,7 +273,7 @@ function handleKeydown(event: KeyboardEvent) {
 			scrollIntoView(selectedIndex);
 			break;
 
-		case 'Enter':
+		case "Enter":
 			event.preventDefault();
 			if (showDropdown && selectedIndex >= 0 && displayOptions[selectedIndex]) {
 				selectOption(displayOptions[selectedIndex]);
@@ -275,7 +286,7 @@ function handleKeydown(event: KeyboardEvent) {
 			}
 			break;
 
-		case 'Escape':
+		case "Escape":
 			event.preventDefault();
 			if (showDropdown) {
 				showDropdown = false;
@@ -285,7 +296,7 @@ function handleKeydown(event: KeyboardEvent) {
 			}
 			break;
 
-		case 'Tab':
+		case "Tab":
 			// Close dropdown on Tab
 			showDropdown = false;
 			selectedIndex = -1;
@@ -342,7 +353,12 @@ function handleInput() {
 // Click outside handler
 function handleClickOutside(event: MouseEvent) {
 	const target = event.target as HTMLElement;
-	if (dropdownElement && !dropdownElement.contains(target) && inputElement && !inputElement.contains(target)) {
+	if (
+		dropdownElement &&
+		!dropdownElement.contains(target) &&
+		inputElement &&
+		!inputElement.contains(target)
+	) {
 		showDropdown = false;
 		selectedIndex = -1;
 	}
@@ -357,8 +373,8 @@ function handleOptionMouseDown(option: string, event: MouseEvent) {
 // Setup click outside listener
 $effect(() => {
 	if (showDropdown) {
-		document.addEventListener('click', handleClickOutside);
-		return () => document.removeEventListener('click', handleClickOutside);
+		document.addEventListener("click", handleClickOutside);
+		return () => document.removeEventListener("click", handleClickOutside);
 	}
 });
 
@@ -371,15 +387,15 @@ $effect(() => {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 
 onDestroy(() => {

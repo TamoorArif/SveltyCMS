@@ -10,7 +10,9 @@ Features:
 
 <script lang="ts">
 // sanitizePermissions function moved to component - simplified implementation
-function sanitizePermissions(permissions: Record<string, Record<string, boolean>>) {
+function sanitizePermissions(
+	permissions: Record<string, Record<string, boolean>>,
+) {
 	const res = Object.entries(permissions).reduce(
 		(acc, [role, actions]) => {
 			const nonEmptyActions = Object.entries(actions).reduce(
@@ -20,28 +22,33 @@ function sanitizePermissions(permissions: Record<string, Record<string, boolean>
 					}
 					return actionAcc;
 				},
-				{} as Record<string, boolean>
+				{} as Record<string, boolean>,
 			);
 			if (Object.keys(nonEmptyActions).length > 0) {
 				acc[role] = nonEmptyActions;
 			}
 			return acc;
 		},
-		{} as Record<string, Record<string, boolean>>
+		{} as Record<string, Record<string, boolean>>,
 	);
 	return Object.keys(res).length === 0 ? undefined : res;
 }
 // Props from parent
-let { value = $bindable(null), icon = $bindable(null), permissions = $bindable(null), ...props } = $props();
+let {
+	value = $bindable(null),
+	icon = $bindable(null),
+	permissions = $bindable(null),
+	...props
+} = $props();
 
 $effect(() => {
-	if (props.key === 'display' && value?.default === true) {
-		value = '';
+	if (props.key === "display" && value?.default === true) {
+		value = "";
 	}
 });
 
 $effect(() => {
-	if (props.key === 'permissions' && value) {
+	if (props.key === "permissions" && value) {
 		permissions = sanitizePermissions(value);
 	}
 });
@@ -56,7 +63,10 @@ function updateParent() {
 // Many admin inputs (e.g. Input.svelte) only use bind:value and never dispatch 'update'.
 // IconifyIconsPicker updates bind:icon; we must pass both so icon changes persist. Only sync when
 // value or icon actually changed to avoid effect_update_depth_exceeded.
-const lastReported = { value: undefined as unknown, icon: undefined as unknown };
+const lastReported = {
+	value: undefined as unknown,
+	icon: undefined as unknown,
+};
 $effect(() => {
 	const v = value;
 	const i = icon;
@@ -66,7 +76,7 @@ $effect(() => {
 	updateParent();
 });
 
-import { resolveAdminComponent } from '@src/components/system/admin-component-registry';
+import { resolveAdminComponent } from "@src/components/system/admin-component-registry";
 
 const WIDGET_COMPONENT = $derived(resolveAdminComponent(props.widget));
 </script>

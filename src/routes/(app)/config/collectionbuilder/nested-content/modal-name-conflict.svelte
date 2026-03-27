@@ -8,7 +8,7 @@ Features:
 - Provides suggestions for resolving conflicts
 -->
 <script lang="ts">
-import { modalState } from '@utils/modal-state.svelte';
+import { modalState } from "@utils/modal-state.svelte";
 
 interface Props {
 	conflictingName: string;
@@ -17,10 +17,15 @@ interface Props {
 	suggestions: string[];
 }
 
-let { conflictingName = $bindable(), conflictPath = $bindable(), suggestions = $bindable([]), onConfirm = $bindable(() => {}) }: Props = $props();
+let {
+	conflictingName = $bindable(),
+	conflictPath = $bindable(),
+	suggestions = $bindable([]),
+	onConfirm = $bindable(() => {}),
+}: Props = $props();
 
-let selectedName = $state(suggestions[0] || ''); // Default to first suggestion
-let customName = $state('');
+let selectedName = $state(suggestions[0] || ""); // Default to first suggestion
+let customName = $state("");
 let useCustomName = $state(false); // Controls whether custom name input is enabled
 
 // Handles the confirmation action. Chooses between selected suggested name or custom name

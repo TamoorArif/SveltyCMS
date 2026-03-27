@@ -23,9 +23,9 @@ A premium Svelte 5 Tags/InputChip primitive with keyboard support and modern sty
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import Badge from './badge.svelte';
-import { fade, scale } from 'svelte/transition';
+import { cn } from "@utils/cn";
+import Badge from "./badge.svelte";
+import { fade, scale } from "svelte/transition";
 
 interface Props {
 	tags?: string[];
@@ -35,44 +35,51 @@ interface Props {
 	onchange?: (tags: string[]) => void;
 	maxTags?: number;
 	disabled?: boolean;
-	variant?: 'filled' | 'tonal' | 'outlined' | 'glass';
-	color?: 'primary' | 'secondary' | 'tertiary' | 'surface' | 'success' | 'warning' | 'error';
+	variant?: "filled" | "tonal" | "outlined" | "glass";
+	color?:
+		| "primary"
+		| "secondary"
+		| "tertiary"
+		| "surface"
+		| "success"
+		| "warning"
+		| "error";
 	class?: string;
 	label?: string;
 }
 
 let {
 	tags = $bindable([]),
-	placeholder = 'Add tag...',
+	placeholder = "Add tag...",
 	allowDuplicates = false,
 	validation,
 	onchange,
 	maxTags,
 	disabled = false,
-	variant = 'tonal',
-	color = 'surface',
-	class: className = '',
-	label
+	variant = "tonal",
+	color = "surface",
+	class: className = "",
+	label,
 }: Props = $props();
 
-let inputValue = $state('');
+let inputValue = $state("");
 let inputElement = $state<HTMLInputElement>();
 const id = Math.random().toString(36).substring(7);
 
 function addTag(tag: string) {
 	if (disabled || !tag.trim()) return;
 	if (maxTags && tags.length >= maxTags) return;
-	
+
 	const trimmed = tag.trim();
 	if (!allowDuplicates && tags.includes(trimmed)) {
-		inputValue = '';
+		inputValue = "";
 		return;
 	}
-	
+
 	if (validation && !validation(trimmed)) return;
 
 	tags = [...tags, trimmed];
-	inputValue = '';
+	inputValue = "";
 	onchange?.(tags);
 }
 
@@ -84,11 +91,11 @@ function removeTag(index: number) {
 
 function handleKeydown(e: KeyboardEvent) {
 	if (disabled) return;
-	
-	if (e.key === 'Enter' || e.key === ',') {
+
+	if (e.key === "Enter" || e.key === ",") {
 		e.preventDefault();
 		addTag(inputValue);
-	} else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+	} else if (e.key === "Backspace" && !inputValue && tags.length > 0) {
 		removeTag(tags.length - 1);
 	}
 }

@@ -119,7 +119,10 @@ export async function POST(event: RequestEvent) {
           if (require("node:fs").existsSync(fullPath)) {
             const items = await fs.readdir(fullPath);
             for (const item of items) {
-              await fs.rm(path.join(fullPath, item), { recursive: true, force: true });
+              await fs.rm(path.join(fullPath, item), {
+                recursive: true,
+                force: true,
+              });
             }
           }
         } catch (e) {
@@ -160,7 +163,9 @@ export async function POST(event: RequestEvent) {
         const adminPassword = body.password || "Test123!";
 
         // Check if already exists
-        const userResult = await currentAuth.getUserByEmail({ email: adminEmail });
+        const userResult = await currentAuth.getUserByEmail({
+          email: adminEmail,
+        });
         if (!userResult) {
           await currentAuth.createUser({
             email: adminEmail,
@@ -205,19 +210,28 @@ export async function POST(event: RequestEvent) {
         await reinitializeSystem(true);
         const { invalidateSetupCache } = await import("@src/utils/setup-check");
         invalidateSetupCache(false, true);
-        return json({ success: true, message: "System marked as setup in-memory" });
+        return json({
+          success: true,
+          message: "System marked as setup in-memory",
+        });
       }
 
       case "cleanup": {
         const { type, email, tenantId } = body;
         if (type === "user" && email) {
           // Wipe a specific user
-          const userResult = await currentAuth.getUserByEmail({ email, tenantId });
+          const userResult = await currentAuth.getUserByEmail({
+            email,
+            tenantId,
+          });
           if (userResult) {
             await currentAuth.deleteUser(userResult._id, tenantId);
             return json({ success: true, message: `User ${email} deleted` });
           }
-          return json({ success: true, message: "User not found, nothing to delete" });
+          return json({
+            success: true,
+            message: "User not found, nothing to delete",
+          });
         }
 
         if (type === "all-data") {
@@ -229,7 +243,10 @@ export async function POST(event: RequestEvent) {
           if (currentDbAdapter.ensureSystem) await currentDbAdapter.ensureSystem();
           if (currentDbAdapter.ensureAuth) await currentDbAdapter.ensureAuth();
 
-          return json({ success: true, message: "Data cleared and system re-initialized" });
+          return json({
+            success: true,
+            message: "Data cleared and system re-initialized",
+          });
         }
 
         return json({ error: "Invalid cleanup type" }, { status: 400 });

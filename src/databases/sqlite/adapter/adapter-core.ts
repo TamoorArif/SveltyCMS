@@ -169,7 +169,9 @@ export class AdapterCore {
         this._sqlite = new Database(dbPathResolved) as SQLiteClient;
         const drizzleModule = "drizzle-orm/bun-sqlite";
         const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
-        this._db = drizzle(this._sqlite as unknown, { schema }) as unknown as SQLiteDB;
+        this._db = drizzle(this._sqlite as unknown, {
+          schema,
+        }) as unknown as SQLiteDB;
 
         // WAL mode for better performance/concurrency
         this._sqlite.exec("PRAGMA journal_mode = WAL;");
@@ -186,7 +188,9 @@ export class AdapterCore {
         this._sqlite = new DATABASE(dbPathResolved) as unknown as SQLiteClient;
         const drizzleModule = "drizzle-orm/better-sqlite3";
         const { drizzle } = await import(/* @vite-ignore */ drizzleModule);
-        this._db = drizzle(this._sqlite as unknown, { schema }) as unknown as SQLiteDB;
+        this._db = drizzle(this._sqlite as unknown, {
+          schema,
+        }) as unknown as SQLiteDB;
 
         // WAL mode
         this._sqlite.exec("PRAGMA journal_mode = WAL");

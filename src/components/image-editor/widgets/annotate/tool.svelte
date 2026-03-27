@@ -7,21 +7,21 @@ Orchestrates annotations using svelte-canvas compatible state and rendering.
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { Layer } from 'svelte-canvas';
-import AnnotateControls from './controls.svelte';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { Layer } from "svelte-canvas";
+import AnnotateControls from "./controls.svelte";
 
 // --- Svelte 5 State ---
 let currentTool = $state<any>(null);
-let strokeColor = $state('#ff0000');
-let fillColor = $state('transparent');
+let strokeColor = $state("#ff0000");
+let fillColor = $state("transparent");
 
 const storeState = imageEditorStore.state;
 
 // --- Lifecycle $effect ---
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'annotate') {
+	if (activeState === "annotate") {
 		imageEditorStore.setToolbarControls({
 			component: AnnotateControls,
 			props: {
@@ -30,16 +30,27 @@ $effect(() => {
 				fillColor,
 				onSetTool: (t: any) => (currentTool = t),
 				onStrokeColorChange: (v: string) => (strokeColor = v),
-				onFillColorChange: (v: string) => (fillColor = v)
-			}
+				onFillColorChange: (v: string) => (fillColor = v),
+			},
 		});
-	} else if (imageEditorStore.state.toolbarControls?.component === AnnotateControls) {
+	} else if (
+		imageEditorStore.state.toolbarControls?.component === AnnotateControls
+	) {
 		imageEditorStore.setToolbarControls(null);
 	}
 });
 
-const renderAnnotations = ({ context, width, height }: { context: CanvasRenderingContext2D; width: number; height: number }) => {
-	const { annotations, zoom, translateX, translateY, imageElement } = storeState;
+const renderAnnotations = ({
+	context,
+	width,
+	height,
+}: {
+	context: CanvasRenderingContext2D;
+	width: number;
+	height: number;
+}) => {
+	const { annotations, zoom, translateX, translateY, imageElement } =
+		storeState;
 	if (!imageElement) {
 		return;
 	}
@@ -56,19 +67,29 @@ const renderAnnotations = ({ context, width, height }: { context: CanvasRenderin
 		context.fillStyle = ann.fill;
 		context.lineWidth = (ann.strokeWidth || 2) / zoom;
 
-		if (ann.type === 'rect') {
-			context.strokeRect(ann.x + offsetX, ann.y + offsetY, ann.width, ann.height);
-			if (ann.fill !== 'transparent') {
-				context.fillRect(ann.x + offsetX, ann.y + offsetY, ann.width, ann.height);
+		if (ann.type === "rect") {
+			context.strokeRect(
+				ann.x + offsetX,
+				ann.y + offsetY,
+				ann.width,
+				ann.height,
+			);
+			if (ann.fill !== "transparent") {
+				context.fillRect(
+					ann.x + offsetX,
+					ann.y + offsetY,
+					ann.width,
+					ann.height,
+				);
 			}
-		} else if (ann.type === 'circle') {
+		} else if (ann.type === "circle") {
 			context.beginPath();
 			context.arc(ann.x + offsetX, ann.y + offsetY, ann.radius, 0, Math.PI * 2);
 			context.stroke();
-			if (ann.fill !== 'transparent') {
+			if (ann.fill !== "transparent") {
 				context.fill();
 			}
-		} else if (ann.type === 'text') {
+		} else if (ann.type === "text") {
 			context.font = `${ann.fontSize}px Arial`;
 			context.fillText(ann.text, ann.x + offsetX, ann.y + offsetY);
 		}

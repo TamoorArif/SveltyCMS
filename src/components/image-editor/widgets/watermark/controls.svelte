@@ -16,7 +16,7 @@ let {
 	currentOpacity = 0.8,
 	currentSize = 100,
 	isTiled = false,
-	watermarkCount = 0
+	watermarkCount = 0,
 }: {
 	onAddImage: () => void;
 	onAddText?: () => void;
@@ -34,24 +34,24 @@ let {
 
 // Position presets with better labels
 const positions = [
-	{ label: '↖', value: 'northwest', title: 'Top Left' },
-	{ label: '↑', value: 'north', title: 'Top Center' },
-	{ label: '↗', value: 'northeast', title: 'Top Right' },
-	{ label: '←', value: 'west', title: 'Middle Left' },
-	{ label: '●', value: 'center', title: 'Center' },
-	{ label: '→', value: 'east', title: 'Middle Right' },
-	{ label: '↙', value: 'southwest', title: 'Bottom Left' },
-	{ label: '↓', value: 'south', title: 'Bottom Center' },
-	{ label: '↘', value: 'southeast', title: 'Bottom Right' }
+	{ label: "↖", value: "northwest", title: "Top Left" },
+	{ label: "↑", value: "north", title: "Top Center" },
+	{ label: "↗", value: "northeast", title: "Top Right" },
+	{ label: "←", value: "west", title: "Middle Left" },
+	{ label: "●", value: "center", title: "Center" },
+	{ label: "→", value: "east", title: "Middle Right" },
+	{ label: "↙", value: "southwest", title: "Bottom Left" },
+	{ label: "↓", value: "south", title: "Bottom Center" },
+	{ label: "↘", value: "southeast", title: "Bottom Right" },
 ];
 
 // Size presets (percentage of image width)
 const sizePresets = [
-	{ label: 'XS', value: 50 },
-	{ label: 'S', value: 75 },
-	{ label: 'M', value: 100 },
-	{ label: 'L', value: 150 },
-	{ label: 'XL', value: 200 }
+	{ label: "XS", value: 50 },
+	{ label: "S", value: 75 },
+	{ label: "M", value: 100 },
+	{ label: "L", value: 150 },
+	{ label: "XL", value: 200 },
 ];
 
 function handleOpacityInput(e: Event) {
@@ -61,27 +61,27 @@ function handleOpacityInput(e: Event) {
 
 // Keyboard shortcuts
 function handleKeyDown(e: KeyboardEvent) {
-	if ((e.target as HTMLElement).tagName === 'INPUT') {
+	if ((e.target as HTMLElement).tagName === "INPUT") {
 		return;
 	}
 
 	switch (e.key) {
-		case 'Delete':
-		case 'Backspace':
+		case "Delete":
+		case "Backspace":
 			if (hasSelection) {
 				e.preventDefault();
 				onDeleteWatermark();
 			}
 			break;
-		case 't':
-		case 'T':
+		case "t":
+		case "T":
 			if (onAddText) {
 				e.preventDefault();
 				onAddText();
 			}
 			break;
-		case 'i':
-		case 'I':
+		case "i":
+		case "I":
 			e.preventDefault();
 			onAddImage();
 			break;

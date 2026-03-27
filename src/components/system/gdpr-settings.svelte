@@ -14,8 +14,8 @@
 -->
 
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import type { SettingGroup } from '../../routes/(app)/config/system-settings/settings-groups';
+import { toast } from "@src/stores/toast.svelte.ts";
+import type { SettingGroup } from "../../routes/(app)/config/system-settings/settings-groups";
 
 interface Props {
 	group: SettingGroup;
@@ -23,8 +23,8 @@ interface Props {
 
 let { group }: Props = $props();
 
-let userIdExport = $state('');
-let userIdAnonymize = $state('');
+let userIdExport = $state("");
+let userIdAnonymize = $state("");
 let loadingExport = $state(false);
 let loadingAnonymize = $state(false);
 let confirmAnonymize = $state(false);
@@ -35,30 +35,30 @@ async function handleExport() {
 	}
 	loadingExport = true;
 	try {
-		const res = await fetch('/api/gdpr', {
-			method: 'POST',
-			body: JSON.stringify({ action: 'export', userId: userIdExport })
+		const res = await fetch("/api/gdpr", {
+			method: "POST",
+			body: JSON.stringify({ action: "export", userId: userIdExport }),
 		});
 		const result = await res.json();
 		if (result.success) {
 			// Trigger download
 			const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-				type: 'application/json'
+				type: "application/json",
 			});
 			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
+			const a = document.createElement("a");
 			a.href = url;
 			a.download = `user-export-${userIdExport}-${new Date().toISOString()}.json`;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
 			window.URL.revokeObjectURL(url);
-			toast.success('Data export downloaded successfully.');
+			toast.success("Data export downloaded successfully.");
 		} else {
-			toast.error({ description: result.error || 'Export failed' });
+			toast.error({ description: result.error || "Export failed" });
 		}
 	} catch (err: any) {
-		toast.error({ description: err.message || 'Export error' });
+		toast.error({ description: err.message || "Export error" });
 	} finally {
 		loadingExport = false;
 	}
@@ -76,20 +76,20 @@ async function handleAnonymize() {
 
 	loadingAnonymize = true;
 	try {
-		const res = await fetch('/api/gdpr', {
-			method: 'POST',
-			body: JSON.stringify({ action: 'anonymize', userId: userIdAnonymize })
+		const res = await fetch("/api/gdpr", {
+			method: "POST",
+			body: JSON.stringify({ action: "anonymize", userId: userIdAnonymize }),
 		});
 		const result = await res.json();
 		if (result.success) {
 			toast.success(`User ${userIdAnonymize} successfully anonymized.`);
-			userIdAnonymize = '';
+			userIdAnonymize = "";
 			confirmAnonymize = false;
 		} else {
-			toast.error({ description: result.error || 'Anonymization failed' });
+			toast.error({ description: result.error || "Anonymization failed" });
 		}
 	} catch (err: any) {
-		toast.error({ description: err.message || 'Anonymization error' });
+		toast.error({ description: err.message || "Anonymization error" });
 	} finally {
 		loadingAnonymize = false;
 	}

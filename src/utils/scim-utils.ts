@@ -221,7 +221,11 @@ function mapScimFieldsToDb(value: Record<string, any>): Record<string, any> {
 export async function validateScimAuth(
   request: Request,
   locals: App.Locals,
-): Promise<{ authenticated: boolean; tenantId?: string | null; error?: string }> {
+): Promise<{
+  authenticated: boolean;
+  tenantId?: string | null;
+  error?: string;
+}> {
   const authHeader = request.headers.get("authorization");
 
   // Option 1: Bearer token
@@ -233,7 +237,10 @@ export async function validateScimAuth(
     }
 
     if (!auth) {
-      return { authenticated: false, error: "Authentication service unavailable" };
+      return {
+        authenticated: false,
+        error: "Authentication service unavailable",
+      };
     }
 
     try {

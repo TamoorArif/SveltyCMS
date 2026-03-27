@@ -1,19 +1,19 @@
 <script lang="ts">
-import type { FieldInstance } from '@src/content/types';
-import type { Locale } from '@src/paraglide/runtime';
-import { tokenTarget } from '@src/services/token/token-target';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import type { FieldInstance } from "@src/content/types";
+import type { Locale } from "@src/paraglide/runtime";
+import { tokenTarget } from "@src/services/token/token-target";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 
 // Lucide Icons
 
-import type { Snippet } from 'svelte';
+import type { Snippet } from "svelte";
 
 interface Props {
 	field: FieldInstance;
 	icon?: Snippet;
 	id: string;
 	label: string;
-	lang: Locale | 'default';
+	lang: Locale | "default";
 	maxLength?: number;
 	onUpdate: (value: string) => void;
 	optimalMax?: number;
@@ -22,7 +22,7 @@ interface Props {
 	rows?: number;
 	translated?: boolean;
 	translationPct?: number;
-	type?: 'input' | 'textarea';
+	type?: "input" | "textarea";
 	value: string;
 }
 
@@ -30,8 +30,8 @@ let {
 	id,
 	label,
 	value = $bindable(),
-	placeholder = '',
-	type = 'input',
+	placeholder = "",
+	type = "input",
 	rows = 3,
 	maxLength,
 	optimalMin = 0,
@@ -41,20 +41,22 @@ let {
 	translationPct = 0,
 	field,
 	onUpdate,
-	icon
+	icon,
 }: Props = $props();
 
 // Element references
-let inputRef = $state<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
+let inputRef = $state<HTMLInputElement | HTMLTextAreaElement | undefined>(
+	undefined,
+);
 
 const getLengthClass = () => {
 	if (maxLength && value.length > maxLength) {
-		return 'text-error-500';
+		return "text-error-500";
 	}
 	if (value.length >= optimalMin && value.length <= optimalMax) {
-		return 'text-success-500';
+		return "text-success-500";
 	}
-	return 'text-surface-400 dark:text-surface-300';
+	return "text-surface-400 dark:text-surface-300";
 };
 </script>
 

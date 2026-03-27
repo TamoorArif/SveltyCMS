@@ -23,11 +23,11 @@
 -->
 
 <script lang="ts">
-import type { FieldInstance } from '@content/types';
-import PageTitle from '@src/components/page-title.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { debounce } from '@utils/utils';
-import AddWidget from './add-widget.svelte';
+import type { FieldInstance } from "@content/types";
+import PageTitle from "@src/components/page-title.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { debounce } from "@utils/utils";
+import AddWidget from "./add-widget.svelte";
 
 // Props
 const { fields = [], onFieldsUpdate = () => {} } = $props();
@@ -43,10 +43,10 @@ function initDragAndDrop(node: HTMLElement) {
 		const pointerID = e.pointerId;
 
 		let targets = $state(
-			[...(container?.getElementsByClassName('field') || [])].map((el) => {
+			[...(container?.getElementsByClassName("field") || [])].map((el) => {
 				const rect = el.getBoundingClientRect();
 				return { el: el as HTMLElement, center: rect.top + rect.height / 2 };
-			})
+			}),
 		);
 
 		const onPointerUp = () => {
@@ -61,10 +61,10 @@ function initDragAndDrop(node: HTMLElement) {
 			// eslint-disable-next-line svelte/no-dom-manipulating
 			container?.appendChild(clone);
 			clone.setPointerCapture(pointerID);
-			node.style.opacity = '0.5';
+			node.style.opacity = "0.5";
 			clone.style.left = `${node.getBoundingClientRect().left}px`;
-			clone.style.marginLeft = '0';
-			clone.style.position = 'fixed';
+			clone.style.marginLeft = "0";
+			clone.style.position = "fixed";
 			clone.style.top = `${e.clientY}px`;
 			clone.style.width = `${node.getBoundingClientRect().width}px`;
 			const cloneHeight = `${clone.offsetHeight + 10}px`;
@@ -72,7 +72,10 @@ function initDragAndDrop(node: HTMLElement) {
 			let oldClosest: HTMLElement;
 
 			clone.onpointermove = (e) => {
-				if (e.clientY < container!.offsetTop || e.clientY > container!.offsetTop + container!.offsetHeight - 60) {
+				if (
+					e.clientY < container!.offsetTop ||
+					e.clientY > container!.offsetTop + container!.offsetHeight - 60
+				) {
 					if (e.clientY < container!.offsetTop) {
 						container?.scrollBy(0, -5);
 					} else {
@@ -81,44 +84,67 @@ function initDragAndDrop(node: HTMLElement) {
 				}
 				clone.style.top = `${e.clientY}px`;
 				deb(() => {
-					targets = [...(container?.getElementsByClassName('field') || [])]
+					targets = [...(container?.getElementsByClassName("field") || [])]
 						.map((el) => {
 							const rect = el.getBoundingClientRect();
 							return {
 								el: el as HTMLElement,
-								center: rect.top + rect.height / 2
+								center: rect.top + rect.height / 2,
 							};
 						})
 						.filter((el) => el.el !== clone);
-					targets.sort((a, b) => (Math.abs(b.center - e.clientY) < Math.abs(a.center - e.clientY) ? 1 : -1));
+					targets.sort((a, b) =>
+						Math.abs(b.center - e.clientY) < Math.abs(a.center - e.clientY)
+							? 1
+							: -1,
+					);
 					const closest = targets[0];
 					if (closest.el === node) {
 						return;
 					}
-					const closestIndex = Number.parseInt(closest.el.getAttribute('data-index') as string, 10);
-					const cloneIndex = Number.parseInt(clone.getAttribute('data-index') as string, 10);
+					const closestIndex = Number.parseInt(
+						closest.el.getAttribute("data-index") as string,
+						10,
+					);
+					const cloneIndex = Number.parseInt(
+						clone.getAttribute("data-index") as string,
+						10,
+					);
 
 					if (oldClosest) {
-						oldClosest.style.removeProperty('border-color');
-						oldClosest.style.margin = '10px 0';
+						oldClosest.style.removeProperty("border-color");
+						oldClosest.style.margin = "10px 0";
 					}
 					if (e.clientY > closest.center && cloneIndex - closestIndex !== 1) {
 						closest.el.style.marginBottom = cloneHeight;
-					} else if (e.clientY < closest.center && closestIndex - cloneIndex !== 1) {
+					} else if (
+						e.clientY < closest.center &&
+						closestIndex - cloneIndex !== 1
+					) {
 						closest.el.style.marginTop = cloneHeight;
 					}
-					closest.el.style.borderColor = 'red';
+					closest.el.style.borderColor = "red";
 					oldClosest = closest.el;
 				});
 			};
 
 			clone.onpointerup = (e) => {
-				node.style.opacity = '1';
+				node.style.opacity = "1";
 				clone.releasePointerCapture(pointerID);
-				targets.sort((a, b) => (Math.abs(b.center - e.clientY) < Math.abs(a.center - e.clientY) ? 1 : -1));
+				targets.sort((a, b) =>
+					Math.abs(b.center - e.clientY) < Math.abs(a.center - e.clientY)
+						? 1
+						: -1,
+				);
 				const closest = targets[0];
-				let closestIndex = Number.parseInt(closest.el.getAttribute('data-index') as string, 10);
-				const cloneIndex = Number.parseInt(clone.getAttribute('data-index') as string, 10);
+				let closestIndex = Number.parseInt(
+					closest.el.getAttribute("data-index") as string,
+					10,
+				);
+				const cloneIndex = Number.parseInt(
+					clone.getAttribute("data-index") as string,
+					10,
+				);
 				const newFields = [...fields];
 				const draggedItem = newFields.splice(cloneIndex, 1)[0];
 
@@ -133,8 +159,8 @@ function initDragAndDrop(node: HTMLElement) {
 				clone.remove();
 				setTimeout(() => {
 					targets.forEach((el) => {
-						el.el.style.removeProperty('border-color');
-						el.el.style.margin = '10px 0';
+						el.el.style.removeProperty("border-color");
+						el.el.style.margin = "10px 0";
 					});
 				}, 50);
 			};
@@ -146,7 +172,7 @@ function initDragAndDrop(node: HTMLElement) {
 	return {
 		destroy() {
 			node.onpointerdown = null;
-		}
+		},
 	};
 }
 

@@ -4,15 +4,15 @@
 Controller for Blur tool using svelte-canvas compatible state.
 -->
 <script lang="ts">
-import Controls from '@src/components/image-editor/toolbars/blur-controls.svelte';
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { Layer } from 'svelte-canvas';
-import type { BlurPattern, BlurShape } from './types';
+import Controls from "@src/components/image-editor/toolbars/blur-controls.svelte";
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { Layer } from "svelte-canvas";
+import type { BlurPattern, BlurShape } from "./types";
 
 // reactive tool state
 let blurStrength = $state(20);
-let pattern = $state<BlurPattern>('blur');
-let shape = $state<BlurShape>('rectangle');
+let pattern = $state<BlurPattern>("blur");
+let shape = $state<BlurShape>("rectangle");
 let activeId = $state<string | null>(null);
 
 const storeState = imageEditorStore.state;
@@ -20,7 +20,7 @@ const storeState = imageEditorStore.state;
 // bind/unbind the tool when active state changes
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'blur') {
+	if (activeState === "blur") {
 		updateToolbar();
 	} else if (imageEditorStore.state.toolbarControls?.component === Controls) {
 		imageEditorStore.setToolbarControls(null);
@@ -43,19 +43,28 @@ function updateToolbar() {
 			onDeleteRegion: () => {},
 			onRotateLeft: () => {},
 			onRotateRight: () => {},
-			onFlipHorizontal: () => {}
-		}
+			onFlipHorizontal: () => {},
+		},
 	});
 }
 
 $effect(() => {
-	if (imageEditorStore.state.activeState === 'blur') {
+	if (imageEditorStore.state.activeState === "blur") {
 		updateToolbar();
 	}
 });
 
-const renderBlurRegions = ({ context, width, height }: { context: CanvasRenderingContext2D; width: number; height: number }) => {
-	const { blurRegions, zoom, translateX, translateY, imageElement } = storeState;
+const renderBlurRegions = ({
+	context,
+	width,
+	height,
+}: {
+	context: CanvasRenderingContext2D;
+	width: number;
+	height: number;
+}) => {
+	const { blurRegions, zoom, translateX, translateY, imageElement } =
+		storeState;
 	if (!imageElement) {
 		return;
 	}
@@ -69,8 +78,13 @@ const renderBlurRegions = ({ context, width, height }: { context: CanvasRenderin
 
 	for (const region of blurRegions) {
 		// Placeholder: draw semi-transparent rectangles for blur regions
-		context.fillStyle = 'rgba(255, 255, 255, 0.3)';
-		context.fillRect(region.x + offsetX, region.y + offsetY, region.width, region.height);
+		context.fillStyle = "rgba(255, 255, 255, 0.3)";
+		context.fillRect(
+			region.x + offsetX,
+			region.y + offsetY,
+			region.width,
+			region.height,
+		);
 	}
 
 	context.restore();

@@ -37,16 +37,17 @@ The `/Users` endpoint manages the lifecycle of individual identities. SveltyCMS 
 
 **Base Path**: `/api/scim/v2/Users`
 
-| Method | Endpoint | RFC | Description |
-| :--- | :--- | :--- | :--- |
-| GET | `/Users` | §3.4.1 | List users (supports filtration and pagination). |
-| POST | `/Users` | §3.3 | Create a new user resource. |
-| GET | `/Users/{id}` | §3.4.1 | Get user details. |
-| PUT | `/Users/{id}` | §3.5.1 | Replace user details (full update). |
-| PATCH | `/Users/{id}` | §3.5.2 | Partial update (e.g. `active: false`). |
-| DELETE | `/Users/{id}` | §3.6 | Deactivate or remove user. |
+| Method | Endpoint      | RFC    | Description                                      |
+| :----- | :------------ | :----- | :----------------------------------------------- |
+| GET    | `/Users`      | §3.4.1 | List users (supports filtration and pagination). |
+| POST   | `/Users`      | §3.3   | Create a new user resource.                      |
+| GET    | `/Users/{id}` | §3.4.1 | Get user details.                                |
+| PUT    | `/Users/{id}` | §3.5.1 | Replace user details (full update).              |
+| PATCH  | `/Users/{id}` | §3.5.2 | Partial update (e.g. `active: false`).           |
+| DELETE | `/Users/{id}` | §3.6   | Deactivate or remove user.                       |
 
 ### Filtration & Pagination
+
 - **`filter`**: Supports RFC 7644 operators like `eq` (Equal), `co` (Contains), `sw` (Starts with), and `pr` (Present).
 - **`startIndex`**: 1-based index (Default: `1`).
 - **`count`**: Items per page (Default: `100`, Max: `200`).
@@ -59,13 +60,13 @@ In SveltyCMS, SCIM **Groups** map 1:1 to **System Roles**. This allows your IdP 
 
 **Base Path**: `/api/scim/v2/Groups`
 
-| Method | Endpoint | RFC | Description |
-| :--- | :--- | :--- | :--- |
-| GET | `/Groups` | §3.4.1 | List all roles in the current tenant. |
-| POST | `/Groups` | §3.3 | Create a new system role. |
-| GET | `/Groups/{id}` | §3.4.1 | Get role details and membership list. |
-| PATCH | `/Groups/{id}` | §3.5.2 | Update members (add/remove from role). |
-| DELETE | `/Groups/{id}` | §3.6 | Delete the system role. |
+| Method | Endpoint       | RFC    | Description                            |
+| :----- | :------------- | :----- | :------------------------------------- |
+| GET    | `/Groups`      | §3.4.1 | List all roles in the current tenant.  |
+| POST   | `/Groups`      | §3.3   | Create a new system role.              |
+| GET    | `/Groups/{id}` | §3.4.1 | Get role details and membership list.  |
+| PATCH  | `/Groups/{id}` | §3.5.2 | Update members (add/remove from role). |
+| DELETE | `/Groups/{id}` | §3.6   | Delete the system role.                |
 
 ---
 
@@ -82,16 +83,20 @@ These endpoints provide metadata to the IdP to ensure compatibility between the 
 ## 4. Multi-Tenant Architecture
 
 ### Secure Scoping
+
 The SCIM API is **tenant-isolated**. Authentication is handled via a Bearer Token that is cryptographically bound to a specific `tenantId`.
+
 > [!IMPORTANT]
 > **Isolation Guarantee**: A token generated for "Tenant A" is mathematically incapable of reading or modifying resources for "Tenant B". This ensures strict data sovereignty in SaaS environments.
 
 ### Conflict Resolution & Identity Linking
+
 When an identity provider attempts to create a user that already exists in the global CMS identity pool (but not yet in the target tenant), SveltyCMS performs **Identity Linking**:
+
 1.  Matches the user by `email` (case-insensitive).
 2.  Links the existing `userId` to the new `tenantId` context.
 3.  Responds with a `201 Created` or `200 OK` (if already linked) to the IdP.
-This prevents duplicate user accounts while allowing a single user to exist across multiple tenants.
+    This prevents duplicate user accounts while allowing a single user to exist across multiple tenants.
 
 ---
 

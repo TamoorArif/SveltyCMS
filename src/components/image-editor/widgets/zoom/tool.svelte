@@ -7,8 +7,8 @@ Provides zoom functionality for the image editor using svelte-canvas compatible 
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import ZoomControls from './controls.svelte';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import ZoomControls from "./controls.svelte";
 
 // --- Svelte 5 State ---
 let minZoom = 0.1;
@@ -19,9 +19,11 @@ const storeState = imageEditorStore.state;
 // --- Lifecycle $effect ---
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'zoom') {
+	if (activeState === "zoom") {
 		updateToolbar();
-	} else if (imageEditorStore.state.toolbarControls?.component === ZoomControls) {
+	} else if (
+		imageEditorStore.state.toolbarControls?.component === ZoomControls
+	) {
 		imageEditorStore.setToolbarControls(null);
 	}
 });
@@ -39,14 +41,14 @@ function updateToolbar() {
 			onFitToScreen: fitToScreen,
 			onFillScreen: fillScreen,
 			onActualSize: () => setZoom(1),
-			onReset: resetZoom
-		}
+			onReset: resetZoom,
+		},
 	});
 }
 
 // Update toolbar when zoom changes
 $effect(() => {
-	if (imageEditorStore.state.activeState === 'zoom') {
+	if (imageEditorStore.state.activeState === "zoom") {
 		updateToolbar();
 	}
 });

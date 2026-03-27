@@ -277,7 +277,10 @@ describe("Collections API Unit Tests", () => {
         fields: [],
       });
 
-      const event = createMockCreateEvent("col-1", { title: "Test Entry", status: "published" });
+      const event = createMockCreateEvent("col-1", {
+        title: "Test Entry",
+        status: "published",
+      });
       const response = await POST_CREATE(event);
 
       expect(response.status).toBe(201);
@@ -365,7 +368,10 @@ describe("Collections API Unit Tests", () => {
       // @ts-expect-error - accessing the mocked dbAdapter
       event.locals.dbAdapter.crud.insert.mockResolvedValue({
         success: false,
-        error: { message: "validation failed: title is required", code: "INSERT_ERROR" },
+        error: {
+          message: "validation failed: title is required",
+          code: "INSERT_ERROR",
+        },
       });
 
       mockContentManager.getCollectionById.mockResolvedValue({
@@ -440,7 +446,9 @@ describe("Collections API Unit Tests", () => {
         fields: [],
       });
 
-      const event = createMockPatchEvent("col-1", "entry-123", { title: "Updated Title" });
+      const event = createMockPatchEvent("col-1", "entry-123", {
+        title: "Updated Title",
+      });
       const response = await PATCH_ENTRY(event);
 
       expect(response.status).toBe(200);
@@ -480,7 +488,9 @@ describe("Collections API Unit Tests", () => {
     });
 
     it("should return 404 if entry not found", async () => {
-      const event = createMockPatchEvent("col-1", "nonexistent", { title: "Test" });
+      const event = createMockPatchEvent("col-1", "nonexistent", {
+        title: "Test",
+      });
       // @ts-expect-error
       event.locals.dbAdapter.crud.findOne.mockResolvedValue({
         success: false,

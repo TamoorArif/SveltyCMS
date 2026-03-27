@@ -24,19 +24,19 @@ Advanced icon picker with search, pagination, and favorites.
 -->
 
 <script lang="ts">
-import { loadIcons } from '@iconify/svelte';
-import { iconpicker_placeholder } from '@src/paraglide/messages';
-import { logger } from '@utils/logger';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onDestroy, onMount } from 'svelte';
-import { quintOut } from 'svelte/easing';
-import { fade, scale, slide } from 'svelte/transition';
+import { loadIcons } from "@iconify/svelte";
+import { iconpicker_placeholder } from "@src/paraglide/messages";
+import { logger } from "@utils/logger";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onDestroy, onMount } from "svelte";
+import { quintOut } from "svelte/easing";
+import { fade, scale, slide } from "svelte/transition";
 
 // Constants
 const DEBOUNCE_MS = 300;
 const ICONS_PER_PAGE = 50;
-const DEFAULT_LIBRARY = 'ic';
-const ICONIFY_API_BASE = 'https://api.iconify.design';
+const DEFAULT_LIBRARY = "ic";
+const ICONIFY_API_BASE = "https://api.iconify.design";
 const MAX_RECENT = 10;
 
 // Types
@@ -68,7 +68,13 @@ interface Props {
 	hideSearchInput?: boolean;
 }
 
-let { iconselected = $bindable(), icon = $bindable(''), searchQuery = $bindable(''), showFavorites = true, hideSearchInput = true }: Props = $props();
+let {
+	iconselected = $bindable(),
+	icon = $bindable(""),
+	searchQuery = $bindable(""),
+	showFavorites = true,
+	hideSearchInput = true,
+}: Props = $props();
 
 // Sync icon ↔ iconselected so bind:icon from InputSwitch receives picker updates
 $effect(() => {
@@ -88,7 +94,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let favorites = $state<string[]>([]);
 let recentSelections = $state<string[]>([]);
 let isLoading = $state(false);
-let activeTab = $state<'search' | 'favorites' | 'recent'>('search');
+let activeTab = $state<"search" | "favorites" | "recent">("search");
 let showDropdown = $state(false);
 let selectedIndex = $state(-1);
 let prefersReducedMotion = $state(false);
@@ -103,22 +109,24 @@ let gridRef = $state<HTMLDivElement | null>(null);
 const startIndex = $derived(currentPage * ICONS_PER_PAGE);
 const librariesLoaded = $derived(Object.keys(iconLibraries).length > 0);
 const hasSearchQuery = $derived(searchQuery.trim().length > 0);
-const isFavorite = $derived(favorites.includes(iconselected ?? ''));
+const isFavorite = $derived(favorites.includes(iconselected ?? ""));
 const hasRecent = $derived(recentSelections.length > 0);
 const hasFavorites = $derived(favorites.length > 0);
 
 const sortedLibraries = $derived.by(() => {
-	return Object.entries(iconLibraries).sort(([, a], [, b]) => a.name.localeCompare(b.name));
+	return Object.entries(iconLibraries).sort(([, a], [, b]) =>
+		a.name.localeCompare(b.name),
+	);
 });
 
 let visibleLimit = $state(50);
 
 // Display icons based on active tab
 const displayIcons = $derived.by(() => {
-	if (activeTab === 'favorites') {
+	if (activeTab === "favorites") {
 		return favorites;
 	}
-	if (activeTab === 'recent') {
+	if (activeTab === "recent") {
 		return recentSelections;
 	}
 
@@ -141,7 +149,7 @@ function intersectionObserverAction(node: HTMLElement) {
 	return {
 		destroy() {
 			observer.disconnect();
-		}
+		},
 	};
 }
 
@@ -151,7 +159,7 @@ function loadMore() {
 		visibleLimit += 50;
 	}
 	// If searching (API pagination), fetch more
-	else if (hasSearchQuery || selectedLibrary === '') {
+	else if (hasSearchQuery || selectedLibrary === "") {
 		// Logic to fetch next page from API and append (requires searchIcons to append)
 		// For simplicity, we can ignore this for now if searchTokens returns 50 at a time
 		// But since we removed Page Next/Prev buttons, we SHOULD implement API pagination here.
@@ -188,7 +196,11 @@ function debouncedSearch(query: string, library: string): void {
 }
 
 // Fetch icons from Iconify API
-async function searchIcons(query: string, library: string, append = false): Promise<void> {
+async function searchIcons(
+	query: string,
+	library: string,
+	append = false,
+): Promise<void> {
 	// If no query, load the library's icons instead of clearing
 	if (!query.trim()) {
 		if (library && !append) {
@@ -202,19 +214,19 @@ async function searchIcons(query: string, library: string, append = false): Prom
 
 	try {
 		const url = new URL(`${ICONIFY_API_BASE}/search`);
-		url.searchParams.set('query', query);
+		url.searchParams.set("query", query);
 		// Only set prefix if a specific library is selected
 		if (library) {
-			url.searchParams.set('prefix', library);
+			url.searchParams.set("prefix", library);
 		}
-		url.searchParams.set('start', startIndex.toString());
-		url.searchParams.set('limit', ICONS_PER_PAGE.toString());
+		url.searchParams.set("start", startIndex.toString());
+		url.searchParams.set("limit", ICONS_PER_PAGE.toString());
 
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 10_000);
 
 		const response = await fetch(url.toString(), {
-			signal: controller.signal
+			signal: controller.signal,
 		});
 
 		clearTimeout(timeout);
@@ -244,16 +256,16 @@ async function searchIcons(query: string, library: string, append = false): Prom
 			});
 			await loadIcons(iconIds);
 
-			activeTab = 'search';
+			activeTab = "search";
 		} else if (!append) {
 			icons = [];
 		}
 	} catch (error) {
-		if (error instanceof Error && error.name === 'AbortError') {
-			searchError = 'Search timeout - please try again';
+		if (error instanceof Error && error.name === "AbortError") {
+			searchError = "Search timeout - please try again";
 		} else {
-			logger.error('Error fetching icons:', error);
-			searchError = 'Failed to fetch icons';
+			logger.error("Error fetching icons:", error);
+			searchError = "Failed to fetch icons";
 		}
 		icons = [];
 	} finally {
@@ -268,7 +280,9 @@ async function fetchCollectionIcons(library: string): Promise<void> {
 	icons = [];
 
 	try {
-		const response = await fetch(`${ICONIFY_API_BASE}/collection?prefix=${library}`);
+		const response = await fetch(
+			`${ICONIFY_API_BASE}/collection?prefix=${library}`,
+		);
 		if (!response.ok) {
 			throw new Error(`Failed to load collection: ${response.status}`);
 		}
@@ -297,8 +311,8 @@ async function fetchCollectionIcons(library: string): Promise<void> {
 		// Reset to page 0 for new collection
 		// currentPage = 0; // Don't reset here, handled by caller if needed
 	} catch (error) {
-		logger.error('Error fetching collection icons:', error);
-		searchError = 'Failed to load library icons';
+		logger.error("Error fetching collection icons:", error);
+		searchError = "Failed to load library icons";
 	} finally {
 		isLoading = false;
 	}
@@ -318,7 +332,7 @@ async function fetchIconLibraries(): Promise<void> {
 		const timeout = setTimeout(() => controller.abort(), 10_000);
 
 		const response = await fetch(`${ICONIFY_API_BASE}/collections`, {
-			signal: controller.signal
+			signal: controller.signal,
 		});
 
 		clearTimeout(timeout);
@@ -330,8 +344,8 @@ async function fetchIconLibraries(): Promise<void> {
 		const data: Record<string, IconLibrary> = await response.json();
 		iconLibraries = data;
 	} catch (error) {
-		logger.error('Error fetching icon libraries:', error);
-		searchError = 'Failed to load libraries';
+		logger.error("Error fetching icon libraries:", error);
+		searchError = "Failed to load libraries";
 	} finally {
 		isLoadingLibraries = false;
 	}
@@ -341,12 +355,17 @@ async function fetchIconLibraries(): Promise<void> {
 
 // Icon selection
 function selectIcon(iconName: string): void {
-	const fullIconName = iconName.includes(':') ? iconName : `${selectedLibrary}:${iconName}`;
+	const fullIconName = iconName.includes(":")
+		? iconName
+		: `${selectedLibrary}:${iconName}`;
 	iconselected = fullIconName;
 	icon = fullIconName;
 
 	// Add to recent (avoiding duplicates)
-	recentSelections = [fullIconName, ...recentSelections.filter((i) => i !== fullIconName)].slice(0, MAX_RECENT);
+	recentSelections = [
+		fullIconName,
+		...recentSelections.filter((i) => i !== fullIconName),
+	].slice(0, MAX_RECENT);
 
 	showDropdown = false;
 	toast.success(`Icon selected: ${fullIconName}`);
@@ -361,10 +380,10 @@ function toggleFavorite(icon?: string): void {
 
 	if (favorites.includes(targetIcon)) {
 		favorites = favorites.filter((i) => i !== targetIcon);
-		toast.info('Removed from favorites');
+		toast.info("Removed from favorites");
 	} else {
 		favorites = [...favorites, targetIcon];
-		toast.success('Added to favorites');
+		toast.success("Added to favorites");
 	}
 }
 
@@ -376,18 +395,18 @@ async function copyIconName(): Promise<void> {
 
 	try {
 		await navigator.clipboard.writeText(iconselected);
-		toast.success('Icon name copied to clipboard');
+		toast.success("Icon name copied to clipboard");
 	} catch (error) {
-		logger.error('Copy failed:', error);
-		toast.error('Failed to copy icon name');
+		logger.error("Copy failed:", error);
+		toast.error("Failed to copy icon name");
 	}
 }
 
 // Remove icon
 function removeIcon(): void {
-	iconselected = '';
-	icon = '';
-	searchQuery = '';
+	iconselected = "";
+	icon = "";
+	searchQuery = "";
 	icons = [];
 }
 
@@ -430,24 +449,24 @@ function handleKeyDown(event: KeyboardEvent): void {
 	const iconsToNavigate = displayIcons;
 
 	switch (event.key) {
-		case 'Escape':
+		case "Escape":
 			event.preventDefault();
 			showDropdown = false;
 			break;
 
-		case 'ArrowDown':
+		case "ArrowDown":
 			event.preventDefault();
 			selectedIndex = Math.min(selectedIndex + 1, iconsToNavigate.length - 1);
 			scrollToSelected();
 			break;
 
-		case 'ArrowUp':
+		case "ArrowUp":
 			event.preventDefault();
 			selectedIndex = Math.max(selectedIndex - 1, -1);
 			scrollToSelected();
 			break;
 
-		case 'Enter':
+		case "Enter":
 			event.preventDefault();
 			if (selectedIndex >= 0 && iconsToNavigate[selectedIndex]) {
 				selectIcon(iconsToNavigate[selectedIndex]);
@@ -465,8 +484,8 @@ function scrollToSelected(): void {
 	const selectedElement = gridRef.children[selectedIndex] as HTMLElement;
 	if (selectedElement) {
 		selectedElement.scrollIntoView({
-			block: 'nearest',
-			behavior: prefersReducedMotion ? 'auto' : 'smooth'
+			block: "nearest",
+			behavior: prefersReducedMotion ? "auto" : "smooth",
 		});
 	}
 }
@@ -480,26 +499,26 @@ function switchTab(tab: typeof activeTab): void {
 // Effects
 $effect(() => {
 	if (showDropdown) {
-		document.addEventListener('click', handleClickOutside);
-		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener("click", handleClickOutside);
+		document.addEventListener("keydown", handleKeyDown);
 		return () => {
-			document.removeEventListener('click', handleClickOutside);
-			document.removeEventListener('keydown', handleKeyDown);
+			document.removeEventListener("click", handleClickOutside);
+			document.removeEventListener("keydown", handleKeyDown);
 		};
 	}
 });
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 
 onDestroy(() => {

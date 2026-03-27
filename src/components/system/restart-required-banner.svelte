@@ -20,9 +20,9 @@ Displays a prominent banner when server restart is required with countdown and s
 -->
 
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onDestroy, onMount } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onDestroy, onMount } from "svelte";
+import { fade, slide } from "svelte/transition";
 
 // State
 let isRestarting = $state(false);
@@ -41,7 +41,9 @@ async function restartServer(skipConfirmation = false) {
 	}
 
 	if (!skipConfirmation) {
-		const confirmed = confirm('Are you sure you want to restart the server? This will temporarily interrupt service.');
+		const confirmed = confirm(
+			"Are you sure you want to restart the server? This will temporarily interrupt service.",
+		);
 		if (!confirmed) {
 			return;
 		}
@@ -50,15 +52,15 @@ async function restartServer(skipConfirmation = false) {
 	isRestarting = true;
 
 	try {
-		const response = await fetch('/api/system/restart', {
-			method: 'POST',
+		const response = await fetch("/api/system/restart", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				"Content-Type": "application/json",
+			},
 		});
 
 		if (response.ok) {
-			toast.success('Server is restarting... Please wait.');
+			toast.success("Server is restarting... Please wait.");
 
 			// Optionally reload page after delay
 			setTimeout(() => {
@@ -66,10 +68,11 @@ async function restartServer(skipConfirmation = false) {
 			}, 5000);
 		} else {
 			const data = await response.json();
-			throw new Error(data.error || 'Restart failed');
+			throw new Error(data.error || "Restart failed");
 		}
 	} catch (error) {
-		const message = error instanceof Error ? error.message : 'Failed to restart server';
+		const message =
+			error instanceof Error ? error.message : "Failed to restart server";
 		toast.error(message);
 		isRestarting = false;
 	}
@@ -106,15 +109,15 @@ function dismiss() {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 
 onDestroy(() => {

@@ -177,7 +177,10 @@ describe("SCIM PATCH Engine", () => {
 
   it("should handle name object in no-path merge", () => {
     const updates = applyScimPatchOps(existingUser, [
-      { op: "replace", value: { name: { givenName: "Jane", familyName: "Smith" } } },
+      {
+        op: "replace",
+        value: { name: { givenName: "Jane", familyName: "Smith" } },
+      },
     ]);
     expect(updates.username).toBe("Jane");
     expect(updates.lastName).toBe("Smith");
@@ -185,7 +188,10 @@ describe("SCIM PATCH Engine", () => {
 
   it("should handle emails array in no-path merge", () => {
     const updates = applyScimPatchOps(existingUser, [
-      { op: "replace", value: { emails: [{ value: "new@example.com", primary: true }] } },
+      {
+        op: "replace",
+        value: { emails: [{ value: "new@example.com", primary: true }] },
+      },
     ]);
     expect(updates.email).toBe("new@example.com");
   });

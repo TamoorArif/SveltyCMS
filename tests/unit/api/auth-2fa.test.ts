@@ -175,7 +175,9 @@ describe("2FA API Unit Tests", () => {
   describe("POST /api/auth/2fa/setup", () => {
     it("should initiate setup for authenticated user", async () => {
       const user = { _id: "user-1", email: "test@example.com" };
-      mockTwoFactorService.initiate2FASetup.mockResolvedValue({ secret: "secret" });
+      mockTwoFactorService.initiate2FASetup.mockResolvedValue({
+        secret: "secret",
+      });
 
       const event = createMockEvent({}, user);
       const response = await POST_SETUP(event);
@@ -236,7 +238,11 @@ describe("2FA API Unit Tests", () => {
 
   describe("POST /api/auth/2fa/disable", () => {
     it("should disable 2FA for enabled user", async () => {
-      const user = { _id: "user-1", is2FAEnabled: true, password: "hashed_password" };
+      const user = {
+        _id: "user-1",
+        is2FAEnabled: true,
+        password: "hashed_password",
+      };
       mockTwoFactorService.disable2FA.mockResolvedValue(true);
       mockVerifyPassword.mockResolvedValue(true);
 
@@ -248,7 +254,11 @@ describe("2FA API Unit Tests", () => {
     });
 
     it("should throw 2FA_DISABLED if not enabled", async () => {
-      const user = { _id: "user-1", is2FAEnabled: false, password: "hashed_password" };
+      const user = {
+        _id: "user-1",
+        is2FAEnabled: false,
+        password: "hashed_password",
+      };
       mockVerifyPassword.mockResolvedValue(true);
 
       const event = createMockEvent({ password: "correct_password" }, user);
@@ -259,7 +269,10 @@ describe("2FA API Unit Tests", () => {
   describe("Backup Codes Management", () => {
     it("should return 2FA status (GET)", async () => {
       const user = { _id: "user-1" };
-      mockTwoFactorService.get2FAStatus.mockResolvedValue({ enabled: true, backupCodesCount: 5 });
+      mockTwoFactorService.get2FAStatus.mockResolvedValue({
+        enabled: true,
+        backupCodesCount: 5,
+      });
 
       const event = createMockEvent({}, user);
       const response = await GET_BACKUP_CODES(event);

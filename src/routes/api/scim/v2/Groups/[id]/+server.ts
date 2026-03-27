@@ -104,7 +104,10 @@ export const PATCH = apiHandler(async ({ params, request, url, locals }) => {
             });
           }
         } catch (e) {
-          logger.warn("SCIM Group bulk member add failed", { groupId: id, error: e });
+          logger.warn("SCIM Group bulk member add failed", {
+            groupId: id,
+            error: e,
+          });
         }
       } else if (op.op === "remove" && Array.isArray(op.value)) {
         // Remove members: revert to default role using bulk update
@@ -124,14 +127,21 @@ export const PATCH = apiHandler(async ({ params, request, url, locals }) => {
             });
           }
         } catch (e) {
-          logger.warn("SCIM Group bulk member remove failed", { groupId: id, error: e });
+          logger.warn("SCIM Group bulk member remove failed", {
+            groupId: id,
+            error: e,
+          });
         }
       } else if (op.op === "replace" && typeof op.value === "object" && op.value !== null) {
         // Replace group displayName
         const val = op.value as Record<string, any>;
         if (val.displayName) {
           await auth.authInterface.updateRole(id, { name: val.displayName } as any, tenantId);
-          logger.info("SCIM Group renamed", { groupId: id, newName: val.displayName, tenantId });
+          logger.info("SCIM Group renamed", {
+            groupId: id,
+            newName: val.displayName,
+            tenantId,
+          });
         }
       }
     }
@@ -185,6 +195,10 @@ export const DELETE = apiHandler(async ({ params, request, locals }) => {
   }
 
   await auth.authInterface.deleteRole(id, tenantId);
-  logger.info("SCIM Group deleted", { groupId: id, roleName: role.name, tenantId });
+  logger.info("SCIM Group deleted", {
+    groupId: id,
+    roleName: role.name,
+    tenantId,
+  });
   return new Response(null, { status: 204 });
 });

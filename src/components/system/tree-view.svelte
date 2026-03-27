@@ -32,7 +32,14 @@ export interface TreeNode {
 	badge?: {
 		visible?: boolean; // Whether the badge is visible
 		count?: number; // Count for the badge
-		status?: 'draft' | 'publish' | 'archive' | 'schedule' | 'delete' | 'clone' | 'test'; // Status for the badge
+		status?:
+			| "draft"
+			| "publish"
+			| "archive"
+			| "schedule"
+			| "delete"
+			| "clone"
+			| "test"; // Status for the badge
 		color?: string; // Color for the badge
 	};
 	children?: TreeNode[]; // Optional children nodes

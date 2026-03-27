@@ -24,7 +24,11 @@ import {
 
 describe("Crypto Utils - AES-256-GCM Encryption", () => {
   const testPassword = "TestPassword123!";
-  const testData = { username: "admin", email: "admin@example.com", secret: "my-secret-key" };
+  const testData = {
+    username: "admin",
+    email: "admin@example.com",
+    secret: "my-secret-key",
+  };
 
   it("should encrypt data successfully", async () => {
     const encrypted = await encryptData(testData, testPassword);

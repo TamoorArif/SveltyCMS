@@ -60,10 +60,10 @@ Permission-based access control component with advanced features and security.
 -->
 
 <script lang="ts">
-import type { PermissionConfig } from '@src/databases/auth/permissions';
-import type { Snippet } from 'svelte';
-import { fade } from 'svelte/transition';
-import { page } from '$app/state';
+import type { PermissionConfig } from "@src/databases/auth/permissions";
+import type { Snippet } from "svelte";
+import { fade } from "svelte/transition";
+import { page } from "$app/state";
 
 interface ErrorMessages {
 	insufficientPermissions?: string;
@@ -82,21 +82,34 @@ interface Props {
 	silent?: boolean;
 }
 
-const { config, messages = {}, silent = false, showLoadingState = true, logDenials = true, children, fallback }: Props = $props();
+const {
+	config,
+	messages = {},
+	silent = false,
+	showLoadingState = true,
+	logDenials = true,
+	children,
+	fallback,
+}: Props = $props();
 
 // Default messages
 const defaultMessages: Required<ErrorMessages> = {
-	rateLimited: 'Rate limit reached. Please try again later.',
-	missingConfig: 'Permission configuration is missing.',
-	insufficientPermissions: 'You do not have permission to access this content.',
-	loadingPermissions: 'Loading permissions...'
+	rateLimited: "Rate limit reached. Please try again later.",
+	missingConfig: "Permission configuration is missing.",
+	insufficientPermissions: "You do not have permission to access this content.",
+	loadingPermissions: "Loading permissions...",
 };
 
 // Merge with user-provided messages
 const finalMessages = $derived({ ...defaultMessages, ...messages });
 
 // Derive permissions and admin status from page data
-const permissions = $derived((page.data?.permissions || {}) as Record<string, { hasPermission: boolean; isRateLimited: boolean }>);
+const permissions = $derived(
+	(page.data?.permissions || {}) as Record<
+		string,
+		{ hasPermission: boolean; isRateLimited: boolean }
+	>,
+);
 const isAdmin = $derived(page.data?.isAdmin as boolean);
 const isLoading = $derived(page.data?.isLoadingPermissions as boolean);
 
@@ -108,7 +121,7 @@ const permissionData = $derived.by(() => {
 	return (
 		permissions[config.contextId] ?? {
 			hasPermission: false,
-			isRateLimited: false
+			isRateLimited: false,
 		}
 	);
 });
@@ -116,18 +129,20 @@ const permissionData = $derived.by(() => {
 // Determine access status
 const hasPermission = $derived(isAdmin || permissionData.hasPermission);
 const isRateLimited = $derived(permissionData.isRateLimited);
-const shouldShowContent = $derived(!!config && hasPermission && !isRateLimited && !isLoading);
+const shouldShowContent = $derived(
+	!!config && hasPermission && !isRateLimited && !isLoading,
+);
 
 // Denial reason (for logging)
 const denialReason = $derived.by(() => {
 	if (!config) {
-		return 'missing_config';
+		return "missing_config";
 	}
 	if (isRateLimited) {
-		return 'rate_limited';
+		return "rate_limited";
 	}
 	if (!hasPermission) {
-		return 'insufficient_permissions';
+		return "insufficient_permissions";
 	}
 	return null;
 });
@@ -135,11 +150,12 @@ const denialReason = $derived.by(() => {
 // Log permission denials for security audit
 $effect(() => {
 	if (logDenials && denialReason && config) {
-		console.warn('[PermissionGuard] Access denied:', {
+		console.warn("[PermissionGuard] Access denied:", {
 			contextId: config.contextId,
 			reason: denialReason,
 			timestamp: new Date().toISOString(),
-			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+			userAgent:
+				typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
 		});
 	}
 });
@@ -161,19 +177,19 @@ const errorMessage = $derived.by(() => {
 // Determine icon for error state
 const errorIcon = $derived.by(() => {
 	if (!config) {
-		return '⚙️';
+		return "⚙️";
 	}
 	if (isRateLimited) {
-		return '⏱️';
+		return "⏱️";
 	}
 	if (!hasPermission) {
-		return '🔒';
+		return "🔒";
 	}
-	return '❌';
+	return "❌";
 });
 
 // ARIA role for error messages
-const errorRole = $derived(isRateLimited ? 'status' : 'alert');
+const errorRole = $derived(isRateLimited ? "status" : "alert");
 </script>
 
 {#if isLoading && showLoadingState}

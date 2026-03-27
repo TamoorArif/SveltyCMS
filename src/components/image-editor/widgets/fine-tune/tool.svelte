@@ -7,13 +7,18 @@ Orchestrates the filter modules using svelte-canvas compatible state.
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { type Adjustments, DEFAULT_ADJUSTMENTS, FILTER_PRESETS, getAdjustmentsByCategory } from './adjustments';
-import FineTuneControls from './controls.svelte';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import {
+	type Adjustments,
+	DEFAULT_ADJUSTMENTS,
+	FILTER_PRESETS,
+	getAdjustmentsByCategory,
+} from "./adjustments";
+import FineTuneControls from "./controls.svelte";
 
 // --- Svelte 5 State ---
-let activeAdjustment = $state<keyof Adjustments>('brightness');
-let activeCategory = $state('basic');
+let activeAdjustment = $state<keyof Adjustments>("brightness");
+let activeCategory = $state("basic");
 let isComparing = $state(false);
 
 const storeState = imageEditorStore.state;
@@ -21,16 +26,18 @@ const storeState = imageEditorStore.state;
 // Binds/unbounds the tool and registers the toolbar
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'finetune') {
+	if (activeState === "finetune") {
 		updateToolbar();
-	} else if (imageEditorStore.state.toolbarControls?.component === FineTuneControls) {
+	} else if (
+		imageEditorStore.state.toolbarControls?.component === FineTuneControls
+	) {
 		imageEditorStore.setToolbarControls(null);
 	}
 });
 
 // Reactively update toolbar when state changes
 function updateToolbar() {
-	if (imageEditorStore.state.activeState !== 'finetune') {
+	if (imageEditorStore.state.activeState !== "finetune") {
 		return;
 	}
 
@@ -61,7 +68,7 @@ function updateToolbar() {
 				if (preset) {
 					storeState.filters = {
 						...DEFAULT_ADJUSTMENTS,
-						...preset.adjustments
+						...preset.adjustments,
 					};
 				}
 			},
@@ -72,8 +79,8 @@ function updateToolbar() {
 				storeState.filters = { ...DEFAULT_ADJUSTMENTS };
 			},
 			onCompareToggle: () => (isComparing = !isComparing),
-			onAutoAdjust: autoAdjust
-		}
+			onAutoAdjust: autoAdjust,
+		},
 	});
 }
 
@@ -85,7 +92,7 @@ function autoAdjust() {
 	storeState.filters = {
 		...DEFAULT_ADJUSTMENTS,
 		contrast: 10,
-		saturation: 20
+		saturation: 20,
 	};
 }
 

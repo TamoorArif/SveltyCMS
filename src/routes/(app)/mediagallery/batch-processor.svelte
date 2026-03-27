@@ -3,10 +3,10 @@
 @component Batch Image Transformation Engine
  -->
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import { slide } from 'svelte/transition';
-import type { SvelteSet } from 'svelte/reactivity';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import { slide } from "svelte/transition";
+import type { SvelteSet } from "svelte/reactivity";
 
 interface Props {
 	selectedIds: SvelteSet<string>;
@@ -15,16 +15,16 @@ interface Props {
 
 let { selectedIds, onClose }: Props = $props();
 
-let operation = $state<'filter' | 'resize' | 'watermark'>('filter');
-let filterPreset = $state('vivid');
+let operation = $state<"filter" | "resize" | "watermark">("filter");
+let filterPreset = $state("vivid");
 let width = $state(1200);
 let isProcessing = $state(false);
 
 const presets = [
-	{ id: 'vivid', label: 'Vivid' },
-	{ id: 'bw', label: 'B&W' },
-	{ id: 'sepia', label: 'Sepia' },
-	{ id: 'dramatic', label: 'Dramatic' }
+	{ id: "vivid", label: "Vivid" },
+	{ id: "bw", label: "B&W" },
+	{ id: "sepia", label: "Sepia" },
+	{ id: "dramatic", label: "Dramatic" },
 ];
 
 async function runBatch() {
@@ -33,25 +33,25 @@ async function runBatch() {
 	const ids = Array.from(selectedIds);
 
 	try {
-		const response = await fetch('/api/media/batch-process', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/media/batch-process", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				ids,
 				operation,
-				params: operation === 'filter' ? { filterPreset } : { width }
-			})
+				params: operation === "filter" ? { filterPreset } : { width },
+			}),
 		});
 
 		if (response.ok) {
 			toast.success(`Successfully processed ${ids.length} images.`);
 			onClose();
 		} else {
-			throw new Error('Batch processing failed');
+			throw new Error("Batch processing failed");
 		}
 	} catch (err) {
-		logger.error('Batch error', err);
-		toast.error('Batch processing encountered an error.');
+		logger.error("Batch error", err);
+		toast.error("Batch processing encountered an error.");
 	} finally {
 		isProcessing = false;
 	}

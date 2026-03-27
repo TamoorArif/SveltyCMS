@@ -45,15 +45,15 @@
 - Fluid typography scaling
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { ui } from '@src/stores/ui-store.svelte.ts';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { ui } from "@src/stores/ui-store.svelte.ts";
 
 type DefaultBehaviorFn = () => void;
 
 // Props
 interface Props {
 	backUrl?: string;
-	children?: import('svelte').Snippet; // For action buttons
+	children?: import("svelte").Snippet; // For action buttons
 	highlight?: string;
 	helpUrl?: string; // Documentation URL
 	icon?: string;
@@ -67,21 +67,21 @@ interface Props {
 
 const {
 	name,
-	highlight = '',
-	helpUrl = '',
+	highlight = "",
+	helpUrl = "",
 	icon,
-	iconColor = 'text-tertiary-500 dark:text-primary-500',
-	iconSize = '32',
+	iconColor = "text-tertiary-500 dark:text-primary-500",
+	iconSize = "32",
 	showBackButton = false,
-	backUrl = '',
+	backUrl = "",
 	truncate = true,
 	onBackClick,
-	children
+	children,
 }: Props = $props();
 
 const titleParts = $derived(() => {
 	if (highlight && name.toLowerCase().includes(highlight.toLowerCase())) {
-		const regex = new RegExp(`(${highlight})`, 'gi');
+		const regex = new RegExp(`(${highlight})`, "gi");
 		return name.split(regex);
 	}
 	return [name];

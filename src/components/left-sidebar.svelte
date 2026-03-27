@@ -6,17 +6,17 @@ Main sidebar navigation updated to use the modular Content Service and Context.
 
 <script lang="ts">
 // Skeleton V4
-import { Avatar, Menu, Portal } from '@skeletonlabs/skeleton-svelte';
-import Collections from '@src/components/collections.svelte';
-import MediaFolders from '@src/components/media-folders.svelte';
-import SettingsMenu from '@src/components/settings-menu.svelte';
-import SiteName from '@src/components/site-name.svelte';
-import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
-import Slot from '@src/components/system/slot.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import ThemeToggle from '@src/components/theme-toggle.svelte';
-import VersionCheck from '@src/components/version-check.svelte';
-import { useContent } from '@src/content/content-context.svelte';
+import { Avatar, Menu, Portal } from "@skeletonlabs/skeleton-svelte";
+import Collections from "@src/components/collections.svelte";
+import MediaFolders from "@src/components/media-folders.svelte";
+import SettingsMenu from "@src/components/settings-menu.svelte";
+import SiteName from "@src/components/site-name.svelte";
+import SveltyCMSLogo from "@src/components/system/icons/svelty-cms-logo.svelte";
+import Slot from "@src/components/system/slot.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import ThemeToggle from "@src/components/theme-toggle.svelte";
+import VersionCheck from "@src/components/version-check.svelte";
+import { useContent } from "@src/content/content-context.svelte";
 
 // Paraglide Messages
 import {
@@ -27,23 +27,30 @@ import {
 	applayout_userprofile,
 	button_Collections,
 	Collections_MediaGallery,
-	collections_media
-} from '@src/paraglide/messages';
-import type { Locale } from '@src/paraglide/runtime';
-import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
+	collections_media,
+} from "@src/paraglide/messages";
+import type { Locale } from "@src/paraglide/runtime";
+import { locales as availableLocales, getLocale } from "@src/paraglide/runtime";
 
 // Stores
-import { setMode } from '@src/stores/collection-store.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte';
-import { avatarSrc, systemLanguage } from '@src/stores/store.svelte';
-import { themeStore } from '@src/stores/theme-store.svelte';
-import { toggleUIElement, uiStateManager, userPreferredState } from '@src/stores/ui-store.svelte';
-import { getLanguageName } from '@utils/language-utils';
-import { logger } from '@utils/logger';
-import { browser } from '$app/environment';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import { setMode } from "@src/stores/collection-store.svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte";
+import { avatarSrc, systemLanguage } from "@src/stores/store.svelte";
+import { themeStore } from "@src/stores/theme-store.svelte";
+import {
+	toggleUIElement,
+	uiStateManager,
+	userPreferredState,
+} from "@src/stores/ui-store.svelte";
+import { getLanguageName } from "@utils/language-utils";
+import { logger } from "@utils/logger";
+import { browser } from "$app/environment";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
 
 // Constants
 const MOBILE_BREAKPOINT = 768;
@@ -58,21 +65,25 @@ const user = $derived(page.data.user);
 const currentPath = $derived(page.url.pathname);
 
 // Check if we're in special modes
-const isMediaMode = $derived(currentPath.includes('/mediagallery'));
-const isSettingsMode = $derived(currentPath.includes('/config/system-settings'));
+const isMediaMode = $derived(currentPath.includes("/mediagallery"));
+const isSettingsMode = $derived(
+	currentPath.includes("/config/system-settings"),
+);
 
 // Language state
 let languageTag = $state(getLocale() as string);
-let searchQuery = $state('');
+let searchQuery = $state("");
 
 // Derived values
-const isSidebarFull = $derived(uiStateManager.uiState.value.leftSidebar === 'full');
+const isSidebarFull = $derived(
+	uiStateManager.uiState.value.leftSidebar === "full",
+);
 
 /**
  * Dynamically resolves the path to the first available collection.
  * Uses the new content service for smart resolution.
  */
-let firstCollectionPath = $state('/collections');
+let firstCollectionPath = $state("/collections");
 $effect(() => {
 	if (content.isInitialized) {
 		content.getFirstCollectionRedirectUrl(getLocale(), tenantId).then((url) => {
@@ -81,39 +92,51 @@ $effect(() => {
 	}
 });
 
-const availableLanguages = $derived([...availableLocales].sort((a, b) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en'))));
+const availableLanguages = $derived(
+	[...availableLocales].sort((a, b) =>
+		getLanguageName(a, "en").localeCompare(getLanguageName(b, "en")),
+	),
+);
 
-const showLanguageDropdown = $derived(availableLanguages.length > LANGUAGE_DROPDOWN_THRESHOLD);
+const showLanguageDropdown = $derived(
+	availableLanguages.length > LANGUAGE_DROPDOWN_THRESHOLD,
+);
 
 const filteredLanguages = $derived(
 	availableLanguages
 		.filter((lang) => lang !== languageTag)
 		.filter((lang: string) => {
 			const searchLower = searchQuery.toLowerCase();
-			const systemLangName = getLanguageName(lang, systemLanguage.value).toLowerCase();
-			const enLangName = getLanguageName(lang, 'en').toLowerCase();
-			return systemLangName.includes(searchLower) || enLangName.includes(searchLower);
-		})
+			const systemLangName = getLanguageName(
+				lang,
+				systemLanguage.value,
+			).toLowerCase();
+			const enLangName = getLanguageName(lang, "en").toLowerCase();
+			return (
+				systemLangName.includes(searchLower) || enLangName.includes(searchLower)
+			);
+		}),
 );
 
 const avatarUrl = $derived.by(() => {
 	let src = avatarSrc.value;
-	if (!src || src === 'Default_User.svg' || src === '/Default_User.svg') return '/Default_User.svg';
-	if (src.startsWith('data:')) return src;
+	if (!src || src === "Default_User.svg" || src === "/Default_User.svg")
+		return "/Default_User.svg";
+	if (src.startsWith("data:")) return src;
 
 	src = src
-		.replace(/^\/+/, '')
-		.replace(/^mediaFolder\//, '')
-		.replace(/^files\//, '')
-		.replace(/^\/+/, '');
+		.replace(/^\/+/, "")
+		.replace(/^mediaFolder\//, "")
+		.replace(/^files\//, "")
+		.replace(/^\/+/, "");
 	return `/files/${src}?t=${AVATAR_CACHE_BUSTER}`;
 });
 
 const themeTooltipText = $derived.by(() => {
 	const current = themeStore.themePreference;
-	if (current === 'system') return 'System theme (click for Light)';
-	if (current === 'light') return 'Light theme (click for Dark)';
-	return 'Dark theme (click for System)';
+	if (current === "system") return "System theme (click for Light)";
+	if (current === "light") return "Light theme (click for Dark)";
+	return "Dark theme (click for System)";
 });
 
 function isMobile(): boolean {
@@ -122,14 +145,25 @@ function isMobile(): boolean {
 
 async function navigateTo(path: string): Promise<void> {
 	if (currentPath === path) return;
-	if (isMobile()) toggleUIElement('leftSidebar', 'hidden');
+	if (isMobile()) toggleUIElement("leftSidebar", "hidden");
 
-	setMode('view');
-	globalLoadingStore.startLoading(loadingOperations.navigation, `LeftSidebar.navigateTo(${path})`);
+	setMode("view");
+	globalLoadingStore.startLoading(
+		loadingOperations.navigation,
+		`LeftSidebar.navigateTo(${path})`,
+	);
 
 	try {
-		const unlocalizedRoutes = ['/mediagallery', '/config', '/user', '/dashboard', '/setup'];
-		const isUnlocalized = unlocalizedRoutes.some((r) => path === r || path.startsWith(`${r}/`));
+		const unlocalizedRoutes = [
+			"/mediagallery",
+			"/config",
+			"/user",
+			"/dashboard",
+			"/setup",
+		];
+		const isUnlocalized = unlocalizedRoutes.some(
+			(r) => path === r || path.startsWith(`${r}/`),
+		);
 
 		if (isUnlocalized) {
 			await goto(path);
@@ -137,33 +171,38 @@ async function navigateTo(path: string): Promise<void> {
 		}
 
 		const currentLocale = getLocale();
-		const pathWithLanguage = path.startsWith(`/${currentLocale}`) ? path : `/${currentLocale}${path}`;
+		const pathWithLanguage = path.startsWith(`/${currentLocale}`)
+			? path
+			: `/${currentLocale}${path}`;
 		await goto(pathWithLanguage);
 	} finally {
-		setTimeout(() => globalLoadingStore.stopLoading(loadingOperations.navigation), 100);
+		setTimeout(
+			() => globalLoadingStore.stopLoading(loadingOperations.navigation),
+			100,
+		);
 	}
 }
 
 function handleLanguageSelection(lang: string): void {
 	systemLanguage.set(lang as Locale);
 	languageTag = lang;
-	searchQuery = '';
+	searchQuery = "";
 }
 
 function toggleSidebar(): void {
 	const current = uiStateManager.uiState.value.leftSidebar;
-	const newState = current === 'full' ? 'collapsed' : 'full';
-	toggleUIElement('leftSidebar', newState);
+	const newState = current === "full" ? "collapsed" : "full";
+	toggleUIElement("leftSidebar", newState);
 	userPreferredState.set(newState);
 }
 
 async function signOut(): Promise<void> {
 	try {
-		await fetch('/api/user/logout', { method: 'POST' });
+		await fetch("/api/user/logout", { method: "POST" });
 	} catch (error) {
-		logger.error('Error during sign-out:', error);
+		logger.error("Error during sign-out:", error);
 	} finally {
-		if (browser) window.location.href = '/login';
+		if (browser) window.location.href = "/login";
 	}
 }
 </script>

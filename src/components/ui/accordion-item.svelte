@@ -5,9 +5,9 @@ A Svelte 5 Accordion Item that works within an Accordion container.
 -->
 
 <script lang="ts">
-import { getContext } from 'svelte';
-import { cn } from '@utils/cn';
-import Collapsible from './collapsible.svelte';
+import { getContext } from "svelte";
+import { cn } from "@utils/cn";
+import Collapsible from "./collapsible.svelte";
 
 interface Props {
 	id?: string;
@@ -16,20 +16,24 @@ interface Props {
 	disabled?: boolean;
 	open?: boolean;
 	class?: string;
-	children: import('svelte').Snippet;
+	children: import("svelte").Snippet;
 }
 
-let { 
+let {
 	id = crypto.randomUUID(),
-	title, 
-	icon, 
-	disabled = false, 
+	title,
+	icon,
+	disabled = false,
 	open = $bindable(false),
-	class: className, 
-	children 
+	class: className,
+	children,
 }: Props = $props();
 
-const context = getContext<{ activeId: string | null, setActive: (id: string | null) => void, autoclose: boolean }>('accordion');
+const context = getContext<{
+	activeId: string | null;
+	setActive: (id: string | null) => void;
+	autoclose: boolean;
+}>("accordion");
 
 // If inside an accordion, sync with its state
 $effect(() => {

@@ -24,10 +24,15 @@ Supports regional celebrations for Western Europe, East Asia, and South Asia, wi
 <script lang="ts">
 // Settings helper
 
-import { login_Happy_Holi, login_happy_diwali, login_happy_navratri, login_new_year } from '@src/paraglide/messages';
-import { publicEnv } from '@src/stores/global-settings.svelte';
+import {
+	login_Happy_Holi,
+	login_happy_diwali,
+	login_happy_navratri,
+	login_new_year,
+} from "@src/paraglide/messages";
+import { publicEnv } from "@src/stores/global-settings.svelte";
 // Svelte 5 reactive Date
-import { SvelteDate } from 'svelte/reactivity';
+import { SvelteDate } from "svelte/reactivity";
 
 // =====================================================================
 // LUNAR PHASE CALCULATIONS (Meeus Algorithm - Simplified)
@@ -42,7 +47,12 @@ function findNewMoonNear(year: number, month: number, _day: number): Date {
 	const T = k / 1236.85;
 
 	// New moon time (simplified Meeus formula)
-	const JDE = 2_451_550.097_66 + 29.530_588_861 * k + 0.000_154_37 * T * T - 0.000_000_15 * T * T * T + 0.000_000_000_73 * T * T * T * T;
+	const JDE =
+		2_451_550.097_66 +
+		29.530_588_861 * k +
+		0.000_154_37 * T * T -
+		0.000_000_15 * T * T * T +
+		0.000_000_000_73 * T * T * T * T;
 
 	// Convert back to Gregorian date
 	const jd = Math.floor(JDE + 0.5);
@@ -102,7 +112,11 @@ function calculateMidAutumnFestival(year: number): Date {
 	approxDate.setDate(cny.getDate() + 29.53 * 7.5);
 
 	// Find nearest full moon
-	return findFullMoonNear(approxDate.getFullYear(), approxDate.getMonth() + 1, approxDate.getDate());
+	return findFullMoonNear(
+		approxDate.getFullYear(),
+		approxDate.getMonth() + 1,
+		approxDate.getDate(),
+	);
 }
 
 // =====================================================================
@@ -196,7 +210,7 @@ let festivalDates = $derived.by(() => {
 		diwali: calculateDiwali(year),
 		holi: calculateHoli(year),
 		navratri: calculateNavratri(year),
-		easter: calculateEaster(year)
+		easter: calculateEaster(year),
 	};
 });
 
@@ -221,21 +235,48 @@ let eastertideEndDate = $derived.by(() => {
 // =====================================================================
 
 // Fixed Gregorian holidays
-let isNewYear = $derived(currentDate.getMonth() === 0 && currentDate.getDate() === 1);
-let isValentine = $derived(currentDate.getMonth() === 1 && currentDate.getDate() === 14);
-let isMayDay = $derived(currentDate.getMonth() === 4 && currentDate.getDate() === 1);
-let isHalloween = $derived(currentDate.getMonth() === 9 && currentDate.getDate() === 31);
-let isChristmas = $derived(currentDate.getMonth() === 11 && (currentDate.getDate() === 24 || currentDate.getDate() === 25));
+let isNewYear = $derived(
+	currentDate.getMonth() === 0 && currentDate.getDate() === 1,
+);
+let isValentine = $derived(
+	currentDate.getMonth() === 1 && currentDate.getDate() === 14,
+);
+let isMayDay = $derived(
+	currentDate.getMonth() === 4 && currentDate.getDate() === 1,
+);
+let isHalloween = $derived(
+	currentDate.getMonth() === 9 && currentDate.getDate() === 31,
+);
+let isChristmas = $derived(
+	currentDate.getMonth() === 11 &&
+		(currentDate.getDate() === 24 || currentDate.getDate() === 25),
+);
 
 // Calculated festivals (with tolerance windows)
-let isEaster = $derived(isDateInRange(currentDate, easterSunday, eastertideEndDate));
-let isChineseNewYear = $derived(Math.abs(currentDate.getTime() - chineseNewYear.getTime()) < 3 * 24 * 60 * 60 * 1000); // 3 days
-let isMidAutumnFestival = $derived(currentDate.toDateString() === midAutumnFestival.toDateString());
-let isDragonBoatFestival = $derived(currentDate.toDateString() === dragonBoatFestival.toDateString());
+let isEaster = $derived(
+	isDateInRange(currentDate, easterSunday, eastertideEndDate),
+);
+let isChineseNewYear = $derived(
+	Math.abs(currentDate.getTime() - chineseNewYear.getTime()) <
+		3 * 24 * 60 * 60 * 1000,
+); // 3 days
+let isMidAutumnFestival = $derived(
+	currentDate.toDateString() === midAutumnFestival.toDateString(),
+);
+let isDragonBoatFestival = $derived(
+	currentDate.toDateString() === dragonBoatFestival.toDateString(),
+);
 let isCherryBlossom = $derived(isCherryBlossomSeason(currentDate));
-let isDiwali = $derived(Math.abs(currentDate.getTime() - diwali.getTime()) < 5 * 24 * 60 * 60 * 1000); // 5 days
-let isHoli = $derived(Math.abs(currentDate.getTime() - holi.getTime()) < 2 * 24 * 60 * 60 * 1000); // 2 days
-let isNavratri = $derived(Math.abs(currentDate.getTime() - navratri.getTime()) < 9 * 24 * 60 * 60 * 1000); // 9 days
+let isDiwali = $derived(
+	Math.abs(currentDate.getTime() - diwali.getTime()) < 5 * 24 * 60 * 60 * 1000,
+); // 5 days
+let isHoli = $derived(
+	Math.abs(currentDate.getTime() - holi.getTime()) < 2 * 24 * 60 * 60 * 1000,
+); // 2 days
+let isNavratri = $derived(
+	Math.abs(currentDate.getTime() - navratri.getTime()) <
+		9 * 24 * 60 * 60 * 1000,
+); // 9 days
 
 // Settings
 let seasonsEnabled = $derived(publicEnv.SEASONS === true);

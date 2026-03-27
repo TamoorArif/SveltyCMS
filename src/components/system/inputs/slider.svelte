@@ -14,14 +14,14 @@
 -->
 
 <script lang="ts">
-import { Slider } from '@skeletonlabs/skeleton-svelte';
+import { Slider } from "@skeletonlabs/skeleton-svelte";
 
 let {
 	value = $bindable({
 		max: 100,
-		current: 0
+		current: 0,
 	}),
-	onChange
+	onChange,
 } = $props(); // Maximum value for the slider
 // Current selected value
 // Callback when value changes

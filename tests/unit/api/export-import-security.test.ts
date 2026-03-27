@@ -54,8 +54,16 @@ vi.mock("@utils/logger.server", () => ({
 }));
 
 describe("Export/Import API Security - Tenant Isolation", () => {
-  const mockAdmin = { _id: "admin1", role: "admin", email: "admin@tenant1.com" };
-  const mockSuperAdmin = { _id: "super1", role: "super-admin", email: "super@cms.com" };
+  const mockAdmin = {
+    _id: "admin1",
+    role: "admin",
+    email: "admin@tenant1.com",
+  };
+  const mockSuperAdmin = {
+    _id: "super1",
+    role: "super-admin",
+    email: "super@cms.com",
+  };
   const myTenant = "tenant-1";
   const otherTenant = "tenant-2";
 
@@ -72,7 +80,9 @@ describe("Export/Import API Security - Tenant Isolation", () => {
       } as any;
 
       await exportData(event);
-      expect(dbAdapter!.auth.getAllUsers).toHaveBeenCalledWith({ filter: { tenantId: myTenant } });
+      expect(dbAdapter!.auth.getAllUsers).toHaveBeenCalledWith({
+        filter: { tenantId: myTenant },
+      });
     });
 
     it("should allow super-admin to override tenantId", async () => {
@@ -117,9 +127,10 @@ describe("Export/Import API Security - Tenant Isolation", () => {
       const event = {
         locals: { user: mockAdmin, tenantId: myTenant },
         request: {
-          json: vi
-            .fn()
-            .mockResolvedValue({ data: mockImportData, options: { strategy: "overwrite" } }),
+          json: vi.fn().mockResolvedValue({
+            data: mockImportData,
+            options: { strategy: "overwrite" },
+          }),
         },
         url: new URL("http://localhost/api/import/full"),
       } as any;

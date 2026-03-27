@@ -20,7 +20,7 @@ A premium Svelte 5 File Upload primitive with drag-and-drop and multiple file su
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
+import { cn } from "@utils/cn";
 
 interface Props {
 	files?: File[];
@@ -33,22 +33,22 @@ interface Props {
 	class?: string;
 	onchange?: (files: File[]) => void;
 	// Snippets
-	icon?: import('svelte').Snippet;
-	children?: import('svelte').Snippet;
+	icon?: import("svelte").Snippet;
+	children?: import("svelte").Snippet;
 }
 
 let {
 	files = $bindable([]),
 	multiple = false,
-	accept = '*',
+	accept = "*",
 	maxSize,
-	label = 'Click or drag files to upload',
-	helper = 'Supports most file types',
+	label = "Click or drag files to upload",
+	helper = "Supports most file types",
 	disabled = false,
-	class: className = '',
+	class: className = "",
 	onchange,
 	icon,
-	children
+	children,
 }: Props = $props();
 
 let isDragging = $state(false);
@@ -56,8 +56,8 @@ let inputElement = $state<HTMLInputElement>();
 
 function handleFiles(newFiles: FileList | null) {
 	if (!newFiles || disabled) return;
-	
-	const filteredFiles = Array.from(newFiles).filter(file => {
+
+	const filteredFiles = Array.from(newFiles).filter((file) => {
 		if (maxSize && file.size > maxSize) return false;
 		return true;
 	});

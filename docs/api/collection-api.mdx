@@ -34,16 +34,18 @@ The Collection API is the primary interface for **mutating** data within SveltyC
 In the 2026 SveltyCMS engine, **direct GET endpoints for listing collection entries have been removed** from the Collection API route.
 
 ### Why this change?
+
 1.  **Eliminate Waterfall**: For the Admin Studio and standard frontend pages, data is fetched during SSR via `+page.server.ts`, preventing the "Double Fetch" pattern (Server -> Browser -> API -> Server).
 2.  **Type Safety**: Native DB adapters provide full TypeScript intellisense that REST strings cannot.
 3.  **Performance**: Sub-1ms hot-paths are achieved by querying the database directly within the SvelteKit request lifecycle.
 
 ### How to READ data now?
-| Scenario | Recommended Solution |
-| :------- | :------------------- |
-| **SvelteKit App** | Use `dbAdapter.crud.findMany` in your `load()` function. |
-| **Headless (Next/Nuxt)** | Use the [**Search API**](./search-api.mdx) (supports filters & sorting). |
-| **Complex Queries** | Use the [**GraphQL API**](./graphql-api.mdx) (query exactly what you need). |
+
+| Scenario                 | Recommended Solution                                                        |
+| :----------------------- | :-------------------------------------------------------------------------- |
+| **SvelteKit App**        | Use `dbAdapter.crud.findMany` in your `load()` function.                    |
+| **Headless (Next/Nuxt)** | Use the [**Search API**](./search-api.mdx) (supports filters & sorting).    |
+| **Complex Queries**      | Use the [**GraphQL API**](./graphql-api.mdx) (query exactly what you need). |
 
 ---
 
@@ -52,15 +54,18 @@ In the 2026 SveltyCMS engine, **direct GET endpoints for listing collection entr
 All mutations require an `Authorization: Bearer <token>` header and a valid `Content-Type: application/json`.
 
 ### Base Endpoint Pattern
+
 `/api/collections/[collectionId]`
 
 > [!NOTE]
 > Use the **Internal ID** (e.g., `23d772dd3783492...`) for `[collectionId]`, which you can find in the Collection list or the Settings JSON.
 
 ### A. Create Entry (POST)
+
 **Endpoint**: `POST /api/collections/[collectionId]`
 
 **Payload**:
+
 ```json
 {
   "title": "My New Post",
@@ -70,13 +75,16 @@ All mutations require an `Authorization: Bearer <token>` header and a valid `Con
 ```
 
 **Mechanics**:
+
 - The system automatically assigns `_id`, `createdAt`, `updatedAt`, and `createdBy`.
 - All data passes through the **Widget Validation System** before persistence.
 
 ### B. Update Entry (PATCH)
+
 **Endpoint**: `PATCH /api/collections/[collectionId]/[entryId]`
 
 **Payload**:
+
 ```json
 {
   "status": "archived"
@@ -84,14 +92,17 @@ All mutations require an `Authorization: Bearer <token>` header and a valid `Con
 ```
 
 **Mechanics**:
+
 - Performs a partial merge. Fields not included in the payload are preserved.
 - Refreshes the `updatedAt` and `updatedBy` metadata.
 - Automatically invalidates the page cache for this collection.
 
 ### C. Delete Entry (DELETE)
+
 **Endpoint**: `DELETE /api/collections/[collectionId]/[entryId]`
 
 **Query Params**:
+
 - `permanent=true` (Optional): Forces a hard delete. Otherwise, entries are soft-deleted to the Trash.
 
 ---
@@ -103,6 +114,7 @@ For managing multiple items (e.g., publishing 50 drafts at once), use the `/batc
 **Endpoint**: `POST /api/collections/[collectionId]/batch`
 
 **Payload**:
+
 ```json
 {
   "action": "status",
@@ -112,6 +124,7 @@ For managing multiple items (e.g., publishing 50 drafts at once), use the `/batc
 ```
 
 **Available Actions**:
+
 - `status`: Update the publishing state.
 - `delete`: Soft or hard delete the group.
 - `clone`: Duplicate the targeted entries.
@@ -121,12 +134,16 @@ For managing multiple items (e.g., publishing 50 drafts at once), use the `/batc
 ## 4. Security & Multi-Tenancy
 
 ### Automatic Tenant Scoping
+
 If `MULTI_TENANT` is enabled in your `private.ts` config, the API **automatically** scopes every request:
+
 - **Write**: New entries are stamped with the `tenantId` from the authenticated user.
 - **Access**: Attempting to PATCH or DELETE an entry belonging to a different tenant returns a `404 NOT_FOUND` for security obfuscation.
 
 ### Permission Gates
+
 Endpoints check permissions sequentially:
+
 1.  **Auth Check**: Is the request signed with a valid JWT?
 2.  **Role Check**: Does the user's role permit `write` or `delete` on this specific collection?
 3.  **Widget Check**: Are there field-level restrictions (e.g., "Read-Only" fields) defined in the widget schema?
@@ -149,6 +166,7 @@ All Collection API responses include performance telemetry.
 ```
 
 **Error Codes**:
+
 - `COLLECTION_NOT_FOUND` (404)
 - `VALIDATION_FAILED` (400) — Check `details` for field-specific errors.
 - `UNAUTHORIZED` (401) — Token missing or expired.

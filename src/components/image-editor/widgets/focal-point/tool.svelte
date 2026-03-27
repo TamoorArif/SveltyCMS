@@ -7,25 +7,27 @@ Allows users to set the focal point using svelte-canvas compatible state.
 -->
 
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { Layer } from 'svelte-canvas';
-import FocalPointControls from './controls.svelte';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { Layer } from "svelte-canvas";
+import FocalPointControls from "./controls.svelte";
 
 const storeState = imageEditorStore.state;
 
 // --- Lifecycle $effect ---
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'focalpoint') {
+	if (activeState === "focalpoint") {
 		imageEditorStore.setToolbarControls({
 			component: FocalPointControls,
 			props: {
 				focalX: Math.round((storeState.focalPoint?.x ?? 0.5) * 100),
 				focalY: Math.round((storeState.focalPoint?.y ?? 0.5) * 100),
-				onReset: () => (storeState.focalPoint = { x: 0.5, y: 0.5 })
-			}
+				onReset: () => (storeState.focalPoint = { x: 0.5, y: 0.5 }),
+			},
 		});
-	} else if (imageEditorStore.state.toolbarControls?.component === FocalPointControls) {
+	} else if (
+		imageEditorStore.state.toolbarControls?.component === FocalPointControls
+	) {
 		imageEditorStore.setToolbarControls(null);
 	}
 });
@@ -47,15 +49,28 @@ export function handleMouseDown(e: MouseEvent, width: number, height: number) {
 	const ix = (offsetX - centerX) / zoom + imageElement.width / 2;
 	const iy = (offsetY - centerY) / zoom + imageElement.height / 2;
 
-	if (ix >= 0 && ix <= imageElement.width && iy >= 0 && iy <= imageElement.height) {
+	if (
+		ix >= 0 &&
+		ix <= imageElement.width &&
+		iy >= 0 &&
+		iy <= imageElement.height
+	) {
 		storeState.focalPoint = {
 			x: ix / imageElement.width,
-			y: iy / imageElement.height
+			y: iy / imageElement.height,
 		};
 	}
 }
 
-const renderFocalPoint = ({ context, width, height }: { context: CanvasRenderingContext2D; width: number; height: number }) => {
+const renderFocalPoint = ({
+	context,
+	width,
+	height,
+}: {
+	context: CanvasRenderingContext2D;
+	width: number;
+	height: number;
+}) => {
 	const { zoom, translateX, translateY, imageElement, focalPoint } = storeState;
 	if (!imageElement) {
 		return;
@@ -72,7 +87,7 @@ const renderFocalPoint = ({ context, width, height }: { context: CanvasRendering
 	const fy = offsetY + imageElement.height * fp.y;
 
 	// Draw Crosshair
-	context.strokeStyle = '#ff0000';
+	context.strokeStyle = "#ff0000";
 	context.lineWidth = 2 / zoom;
 	context.beginPath();
 	context.moveTo(fx - 20 / zoom, fy);
@@ -84,7 +99,7 @@ const renderFocalPoint = ({ context, width, height }: { context: CanvasRendering
 	// Draw Circle
 	context.beginPath();
 	context.arc(fx, fy, 5 / zoom, 0, Math.PI * 2);
-	context.fillStyle = '#ff0000';
+	context.fillStyle = "#ff0000";
 	context.fill();
 
 	context.restore();

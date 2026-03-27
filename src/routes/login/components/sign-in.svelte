@@ -23,14 +23,14 @@ Note: First-user registration is now handled by /setup route (enforced by handle
 -->
 
 <script lang="ts">
-import PasswordStrength from '@src/components/password-strength.svelte';
-import SiteName from '@src/components/site-name.svelte';
+import PasswordStrength from "@src/components/password-strength.svelte";
+import SiteName from "@src/components/site-name.svelte";
 // Components
-import FloatingPaths from '@src/components/system/floating-paths.svelte';
-import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
-import SveltyCMSLogoFull from '@src/components/system/icons/svelty-cms-logo-full.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import FloatingPaths from "@src/components/system/floating-paths.svelte";
+import SveltyCMSLogo from "@src/components/system/icons/svelty-cms-logo.svelte";
+import SveltyCMSLogoFull from "@src/components/system/icons/svelty-cms-logo-full.svelte";
+import FloatingInput from "@src/components/system/inputs/floating-input.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // ParaglideJS
 import {
 	button_back,
@@ -53,23 +53,30 @@ import {
 	twofa_verify_button,
 	twofa_verify_description,
 	twofa_verify_title,
-	twofa_verifying
-} from '@src/paraglide/messages';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-import { screen } from '@src/stores/screen-size-store.svelte';
+	twofa_verifying,
+} from "@src/paraglide/messages";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte.ts";
+import { screen } from "@src/stores/screen-size-store.svelte";
 // Skeleton
-import { toast } from '@src/stores/toast.svelte.ts';
-import { Form } from '@utils/form.svelte.ts';
-import { forgotFormSchema, loginFormSchema, resetFormSchema } from '@utils/form-schemas';
-import { browser } from '$app/environment';
-import { enhance } from '$app/forms';
-import { goto, preloadData } from '$app/navigation';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { Form } from "@utils/form.svelte.ts";
+import {
+	forgotFormSchema,
+	loginFormSchema,
+	resetFormSchema,
+} from "@utils/form-schemas";
+import { browser } from "$app/environment";
+import { enhance } from "$app/forms";
+import { goto, preloadData } from "$app/navigation";
 // Stores
-import { page } from '$app/state';
-import type { PageData } from '../$types';
-import SigninIcon from './icons/signin-icon.svelte';
-import OauthLogin from './oauth-login.svelte';
+import { page } from "$app/state";
+import type { PageData } from "../$types";
+import SigninIcon from "./icons/signin-icon.svelte";
+import OauthLogin from "./oauth-login.svelte";
 
 // Props
 const {
@@ -77,7 +84,7 @@ const {
 	onClick = () => {},
 	onPointerEnter: onPointerEnterProp = () => {},
 	onBack = () => {},
-	firstCollectionPath = ''
+	firstCollectionPath = "",
 }: {
 	active?: number;
 	onClick?: () => void;
@@ -86,7 +93,7 @@ const {
 	firstCollectionPath?: string;
 } = $props();
 
-const siteName = $derived(publicEnv.SITE_NAME || 'SveltyCMS');
+const siteName = $derived(publicEnv.SITE_NAME || "SveltyCMS");
 
 // State management
 let P_WFORGOT = $state(false);
@@ -103,7 +110,7 @@ const forgotPasswordTabIndex = 4;
 const pageData = page.data as PageData;
 
 // URL handling
-const currentUrl = $state(browser ? window.location.href : '');
+const currentUrl = $state(browser ? window.location.href : "");
 
 // State for improved spinner control
 let isSubmitting = $state(false);
@@ -111,8 +118,8 @@ let isAuthenticating = $state(false);
 
 // 2FA state
 let requires2FA = $state(false);
-let twoFAUserId = $state('');
-let twoFACode = $state('');
+let twoFAUserId = $state("");
+let twoFACode = $state("");
 let useBackupCode = $state(false);
 let isVerifying2FA = $state(false);
 
@@ -127,13 +134,16 @@ async function prefetchFirstCollection() {
 	try {
 		await preloadData(firstCollectionPath);
 	} catch (error) {
-		console.error('Prefetch failed:', error);
+		console.error("Prefetch failed:", error);
 	}
 }
 
 // Login form setup
 // Login form setup
-const loginForm = new Form({ email: '', password: '', isToken: false }, loginFormSchema);
+const loginForm = new Form(
+	{ email: "", password: "", isToken: false },
+	loginFormSchema,
+);
 const loginSubmit = loginForm.enhance({
 	onSubmit: ({ cancel }) => {
 		if (loginForm.data.email) {
@@ -143,8 +153,8 @@ const loginSubmit = loginForm.enhance({
 		// handle login form submission
 		if (Object.keys(loginForm.errors).length > 0) {
 			cancel();
-			formElement?.classList.add('wiggle');
-			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
+			formElement?.classList.add("wiggle");
+			setTimeout(() => formElement?.classList.remove("wiggle"), 300);
 			return;
 		}
 
@@ -158,39 +168,39 @@ const loginSubmit = loginForm.enhance({
 		// Reset submitting state
 		isSubmitting = false;
 
-		if (result.type === 'redirect') {
+		if (result.type === "redirect") {
 			// Keep authenticating state for redirect phase
 			isAuthenticating = true;
 
 			// Store flash message in sessionStorage for display after redirect
 			sessionStorage.setItem(
-				'flashMessage',
+				"flashMessage",
 				JSON.stringify({
-					type: 'success',
-					title: 'Welcome Back!',
+					type: "success",
+					title: "Welcome Back!",
 					description: `<iconify-icon icon="mdi:party-popper" width="24" class="mr-2 inline-block text-white"></iconify-icon> Successfully signed in.`,
-					duration: 4000
-				})
+					duration: 4000,
+				}),
 			);
 
 			// Use window.location.href for reliable redirect after auth
-			const redirectUrl = (result.location as string) || '/';
+			const redirectUrl = (result.location as string) || "/";
 			window.location.href = redirectUrl;
 
 			return;
 		}
 
 		// Check if 2FA is required
-		if (result.type === 'failure' && result.data?.requires2FA) {
+		if (result.type === "failure" && result.data?.requires2FA) {
 			requires2FA = true;
-			twoFAUserId = result.data.userId || '';
+			twoFAUserId = result.data.userId || "";
 			isAuthenticating = false;
 			globalLoadingStore.stopLoading(loadingOperations.authentication);
 
 			// Show 2FA required message
 			toast.warning({
-				title: 'Two-Factor Authentication Required',
-				description: 'Please enter your authentication code to continue'
+				title: "Two-Factor Authentication Required",
+				description: "Please enter your authentication code to continue",
 			});
 			return;
 		}
@@ -199,29 +209,31 @@ const loginSubmit = loginForm.enhance({
 		isAuthenticating = false;
 		globalLoadingStore.stopLoading(loadingOperations.authentication);
 
-		if (result.type === 'failure' || result.type === 'error') {
+		if (result.type === "failure" || result.type === "error") {
 			const errorMessage =
-				result.type === 'failure' ? result.data?.message || 'Invalid email or password' : result.error?.message || 'An unexpected error occurred';
+				result.type === "failure"
+					? result.data?.message || "Invalid email or password"
+					: result.error?.message || "An unexpected error occurred";
 
 			toast.error({
-				title: 'Sign In Failed',
-				description: errorMessage
+				title: "Sign In Failed",
+				description: errorMessage,
 			});
 
 			// add wiggle animation to form element
-			formElement?.classList.add('wiggle');
+			formElement?.classList.add("wiggle");
 			setTimeout(() => {
-				formElement?.classList.remove('wiggle');
+				formElement?.classList.remove("wiggle");
 			}, 300);
 		}
 
 		await update();
-	}
+	},
 });
 
 // Forgot Form setup
 // Forgot Form setup
-const forgotForm = new Form({ email: '' }, forgotFormSchema);
+const forgotForm = new Form({ email: "" }, forgotFormSchema);
 const forgotSubmit = forgotForm.enhance({
 	onSubmit: ({ cancel }) => {
 		if (forgotForm.data.email) {
@@ -230,8 +242,8 @@ const forgotSubmit = forgotForm.enhance({
 
 		if (Object.keys(forgotForm.errors).length > 0) {
 			cancel();
-			formElement?.classList.add('wiggle');
-			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
+			formElement?.classList.add("wiggle");
+			setTimeout(() => formElement?.classList.remove("wiggle"), 300);
 			return;
 		}
 
@@ -241,7 +253,7 @@ const forgotSubmit = forgotForm.enhance({
 	onResult: async ({ result, update }) => {
 		isSubmitting = false;
 
-		if (result.type === 'error') {
+		if (result.type === "error") {
 			// Transform the array of error messages into a single string
 			// Form class puts errors in forgotForm.errors
 			// But result.type 'error' is usually 500 or network error
@@ -249,12 +261,12 @@ const forgotSubmit = forgotForm.enhance({
 
 			// For now, just show generic error or message from result
 			toast.info({
-				description: result.error?.message || 'An error occurred'
+				description: result.error?.message || "An error occurred",
 			});
 			return;
 		}
 
-		if (result.type === 'success') {
+		if (result.type === "success") {
 			// Check if user exists (success with data)
 			if (result.data && result.data.userExists === true) {
 				P_WRESET = true;
@@ -267,37 +279,41 @@ const forgotSubmit = forgotForm.enhance({
 				// Actually, standard SvelteKit 'success' means 200 OK.
 				// If backend returns { userExists: false }, we handle it.
 				P_WRESET = false;
-				toast.error('No account found with this email address.');
-				formElement?.classList.add('wiggle');
-				setTimeout(() => formElement?.classList.remove('wiggle'), 300);
+				toast.error("No account found with this email address.");
+				formElement?.classList.add("wiggle");
+				setTimeout(() => formElement?.classList.remove("wiggle"), 300);
 			} else {
 				// Default success
 				P_WRESET = true;
 				toast.success({
-					title: 'Email Sent',
-					description: 'Password reset instructions have been sent to your email'
+					title: "Email Sent",
+					description:
+						"Password reset instructions have been sent to your email",
 				});
 			}
-		} else if (result.type === 'failure') {
-			const errorMessage = result.data?.message || 'Password reset failed';
+		} else if (result.type === "failure") {
+			const errorMessage = result.data?.message || "Password reset failed";
 
 			toast.error({
-				title: 'Reset Failed',
-				description: errorMessage
+				title: "Reset Failed",
+				description: errorMessage,
 			});
 
-			formElement?.classList.add('wiggle');
-			setTimeout(() => formElement?.classList.remove('wiggle'), 300);
+			formElement?.classList.add("wiggle");
+			setTimeout(() => formElement?.classList.remove("wiggle"), 300);
 			return;
 		}
 
 		await update();
-	}
+	},
 });
 
 // Reset Form setup
 // Reset Form setup
-const resetForm = new Form({ password: '', confirm_password: '', token: '', email: '' }, resetFormSchema);
+const resetForm = new Form(
+	{ password: "", confirm_password: "", token: "", email: "" },
+	resetFormSchema,
+);
 const resetSubmit = resetForm.enhance({
 	onSubmit: ({ cancel }) => {
 		if (Object.keys(resetForm.errors).length > 0) {
@@ -312,12 +328,12 @@ const resetSubmit = resetForm.enhance({
 		P_WRESET = false;
 		P_WFORGOT = false;
 
-		if (result.type === 'success' || result.type === 'redirect') {
+		if (result.type === "success" || result.type === "redirect") {
 			toast.success({
-				title: 'Password Reset Successful',
-				description: 'You can now sign in with your new password'
+				title: "Password Reset Successful",
+				description: "You can now sign in with your new password",
 			});
-			if (result.type === 'redirect') {
+			if (result.type === "redirect") {
 				if (result.location) {
 					goto(result.location);
 				}
@@ -327,13 +343,13 @@ const resetSubmit = resetForm.enhance({
 
 		await update();
 
-		if (result.type === 'failure') {
-			formElement?.classList.add('wiggle');
+		if (result.type === "failure") {
+			formElement?.classList.add("wiggle");
 			setTimeout(() => {
-				formElement?.classList.remove('wiggle');
+				formElement?.classList.remove("wiggle");
 			}, 300);
 		}
-	}
+	},
 });
 
 // 2FA Functions
@@ -348,7 +364,7 @@ async function verify2FA() {
 	}
 
 	if (useBackupCode && twoFACode.length < 8) {
-		toast.error('Invalid backup code format');
+		toast.error("Invalid backup code format");
 		return;
 	}
 
@@ -356,20 +372,20 @@ async function verify2FA() {
 
 	try {
 		const formData = new FormData();
-		formData.append('userId', twoFAUserId);
-		formData.append('code', twoFACode.trim());
+		formData.append("userId", twoFAUserId);
+		formData.append("code", twoFACode.trim());
 
-		const response = await fetch('?/verify2FA', {
-			method: 'POST',
-			body: formData
+		const response = await fetch("?/verify2FA", {
+			method: "POST",
+			body: formData,
 		});
 
 		// Parse response
 		if (response.ok) {
 			// Success - redirect will be handled by SvelteKit
 			toast.success({
-				title: 'Verification Successful',
-				description: 'Redirecting to your dashboard...'
+				title: "Verification Successful",
+				description: "Redirecting to your dashboard...",
 			});
 
 			// The server will redirect on successful verification
@@ -380,7 +396,8 @@ async function verify2FA() {
 		}
 	} catch (error) {
 		toast.error({
-			description: error instanceof Error ? error.message : twofa_error_invalid_code()
+			description:
+				error instanceof Error ? error.message : twofa_error_invalid_code(),
 		});
 	} finally {
 		isVerifying2FA = false;
@@ -394,12 +411,12 @@ function handle2FAInput(event: Event) {
 	if (useBackupCode) {
 		// For backup codes, allow alphanumeric and remove spaces
 		value = value
-			.replace(/[^a-zA-Z0-9]/g, '')
+			.replace(/[^a-zA-Z0-9]/g, "")
 			.toLowerCase()
 			.slice(0, 10);
 	} else {
 		// For TOTP codes, only allow 6 digits
-		value = value.replace(/\D/g, '').slice(0, 6);
+		value = value.replace(/\D/g, "").slice(0, 6);
 	}
 
 	twoFACode = value;
@@ -407,23 +424,27 @@ function handle2FAInput(event: Event) {
 
 function toggle2FACodeType() {
 	useBackupCode = !useBackupCode;
-	twoFACode = '';
+	twoFACode = "";
 }
 
 function back2FAToLogin() {
 	requires2FA = false;
-	twoFAUserId = '';
-	twoFACode = '';
+	twoFAUserId = "";
+	twoFACode = "";
 	useBackupCode = false;
 	isVerifying2FA = false;
 }
 
 // Side effect for URL token handling
 $effect(() => {
-	if (browser && currentUrl.includes('/login') && currentUrl.includes('token')) {
+	if (
+		browser &&
+		currentUrl.includes("/login") &&
+		currentUrl.includes("token")
+	) {
 		const urlObj = new URL(currentUrl);
-		const tokenParam = urlObj.searchParams.get('token') || '';
-		const emailParam = urlObj.searchParams.get('email') || '';
+		const tokenParam = urlObj.searchParams.get("token") || "";
+		const emailParam = urlObj.searchParams.get("email") || "";
 		if (tokenParam && emailParam) {
 			// Directly update the reset form with token and email values
 			resetForm.data.token = tokenParam;
@@ -465,7 +486,7 @@ const isActive = $derived(active === 0);
 const isInactive = $derived(active !== undefined && active !== 0);
 const isHover = $derived(active === undefined || active === 1);
 
-const baseClasses = 'hover relative flex items-center';
+const baseClasses = "hover relative flex items-center";
 
 // Prefetch first collection data when active
 $effect(() => {

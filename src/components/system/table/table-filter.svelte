@@ -29,7 +29,7 @@ It includes search, filter toggles, column visibility, and density controls, opt
 <script lang="ts">
 // Stores
 
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 import {
 	table_clear_search,
 	table_column_toggle,
@@ -38,23 +38,23 @@ import {
 	table_filter_toggle,
 	table_search_aria,
 	table_search_placeholder,
-	table_search_toggle
-} from '@src/paraglide/messages';
-import { app } from '@src/stores/store.svelte';
+	table_search_toggle,
+} from "@src/paraglide/messages";
+import { app } from "@src/stores/store.svelte";
 // Logger
-import { logger } from '@utils/logger';
+import { logger } from "@utils/logger";
 // Using iconify-icon web component
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
 // Props with types
 let {
-	globalSearchValue = $bindable(''),
+	globalSearchValue = $bindable(""),
 	searchShow = $bindable(false),
 	filterShow = $bindable(false),
 	columnShow = $bindable(false),
-	density = $bindable('normal'),
-	densityOptions = $bindable(['compact', 'normal', 'comfortable']),
-	showDeleted = $bindable(false)
+	density = $bindable("normal"),
+	densityOptions = $bindable(["compact", "normal", "comfortable"]),
+	showDeleted = $bindable(false),
 } = $props();
 
 let searchInput = $state<HTMLInputElement>();
@@ -66,18 +66,20 @@ $effect(() => {
 });
 
 // Storage key for user settings
-const USER_SETTINGS_KEY = 'userTableSettings';
+const USER_SETTINGS_KEY = "userTableSettings";
 
 // Load density from localStorage on component mount
 $effect(() => {
 	if (browser) {
 		try {
-			const settings = JSON.parse(localStorage.getItem(USER_SETTINGS_KEY) || '{}');
+			const settings = JSON.parse(
+				localStorage.getItem(USER_SETTINGS_KEY) || "{}",
+			);
 			if (settings.density && densityOptions.includes(settings.density)) {
 				density = settings.density;
 			}
 		} catch (e) {
-			logger.error('Failed to load user table settings', e);
+			logger.error("Failed to load user table settings", e);
 			// Keep default if error
 		}
 	}
@@ -87,24 +89,26 @@ $effect(() => {
 $effect(() => {
 	if (browser && density) {
 		try {
-			const settings = JSON.parse(localStorage.getItem(USER_SETTINGS_KEY) || '{}');
+			const settings = JSON.parse(
+				localStorage.getItem(USER_SETTINGS_KEY) || "{}",
+			);
 			settings.density = density;
 			localStorage.setItem(USER_SETTINGS_KEY, JSON.stringify(settings));
 		} catch (e) {
-			logger.error('Failed to save user table settings', e);
+			logger.error("Failed to save user table settings", e);
 		}
 	}
 });
 
 // Function to close all open states except the specified one
-function closeOpenStates(except?: 'search' | 'filter' | 'column' | 'density') {
-	if (except !== 'search') {
+function closeOpenStates(except?: "search" | "filter" | "column" | "density") {
+	if (except !== "search") {
 		searchShow = false;
 	}
-	if (except !== 'filter') {
+	if (except !== "filter") {
 		filterShow = false;
 	}
-	if (except !== 'column') {
+	if (except !== "column") {
 		columnShow = false;
 	}
 	app.setTranslationStatusOpen(false);
@@ -125,14 +129,14 @@ function getDensityDisplayName() {
 // Function to get density icon based on current setting
 function getDensityIcon() {
 	switch (density) {
-		case 'compact':
-			return 'material-symbols:align-space-even-rounded';
-		case 'normal':
-			return 'material-symbols:align-space-around-rounded';
-		case 'comfortable':
-			return 'material-symbols:align-space-between-rounded';
+		case "compact":
+			return "material-symbols:align-space-even-rounded";
+		case "normal":
+			return "material-symbols:align-space-around-rounded";
+		case "comfortable":
+			return "material-symbols:align-space-between-rounded";
 		default:
-			return 'material-symbols:align-space-around-rounded';
+			return "material-symbols:align-space-around-rounded";
 	}
 }
 </script>

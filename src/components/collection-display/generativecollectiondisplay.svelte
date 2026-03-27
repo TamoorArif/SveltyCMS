@@ -8,9 +8,9 @@ It allows for completely AI-generated, interactive layouts that leverage existin
 -->
 
 <script lang="ts">
-import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
-import { sveltyRegistry } from '@src/services/json-render/catalog';
-import type { CollectionEntry, Schema } from '@src/content/types';
+import { Renderer, JSONUIProvider, type Spec } from "json-render-svelte";
+import { sveltyRegistry } from "@src/services/json-render/catalog";
+import type { CollectionEntry, Schema } from "@src/content/types";
 
 interface Props {
 	schema: Schema;
@@ -24,21 +24,21 @@ let { schema, entries, context = {} }: Props = $props();
 // If the schema doesn't have a displaySpec, we fallback to a default list (or handled by parent)
 const displaySpec = $derived(
 	(schema.displaySpec as unknown as Spec) || {
-		root: 'root',
+		root: "root",
 		elements: {
 			root: {
-				type: 'EntryList',
-				props: { entries }
-			}
-		}
-	}
+				type: "EntryList",
+				props: { entries },
+			},
+		},
+	},
 );
 
 // Merged context for the renderer
 const initialState = $derived({
 	...context,
 	entries,
-	schema
+	schema,
 });
 </script>
 

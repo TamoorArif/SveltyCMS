@@ -6,7 +6,7 @@ Displays a preview of the shared link for different platforms.
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // Using iconify-icon web component
 interface Props {
 	hostUrl: string;
@@ -18,50 +18,68 @@ interface Props {
 	twitterTitle?: string;
 }
 
-let { ogTitle = '', ogDescription = '', ogImage = '', twitterTitle = '', twitterDescription = '', twitterImage = '', hostUrl = '' }: Props = $props();
+let {
+	ogTitle = "",
+	ogDescription = "",
+	ogImage = "",
+	twitterTitle = "",
+	twitterDescription = "",
+	twitterImage = "",
+	hostUrl = "",
+}: Props = $props();
 
-let activePlatform = $state<'facebook' | 'whatsapp' | 'twitter' | 'linkedin' | 'discord'>('facebook');
+let activePlatform = $state<
+	"facebook" | "whatsapp" | "twitter" | "linkedin" | "discord"
+>("facebook");
 
 // Fallback logic
-let displayTitle = $derived(activePlatform === 'twitter' ? twitterTitle || ogTitle || 'Page Title' : ogTitle || 'Page Title');
+let displayTitle = $derived(
+	activePlatform === "twitter"
+		? twitterTitle || ogTitle || "Page Title"
+		: ogTitle || "Page Title",
+);
 let displayDescription = $derived(
-	activePlatform === 'twitter' ? twitterDescription || ogDescription || 'Page description...' : ogDescription || 'Page description...'
+	activePlatform === "twitter"
+		? twitterDescription || ogDescription || "Page description..."
+		: ogDescription || "Page description...",
 );
 
 // Image placeholder if no image provided
-let displayImage = $derived(activePlatform === 'twitter' && twitterImage ? twitterImage : ogImage);
+let displayImage = $derived(
+	activePlatform === "twitter" && twitterImage ? twitterImage : ogImage,
+);
 
 const platforms = [
 	{
-		id: 'facebook',
-		icon: 'mdi:facebook',
-		color: 'text-blue-600',
-		label: 'Facebook'
+		id: "facebook",
+		icon: "mdi:facebook",
+		color: "text-blue-600",
+		label: "Facebook",
 	},
 	{
-		id: 'whatsapp',
-		icon: 'mdi:whatsapp',
-		color: 'text-green-500',
-		label: 'WhatsApp'
+		id: "whatsapp",
+		icon: "mdi:whatsapp",
+		color: "text-green-500",
+		label: "WhatsApp",
 	},
 	{
-		id: 'twitter',
-		icon: 'mdi:twitter',
-		color: 'text-black dark:text-white',
-		label: 'X (Twitter)'
+		id: "twitter",
+		icon: "mdi:twitter",
+		color: "text-black dark:text-white",
+		label: "X (Twitter)",
 	},
 	{
-		id: 'linkedin',
-		icon: 'mdi:linkedin',
-		color: 'text-blue-700',
-		label: 'LinkedIn'
+		id: "linkedin",
+		icon: "mdi:linkedin",
+		color: "text-blue-700",
+		label: "LinkedIn",
 	},
 	{
-		id: 'discord',
-		icon: 'mdi:discord',
-		color: 'text-indigo-500',
-		label: 'Discord'
-	}
+		id: "discord",
+		icon: "mdi:discord",
+		color: "text-indigo-500",
+		label: "Discord",
+	},
 ] as const;
 </script>
 

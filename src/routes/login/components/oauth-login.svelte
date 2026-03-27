@@ -1,7 +1,7 @@
 <script lang="ts">
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { deserialize } from '$app/forms';
-import { preloadData } from '$app/navigation';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { deserialize } from "$app/forms";
+import { preloadData } from "$app/navigation";
 
 const { showOAuth = true } = $props();
 
@@ -15,21 +15,21 @@ async function prefetchFirstCollection() {
 
 	try {
 		const data = new FormData();
-		const response = await fetch('?/prefetch', {
-			method: 'POST',
-			body: data
+		const response = await fetch("?/prefetch", {
+			method: "POST",
+			body: data,
 		});
 
 		const result = deserialize(await response.text());
 
-		if (result.type === 'success') {
+		if (result.type === "success") {
 			const data = result.data as { collection?: { path?: string } };
 			if (data?.collection?.path) {
 				await preloadData(data.collection.path);
 			}
 		}
 	} catch (error) {
-		console.error('Prefetch failed:', error);
+		console.error("Prefetch failed:", error);
 	}
 }
 </script>

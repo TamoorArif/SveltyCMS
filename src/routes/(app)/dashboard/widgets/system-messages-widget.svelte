@@ -19,9 +19,9 @@
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'System Messages',
-	icon: 'mdi:message-alert-outline',
-	defaultSize: { w: 1, h: 2 }
+	name: "System Messages",
+	icon: "mdi:message-alert-outline",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

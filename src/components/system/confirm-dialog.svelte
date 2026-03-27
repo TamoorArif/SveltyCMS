@@ -5,7 +5,7 @@
 -->
 
 <script lang="ts">
-import Sanitize from '@src/utils/sanitize.svelte';
+import Sanitize from "@src/utils/sanitize.svelte";
 
 interface Props {
 	body?: string;
@@ -15,7 +15,13 @@ interface Props {
 	htmlTitle?: string;
 }
 
-const { htmlTitle, body = 'Are you sure?', buttonTextConfirm = 'Confirm', buttonTextCancel = 'Cancel', close }: Props = $props();
+const {
+	htmlTitle,
+	body = "Are you sure?",
+	buttonTextConfirm = "Confirm",
+	buttonTextCancel = "Cancel",
+	close,
+}: Props = $props();
 
 function onConfirm() {
 	close?.(true);

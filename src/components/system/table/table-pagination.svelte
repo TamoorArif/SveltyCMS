@@ -22,8 +22,14 @@
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { entrylist_items, entrylist_of, entrylist_page, entrylist_rows, entrylist_showing } from '@src/paraglide/messages';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import {
+	entrylist_items,
+	entrylist_of,
+	entrylist_page,
+	entrylist_rows,
+	entrylist_showing,
+} from "@src/paraglide/messages";
 
 // Props with default values
 let {
@@ -33,7 +39,7 @@ let {
 	rowsPerPageOptions = [5, 10, 25, 50, 100, 500],
 	totalItems = 0,
 	onUpdatePage,
-	onUpdateRowsPerPage
+	onUpdateRowsPerPage,
 } = $props();
 
 // Derived pagesCount if not provided
@@ -51,8 +57,12 @@ const isFirstPage = $derived(currentPage === 1);
 const isLastPage = $derived(currentPage === computedPagesCount);
 
 // Calculate start and end item numbers for the current page
-const startItem = $derived(totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1);
-const endItem = $derived(totalItems === 0 ? 0 : Math.min(currentPage * rowsPerPage, totalItems));
+const startItem = $derived(
+	totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1,
+);
+const endItem = $derived(
+	totalItems === 0 ? 0 : Math.min(currentPage * rowsPerPage, totalItems),
+);
 
 // Go to page - IMMEDIATE
 function goToPage(page: number) {

@@ -25,7 +25,11 @@ vi.mock("@src/services/webhook-service", () => ({
 
 describe("Webhook API Security - IDOR and Tenant Isolation", () => {
   const mockUser = { _id: "user1", role: "admin", email: "test@example.com" };
-  const mockSuperAdmin = { _id: "admin1", role: "super-admin", email: "super@example.com" };
+  const mockSuperAdmin = {
+    _id: "admin1",
+    role: "super-admin",
+    email: "super@example.com",
+  };
   const myTenant = "tenant-1";
   const otherTenant = "tenant-2";
 
@@ -84,7 +88,11 @@ describe("Webhook API Security - IDOR and Tenant Isolation", () => {
 
   describe("Create Webhook (POST /api/webhooks)", () => {
     it("should enforce the creators tenantId", async () => {
-      const webhookData = { name: "Test Hook", url: "http://test.com", events: ["*"] };
+      const webhookData = {
+        name: "Test Hook",
+        url: "http://test.com",
+        events: ["*"],
+      };
       const event = {
         locals: { user: mockUser, tenantId: myTenant },
         request: { json: vi.fn().mockResolvedValue(webhookData) },

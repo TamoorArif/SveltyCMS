@@ -1224,7 +1224,11 @@ export class MediaService {
     this.ensureInitialized();
     const results: MediaItem[] = [];
 
-    logger.info(`Starting batch processing for ${ids.length} items`, { userId, options, tenantId });
+    logger.info(`Starting batch processing for ${ids.length} items`, {
+      userId,
+      options,
+      tenantId,
+    });
 
     // Process in parallel with concurrency limit if needed, but for now direct parallel
     const promises = ids.map((id) =>

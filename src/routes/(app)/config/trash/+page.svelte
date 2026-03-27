@@ -3,35 +3,35 @@
  * @file src/routes/(app)/config/trash/+page.svelte
  * @description UI for browsing and restoring soft-deleted content.
  */
-import { onMount } from 'svelte';
-import { fetchApi } from '@utils/api-client';
-import { toast } from '@src/stores/toast.svelte';
-import { formatDate } from '@utils/date-utils';
+import { onMount } from "svelte";
+import { fetchApi } from "@utils/api-client";
+import { toast } from "@src/stores/toast.svelte";
+import { formatDate } from "@utils/date-utils";
 let trashedItems = $state<any[]>([]);
 let isLoading = $state(true);
 
 async function loadTrash() {
 	isLoading = true;
-	const response = await fetchApi<any[]>('/api/trash');
+	const response = await fetchApi<any[]>("/api/trash");
 	if (response.success) {
 		trashedItems = response.data || [];
 	} else {
-		toast.error(response.message || 'Failed to load trash');
+		toast.error(response.message || "Failed to load trash");
 	}
 	isLoading = false;
 }
 
 async function restoreItem(collectionId: string, entryId: string) {
-	const response = await fetchApi('/api/trash/restore', {
-		method: 'POST',
-		body: JSON.stringify({ collectionId, entryId })
+	const response = await fetchApi("/api/trash/restore", {
+		method: "POST",
+		body: JSON.stringify({ collectionId, entryId }),
 	});
 
 	if (response.success) {
-		toast.success('Item restored successfully');
+		toast.success("Item restored successfully");
 		await loadTrash();
 	} else {
-		toast.error(response.message || 'Failed to restore item');
+		toast.error(response.message || "Failed to restore item");
 	}
 }
 

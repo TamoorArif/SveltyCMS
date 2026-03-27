@@ -23,9 +23,11 @@ This guide provides solutions for common issues encountered during installation,
 ## 🚀 Setup & Installation Issues
 
 ### Goal: Fix "Initializing System" Hang
+
 **The Problem**: The splash screen stays on "Initializing System" indefinitely or throws a MIME type error (`text/html` instead of `javascript`).
 
 **🛠️ The Solution:**
+
 1.  **Check `config/private.ts`**: If the file is empty or corrupted, the Setup Wizard cannot move to `READY`. Delete the file and restart `bun run dev`.
 2.  **Verify Vite Cache**: Vite's dependency optimization can sometimes desync.
     ```bash
@@ -37,11 +39,13 @@ This guide provides solutions for common issues encountered during installation,
 ---
 
 ### Goal: Fix Database Connection Failures
+
 **The Problem**: Error message: `Check your credentials` or `ECONNREFUSED`.
 
 **🛠️ The Solution:**
+
 - **MongoDB**: Ensure the `authSource` is correct (usually `admin`) and your IP is whitelisted in Atlas.
-- **PostgreSQL/MariaDB**: Ensure the database exists *before* running the wizard. SveltyCMS scopes by `database_name`.
+- **PostgreSQL/MariaDB**: Ensure the database exists _before_ running the wizard. SveltyCMS scopes by `database_name`.
 - **SQLite**: Ensure the directory for the `.db` file has write permissions.
 
 **⚙️ Mechanics:**
@@ -52,9 +56,11 @@ Check `src/databases/db.ts` to see how the adapter probes the connection. Use `b
 ## 🔐 Authentication & Session Issues
 
 ### Goal: Resolve "Unauthorized" or "Session Expired"
+
 **The Problem**: Getting logged out immediately or seeing `401 Unauthorized` on all API calls.
 
 **🛠️ The Solution:**
+
 1.  **Clear Browser Storage**: Sessions are tied to cookies. Clear cookies for your domain and try again.
 2.  **Verify `JWT_SECRET`**: If you manually edited `config/private.ts` and changed the secret, all active sessions are invalidated.
 3.  **Check Node.js Time**: Ensure your server's system time is synchronized. Divergent times can cause JWT expiration errors.
@@ -64,9 +70,11 @@ Check `src/databases/db.ts` to see how the adapter probes the connection. Use `b
 ## 🧩 Widget & Collection Issues
 
 ### Goal: Fix Missing Widgets in Dashboard
+
 **The Problem**: You added a widget to `src/widgets/core/`, but it doesn't appear in the Studio Dashboard.
 
 **🛠️ The Solution:**
+
 - Use the **"Sync Widgets"** button in the `System Settings` → `Widgets` panel.
 - **Mechanics**: The SveltyCMS scanner (`collectionScanner.ts`) runs on HMR, but the database registry needs a manual trigger to update for new custom widgets.
 
@@ -75,10 +83,12 @@ Check `src/databases/db.ts` to see how the adapter probes the connection. Use `b
 ## 📈 Performance & Memory
 
 ### Goal: Fix "JavaScript heap out of memory"
+
 **The Problem**: The build process fails on large media libraries or complex collections.
 
 **🛠️ The Solution:**
 Increase the Node.js memory limit:
+
 ```bash
 # Set limit to 4GB
 export NODE_OPTIONS="--max-old-space-size=4096"

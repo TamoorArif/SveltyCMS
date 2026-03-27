@@ -23,20 +23,20 @@
 
 <script lang="ts">
 // Using iconify-icon web component
-import { logger } from '@utils/logger';
+import { logger } from "@utils/logger";
 
-import type { TogglesProps } from './types';
+import type { TogglesProps } from "./types";
 
 let {
 	value = $bindable(false),
-	label = '',
-	labelColor = 'text-primary-500',
-	iconOn = '',
-	iconOff = '',
-	size = 'md',
+	label = "",
+	labelColor = "text-primary-500",
+	iconOn = "",
+	iconOff = "",
+	size = "md",
 	disabled = false,
-	title = '',
-	onChange = undefined
+	title = "",
+	onChange = undefined,
 }: TogglesProps = $props();
 
 // Generate a unique ID for a11y
@@ -56,33 +56,33 @@ function handleToggle(event: Event) {
 	try {
 		onChange?.(checked);
 	} catch (error) {
-		logger.error('[Toggles] Error in onChange callback:', error);
+		logger.error("[Toggles] Error in onChange callback:", error);
 	}
 }
 
 // Compute classes and sizes using $derived
 const trackClasses = $derived(
 	{
-		sm: 'h-6 w-10 min-w-[40px]', // Ensure minimum touch target size
-		md: 'h-8 w-14 min-w-[48px]',
-		lg: 'h-10 w-20 min-w-[56px]'
-	}[size]
+		sm: "h-6 w-10 min-w-[40px]", // Ensure minimum touch target size
+		md: "h-8 w-14 min-w-[48px]",
+		lg: "h-10 w-20 min-w-[56px]",
+	}[size],
 );
 
 const dotClasses = $derived(
 	{
-		sm: 'h-4 w-4 peer-checked:translate-x-5',
-		md: 'h-6 w-6 peer-checked:translate-x-7',
-		lg: 'h-8 w-8 peer-checked:translate-x-11'
-	}[size]
+		sm: "h-4 w-4 peer-checked:translate-x-5",
+		md: "h-6 w-6 peer-checked:translate-x-7",
+		lg: "h-8 w-8 peer-checked:translate-x-11",
+	}[size],
 );
 
 const iconSize = $derived(
 	{
-		sm: '16',
-		md: '24',
-		lg: '32'
-	}[size]
+		sm: "16",
+		md: "24",
+		lg: "32",
+	}[size],
 );
 </script>
 

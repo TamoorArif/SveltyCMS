@@ -17,8 +17,8 @@
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
-import ColorPicker, { ChromeVariant } from 'svelte-awesome-color-picker';
+import { onMount } from "svelte";
+import ColorPicker, { ChromeVariant } from "svelte-awesome-color-picker";
 
 interface Props {
 	active?: string; // Tracks the currently active dropdown on the page
@@ -28,7 +28,13 @@ interface Props {
 	show?: boolean;
 }
 
-let { color = $bindable(''), show = true, key = 'color-selector', active = $bindable(''), onChange }: Props = $props();
+let {
+	color = $bindable(""),
+	show = true,
+	key = "color-selector",
+	active = $bindable(""),
+	onChange,
+}: Props = $props();
 
 let expanded = $state(false);
 let wrapperRef = $state<HTMLDivElement | null>(null);
@@ -50,7 +56,7 @@ $effect(() => {
 function close() {
 	expanded = false;
 	if (active === key) {
-		active = '';
+		active = "";
 	}
 }
 
@@ -76,17 +82,17 @@ onMount(() => {
 	};
 
 	const handleKeydown = (event: KeyboardEvent) => {
-		if (event.key === 'Escape') {
+		if (event.key === "Escape") {
 			close();
 		}
 	};
 
-	document.addEventListener('click', handleClickOutside);
-	document.addEventListener('keydown', handleKeydown);
+	document.addEventListener("click", handleClickOutside);
+	document.addEventListener("keydown", handleKeydown);
 
 	return () => {
-		document.removeEventListener('click', handleClickOutside);
-		document.removeEventListener('keydown', handleKeydown);
+		document.removeEventListener("click", handleClickOutside);
+		document.removeEventListener("keydown", handleKeydown);
 	};
 });
 
@@ -97,15 +103,16 @@ function setPosition(node: HTMLDivElement) {
 	}
 	const parent = wrapperRef.parentElement as HTMLElement;
 	const { left: wrapperLeft } = wrapperRef.getBoundingClientRect();
-	const { left: parentLeft, width: parentWidth } = parent.getBoundingClientRect();
+	const { left: parentLeft, width: parentWidth } =
+		parent.getBoundingClientRect();
 
 	const leftPos = wrapperLeft - parentLeft;
 	if (leftPos + node.offsetWidth > parentWidth) {
-		node.style.left = 'auto';
-		node.style.right = '0';
+		node.style.left = "auto";
+		node.style.right = "0";
 	} else {
-		node.style.right = 'auto';
-		node.style.left = '0'; // Position relative to the wrapper
+		node.style.right = "auto";
+		node.style.left = "0"; // Position relative to the wrapper
 	}
 }
 </script>

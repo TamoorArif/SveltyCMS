@@ -3,32 +3,36 @@
 @component Collection Builder Editor Shell
  -->
 <script lang="ts">
-import PageTitle from '@src/components/page-title.svelte';
-import type { FieldInstance, Schema } from '@src/content/types';
-import type { User } from '@src/databases/auth/types';
-import { button_delete, button_save } from '@src/paraglide/messages';
-import { collections, collection, setCollection } from '@src/stores/collection-store.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { useContent } from '@src/content/content-context.svelte';
-import { validationStore } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
-import { logger } from '@utils/logger';
-import { showConfirm } from '@utils/modal-utils';
-import { obj2formData } from '@utils/utils';
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount, onDestroy } from 'svelte';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
-import CollectionForm from './tabs/collection-form.svelte';
-import CollectionWidgetOptimized from './tabs/collection-widget-optimized.svelte';
-import Stepper from '@src/components/ui/stepper.svelte';
+import PageTitle from "@src/components/page-title.svelte";
+import type { FieldInstance, Schema } from "@src/content/types";
+import type { User } from "@src/databases/auth/types";
+import { button_delete, button_save } from "@src/paraglide/messages";
+import {
+	collections,
+	collection,
+	setCollection,
+} from "@src/stores/collection-store.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { useContent } from "@src/content/content-context.svelte";
+import { validationStore } from "@src/stores/store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { widgetStoreActions } from "@src/stores/widget-store.svelte.ts";
+import { logger } from "@utils/logger";
+import { showConfirm } from "@utils/modal-utils";
+import { obj2formData } from "@utils/utils";
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount, onDestroy } from "svelte";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
+import CollectionForm from "./tabs/collection-form.svelte";
+import CollectionWidgetOptimized from "./tabs/collection-widget-optimized.svelte";
+import Stepper from "@src/components/ui/stepper.svelte";
 
 const action = $derived(page.params.action);
 const { data } = $props<{ data: { collection?: Schema; user: User } }>();
 useContent();
 
-let originalName = $state('');
+let originalName = $state("");
 let isLoading = $state(false);
 
 // Studio Mode Stepper sync
@@ -38,7 +42,7 @@ const steps = $derived(collections.stepper.steps);
 
 // Effect: Synchronize step completion with collection name presence
 $effect(() => {
-	if (collection.value?.name && collection.value.name !== 'new') {
+	if (collection.value?.name && collection.value.name !== "new") {
 		if (!collections.stepper.completedSteps.has(0)) {
 			// Stepper indices are 0-based
 			collections.stepper.completedSteps.add(0);
@@ -51,49 +55,57 @@ $effect(() => {
 onMount(() => {
 	widgetStoreActions.initializeWidgets();
 	ui.setRouteContext({ isCollectionBuilder: true });
-	
+
 	// Hide global header but SHOW layout footer (v4 Studio integration)
-	ui.toggle('pageheader', 'hidden');
-	ui.toggle('pagefooter', 'full');
+	ui.toggle("pageheader", "hidden");
+	ui.toggle("pagefooter", "full");
 
 	// Centralized Hotkeys
-	registerHotkey('mod+s', () => handleCollectionSave(), 'Save Collection');
-	registerHotkey('escape', () => goto('/config/collectionbuilder'), 'Cancel & Exit', false);
+	registerHotkey("mod+s", () => handleCollectionSave(), "Save Collection");
+	registerHotkey(
+		"escape",
+		() => goto("/config/collectionbuilder"),
+		"Cancel & Exit",
+		false,
+	);
 });
 
 onDestroy(() => {
 	ui.setRouteContext({ isCollectionBuilder: false });
 	// Restore global UI when leaving builder
-	ui.toggle('pageheader', 'full');
-	ui.toggle('pagefooter', 'hidden'); // Default value from ui-store
+	ui.toggle("pageheader", "full");
+	ui.toggle("pagefooter", "hidden"); // Default value from ui-store
 });
 
 async function handleCollectionSave(confirmDeletions = false) {
-	if (validationStore.errors && Object.keys(validationStore.errors).length > 0) {
-		toast.error('Please fix validation errors before saving');
+	if (
+		validationStore.errors &&
+		Object.keys(validationStore.errors).length > 0
+	) {
+		toast.error("Please fix validation errors before saving");
 		return;
 	}
 
 	try {
 		isLoading = true;
 		const payload = { originalName, ...collection.value };
-		if (confirmDeletions) (payload as any).confirmDeletions = 'true';
+		if (confirmDeletions) (payload as any).confirmDeletions = "true";
 
-		const response = await fetch('?/saveCollection', {
-			method: 'POST',
-			body: obj2formData(payload)
+		const response = await fetch("?/saveCollection", {
+			method: "POST",
+			body: obj2formData(payload),
 		});
 
 		if (response.ok) {
-			toast.success('Collection Saved Successfully');
+			toast.success("Collection Saved Successfully");
 			if (originalName !== collection.value?.name) {
 				originalName = String(collection.value?.name);
 				goto(`/config/collectionbuilder/edit/${originalName}`);
 			}
 		}
 	} catch (error) {
-		logger.error('Save failed', error);
-		toast.error('Failed to save collection');
+		logger.error("Save failed", error);
+		toast.error("Failed to save collection");
 	} finally {
 		isLoading = false;
 	}
@@ -101,18 +113,18 @@ async function handleCollectionSave(confirmDeletions = false) {
 
 function handleCollectionDelete() {
 	showConfirm({
-		title: 'Delete Collection?',
+		title: "Delete Collection?",
 		body: `Are you sure you want to delete "${collection.value?.name}"?`,
 		onConfirm: async () => {
-			const res = await fetch('?/deleteCollections', {
-				method: 'POST',
-				body: obj2formData({ ids: JSON.stringify([collection.value?._id]) })
+			const res = await fetch("?/deleteCollections", {
+				method: "POST",
+				body: obj2formData({ ids: JSON.stringify([collection.value?._id]) }),
 			});
 			if (res.ok) {
-				toast.success('Collection Deleted');
-				goto('/config/collectionbuilder');
+				toast.success("Collection Deleted");
+				goto("/config/collectionbuilder");
 			}
-		}
+		},
 	});
 }
 
@@ -122,32 +134,40 @@ $effect(() => {
 	const action = params.action;
 	const contentPath = params.contentPath;
 
-	if (action === 'edit' && data.collection) {
+	if (action === "edit" && data.collection) {
 		setCollection(data.collection);
-		originalName = String(data.collection.name || '');
+		originalName = String(data.collection.name || "");
 		if (!collections.stepper.completedSteps.has(0)) {
 			collections.stepper.completedSteps.add(0);
 		}
-	} else if (action === 'new') {
+	} else if (action === "new") {
 		// Extract name from contentPath (e.g., /new/testcollection -> testcollection)
-		const urlName = contentPath ? contentPath.split('/').filter(Boolean).pop() : '';
-		const defaultName = urlName && urlName !== 'new' ? urlName : 'new';
-		
+		const urlName = contentPath
+			? contentPath.split("/").filter(Boolean).pop()
+			: "";
+		const defaultName = urlName && urlName !== "new" ? urlName : "new";
+
 		// Only update if it's different to avoid loops
 		if (collection.value?.name !== defaultName) {
-			setCollection({ 
-				name: defaultName, 
-				icon: 'bi:collection', 
-				status: 'unpublished', 
+			setCollection({
+				name: defaultName,
+				icon: "bi:collection",
+				status: "unpublished",
 				fields: [],
-				slug: defaultName !== 'new' ? defaultName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : ''
+				slug:
+					defaultName !== "new"
+						? defaultName
+								.toLowerCase()
+								.replace(/\s+/g, "-")
+								.replace(/[^a-z0-9-]/g, "")
+						: "",
 			} as any);
 		}
-		
-		originalName = '';
-		if (defaultName !== 'new' && !collections.stepper.completedSteps.has(0)) {
+
+		originalName = "";
+		if (defaultName !== "new" && !collections.stepper.completedSteps.has(0)) {
 			collections.stepper.completedSteps.add(0);
-		} else if (defaultName === 'new') {
+		} else if (defaultName === "new") {
 			collections.stepper.completedSteps.delete(0);
 		}
 	}

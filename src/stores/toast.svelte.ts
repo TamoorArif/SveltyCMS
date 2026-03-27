@@ -180,7 +180,10 @@ class ToastStore {
   }
 
   error(msgOrOpts: string | Partial<ToastOptions>, opts?: Partial<ToastOptions>): string {
-    return this._handleLegacy("error", msgOrOpts, { duration: opts?.duration ?? 6000, ...opts });
+    return this._handleLegacy("error", msgOrOpts, {
+      duration: opts?.duration ?? 6000,
+      ...opts,
+    });
   }
 
   warning(msgOrOpts: string | Partial<ToastOptions>, opts?: Partial<ToastOptions>): string {

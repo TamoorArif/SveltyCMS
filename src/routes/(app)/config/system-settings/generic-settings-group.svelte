@@ -14,19 +14,27 @@ Handles all field types and validation automatically
 -->
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import iso6391 from '@utils/iso639-1.json';
-import { getLanguageName } from '@utils/language-utils';
-import { logger } from '@utils/logger';
-import { showConfirm } from '@utils/modal-utils';
-import { onMount } from 'svelte';
-import type { SvelteSet } from 'svelte/reactivity';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import iso6391 from "@utils/iso639-1.json";
+import { getLanguageName } from "@utils/language-utils";
+import { logger } from "@utils/logger";
+import { showConfirm } from "@utils/modal-utils";
+import { onMount } from "svelte";
+import type { SvelteSet } from "svelte/reactivity";
 // Types and Utilities
-import type { SettingField, SettingGroup } from './settings-groups';
+import type { SettingField, SettingGroup } from "./settings-groups";
 
 // Log levels from logger.svelte.ts
-const LOG_LEVELS = ['none', 'fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const;
+const LOG_LEVELS = [
+	"none",
+	"fatal",
+	"error",
+	"warn",
+	"info",
+	"debug",
+	"trace",
+] as const;
 type LogLevel = (typeof LOG_LEVELS)[number];
 
 interface Props {
@@ -49,7 +57,7 @@ let hasEmptyRequiredFields = $state(false);
 let hasUnsavedChanges = $derived(
 	Object.keys(values).some((key) => {
 		return JSON.stringify(values[key]) !== JSON.stringify(originalValues[key]);
-	})
+	}),
 );
 
 // Notify parent component when hasUnsavedChanges changes
@@ -66,21 +74,30 @@ const showLogLevelPicker = $state<Record<string, boolean>>({}); // Track log lev
 let allowedLocales = $state<string[]>([]); // Locales from project.inlang/settings.json
 
 // Derived fields for special layouts
-const defaultLangField = $derived(group.fields.find((f) => f.key === 'DEFAULT_CONTENT_LANGUAGE'));
-const availableLangsField = $derived(group.fields.find((f) => f.key === 'AVAILABLE_CONTENT_LANGUAGES'));
-const baseLocaleField = $derived(group.fields.find((f) => f.key === 'BASE_LOCALE'));
-const localesField = $derived(group.fields.find((f) => f.key === 'LOCALES'));
+const defaultLangField = $derived(
+	group.fields.find((f) => f.key === "DEFAULT_CONTENT_LANGUAGE"),
+);
+const availableLangsField = $derived(
+	group.fields.find((f) => f.key === "AVAILABLE_CONTENT_LANGUAGES"),
+);
+const baseLocaleField = $derived(
+	group.fields.find((f) => f.key === "BASE_LOCALE"),
+);
+const localesField = $derived(group.fields.find((f) => f.key === "LOCALES"));
 
 // Load allowed locales from project.inlang/settings.json
 async function loadAllowedLocales() {
 	try {
-		const response = await fetch('/project.inlang/settings.json');
+		const response = await fetch("/project.inlang/settings.json");
 		const data = await response.json();
 		if (data.locales && Array.isArray(data.locales)) {
 			allowedLocales = data.locales;
 		}
 	} catch (err) {
-		logger.warn('[GenericSettingsGroup] Could not load project.inlang/settings.json, using all languages:', err);
+		logger.warn(
+			"[GenericSettingsGroup] Could not load project.inlang/settings.json, using all languages:",
+			err,
+		);
 		// Fall back to all languages if we can't read the file
 		allowedLocales = [];
 	}
@@ -92,8 +109,13 @@ function checkForEmptyFields() {
 		const value = values[field.key];
 
 		// Check for empty strings, especially in critical fields like email, host, etc.
-		if (typeof value === 'string') {
-			return value === '' && (field.required || field.key.includes('HOST') || field.key.includes('EMAIL'));
+		if (typeof value === "string") {
+			return (
+				value === "" &&
+				(field.required ||
+					field.key.includes("HOST") ||
+					field.key.includes("EMAIL"))
+			);
 		}
 
 		return false;
@@ -114,7 +136,9 @@ async function loadSettings(bypassCache = false) {
 
 	try {
 		// Load values from API with optional cache bypass
-		const url = bypassCache ? `/api/settings/${group.id}?refresh=true` : `/api/settings/${group.id}`;
+		const url = bypassCache
+			? `/api/settings/${group.id}?refresh=true`
+			: `/api/settings/${group.id}`;
 		const response = await fetch(url);
 		const data = await response.json();
 
@@ -124,11 +148,11 @@ async function loadSettings(bypassCache = false) {
 			originalValues = JSON.parse(JSON.stringify(values));
 			checkForEmptyFields(); // Check if configuration is needed
 		} else {
-			throw new Error(data.error || 'Failed to load settings');
+			throw new Error(data.error || "Failed to load settings");
 		}
 	} catch (err) {
 		logger.error(`[${group.id}] Load error:`, err);
-		error = err instanceof Error ? err.message : 'Failed to load settings';
+		error = err instanceof Error ? err.message : "Failed to load settings";
 	} finally {
 		loading = false;
 	}
@@ -147,83 +171,95 @@ function displayLanguage(code: string): string {
 function getFieldIcon(field: SettingField): string {
 	// Check field key patterns first
 	const key = field.key.toLowerCase();
-	if (key.includes('email') || key.includes('smtp_user')) {
-		return 'mdi:email';
+	if (key.includes("email") || key.includes("smtp_user")) {
+		return "mdi:email";
 	}
-	if (key.includes('password') || key.includes('secret') || key.includes('token')) {
-		return 'mdi:lock';
+	if (
+		key.includes("password") ||
+		key.includes("secret") ||
+		key.includes("token")
+	) {
+		return "mdi:lock";
 	}
-	if (key.includes('host') || key.includes('url') || key.includes('domain')) {
-		return 'mdi:web';
+	if (key.includes("host") || key.includes("url") || key.includes("domain")) {
+		return "mdi:web";
 	}
-	if (key.includes('port')) {
-		return 'mdi:power-plug';
+	if (key.includes("port")) {
+		return "mdi:power-plug";
 	}
-	if (key.includes('database') || key.includes('db')) {
-		return 'mdi:database';
+	if (key.includes("database") || key.includes("db")) {
+		return "mdi:database";
 	}
-	if (key.includes('path') || key.includes('folder') || key.includes('directory')) {
-		return 'mdi:folder';
+	if (
+		key.includes("path") ||
+		key.includes("folder") ||
+		key.includes("directory")
+	) {
+		return "mdi:folder";
 	}
-	if (key.includes('log') || key.includes('logging')) {
-		return 'mdi:math-log';
+	if (key.includes("log") || key.includes("logging")) {
+		return "mdi:math-log";
 	}
-	if (key.includes('cache')) {
-		return 'mdi:cached';
+	if (key.includes("cache")) {
+		return "mdi:cached";
 	}
-	if (key.includes('timeout') || key.includes('duration') || key.includes('ttl')) {
-		return 'mdi:timer';
+	if (
+		key.includes("timeout") ||
+		key.includes("duration") ||
+		key.includes("ttl")
+	) {
+		return "mdi:timer";
 	}
-	if (key.includes('limit') || key.includes('max') || key.includes('min')) {
-		return 'mdi:speedometer';
+	if (key.includes("limit") || key.includes("max") || key.includes("min")) {
+		return "mdi:speedometer";
 	}
-	if (key.includes('enable') || key.includes('allow')) {
-		return 'mdi:toggle-switch';
+	if (key.includes("enable") || key.includes("allow")) {
+		return "mdi:toggle-switch";
 	}
-	if (key.includes('jwt')) {
-		return 'mdi:key';
+	if (key.includes("jwt")) {
+		return "mdi:key";
 	}
-	if (key.includes('oauth') || key.includes('auth')) {
-		return 'mdi:shield-account';
+	if (key.includes("oauth") || key.includes("auth")) {
+		return "mdi:shield-account";
 	}
-	if (key.includes('redis')) {
-		return 'mdi:database-cog';
+	if (key.includes("redis")) {
+		return "mdi:database-cog";
 	}
-	if (key.includes('smtp')) {
-		return 'mdi:email-send';
+	if (key.includes("smtp")) {
+		return "mdi:email-send";
 	}
-	if (key.includes('site') || key.includes('name')) {
-		return 'mdi:web-box';
+	if (key.includes("site") || key.includes("name")) {
+		return "mdi:web-box";
 	}
-	if (key.includes('storage')) {
-		return 'mdi:harddisk';
+	if (key.includes("storage")) {
+		return "mdi:harddisk";
 	}
-	if (key.includes('backup')) {
-		return 'mdi:backup-restore';
+	if (key.includes("backup")) {
+		return "mdi:backup-restore";
 	}
 
 	// Check field type
-	if (field.type === 'boolean') {
-		return 'mdi:checkbox-marked';
+	if (field.type === "boolean") {
+		return "mdi:checkbox-marked";
 	}
-	if (field.type === 'number') {
-		return 'mdi:numeric';
+	if (field.type === "number") {
+		return "mdi:numeric";
 	}
-	if (field.type === 'array') {
-		return 'mdi:format-list-bulleted';
+	if (field.type === "array") {
+		return "mdi:format-list-bulleted";
 	}
-	if (field.type === 'select') {
-		return 'mdi:form-dropdown';
+	if (field.type === "select") {
+		return "mdi:form-dropdown";
 	}
-	if (field.type === 'password') {
-		return 'mdi:lock';
+	if (field.type === "password") {
+		return "mdi:lock";
 	}
-	if (field.type === 'loglevel-multi') {
-		return 'mdi:math-log';
+	if (field.type === "loglevel-multi") {
+		return "mdi:math-log";
 	}
 
 	// Default icon
-	return 'mdi:text-box';
+	return "mdi:text-box";
 }
 
 // Helper for language picker
@@ -299,15 +335,20 @@ function removeLogLevel(fieldKey: string, level: LogLevel) {
 // Validate a single field
 function validateField(field: SettingField, value: unknown): string | null {
 	// Required check
-	if (field.required && (value === undefined || value === null || value === '')) {
+	if (
+		field.required &&
+		(value === undefined || value === null || value === "")
+	) {
 		return `${field.label} is required`;
 	}
 
 	// Email validation for email-related fields
 	if (
-		typeof value === 'string' &&
+		typeof value === "string" &&
 		value &&
-		(field.key.toLowerCase().includes('email') || field.key === 'SMTP_USER' || field.label.toLowerCase().includes('email'))
+		(field.key.toLowerCase().includes("email") ||
+			field.key === "SMTP_USER" ||
+			field.label.toLowerCase().includes("email"))
 	) {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(value)) {
@@ -316,7 +357,7 @@ function validateField(field: SettingField, value: unknown): string | null {
 	}
 
 	// Type-specific validation
-	if (field.type === 'number' && typeof value === 'number') {
+	if (field.type === "number" && typeof value === "number") {
 		if (field.min !== undefined && value < field.min) {
 			return `${field.label} must be at least ${field.min}`;
 		}
@@ -352,7 +393,7 @@ function validateAll(): boolean {
 // Save settings
 async function saveSettings() {
 	if (!validateAll()) {
-		error = 'Please fix the validation errors';
+		error = "Please fix the validation errors";
 		return;
 	}
 
@@ -361,11 +402,11 @@ async function saveSettings() {
 
 	try {
 		const response = await fetch(`/api/settings/${group.id}`, {
-			method: 'PUT',
+			method: "PUT",
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
-			body: JSON.stringify(values)
+			body: JSON.stringify(values),
 		});
 
 		const data = await response.json();
@@ -373,16 +414,16 @@ async function saveSettings() {
 		if (data.success) {
 			let message = `${group.name} settings saved successfully!`;
 			if (group.requiresRestart) {
-				message += ' Server restart required for changes to take effect.';
+				message += " Server restart required for changes to take effect.";
 			}
 			toast.success({ description: message });
 			await loadSettings(true); // Bypass cache after save - this also resets originalValues
 			checkForEmptyFields(); // Update the warning status after save
 		} else {
-			error = data.error || 'Failed to save settings';
+			error = data.error || "Failed to save settings";
 		}
 	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to save settings';
+		error = err instanceof Error ? err.message : "Failed to save settings";
 	} finally {
 		saving = false;
 	}
@@ -390,9 +431,11 @@ async function saveSettings() {
 
 // Export current group settings
 function exportGroup() {
-	const blob = new Blob([JSON.stringify({ [group.id]: values }, null, 2)], { type: 'application/json' });
+	const blob = new Blob([JSON.stringify({ [group.id]: values }, null, 2)], {
+		type: "application/json",
+	});
 	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
+	const a = document.createElement("a");
 	a.href = url;
 	a.download = `sveltycms-settings-${group.id}-${new Date().toISOString().slice(0, 10)}.json`;
 	a.click();
@@ -402,7 +445,7 @@ function exportGroup() {
 // Reset to defaults (with confirmation)
 async function resetToDefaults() {
 	showConfirm({
-		title: 'Reset Settings',
+		title: "Reset Settings",
 		body: `Are you sure you want to reset all <strong>${group.name}</strong> settings to their default values? This action cannot be undone.`,
 		onConfirm: async () => {
 			saving = true;
@@ -410,7 +453,7 @@ async function resetToDefaults() {
 
 			try {
 				const response = await fetch(`/api/settings/${group.id}`, {
-					method: 'DELETE'
+					method: "DELETE",
 				});
 
 				const data = await response.json();
@@ -420,16 +463,16 @@ async function resetToDefaults() {
 					await loadSettings(true); // Bypass cache after reset
 					checkForEmptyFields(); // Re-check after reset
 				} else {
-					error = data.error || 'Failed to reset settings';
-					toast.error({ description: error || 'Failed to reset settings' });
+					error = data.error || "Failed to reset settings";
+					toast.error({ description: error || "Failed to reset settings" });
 				}
 			} catch (err) {
-				error = err instanceof Error ? err.message : 'Failed to reset settings';
-				toast.error({ description: error || 'Failed to reset settings' });
+				error = err instanceof Error ? err.message : "Failed to reset settings";
+				toast.error({ description: error || "Failed to reset settings" });
 			} finally {
 				saving = false;
 			}
-		}
+		},
 	});
 }
 
@@ -450,7 +493,7 @@ function formatDuration(seconds: number): string {
 function handleArrayInput(field: SettingField, event: Event) {
 	const input = (event.target as HTMLInputElement).value;
 	values[field.key] = input
-		.split(',')
+		.split(",")
 		.map((s) => s.trim())
 		.filter((s) => s.length > 0);
 }
@@ -459,14 +502,16 @@ function handleArrayInput(field: SettingField, event: Event) {
 function getArrayValue(key: string): string {
 	const val = values[key];
 	if (Array.isArray(val)) {
-		return val.join(', ');
+		return val.join(", ");
 	}
-	return '';
+	return "";
 }
 
 // Close language picker on click outside
 $effect(() => {
-	const openPickers = Object.keys(showLanguagePicker).filter((key) => showLanguagePicker[key]);
+	const openPickers = Object.keys(showLanguagePicker).filter(
+		(key) => showLanguagePicker[key],
+	);
 	if (openPickers.length === 0) {
 		return;
 	}
@@ -480,13 +525,15 @@ $effect(() => {
 		});
 	};
 
-	document.addEventListener('mousedown', handler);
-	return () => document.removeEventListener('mousedown', handler);
+	document.addEventListener("mousedown", handler);
+	return () => document.removeEventListener("mousedown", handler);
 });
 
 // Close log level picker on click outside
 $effect(() => {
-	const openPickers = Object.keys(showLogLevelPicker).filter((key) => showLogLevelPicker[key]);
+	const openPickers = Object.keys(showLogLevelPicker).filter(
+		(key) => showLogLevelPicker[key],
+	);
 	if (openPickers.length === 0) {
 		return;
 	}
@@ -500,8 +547,8 @@ $effect(() => {
 		});
 	};
 
-	document.addEventListener('mousedown', handler);
-	return () => document.removeEventListener('mousedown', handler);
+	document.addEventListener("mousedown", handler);
+	return () => document.removeEventListener("mousedown", handler);
 });
 
 onMount(() => {

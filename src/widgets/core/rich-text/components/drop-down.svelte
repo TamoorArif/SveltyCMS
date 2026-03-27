@@ -18,25 +18,27 @@
 -->
 
 <script lang="ts">
-import { onMount, tick } from 'svelte';
-import { twMerge } from 'tailwind-merge';
+import { onMount, tick } from "svelte";
+import { twMerge } from "tailwind-merge";
 
 // Lucide icons
 
 // Define props using Svelte 5 runes
 let {
 	items = [], // Array of selectable items
-	label = '', // Optional label for the dropdown
+	label = "", // Optional label for the dropdown
 	icon = undefined, // Optional icon for the dropdown button
-	class: className = '', // Custom class for the dropdown container
+	class: className = "", // Custom class for the dropdown container
 	show = true, // Whether to show the dropdown
-	active = $bindable('') // Currently active dropdown ID
+	active = $bindable(""), // Currently active dropdown ID
 } = $props();
 
 let expanded = $state(false);
 let dropdownRef: HTMLDivElement | undefined = $state();
 let buttonRef: HTMLButtonElement | undefined = $state();
-const dropdownId = $state(`dropdown-${Math.random().toString(36).substring(2, 9)}`);
+const dropdownId = $state(
+	`dropdown-${Math.random().toString(36).substring(2, 9)}`,
+);
 const listboxId = $derived(`${dropdownId}-menu`);
 let focusedIndex = $state(-1); // roving focus index when expanded
 const itemRefs: Array<HTMLButtonElement | null> = [];
@@ -50,7 +52,7 @@ function captureItem(node: HTMLButtonElement, index: number) {
 			if (itemRefs[index] === node) {
 				itemRefs[index] = null;
 			}
-		}
+		},
 	};
 }
 
@@ -65,8 +67,8 @@ function open(expandToIndex: number | null = null) {
 		return;
 	}
 	// close other dropdowns
-	if (active !== dropdownId && active !== '') {
-		active = '';
+	if (active !== dropdownId && active !== "") {
+		active = "";
 	}
 	expanded = true;
 	active = dropdownId;
@@ -85,7 +87,7 @@ function close(focusButton = true) {
 		return;
 	}
 	expanded = false;
-	active = '';
+	active = "";
 	focusedIndex = -1;
 	if (focusButton) {
 		buttonRef?.focus();
@@ -120,15 +122,19 @@ $effect(() => {
 // Add global click event listener to close dropdown when clicking outside
 onMount(() => {
 	const handleClickOutside = (event: MouseEvent) => {
-		if (dropdownRef && !dropdownRef.contains(event.target as Node) && expanded) {
+		if (
+			dropdownRef &&
+			!dropdownRef.contains(event.target as Node) &&
+			expanded
+		) {
 			close(false);
 		}
 	};
 
-	document.addEventListener('click', handleClickOutside);
+	document.addEventListener("click", handleClickOutside);
 
 	return () => {
-		document.removeEventListener('click', handleClickOutside);
+		document.removeEventListener("click", handleClickOutside);
 	};
 });
 

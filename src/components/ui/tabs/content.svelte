@@ -3,24 +3,24 @@
 @component CONTENT
 -->
 <script lang="ts">
-	import { getContext } from 'svelte';
-	import { cn } from '@utils/cn';
-	import type { Snippet } from 'svelte';
+import { getContext } from "svelte";
+import { cn } from "@utils/cn";
+import type { Snippet } from "svelte";
 
-	interface TabsContext {
-		value: any;
-	}
+interface TabsContext {
+	value: any;
+}
 
-	interface Props {
-		value: any;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	value: any;
+	children?: Snippet;
+	class?: string;
+}
 
-	let { value: contentValue, children, class: className = '' }: Props = $props();
-	
-	const context = getContext<TabsContext>('TABS_CONTEXT');
-	const active = $derived(context?.value === contentValue);
+let { value: contentValue, children, class: className = "" }: Props = $props();
+
+const context = getContext<TabsContext>("TABS_CONTEXT");
+const active = $derived(context?.value === contentValue);
 </script>
 
 {#if active}

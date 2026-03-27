@@ -191,7 +191,11 @@ describe("SAML SSO API Unit Tests", () => {
         tenantId: "tenant-1",
         blocked: false,
       });
-      mockAuth.getUserById.mockResolvedValue({ _id: "new-id", role: "VIEWER", blocked: false });
+      mockAuth.getUserById.mockResolvedValue({
+        _id: "new-id",
+        role: "VIEWER",
+        blocked: false,
+      });
       mockAuth.createSession.mockResolvedValue({ _id: "session-2" });
 
       const event = {

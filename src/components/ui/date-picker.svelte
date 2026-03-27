@@ -18,7 +18,7 @@ A premium Svelte 5 Date Picker primitive using native date input with enhanced S
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
+import { cn } from "@utils/cn";
 
 interface Props {
 	value?: string;
@@ -31,22 +31,24 @@ interface Props {
 }
 
 let {
-	value = $bindable(''),
+	value = $bindable(""),
 	label,
 	min,
 	max,
 	disabled = false,
-	class: className = '',
-	onchange
+	class: className = "",
+	onchange,
 }: Props = $props();
 
-const classes = $derived(cn(
-	'input px-3 py-2 rounded-lg border transition-all duration-200',
-	'bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700',
-	'focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-	disabled && 'opacity-50 cursor-not-allowed grayscale',
-	className
-));
+const classes = $derived(
+	cn(
+		"input px-3 py-2 rounded-lg border transition-all duration-200",
+		"bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700",
+		"focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
+		disabled && "opacity-50 cursor-not-allowed grayscale",
+		className,
+	),
+);
 
 const id = Math.random().toString(36).substring(7);
 </script>

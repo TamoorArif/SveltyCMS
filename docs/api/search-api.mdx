@@ -35,9 +35,9 @@ The Search API is the primary **Content Delivery** interface for headless implem
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| GET | `/api/search` | Cross-collection full-text search |
+| Method | Endpoint      | Description                       |
+| :----- | :------------ | :-------------------------------- |
+| GET    | `/api/search` | Cross-collection full-text search |
 
 ---
 
@@ -49,16 +49,16 @@ All parameters are passed as URL query strings.
 
 ### Query Parameters
 
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `q` | `string` | `""` | The search term. Matched against `title`, `content`, `description`, and `name` fields. |
-| `collections` | `string` | *(all)* | Comma-separated list of collection IDs (e.g. `posts,pages`). If omitted, all collections the user can access are searched. |
-| `page` | `number` | `1` | Pagination — the current page number. |
-| `limit` | `number` | `25` | Results per page. Capped at `100` per collection per request. |
-| `sortField` | `string` | `updatedAt` | Field to sort results by. |
-| `sortDirection` | `asc\|desc` | `desc` | Sort direction. |
-| `filter` | `json` | `{}` | A URL-encoded JSON string for exact-match filtering (e.g. `{"author":"admin123"}`). |
-| `status` | `string` | *(see below)* | Filter by entry status. Admins may pass any value. Non-admins are **always** restricted to `published`. |
+| Parameter       | Type        | Default       | Description                                                                                                                |
+| :-------------- | :---------- | :------------ | :------------------------------------------------------------------------------------------------------------------------- |
+| `q`             | `string`    | `""`          | The search term. Matched against `title`, `content`, `description`, and `name` fields.                                     |
+| `collections`   | `string`    | _(all)_       | Comma-separated list of collection IDs (e.g. `posts,pages`). If omitted, all collections the user can access are searched. |
+| `page`          | `number`    | `1`           | Pagination — the current page number.                                                                                      |
+| `limit`         | `number`    | `25`          | Results per page. Capped at `100` per collection per request.                                                              |
+| `sortField`     | `string`    | `updatedAt`   | Field to sort results by.                                                                                                  |
+| `sortDirection` | `asc\|desc` | `desc`        | Sort direction.                                                                                                            |
+| `filter`        | `json`      | `{}`          | A URL-encoded JSON string for exact-match filtering (e.g. `{"author":"admin123"}`).                                        |
+| `status`        | `string`    | _(see below)_ | Filter by entry status. Admins may pass any value. Non-admins are **always** restricted to `published`.                    |
 
 > [!IMPORTANT]
 > **Status Gate**: Non-admin users cannot override the `status` filter. Their results are always scoped to `status == "published"`, regardless of what value they pass. Admin users may filter by `draft`, `archived`, or any custom status.
@@ -171,12 +171,12 @@ curl -X GET \
 
 ### Error Codes
 
-| Code | HTTP | Meaning |
-| :--- | :--- | :------ |
-| `UNAUTHORIZED` | 401 | Request is not authenticated. |
-| `TENANT_MISSING` | 400 | Multi-tenant mode is enabled but no tenant could be resolved from the session. |
-| `INVALID_FILTER` | 400 | The `filter` parameter is not valid JSON. |
-| `SEARCH_ERROR` | 500 | An unexpected internal error occurred. |
+| Code             | HTTP | Meaning                                                                        |
+| :--------------- | :--- | :----------------------------------------------------------------------------- |
+| `UNAUTHORIZED`   | 401  | Request is not authenticated.                                                  |
+| `TENANT_MISSING` | 400  | Multi-tenant mode is enabled but no tenant could be resolved from the session. |
+| `INVALID_FILTER` | 400  | The `filter` parameter is not valid JSON.                                      |
+| `SEARCH_ERROR`   | 500  | An unexpected internal error occurred.                                         |
 
 ---
 

@@ -14,12 +14,12 @@ tags:
   - "guide"
 ---
 
-
 # Documentation Contribution Guide
 
 High-quality documentation is what makes SveltyCMS accessible to everyone — from first-time users to experienced engineers extending the core. This guide serves two audiences and is organized accordingly.
 
 **Jump to your section:**
+
 - 👥 **[For All Contributors](#for-all-contributors)** — Style, tone, and the writing approach that makes our docs excellent.
 - 🛠️ **[For Developers & AI Agents](#for-developers--ai-agents)** — Non-negotiable technical rules, canonical locations, frontmatter spec, and PR process.
 
@@ -47,11 +47,11 @@ When writing or rewriting any section, structure your content in this order:
 
 1. **The Goal** — What is a user (Content Creator, Admin, or Developer) trying to achieve? State it in one sentence.
 2. **The Solution** — Clear, step-by-step instructions (screenshots, code snippets) to achieve that goal.
-3. **The Mechanics** — *(Optional & Final)* — Explain the architecture, state machines, or DB-agnostic adapters *after* the goal is achieved. Never lead with mechanics for high-level guides.
+3. **The Mechanics** — _(Optional & Final)_ — Explain the architecture, state machines, or DB-agnostic adapters _after_ the goal is achieved. Never lead with mechanics for high-level guides.
 
 > [!IMPORTANT]
 > **Multi-Persona Balance**: Documentation is not just for developers. Every major guide (like Getting Started) must provide distinct paths for **Content Creators** (layout, workflows), **Administrators** (settings, permissions), and **Engineers** (setup, mechanics).
-> 
+>
 > **1:1 Technical Alignment**: Before documenting any function, endpoint, or component, find it in the `src/` directory first. Document the **actual** parameter names and behavior — not what you expect them to be. If the code and the existing docs disagree, the code is correct.
 
 ---
@@ -79,6 +79,7 @@ Use a diagram when the relationship between **three or more components** is not 
 ### MDX Formatting Features
 
 #### GitHub-Style Alerts
+
 Use these callouts to surface critical information. Do not overuse them — if everything is important, nothing is.
 
 ```markdown
@@ -99,6 +100,7 @@ Use these callouts to surface critical information. Do not overuse them — if e
 ```
 
 #### Mermaid Diagrams
+
 ````markdown
 ```mermaid
 sequenceDiagram
@@ -113,6 +115,7 @@ sequenceDiagram
 ````
 
 #### Code Blocks
+
 Always specify the language for syntax highlighting:
 
 ````markdown
@@ -147,13 +150,13 @@ These rules are enforced. A PR that violates them will not be merged.
 
 Place files only in these locations. No other locations are permitted.
 
-| Content Type | Location | Reason |
-| :--- | :--- | :--- |
-| **API Reference** | `/docs/api/` | Single unified surface for all endpoint docs. |
-| **General Guides** | `/docs/guides/` | Central library for feature and workflow guides. |
-| **Architecture** | `/docs/architecture/` | Internal mechanics and system design. |
-| **Contributing** | `/docs/contributing/` | Process and standards docs (like this file). |
-| **Widget Docs** | `src/widgets/core/{widget-name}/{widget-name}.mdx` | Co-located with source for maintainability. |
+| Content Type       | Location                                           | Reason                                           |
+| :----------------- | :------------------------------------------------- | :----------------------------------------------- |
+| **API Reference**  | `/docs/api/`                                       | Single unified surface for all endpoint docs.    |
+| **General Guides** | `/docs/guides/`                                    | Central library for feature and workflow guides. |
+| **Architecture**   | `/docs/architecture/`                              | Internal mechanics and system design.            |
+| **Contributing**   | `/docs/contributing/`                              | Process and standards docs (like this file).     |
+| **Widget Docs**    | `src/widgets/core/{widget-name}/{widget-name}.mdx` | Co-located with source for maintainability.      |
 
 #### Canonical Structure Reference
 
@@ -190,17 +193,17 @@ SveltyCMS/
 
 Every `.mdx` file must begin with a complete YAML frontmatter block. All fields are required.
 
-| Field | Type | Purpose | Example |
-| :--- | :--- | :--- | :--- |
-| `path` | string | Full path from project root. Used for routing and identification. Must exactly match the file's actual location. | `"docs/api/Collection_API.mdx"` |
-| `title` | string | Main H1 heading. Shown in navigation, browser tab, and search results. | `"Collection API"` |
-| `description` | string | One-sentence summary for SEO and link previews. | `"CRUD operations for collection entries."` |
-| `order` | number | Position in sidebar navigation relative to siblings. Lower = higher. | `15` |
-| `icon` | string | Material Design Icon with `mdi:` prefix. | `"mdi:api"` |
-| `author` | string | GitHub username of the original author. | `"your-github-handle"` |
-| `created` | string | Creation date in `YYYY-MM-DD` format. Set once, never change. | `"2025-10-05"` |
-| `updated` | string | Date of last meaningful change. Update with every PR that modifies content. | `"2026-03-27"` |
-| `tags` | array | Lowercase kebab-case keywords for search and filtering. | `["api", "collections", "crud"]` |
+| Field         | Type   | Purpose                                                                                                          | Example                                     |
+| :------------ | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------------------------------------ |
+| `path`        | string | Full path from project root. Used for routing and identification. Must exactly match the file's actual location. | `"docs/api/Collection_API.mdx"`             |
+| `title`       | string | Main H1 heading. Shown in navigation, browser tab, and search results.                                           | `"Collection API"`                          |
+| `description` | string | One-sentence summary for SEO and link previews.                                                                  | `"CRUD operations for collection entries."` |
+| `order`       | number | Position in sidebar navigation relative to siblings. Lower = higher.                                             | `15`                                        |
+| `icon`        | string | Material Design Icon with `mdi:` prefix.                                                                         | `"mdi:api"`                                 |
+| `author`      | string | GitHub username of the original author.                                                                          | `"your-github-handle"`                      |
+| `created`     | string | Creation date in `YYYY-MM-DD` format. Set once, never change.                                                    | `"2025-10-05"`                              |
+| `updated`     | string | Date of last meaningful change. Update with every PR that modifies content.                                      | `"2026-03-27"`                              |
+| `tags`        | array  | Lowercase kebab-case keywords for search and filtering.                                                          | `["api", "collections", "crud"]`            |
 
 **Correct frontmatter example:**
 
@@ -237,6 +240,7 @@ All non-MDX files (images, screenshots, SVGs) must follow these rules:
 ```
 
 **File standards:**
+
 - **Format**: PNG for screenshots, SVG for diagrams and icons.
 - **Size**: Keep files under 500KB. Compress screenshots before committing.
 - **Naming**: Descriptive kebab-case (e.g., `saml-handshake-flow.svg`).
@@ -266,6 +270,7 @@ flowchart LR
 ```
 
 1. **Branch**: Create a branch with a descriptive name.
+
    ```bash
    git checkout -b docs/fix-collection-api-filter-params
    ```
@@ -273,11 +278,13 @@ flowchart LR
 2. **Verify source alignment**: If documenting code behavior, open the relevant file in `src/` and confirm every parameter name, return value, and sequence matches what you've written.
 
 3. **Lint**: Run the documentation linter and fix all errors before pushing.
+
    ```bash
    bun ./tests/lint-docs.ts
    ```
 
-4. **CI parity** *(if code was also changed)*: Run the full check suite.
+4. **CI parity** _(if code was also changed)_: Run the full check suite.
+
    ```bash
    bun run lint && bun run check && bun run test
    ```
@@ -285,6 +292,7 @@ flowchart LR
 5. **Update `updated` field**: Change the date in frontmatter to today's date.
 
 6. **Submit PR**: Use a clear title following the convention:
+
    ```
    docs: add filter operator reference to SCIM API
    docs: fix outdated widget sync steps in troubleshooting

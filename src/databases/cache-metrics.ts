@@ -121,7 +121,12 @@ export class CacheMetrics {
 
   private updateCategory(
     category: string,
-    updates: Partial<{ hits: number; misses: number; totalTTL: number; ttlCount: number }>,
+    updates: Partial<{
+      hits: number;
+      misses: number;
+      totalTTL: number;
+      ttlCount: number;
+    }>,
   ): void {
     const metrics = this.categoryMetrics.get(category) || {
       hits: 0,

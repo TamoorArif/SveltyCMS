@@ -12,49 +12,52 @@ A comprehensive search and filter toolbar for data tables.
 -->
 
 <script lang="ts">
-import Button from '../button.svelte';
+import Button from "../button.svelte";
 
 let {
-    search = $bindable(''),
-    globalSearchValue = $bindable(''),
-    density = $bindable('normal'),
-    showSearch = $bindable(true),
-    filterShow = $bindable(false),
-    columnShow = $bindable(false),
-    onfilter,
-    children
+	search = $bindable(""),
+	globalSearchValue = $bindable(""),
+	density = $bindable("normal"),
+	showSearch = $bindable(true),
+	filterShow = $bindable(false),
+	columnShow = $bindable(false),
+	onfilter,
+	children,
 }: {
-    search?: string;
-    globalSearchValue?: string;
-    density?: 'compact' | 'normal' | 'comfortable';
-    showSearch?: boolean;
-    filterShow?: boolean;
-    columnShow?: boolean;
-    onfilter?: () => void;
-    children?: import('svelte').Snippet;
+	search?: string;
+	globalSearchValue?: string;
+	density?: "compact" | "normal" | "comfortable";
+	showSearch?: boolean;
+	filterShow?: boolean;
+	columnShow?: boolean;
+	onfilter?: () => void;
+	children?: import("svelte").Snippet;
 } = $props();
 
 // Synchronize search and globalSearchValue
 $effect(() => {
-    if (globalSearchValue !== search) search = globalSearchValue;
+	if (globalSearchValue !== search) search = globalSearchValue;
 });
 $effect(() => {
-    if (search !== globalSearchValue) globalSearchValue = search;
+	if (search !== globalSearchValue) globalSearchValue = search;
 });
 
-const densities = ['compact', 'normal', 'comfortable'] as const;
+const densities = ["compact", "normal", "comfortable"] as const;
 
 function cycleDensity() {
-    const idx = densities.indexOf(density as any);
-    density = densities[(idx + 1) % densities.length];
+	const idx = densities.indexOf(density as any);
+	density = densities[(idx + 1) % densities.length];
 }
 
 const densityIcon = $derived.by(() => {
-    switch(density) {
-        case 'compact': return 'mingcute:rows-4-line';
-        case 'comfortable': return 'mingcute:rows-1-line';
-        default: return 'mingcute:rows-3-line';
-    }
+	switch (density) {
+		case "compact":
+			return "mingcute:rows-4-line";
+		case "comfortable":
+			return "mingcute:rows-1-line";
+		default:
+			return "mingcute:rows-3-line";
+	}
 });
 </script>
 

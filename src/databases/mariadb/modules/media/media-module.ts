@@ -45,7 +45,9 @@ export class MediaModule {
       fileIds: DatabaseId[],
       tenantId?: string | null,
     ): Promise<DatabaseResult<{ deletedCount: number }>> =>
-      this.adapter.crud.deleteMany("media", { _id: { $in: fileIds } } as any, { tenantId }),
+      this.adapter.crud.deleteMany("media", { _id: { $in: fileIds } } as any, {
+        tenantId,
+      }),
 
     getByFolder: (
       folderId?: DatabaseId,
@@ -184,7 +186,11 @@ export class MediaModule {
       options?: PaginationOptions,
       tenantId?: string | null,
     ): Promise<
-      DatabaseResult<{ folders: MediaFolder[]; files: MediaItem[]; totalCount: number }>
+      DatabaseResult<{
+        folders: MediaFolder[];
+        files: MediaItem[];
+        totalCount: number;
+      }>
     > =>
       this.adapter.wrap(async () => {
         const [foldersRes, filesRes] = await Promise.all([

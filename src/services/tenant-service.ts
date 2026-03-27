@@ -297,7 +297,9 @@ export class TenantService {
       if (!dbAdapter) {
         return;
       }
-      await dbAdapter.system.tenants.update(tenantId as any, { usage: newUsage });
+      await dbAdapter.system.tenants.update(tenantId as any, {
+        usage: newUsage,
+      });
     } catch (err) {
       logger.error(`Failed to update usage for tenant ${tenantId}`, err);
     }

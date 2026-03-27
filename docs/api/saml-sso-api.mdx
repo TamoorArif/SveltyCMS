@@ -16,7 +16,6 @@ tags:
   - "azure-ad"
 ---
 
-
 # SAML 2.0 / Enterprise SSO API
 
 SveltyCMS provides SAML 2.0 integration for enterprise identity providers like Okta, Azure AD (Entra ID), and PingIdentity. This is built on **BoxyHQ SAML Jackson** and supports multi-tenant isolation with Just-In-Time (JIT) user provisioning.
@@ -34,11 +33,11 @@ SveltyCMS provides SAML 2.0 integration for enterprise identity providers like O
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Auth | Description |
-| :--- | :--- | :--- | :--- |
-| POST | `/api/auth/saml/config` | Admin | Register or update an IdP SAML connection |
-| GET | `/api/auth/saml/login` | Public | Initiate SSO — redirects to the configured IdP |
-| POST | `/api/auth/saml/acs` | Public (IdP callback) | Assertion Consumer Service — receives SAML assertions |
+| Method | Endpoint                | Auth                  | Description                                           |
+| :----- | :---------------------- | :-------------------- | :---------------------------------------------------- |
+| POST   | `/api/auth/saml/config` | Admin                 | Register or update an IdP SAML connection             |
+| GET    | `/api/auth/saml/login`  | Public                | Initiate SSO — redirects to the configured IdP        |
+| POST   | `/api/auth/saml/acs`    | Public (IdP callback) | Assertion Consumer Service — receives SAML assertions |
 
 ---
 
@@ -53,11 +52,11 @@ Registers or updates a SAML 2.0 connection for a specific tenant by providing th
 
 **Payload**:
 
-| Field | Type | Description |
-| :---- | :--- | :---------- |
-| `tenant` | `string` | The tenant identifier this connection is scoped to. |
-| `product` | `string` | Product identifier — use `sveltycms`. |
-| `rawMetadata` | `string` | The full XML metadata document from your IdP. |
+| Field                | Type     | Description                                               |
+| :------------------- | :------- | :-------------------------------------------------------- |
+| `tenant`             | `string` | The tenant identifier this connection is scoped to.       |
+| `product`            | `string` | Product identifier — use `sveltycms`.                     |
+| `rawMetadata`        | `string` | The full XML metadata document from your IdP.             |
 | `defaultRedirectUrl` | `string` | URL to redirect to after a successful SSO authentication. |
 
 ```json

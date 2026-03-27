@@ -19,10 +19,10 @@ It provides the following functionality:
 
 <script lang="ts">
 // Auth
-import type { Permission, Role } from '@src/databases/auth/types';
-import { PermissionType } from '@src/databases/auth/permission-constants';
+import type { Permission, Role } from "@src/databases/auth/types";
+import { PermissionType } from "@src/databases/auth/permission-constants";
 // Stores
-import { page } from '$app/state';
+import { page } from "$app/state";
 
 interface Props {
 	// Props passed from +page.svelte
@@ -37,42 +37,42 @@ const { roleData, setRoleData, updateModifiedCount }: Props = $props();
 let permissionsList: Permission[] = $state([]);
 let roles: Role[] = $state([]);
 const error = $state(null);
-let searchTerm = $state('');
+let searchTerm = $state("");
 const modifiedPermissions = $state(new Set());
 
 // Sorting state
-type SortKey = 'name' | 'action' | 'type';
-let sortBy = $state('name');
+type SortKey = "name" | "action" | "type";
+let sortBy = $state("name");
 let sortOrder = $state(0);
 
 // Function to get groups of permissions
 const getGroups = (filteredPermissions: Permission[]) => {
 	const groups: string[] = [];
 	filteredPermissions.forEach((cur) => {
-		let group = '';
+		let group = "";
 		if (cur.type === PermissionType.COLLECTION) {
-			group = 'Collection Entries';
+			group = "Collection Entries";
 		} else if (cur.type === PermissionType.USER) {
-			group = 'User Management';
+			group = "User Management";
 		} else if (cur.type === PermissionType.CONFIGURATION) {
-			group = 'Configuration';
+			group = "Configuration";
 		} else if (cur.type === PermissionType.SYSTEM) {
 			// Group system permissions by their prefix
-			const prefix = cur._id.split(':')[0];
-			if (prefix === 'system') {
-				group = 'System';
-			} else if (prefix === 'api') {
-				group = 'API Access';
-			} else if (prefix === 'content') {
-				group = 'Content Management';
-			} else if (prefix === 'media') {
-				group = 'Media Management';
-			} else if (prefix === 'config') {
-				group = 'Configuration';
-			} else if (prefix === 'admin') {
-				group = 'Admin';
+			const prefix = cur._id.split(":")[0];
+			if (prefix === "system") {
+				group = "System";
+			} else if (prefix === "api") {
+				group = "API Access";
+			} else if (prefix === "content") {
+				group = "Content Management";
+			} else if (prefix === "media") {
+				group = "Media Management";
+			} else if (prefix === "config") {
+				group = "Configuration";
+			} else if (prefix === "admin") {
+				group = "Admin";
 			} else {
-				group = 'System';
+				group = "System";
 			}
 		}
 		if (group && !groups.includes(group)) {
@@ -88,7 +88,7 @@ const handleSort = (column: SortKey) => {
 		// Cycle through: ascending (1) -> descending (-1) -> unsorted (0)
 		sortOrder = sortOrder === 1 ? -1 : sortOrder === -1 ? 0 : 1;
 		if (sortOrder === 0) {
-			sortBy = 'name'; // Reset to default when unsorted
+			sortBy = "name"; // Reset to default when unsorted
 		}
 	} else {
 		sortBy = column;
@@ -103,16 +103,16 @@ const sortPermissions = (permissions: Permission[]): Permission[] => {
 	}
 
 	return [...permissions].sort((a, b) => {
-		let aVal: string | number = '';
-		let bVal: string | number = '';
+		let aVal: string | number = "";
+		let bVal: string | number = "";
 
-		if (sortBy === 'name') {
+		if (sortBy === "name") {
 			aVal = a.name.toLowerCase();
 			bVal = b.name.toLowerCase();
-		} else if (sortBy === 'action') {
+		} else if (sortBy === "action") {
 			aVal = a.action.toLowerCase();
 			bVal = b.action.toLowerCase();
-		} else if (sortBy === 'type') {
+		} else if (sortBy === "type") {
 			aVal = a.type.toLowerCase();
 			bVal = b.type.toLowerCase();
 		}
@@ -129,11 +129,16 @@ const sortPermissions = (permissions: Permission[]): Permission[] => {
 
 // Derived reactive values
 const filteredPermissions = $derived(
-	permissionsList.filter((permission) => permission._id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+	permissionsList.filter(
+		(permission) =>
+			permission._id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false,
+	),
 );
 const groups = $derived(getGroups(filteredPermissions));
 const adminRole = $derived(roles.find((role) => role.isAdmin));
-const nonAdminRolesCount = $derived(roles.filter((role) => !role.isAdmin).length);
+const nonAdminRolesCount = $derived(
+	roles.filter((role) => !role.isAdmin).length,
+);
 
 // Initialize data when component mounts (run once)
 $effect(() => {
@@ -145,29 +150,52 @@ $effect(() => {
 });
 
 // Function to filter permissions by group (with sorting applied)
-const filterGroups = (permissions: Permission[], group: string): Permission[] => {
+const filterGroups = (
+	permissions: Permission[],
+	group: string,
+): Permission[] => {
 	let filtered: Permission[] = [];
 
-	if (group === 'Collection Entries') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.COLLECTION);
-	} else if (group === 'User Management') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.USER);
-	} else if (group === 'Configuration') {
+	if (group === "Collection Entries") {
 		filtered = permissions.filter(
-			(cur) => cur.type === PermissionType.CONFIGURATION || (cur.type === PermissionType.SYSTEM && cur._id.startsWith('config:'))
+			(cur) => cur.type === PermissionType.COLLECTION,
 		);
-	} else if (group === 'System') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith('system:'));
-	} else if (group === 'API Access') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith('api:'));
-	} else if (group === 'Content Management') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith('content:'));
-	} else if (group === 'Media Management') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith('media:'));
-	} else if (group === 'Admin') {
-		filtered = permissions.filter((cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith('admin:'));
+	} else if (group === "User Management") {
+		filtered = permissions.filter((cur) => cur.type === PermissionType.USER);
+	} else if (group === "Configuration") {
+		filtered = permissions.filter(
+			(cur) =>
+				cur.type === PermissionType.CONFIGURATION ||
+				(cur.type === PermissionType.SYSTEM && cur._id.startsWith("config:")),
+		);
+	} else if (group === "System") {
+		filtered = permissions.filter(
+			(cur) =>
+				cur.type === PermissionType.SYSTEM && cur._id.startsWith("system:"),
+		);
+	} else if (group === "API Access") {
+		filtered = permissions.filter(
+			(cur) => cur.type === PermissionType.SYSTEM && cur._id.startsWith("api:"),
+		);
+	} else if (group === "Content Management") {
+		filtered = permissions.filter(
+			(cur) =>
+				cur.type === PermissionType.SYSTEM && cur._id.startsWith("content:"),
+		);
+	} else if (group === "Media Management") {
+		filtered = permissions.filter(
+			(cur) =>
+				cur.type === PermissionType.SYSTEM && cur._id.startsWith("media:"),
+		);
+	} else if (group === "Admin") {
+		filtered = permissions.filter(
+			(cur) =>
+				cur.type === PermissionType.SYSTEM && cur._id.startsWith("admin:"),
+		);
 	} else {
-		filtered = permissions.filter((cur) => cur._id.split(':')[0] === group.toLowerCase());
+		filtered = permissions.filter(
+			(cur) => cur._id.split(":")[0] === group.toLowerCase(),
+		);
 	}
 
 	// Apply sorting to the filtered group
@@ -202,12 +230,18 @@ const toggleAllForRole = (roleId: string, checked: boolean) => {
 		if (role._id === roleId) {
 			if (checked) {
 				// Add all filtered permissions
-				const newPerms = new Set([...role.permissions, ...filteredPermissions.map((p) => p._id)]);
+				const newPerms = new Set([
+					...role.permissions,
+					...filteredPermissions.map((p) => p._id),
+				]);
 				return { ...role, permissions: Array.from(newPerms) };
 			} else {
 				// Remove all filtered permissions
 				const filteredIds = new Set(filteredPermissions.map((p) => p._id));
-				return { ...role, permissions: role.permissions.filter((p) => !filteredIds.has(p)) };
+				return {
+					...role,
+					permissions: role.permissions.filter((p) => !filteredIds.has(p)),
+				};
 			}
 		}
 		return role;

@@ -68,7 +68,10 @@ export const POST = apiHandler(async ({ locals, request }) => {
           );
         }
 
-        await configService.performImport({ changes: payload, tenantId: tenantId! });
+        await configService.performImport({
+          changes: payload,
+          tenantId: tenantId!,
+        });
         invalidateSettingsCache();
 
         return json({
@@ -78,7 +81,10 @@ export const POST = apiHandler(async ({ locals, request }) => {
       }
 
       case "export": {
-        const result = await configService.performExport({ uuids, tenantId: tenantId! });
+        const result = await configService.performExport({
+          uuids,
+          tenantId: tenantId!,
+        });
         return json({
           success: true,
           message: "Configuration exported successfully.",

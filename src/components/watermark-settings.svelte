@@ -23,11 +23,11 @@ interface Props {
 }
 
 let {
-	size = $bindable('100%'),
+	size = $bindable("100%"),
 	opacity = $bindable(1),
 	positionX = $bindable(0),
 	positionY = $bindable(0),
-	rotation = $bindable(0)
+	rotation = $bindable(0),
 }: Props = $props();
 
 // Handle size input change

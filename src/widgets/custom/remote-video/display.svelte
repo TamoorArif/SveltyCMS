@@ -26,7 +26,7 @@ Renders: Thumbnail + title + duration in compact horizontal layout
 -->
 
 <script lang="ts">
-import type { RemoteVideoData } from './types';
+import type { RemoteVideoData } from "./types";
 
 const { value }: { value: RemoteVideoData | null | undefined } = $props();
 

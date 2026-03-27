@@ -26,9 +26,9 @@ Structure optimized for LLM integration and AI-powered search.
 -->
 
 <script lang="ts">
-import type { SearchCriteria } from '@utils/media/advanced-search';
-import type { MediaBase } from '@utils/media/media-models';
-import { SvelteDate, SvelteSet } from 'svelte/reactivity';
+import type { SearchCriteria } from "@utils/media/advanced-search";
+import type { MediaBase } from "@utils/media/media-models";
+import { SvelteDate, SvelteSet } from "svelte/reactivity";
 
 interface Props {
 	files: MediaBase[];
@@ -43,24 +43,24 @@ const { files, onSearch, onClose }: Props = $props();
 
 // Form input values (separate from criteria for easier binding)
 let formValues = $state({
-	filename: '',
-	tagsInput: '',
-	minWidth: '',
-	maxWidth: '',
-	minHeight: '',
-	maxHeight: '',
-	aspectRatio: 'any',
-	minSize: '',
-	maxSize: '',
-	fileTypesInput: '',
-	uploadedAfter: '',
-	uploadedBefore: '',
-	hasEXIF: 'any',
-	camera: '',
-	location: '',
-	dominantColor: '',
+	filename: "",
+	tagsInput: "",
+	minWidth: "",
+	maxWidth: "",
+	minHeight: "",
+	maxHeight: "",
+	aspectRatio: "any",
+	minSize: "",
+	maxSize: "",
+	fileTypesInput: "",
+	uploadedAfter: "",
+	uploadedBefore: "",
+	hasEXIF: "any",
+	camera: "",
+	location: "",
+	dominantColor: "",
 	showDuplicatesOnly: false,
-	hashMatch: ''
+	hashMatch: "",
 });
 
 // Search suggestions (computed from files)
@@ -71,7 +71,11 @@ const suggestions = $derived.by(() => {
 
 	files.forEach((file) => {
 		// Extract tags - handle type safety
-		if (file.metadata && typeof file.metadata === 'object' && 'tags' in file.metadata) {
+		if (
+			file.metadata &&
+			typeof file.metadata === "object" &&
+			"tags" in file.metadata
+		) {
 			const fileTags = file.metadata.tags as string[] | undefined;
 			if (Array.isArray(fileTags)) {
 				fileTags.forEach((tag) => tags.add(tag));
@@ -79,9 +83,13 @@ const suggestions = $derived.by(() => {
 		}
 
 		// Extract camera info - handle type safety
-		if (file.metadata && typeof file.metadata === 'object' && 'exif' in file.metadata) {
+		if (
+			file.metadata &&
+			typeof file.metadata === "object" &&
+			"exif" in file.metadata
+		) {
 			const exif = file.metadata.exif as Record<string, unknown> | undefined;
-			if (exif && 'camera' in exif && typeof exif.camera === 'string') {
+			if (exif && "camera" in exif && typeof exif.camera === "string") {
 				cameras.add(exif.camera);
 			}
 		}
@@ -96,7 +104,7 @@ const suggestions = $derived.by(() => {
 	return {
 		tags: Array.from(tags).slice(0, 10),
 		cameras: Array.from(cameras).slice(0, 10),
-		dimensions: Array.from(dimensions).slice(0, 10)
+		dimensions: Array.from(dimensions).slice(0, 10),
 	};
 });
 
@@ -105,23 +113,47 @@ function handleSearch() {
 	// Convert form values to criteria
 	const searchCriteria: SearchCriteria = {
 		filename: formValues.filename || undefined,
-		tags: formValues.tagsInput ? formValues.tagsInput.split(',').map((t) => t.trim()) : undefined,
-		minWidth: formValues.minWidth ? Number.parseInt(formValues.minWidth, 10) : undefined,
-		maxWidth: formValues.maxWidth ? Number.parseInt(formValues.maxWidth, 10) : undefined,
-		minHeight: formValues.minHeight ? Number.parseInt(formValues.minHeight, 10) : undefined,
-		maxHeight: formValues.maxHeight ? Number.parseInt(formValues.maxHeight, 10) : undefined,
-		aspectRatio: formValues.aspectRatio !== 'any' ? (formValues.aspectRatio as 'landscape' | 'portrait' | 'square') : undefined,
-		minSize: formValues.minSize ? Number.parseInt(formValues.minSize, 10) * 1024 * 1024 : undefined, // Convert MB to bytes
-		maxSize: formValues.maxSize ? Number.parseInt(formValues.maxSize, 10) * 1024 * 1024 : undefined,
-		fileTypes: formValues.fileTypesInput ? formValues.fileTypesInput.split(',').map((t) => t.trim()) : undefined,
-		uploadedAfter: formValues.uploadedAfter ? new Date(formValues.uploadedAfter) : undefined,
-		uploadedBefore: formValues.uploadedBefore ? new Date(formValues.uploadedBefore) : undefined,
-		hasEXIF: formValues.hasEXIF !== 'any' ? formValues.hasEXIF === 'yes' : undefined,
+		tags: formValues.tagsInput
+			? formValues.tagsInput.split(",").map((t) => t.trim())
+			: undefined,
+		minWidth: formValues.minWidth
+			? Number.parseInt(formValues.minWidth, 10)
+			: undefined,
+		maxWidth: formValues.maxWidth
+			? Number.parseInt(formValues.maxWidth, 10)
+			: undefined,
+		minHeight: formValues.minHeight
+			? Number.parseInt(formValues.minHeight, 10)
+			: undefined,
+		maxHeight: formValues.maxHeight
+			? Number.parseInt(formValues.maxHeight, 10)
+			: undefined,
+		aspectRatio:
+			formValues.aspectRatio !== "any"
+				? (formValues.aspectRatio as "landscape" | "portrait" | "square")
+				: undefined,
+		minSize: formValues.minSize
+			? Number.parseInt(formValues.minSize, 10) * 1024 * 1024
+			: undefined, // Convert MB to bytes
+		maxSize: formValues.maxSize
+			? Number.parseInt(formValues.maxSize, 10) * 1024 * 1024
+			: undefined,
+		fileTypes: formValues.fileTypesInput
+			? formValues.fileTypesInput.split(",").map((t) => t.trim())
+			: undefined,
+		uploadedAfter: formValues.uploadedAfter
+			? new Date(formValues.uploadedAfter)
+			: undefined,
+		uploadedBefore: formValues.uploadedBefore
+			? new Date(formValues.uploadedBefore)
+			: undefined,
+		hasEXIF:
+			formValues.hasEXIF !== "any" ? formValues.hasEXIF === "yes" : undefined,
 		camera: formValues.camera || undefined,
 		location: formValues.location || undefined,
 		dominantColor: formValues.dominantColor || undefined,
 		showDuplicatesOnly: formValues.showDuplicatesOnly,
-		hashMatch: formValues.hashMatch || undefined
+		hashMatch: formValues.hashMatch || undefined,
 	};
 
 	onSearch(searchCriteria);
@@ -130,32 +162,32 @@ function handleSearch() {
 // Reset form
 function resetForm() {
 	formValues = {
-		filename: '',
-		tagsInput: '',
-		minWidth: '',
-		maxWidth: '',
-		minHeight: '',
-		maxHeight: '',
-		aspectRatio: 'any',
-		minSize: '',
-		maxSize: '',
-		fileTypesInput: '',
-		uploadedAfter: '',
-		uploadedBefore: '',
-		hasEXIF: 'any',
-		camera: '',
-		location: '',
-		dominantColor: '',
+		filename: "",
+		tagsInput: "",
+		minWidth: "",
+		maxWidth: "",
+		minHeight: "",
+		maxHeight: "",
+		aspectRatio: "any",
+		minSize: "",
+		maxSize: "",
+		fileTypesInput: "",
+		uploadedAfter: "",
+		uploadedBefore: "",
+		hasEXIF: "any",
+		camera: "",
+		location: "",
+		dominantColor: "",
 		showDuplicatesOnly: false,
-		hashMatch: ''
+		hashMatch: "",
 	};
 }
 
 // Keyboard shortcuts
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'Escape') {
+	if (e.key === "Escape") {
 		onClose();
-	} else if (e.key === 'Enter' && e.ctrlKey) {
+	} else if (e.key === "Enter" && e.ctrlKey) {
 		handleSearch();
 	}
 }

@@ -18,7 +18,7 @@ let {
 	onStraighten,
 	onAutoStraighten,
 	onGridToggle,
-	onSnapToggle
+	onSnapToggle,
 }: {
 	rotationAngle: number;
 	isFlippedH?: boolean;
@@ -58,14 +58,14 @@ function handleAngleInput(e: Event) {
 
 // Keyboard shortcuts
 function handleKeyDown(e: KeyboardEvent) {
-	if ((e.target as HTMLElement).tagName === 'INPUT') {
+	if ((e.target as HTMLElement).tagName === "INPUT") {
 		return;
 	}
 
 	const cmdOrCtrl = e.metaKey || e.ctrlKey;
 
 	switch (e.key) {
-		case 'ArrowLeft':
+		case "ArrowLeft":
 			e.preventDefault();
 			if (e.shiftKey) {
 				onRotationChange(rotationAngle - 0.1);
@@ -75,7 +75,7 @@ function handleKeyDown(e: KeyboardEvent) {
 				onRotationChange(rotationAngle - 1);
 			}
 			break;
-		case 'ArrowRight':
+		case "ArrowRight":
 			e.preventDefault();
 			if (e.shiftKey) {
 				onRotationChange(rotationAngle + 0.1);
@@ -85,31 +85,31 @@ function handleKeyDown(e: KeyboardEvent) {
 				onRotationChange(rotationAngle + 1);
 			}
 			break;
-		case 'h':
-		case 'H':
+		case "h":
+		case "H":
 			e.preventDefault();
 			onFlipHorizontal();
 			break;
-		case 'v':
-		case 'V':
+		case "v":
+		case "V":
 			e.preventDefault();
 			onFlipVertical();
 			break;
-		case 'g':
-		case 'G':
+		case "g":
+		case "G":
 			if (onGridToggle) {
 				e.preventDefault();
 				onGridToggle();
 			}
 			break;
-		case 's':
-		case 'S':
+		case "s":
+		case "S":
 			if (onStraighten && !cmdOrCtrl) {
 				e.preventDefault();
 				onStraighten();
 			}
 			break;
-		case '0':
+		case "0":
 			e.preventDefault();
 			onRotationChange(0);
 			break;

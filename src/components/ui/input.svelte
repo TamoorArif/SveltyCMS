@@ -10,11 +10,14 @@
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import type { HTMLInputAttributes } from 'svelte/elements';
+import { cn } from "@utils/cn";
+import type { HTMLInputAttributes } from "svelte/elements";
 
 // Generate a random ID for accessibility linkage if none provided
-const generatedId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7);
+const generatedId =
+	typeof crypto !== "undefined" && crypto.randomUUID
+		? crypto.randomUUID()
+		: Math.random().toString(36).substring(7);
 
 type Props = HTMLInputAttributes & {
 	value?: string | number | string[];
@@ -34,14 +37,14 @@ let {
 	error,
 	class: className,
 	id = generatedId,
-	type = 'text',
+	type = "text",
 	...rest
 }: Props = $props();
 
 const baseInputStyles =
-	'flex h-10 w-full rounded-md border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-900 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-surface-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50';
-	
-const errorInputStyles = 'border-error-500 focus-visible:ring-error-500';
+	"flex h-10 w-full rounded-md border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-900 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-surface-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50";
+
+const errorInputStyles = "border-error-500 focus-visible:ring-error-500";
 </script>
 
 <div class="space-y-2 w-full">

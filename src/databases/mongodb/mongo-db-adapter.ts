@@ -27,7 +27,6 @@ import { MongoCrudMethods } from "./methods/crud-methods";
 import { composeMongoAuthAdapter } from "./methods/auth-composition";
 import { MongoQueryBuilder } from "./mongo-query-builder";
 import { cacheService } from "@src/databases/cache/cache-service";
-import { CacheCategory } from "@src/databases/cache/types";
 
 export class MongoDBAdapter implements IDBAdapter {
   private _connection: mongoose.Connection | null = null;
@@ -50,8 +49,12 @@ export class MongoDBAdapter implements IDBAdapter {
 
     // Initialize basic content interface (extended in ensureContent)
     this.content = {
-      drafts: { restore: (id: DatabaseId) => this.crud.restore("content_drafts", id) },
-      revisions: { restore: (id: DatabaseId) => this.crud.restore("content_revisions", id) },
+      drafts: {
+        restore: (id: DatabaseId) => this.crud.restore("content_drafts", id),
+      },
+      revisions: {
+        restore: (id: DatabaseId) => this.crud.restore("content_revisions", id),
+      },
     } as unknown as IContentAdapter;
 
     // Initialize basic media interface (extended in ensureMedia)
@@ -234,7 +237,9 @@ export class MongoDBAdapter implements IDBAdapter {
       }
 
       if (options?.sort) {
-        query = query.sort({ [options.sort.field]: options.sort.direction === "asc" ? 1 : -1 });
+        query = query.sort({
+          [options.sort.field]: options.sort.direction === "asc" ? 1 : -1,
+        });
       }
 
       if (options?.offset) {
@@ -270,7 +275,11 @@ export class MongoDBAdapter implements IDBAdapter {
   }
 
   async getConnectionHealth(): Promise<
-    DatabaseResult<{ healthy: boolean; latency: number; activeConnections: number }>
+    DatabaseResult<{
+      healthy: boolean;
+      latency: number;
+      activeConnections: number;
+    }>
   > {
     return {
       success: true,
@@ -371,7 +380,10 @@ export class MongoDBAdapter implements IDBAdapter {
           .then(() => {}),
       list: (o: any) => JobModel.find(o).lean().exec() as any,
       count: (f: any) =>
-        JobModel.countDocuments(f).then((c) => ({ success: true, data: c })) as any,
+        JobModel.countDocuments(f).then((c) => ({
+          success: true,
+          data: c,
+        })) as any,
     } as any;
   }
 
@@ -451,7 +463,7 @@ export class MongoDBAdapter implements IDBAdapter {
           mediaMethods.getFiles(undefined, { ...options, search: query }, false, tenantId),
       },
       folders: {
-        getTree: (maxDepth?: number, tenantId?: string | null) =>
+        getTree: (_maxDepth?: number, tenantId?: string | null) =>
           mediaMethods.getFolders(undefined, tenantId),
         getFolderContents: mediaMethods.getFolders.bind(mediaMethods),
         // Placeholder methods for other folder operations
@@ -556,7 +568,10 @@ export class MongoDBAdapter implements IDBAdapter {
     generateId: () => new mongoose.Types.ObjectId().toHexString(),
     validateId: (id: string) => mongoose.Types.ObjectId.isValid(id),
     normalizePath: (p: string) => p,
-    createPagination: <T>(items: T[]) => ({ items: items, total: items.length }),
+    createPagination: <T>(items: T[]) => ({
+      items: items,
+      total: items.length,
+    }),
   } as any;
 
   private _getOrCreateModel(name: string): mongoose.Model<any> {

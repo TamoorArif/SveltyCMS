@@ -183,7 +183,14 @@ export class MariaDBAdapter extends AdapterCore implements IDBAdapter {
       cache: new CacheModule(),
       getConnectionPoolStats: async () =>
         this.wrap(async () => {
-          if (!this.pool) return { total: 0, active: 0, idle: 0, waiting: 0, avgConnectionTime: 0 };
+          if (!this.pool)
+            return {
+              total: 0,
+              active: 0,
+              idle: 0,
+              waiting: 0,
+              avgConnectionTime: 0,
+            };
           return {
             total: (this.pool as any)._allConnections?.length || 10,
             active:

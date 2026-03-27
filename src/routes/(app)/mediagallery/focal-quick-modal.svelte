@@ -16,10 +16,10 @@ and rule-of-thirds grid overlay.
 -->
 
 <script lang="ts">
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
-import type { MediaImage } from '@utils/media/media-models';
-import { fade, scale } from 'svelte/transition';
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
+import type { MediaImage } from "@utils/media/media-models";
+import { fade, scale } from "svelte/transition";
 
 interface Props {
 	/** The media image to adjust focal point for */
@@ -37,7 +37,7 @@ let { media, show = $bindable(), onClose, onSave }: Props = $props();
 // Initialize focal point with defaults
 let focalPoint = $state({
 	x: 50,
-	y: 50
+	y: 50,
 });
 
 let containerRef: HTMLDivElement | undefined = $state();
@@ -48,7 +48,7 @@ $effect(() => {
 	if (media) {
 		focalPoint = {
 			x: media.metadata?.focalPoint?.x ?? 50,
-			y: media.metadata?.focalPoint?.y ?? 50
+			y: media.metadata?.focalPoint?.y ?? 50,
 		};
 	}
 });
@@ -75,26 +75,26 @@ function updateFocalPoint(e: MouseEvent) {
 	const rect = containerRef.getBoundingClientRect();
 	focalPoint = {
 		x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
-		y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100))
+		y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)),
 	};
 }
 
 function handleKeyDown(e: KeyboardEvent) {
 	const step = e.shiftKey ? 10 : 1;
 	switch (e.key) {
-		case 'ArrowLeft':
+		case "ArrowLeft":
 			focalPoint.x = Math.max(0, focalPoint.x - step);
 			e.preventDefault();
 			break;
-		case 'ArrowRight':
+		case "ArrowRight":
 			focalPoint.x = Math.min(100, focalPoint.x + step);
 			e.preventDefault();
 			break;
-		case 'ArrowUp':
+		case "ArrowUp":
 			focalPoint.y = Math.max(0, focalPoint.y - step);
 			e.preventDefault();
 			break;
-		case 'ArrowDown':
+		case "ArrowDown":
 			focalPoint.y = Math.min(100, focalPoint.y + step);
 			e.preventDefault();
 			break;
@@ -103,20 +103,20 @@ function handleKeyDown(e: KeyboardEvent) {
 
 onMount(() => {
 	registerHotkey(
-		'mod+s',
+		"mod+s",
 		() => {
 			if (show) handleSave();
 		},
-		'Save focal point'
+		"Save focal point",
 	);
 
 	registerHotkey(
-		'escape',
+		"escape",
 		() => {
 			if (show) handleClose();
 		},
-		'Cancel focal point adjustment',
-		false
+		"Cancel focal point adjustment",
+		false,
 	);
 });
 
@@ -135,7 +135,9 @@ function resetToCenter() {
 }
 
 // Get image URL (prefer thumbnail for faster loading)
-const imageUrl = $derived(media.thumbnails?.md?.url || media.thumbnails?.sm?.url || media.url);
+const imageUrl = $derived(
+	media.thumbnails?.md?.url || media.thumbnails?.sm?.url || media.url,
+);
 </script>
 
 {#if show}

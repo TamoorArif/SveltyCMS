@@ -24,7 +24,10 @@ const LOAD_PROFILES = {
 };
 
 const QUERIES = [
-  { name: "Me (Basic)", body: JSON.stringify({ query: `query { me { username email role } }` }) },
+  {
+    name: "Me (Basic)",
+    body: JSON.stringify({ query: `query { me { username email role } }` }),
+  },
   {
     name: "System Health",
     body: JSON.stringify({
@@ -33,11 +36,15 @@ const QUERIES = [
   },
   {
     name: "Introspection (Schema)",
-    body: JSON.stringify({ query: `query { __schema { queryType { name } } }` }),
+    body: JSON.stringify({
+      query: `query { __schema { queryType { name } } }`,
+    }),
   },
   {
     name: "Metadata (User Type)",
-    body: JSON.stringify({ query: `query { __type(name: "User") { name fields { name } } }` }),
+    body: JSON.stringify({
+      query: `query { __type(name: "User") { name fields { name } } }`,
+    }),
   },
   {
     name: "Relational (Authors -> Posts)",

@@ -44,9 +44,24 @@ export class CacheModule {
     return { success: true, data: undefined };
   }
 
-  async invalidateCollection(collection: string): Promise<DatabaseResult<void>> {
+  async invalidateCollection(
+    collection: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
     for (const [key] of this.cache) {
       if (key.includes(collection)) {
+        this.cache.delete(key);
+      }
+    }
+    return { success: true, data: undefined };
+  }
+
+  async invalidateCategory(
+    category: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
+    for (const [key] of this.cache) {
+      if (key.includes(category)) {
         this.cache.delete(key);
       }
     }

@@ -100,7 +100,10 @@ class AutomationService {
       // Enforce tenantId consistency
       const sanitizedFlows = flows.map((f) => ({ ...f, tenantId }));
 
-      this.flowsCache.set(tenantId, { data: sanitizedFlows, timestamp: Date.now() });
+      this.flowsCache.set(tenantId, {
+        data: sanitizedFlows,
+        timestamp: Date.now(),
+      });
       return sanitizedFlows;
     } catch (e) {
       logger.error(`Failed to load automation flows for tenant ${tenantId}:`, e);

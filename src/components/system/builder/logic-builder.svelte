@@ -3,21 +3,21 @@
 @component Visual Conditional Logic Builder
  -->
 <script lang="ts">
-import { slide } from 'svelte/transition';
+import { slide } from "svelte/transition";
 
 interface Rule {
 	id: string;
 	field: string;
-	operator: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'in';
+	operator: "eq" | "neq" | "gt" | "lt" | "contains" | "in";
 	value: any;
 }
 
 interface LogicGroup {
-	type: 'AND' | 'OR';
+	type: "AND" | "OR";
 	rules: (Rule | LogicGroup)[];
 }
 
-import LogicBuilder from './logic-builder.svelte';
+import LogicBuilder from "./logic-builder.svelte";
 
 let { value = $bindable<any>(), fields = [] } = $props<{
 	fields: any[];
@@ -27,30 +27,30 @@ let { value = $bindable<any>(), fields = [] } = $props<{
 // Initialize if empty
 $effect(() => {
 	if (!value) {
-		value = { type: 'AND', rules: [] };
+		value = { type: "AND", rules: [] };
 	}
 });
 
 const operators = [
-	{ label: 'Equals', value: 'eq' },
-	{ label: 'Not Equals', value: 'neq' },
-	{ label: 'Greater Than', value: 'gt' },
-	{ label: 'Less Than', value: 'lt' },
-	{ label: 'Contains', value: 'contains' },
-	{ label: 'Is In', value: 'in' }
+	{ label: "Equals", value: "eq" },
+	{ label: "Not Equals", value: "neq" },
+	{ label: "Greater Than", value: "gt" },
+	{ label: "Less Than", value: "lt" },
+	{ label: "Contains", value: "contains" },
+	{ label: "Is In", value: "in" },
 ];
 
 function addRule(group: LogicGroup) {
 	group.rules.push({
 		id: Math.random().toString(36).substring(7),
-		field: fields[0]?.db_fieldName || '',
-		operator: 'eq',
-		value: ''
+		field: fields[0]?.db_fieldName || "",
+		operator: "eq",
+		value: "",
 	});
 }
 
 function addGroup(group: LogicGroup) {
-	group.rules.push({ type: 'AND', rules: [] });
+	group.rules.push({ type: "AND", rules: [] });
 }
 
 function removeRule(group: LogicGroup, index: number) {
@@ -58,7 +58,7 @@ function removeRule(group: LogicGroup, index: number) {
 }
 
 function toggleGroupType(group: LogicGroup) {
-	group.type = group.type === 'AND' ? 'OR' : 'AND';
+	group.type = group.type === "AND" ? "OR" : "AND";
 }
 </script>
 

@@ -10,7 +10,7 @@
 - Clear explanation of why SMTP is needed
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 import {
 	setup_email_aria_help_host,
 	setup_email_aria_help_password,
@@ -76,20 +76,20 @@ import {
 	setup_email_user,
 	setup_email_user_placeholder,
 	setup_email_why_desc,
-	setup_email_why_title
-} from '@src/paraglide/messages';
-import { setupStore } from '@src/stores/setup-store.svelte.ts';
-import { type SmtpConfigSchema, smtpConfigSchema } from '@utils/form-schemas';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { safeParse } from 'valibot';
-import { deserialize } from '$app/forms';
+	setup_email_why_title,
+} from "@src/paraglide/messages";
+import { setupStore } from "@src/stores/setup-store.svelte.ts";
+import { type SmtpConfigSchema, smtpConfigSchema } from "@utils/form-schemas";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { safeParse } from "valibot";
+import { deserialize } from "$app/forms";
 
 const { wizard } = setupStore;
 
 // Local state
 let isTesting = $state(false);
 let testSuccess = $state(false);
-let testError = $state('');
+let testError = $state("");
 let testEmailSent = $state(false);
 let showSuccessDetails = $state(true);
 let showWhySmtp = $state(false);
@@ -117,7 +117,9 @@ let detectedSecure = $derived(() => {
 });
 
 // Effective values (use detected values when available)
-let effectivePort = $derived(() => detectedPort() ?? Number(wizard.emailSettings.port));
+let effectivePort = $derived(
+	() => detectedPort() ?? Number(wizard.emailSettings.port),
+);
 let effectiveSecure = $derived(() => detectedSecure());
 
 // Common SMTP ports with descriptions
@@ -125,99 +127,99 @@ const commonPorts = $derived([
 	{
 		value: 587,
 		label: setup_email_port_587(),
-		description: setup_email_port_587_desc()
+		description: setup_email_port_587_desc(),
 	},
 	{
 		value: 465,
 		label: setup_email_port_465(),
-		description: setup_email_port_465_desc()
+		description: setup_email_port_465_desc(),
 	},
 	{
 		value: 2525,
 		label: setup_email_port_2525(),
-		description: setup_email_port_2525_desc()
+		description: setup_email_port_2525_desc(),
 	},
 	{
 		value: 25,
 		label: setup_email_port_25(),
-		description: setup_email_port_25_desc()
-	}
+		description: setup_email_port_25_desc(),
+	},
 ]);
 
 // Enhanced SMTP provider detection
 const providerPatterns = [
 	{
 		pattern: /gmail\.com|googlemail\.com/i,
-		name: 'Gmail',
-		host: 'smtp.gmail.com',
+		name: "Gmail",
+		host: "smtp.gmail.com",
 		port: 587,
 		secure: true,
-		note: setup_email_preset_note_gmail()
+		note: setup_email_preset_note_gmail(),
 	},
 	{
 		pattern: /outlook\.com|hotmail\.com|live\.com|office365\.com/i,
-		name: 'Outlook/Office 365',
-		host: 'smtp.office365.com',
+		name: "Outlook/Office 365",
+		host: "smtp.office365.com",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /sendgrid/i,
-		name: 'SendGrid',
-		host: 'smtp.sendgrid.net',
+		name: "SendGrid",
+		host: "smtp.sendgrid.net",
 		port: 587,
 		secure: true,
-		note: setup_email_preset_note_sendgrid()
+		note: setup_email_preset_note_sendgrid(),
 	},
 	{
 		pattern: /mailgun/i,
-		name: 'Mailgun',
-		host: 'smtp.mailgun.org',
+		name: "Mailgun",
+		host: "smtp.mailgun.org",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /smtp\.mail\.yahoo\.com/i,
-		name: 'Yahoo Mail',
-		host: 'smtp.mail.yahoo.com',
+		name: "Yahoo Mail",
+		host: "smtp.mail.yahoo.com",
 		port: 465,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /smtp\.zoho\.com/i,
-		name: 'Zoho Mail',
-		host: 'smtp.zoho.com',
+		name: "Zoho Mail",
+		host: "smtp.zoho.com",
 		port: 465,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /smtp\.ionos\.(com|de)/i,
-		name: 'IONOS',
-		host: 'smtp.ionos.com',
+		name: "IONOS",
+		host: "smtp.ionos.com",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /smtp\.1und1\.(de|com)/i,
-		name: '1&1',
-		host: 'smtp.1und1.de',
+		name: "1&1",
+		host: "smtp.1und1.de",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		pattern: /smtp\.strato\.(de|com)/i,
-		name: 'Strato',
-		host: 'smtp.strato.de',
+		name: "Strato",
+		host: "smtp.strato.de",
 		port: 465,
 		secure: true,
-		note: ''
-	}
+		note: "",
+	},
 ];
 
 // Detect provider from host and auto-configure
@@ -258,7 +260,7 @@ $effect(() => {
 });
 
 // Watch for host changes and auto-detect provider
-let lastDetectedHost = '';
+let lastDetectedHost = "";
 $effect(() => {
 	// Only auto-detect if user isn't using custom port and host has changed
 	if (!useCustomPort && wizard.emailSettings.host !== lastDetectedHost) {
@@ -279,7 +281,7 @@ const validationResult = $derived(() => {
 		user: wizard.emailSettings.user,
 		password: wizard.emailSettings.password,
 		from: wizard.emailSettings.from || wizard.emailSettings.user,
-		secure: effectiveSecure()
+		secure: effectiveSecure(),
 	};
 
 	const result = safeParse(smtpConfigSchema, config);
@@ -315,7 +317,7 @@ const displayErrors = $derived.by(() => {
 	// Parent validation errors always show (from API responses)
 	return {
 		...errors,
-		...validationErrors
+		...validationErrors,
 	};
 });
 
@@ -330,49 +332,51 @@ const isValidHostname = $derived(() => {
 	if (!wizard.emailSettings.host.trim()) {
 		return true;
 	}
-	if (wizard.emailSettings.host.includes('@')) {
+	if (wizard.emailSettings.host.includes("@")) {
 		return false;
 	}
-	return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(wizard.emailSettings.host);
+	return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
+		wizard.emailSettings.host,
+	);
 });
 
 // SMTP presets for dropdown
 const presets = [
 	{
 		name: setup_email_preset_gmail() as string,
-		host: 'smtp.gmail.com',
+		host: "smtp.gmail.com",
 		port: 587,
 		secure: true,
-		note: setup_email_preset_note_gmail()
+		note: setup_email_preset_note_gmail(),
 	},
 	{
 		name: setup_email_preset_outlook() as string,
-		host: 'smtp.office365.com',
+		host: "smtp.office365.com",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		name: setup_email_preset_sendgrid() as string,
-		host: 'smtp.sendgrid.net',
+		host: "smtp.sendgrid.net",
 		port: 587,
 		secure: true,
-		note: setup_email_preset_note_sendgrid()
+		note: setup_email_preset_note_sendgrid(),
 	},
 	{
 		name: setup_email_preset_mailgun() as string,
-		host: 'smtp.mailgun.org',
+		host: "smtp.mailgun.org",
 		port: 587,
 		secure: true,
-		note: ''
+		note: "",
 	},
 	{
 		name: setup_email_preset_custom() as string,
-		host: '',
+		host: "",
 		port: 587,
 		secure: true,
-		note: ''
-	}
+		note: "",
+	},
 ];
 
 let selectedPreset = $state(setup_email_preset_custom() as string);
@@ -385,7 +389,7 @@ function applyPreset(presetName: string) {
 		wizard.emailSettings.port = String(preset.port);
 		useCustomPort = false;
 		testSuccess = false;
-		testError = '';
+		testError = "";
 	}
 }
 
@@ -397,28 +401,31 @@ async function testConnection() {
 
 	isTesting = true;
 	testSuccess = false;
-	testError = '';
+	testError = "";
 	testEmailSent = false;
 
 	try {
 		const formData = new FormData();
-		formData.append('host', wizard.emailSettings.host);
-		formData.append('port', String(effectivePort()));
-		formData.append('user', wizard.emailSettings.user);
-		formData.append('password', wizard.emailSettings.password);
-		formData.append('from', wizard.emailSettings.from || wizard.emailSettings.user);
-		formData.append('secure', String(effectiveSecure()));
-		formData.append('testEmail', wizard.adminUser.email);
-		formData.append('saveToDatabase', 'true');
+		formData.append("host", wizard.emailSettings.host);
+		formData.append("port", String(effectivePort()));
+		formData.append("user", wizard.emailSettings.user);
+		formData.append("password", wizard.emailSettings.password);
+		formData.append(
+			"from",
+			wizard.emailSettings.from || wizard.emailSettings.user,
+		);
+		formData.append("secure", String(effectiveSecure()));
+		formData.append("testEmail", wizard.adminUser.email);
+		formData.append("saveToDatabase", "true");
 
-		const response = await fetch('?/testEmail', {
-			method: 'POST',
-			body: formData
+		const response = await fetch("?/testEmail", {
+			method: "POST",
+			body: formData,
 		});
 
 		const result = deserialize(await response.text());
 
-		if (result.type === 'success') {
+		if (result.type === "success") {
 			const data = result.data as {
 				success: boolean;
 				testEmailSent?: boolean;
@@ -437,17 +444,20 @@ async function testConnection() {
 					: setup_email_test_success();
 				toast.success(message);
 			} else {
-				testError = data.error || 'Connection failed';
+				testError = data.error || "Connection failed";
 				toast.error(`${setup_email_test_failed()}: ${testError}`);
 			}
 		} else {
 			// Handle failure/error type
-			const errorMsg = (result as { data?: { error?: string } }).data?.error || 'Connection failed'; // Attempt to get error from failure data
+			const errorMsg =
+				(result as { data?: { error?: string } }).data?.error ||
+				"Connection failed"; // Attempt to get error from failure data
 			testError = errorMsg;
 			toast.error(`${setup_email_test_failed()}: ${testError}`);
 		}
 	} catch (error) {
-		testError = error instanceof Error ? error.message : 'Unknown error occurred';
+		testError =
+			error instanceof Error ? error.message : "Unknown error occurred";
 		toast.error(`${setup_email_test_failed()}: ${testError}`);
 	} finally {
 		isTesting = false;

@@ -154,7 +154,9 @@ export class BatchModule {
       const result = await this.db
         .delete(table as any)
         .where(inArray((table as any)._id, ids as string[]));
-      return { deletedCount: (result as unknown as { changes: number }).changes };
+      return {
+        deletedCount: (result as unknown as { changes: number }).changes,
+      };
     }, "BULK_DELETE_FAILED");
   }
 
@@ -163,7 +165,9 @@ export class BatchModule {
     items: Array<Partial<T> & { id?: DatabaseId }>,
   ): Promise<DatabaseResult<T[]>> {
     const mappedItems = items.map((item) => ({
-      query: { _id: item.id } as unknown as import("../../db-interface").QueryFilter<T>,
+      query: {
+        _id: item.id,
+      } as unknown as import("../../db-interface").QueryFilter<T>,
       data: item as unknown as Omit<T, "_id" | "createdAt" | "updatedAt">,
     }));
     return this.crud.upsertMany<T>(collection, mappedItems) as unknown as DatabaseResult<T[]>;

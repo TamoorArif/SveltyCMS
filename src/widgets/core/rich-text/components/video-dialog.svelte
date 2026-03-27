@@ -9,10 +9,10 @@
 -->
 
 <script lang="ts">
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
+import FloatingInput from "@src/components/system/inputs/floating-input.svelte";
 // import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
-import { onMount } from 'svelte';
-import { fade } from 'svelte/transition';
+import { onMount } from "svelte";
+import { fade } from "svelte/transition";
 
 interface Props {
 	editor: any | null; // Changed from Editor to any
@@ -22,13 +22,13 @@ interface Props {
 let { show = $bindable(false), editor }: Props = $props();
 
 let insertUrl = $state(false);
-let youtubeUrl = $state('');
+let youtubeUrl = $state("");
 
 function close() {
 	show = false;
 	// Reset state after a short delay to allow the fade-out transition to complete
 	setTimeout(() => {
-		youtubeUrl = '';
+		youtubeUrl = "";
 		insertUrl = false;
 	}, 200);
 }
@@ -38,14 +38,17 @@ function handleSubmit(e: Event) {
 
 	// SECURITY: Validate YouTube URL to prevent XSS
 	// Only allow youtube.com and youtu.be URLs (HTTPS only)
-	const youtubePattern = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
+	const youtubePattern =
+		/^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
 
 	if (youtubeUrl && editor) {
 		if (youtubePattern.test(youtubeUrl)) {
 			editor.chain().focus().setYoutubeVideo({ src: youtubeUrl }).run();
 			close();
 		} else {
-			alert('Invalid YouTube URL. Please use a valid youtube.com or youtu.be link.');
+			alert(
+				"Invalid YouTube URL. Please use a valid youtube.com or youtu.be link.",
+			);
 		}
 	} else {
 		close();
@@ -55,13 +58,13 @@ function handleSubmit(e: Event) {
 // Add 'Escape' key listener
 onMount(() => {
 	const handleKeydown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape' && show) {
+		if (e.key === "Escape" && show) {
 			close();
 		}
 	};
-	window.addEventListener('keydown', handleKeydown);
+	window.addEventListener("keydown", handleKeydown);
 	return () => {
-		window.removeEventListener('keydown', handleKeydown);
+		window.removeEventListener("keydown", handleKeydown);
 	};
 });
 </script>

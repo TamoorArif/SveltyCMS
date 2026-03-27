@@ -6,8 +6,8 @@ Displays detailed SEO analysis results in a modal overlay.
 -->
 
 <script lang="ts">
-import { fade, scale } from 'svelte/transition';
-import type { SeoAnalysisResult } from '../seo-types';
+import { fade, scale } from "svelte/transition";
+import type { SeoAnalysisResult } from "../seo-types";
 
 interface Props {
 	analysisResult: SeoAnalysisResult | null;
@@ -15,7 +15,11 @@ interface Props {
 	show: boolean;
 }
 
-let { show = $bindable(), analysisResult, onclose = () => {} }: Props = $props();
+let {
+	show = $bindable(),
+	analysisResult,
+	onclose = () => {},
+}: Props = $props();
 
 function close() {
 	show = false;
@@ -23,7 +27,7 @@ function close() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-	if (show && event.key === 'Escape') {
+	if (show && event.key === "Escape") {
 		close();
 	}
 }

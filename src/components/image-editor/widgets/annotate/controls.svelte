@@ -4,7 +4,7 @@
 Controls for the Annotate tool: tool selection (text, arrow, shapes) and styling (colors).
 -->
 <script lang="ts">
-type ToolType = 'text' | 'arrow' | 'rectangle' | 'circle' | null;
+type ToolType = "text" | "arrow" | "rectangle" | "circle" | null;
 
 let {
 	currentTool,
@@ -12,7 +12,7 @@ let {
 	fillColor,
 	onSetTool,
 	onStrokeColorChange,
-	onFillColorChange
+	onFillColorChange,
 }: {
 	currentTool: ToolType;
 	strokeColor: string;

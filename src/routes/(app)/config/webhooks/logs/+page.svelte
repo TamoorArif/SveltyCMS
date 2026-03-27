@@ -3,37 +3,37 @@
  * @file src/routes/(app)/config/webhooks/logs/+page.svelte
  * @description UI for monitoring Webhook delivery logs and the Dead-Letter Queue (DLQ).
  */
-import { onMount } from 'svelte';
-import { fetchApi } from '@utils/api-client';
-import { toast } from '@src/stores/toast.svelte';
-import { formatDate } from '@utils/date-utils';
+import { onMount } from "svelte";
+import { fetchApi } from "@utils/api-client";
+import { toast } from "@src/stores/toast.svelte";
+import { formatDate } from "@utils/date-utils";
 
 let logs = $state<any[]>([]);
 let isLoading = $state(true);
-let filterStatus = $state('');
+let filterStatus = $state("");
 
 async function loadLogs() {
 	isLoading = true;
-	const query = filterStatus ? `?status=${filterStatus}` : '';
+	const query = filterStatus ? `?status=${filterStatus}` : "";
 	const response = await fetchApi<any[]>(`/api/webhooks/logs${query}`);
 	if (response.success) {
 		logs = response.data || [];
 	} else {
-		toast.error(response.message || 'Failed to load webhook logs');
+		toast.error(response.message || "Failed to load webhook logs");
 	}
 	isLoading = false;
 }
 
 async function retryWebhook(jobId: string) {
 	const response = await fetchApi(`/api/webhooks/logs/${jobId}/retry`, {
-		method: 'POST'
+		method: "POST",
 	});
 
 	if (response.success) {
-		toast.success('Webhook delivery queued for retry');
+		toast.success("Webhook delivery queued for retry");
 		await loadLogs();
 	} else {
-		toast.error(response.message || 'Failed to retry webhook');
+		toast.error(response.message || "Failed to retry webhook");
 	}
 }
 

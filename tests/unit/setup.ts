@@ -70,7 +70,11 @@ if (isBun) {
       // Augment with Vitest-like helpers safely
       const augment = (prop: string, val: any) => {
         try {
-          Object.defineProperty(m, prop, { value: val, writable: true, configurable: true });
+          Object.defineProperty(m, prop, {
+            value: val,
+            writable: true,
+            configurable: true,
+          });
         } catch {
           (m as any)[prop] = val;
         }
@@ -184,7 +188,10 @@ const CacheCategory = {
   SYSTEM: "system",
 };
 setGlobal("CacheCategory", CacheCategory);
-moduleMock("@src/databases/cache/types", () => ({ CacheCategory, default: CacheCategory }));
+moduleMock("@src/databases/cache/types", () => ({
+  CacheCategory,
+  default: CacheCategory,
+}));
 
 const mockLogger = {
   fatal: mock(() => {}),
@@ -197,8 +204,14 @@ const mockLogger = {
   dump: mock(() => {}),
 };
 
-moduleMock("@utils/logger", () => ({ logger: mockLogger, default: mockLogger }));
-moduleMock("@utils/logger.server", () => ({ logger: mockLogger, default: mockLogger }));
+moduleMock("@utils/logger", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
+moduleMock("@utils/logger.server", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
 
 moduleMock("$app/environment", () => ({
   browser: true,
@@ -623,7 +636,13 @@ const mockMetricsService = {
       cacheMisses: 0,
       cacheHitRate: 0,
     },
-    api: { requests: 0, errors: 0, cacheHits: 0, cacheMisses: 0, cacheHitRate: 0 },
+    api: {
+      requests: 0,
+      errors: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      cacheHitRate: 0,
+    },
     security: { rateLimitViolations: 0, cspViolations: 0, authFailures: 0 },
     performance: { slowRequests: 0, avgHookExecutionTime: 0, bottlenecks: [] },
   })),
@@ -646,7 +665,13 @@ const mockSecurityResponseService = {
     throttledIPs: 0,
     totalIncidents: 0,
     rateLimitEntries: 0,
-    threatLevelDistribution: { none: 0, low: 0, medium: 0, high: 0, critical: 0 },
+    threatLevelDistribution: {
+      none: 0,
+      low: 0,
+      medium: 0,
+      high: 0,
+      critical: 0,
+    },
   })),
   resolveIncident: mock(() => true),
   unblockIP: mock(() => true),
@@ -686,9 +711,12 @@ const settingsMock = {
   getPrivateSettingSync: mock((key: string) => {
     const env = (globalThis as any).privateEnv || (globalThis as any).__privateEnv;
     if (env && key in env) return env[key];
-    return { DB_TYPE: "mongodb", MULTI_TENANT: false, FIREWALL_ENABLED: true, USE_REDIS: false }[
-      key
-    ];
+    return {
+      DB_TYPE: "mongodb",
+      MULTI_TENANT: false,
+      FIREWALL_ENABLED: true,
+      USE_REDIS: false,
+    }[key];
   }),
   getPublicSettingSync: mock((key: string) => (key === "SITE_NAME" ? "SveltyCMS Test" : undefined)),
   getPrivateSetting: mock(async (key: string) => {
@@ -697,7 +725,11 @@ const settingsMock = {
     return "mongodb";
   }),
   getPublicSetting: mock(async (_key: string) => "test"),
-  loadSettingsCache: mock(async () => ({ loaded: true, private: {}, public: {} })),
+  loadSettingsCache: mock(async () => ({
+    loaded: true,
+    private: {},
+    public: {},
+  })),
   setSettingsCache: mock(async () => {}),
   invalidateSettingsCache: mock(async () => {}),
   isCacheLoaded: mock(() => true),
@@ -737,7 +769,11 @@ const mockDbAdapter = {
       ),
     ),
     ensureAuth: mock(() => Promise.resolve()),
-    createSessionCookie: mock(() => ({ name: "session", value: "secret", attributes: {} })),
+    createSessionCookie: mock(() => ({
+      name: "session",
+      value: "secret",
+      attributes: {},
+    })),
     authInterface: {
       getUserById: mock((id: string) => Promise.resolve({ success: true, data: { _id: id } })),
     },

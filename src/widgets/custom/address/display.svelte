@@ -25,15 +25,15 @@ Renders: "Main St 123, 12345 Berlin, Germany"
 -->
 
 <script lang="ts">
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { app } from '@src/stores/store.svelte';
-import type { FieldType } from './';
-import { countryStore } from './country-store.svelte';
-import type { AddressData } from './types';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { app } from "@src/stores/store.svelte";
+import type { FieldType } from "./";
+import { countryStore } from "./country-store.svelte";
+import type { AddressData } from "./types";
 
 let {
 	field,
-	value
+	value,
 }: {
 	field: FieldType;
 	value: Record<string, AddressData> | AddressData | null | undefined;
@@ -46,13 +46,15 @@ const safeValue = $derived.by(() => {
 		return null;
 	}
 
-	if (field.translated && typeof value === 'object') {
+	if (field.translated && typeof value === "object") {
 		// Multilingual mode: Try current content language, fallback to default
 		const lang = app.contentLanguage;
-		const defaultLang = (publicEnv.DEFAULT_CONTENT_LANGUAGE || 'en').toLowerCase();
-		return ((value as Record<string, AddressData>)[lang] || (value as Record<string, AddressData>)[defaultLang] || Object.values(value)[0]) as
-			| AddressData
-			| undefined;
+		const defaultLang = (
+			publicEnv.DEFAULT_CONTENT_LANGUAGE || "en"
+		).toLowerCase();
+		return ((value as Record<string, AddressData>)[lang] ||
+			(value as Record<string, AddressData>)[defaultLang] ||
+			Object.values(value)[0]) as AddressData | undefined;
 	}
 
 	// Single value mode
@@ -65,14 +67,20 @@ const uiLang = $derived(app.systemLanguage);
 // Create a formatted address string from the data object.
 const formattedAddress = $derived.by(() => {
 	if (!safeValue?.street) {
-		return '–';
+		return "–";
 	}
 
 	// Resolve country name from store using UI language
-	const countryName = safeValue.country ? countryStore.getCountryName(safeValue.country, uiLang) : '';
+	const countryName = safeValue.country
+		? countryStore.getCountryName(safeValue.country, uiLang)
+		: "";
 
-	const parts = [`${safeValue.street} ${safeValue.houseNumber}`, `${safeValue.postalCode} ${safeValue.city}`, countryName];
-	return parts.filter(Boolean).join(', ');
+	const parts = [
+		`${safeValue.street} ${safeValue.houseNumber}`,
+		`${safeValue.postalCode} ${safeValue.city}`,
+		countryName,
+	];
+	return parts.filter(Boolean).join(", ");
 });
 </script>
 

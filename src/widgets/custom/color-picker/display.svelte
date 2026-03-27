@@ -27,7 +27,7 @@ const isValidHex = (color: string): boolean => {
 	return /^#[0-9a-f]{6}$/i.test(color);
 };
 
-const safeColor = $derived(value && isValidHex(value) ? value : '#000000');
+const safeColor = $derived(value && isValidHex(value) ? value : "#000000");
 </script>
 
 {#if value && isValidHex(value)}

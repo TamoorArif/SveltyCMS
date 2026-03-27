@@ -28,32 +28,36 @@ Part of the Three Pillars Architecture for widget system.
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { app, validationStore } from '@src/stores/store.svelte';
-import { logger } from '@utils/logger';
-import { debounce, getFieldName } from '@utils/utils';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { app, validationStore } from "@src/stores/store.svelte";
+import { logger } from "@utils/logger";
+import { debounce, getFieldName } from "@utils/utils";
 // Unified error handling
-import { handleWidgetValidation } from '@widgets/widget-error-handler';
+import { handleWidgetValidation } from "@widgets/widget-error-handler";
 // Valibot validation
-import { custom, optional, parse, pipe, string, url } from 'valibot';
-import type { FieldType } from './';
-import type { RemoteVideoData } from './types';
+import { custom, optional, parse, pipe, string, url } from "valibot";
+import type { FieldType } from "./";
+import type { RemoteVideoData } from "./types";
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
 	value: RemoteVideoData | null | undefined | Record<string, RemoteVideoData>;
 	error?: string | null;
 } = $props();
 
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
 
 // Local state for the URL input.
-let urlInput = $state('');
+let urlInput = $state("");
 // Local state to temporarily hold fetched metadata before it's set to `value`.
 let fetchedMetadata = $state<RemoteVideoData | null>(null);
 let isLoading = $state(false);
@@ -64,9 +68,9 @@ $effect(() => {
 	const parentVal = value;
 	let extracted: RemoteVideoData | null = null;
 
-	if (field.translated && typeof parentVal === 'object' && parentVal !== null) {
+	if (field.translated && typeof parentVal === "object" && parentVal !== null) {
 		extracted = (parentVal as Record<string, any>)[LANGUAGE] ?? null;
-	} else if (!field.translated && typeof parentVal === 'object') {
+	} else if (!field.translated && typeof parentVal === "object") {
 		extracted = parentVal as RemoteVideoData;
 	}
 
@@ -74,7 +78,7 @@ $effect(() => {
 		urlInput = extracted.url;
 		fetchedMetadata = extracted;
 	} else if (!extracted) {
-		urlInput = '';
+		urlInput = "";
 		fetchedMetadata = null;
 	}
 });
@@ -83,30 +87,43 @@ $effect(() => {
 const fieldName = $derived(getFieldName(field));
 
 // Supported video platforms
-const supportedPlatforms = ['youtube.com', 'youtu.be', 'vimeo.com', 'twitch.tv', 'tiktok.com'];
+const supportedPlatforms = [
+	"youtube.com",
+	"youtu.be",
+	"vimeo.com",
+	"twitch.tv",
+	"tiktok.com",
+];
 
 // Video URL validation schema
 const videoUrlSchema = $derived(
 	field?.required
 		? pipe(
 				string(),
-				url('Invalid URL format'),
+				url("Invalid URL format"),
 				custom(
-					(val) => supportedPlatforms.some((domain) => (val as string).includes(domain)),
-					'Unsupported video platform. Supported: YouTube, Vimeo, Twitch, TikTok'
-				)
+					(val) =>
+						supportedPlatforms.some((domain) =>
+							(val as string).includes(domain),
+						),
+					"Unsupported video platform. Supported: YouTube, Vimeo, Twitch, TikTok",
+				),
 			)
 		: optional(
 				pipe(
 					string(),
-					url('Invalid URL format'),
+					url("Invalid URL format"),
 					custom(
-						(val) => (val as string) === '' || supportedPlatforms.some((domain) => (val as string).includes(domain)),
-						'Unsupported video platform'
-					)
+						(val) =>
+							(val as string) === "" ||
+							supportedPlatforms.some((domain) =>
+								(val as string).includes(domain),
+							),
+						"Unsupported video platform",
+					),
 				),
-				''
-			)
+				"",
+			),
 );
 
 // Validation function using unified handler
@@ -120,7 +137,7 @@ function validateVideoUrl(urlValue: string): {
 	}
 	const result = handleWidgetValidation(() => parse(videoUrlSchema, urlValue), {
 		fieldName,
-		updateStore: true
+		updateStore: true,
 	});
 	return { valid: result.valid, error: result.message ?? undefined };
 }
@@ -128,10 +145,13 @@ function validateVideoUrl(urlValue: string): {
 // Helper to update parent value
 function updateParent(newData: RemoteVideoData | null) {
 	if (field.translated) {
-		if (!value || typeof value !== 'object') {
+		if (!value || typeof value !== "object") {
 			value = {};
 		}
-		value = { ...(value as object), [LANGUAGE]: newData } as Record<string, RemoteVideoData>;
+		value = { ...(value as object), [LANGUAGE]: newData } as Record<
+			string,
+			RemoteVideoData
+		>;
 	} else {
 		value = newData;
 	}
@@ -139,7 +159,7 @@ function updateParent(newData: RemoteVideoData | null) {
 
 // Debounced function to fetch video metadata from the server.
 const fetchVideoMetadata = debounce.create((...args: unknown[]) => {
-	const url = typeof args[0] === 'string' ? args[0] : '';
+	const url = typeof args[0] === "string" ? args[0] : "";
 	isLoading = true;
 	fetchError = null;
 	fetchedMetadata = null;
@@ -152,7 +172,7 @@ const fetchVideoMetadata = debounce.create((...args: unknown[]) => {
 	// SECURITY: Validate URL before making API call
 	const validation = validateVideoUrl(url);
 	if (!validation.valid) {
-		fetchError = validation.error || 'Invalid video URL';
+		fetchError = validation.error || "Invalid video URL";
 		isLoading = false;
 		updateParent(null);
 		return;
@@ -162,14 +182,14 @@ const fetchVideoMetadata = debounce.create((...args: unknown[]) => {
 	(async () => {
 		try {
 			// Call API endpoint to fetch metadata securely
-			const response = await fetch('/api/remoteVideo', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+			const response = await fetch("/api/remoteVideo", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
 				// Send a JSON object
 				body: JSON.stringify({
 					url,
-					allowedPlatforms: field.allowedPlatforms
-				})
+					allowedPlatforms: field.allowedPlatforms,
+				}),
 			});
 
 			const result = await response.json();
@@ -178,12 +198,12 @@ const fetchVideoMetadata = debounce.create((...args: unknown[]) => {
 				fetchedMetadata = result.data;
 				updateParent(result.data); // Bind the full metadata object back to the parent safely.
 			} else {
-				fetchError = result.error || 'Failed to fetch video metadata.';
+				fetchError = result.error || "Failed to fetch video metadata.";
 				updateParent(null); // Clear parent value on error.
 			}
 		} catch (e) {
-			logger.error('Error fetching video metadata:', e);
-			fetchError = 'An unexpected error occurred while fetching video data.';
+			logger.error("Error fetching video metadata:", e);
+			fetchError = "An unexpected error occurred while fetching video data.";
 			updateParent(null);
 		} finally {
 			isLoading = false;

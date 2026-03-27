@@ -5,7 +5,7 @@
 Displays a GDPR-compliant cookie consent banner.
 -->
 <script lang="ts">
-import Toggles from '@src/components/system/inputs/toggles.svelte';
+import Toggles from "@src/components/system/inputs/toggles.svelte";
 import {
 	cookie_analytics_desc,
 	cookie_analytics_title,
@@ -18,11 +18,11 @@ import {
 	cookie_marketing_desc,
 	cookie_marketing_title,
 	cookie_necessary_desc,
-	cookie_necessary_title
-} from '@src/paraglide/messages';
-import { consentStore } from '@src/stores/consent-store.svelte';
-import { onMount } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+	cookie_necessary_title,
+} from "@src/paraglide/messages";
+import { consentStore } from "@src/stores/consent-store.svelte";
+import { onMount } from "svelte";
+import { fade, slide } from "svelte/transition";
 
 let showBanner = $state(false);
 let showDetails = $state(false);
@@ -30,7 +30,7 @@ let showDetails = $state(false);
 // Local state for the details view before saving
 let preferences = $state({
 	analytics: consentStore.analytics,
-	marketing: consentStore.marketing
+	marketing: consentStore.marketing,
 });
 
 onMount(() => {

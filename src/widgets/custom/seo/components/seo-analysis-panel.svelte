@@ -7,10 +7,10 @@ Designed to be used in a dashboard layout (e.g. side-by-side with preview).
 -->
 
 <script lang="ts">
-import { slide } from 'svelte/transition';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import { slide } from "svelte/transition";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // Using iconify-icon web component
-import type { SeoAnalysisResult } from '../seo-types';
+import type { SeoAnalysisResult } from "../seo-types";
 
 interface Props {
 	analysisResult: SeoAnalysisResult | null;
@@ -19,7 +19,12 @@ interface Props {
 	isAnalyzing?: boolean;
 }
 
-let { analysisResult, class: className = '', expanded = $bindable(false), isAnalyzing = false }: Props = $props();
+let {
+	analysisResult,
+	class: className = "",
+	expanded = $bindable(false),
+	isAnalyzing = false,
+}: Props = $props();
 </script>
 
 <div class="card pt-1 preset-tonal-surface flex flex-col overflow-hidden {className} transition-all duration-300 {expanded ? 'h-[500px]' : 'h-16'}">

@@ -11,10 +11,10 @@
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import { fade, fly } from 'svelte/transition';
-import { sanitize } from 'isomorphic-dompurify';
-import type { Toast } from '@src/stores/toast.svelte.ts';
+import { cn } from "@utils/cn";
+import { fade, fly } from "svelte/transition";
+import { sanitize } from "isomorphic-dompurify";
+import type { Toast } from "@src/stores/toast.svelte.ts";
 
 interface Props {
 	toast: Toast;
@@ -26,19 +26,19 @@ interface Props {
 let { toast: t, onClose, onPause, onResume }: Props = $props();
 
 const styles = {
-	success: 'preset-filled-success-500 text-white shadow-success-500/20',
-	error: 'preset-filled-error-500 text-white shadow-error-500/20',
-	warning: 'preset-filled-warning-500 text-white shadow-warning-500/20',
-	info: 'preset-filled-info-500 text-white shadow-info-500/20',
-	loading: 'preset-filled-surface-500 text-white shadow-surface-500/20'
+	success: "preset-filled-success-500 text-white shadow-success-500/20",
+	error: "preset-filled-error-500 text-white shadow-error-500/20",
+	warning: "preset-filled-warning-500 text-white shadow-warning-500/20",
+	info: "preset-filled-info-500 text-white shadow-info-500/20",
+	loading: "preset-filled-surface-500 text-white shadow-surface-500/20",
 };
 
 const icons = {
-	success: 'mdi:check-circle',
-	error: 'mdi:alert-circle',
-	warning: 'mdi:alert',
-	info: 'mdi:information',
-	loading: 'mdi:loading'
+	success: "mdi:check-circle",
+	error: "mdi:alert-circle",
+	warning: "mdi:alert",
+	info: "mdi:information",
+	loading: "mdi:loading",
 };
 </script>
 

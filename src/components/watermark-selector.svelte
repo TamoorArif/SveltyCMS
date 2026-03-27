@@ -14,7 +14,7 @@ Usage:
 -->
 
 <script lang="ts">
-import type { MediaItem } from '@utils/media/media-models';
+import type { MediaItem } from "@utils/media/media-models";
 
 interface Props {
 	// Component props
@@ -32,7 +32,7 @@ function handleSelect(media: MediaItem) {
 
 // Handle keyboard navigation
 function handleKeydown(event: KeyboardEvent, media: MediaItem) {
-	if (event.key === 'Enter' || event.key === ' ') {
+	if (event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		handleSelect(media);
 	}

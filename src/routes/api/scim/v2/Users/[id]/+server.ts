@@ -130,7 +130,11 @@ export const PATCH = apiHandler(async ({ params, request, url, locals }) => {
   }
 
   const updatedUser = await auth.getUserById(id, tenantId);
-  logger.info("SCIM User patched", { userId: id, ops: body.Operations.length, tenantId });
+  logger.info("SCIM User patched", {
+    userId: id,
+    ops: body.Operations.length,
+    tenantId,
+  });
   return json(buildScimUser(updatedUser || existingUser, url.origin));
 });
 

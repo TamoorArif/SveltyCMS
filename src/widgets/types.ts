@@ -22,7 +22,9 @@ import type { FieldInstance, Schema } from "../content/types";
  * A function that dynamically imports a Svelte component.
  * Used for code-splitting and type-safe component resolution.
  */
-export type ComponentLoader = () => Promise<{ default: Component<any, any, any> }>;
+export type ComponentLoader = () => Promise<{
+  default: Component<any, any, any>;
+}>;
 
 // ============================================================================
 // Widget Type Classification

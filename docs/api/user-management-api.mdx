@@ -33,18 +33,18 @@ The User Management API is the core identity layer of SveltyCMS. It covers user 
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Description | Permission |
-| :--- | :--- | :--- | :--- |
-| GET | `/api/user` | List users (paginated, filterable) | `manage_users` |
-| POST | `/api/user` | Invite a new user (creates + sends email token) | `manage_users` |
-| POST | `/api/user/create-user` | Create user directly (no email invite) | `manage_users` |
-| PATCH | `/api/user/update-user-attributes` | Update username, email, or password | Own profile or `manage_users` |
-| POST | `/api/user/save-avatar` | Upload a new avatar image | Own profile or Admin |
-| DELETE | `/api/user/delete-avatar` | Remove avatar and revert to default | Own profile or Admin |
-| POST | `/api/user/verify-password` | Verify the current user's password | Authenticated user |
-| POST | `/api/user/login` | Authenticate and open a session | Public |
-| POST | `/api/user/logout` | Terminate the current session | Authenticated user |
-| POST | `/api/user/batch` | Bulk delete, block, or unblock users | `manage_users` |
+| Method | Endpoint                           | Description                                     | Permission                    |
+| :----- | :--------------------------------- | :---------------------------------------------- | :---------------------------- |
+| GET    | `/api/user`                        | List users (paginated, filterable)              | `manage_users`                |
+| POST   | `/api/user`                        | Invite a new user (creates + sends email token) | `manage_users`                |
+| POST   | `/api/user/create-user`            | Create user directly (no email invite)          | `manage_users`                |
+| PATCH  | `/api/user/update-user-attributes` | Update username, email, or password             | Own profile or `manage_users` |
+| POST   | `/api/user/save-avatar`            | Upload a new avatar image                       | Own profile or Admin          |
+| DELETE | `/api/user/delete-avatar`          | Remove avatar and revert to default             | Own profile or Admin          |
+| POST   | `/api/user/verify-password`        | Verify the current user's password              | Authenticated user            |
+| POST   | `/api/user/login`                  | Authenticate and open a session                 | Public                        |
+| POST   | `/api/user/logout`                 | Terminate the current session                   | Authenticated user            |
+| POST   | `/api/user/batch`                  | Bulk delete, block, or unblock users            | `manage_users`                |
 
 ---
 
@@ -56,13 +56,13 @@ Returns a paginated, searchable list of users. Requires the `manage_users` permi
 
 #### Query Parameters
 
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `page` | `number` | `1` | Current page. |
-| `limit` | `number` | `10` | Results per page. |
-| `sort` | `string` | `createdAt` | Field to sort by. |
-| `order` | `asc\|desc` | `desc` | Sort direction. `asc` = `1`, `desc` = `-1`. |
-| `search` | `string` | `""` | Case-insensitive substring match against `username` and `email`. |
+| Parameter | Type        | Default     | Description                                                      |
+| :-------- | :---------- | :---------- | :--------------------------------------------------------------- |
+| `page`    | `number`    | `1`         | Current page.                                                    |
+| `limit`   | `number`    | `10`        | Results per page.                                                |
+| `sort`    | `string`    | `createdAt` | Field to sort by.                                                |
+| `order`   | `asc\|desc` | `desc`      | Sort direction. `asc` = `1`, `desc` = `-1`.                      |
+| `search`  | `string`    | `""`        | Case-insensitive substring match against `username` and `email`. |
 
 #### Response Shape
 
@@ -109,11 +109,11 @@ Creates a new user record and sends them an invite email with a time-limited reg
 }
 ```
 
-| Field | Type | Required | Description |
-| :---- | :--- | :------- | :---------- |
-| `email` | `string` | ✅ | The new user's email address. |
-| `role` | `string` | ✅ | Assigned role (e.g., `editor`, `admin`). |
-| `expiresIn` | `string` | ✅ | Token expiry. One of: `"2 hrs"`, `"12 hrs"`, `"2 days"`, `"1 week"`, `"2 weeks"`, `"1 month"`. |
+| Field       | Type     | Required | Description                                                                                    |
+| :---------- | :------- | :------- | :--------------------------------------------------------------------------------------------- |
+| `email`     | `string` | ✅       | The new user's email address.                                                                  |
+| `role`      | `string` | ✅       | Assigned role (e.g., `editor`, `admin`).                                                       |
+| `expiresIn` | `string` | ✅       | Token expiry. One of: `"2 hrs"`, `"12 hrs"`, `"2 days"`, `"1 week"`, `"2 weeks"`, `"1 month"`. |
 
 #### Mechanics
 
@@ -139,13 +139,13 @@ Supports updating `username`, `email`, or `password`. Passwords are re-hashed vi
 
 #### Field-Level Permissions
 
-| Field | Non-Admin Restriction |
-| :---- | :-------------------- |
-| `username` | Can only update own profile. |
-| `email` | Can only update own profile. Triggers email change notification. |
+| Field      | Non-Admin Restriction                                                |
+| :--------- | :------------------------------------------------------------------- |
+| `username` | Can only update own profile.                                         |
+| `email`    | Can only update own profile. Triggers email change notification.     |
 | `password` | Can only update own profile. Requires current password verification. |
-| `role` | **Admin only.** Non-admins cannot elevate their own role. |
-| `isActive` | **Admin only.** Used to enable/disable accounts. |
+| `role`     | **Admin only.** Non-admins cannot elevate their own role.            |
+| `isActive` | **Admin only.** Used to enable/disable accounts.                     |
 
 ### B. Save Avatar (`POST`)
 
@@ -153,19 +153,21 @@ Supports updating `username`, `email`, or `password`. Passwords are re-hashed vi
 
 **Payload**: `multipart/form-data`
 
-| Field | Type | Description |
-| :---- | :--- | :---------- |
-| `avatar` | `File` | The image to upload. |
-| `userId` | `string` | *(Optional)* Target user ID. Defaults to self. Admins may specify another user. |
+| Field    | Type     | Description                                                                     |
+| :------- | :------- | :------------------------------------------------------------------------------ |
+| `avatar` | `File`   | The image to upload.                                                            |
+| `userId` | `string` | _(Optional)_ Target user ID. Defaults to self. Admins may specify another user. |
 
 **Allowed MIME types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/svg+xml`, `image/avif`.
 
 **Mechanics**:
+
 - If the user already has a non-default avatar, it is **moved to trash** before the new file is saved.
 - The new file is processed by `saveAvatarImage()`, which handles both local and cloud (S3/R2) storage.
 - The user's session cache is immediately invalidated so the new avatar appears without a page reload.
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -190,14 +192,17 @@ Moves the current avatar to trash and resets the user's profile to the default p
 Used by the UI before allowing sensitive operations (e.g., enabling 2FA, changing email).
 
 **Payload**:
+
 ```json
 { "password": "currentUserPassword" }
 ```
 
 **Response**:
+
 ```json
 { "success": true }
 ```
+
 Returns `401` if the password is incorrect.
 
 ---
@@ -209,6 +214,7 @@ Returns `401` if the password is incorrect.
 Administrators can perform bulk actions on multiple users in a single request.
 
 **Payload**:
+
 ```json
 {
   "userIds": ["id1", "id2", "id3"],
@@ -216,11 +222,11 @@ Administrators can perform bulk actions on multiple users in a single request.
 }
 ```
 
-| `action` | Description |
-| :------- | :---------- |
-| `block` | Suspends all listed accounts. Existing sessions remain until they expire. |
-| `unblock` | Restores access for all listed accounts. |
-| `delete` | Permanently removes each user record **and all their active sessions**. |
+| `action`  | Description                                                               |
+| :-------- | :------------------------------------------------------------------------ |
+| `block`   | Suspends all listed accounts. Existing sessions remain until they expire. |
+| `unblock` | Restores access for all listed accounts.                                  |
+| `delete`  | Permanently removes each user record **and all their active sessions**.   |
 
 > [!CAUTION]
 > You cannot include your own user ID in a batch operation. The endpoint returns `400 SELF_ACTION_DENIED` if your session's user ID appears in `userIds`.
@@ -246,11 +252,11 @@ SveltyCMS uses **Argon2id** for all password hashing — both at user creation a
 
 ### Argon2id Parameters
 
-| Parameter | Value | Rationale |
-| :-------- | :---- | :-------- |
-| Memory Cost | 64 MB | Forces GPU/ASIC to allocate physical RAM, defeating parallel brute-force. |
-| Time Cost | 3 iterations | Balances security cost against login latency. |
-| Parallelism | 4 threads | Matches typical server core counts for efficiency. |
+| Parameter   | Value        | Rationale                                                                 |
+| :---------- | :----------- | :------------------------------------------------------------------------ |
+| Memory Cost | 64 MB        | Forces GPU/ASIC to allocate physical RAM, defeating parallel brute-force. |
+| Time Cost   | 3 iterations | Balances security cost against login latency.                             |
+| Parallelism | 4 threads    | Matches typical server core counts for efficiency.                        |
 
 This configuration is **memory-hard**, meaning that brute-force attacks requiring millions of guesses become physically impossible at scale. The same properties that defeat GPU farms also constrain quantum computing acceleration (Grover's algorithm), maintaining a high security floor.
 
@@ -261,6 +267,7 @@ This configuration is **memory-hard**, meaning that brute-force attacks requirin
 ### Login (`POST /api/user/login`)
 
 **Payload**:
+
 ```json
 { "email": "user@example.com", "password": "securePassword123" }
 ```

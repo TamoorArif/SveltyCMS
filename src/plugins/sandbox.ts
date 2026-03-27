@@ -232,7 +232,10 @@ export function wrapSSRHook(
         ),
       ]);
     } catch (error) {
-      safeLog.error(`Plugin "${pluginId}" SSR hook failed`, { error, pluginId });
+      safeLog.error(`Plugin "${pluginId}" SSR hook failed`, {
+        error,
+        pluginId,
+      });
       return [];
     }
   };

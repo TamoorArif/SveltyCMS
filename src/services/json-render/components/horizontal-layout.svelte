@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { ComponentRenderProps } from 'json-render-svelte';
+import type { ComponentRenderProps } from "json-render-svelte";
 
 let { children }: ComponentRenderProps = $props();
 </script>

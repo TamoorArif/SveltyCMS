@@ -12,7 +12,7 @@ This component presents a summary of all configuration steps before finalizing t
 
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // ParaglideJS
 import {
 	form_email,
@@ -51,10 +51,15 @@ import {
 	setup_email_from,
 	setup_email_host,
 	setup_email_port,
-	setup_email_user
-} from '@src/paraglide/messages';
+	setup_email_user,
+} from "@src/paraglide/messages";
 // Types from setupStore
-import type { AdminUser, DbConfig, EmailSettings, SystemSettings } from '@src/stores/setup-store.svelte.ts';
+import type {
+	AdminUser,
+	DbConfig,
+	EmailSettings,
+	SystemSettings,
+} from "@src/stores/setup-store.svelte.ts";
 
 //  props
 //  props
@@ -69,9 +74,9 @@ const { dbConfig, adminUser, systemSettings, emailSettings }: Props = $props();
 
 // Redaction helper (masking)
 function redact(value: string | undefined): string {
-	if (!value) return '-';
-	if (value.length <= 4) return '****';
-	return value.substring(0, 2) + '••••' + value.substring(value.length - 2);
+	if (!value) return "-";
+	if (value.length <= 4) return "****";
+	return value.substring(0, 2) + "••••" + value.substring(value.length - 2);
 }
 </script>
 

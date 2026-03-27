@@ -57,7 +57,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
   }
 
   if (isAuthorizedInternal) {
-    logger.debug("Authorized internal API call to /api/send-mail", { tenantId });
+    logger.debug("Authorized internal API call to /api/send-mail", {
+      tenantId,
+    });
   } else {
     logger.debug(`Admin '${user?.email}' calling /api/send-mail`, { tenantId });
   }

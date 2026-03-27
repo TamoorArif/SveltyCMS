@@ -36,7 +36,17 @@ export class CacheModule {
     return this.core.notImplemented("cache.clear");
   }
 
-  async invalidateCollection(_collection: string): Promise<DatabaseResult<void>> {
+  async invalidateCollection(
+    _collection: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
     return this.core.notImplemented("cache.invalidateCollection");
+  }
+
+  async invalidateCategory(
+    _category: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
+    return this.core.notImplemented("cache.invalidateCategory");
   }
 }

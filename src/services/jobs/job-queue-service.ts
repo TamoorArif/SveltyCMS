@@ -141,7 +141,10 @@ class JobQueueService {
     const handler = this.handlers.get(job.taskType);
 
     // Mark as running
-    await db.system.jobs.update(job._id, { status: "running", attempts: job.attempts + 1 });
+    await db.system.jobs.update(job._id, {
+      status: "running",
+      attempts: job.attempts + 1,
+    });
 
     if (!handler) {
       logger.warn(`[JobQueue] No handler found for task type: ${job.taskType}`);
@@ -157,7 +160,10 @@ class JobQueueService {
       await handler(job.payload, job);
 
       // Mark as completed
-      await db.system.jobs.update(job._id, { status: "completed", progress: 100 });
+      await db.system.jobs.update(job._id, {
+        status: "completed",
+        progress: 100,
+      });
       logger.info(`[JobQueue] Job ${job._id} completed successfully`);
     } catch (error) {
       const errMessage = error instanceof Error ? error.message : String(error);

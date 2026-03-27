@@ -2,9 +2,9 @@
 
 <script lang="ts">
 // Skeleton V4
-import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-import { modalState } from '@utils/modal-state.svelte';
-import { tick } from 'svelte';
+import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
+import { modalState } from "@utils/modal-state.svelte";
+import { tick } from "svelte";
 
 // Handle closing via the Store
 function onClose() {
@@ -19,7 +19,7 @@ async function onOpenChange(details: { open: boolean }) {
 	}
 }
 /* Derived state for fullscreen mode */
-const isFullscreen = $derived(modalState.active?.props?.size === 'fullscreen');
+const isFullscreen = $derived(modalState.active?.props?.size === "fullscreen");
 </script>
 
 <Dialog open={modalState.isOpen} {onOpenChange}>

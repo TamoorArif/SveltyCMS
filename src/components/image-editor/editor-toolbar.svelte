@@ -3,12 +3,14 @@
  @component Toolbar for the Image Editor
  -->
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { slide } from 'svelte/transition';
-import { editorWidgets } from './widgets/registry';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { slide } from "svelte/transition";
+import { editorWidgets } from "./widgets/registry";
 
 const activeToolId = $derived(imageEditorStore.activeToolId);
-const toolbarControls = $derived(activeToolId ? editorWidgets.find((w) => w.key === activeToolId) : null);
+const toolbarControls = $derived(
+	activeToolId ? editorWidgets.find((w) => w.key === activeToolId) : null,
+);
 
 function handleToolToggle(toolId: string) {
 	if (imageEditorStore.activeToolId === toolId) {

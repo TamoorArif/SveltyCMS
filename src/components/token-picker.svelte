@@ -12,34 +12,42 @@
 -->
 
 <script lang="ts">
-import { replaceTokens, TokenRegistry } from '@src/services/token/engine';
-import { modifierMetadata } from '@src/services/token/modifiers';
-import type { ModifierMetadata, TokenDefinition } from '@src/services/token/types';
-import { activeInput } from '@src/stores/active-input-store.svelte';
-import { collection, collectionValue } from '@src/stores/collection-store.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { nowISODateString } from '@utils/date-utils';
-import { fade, slide } from 'svelte/transition';
+import { replaceTokens, TokenRegistry } from "@src/services/token/engine";
+import { modifierMetadata } from "@src/services/token/modifiers";
+import type {
+	ModifierMetadata,
+	TokenDefinition,
+} from "@src/services/token/types";
+import { activeInput } from "@src/stores/active-input-store.svelte";
+import {
+	collection,
+	collectionValue,
+} from "@src/stores/collection-store.svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { nowISODateString } from "@utils/date-utils";
+import { fade, slide } from "svelte/transition";
 
-import { page } from '$app/state';
+import { page } from "$app/state";
 
 const icons: Record<string, string> = {
-	entry: 'mdi:file-document-outline',
-	user: 'mdi:account-circle-outline',
-	site: 'mdi:web',
-	system: 'mdi:cog-outline'
+	entry: "mdi:file-document-outline",
+	user: "mdi:account-circle-outline",
+	site: "mdi:web",
+	system: "mdi:cog-outline",
 };
 
 // Reactive state
-let mode = $state<'list' | 'configure'>('list');
-let search = $state('');
+let mode = $state<"list" | "configure">("list");
+let search = $state("");
 let selectedToken = $state<TokenDefinition | null>(null);
-let selectedModifiers = $state<{ def: ModifierMetadata; args: unknown[] }[]>([]);
-let resolvedPreview = $state('');
+let selectedModifiers = $state<{ def: ModifierMetadata; args: unknown[] }[]>(
+	[],
+);
+let resolvedPreview = $state("");
 let isLoadingPreview = $state(false);
-let editablePreview = $state('');
-let previousTokenResult = $state('');
+let editablePreview = $state("");
+let previousTokenResult = $state("");
 
 // UI state
 let showInfo = $state<Record<string, boolean>>({});
@@ -47,17 +55,22 @@ let openCategories = $state<Record<string, boolean>>({
 	entry: true,
 	user: false,
 	site: false,
-	system: false
+	system: false,
 });
 
 // Derived data
-let groupedTokens = $derived(TokenRegistry.getTokens(collection.value ?? undefined, page.data?.user));
+let groupedTokens = $derived(
+	TokenRegistry.getTokens(collection.value ?? undefined, page.data?.user),
+);
 
 let filteredGroups = $derived.by(() => {
 	const q = search.toLowerCase();
 	const result: Record<string, TokenDefinition[]> = {};
 	for (const [cat, tokens] of Object.entries(groupedTokens)) {
-		const filtered = tokens.filter((t) => t.name.toLowerCase().includes(q) || t.token.toLowerCase().includes(q));
+		const filtered = tokens.filter(
+			(t) =>
+				t.name.toLowerCase().includes(q) || t.token.toLowerCase().includes(q),
+		);
 		if (filtered.length > 0) {
 			result[cat] = filtered;
 		}
@@ -66,33 +79,43 @@ let filteredGroups = $derived.by(() => {
 });
 
 let availableModifiers = $derived(
-	selectedToken ? modifierMetadata.filter((m) => m.accepts.includes(selectedToken!.type) || m.accepts.includes('any')) : []
+	selectedToken
+		? modifierMetadata.filter(
+				(m) =>
+					m.accepts.includes(selectedToken!.type) || m.accepts.includes("any"),
+			)
+		: [],
 );
 
 let tokenResult = $derived.by(() => {
 	if (!selectedToken) {
-		return '';
+		return "";
 	}
 	let str = `{{ ${selectedToken.token}`;
 	selectedModifiers.forEach((mod) => {
 		str += ` | ${mod.def.name}`;
-		if (mod.args.length > 0 && mod.args.some((a) => a !== undefined && a !== '')) {
-			const argStr = mod.args.map((a) => (typeof a === 'string' ? `'${a}'` : String(a))).join(',');
+		if (
+			mod.args.length > 0 &&
+			mod.args.some((a) => a !== undefined && a !== "")
+		) {
+			const argStr = mod.args
+				.map((a) => (typeof a === "string" ? `'${a}'` : String(a)))
+				.join(",");
 			str += `(${argStr})`;
 		}
 	});
-	str += ' }}';
+	str += " }}";
 	return str;
 });
 
-let rightPosition = $derived(ui.isRightSidebarVisible ? '340px' : '2rem');
+let rightPosition = $derived(ui.isRightSidebarVisible ? "340px" : "2rem");
 
 // Debounced live preview resolution
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 $effect(() => {
 	const text = editablePreview;
 	if (!text) {
-		resolvedPreview = '';
+		resolvedPreview = "";
 		isLoadingPreview = false;
 		return;
 	}
@@ -105,12 +128,12 @@ $effect(() => {
 				entry: collectionValue.value,
 				user: page.data.user,
 				site: publicEnv,
-				system: { now: nowISODateString() }
+				system: { now: nowISODateString() },
 			};
 			resolvedPreview = await replaceTokens(text, context);
 		} catch (e) {
-			console.error('Token preview resolution failed', e);
-			resolvedPreview = 'Error';
+			console.error("Token preview resolution failed", e);
+			resolvedPreview = "Error";
 		} finally {
 			isLoadingPreview = false;
 		}
@@ -121,15 +144,15 @@ $effect(() => {
 $effect(() => {
 	if (!activeInput.current) {
 		// Reset everything on close
-		mode = 'list';
+		mode = "list";
 		selectedToken = null;
 		selectedModifiers = [];
-		search = '';
-		resolvedPreview = '';
+		search = "";
+		resolvedPreview = "";
 		isLoadingPreview = false;
 		showInfo = {};
-		editablePreview = '';
-		previousTokenResult = '';
+		editablePreview = "";
+		previousTokenResult = "";
 		return;
 	}
 
@@ -143,25 +166,33 @@ $effect(() => {
 		return;
 	}
 
-	const [tokenPath, ...modParts] = match[1].split('|').map((s: string) => s.trim());
+	const [tokenPath, ...modParts] = match[1]
+		.split("|")
+		.map((s: string) => s.trim());
 	const foundToken = Object.values(groupedTokens)
 		.flat()
 		.find((t) => t.token === tokenPath);
 
 	if (foundToken) {
 		selectedToken = foundToken;
-		mode = 'configure';
+		mode = "configure";
 		selectedModifiers = modParts
 			.map((modStr: string) => {
 				const m = modStr.match(/^(\w+)(?:\((.*)\))?$/);
 				if (!m) {
 					return null;
 				}
-				const modDef = modifierMetadata.find((md) => md.name === m[1].toLowerCase());
+				const modDef = modifierMetadata.find(
+					(md) => md.name === m[1].toLowerCase(),
+				);
 				if (!modDef) {
 					return null;
 				}
-				const rawArgs = m[2] ? m[2].split(',').map((s: string) => s.trim().replace(/^['"]|['"]$/g, '')) : [];
+				const rawArgs = m[2]
+					? m[2]
+							.split(",")
+							.map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
+					: [];
 				const args = modDef.args.map((a, i) => rawArgs[i] ?? a.default);
 				return { def: modDef, args };
 			})
@@ -176,11 +207,17 @@ $effect(() => {
 
 	if (currentToken !== previousTokenResult) {
 		if (previousTokenResult && editablePreview.includes(previousTokenResult)) {
-			editablePreview = editablePreview.replace(previousTokenResult, currentToken);
+			editablePreview = editablePreview.replace(
+				previousTokenResult,
+				currentToken,
+			);
 		} else if (!editablePreview && active?.element) {
 			const el = active.element;
 			const start = el.selectionStart ?? el.value.length;
-			editablePreview = el.value.slice(0, start) + currentToken + el.value.slice(el.selectionEnd ?? start);
+			editablePreview =
+				el.value.slice(0, start) +
+				currentToken +
+				el.value.slice(el.selectionEnd ?? start);
 		} else if (!editablePreview) {
 			editablePreview = currentToken;
 		}
@@ -192,9 +229,9 @@ $effect(() => {
 function selectToken(t: TokenDefinition) {
 	selectedToken = t;
 	selectedModifiers = [];
-	mode = 'configure';
-	previousTokenResult = '';
-	editablePreview = '';
+	mode = "configure";
+	previousTokenResult = "";
+	editablePreview = "";
 }
 
 function addModifier(m: ModifierMetadata) {
@@ -226,24 +263,24 @@ function insert() {
 	el.value = editablePreview.trim();
 	el.focus();
 	el.setSelectionRange(el.value.length, el.value.length);
-	el.dispatchEvent(new Event('input', { bubbles: true }));
-	el.dispatchEvent(new Event('change', { bubbles: true }));
+	el.dispatchEvent(new Event("input", { bubbles: true }));
+	el.dispatchEvent(new Event("change", { bubbles: true }));
 
 	activeInput.set(null);
 }
 
 function addAnotherToken() {
-	mode = 'list';
+	mode = "list";
 	selectedToken = null;
 	selectedModifiers = [];
-	previousTokenResult = '';
+	previousTokenResult = "";
 }
 
 function back() {
-	mode = 'list';
+	mode = "list";
 	selectedToken = null;
 	selectedModifiers = [];
-	previousTokenResult = '';
+	previousTokenResult = "";
 }
 
 function deleteToken() {
@@ -252,9 +289,9 @@ function deleteToken() {
 		return;
 	}
 
-	active.element.value = '';
-	active.element.dispatchEvent(new Event('input', { bubbles: true }));
-	active.element.dispatchEvent(new Event('change', { bubbles: true }));
+	active.element.value = "";
+	active.element.dispatchEvent(new Event("input", { bubbles: true }));
+	active.element.dispatchEvent(new Event("change", { bubbles: true }));
 	activeInput.set(null);
 }
 
@@ -267,7 +304,7 @@ function toggleInfo(token: string, e: Event) {
 function draggable(node: HTMLElement) {
 	let x = 0,
 		y = 0;
-	const container = node.closest('.token-window') as HTMLElement;
+	const container = node.closest(".token-window") as HTMLElement;
 	const move = (e: MouseEvent) => {
 		container.style.top = `${container.offsetTop + e.clientY - y}px`;
 		container.style.left = `${container.offsetLeft + e.clientX - x}px`;
@@ -275,20 +312,22 @@ function draggable(node: HTMLElement) {
 		y = e.clientY;
 	};
 	const stop = () => {
-		window.removeEventListener('mousemove', move);
-		window.removeEventListener('mouseup', stop);
+		window.removeEventListener("mousemove", move);
+		window.removeEventListener("mouseup", stop);
 	};
 	const handleMouseDown = (e: MouseEvent) => {
-		if ((e.target as HTMLElement).closest('button')) {
+		if ((e.target as HTMLElement).closest("button")) {
 			return;
 		}
 		x = e.clientX;
 		y = e.clientY;
-		window.addEventListener('mousemove', move);
-		window.addEventListener('mouseup', stop);
+		window.addEventListener("mousemove", move);
+		window.addEventListener("mouseup", stop);
 	};
-	node.addEventListener('mousedown', handleMouseDown);
-	return { destroy: () => node.removeEventListener('mousedown', handleMouseDown) };
+	node.addEventListener("mousedown", handleMouseDown);
+	return {
+		destroy: () => node.removeEventListener("mousedown", handleMouseDown),
+	};
 }
 </script>
 

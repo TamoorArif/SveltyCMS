@@ -18,9 +18,9 @@
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'CPU Usage',
-	icon: 'mdi:cpu-64-bit',
-	defaultSize: { w: 1, h: 2 }
+	name: "CPU Usage",
+	icon: "mdi:cpu-64-bit",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

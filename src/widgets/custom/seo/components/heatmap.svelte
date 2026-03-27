@@ -17,9 +17,9 @@
 -->
 
 <script lang="ts">
-import { debounce } from '@utils/utils';
-import { tick } from 'svelte';
-import { fade } from 'svelte/transition';
+import { debounce } from "@utils/utils";
+import { tick } from "svelte";
+import { fade } from "svelte/transition";
 
 interface HeatmapData {
 	heatmapData: Array<{ word: string; heatLevel: number; isKeyword: boolean }>;
@@ -30,13 +30,20 @@ interface Props {
 	content?: string;
 	keywords?: string[];
 	language?: string;
-	'on:heatmapGenerated'?: (data: HeatmapData) => void;
+	"on:heatmapGenerated"?: (data: HeatmapData) => void;
 }
 
 // Props with default values
-const { content = '', language = 'en', keywords = [], 'on:heatmapGenerated': onHeatmapGenerated = () => {} }: Props = $props();
+const {
+	content = "",
+	language = "en",
+	keywords = [],
+	"on:heatmapGenerated": onHeatmapGenerated = () => {},
+}: Props = $props();
 
-let heatmapData = $state<Array<{ word: string; heatLevel: number; isKeyword: boolean }>>([]);
+let heatmapData = $state<
+	Array<{ word: string; heatLevel: number; isKeyword: boolean }>
+>([]);
 let keywordDensity = $state<Record<string, number>>({});
 
 // Use global debounce for content analysis
@@ -57,7 +64,7 @@ async function generateHeatmap() {
 	heatmapData = words.map((word, index) => ({
 		word,
 		heatLevel: calculateHeatLevel(word, index, words.length, language),
-		isKeyword: keywords.includes(word.toLowerCase())
+		isKeyword: keywords.includes(word.toLowerCase()),
 	}));
 
 	analyzeKeywordDensity(words);
@@ -65,7 +72,12 @@ async function generateHeatmap() {
 	await tick();
 }
 
-function calculateHeatLevel(word: string, index: number, totalWords: number, lang: string): number {
+function calculateHeatLevel(
+	word: string,
+	index: number,
+	totalWords: number,
+	lang: string,
+): number {
 	let score = 0;
 
 	// Position-based scoring
@@ -73,7 +85,7 @@ function calculateHeatLevel(word: string, index: number, totalWords: number, lan
 	score += positionFactor * 2;
 
 	// Word length scoring (adjust for different languages)
-	const idealLength = lang === 'en' ? 5 : 6;
+	const idealLength = lang === "en" ? 5 : 6;
 	score += Math.max(0, 3 - Math.abs(word.length - idealLength));
 
 	// Keyword bonus
@@ -90,7 +102,9 @@ function analyzeKeywordDensity(words: string[]) {
 	const result: Record<string, number> = {};
 
 	for (const keyword of keywords) {
-		const count = words.filter((word) => word.toLowerCase() === keyword.toLowerCase()).length;
+		const count = words.filter(
+			(word) => word.toLowerCase() === keyword.toLowerCase(),
+		).length;
 		result[keyword] = (count / totalWords) * 100;
 	}
 
@@ -99,13 +113,13 @@ function analyzeKeywordDensity(words: string[]) {
 
 function getHeatClasses(heatLevel: number): string {
 	const heatMap = {
-		1: 'bg-green-500/20',
-		2: 'bg-yellow-500/20',
-		3: 'bg-orange-500/20',
-		4: 'bg-red-500/20',
-		5: 'bg-purple-500/20'
+		1: "bg-green-500/20",
+		2: "bg-yellow-500/20",
+		3: "bg-orange-500/20",
+		4: "bg-red-500/20",
+		5: "bg-purple-500/20",
 	};
-	return heatMap[heatLevel as keyof typeof heatMap] || '';
+	return heatMap[heatLevel as keyof typeof heatMap] || "";
 }
 
 // Effect to handle content changes with debounced analysis

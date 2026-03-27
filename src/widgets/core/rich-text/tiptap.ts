@@ -14,7 +14,10 @@ export async function createEditor(
   element: HTMLElement,
   content: string,
   language: string,
-  options: { aiEnabled?: boolean; collaboration?: { doc: any; field: string } } = {},
+  options: {
+    aiEnabled?: boolean;
+    collaboration?: { doc: any; field: string };
+  } = {},
 ) {
   // Dynamically import all Tiptap modules only when needed (client-side)
   const [

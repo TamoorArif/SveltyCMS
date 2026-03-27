@@ -9,13 +9,13 @@ Features:
 - Multi-Tenant Folder Resolution
 -->
 <script lang="ts">
-import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
-import FileInput from '@src/components/system/inputs/file-input.svelte';
-import { updateMediaMetadata } from '@utils/media/api';
-import type { MediaImage } from '@utils/media/media-models';
-import { convertTimestampToDateString } from '@utils/utils';
-import { modalState } from '@utils/modal-state.svelte';
-import { mediaUrl } from '@utils/media/media-utils';
+import ImageEditorModal from "@src/components/image-editor/image-editor-modal.svelte";
+import FileInput from "@src/components/system/inputs/file-input.svelte";
+import { updateMediaMetadata } from "@utils/media/api";
+import type { MediaImage } from "@utils/media/media-models";
+import { convertTimestampToDateString } from "@utils/utils";
+import { modalState } from "@utils/modal-state.svelte";
+import { mediaUrl } from "@utils/media/media-utils";
 
 let isFlipped = $state(false);
 
@@ -30,26 +30,30 @@ async function handleEdit() {
 	modalState.trigger(ImageEditorModal as any, {
 		image: { ...value, url: fullUrl },
 		onsave: handleEditorSave,
-		size: 'fullscreen'
+		size: "fullscreen",
 	});
 }
 
 async function handleEditorSave(detail: any) {
 	const formData = new FormData();
-	formData.append('file', detail.file);
-	if (detail.mediaId) formData.append('mediaId', detail.mediaId);
-	if (detail.operations) formData.append('operations', JSON.stringify(detail.operations));
-	if (detail.saveBehavior) formData.append('saveBehavior', detail.saveBehavior);
+	formData.append("file", detail.file);
+	if (detail.mediaId) formData.append("mediaId", detail.mediaId);
+	if (detail.operations)
+		formData.append("operations", JSON.stringify(detail.operations));
+	if (detail.saveBehavior) formData.append("saveBehavior", detail.saveBehavior);
 
 	try {
-		const response = await fetch('/api/media/edit', { method: 'POST', body: formData });
+		const response = await fetch("/api/media/edit", {
+			method: "POST",
+			body: formData,
+		});
 		if (response.ok) {
 			const result = await response.json();
 			value = result.data;
 			modalState.close();
 		}
 	} catch (error) {
-		logger.error('Error saving edited image:', error);
+		logger.error("Error saving edited image:", error);
 	}
 }
 
@@ -68,8 +72,14 @@ function handleFocalPointDrag(event: MouseEvent) {
 	if (!isDraggingFocalPoint || !containerRef) return;
 	const rect = containerRef.getBoundingClientRect();
 	focalPoint = {
-		x: Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100)),
-		y: Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100))
+		x: Math.max(
+			0,
+			Math.min(100, ((event.clientX - rect.left) / rect.width) * 100),
+		),
+		y: Math.max(
+			0,
+			Math.min(100, ((event.clientY - rect.top) / rect.height) * 100),
+		),
 	};
 }
 
@@ -82,11 +92,11 @@ async function saveFocalPoint() {
 
 $effect(() => {
 	if (isDraggingFocalPoint) {
-		window.addEventListener('mousemove', handleFocalPointDrag);
-		window.addEventListener('mouseup', saveFocalPoint);
+		window.addEventListener("mousemove", handleFocalPointDrag);
+		window.addEventListener("mouseup", saveFocalPoint);
 		return () => {
-			window.removeEventListener('mousemove', handleFocalPointDrag);
-			window.removeEventListener('mouseup', saveFocalPoint);
+			window.removeEventListener("mousemove", handleFocalPointDrag);
+			window.removeEventListener("mouseup", saveFocalPoint);
 		};
 	}
 });

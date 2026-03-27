@@ -25,7 +25,9 @@ SveltyCMS is built with the **"High-Performance Edge"** philosophy: zero-runtime
 SveltyCMS leverages **Svelte 5** to provide fine-grained reactivity without the "Virtual DOM" tax of React-based competitors.
 
 ### 👥 For Administrators
+
 The Admin Studio is a **single-page application (SPA)** with server-side rendering (SSR) for the initial load. It uses:
+
 - `$state()` — Deeply reactive state management for real-time field edits.
 - `$derived()` — Instant UI computations (e.g., search results, media thumbnails).
 - `$effect()` — Managed side-effects for API syncing.
@@ -39,6 +41,7 @@ The Admin Studio is a **single-page application (SPA)** with server-side renderi
 SveltyCMS is not tied to any specific database. It uses a **unified CRUD interface** that translates operations into native driver calls.
 
 ### 🛠️ For Digital Engineers
+
 The architecture relies on the `DatabaseAdapter` interface, which is physically separated from your application logic.
 
 - [📊 **Database Adapters**](./database/index.mdx) — Overview of the unified query abstraction.
@@ -63,6 +66,7 @@ Security is built into the request lifecycle, not added as a "plugin."
 SveltyCMS is **modular by design**. Every field in a collection is a **Widget**.
 
 ### 🧩 3-Pillar Architecture
+
 1.  **Definition**: Valibot-based validation schemas.
 2.  **Input**: The Svelte 5 edit component.
 3.  **Display**: The read-only render component.

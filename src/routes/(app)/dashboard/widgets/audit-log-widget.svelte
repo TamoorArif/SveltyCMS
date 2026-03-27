@@ -10,10 +10,10 @@ Features:
 
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Audit Log',
-	icon: 'mdi:history',
-	description: 'Monitor system activity and security events',
-	defaultSize: { w: 1, h: 2 }
+	name: "Audit Log",
+	icon: "mdi:history",
+	description: "Monitor system activity and security events",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

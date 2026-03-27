@@ -32,7 +32,10 @@ export function setContentContext(tenantId: string | null = null) {
      * Tenant-aware reactive navigation tree (progressive/sync).
      */
     get navigation() {
-      return contentManager.getNavigationStructureProgressive({ tenantId, maxDepth: 999 });
+      return contentManager.getNavigationStructureProgressive({
+        tenantId,
+        maxDepth: 999,
+      });
     },
 
     /**
@@ -61,7 +64,10 @@ export function useContent() {
         return contentManager.collections.getAll(null);
       },
       get navigation() {
-        return contentManager.getNavigationStructureProgressive({ tenantId: null, maxDepth: 999 });
+        return contentManager.getNavigationStructureProgressive({
+          tenantId: null,
+          maxDepth: 999,
+        });
       },
       get isReady() {
         return contentManager.isInitialized;

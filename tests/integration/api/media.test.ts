@@ -120,7 +120,11 @@ describe("Media API Endpoints", () => {
     it("should return 400 with missing URL", async () => {
       const response = await fetch(`${API_BASE_URL}/api/media/delete`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json", Cookie: authCookie, Origin: API_BASE_URL },
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: authCookie,
+          Origin: API_BASE_URL,
+        },
         body: JSON.stringify({}),
       });
       expect(response.status).toBe(400);
@@ -140,7 +144,11 @@ describe("Media API Endpoints", () => {
     it("should return 400 with missing parameters", async () => {
       const response = await fetch(`${API_BASE_URL}/api/media/trash`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: authCookie, Origin: API_BASE_URL },
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: authCookie,
+          Origin: API_BASE_URL,
+        },
         body: JSON.stringify({}),
       });
       expect(response.status).toBe(400);
@@ -208,7 +216,11 @@ describe("Media API Endpoints", () => {
     it("should return 400 with missing manipulations", async () => {
       const response = await fetch(`${API_BASE_URL}/api/media/manipulate/test-id`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: authCookie, Origin: API_BASE_URL },
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: authCookie,
+          Origin: API_BASE_URL,
+        },
         body: JSON.stringify({}),
       });
       expect(response.status).toBe(400);
@@ -217,7 +229,11 @@ describe("Media API Endpoints", () => {
     it("should return 404 for non-existent media", async () => {
       const response = await fetch(`${API_BASE_URL}/api/media/manipulate/non-existent-id`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: authCookie, Origin: API_BASE_URL },
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: authCookie,
+          Origin: API_BASE_URL,
+        },
         body: JSON.stringify({ manipulations: { rotation: 90 } }),
       });
       // Should be 404 since the media ID doesn't exist

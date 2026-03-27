@@ -18,11 +18,15 @@
 
 <script lang="ts">
 // Paraglide
-import { locales as availableLocales, getLocale, setLocale } from '@src/paraglide/runtime';
+import {
+	locales as availableLocales,
+	getLocale,
+	setLocale,
+} from "@src/paraglide/runtime";
 
 // Stores
-import { systemLanguage } from '@src/stores/store.svelte';
-import { browser } from '$app/environment';
+import { systemLanguage } from "@src/stores/store.svelte";
+import { browser } from "$app/environment";
 
 // Dynamically generate LanguageCode type from Paraglide's available locales.
 type LanguageCode = (typeof availableLocales)[number];
@@ -41,7 +45,7 @@ $effect(() => {
 			setLocale(desiredLang as LanguageCode, { reload: false });
 			// Persisting to localStorage ensures the preference is remembered across sessions/reloads.
 			if (browser) {
-				globalThis.localStorage.setItem('systemLanguage', desiredLang);
+				globalThis.localStorage.setItem("systemLanguage", desiredLang);
 			}
 			locale = desiredLang;
 		}

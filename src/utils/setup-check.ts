@@ -151,7 +151,7 @@ export async function isSetupCompleteAsync(): Promise<boolean> {
     try {
       const db = await import("../databases/db");
       console.error(`[setupCheck Diagnostic] dbAdapter availability: ${!!db.dbAdapter}`);
-    } catch (e) {
+    } catch {
       console.error(
         "[setupCheck Diagnostic] Could not even import db module during error handling.",
       );

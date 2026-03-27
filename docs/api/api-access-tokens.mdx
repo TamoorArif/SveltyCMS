@@ -39,13 +39,13 @@ SveltyCMS uses two distinct token mechanisms for programmatic access:
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Permission | Description |
-| :--- | :--- | :--- | :--- |
-| GET | `/api/token` | `manage_users` | List all invitation tokens (paginated) |
-| POST | `/api/token/create-token` | `manage_users` | Create an invitation token and send an email |
-| GET | `/api/token/[tokenID]` | `manage_users` | Retrieve a single token by its ID |
-| DELETE | `/api/token/[tokenID]` | `manage_users` | Delete a specific token |
-| POST | `/api/token/batch` | `manage_users` | Bulk-delete multiple tokens |
+| Method | Endpoint                  | Permission     | Description                                  |
+| :----- | :------------------------ | :------------- | :------------------------------------------- |
+| GET    | `/api/token`              | `manage_users` | List all invitation tokens (paginated)       |
+| POST   | `/api/token/create-token` | `manage_users` | Create an invitation token and send an email |
+| GET    | `/api/token/[tokenID]`    | `manage_users` | Retrieve a single token by its ID            |
+| DELETE | `/api/token/[tokenID]`    | `manage_users` | Delete a specific token                      |
+| POST   | `/api/token/batch`        | `manage_users` | Bulk-delete multiple tokens                  |
 
 ---
 
@@ -57,13 +57,13 @@ Returns a paginated, searchable list of invitation tokens for the current tenant
 
 ### Query Parameters
 
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `page` | `number` | `1` | Current page. |
-| `limit` | `number` | `10` | Results per page. |
-| `sort` | `string` | `createdAt` | Field to sort by (e.g., `expires`, `email`). |
-| `order` | `asc\|desc` | `desc` | Sort direction. |
-| `search` | `string` | `""` | Case-insensitive match against `email` or token value. |
+| Parameter | Type        | Default     | Description                                            |
+| :-------- | :---------- | :---------- | :----------------------------------------------------- |
+| `page`    | `number`    | `1`         | Current page.                                          |
+| `limit`   | `number`    | `10`        | Results per page.                                      |
+| `sort`    | `string`    | `createdAt` | Field to sort by (e.g., `expires`, `email`).           |
+| `order`   | `asc\|desc` | `desc`      | Sort direction.                                        |
+| `search`  | `string`    | `""`        | Case-insensitive match against `email` or token value. |
 
 ### Response Shape
 
@@ -106,22 +106,22 @@ Creates an invitation token for a new user and sends them a registration link vi
 }
 ```
 
-| Field | Type | Required | Description |
-| :---- | :--- | :------- | :---------- |
-| `email` | `string` | ✅ | The invitee's email address. |
-| `role` | `string` | ✅ | Role ID to grant on registration (e.g., `editor`, `admin`). |
-| `expiresIn` | `string` | ✅ | Token validity window (see table below). |
+| Field       | Type     | Required | Description                                                 |
+| :---------- | :------- | :------- | :---------------------------------------------------------- |
+| `email`     | `string` | ✅       | The invitee's email address.                                |
+| `role`      | `string` | ✅       | Role ID to grant on registration (e.g., `editor`, `admin`). |
+| `expiresIn` | `string` | ✅       | Token validity window (see table below).                    |
 
 ### Valid `expiresIn` Values
 
-| Value | Expiry |
-| :---- | :----- |
-| `"2 hrs"` | 2 hours |
-| `"12 hrs"` | 12 hours |
-| `"2 days"` | 2 days |
-| `"1 week"` | 7 days |
-| `"2 weeks"` | 14 days |
-| `"1 month"` | 30 days |
+| Value       | Expiry   |
+| :---------- | :------- |
+| `"2 hrs"`   | 2 hours  |
+| `"12 hrs"`  | 12 hours |
+| `"2 days"`  | 2 days   |
+| `"1 week"`  | 7 days   |
+| `"2 weeks"` | 14 days  |
+| `"1 month"` | 30 days  |
 
 > [!IMPORTANT]
 > Only one invitation token may exist per email address within a tenant. Attempting to create a second one returns `409 TOKEN_EXISTS`. Delete the existing token first, then re-invite.
@@ -129,6 +129,7 @@ Creates an invitation token for a new user and sends them a registration link vi
 ### Pre-flight Checks
 
 Before creating the token, the endpoint verifies:
+
 1. No existing **user** account has this email in the current tenant (`409 USER_EXISTS` if so).
 2. No existing **token** already targets this email (`409 TOKEN_EXISTS` if so).
 3. The `role` value corresponds to a valid system role.
@@ -136,6 +137,7 @@ Before creating the token, the endpoint verifies:
 ### Response
 
 **Success (SMTP configured)**:
+
 ```json
 {
   "success": true,
@@ -146,6 +148,7 @@ Before creating the token, the endpoint verifies:
 ```
 
 **Success (SMTP not configured — token preserved for manual delivery)**:
+
 ```json
 {
   "success": true,
@@ -184,6 +187,7 @@ Immediately invalidates the token. The invitation link becomes unusable. The use
 Bulk-delete multiple expired or redundant tokens.
 
 **Payload**:
+
 ```json
 {
   "tokenIds": ["token_id_1", "token_id_2"],
@@ -210,25 +214,25 @@ flowchart LR
 
 ### Security Properties
 
-| Property | Detail |
-| :-------- | :----- |
-| **Storage** | SHA-256 hashed in the database. Raw value is never stored. |
-| **Tenant Isolation** | A token from Tenant A is mathematically invalid for Tenant B. |
-| **Audit Logging** | Every request authenticated via token is logged with its unique token ID. |
-| **Replay Protection** | Nonce-based validation prevents replay attacks on sensitive operations. |
+| Property              | Detail                                                                    |
+| :-------------------- | :------------------------------------------------------------------------ |
+| **Storage**           | SHA-256 hashed in the database. Raw value is never stored.                |
+| **Tenant Isolation**  | A token from Tenant A is mathematically invalid for Tenant B.             |
+| **Audit Logging**     | Every request authenticated via token is logged with its unique token ID. |
+| **Replay Protection** | Nonce-based validation prevents replay attacks on sensitive operations.   |
 
 ---
 
 ## Troubleshooting
 
-| Error | HTTP | Meaning |
-| :---- | :--- | :------ |
-| `TOKEN_EXISTS` | 409 | An invite for this email already exists. Delete it first. |
-| `USER_EXISTS` | 409 | A user account with this email already exists in the tenant. |
-| `INVALID_ROLE` | 400 | The `role` field does not match a valid system role ID. |
-| `INVALID_EXPIRATION` | 400 | The `expiresIn` value is not one of the six allowed strings. |
-| Unauthorized | 401 | Token is expired, missing, or invalid for this tenant. |
-| Forbidden | 403 | Token is valid but lacks permissions for the requested resource. |
+| Error                | HTTP | Meaning                                                          |
+| :------------------- | :--- | :--------------------------------------------------------------- |
+| `TOKEN_EXISTS`       | 409  | An invite for this email already exists. Delete it first.        |
+| `USER_EXISTS`        | 409  | A user account with this email already exists in the tenant.     |
+| `INVALID_ROLE`       | 400  | The `role` field does not match a valid system role ID.          |
+| `INVALID_EXPIRATION` | 400  | The `expiresIn` value is not one of the six allowed strings.     |
+| Unauthorized         | 401  | Token is expired, missing, or invalid for this tenant.           |
+| Forbidden            | 403  | Token is valid but lacks permissions for the requested resource. |
 
 ---
 

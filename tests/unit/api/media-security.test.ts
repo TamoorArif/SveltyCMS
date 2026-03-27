@@ -70,7 +70,10 @@ describe("Media API Security Unit Tests", () => {
 
   describe("PATCH /api/media/[id]", () => {
     it("should propagate tenantId to MediaService.getMedia and updateMedia", async () => {
-      mockMediaService.getMedia.mockResolvedValue({ _id: "media-1", metadata: {} });
+      mockMediaService.getMedia.mockResolvedValue({
+        _id: "media-1",
+        metadata: {},
+      });
 
       const event = {
         params: { id: "media-1" },

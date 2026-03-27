@@ -145,7 +145,9 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
     typeof (possibleAuth as { updateToken: unknown }).updateToken === "function"
   ) {
     updateResult = await (
-      possibleAuth as { updateToken: (id: string, data: unknown, tenantId?: string) => unknown }
+      possibleAuth as {
+        updateToken: (id: string, data: unknown, tenantId?: string) => unknown;
+      }
     ).updateToken(targetId, newTokenData, tenantId || undefined);
   } else {
     // Fallback (should not normally execute once interface is standardized)
@@ -230,7 +232,9 @@ export const DELETE = apiHandler(async ({ params, locals }) => {
       typeof (maybeAuth as { deleteTokens: unknown }).deleteTokens === "function"
     ) {
       const result = await (
-        maybeAuth as { deleteTokens: (ids: string[], tenantId?: string) => unknown }
+        maybeAuth as {
+          deleteTokens: (ids: string[], tenantId?: string) => unknown;
+        }
       ).deleteTokens([targetId], tenantId || undefined);
       if (typeof result === "number") {
         deletedCount = result;

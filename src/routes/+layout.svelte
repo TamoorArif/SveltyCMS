@@ -13,39 +13,47 @@
 
 <script lang="ts">
 // Selected theme
-import '../app.css';
+import "../app.css";
 // Register Iconify custom element globally
-import 'iconify-icon';
+import "iconify-icon";
 
-import { onMount, untrack } from 'svelte';
-import { browser } from '$app/environment';
-import { page } from '$app/state';
-import { beforeNavigate, afterNavigate } from '$app/navigation';
+import { onMount, untrack } from "svelte";
+import { browser } from "$app/environment";
+import { page } from "$app/state";
+import { beforeNavigate, afterNavigate } from "$app/navigation";
 
 // WebMCP Support (Polyfill + Plugin)
-import '@mcp-b/webmcp-polyfill';
+import "@mcp-b/webmcp-polyfill";
 
 // Components
-import DialogManager from '@src/components/system/dialog-manager.svelte';
-import ToastContainer from '@src/components/toast-container.svelte';
+import DialogManager from "@src/components/system/dialog-manager.svelte";
+import ToastContainer from "@src/components/toast-container.svelte";
 // Paraglide locale bridge
-import { locales as availableLocales, getLocale, setLocale } from '@src/paraglide/runtime';
-import CookieConsent from '@src/plugins/cookie-consent/cookie-consent.svelte';
-import { initWebMCP } from '@src/plugins/webmcp/index';
+import {
+	locales as availableLocales,
+	getLocale,
+	setLocale,
+} from "@src/paraglide/runtime";
+import CookieConsent from "@src/plugins/cookie-consent/cookie-consent.svelte";
+import { initWebMCP } from "@src/plugins/webmcp/index";
 // Global Settings
-import { initPublicEnv, publicEnv } from '@src/stores/global-settings.svelte';
+import { initPublicEnv, publicEnv } from "@src/stores/global-settings.svelte";
 // Skeleton v4
-import { app } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
+import { app } from "@src/stores/store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
 // Theme management
-import { initializeDarkMode, initializeThemeStore, themeStore } from '@src/stores/theme-store.svelte';
+import {
+	initializeDarkMode,
+	initializeThemeStore,
+	themeStore,
+} from "@src/stores/theme-store.svelte";
 
 // Components
 // import TokenPicker from '@components/token-picker.svelte';
 
 // Props
 interface Props {
-	children?: import('svelte').Snippet;
+	children?: import("svelte").Snippet;
 }
 const { children }: Props = $props();
 
@@ -64,8 +72,8 @@ afterNavigate(() => toast.handleAfterNavigate());
 // Initialization
 // ============================================================================
 
-import { setContentStructure } from '@src/stores/collection-store.svelte';
-import { initializeContent } from '@src/content';
+import { setContentStructure } from "@src/stores/collection-store.svelte";
+import { initializeContent } from "@src/content";
 
 // Initialize public environment settings from server data
 // Note: Only access page.data after mount to avoid hydration issues
@@ -87,12 +95,18 @@ $effect(() => {
 // ============================================================================
 
 onMount(() => {
-	console.log('[RootLayout] Mounting in', browser ? 'browser' : 'server');
+	console.log("[RootLayout] Mounting in", browser ? "browser" : "server");
 
 	// URL is the source of truth on initial load
 	const urlLocale = getLocale();
-	if (urlLocale && availableLocales.includes(urlLocale as any) && app.systemLanguage !== urlLocale) {
-		console.log(`[RootLayout] Aligning store (${app.systemLanguage}) to URL (${urlLocale})`);
+	if (
+		urlLocale &&
+		availableLocales.includes(urlLocale as any) &&
+		app.systemLanguage !== urlLocale
+	) {
+		console.log(
+			`[RootLayout] Aligning store (${app.systemLanguage}) to URL (${urlLocale})`,
+		);
 		app.systemLanguage = urlLocale as any;
 		currentLocale = urlLocale;
 	}
@@ -115,15 +129,15 @@ onMount(() => {
 
 	// Hide cold-start splash screen after hydration
 	if (browser) {
-		const splash = document.getElementById('svelty-splash');
+		const splash = document.getElementById("svelty-splash");
 		if (splash) {
 			// 🚀 OPTIMIZATION: Remove loading class to restore theme background
-			document.documentElement.classList.remove('svelty-loading');
-			
+			document.documentElement.classList.remove("svelty-loading");
+
 			// Start fade-out
-			splash.style.opacity = '0';
-			splash.style.visibility = 'hidden';
-			
+			splash.style.opacity = "0";
+			splash.style.visibility = "hidden";
+
 			// Clean up DOM after transition
 			setTimeout(() => {
 				splash.remove();
@@ -162,8 +176,12 @@ $effect(() => {
 	const current = untrack(() => currentLocale);
 
 	// Only update if there's an actual change
-	if (desired && availableLocales.includes(desired as any) && current !== desired) {
-		console.log('[RootLayout] Store changed, updating locale:', desired);
+	if (
+		desired &&
+		availableLocales.includes(desired as any) &&
+		current !== desired
+	) {
+		console.log("[RootLayout] Store changed, updating locale:", desired);
 
 		// Update Paraglide locale (handles routing internally)
 		setLocale(desired as any, { reload: false });
@@ -193,7 +211,7 @@ $effect(() => {
 // ============================================================================
 
 // Get the site name from publicEnv store (safer for SSR/CSR transitions)
-const siteName = $derived(publicEnv?.SITE_NAME || 'SveltyCMS');
+const siteName = $derived(publicEnv?.SITE_NAME || "SveltyCMS");
 
 // Global Keyboard Shortcuts
 onMount(() => {
@@ -205,8 +223,10 @@ onMount(() => {
 
 	(async () => {
 		try {
-			const ACCESSIBILITY_HELP = (await import('@components/system/accessibility-help.svelte')).default;
-			const { modalState } = await import('@utils/modal-state.svelte');
+			const ACCESSIBILITY_HELP = (
+				await import("@components/system/accessibility-help.svelte")
+			).default;
+			const { modalState } = await import("@utils/modal-state.svelte");
 
 			if (controller.signal.aborted) {
 				return;
@@ -214,35 +234,41 @@ onMount(() => {
 
 			function handleGlobalKeydown(e: KeyboardEvent) {
 				// '?' key (Shift + /) to open accessibility help
-				if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+				if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					// Avoid triggering if user is typing in an input/textarea
 					const target = e.target as HTMLElement;
-					if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+					if (
+						target.tagName === "INPUT" ||
+						target.tagName === "TEXTAREA" ||
+						target.isContentEditable
+					) {
 						return;
 					}
 
 					e.preventDefault();
 					modalState.trigger(ACCESSIBILITY_HELP, {
-						ariaLabel: 'Accessibility Help'
+						ariaLabel: "Accessibility Help",
 					});
 				}
 
 				// 'Alt + T' to toggle theme
-				if (e.altKey && e.key.toLowerCase() === 't') {
+				if (e.altKey && e.key.toLowerCase() === "t") {
 					e.preventDefault();
 					// Based on themeStore.svelte.ts, the function is toggleDarkMode
-					import('@src/stores/theme-store.svelte').then(({ toggleDarkMode }) => {
-						toggleDarkMode();
-					});
+					import("@src/stores/theme-store.svelte").then(
+						({ toggleDarkMode }) => {
+							toggleDarkMode();
+						},
+					);
 				}
 			}
 
-			window.addEventListener('keydown', handleGlobalKeydown);
-			controller.signal.addEventListener('abort', () => {
-				window.removeEventListener('keydown', handleGlobalKeydown);
+			window.addEventListener("keydown", handleGlobalKeydown);
+			controller.signal.addEventListener("abort", () => {
+				window.removeEventListener("keydown", handleGlobalKeydown);
 			});
 		} catch (err) {
-			console.error('Failed to setup global keyboard shortcuts:', err);
+			console.error("Failed to setup global keyboard shortcuts:", err);
 		}
 	})();
 

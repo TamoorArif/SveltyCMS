@@ -149,7 +149,10 @@ export class WebhookService {
       // Enforce tenantId consistency on load
       const sanitizedWebhooks = webhooks.map((w) => ({ ...w, tenantId }));
 
-      this.webhooksCache.set(tenantId, { data: sanitizedWebhooks, timestamp: Date.now() });
+      this.webhooksCache.set(tenantId, {
+        data: sanitizedWebhooks,
+        timestamp: Date.now(),
+      });
 
       return sanitizedWebhooks;
     } catch (e) {
@@ -221,7 +224,10 @@ export class WebhookService {
 
     if (updated.length !== initialLength) {
       await db.system.preferences.set("webhooks_config", updated, "system", tenantId as any);
-      this.webhooksCache.set(tenantId, { data: updated, timestamp: Date.now() });
+      this.webhooksCache.set(tenantId, {
+        data: updated,
+        timestamp: Date.now(),
+      });
     }
   }
 }

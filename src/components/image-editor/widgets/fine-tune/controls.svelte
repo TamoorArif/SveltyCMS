@@ -4,12 +4,16 @@
 Professional fine-tune controls with presets and categories
 -->
 <script lang="ts">
-import type { Adjustments } from './adjustments';
-import { FILTER_PRESETS, getAdjustmentConfig, getAdjustmentsByCategory } from './adjustments';
+import type { Adjustments } from "./adjustments";
+import {
+	FILTER_PRESETS,
+	getAdjustmentConfig,
+	getAdjustmentsByCategory,
+} from "./adjustments";
 
 const {
 	activeAdjustment,
-	activeCategory = 'basic',
+	activeCategory = "basic",
 	value,
 	adjustments,
 	showPresets = false,
@@ -20,7 +24,7 @@ const {
 	onPresetApply,
 	onReset,
 	onCompareToggle,
-	onAutoAdjust
+	onAutoAdjust,
 }: {
 	activeAdjustment: keyof Adjustments;
 	activeCategory?: string;
@@ -38,12 +42,12 @@ const {
 } = $props();
 
 const config = $derived(getAdjustmentConfig(activeAdjustment));
-const categories = ['basic', 'tone', 'color', 'detail'] as const;
+const categories = ["basic", "tone", "color", "detail"] as const;
 const categoryIcons = {
-	basic: 'mdi:tune-variant',
-	tone: 'mdi:gradient-vertical',
-	color: 'mdi:palette',
-	detail: 'mdi:details'
+	basic: "mdi:tune-variant",
+	tone: "mdi:gradient-vertical",
+	color: "mdi:palette",
+	detail: "mdi:details",
 };
 
 let showPresetsPanel = $state(false);
@@ -55,24 +59,24 @@ function handleSliderInput(e: Event) {
 
 // Keyboard shortcuts
 function handleKeyDown(e: KeyboardEvent) {
-	if ((e.target as HTMLElement).tagName === 'INPUT') {
+	if ((e.target as HTMLElement).tagName === "INPUT") {
 		return;
 	}
 
 	switch (e.key) {
-		case '0':
+		case "0":
 			e.preventDefault();
 			onReset();
 			break;
-		case 'c':
-		case 'C':
+		case "c":
+		case "C":
 			if (onCompareToggle) {
 				e.preventDefault();
 				onCompareToggle();
 			}
 			break;
-		case 'a':
-		case 'A':
+		case "a":
+		case "A":
 			if (e.shiftKey && onAutoAdjust) {
 				e.preventDefault();
 				onAutoAdjust();

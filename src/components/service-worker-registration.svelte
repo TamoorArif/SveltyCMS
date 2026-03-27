@@ -16,9 +16,9 @@ Registers and manages the service worker for offline support and caching.
 -->
 
 <script lang="ts">
-import { logger } from '@utils/logger';
-import { onMount } from 'svelte';
-import { browser } from '$app/environment';
+import { logger } from "@utils/logger";
+import { onMount } from "svelte";
+import { browser } from "$app/environment";
 
 let updateAvailable = $state(false);
 let registration: ServiceWorkerRegistration | null = $state(null);
@@ -30,7 +30,7 @@ onMount(() => {
 	}
 
 	// Check if service worker is supported
-	if (!('serviceWorker' in navigator)) {
+	if (!("serviceWorker" in navigator)) {
 		return;
 	}
 
@@ -39,24 +39,30 @@ onMount(() => {
 
 async function registerServiceWorker() {
 	try {
-		registration = await navigator.serviceWorker.register('/service-worker.js', {
-			scope: '/'
-		});
+		registration = await navigator.serviceWorker.register(
+			"/service-worker.js",
+			{
+				scope: "/",
+			},
+		);
 
 		// Check for updates every hour
 		setInterval(
 			() => {
 				registration?.update();
 			},
-			60 * 60 * 1000
+			60 * 60 * 1000,
 		);
 
 		// Listen for updates
-		registration.addEventListener('updatefound', () => {
+		registration.addEventListener("updatefound", () => {
 			const newWorker = registration?.installing;
 
-			newWorker?.addEventListener('statechange', () => {
-				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+			newWorker?.addEventListener("statechange", () => {
+				if (
+					newWorker.state === "installed" &&
+					navigator.serviceWorker.controller
+				) {
 					// New service worker available
 					updateAvailable = true;
 				}
@@ -64,24 +70,24 @@ async function registerServiceWorker() {
 		});
 
 		// Handle controller change (new SW activated)
-		navigator.serviceWorker.addEventListener('controllerchange', () => {
+		navigator.serviceWorker.addEventListener("controllerchange", () => {
 			window.location.reload();
 		});
 	} catch (error) {
-		logger.error('[ServiceWorker] Registration failed:', error);
+		logger.error("[ServiceWorker] Registration failed:", error);
 	}
 }
 
 function updateServiceWorker() {
 	if (registration?.waiting) {
 		// Tell the service worker to skip waiting
-		registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+		registration.waiting.postMessage({ type: "SKIP_WAITING" });
 	}
 }
 
 function clearCache() {
 	if (registration?.active) {
-		registration.active.postMessage({ type: 'CLEAR_CACHE' });
+		registration.active.postMessage({ type: "CLEAR_CACHE" });
 	}
 }
 </script>

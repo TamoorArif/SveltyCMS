@@ -3,10 +3,10 @@
  @component Fullscreen modal wrapper for the Image Editor
  -->
 <script lang="ts">
-import { modalState } from '@utils/modal-state.svelte';
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
-import Editor from './editor.svelte';
+import { modalState } from "@utils/modal-state.svelte";
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
+import Editor from "./editor.svelte";
 
 const { image, onsave } = $props<{
 	image: { url: string; _id?: string };
@@ -23,7 +23,7 @@ async function handleSave(data: any) {
 		await onsave(data);
 		modalState.close();
 	} catch (error) {
-		console.error('Failed to save image:', error);
+		console.error("Failed to save image:", error);
 	} finally {
 		isSaving = false;
 	}
@@ -32,12 +32,12 @@ async function handleSave(data: any) {
 onMount(() => {
 	// Register modal-specific hotkeys if needed
 	const unregister = registerHotkey(
-		'escape',
+		"escape",
 		() => {
 			if (!isSaving) modalState.close();
 		},
-		'Close Image Editor',
-		false
+		"Close Image Editor",
+		false,
 	);
 
 	return unregister;

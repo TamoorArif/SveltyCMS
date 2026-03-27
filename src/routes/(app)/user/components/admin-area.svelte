@@ -14,23 +14,23 @@
 <script lang="ts">
 // Type guards for template and logic
 function isToken(row: User | Token): row is Token {
-	return 'token' in row && typeof row.token === 'string';
+	return "token" in row && typeof row.token === "string";
 }
 function isUser(row: User | Token): row is User {
-	return '_id' in row && typeof row._id === 'string';
+	return "_id" in row && typeof row._id === "string";
 }
 
 function getDisplayValue(row: TableDataType, header: TableHeader): string {
-	if (header.key === 'blocked') {
-		return '';
+	if (header.key === "blocked") {
+		return "";
 	}
 	if (isUser(row)) {
-		return String(row[header.key as keyof User] ?? '-');
+		return String(row[header.key as keyof User] ?? "-");
 	}
 	if (isToken(row)) {
-		return String(row[header.key as keyof Token] ?? '-');
+		return String(row[header.key as keyof Token] ?? "-");
 	}
-	return '-';
+	return "-";
 }
 
 function checkTokenExpired(row: TableDataType): boolean {
@@ -41,17 +41,17 @@ function checkTokenExpired(row: TableDataType): boolean {
 }
 
 // Components
-import { Avatar } from '@skeletonlabs/skeleton-svelte';
+import { Avatar } from "@skeletonlabs/skeleton-svelte";
 
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import Boolean from '@src/components/system/table/boolean.svelte';
-import Role from '@src/components/system/table/role.svelte';
-import TableFilter from '@src/components/system/table/table-filter.svelte';
-import TableIcons from '@src/components/system/table/table-icons.svelte';
-import TablePagination from '@src/components/system/table/table-pagination.svelte';
+import FloatingInput from "@src/components/system/inputs/floating-input.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import Boolean from "@src/components/system/table/boolean.svelte";
+import Role from "@src/components/system/table/role.svelte";
+import TableFilter from "@src/components/system/table/table-filter.svelte";
+import TableIcons from "@src/components/system/table/table-icons.svelte";
+import TablePagination from "@src/components/system/table/table-pagination.svelte";
 // Types
-import type { Role as RoleType, Token, User } from '@src/databases/auth/types';
+import type { Role as RoleType, Token, User } from "@src/databases/auth/types";
 // Types
 import {
 	adminarea_activesession,
@@ -80,21 +80,24 @@ import {
 	multibuttontoken_modalbody,
 	multibuttontoken_modaltitle,
 	role,
-	username
-} from '@src/paraglide/messages';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
+	username,
+} from "@src/paraglide/messages";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte.ts";
+import { avatarSrc, normalizeAvatarUrl } from "@src/stores/store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
 // Stores
-import { logger } from '@utils/logger';
-import { modalState } from '@utils/modal-state.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import { debounce } from '@utils/utils';
-import { untrack } from 'svelte';
-import { flip } from 'svelte/animate';
-import { dndzone } from 'svelte-dnd-action';
-import Multibutton from './multibutton.svelte';
-import ModalEditToken from './modal-edit-token.svelte';
+import { logger } from "@utils/logger";
+import { modalState } from "@utils/modal-state.svelte";
+import { showConfirm } from "@utils/modal-utils";
+import { debounce } from "@utils/utils";
+import { untrack } from "svelte";
+import { flip } from "svelte/animate";
+import { dndzone } from "svelte-dnd-action";
+import Multibutton from "./multibutton.svelte";
+import ModalEditToken from "./modal-edit-token.svelte";
 
 type TableDataType = User | Token;
 
@@ -106,7 +109,15 @@ interface TableHeader {
 }
 
 // Props - Using API for scalability
-const { currentUser = null, isMultiTenant = false, roles = [] }: { currentUser: User | null; isMultiTenant: boolean; roles: RoleType[] } = $props();
+const {
+	currentUser = null,
+	isMultiTenant = false,
+	roles = [],
+}: {
+	currentUser: User | null;
+	isMultiTenant: boolean;
+	roles: RoleType[];
+} = $props();
 
 const waitFilter = debounce(300);
 const flipDurationMs = 300;
@@ -119,24 +130,24 @@ async function fetchData() {
 	await globalLoadingStore.withLoading(
 		loadingOperations.dataFetch,
 		async () => {
-			const endpoint = showUserList ? '/api/user' : '/api/token';
+			const endpoint = showUserList ? "/api/user" : "/api/token";
 			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const params = new URLSearchParams();
-			params.set('page', String(currentPage));
-			params.set('limit', String(rowsPerPage));
-			params.set('sort', sorting.sortedBy || 'createdAt');
+			params.set("page", String(currentPage));
+			params.set("limit", String(rowsPerPage));
+			params.set("sort", sorting.sortedBy || "createdAt");
 			if (sorting.isSorted !== 0) {
-				params.set('order', sorting.isSorted === 1 ? 'asc' : 'desc');
+				params.set("order", sorting.isSorted === 1 ? "asc" : "desc");
 			}
 			if (globalSearchValue) {
-				params.set('search', globalSearchValue);
+				params.set("search", globalSearchValue);
 			}
 
 			try {
 				const response = await fetch(`${endpoint}?${params.toString()}`);
 				if (!response.ok) {
 					const errorData = await response.json();
-					throw new Error(errorData.message || 'Failed to fetch data');
+					throw new Error(errorData.message || "Failed to fetch data");
 				}
 				const result = await response.json();
 				if (result.success) {
@@ -144,22 +155,27 @@ async function fetchData() {
 					totalItems = result.pagination.totalItems;
 				}
 			} catch (err) {
-				const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-				logger.error('AdminArea fetch error:', errorMessage);
+				const errorMessage =
+					err instanceof Error ? err.message : "Unknown error";
+				logger.error("AdminArea fetch error:", errorMessage);
 				toast.error(`Error fetching data: ${errorMessage}`);
 				tableData = [];
 				totalItems = 0;
 			}
 		},
-		'Fetching admin data'
+		"Fetching admin data",
 	);
 }
 
 // Custom event handler for updates from Multibutton
-function handleBatchUpdate(data: { ids: string[]; action: string; type: 'user' | 'token' }) {
+function handleBatchUpdate(data: {
+	ids: string[];
+	action: string;
+	type: "user" | "token";
+}) {
 	const { ids, action, type } = data;
 
-	if (action === 'refresh') {
+	if (action === "refresh") {
 		fetchData();
 		return;
 	}
@@ -168,13 +184,13 @@ function handleBatchUpdate(data: { ids: string[]; action: string; type: 'user' |
 	if (tableData) {
 		let updated = false;
 
-		if (action === 'delete') {
+		if (action === "delete") {
 			// Remove deleted items from the table
 			const updatedData = tableData.filter((item: User | Token) => {
-				if (type === 'user' && isUser(item)) {
+				if (type === "user" && isUser(item)) {
 					return !ids.includes(item._id);
 				}
-				if (type === 'token' && isToken(item)) {
+				if (type === "token" && isToken(item)) {
 					return !ids.includes(item.token);
 				}
 				return true;
@@ -188,19 +204,19 @@ function handleBatchUpdate(data: { ids: string[]; action: string; type: 'user' |
 			// Handle block/unblock actions
 			const updatedData = tableData.map((item: User | Token) => {
 				let shouldUpdate = false;
-				if (type === 'user' && isUser(item) && ids.includes(item._id)) {
+				if (type === "user" && isUser(item) && ids.includes(item._id)) {
 					shouldUpdate = true;
 				}
-				if (type === 'token' && isToken(item) && ids.includes(item.token)) {
+				if (type === "token" && isToken(item) && ids.includes(item.token)) {
 					shouldUpdate = true;
 				}
 
 				if (shouldUpdate) {
 					updated = true;
-					if (action === 'block') {
+					if (action === "block") {
 						return { ...item, blocked: true };
 					}
-					if (action === 'unblock') {
+					if (action === "unblock") {
 						return { ...item, blocked: false };
 					}
 				}
@@ -220,35 +236,35 @@ function handleBatchUpdate(data: { ids: string[]; action: string; type: 'user' |
 	}
 } // Table header definitions
 const tableHeadersUser = [
-	{ label: adminarea_blocked(), key: 'blocked' },
-	{ label: form_avatar(), key: 'avatar' },
-	{ label: email(), key: 'email' },
-	{ label: username(), key: 'username' },
-	{ label: role(), key: 'role' },
-	{ label: 'Tenant ID', key: 'tenantId' },
-	{ label: adminarea_user_id(), key: '_id' },
-	{ label: adminarea_activesession(), key: 'activeSessions' },
-	{ label: adminarea_lastaccess(), key: 'lastAccess' },
-	{ label: adminarea_createat(), key: 'createdAt' },
-	{ label: adminarea_updatedat(), key: 'updatedAt' }
+	{ label: adminarea_blocked(), key: "blocked" },
+	{ label: form_avatar(), key: "avatar" },
+	{ label: email(), key: "email" },
+	{ label: username(), key: "username" },
+	{ label: role(), key: "role" },
+	{ label: "Tenant ID", key: "tenantId" },
+	{ label: adminarea_user_id(), key: "_id" },
+	{ label: adminarea_activesession(), key: "activeSessions" },
+	{ label: adminarea_lastaccess(), key: "lastAccess" },
+	{ label: adminarea_createat(), key: "createdAt" },
+	{ label: adminarea_updatedat(), key: "updatedAt" },
 ] as const;
 
 const tableHeaderToken = [
-	{ label: adminarea_blocked(), key: 'blocked' },
-	{ label: email(), key: 'email' },
-	{ label: role(), key: 'role' },
-	{ label: 'Tenant ID', key: 'tenantId' },
-	{ label: adminarea_token(), key: 'token' },
-	{ label: adminarea_expiresin(), key: 'expires' },
-	{ label: adminarea_createat(), key: 'createdAt' },
-	{ label: adminarea_updatedat(), key: 'updatedAt' }
+	{ label: adminarea_blocked(), key: "blocked" },
+	{ label: email(), key: "email" },
+	{ label: role(), key: "role" },
+	{ label: "Tenant ID", key: "tenantId" },
+	{ label: adminarea_token(), key: "token" },
+	{ label: adminarea_expiresin(), key: "expires" },
+	{ label: adminarea_createat(), key: "createdAt" },
+	{ label: adminarea_updatedat(), key: "updatedAt" },
 ] as const;
 
 // Core state with proper initialization
 let showUserList = $state(true);
 let showUsertoken = $state(false);
 let showExpiredTokens = $state(false);
-let globalSearchValue = $state('');
+let globalSearchValue = $state("");
 let searchShow = $state(false);
 let filterShow = $state(false);
 let columnShow = $state(false);
@@ -258,16 +274,16 @@ let selectedMap: Record<number, boolean> = $state({});
 // Derived rows to display and selection will be defined below
 let density = $state(
 	(() => {
-		const settings = localStorage.getItem('userPaginationSettings');
-		return settings ? (JSON.parse(settings).density ?? 'normal') : 'normal';
-	})()
+		const settings = localStorage.getItem("userPaginationSettings");
+		return settings ? (JSON.parse(settings).density ?? "normal") : "normal";
+	})(),
 );
 let selectAllColumns = $state(true);
 // pagesCount becomes derived below
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
 let filters = $state({});
-let sorting = $state({ sortedBy: '', isSorted: 0 });
+let sorting = $state({ sortedBy: "", isSorted: 0 });
 
 // Initialize displayTableHeaders with a safe default
 let displayTableHeaders: TableHeader[] = $state([]);
@@ -275,12 +291,14 @@ let displayTableHeaders: TableHeader[] = $state([]);
 $effect(() => {
 	// Update displayTableHeaders when view changes
 	const baseHeaders = showUserList ? tableHeadersUser : tableHeaderToken;
-	const relevantHeaders = isMultiTenant ? baseHeaders : baseHeaders.filter((h) => h.key !== 'tenantId');
+	const relevantHeaders = isMultiTenant
+		? baseHeaders
+		: baseHeaders.filter((h) => h.key !== "tenantId");
 	displayTableHeaders = relevantHeaders.map((header) => ({
 		label: header.label,
 		key: header.key,
 		visible: true,
-		id: `header-${Math.random().toString(36).substring(2, 15)}-${Date.now().toString(36)}`
+		id: `header-${Math.random().toString(36).substring(2, 15)}-${Date.now().toString(36)}`,
 	}));
 });
 
@@ -316,24 +334,24 @@ function editToken(tokenId: Token) {
 			expires: convertDateToExpiresFormat(tokenData.expires),
 			title: multibuttontoken_modaltitle(),
 			body: multibuttontoken_modalbody(),
-			roles // Pass roles explicitly
+			roles, // Pass roles explicitly
 		},
 		(result: any) => {
 			if (result?.success) {
 				fetchData();
 			} else if (result?.success === false) {
 				toast.error({
-					description: result.error || 'Failed to update token'
+					description: result.error || "Failed to update token",
 				});
 			}
-		}
+		},
 	);
 }
 
 // Helper function to convert Date to expires format expected by ModalEditToken
 function convertDateToExpiresFormat(expiresDate: Date | string | null): string {
 	if (!expiresDate) {
-		return '2 days'; // Default
+		return "2 days"; // Default
 	}
 
 	const now = new Date();
@@ -344,31 +362,31 @@ function convertDateToExpiresFormat(expiresDate: Date | string | null): string {
 
 	// Match the available options in ModalEditToken
 	if (diffHours <= 2) {
-		return '2 hrs';
+		return "2 hrs";
 	}
 	if (diffHours <= 12) {
-		return '12 hrs';
+		return "12 hrs";
 	}
 	if (diffDays <= 2) {
-		return '2 days';
+		return "2 days";
 	}
 	if (diffDays <= 7) {
-		return '1 week';
+		return "1 week";
 	}
 	if (diffDays <= 14) {
-		return '2 weeks';
+		return "2 weeks";
 	}
 	if (diffDays <= 30) {
-		return '1 month';
+		return "1 month";
 	}
 
-	return '1 month'; // Max available option
+	return "1 month"; // Max available option
 }
 
 // Helper function to calculate remaining time until expiration for display in table
 function getRemainingTime(expiresDate: Date | string | null): string {
 	if (!expiresDate) {
-		return 'Never';
+		return "Never";
 	}
 
 	const now = new Date();
@@ -377,7 +395,7 @@ function getRemainingTime(expiresDate: Date | string | null): string {
 
 	// If expired, return 'Expired'
 	if (diffMs <= 0) {
-		return 'Expired';
+		return "Expired";
 	}
 
 	const diffMinutes = Math.floor(diffMs / (1000 * 60));
@@ -385,29 +403,37 @@ function getRemainingTime(expiresDate: Date | string | null): string {
 	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
 	if (diffDays > 0) {
-		const remainingHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-		return remainingHours > 0 ? `${diffDays}d ${remainingHours}h` : `${diffDays}d`;
+		const remainingHours = Math.floor(
+			(diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+		);
+		return remainingHours > 0
+			? `${diffDays}d ${remainingHours}h`
+			: `${diffDays}d`;
 	}
 	if (diffHours > 0) {
-		const remainingMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-		return remainingMinutes > 0 ? `${diffHours}h ${remainingMinutes}m` : `${diffHours}h`;
+		const remainingMinutes = Math.floor(
+			(diffMs % (1000 * 60 * 60)) / (1000 * 60),
+		);
+		return remainingMinutes > 0
+			? `${diffHours}h ${remainingMinutes}m`
+			: `${diffHours}h`;
 	}
 	return `${diffMinutes}m`;
 }
 
 // Safe date formatter for unknown values coming from API
 function formatDate(value: unknown): string {
-	if (value === null || value === undefined || value === '') {
-		return '-';
+	if (value === null || value === undefined || value === "") {
+		return "-";
 	}
 	try {
 		const d = value instanceof Date ? value : new Date(String(value));
 		if (Number.isNaN(d.getTime())) {
-			return '-';
+			return "-";
 		}
 		return d.toLocaleString();
 	} catch {
-		return '-';
+		return "-";
 	}
 }
 
@@ -419,16 +445,16 @@ async function toggleUserBlocked(user: User) {
 
 	// Prevent admins from blocking themselves
 	if (currentUser && user._id === currentUser._id) {
-		toast.warning('You cannot block your own account');
+		toast.warning("You cannot block your own account");
 		return;
 	}
 
-	const action = user.blocked ? 'unblock' : 'block';
-	const actionPastTense = user.blocked ? 'unblocked' : 'blocked';
+	const action = user.blocked ? "unblock" : "block";
+	const actionPastTense = user.blocked ? "unblocked" : "blocked";
 
 	// Always show confirmation modal (same logic as Multibutton) with enhanced styling using theme colors
-	const actionColor = user.blocked ? 'text-success-500' : 'text-error-500';
-	const actionWord = user.blocked ? 'Unblock' : 'Block';
+	const actionColor = user.blocked ? "text-success-500" : "text-error-500";
+	const actionWord = user.blocked ? "Unblock" : "Block";
 
 	const modalTitle = `Please Confirm User <span class="${actionColor} font-bold">${actionWord}</span>`;
 	const modalBody = user.blocked
@@ -440,21 +466,25 @@ async function toggleUserBlocked(user: User) {
 		body: modalBody,
 		onConfirm: async () => {
 			await performBlockAction(user, action, actionPastTense);
-		}
+		},
 	});
 }
 
-async function performBlockAction(user: User, action: string, actionPastTense: string) {
+async function performBlockAction(
+	user: User,
+	action: string,
+	actionPastTense: string,
+) {
 	try {
-		const response = await fetch('/api/user/batch', {
-			method: 'POST',
+		const response = await fetch("/api/user/batch", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				userIds: [user._id],
-				action
-			})
+				action,
+			}),
 		});
 
 		const result = await response.json();
@@ -462,7 +492,9 @@ async function performBlockAction(user: User, action: string, actionPastTense: s
 		if (result.success) {
 			// Update the user in tableData to reflect changes immediately
 			const updatedData = tableData.map((item: User | Token) =>
-				'_id' in item && (item as User)._id === user._id ? { ...item, blocked: !item.blocked } : item
+				"_id" in item && (item as User)._id === user._id
+					? { ...item, blocked: !item.blocked }
+					: item,
 			);
 			tableData = updatedData;
 			toast.success(`User ${actionPastTense} successfully`);
@@ -470,7 +502,7 @@ async function performBlockAction(user: User, action: string, actionPastTense: s
 			throw new Error(result.message || `Failed to ${action} user`);
 		}
 	} catch (err) {
-		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+		const errorMessage = err instanceof Error ? err.message : "Unknown error";
 		toast.error(`Failed to ${action} user: ${errorMessage}`);
 	}
 }
@@ -481,12 +513,12 @@ async function toggleTokenBlocked(token: Token) {
 		return;
 	}
 
-	const action = token.blocked ? 'unblock' : 'block';
-	const actionPastTense = token.blocked ? 'unblocked' : 'blocked';
+	const action = token.blocked ? "unblock" : "block";
+	const actionPastTense = token.blocked ? "unblocked" : "blocked";
 
 	// Show confirmation modal with enhanced styling using theme colors
-	const actionColor = token.blocked ? 'text-success-500' : 'text-error-500';
-	const actionWord = token.blocked ? 'Unblock' : 'Block';
+	const actionColor = token.blocked ? "text-success-500" : "text-error-500";
+	const actionWord = token.blocked ? "Unblock" : "Block";
 
 	const modalTitle = `Please Confirm Token <span class="${actionColor} font-bold">${actionWord}</span>`;
 	const modalBody = token.blocked
@@ -498,21 +530,25 @@ async function toggleTokenBlocked(token: Token) {
 		body: modalBody,
 		onConfirm: async () => {
 			await performTokenBlockAction(token, action, actionPastTense);
-		}
+		},
 	});
 }
 
-async function performTokenBlockAction(token: Token, action: string, actionPastTense: string) {
+async function performTokenBlockAction(
+	token: Token,
+	action: string,
+	actionPastTense: string,
+) {
 	try {
-		const response = await fetch('/api/token/batch', {
-			method: 'POST',
+		const response = await fetch("/api/token/batch", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				tokenIds: [token.token],
-				action
-			})
+				action,
+			}),
 		});
 
 		const result = await response.json();
@@ -520,8 +556,10 @@ async function performTokenBlockAction(token: Token, action: string, actionPastT
 		if (result.success) {
 			// Update the token in tableData to reflect changes immediately
 			const updatedData = tableData.map((item: User | Token) => {
-				const isTokenItem = 'token' in item && item.token !== undefined;
-				return isTokenItem && item.token === token.token ? { ...item, blocked: !item.blocked } : item;
+				const isTokenItem = "token" in item && item.token !== undefined;
+				return isTokenItem && item.token === token.token
+					? { ...item, blocked: !item.blocked }
+					: item;
 			});
 			tableData = updatedData;
 			toast.success(`Token ${actionPastTense} successfully`);
@@ -529,7 +567,7 @@ async function performTokenBlockAction(token: Token, action: string, actionPastT
 			throw new Error(result.message || `Failed to ${action} token`);
 		}
 	} catch (err) {
-		const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+		const errorMessage = err instanceof Error ? err.message : "Unknown error";
 		toast.error(`Failed to ${action} token: ${errorMessage}`);
 	}
 }
@@ -540,7 +578,10 @@ function handleDndConsider(event: CustomEvent) {
 
 function handleDndFinalize(event: CustomEvent) {
 	displayTableHeaders = event.detail.items;
-	localStorage.setItem('userPaginationSettings', JSON.stringify({ density, displayTableHeaders }));
+	localStorage.setItem(
+		"userPaginationSettings",
+		JSON.stringify({ density, displayTableHeaders }),
+	);
 }
 
 function modalTokenUser() {
@@ -550,14 +591,14 @@ function modalTokenUser() {
 			title: multibuttontoken_modaltitle(),
 			body: multibuttontoken_modalbody(),
 			roles, // Pass available roles
-			user: currentUser // Pass current user context if needed
+			user: currentUser, // Pass current user context if needed
 		},
 		(result: any) => {
 			// Refresh data if token was created
 			if (result?.success) {
 				fetchData();
 			}
-		}
+		},
 	);
 }
 
@@ -585,7 +626,9 @@ let selectedRows: TableDataType[] = $derived.by(() =>
 	Object.entries(selectedMap)
 		.filter(([, isSelected]) => isSelected)
 		.map(([index]) => tableData[Number.parseInt(index, 10)])
-		.filter((item): item is User | Token => item !== undefined && item !== null)
+		.filter(
+			(item): item is User | Token => item !== undefined && item !== null,
+		),
 );
 
 // Reset selection and page when the data source changes
@@ -606,10 +649,12 @@ $effect(() => {
 });
 
 function handleCheckboxChange() {
-	const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
+	const allColumnsVisible = displayTableHeaders.every(
+		(header) => header.visible,
+	);
 	displayTableHeaders = displayTableHeaders.map((header) => ({
 		...header,
-		visible: !allColumnsVisible
+		visible: !allColumnsVisible,
 	}));
 	selectAllColumns = !allColumnsVisible;
 }
@@ -618,7 +663,7 @@ function handleInputChange(value: string, headerKey: string) {
 	if (value) {
 		const newFilters: Record<string, string | undefined> = {
 			...filters,
-			[headerKey]: value
+			[headerKey]: value,
 		};
 		waitFilter(() => {
 			filters = newFilters;

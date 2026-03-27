@@ -4,8 +4,8 @@
 -->
 
 <script lang="ts">
-import { quintOut } from 'svelte/easing';
-import { slide } from 'svelte/transition';
+import { quintOut } from "svelte/easing";
+import { slide } from "svelte/transition";
 
 // Components
 // Using iconify-icon web component
@@ -13,46 +13,49 @@ import { slide } from 'svelte/transition';
 // Data
 
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { tokenTarget } from '@src/services/token/token-target';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { tokenTarget } from "@src/services/token/token-target";
 // Stores
-import { app } from '@src/stores/store.svelte';
-import { collections } from '@src/stores/collection-store.svelte';
+import { app } from "@src/stores/store.svelte";
+import { collections } from "@src/stores/collection-store.svelte";
 // import type { Editor } from '@tiptap/core'; // Removed to avoid SSR resolution issues
-import { showModal } from '@utils/modal-utils';
+import { showModal } from "@utils/modal-utils";
 // Svelte
-import { onMount } from 'svelte';
-import * as Y from 'yjs';
-import { SseProvider } from '@src/services/collaboration/sse-provider.svelte';
+import { onMount } from "svelte";
+import * as Y from "yjs";
+import { SseProvider } from "@src/services/collaboration/sse-provider.svelte";
 // Removed static createEditor import for lazy-loading
 
-import type { MediaFile } from '../media-upload/types';
-import type { FieldType } from './';
-import type { RichTextData } from './types';
+import type { MediaFile } from "../media-upload/types";
+import type { FieldType } from "./";
+import type { RichTextData } from "./types";
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
 	value: Record<string, RichTextData> | RichTextData | null | undefined;
 	error?: string | null;
 } = $props();
 
-const lang = $derived(field.translated ? app.contentLanguage : 'default');
+const lang = $derived(field.translated ? app.contentLanguage : "default");
 
 $effect(() => {
 	if (!value) {
 		if (field.translated) {
-			value = { [lang]: { title: '', content: '' } };
+			value = { [lang]: { title: "", content: "" } };
 		} else {
-			value = { title: '', content: '' };
+			value = { title: "", content: "" };
 		}
-	} else if (field.translated && !(value as Record<string, RichTextData>)[lang]) {
+	} else if (
+		field.translated &&
+		!(value as Record<string, RichTextData>)[lang]
+	) {
 		value = {
 			...(value as Record<string, RichTextData>),
-			[lang]: { title: '', content: '' }
+			[lang]: { title: "", content: "" },
 		};
 	}
 });
@@ -72,36 +75,36 @@ let colorInput = $state<HTMLInputElement>();
 let translateLoading = $state(false);
 
 async function translateContent() {
-	const sourceLang = 'en'; // Should be dynamic from settings
+	const sourceLang = "en"; // Should be dynamic from settings
 	const source = (value as Record<string, RichTextData>)?.[sourceLang];
 
 	if (!source?.content || sourceLang === lang) return;
 
 	translateLoading = true;
 	try {
-		const response = await fetch('/api/ai/enrich', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/ai/enrich", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				text: source.content,
-				action: 'translate',
-				format: 'html',
-				language: lang
-			})
+				action: "translate",
+				format: "html",
+				language: lang,
+			}),
 		});
 		const data = await response.json();
 		if (data.result) {
 			if (field.translated) {
-				if (!value || typeof value !== 'object') value = {};
+				if (!value || typeof value !== "object") value = {};
 				(value as any)[lang] = {
 					...(value as any)[lang],
-					content: data.result
+					content: data.result,
 				};
 				editor?.commands.setContent(data.result);
 			}
 		}
 	} catch (err) {
-		console.error('[AI Translation] Error:', err);
+		console.error("[AI Translation] Error:", err);
 	} finally {
 		translateLoading = false;
 	}
@@ -115,16 +118,16 @@ function toggleDropdown(label: string, event: MouseEvent) {
 	event.stopPropagation();
 	activeDropdown = activeDropdown === label ? null : label;
 	// Reset popover states when switching
-	if (activeDropdown !== 'Link' && activeDropdown !== 'Video') {
-		linkUrl = '';
-		videoUrl = '';
+	if (activeDropdown !== "Link" && activeDropdown !== "Video") {
+		linkUrl = "";
+		videoUrl = "";
 	}
 }
 
 function closeDropdowns() {
 	activeDropdown = null;
-	linkUrl = '';
-	videoUrl = '';
+	linkUrl = "";
+	videoUrl = "";
 }
 
 function handleColorChange(e: Event) {
@@ -133,8 +136,8 @@ function handleColorChange(e: Event) {
 }
 
 // Popover States
-let linkUrl = $state('');
-let videoUrl = $state('');
+let linkUrl = $state("");
+let videoUrl = $state("");
 
 function setLink() {
 	if (linkUrl) {
@@ -153,14 +156,18 @@ function setVideo() {
 // New Feature Functions
 function openMediaLibrary() {
 	showModal({
-		component: 'mediaLibraryModal',
+		component: "mediaLibraryModal",
 		response: (files: MediaFile[] | undefined) => {
 			if (files && files.length > 0) {
 				// Insert the first selected image
 				const file = files[0];
-				editor?.chain().focus().setImage({ src: file.url, alt: file.name }).run();
+				editor
+					?.chain()
+					.focus()
+					.setImage({ src: file.url, alt: file.name })
+					.run();
 			}
-		}
+		},
 	});
 }
 
@@ -169,8 +176,8 @@ async function pasteUnformatted() {
 		const text = await navigator.clipboard.readText();
 		editor?.chain().focus().insertContent(text).run();
 	} catch (err) {
-		console.error('Failed to read clipboard:', err);
-		alert('Could not access clipboard. Please check permissions.');
+		console.error("Failed to read clipboard:", err);
+		alert("Could not access clipboard. Please check permissions.");
 	}
 }
 
@@ -181,14 +188,14 @@ interface ToolbarButton {
 	icon: string;
 	label: string;
 	shortcut?: string;
-	type?: 'button';
+	type?: "button";
 }
 
 interface ToolbarDropdown {
 	icon?: string;
 	items?: { label: string; cmd: () => void; active: () => boolean }[];
 	label: string;
-	type: 'dropdown';
+	type: "dropdown";
 }
 
 type ToolbarItem = ToolbarButton | ToolbarDropdown;
@@ -203,276 +210,290 @@ const toolbarGroups: ToolbarGroup[] = [
 	{
 		buttons: [
 			{
-				type: 'button',
-				icon: 'arrow-u-left-top',
-				label: 'Undo',
-				shortcut: 'Ctrl+Z',
+				type: "button",
+				icon: "arrow-u-left-top",
+				label: "Undo",
+				shortcut: "Ctrl+Z",
 				cmd: () => editor?.chain().focus().undo().run(),
-				active: () => false
+				active: () => false,
 			},
 			{
-				type: 'button',
-				icon: 'arrow-u-right-top',
-				label: 'Redo',
-				shortcut: 'Ctrl+Shift+Z',
+				type: "button",
+				icon: "arrow-u-right-top",
+				label: "Redo",
+				shortcut: "Ctrl+Shift+Z",
 				cmd: () => editor?.chain().focus().redo().run(),
-				active: () => false
-			}
-		]
+				active: () => false,
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'button',
-				icon: 'format-bold',
-				label: 'Bold',
-				shortcut: 'Ctrl+B',
+				type: "button",
+				icon: "format-bold",
+				label: "Bold",
+				shortcut: "Ctrl+B",
 				cmd: () => editor?.chain().focus().toggleBold().run(),
-				active: () => editor?.isActive('bold') ?? false
+				active: () => editor?.isActive("bold") ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-italic',
-				label: 'Italic',
-				shortcut: 'Ctrl+I',
+				type: "button",
+				icon: "format-italic",
+				label: "Italic",
+				shortcut: "Ctrl+I",
 				cmd: () => editor?.chain().focus().toggleItalic().run(),
-				active: () => editor?.isActive('italic') ?? false
+				active: () => editor?.isActive("italic") ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-underlined',
-				label: 'Underline',
-				shortcut: 'Ctrl+U',
+				type: "button",
+				icon: "format-underlined",
+				label: "Underline",
+				shortcut: "Ctrl+U",
 				cmd: () => editor?.chain().focus().toggleUnderline().run(),
-				active: () => editor?.isActive('underline') ?? false
+				active: () => editor?.isActive("underline") ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-strikethrough-variant',
-				label: 'Strikethrough',
+				type: "button",
+				icon: "format-strikethrough-variant",
+				label: "Strikethrough",
 				cmd: () => editor?.chain().focus().toggleStrike().run(),
-				active: () => editor?.isActive('strike') ?? false
+				active: () => editor?.isActive("strike") ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-clear',
-				label: 'Clear Formatting',
+				type: "button",
+				icon: "format-clear",
+				label: "Clear Formatting",
 				cmd: () => editor?.chain().focus().unsetAllMarks().run(),
-				active: () => false
-			}
-		]
+				active: () => false,
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'dropdown',
-				label: 'Color',
-				icon: 'palette',
+				type: "dropdown",
+				label: "Color",
+				icon: "palette",
 				items: [
 					{
-						label: 'Default',
+						label: "Default",
 						cmd: () => editor?.chain().focus().unsetColor().run(),
-						active: () => !editor?.getAttributes('textStyle').color
+						active: () => !editor?.getAttributes("textStyle").color,
 					},
 					{
-						label: 'Custom...',
+						label: "Custom...",
 						cmd: () => colorInput?.click(),
-						active: () => editor?.isActive('textStyle', { color: /.*/ }) ?? false
-					}
-				]
-			},
-			{
-				type: 'dropdown',
-				label: 'Font',
-				items: [
-					{
-						label: 'Default',
-						cmd: () => editor?.chain().focus().unsetFontFamily().run(),
-						active: () => !editor?.getAttributes('textStyle').fontFamily
-					},
-					{
-						label: 'Inter',
-						cmd: () => editor?.chain().focus().setFontFamily('Inter').run(),
-						active: () => editor?.isActive('textStyle', { fontFamily: 'Inter' }) ?? false
-					},
-					{
-						label: 'Comic Sans',
-						cmd: () => editor?.chain().focus().setFontFamily('Comic Sans MS, Comic Sans').run(),
 						active: () =>
-							editor?.isActive('textStyle', {
-								fontFamily: 'Comic Sans MS, Comic Sans'
-							}) ?? false
+							editor?.isActive("textStyle", { color: /.*/ }) ?? false,
 					},
-					{
-						label: 'Serif',
-						cmd: () => editor?.chain().focus().setFontFamily('serif').run(),
-						active: () => editor?.isActive('textStyle', { fontFamily: 'serif' }) ?? false
-					},
-					{
-						label: 'Monospace',
-						cmd: () => editor?.chain().focus().setFontFamily('monospace').run(),
-						active: () => editor?.isActive('textStyle', { fontFamily: 'monospace' }) ?? false
-					},
-					{
-						label: 'Cursive',
-						cmd: () => editor?.chain().focus().setFontFamily('cursive').run(),
-						active: () => editor?.isActive('textStyle', { fontFamily: 'cursive' }) ?? false
-					}
-				]
+				],
 			},
 			{
-				type: 'dropdown',
-				label: 'Text',
+				type: "dropdown",
+				label: "Font",
 				items: [
 					{
-						label: 'Paragraph',
+						label: "Default",
+						cmd: () => editor?.chain().focus().unsetFontFamily().run(),
+						active: () => !editor?.getAttributes("textStyle").fontFamily,
+					},
+					{
+						label: "Inter",
+						cmd: () => editor?.chain().focus().setFontFamily("Inter").run(),
+						active: () =>
+							editor?.isActive("textStyle", { fontFamily: "Inter" }) ?? false,
+					},
+					{
+						label: "Comic Sans",
+						cmd: () =>
+							editor
+								?.chain()
+								.focus()
+								.setFontFamily("Comic Sans MS, Comic Sans")
+								.run(),
+						active: () =>
+							editor?.isActive("textStyle", {
+								fontFamily: "Comic Sans MS, Comic Sans",
+							}) ?? false,
+					},
+					{
+						label: "Serif",
+						cmd: () => editor?.chain().focus().setFontFamily("serif").run(),
+						active: () =>
+							editor?.isActive("textStyle", { fontFamily: "serif" }) ?? false,
+					},
+					{
+						label: "Monospace",
+						cmd: () => editor?.chain().focus().setFontFamily("monospace").run(),
+						active: () =>
+							editor?.isActive("textStyle", { fontFamily: "monospace" }) ??
+							false,
+					},
+					{
+						label: "Cursive",
+						cmd: () => editor?.chain().focus().setFontFamily("cursive").run(),
+						active: () =>
+							editor?.isActive("textStyle", { fontFamily: "cursive" }) ?? false,
+					},
+				],
+			},
+			{
+				type: "dropdown",
+				label: "Text",
+				items: [
+					{
+						label: "Paragraph",
 						cmd: () => editor?.chain().focus().setParagraph().run(),
-						active: () => editor?.isActive('paragraph') ?? false
+						active: () => editor?.isActive("paragraph") ?? false,
 					},
 					{
-						label: 'Heading 1',
-						cmd: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
-						active: () => editor?.isActive('heading', { level: 1 }) ?? false
+						label: "Heading 1",
+						cmd: () =>
+							editor?.chain().focus().toggleHeading({ level: 1 }).run(),
+						active: () => editor?.isActive("heading", { level: 1 }) ?? false,
 					},
 					{
-						label: 'Heading 2',
-						cmd: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
-						active: () => editor?.isActive('heading', { level: 2 }) ?? false
+						label: "Heading 2",
+						cmd: () =>
+							editor?.chain().focus().toggleHeading({ level: 2 }).run(),
+						active: () => editor?.isActive("heading", { level: 2 }) ?? false,
 					},
 					{
-						label: 'Heading 3',
-						cmd: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
-						active: () => editor?.isActive('heading', { level: 3 }) ?? false
-					}
-				]
-			}
-		]
+						label: "Heading 3",
+						cmd: () =>
+							editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+						active: () => editor?.isActive("heading", { level: 3 }) ?? false,
+					},
+				],
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'button',
-				icon: 'format-list-bulleted',
-				label: 'Bullet List',
+				type: "button",
+				icon: "format-list-bulleted",
+				label: "Bullet List",
 				cmd: () => editor?.chain().focus().toggleBulletList().run(),
-				active: () => editor?.isActive('bulletList') ?? false
+				active: () => editor?.isActive("bulletList") ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-list-numbered',
-				label: 'Numbered List',
+				type: "button",
+				icon: "format-list-numbered",
+				label: "Numbered List",
 				cmd: () => editor?.chain().focus().toggleOrderedList().run(),
-				active: () => editor?.isActive('orderedList') ?? false
-			}
-		]
+				active: () => editor?.isActive("orderedList") ?? false,
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'dropdown', // Changed to dropdown for popover
-				icon: 'link',
-				label: 'Link'
+				type: "dropdown", // Changed to dropdown for popover
+				icon: "link",
+				label: "Link",
 			},
 			{
-				type: 'button',
-				icon: 'image',
-				label: 'Image',
-				cmd: openMediaLibrary
+				type: "button",
+				icon: "image",
+				label: "Image",
+				cmd: openMediaLibrary,
 			},
 			{
-				type: 'dropdown', // Changed to dropdown for popover
-				icon: 'youtube',
-				label: 'Video'
+				type: "dropdown", // Changed to dropdown for popover
+				icon: "youtube",
+				label: "Video",
 			},
 			{
-				type: 'dropdown',
-				icon: 'table',
-				label: 'Table'
+				type: "dropdown",
+				icon: "table",
+				label: "Table",
 			},
 			{
-				type: 'button',
-				icon: 'code-tags',
-				label: 'Code Block',
+				type: "button",
+				icon: "code-tags",
+				label: "Code Block",
 				cmd: () => editor?.chain().focus().toggleCodeBlock().run(),
-				active: () => editor?.isActive('codeBlock') ?? false
-			}
-		]
+				active: () => editor?.isActive("codeBlock") ?? false,
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'button',
-				icon: 'format-align-left',
-				label: 'Align Left',
-				cmd: () => editor?.chain().focus().setTextAlign('left').run(),
-				active: () => editor?.isActive({ textAlign: 'left' }) ?? false
+				type: "button",
+				icon: "format-align-left",
+				label: "Align Left",
+				cmd: () => editor?.chain().focus().setTextAlign("left").run(),
+				active: () => editor?.isActive({ textAlign: "left" }) ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-align-center',
-				label: 'Align Center',
-				cmd: () => editor?.chain().focus().setTextAlign('center').run(),
-				active: () => editor?.isActive({ textAlign: 'center' }) ?? false
+				type: "button",
+				icon: "format-align-center",
+				label: "Align Center",
+				cmd: () => editor?.chain().focus().setTextAlign("center").run(),
+				active: () => editor?.isActive({ textAlign: "center" }) ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-align-right',
-				label: 'Align Right',
-				cmd: () => editor?.chain().focus().setTextAlign('right').run(),
-				active: () => editor?.isActive({ textAlign: 'right' }) ?? false
+				type: "button",
+				icon: "format-align-right",
+				label: "Align Right",
+				cmd: () => editor?.chain().focus().setTextAlign("right").run(),
+				active: () => editor?.isActive({ textAlign: "right" }) ?? false,
 			},
 			{
-				type: 'button',
-				icon: 'format-quote-close',
-				label: 'Blockquote',
+				type: "button",
+				icon: "format-quote-close",
+				label: "Blockquote",
 				cmd: () => editor?.chain().focus().toggleBlockquote().run(),
-				active: () => editor?.isActive('blockquote') ?? false
-			}
-		]
+				active: () => editor?.isActive("blockquote") ?? false,
+			},
+		],
 	},
 	{
 		condition: () => !!field.aiEnabled,
 		buttons: [
 			{
-				type: 'button',
-				icon: 'sparkles',
-				label: 'AI Command',
-				shortcut: '/',
+				type: "button",
+				icon: "sparkles",
+				label: "AI Command",
+				shortcut: "/",
 				cmd: () => {
 					showSlashMenu = true;
-				}
-			}
-		]
+				},
+			},
+		],
 	},
 	{
 		buttons: [
 			{
-				type: 'button',
-				icon: 'content-paste',
-				label: 'Paste Plain Text',
-				cmd: pasteUnformatted
+				type: "button",
+				icon: "content-paste",
+				label: "Paste Plain Text",
+				cmd: pasteUnformatted,
 			},
 			{
-				type: 'button',
-				icon: 'xml',
-				label: 'Source View',
+				type: "button",
+				icon: "xml",
+				label: "Source View",
 				cmd: () => (showSource = !showSource),
-				active: () => showSource
-			}
-		]
+				active: () => showSource,
+			},
+		],
 	},
 	{
-		condition: () => !!field.translated && lang !== 'default',
+		condition: () => !!field.translated && lang !== "default",
 		buttons: [
 			{
-				type: 'button',
-				icon: 'translate',
-				label: 'AI Translate',
+				type: "button",
+				icon: "translate",
+				label: "AI Translate",
 				cmd: translateContent,
-				active: () => translateLoading
-			}
-		]
-	}
+				active: () => translateLoading,
+			},
+		],
+	},
 ];
 
 function handleScroll() {
@@ -484,51 +505,55 @@ onMount(() => {
 
 	(async () => {
 		// baffle-step: use variable to prevent static analysis during SSR
-		const tiptapPath = './tiptap';
+		const tiptapPath = "./tiptap";
 		const module = await import(tiptapPath);
 		createEditor = module.createEditor;
 
 		// Initialize Yjs for collaboration
 		const yDoc = new Y.Doc();
-		const entryId = (collections as any).currentEntry?._id || 'new';
-		const docId = `collaboration:${field.collectionId || 'unknown'}:${entryId}:${field.db_fieldName}`;
+		const entryId = (collections as any).currentEntry?._id || "new";
+		const docId = `collaboration:${field.collectionId || "unknown"}:${entryId}:${field.db_fieldName}`;
 
 		yProvider = new SseProvider({
 			docId,
 			yDoc,
-			tenantId: (app as any).tenantId
+			tenantId: (app as any).tenantId,
 		});
 		yjsDestroy = () => yProvider?.destroy();
 
-		let initialContent = '';
+		let initialContent = "";
 		if (field.translated) {
-			initialContent = (value as Record<string, RichTextData>)?.[lang]?.content || '';
+			initialContent =
+				(value as Record<string, RichTextData>)?.[lang]?.content || "";
 		} else {
-			initialContent = (value as RichTextData)?.content || '';
+			initialContent = (value as RichTextData)?.content || "";
 		}
 
 		editor = await createEditor(element, initialContent, lang, {
 			aiEnabled: !!field.aiEnabled,
 			collaboration: {
 				doc: yDoc,
-				field: 'content'
-			}
+				field: "content",
+			},
 		});
 
 		if (!editor) {
 			return;
 		}
-		editor.on('update', () => {
+		editor.on("update", () => {
 			if (!editor) {
 				return;
 			}
 			const newContent = {
-				title: (field.translated ? (value as Record<string, RichTextData>)?.[lang]?.title : (value as Record<string, RichTextData>)?.title) || '',
-				content: editor.isEmpty ? '' : editor.getHTML()
+				title:
+					(field.translated
+						? (value as Record<string, RichTextData>)?.[lang]?.title
+						: (value as Record<string, RichTextData>)?.title) || "",
+				content: editor.isEmpty ? "" : editor.getHTML(),
 			};
 
 			if (field.translated) {
-				if (!value || typeof value !== 'object') value = {};
+				if (!value || typeof value !== "object") value = {};
 				(value as any)[lang] = newContent;
 			} else {
 				value = newContent as any;
@@ -536,30 +561,30 @@ onMount(() => {
 			editorStateVersion++;
 		});
 
-		editor.on('transaction', () => {
+		editor.on("transaction", () => {
 			editorStateVersion++;
 		});
 	})();
 
-	window.addEventListener('scroll', handleScroll);
-	window.addEventListener('click', closeDropdowns);
+	window.addEventListener("scroll", handleScroll);
+	window.addEventListener("click", closeDropdowns);
 
 	return () => {
 		editor?.destroy();
 		if (yjsDestroy) {
 			yjsDestroy();
 		}
-		window.removeEventListener('scroll', handleScroll);
-		window.removeEventListener('click', closeDropdowns);
+		window.removeEventListener("scroll", handleScroll);
+		window.removeEventListener("click", closeDropdowns);
 	};
 });
 
 $effect(() => {
-	let content = '';
+	let content = "";
 	if (field.translated) {
-		content = (value as Record<string, RichTextData>)?.[lang]?.content || '';
+		content = (value as Record<string, RichTextData>)?.[lang]?.content || "";
 	} else {
-		content = (value as RichTextData)?.content || '';
+		content = (value as RichTextData)?.content || "";
 	}
 
 	if (editor && editor.getHTML() !== content) {

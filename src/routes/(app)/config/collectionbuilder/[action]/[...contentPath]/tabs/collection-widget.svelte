@@ -5,35 +5,40 @@
 -->
 
 <script lang="ts">
-import { collection, setTargetWidget } from '@src/stores/collection-store.svelte';
-import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
-import { logger } from '@utils/logger';
-import { asAny, getGuiFields } from '@utils/utils';
-import { get } from 'svelte/store';
+import {
+	collection,
+	setTargetWidget,
+} from "@src/stores/collection-store.svelte";
+import { widgetFunctions } from "@src/stores/widget-store.svelte.ts";
+import { logger } from "@utils/logger";
+import { asAny, getGuiFields } from "@utils/utils";
+import { get } from "svelte/store";
 // Using iconify-icon web component
 // Stores
-import { page } from '$app/state';
+import { page } from "$app/state";
 
 // Skeleton
 
-import VerticalList from '@src/components/vertical-list.svelte';
+import VerticalList from "@src/components/vertical-list.svelte";
 import {
 	button_edit,
 	button_previous,
 	button_save,
 	collection_widgetfield_addFields,
 	collection_widgetfield_addrequired,
-	collection_widgetfield_drag
-} from '@src/paraglide/messages';
-import { tabSet } from '@src/stores/store.svelte.ts';
-import { modalState } from '@utils/modal-state.svelte';
-import ModalSelectWidget from './collection-widget/modal-select-widget.svelte';
-import ModalWidgetForm from './collection-widget/modal-widget-form.svelte';
+	collection_widgetfield_drag,
+} from "@src/paraglide/messages";
+import { tabSet } from "@src/stores/store.svelte.ts";
+import { modalState } from "@utils/modal-state.svelte";
+import ModalSelectWidget from "./collection-widget/modal-select-widget.svelte";
+import ModalWidgetForm from "./collection-widget/modal-widget-form.svelte";
 
 const props = $props();
 
 // Extract the collection path from the URL (param name matches folder [...contentPath])
-const contentPath = Array.isArray(page.params.contentPath) ? page.params.contentPath.join('/') : (page.params.contentPath ?? '');
+const contentPath = Array.isArray(page.params.contentPath)
+	? page.params.contentPath.join("/")
+	: (page.params.contentPath ?? "");
 
 // Helper function to map fields
 function mapFieldsWithWidgets(fields: any[]) {
@@ -47,7 +52,7 @@ function mapFieldsWithWidgets(fields: any[]) {
 			field.__type || // For schema-defined widgets
 			field.type || // Backup type field
 			Object.keys(get(widgetFunctions)).find((key) => field[key]) || // Check if field has widget property
-			'Unknown Widget'; // Fallback
+			"Unknown Widget"; // Fallback
 
 		return {
 			id: index + 1,
@@ -55,8 +60,8 @@ function mapFieldsWithWidgets(fields: any[]) {
 			widget: {
 				key: widgetType,
 				Name: widgetType,
-				...field.widget
-			}
+				...field.widget,
+			},
 		};
 	});
 }
@@ -73,7 +78,7 @@ $effect(() => {
 });
 
 // Collection headers
-const headers = ['Id', 'Icon', 'Name', 'DBName', 'Widget'];
+const headers = ["Id", "Icon", "Name", "DBName", "Widget"];
 
 // svelte-dnd-action
 const flipDurationMs = 300;
@@ -90,8 +95,8 @@ function modalSelectWidget(): void {
 	modalState.trigger(
 		ModalSelectWidget as any,
 		{
-			title: 'Select a Widget',
-			body: 'Select your widget and then press submit.'
+			title: "Select a Widget",
+			body: "Select your widget and then press submit.",
 		},
 		(r: { selectedWidget: string } | undefined) => {
 			if (!r) {
@@ -103,13 +108,16 @@ function modalSelectWidget(): void {
 				// Create a new widget object with the selected widget data
 				const newWidget = {
 					widget: { key: selectedWidget, Name: selectedWidget },
-					GuiFields: getGuiFields({ key: selectedWidget }, asAny(widgetInstance.GuiSchema)),
-					permissions: {} // Initialize empty permissions object
+					GuiFields: getGuiFields(
+						{ key: selectedWidget },
+						asAny(widgetInstance.GuiSchema),
+					),
+					permissions: {}, // Initialize empty permissions object
 				};
 				// Call modalWidgetForm with the new widget object
 				modalWidgetForm(newWidget);
 			}
-		}
+		},
 	);
 }
 
@@ -123,9 +131,9 @@ function modalWidgetForm(selectedWidget: any): void {
 	modalState.trigger(
 		ModalWidgetForm as any,
 		{
-			title: 'Define your Widget',
-			body: 'Setup your widget and then press Save.',
-			value: selectedWidget
+			title: "Define your Widget",
+			body: "Setup your widget and then press Save.",
+			value: selectedWidget,
 		},
 		(r: any) => {
 			if (!r) {
@@ -139,14 +147,14 @@ function modalWidgetForm(selectedWidget: any): void {
 				const updatedFields = [
 					...fields.slice(0, existingIndex), // Copy widgets before the updated one
 					{ ...r }, // Update the existing widget
-					...fields.slice(existingIndex + 1) // Copy widgets after the updated one
+					...fields.slice(existingIndex + 1), // Copy widgets after the updated one
 				];
 				fields = updatedFields;
 			} else {
 				// If the existing widget is not found, add it as a new widget
 				const newField = {
 					id: fields.length + 1,
-					...r
+					...r,
 				};
 				fields = [...fields, newField];
 			}
@@ -154,7 +162,7 @@ function modalWidgetForm(selectedWidget: any): void {
 			if (collection?.value) {
 				collection.value.fields = fields;
 			}
-		}
+		},
 	);
 }
 
@@ -162,11 +170,16 @@ function modalWidgetForm(selectedWidget: any): void {
 async function handleSave() {
 	try {
 		const updatedFields = fields.map((field) => {
-			const widgetInstance = field.widget?.Name ? get(widgetFunctions)[field.widget.Name] : undefined;
+			const widgetInstance = field.widget?.Name
+				? get(widgetFunctions)[field.widget.Name]
+				: undefined;
 			if (field.widget?.Name && widgetInstance) {
-				const GUI_FIELDS = getGuiFields({ key: field.widget.Name }, asAny(widgetInstance.GuiSchema));
+				const GUI_FIELDS = getGuiFields(
+					{ key: field.widget.Name },
+					asAny(widgetInstance.GuiSchema),
+				);
 				for (const [property, value] of Object.entries(field)) {
-					if (typeof value !== 'object' && property !== 'id') {
+					if (typeof value !== "object" && property !== "id") {
 						GUI_FIELDS[property] = field[property];
 					}
 				}
@@ -182,7 +195,7 @@ async function handleSave() {
 
 		await props.handleCollectionSave();
 	} catch (error) {
-		logger.error('Error saving collection:', error);
+		logger.error("Error saving collection:", error);
 	}
 }
 </script>

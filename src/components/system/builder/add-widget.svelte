@@ -4,13 +4,13 @@
 -->
 
 <script lang="ts">
-import PageTitle from '@src/components/page-title.svelte';
-import InputSwitch from '@src/components/system/builder/input-switch.svelte';
-import DropDown from '@src/components/system/drop-down/drop-down.svelte';
-import { widgets } from '@src/stores/widget-store.svelte';
-import type { WidgetFactory } from '@src/widgets/types';
+import PageTitle from "@src/components/page-title.svelte";
+import InputSwitch from "@src/components/system/builder/input-switch.svelte";
+import DropDown from "@src/components/system/drop-down/drop-down.svelte";
+import { widgets } from "@src/stores/widget-store.svelte";
+import type { WidgetFactory } from "@src/widgets/types";
 
-import type { AddWidgetProps } from './types';
+import type { AddWidgetProps } from "./types";
 
 let {
 	fields = $bindable([]),
@@ -18,19 +18,19 @@ let {
 	editField = $bindable(false),
 	selected_widget = $bindable(null),
 	field = $bindable({
-		label: '',
-		db_fieldName: '',
+		label: "",
+		db_fieldName: "",
 		translated: false,
 		required: false,
 		widget: {
 			key: null as string | null,
-			GuiFields: {} as Record<string, any>
-		}
-	})
+			GuiFields: {} as Record<string, any>,
+		},
+	}),
 }: AddWidgetProps = $props();
 
 const widgetKeys = $derived(Object.keys(widgets.widgetFunctions));
-let guiSchema = $state<WidgetFactory['GuiSchema'] | undefined>(undefined);
+let guiSchema = $state<WidgetFactory["GuiSchema"] | undefined>(undefined);
 
 $effect(() => {
 	if (selected_widget) {
@@ -44,7 +44,7 @@ function handleSave() {
 		return;
 	}
 	field.widget = { key: selected_widget, GuiFields: field.widget.GuiFields };
-	field.label = String(field.widget.GuiFields.label || '');
+	field.label = String(field.widget.GuiFields.label || "");
 	fields = [...fields, field as any];
 	addField = false;
 }

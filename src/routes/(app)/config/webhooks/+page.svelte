@@ -4,11 +4,11 @@
 **This file sets up and displays the webhooks page. It provides a user-friendly interface for managing webhooks.**
 -->
 <script lang="ts">
-import PageTitle from '@src/components/page-title.svelte';
-import type { Webhook } from '@src/services/webhook-service';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+import PageTitle from "@src/components/page-title.svelte";
+import type { Webhook } from "@src/services/webhook-service";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onMount } from "svelte";
+import { fade, slide } from "svelte/transition";
 
 let webhooks: Webhook[] = $state([]);
 let isLoading = $state(true);
@@ -16,20 +16,28 @@ let isSaving = $state(false);
 let showModal = $state(false);
 let editingWebhook: Partial<Webhook> | null = $state(null);
 
-const eventTypes = ['entry:create', 'entry:update', 'entry:delete', 'entry:publish', 'entry:unpublish', 'media:upload', 'media:delete'];
+const eventTypes = [
+	"entry:create",
+	"entry:update",
+	"entry:delete",
+	"entry:publish",
+	"entry:unpublish",
+	"media:upload",
+	"media:delete",
+];
 
 async function loadWebhooks() {
 	isLoading = true;
 	try {
-		const res = await fetch('/api/webhooks');
+		const res = await fetch("/api/webhooks");
 		const result = await res.json();
 		if (result.success) {
 			webhooks = result.data;
 		} else {
-			toast.error(result.message || 'Failed to load webhooks');
+			toast.error(result.message || "Failed to load webhooks");
 		}
 	} catch (_err) {
-		toast.error('Error loading webhooks');
+		toast.error("Error loading webhooks");
 	} finally {
 		isLoading = false;
 	}
@@ -37,50 +45,54 @@ async function loadWebhooks() {
 
 async function saveWebhook() {
 	if (!(editingWebhook?.url && editingWebhook?.name)) {
-		toast.warning('Name and URL are required');
+		toast.warning("Name and URL are required");
 		return;
 	}
 
 	isSaving = true;
 	try {
-		const method = editingWebhook.id ? 'PATCH' : 'POST';
-		const url = editingWebhook.id ? `/api/webhooks/${editingWebhook.id}` : '/api/webhooks';
+		const method = editingWebhook.id ? "PATCH" : "POST";
+		const url = editingWebhook.id
+			? `/api/webhooks/${editingWebhook.id}`
+			: "/api/webhooks";
 
 		const res = await fetch(url, {
 			method,
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(editingWebhook)
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(editingWebhook),
 		});
 		const result = await res.json();
 
 		if (result.success) {
-			toast.success(`Webhook ${editingWebhook.id ? 'updated' : 'created'} successfully`);
+			toast.success(
+				`Webhook ${editingWebhook.id ? "updated" : "created"} successfully`,
+			);
 			showModal = false;
 			await loadWebhooks();
 		} else {
-			toast.error(result.message || 'Failed to save webhook');
+			toast.error(result.message || "Failed to save webhook");
 		}
 	} catch (_err) {
-		toast.error('Error saving webhook');
+		toast.error("Error saving webhook");
 	} finally {
 		isSaving = false;
 	}
 }
 
 async function deleteWebhook(id: string) {
-	if (!confirm('Are you sure you want to delete this webhook?')) {
+	if (!confirm("Are you sure you want to delete this webhook?")) {
 		return;
 	}
 
 	try {
-		const res = await fetch(`/api/webhooks/${id}`, { method: 'DELETE' });
+		const res = await fetch(`/api/webhooks/${id}`, { method: "DELETE" });
 		const result = await res.json();
 		if (result.success) {
-			toast.success('Webhook deleted');
+			toast.success("Webhook deleted");
 			await loadWebhooks();
 		}
 	} catch (_err) {
-		toast.error('Error deleting webhook');
+		toast.error("Error deleting webhook");
 	}
 }
 
@@ -88,26 +100,26 @@ async function testWebhook(webhook: Webhook) {
 	toast.info(`Sending test payload to ${webhook.name}...`);
 	try {
 		const res = await fetch(`/api/webhooks/${webhook.id}/test`, {
-			method: 'POST'
+			method: "POST",
 		});
 		const result = await res.json();
 		if (result.success) {
-			toast.success('Test webhook sent successfully!');
+			toast.success("Test webhook sent successfully!");
 		} else {
-			toast.error(result.message || 'Webhook test failed');
+			toast.error(result.message || "Webhook test failed");
 		}
 	} catch (_err) {
-		toast.error('Error testing webhook');
+		toast.error("Error testing webhook");
 	}
 }
 
 function openAddModal() {
 	editingWebhook = {
-		name: '',
-		url: '',
+		name: "",
+		url: "",
 		active: true,
-		events: ['entry:publish'],
-		secret: crypto.randomUUID().replace(/-/g, '')
+		events: ["entry:publish"],
+		secret: crypto.randomUUID().replace(/-/g, ""),
 	};
 	showModal = true;
 }

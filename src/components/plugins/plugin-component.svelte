@@ -4,7 +4,7 @@
 -->
 
 <script lang="ts">
-import { getPluginComponent } from '@src/plugins/client';
+import { getPluginComponent } from "@src/plugins/client";
 
 interface Props {
 	componentName: string;

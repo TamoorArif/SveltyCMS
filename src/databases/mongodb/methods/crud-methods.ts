@@ -297,7 +297,9 @@ export class MongoCrudMethods<T extends BaseEntity> {
   ): Promise<DatabaseResult<T | null>> {
     const startTime = performance.now();
     try {
-      const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, { bypassTenantCheck });
+      const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, {
+        bypassTenantCheck,
+      });
       const updateData = {
         ...(data as object),
         updatedAt: nowISODateString(),
@@ -337,7 +339,10 @@ export class MongoCrudMethods<T extends BaseEntity> {
         .findOneAndUpdate(
           secureQuery,
           {
-            $set: { ...(data as Record<string, unknown>), updatedAt: nowISODateString() },
+            $set: {
+              ...(data as Record<string, unknown>),
+              updatedAt: nowISODateString(),
+            },
             $setOnInsert: {
               _id: generateId(),
               createdAt: nowISODateString(),
@@ -373,7 +378,9 @@ export class MongoCrudMethods<T extends BaseEntity> {
   ): Promise<DatabaseResult<void>> {
     try {
       const { tenantId, bypassTenantCheck, permanent, userId } = options;
-      const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, { bypassTenantCheck });
+      const query = safeQuery({ _id: id } as QueryFilter<T>, tenantId, {
+        bypassTenantCheck,
+      });
 
       if (permanent) {
         const result = await this.model.deleteOne(query);
@@ -484,13 +491,19 @@ export class MongoCrudMethods<T extends BaseEntity> {
             return {
               success: false,
               message: `Cannot restore: unique field '${path}' with value '${value}' already exists.`,
-              error: { code: "COLLISION", message: `Unique constraint violation on ${path}` },
+              error: {
+                code: "COLLISION",
+                message: `Unique constraint violation on ${path}`,
+              },
             };
           }
         }
       }
 
-      const result = await this.model.updateOne(query, { $set: updateData, $unset: unsetData });
+      const result = await this.model.updateOne(query, {
+        $set: updateData,
+        $unset: unsetData,
+      });
       return { success: true, data: result.modifiedCount > 0 };
     } catch (error) {
       return {
@@ -600,7 +613,9 @@ export class MongoCrudMethods<T extends BaseEntity> {
       const now = nowISODateString();
       const operations = items.map((item) => ({
         updateOne: {
-          filter: safeQuery(item.query, tenantId, { bypassTenantCheck }) as MongoQueryFilter<T>,
+          filter: safeQuery(item.query, tenantId, {
+            bypassTenantCheck,
+          }) as MongoQueryFilter<T>,
           update: {
             $set: { ...(item.data as Record<string, unknown>), updatedAt: now },
             $setOnInsert: {

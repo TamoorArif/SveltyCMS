@@ -16,10 +16,10 @@
 -->
 
 <script lang="ts">
-import { type DndEvent, dndzone } from 'svelte-dnd-action';
+import { type DndEvent, dndzone } from "svelte-dnd-action";
 
 interface Props {
-	children?: import('svelte').Snippet;
+	children?: import("svelte").Snippet;
 	flipDurationMs: number;
 	handleDndConsider: (e: CustomEvent<DndEvent>) => void;
 	handleDndFinalize: (e: CustomEvent<DndEvent>) => void;
@@ -27,10 +27,17 @@ interface Props {
 	items: Record<string, unknown>[];
 }
 
-const { items, headers = [], flipDurationMs, handleDndConsider, handleDndFinalize, children }: Props = $props();
+const {
+	items,
+	headers = [],
+	flipDurationMs,
+	handleDndConsider,
+	handleDndFinalize,
+	children,
+}: Props = $props();
 
 const gridClass = $derived(
-	`grid grid-cols-${headers.length + 1} preset-outlined-tertiary-500 dark:preset-outlined-primary-500 w-full items-start justify-start p-1 py-2 pl-3 text-center font-semibold`
+	`grid grid-cols-${headers.length + 1} preset-outlined-tertiary-500 dark:preset-outlined-primary-500 w-full items-start justify-start p-1 py-2 pl-3 text-center font-semibold`,
 );
 </script>
 

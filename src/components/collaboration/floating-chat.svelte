@@ -7,15 +7,15 @@ Provides a persistent, draggable UI element that opens the ActivityStream panel.
 -->
 
 <script lang="ts">
-import { collaboration } from '@src/stores/collaboration-store.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
-import { fade, scale } from 'svelte/transition';
-import { browser } from '$app/environment';
-import { page } from '$app/state';
-import ActivityStream from './activity-stream.svelte';
+import { collaboration } from "@src/stores/collaboration-store.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
+import { fade, scale } from "svelte/transition";
+import { browser } from "$app/environment";
+import { page } from "$app/state";
+import ActivityStream from "./activity-stream.svelte";
 
 // --- Derived ---
 const user = $derived(page.data.user);
@@ -24,7 +24,7 @@ const aiEnabled = $derived(page.data.aiEnabled ?? false);
 const isRtcEnabled = $derived(user?.preferences?.rtc?.enabled ?? true);
 // Show chat if RTC is enabled AND (either multiple users OR AI is available)
 const shouldShowChat = $derived(isRtcEnabled && (totalUsers > 1 || aiEnabled));
-const isOpen = $derived(ui.state.chatPanel !== 'hidden');
+const isOpen = $derived(ui.state.chatPanel !== "hidden");
 
 // --- Hotkeys ---
 onMount(() => {
@@ -32,16 +32,20 @@ onMount(() => {
 
 	// Register global toggle for AI Assistant / Collaboration
 	// Using Mod+J (Standard for AI sidebars in many modern apps)
-	registerHotkey('mod+j', () => collaboration.togglePanel(), 'Toggle AI Assistant');
+	registerHotkey(
+		"mod+j",
+		() => collaboration.togglePanel(),
+		"Toggle AI Assistant",
+	);
 
 	// Allow Escape to close the panel if it's open
 	registerHotkey(
-		'escape',
+		"escape",
 		() => {
 			if (isOpen) collaboration.togglePanel();
 		},
-		'Close AI Assistant',
-		false
+		"Close AI Assistant",
+		false,
 	); // preventDefault=false to let other escapes work
 });
 
@@ -52,17 +56,26 @@ const GAP = 16;
 
 // Calculate expansion direction and height constraints
 const layoutInfo = $derived.by(() => {
-	if (!browser) return { expandUp: true, expandLeft: true, maxHeight: DESKTOP_PANEL_HEIGHT };
+	if (!browser)
+		return {
+			expandUp: true,
+			expandLeft: true,
+			maxHeight: DESKTOP_PANEL_HEIGHT,
+		};
 
 	const spaceAbove = pos.y - EDGE_MARGIN;
-	const spaceBelow = window.innerHeight - (pos.y + BUTTON_RADIUS * 2 + EDGE_MARGIN);
+	const spaceBelow =
+		window.innerHeight - (pos.y + BUTTON_RADIUS * 2 + EDGE_MARGIN);
 	const spaceLeft = pos.x - EDGE_MARGIN;
-	const spaceRight = window.innerWidth - (pos.x + BUTTON_RADIUS * 2 + EDGE_MARGIN);
+	const spaceRight =
+		window.innerWidth - (pos.x + BUTTON_RADIUS * 2 + EDGE_MARGIN);
 
 	// Prefer expanding UP if there's more space or if it fits better
-	const expandUp = spaceAbove >= spaceBelow || spaceBelow < DESKTOP_PANEL_HEIGHT;
+	const expandUp =
+		spaceAbove >= spaceBelow || spaceBelow < DESKTOP_PANEL_HEIGHT;
 	// Prefer expanding LEFT if there's more space on the left
-	const expandLeft = spaceLeft >= spaceRight || spaceRight < DESKTOP_PANEL_WIDTH;
+	const expandLeft =
+		spaceLeft >= spaceRight || spaceRight < DESKTOP_PANEL_WIDTH;
 
 	const availableHeight = expandUp ? spaceAbove : spaceBelow;
 	const maxHeight = Math.min(DESKTOP_PANEL_HEIGHT, availableHeight - GAP);
@@ -85,7 +98,7 @@ function loadPosition() {
 		return;
 	}
 	try {
-		const saved = localStorage.getItem('floatingChatPosition');
+		const saved = localStorage.getItem("floatingChatPosition");
 		if (saved) {
 			pos = JSON.parse(saved);
 		} else {
@@ -101,7 +114,7 @@ function loadPosition() {
 
 function savePosition() {
 	if (browser) {
-		localStorage.setItem('floatingChatPosition', JSON.stringify(pos));
+		localStorage.setItem("floatingChatPosition", JSON.stringify(pos));
 	}
 }
 
@@ -112,7 +125,7 @@ function drag(node: HTMLElement) {
 
 	function handleDown(e: PointerEvent) {
 		// Don't drag if clicking close button
-		if ((e.target as HTMLElement).closest('.close-btn')) {
+		if ((e.target as HTMLElement).closest(".close-btn")) {
 			return;
 		}
 
@@ -123,8 +136,8 @@ function drag(node: HTMLElement) {
 		isDragging = true;
 
 		node.setPointerCapture(e.pointerId);
-		window.addEventListener('pointermove', handleMove);
-		window.addEventListener('pointerup', handleUp);
+		window.addEventListener("pointermove", handleMove);
+		window.addEventListener("pointerup", handleUp);
 	}
 
 	function handleMove(e: PointerEvent) {
@@ -138,31 +151,37 @@ function drag(node: HTMLElement) {
 		if (moved) {
 			pos = {
 				x: initialPos.x + dx,
-				y: initialPos.y + dy
+				y: initialPos.y + dy,
 			};
 		}
 	}
 
 	function handleUp(_e: PointerEvent) {
 		isDragging = false;
-		window.removeEventListener('pointermove', handleMove);
-		window.removeEventListener('pointerup', handleUp);
+		window.removeEventListener("pointermove", handleMove);
+		window.removeEventListener("pointerup", handleUp);
 
 		if (moved) {
 			// Snap to bounds
-			pos.x = Math.max(EDGE_MARGIN, Math.min(pos.x, window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
-			pos.y = Math.max(EDGE_MARGIN, Math.min(pos.y, window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN)));
+			pos.x = Math.max(
+				EDGE_MARGIN,
+				Math.min(pos.x, window.innerWidth - (BUTTON_RADIUS * 2 + EDGE_MARGIN)),
+			);
+			pos.y = Math.max(
+				EDGE_MARGIN,
+				Math.min(pos.y, window.innerHeight - (BUTTON_RADIUS * 2 + EDGE_MARGIN)),
+			);
 			savePosition();
 		} else {
 			collaboration.togglePanel();
 		}
 	}
 
-	node.addEventListener('pointerdown', handleDown);
+	node.addEventListener("pointerdown", handleDown);
 	return {
 		destroy() {
-			node.removeEventListener('pointerdown', handleDown);
-		}
+			node.removeEventListener("pointerdown", handleDown);
+		},
 	};
 }
 
@@ -176,14 +195,14 @@ const panelStyle = $derived.by(() => {
 		return `position: fixed; bottom: 80px; left: 10px; right: 10px; width: calc(100% - 20px); height: 70vh;`;
 	}
 	// Desktop constraints
-	return `transform: translateY(${layoutInfo.expandUp ? '0' : '0'}); height: ${layoutInfo.maxHeight}px; width: ${DESKTOP_PANEL_WIDTH}px; flex-direction: column; display: flex;`;
+	return `transform: translateY(${layoutInfo.expandUp ? "0" : "0"}); height: ${layoutInfo.maxHeight}px; width: ${DESKTOP_PANEL_WIDTH}px; flex-direction: column; display: flex;`;
 });
 
 // Calculate container position and layout
 const containerStyle = $derived.by(() => {
-	if (screen.isMobile && isOpen) return '';
+	if (screen.isMobile && isOpen) return "";
 
-	const commonStyle = `left: ${pos.x}px; width: ${BUTTON_RADIUS * 2}px; display: flex; align-items: ${layoutInfo.expandLeft ? 'flex-end' : 'flex-start'};`;
+	const commonStyle = `left: ${pos.x}px; width: ${BUTTON_RADIUS * 2}px; display: flex; align-items: ${layoutInfo.expandLeft ? "flex-end" : "flex-start"};`;
 
 	if (!screen.isMobile && isOpen && layoutInfo.expandUp) {
 		return `${commonStyle} bottom: ${window.innerHeight - (pos.y + BUTTON_RADIUS * 2)}px; flex-direction: column-reverse;`;

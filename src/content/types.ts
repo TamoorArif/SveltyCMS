@@ -88,6 +88,7 @@ export interface ContentNode {
   description?: string;
   icon?: string;
   name: string;
+  isDeleted?: boolean; // Soft delete flag
   nodeType: "category" | "collection";
   order: number;
   parentId?: DatabaseId;
@@ -174,9 +175,7 @@ export interface FieldInstance {
 
   // Field properties
   label: string;
-  modifyRequest?: (
-    args: Record<string, unknown>,
-  ) => Promise<Record<string, unknown>>;
+  modifyRequest?: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
   modifyRequestBatch?: (args: {
     data: Record<string, unknown>[];
     collection: unknown;
@@ -187,9 +186,7 @@ export interface FieldInstance {
   }) => Promise<Record<string, unknown>[]>;
 
   // Permissions: access control for this field (AUTH tab). Stored in widget.permissions.
-  permissions?:
-    | WidgetFieldPermissions
-    | Record<string, Record<string, boolean>>;
+  permissions?: WidgetFieldPermissions | Record<string, Record<string, boolean>>;
   required: boolean; // Now required (factory sets default)
   translated: boolean; // Now required (factory sets default)
   type?: string; // Optional field type
@@ -265,12 +262,7 @@ export interface Category {
   subcategories?: Category[];
 }
 
-export type ContentNodeOperatianType =
-  | "create"
-  | "delete"
-  | "move"
-  | "rename"
-  | "update";
+export type ContentNodeOperatianType = "create" | "delete" | "move" | "rename" | "update";
 
 export interface ContentNodeOperation {
   node: ContentNode;

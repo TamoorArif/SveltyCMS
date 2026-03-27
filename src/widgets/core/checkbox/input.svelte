@@ -24,13 +24,13 @@ Renders a checkbox with label, color, size, and helper text from field props
 - **Screen Reader Support**: Proper ARIA attributes and semantic markup
 -->
 <script lang="ts">
-import { validationStore } from '@src/stores/store.svelte';
-import { getFieldName } from '@src/utils/utils';
-import type { FieldType } from '.';
+import { validationStore } from "@src/stores/store.svelte";
+import { getFieldName } from "@src/utils/utils";
+import type { FieldType } from ".";
 
 let {
 	field,
-	value = $bindable()
+	value = $bindable(),
 }: {
 	field: FieldType;
 	value: boolean | string | null | undefined;

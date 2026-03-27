@@ -5,10 +5,10 @@ Horizontal snap-scroll preset carousel for selecting project blueprints.
 Default value is 'blank'.
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import type { Preset } from './presets';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import type { Preset } from "./presets";
 
-let { presets, selected = $bindable('blank') } = $props<{
+let { presets, selected = $bindable("blank") } = $props<{
 	presets: Preset[];
 	selected: string | null;
 }>();
@@ -28,7 +28,8 @@ function updateScrollState() {
 		return;
 	}
 	canScrollLeft = scrollEl.scrollLeft > 8;
-	canScrollRight = scrollEl.scrollLeft < scrollEl.scrollWidth - scrollEl.clientWidth - 8;
+	canScrollRight =
+		scrollEl.scrollLeft < scrollEl.scrollWidth - scrollEl.clientWidth - 8;
 }
 
 function handleMouseDown(e: MouseEvent) {
@@ -53,7 +54,7 @@ function handleMouseUp() {
 }
 
 function scrollBy(dir: -1 | 1) {
-	scrollEl?.scrollBy({ left: dir * 300, behavior: 'smooth' });
+	scrollEl?.scrollBy({ left: dir * 300, behavior: "smooth" });
 }
 
 function select(id: string | null) {
@@ -85,8 +86,8 @@ $effect(() => {
 		},
 		{
 			root: scrollEl,
-			threshold: 0.5 // Trigger when a card is at least 50% visible
-		}
+			threshold: 0.5, // Trigger when a card is at least 50% visible
+		},
 	);
 
 	// Observe all preset cards

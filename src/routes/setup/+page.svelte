@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 // Skeleton v4
-import DialogManager from '@src/components/system/dialog-manager.svelte';
+import DialogManager from "@src/components/system/dialog-manager.svelte";
 // ParaglideJS
 import {
 	label_database,
@@ -29,41 +29,48 @@ import {
 	setup_step_email,
 	setup_step_email_desc,
 	setup_step_system,
-	setup_step_system_desc
-} from '@src/paraglide/messages';
-import { locales as availableLocales, getLocale } from '@src/paraglide/runtime';
+	setup_step_system_desc,
+} from "@src/paraglide/messages";
+import { locales as availableLocales, getLocale } from "@src/paraglide/runtime";
 // Stores
-import { setupStore } from '@src/stores/setup-store.svelte.ts';
-import { app } from '@src/stores/store.svelte';
+import { setupStore } from "@src/stores/setup-store.svelte.ts";
+import { app } from "@src/stores/store.svelte";
 // Utils
-import { getLanguageName } from '@utils/language-utils';
-import { modalState } from '@utils/modal-state.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import { onMount, tick } from 'svelte';
-import { goto } from '$app/navigation';
+import { getLanguageName } from "@utils/language-utils";
+import { modalState } from "@utils/modal-state.svelte";
+import { showConfirm } from "@utils/modal-utils";
+import { onMount, tick } from "svelte";
+import { goto } from "$app/navigation";
 // Components
-import AdminConfig from './admin-config.svelte';
-import DatabaseConfig from './database-config.svelte';
-import EmailConfig from './email-config.svelte';
-import ReviewConfig from './review-config.svelte';
-import SetupCardHeader from './setup-card-header.svelte';
-import SetupHeader from './setup-header.svelte';
-import SetupNavigation from './setup-navigation.svelte';
-import SetupStepper from './setup-stepper.svelte';
-import SystemConfig from './system-config.svelte';
+import AdminConfig from "./admin-config.svelte";
+import DatabaseConfig from "./database-config.svelte";
+import EmailConfig from "./email-config.svelte";
+import ReviewConfig from "./review-config.svelte";
+import SetupCardHeader from "./setup-card-header.svelte";
+import SetupHeader from "./setup-header.svelte";
+import SetupNavigation from "./setup-navigation.svelte";
+import SetupStepper from "./setup-stepper.svelte";
+import SystemConfig from "./system-config.svelte";
 // Step Content Components
-import WelcomeModal from './welcome-modal.svelte';
+import WelcomeModal from "./welcome-modal.svelte";
 
 // --- 1. STATE MANAGEMENT (Wired to Store) ---
 let { data } = $props();
 const wizard = setupStore.wizard;
-const { load: loadStore, clear: clearStore, setupPersistence: setupPersistenceFn, validateStep, seedDatabase, completeSetup } = setupStore;
+const {
+	load: loadStore,
+	clear: clearStore,
+	setupPersistence: setupPersistenceFn,
+	validateStep,
+	seedDatabase,
+	completeSetup,
+} = setupStore;
 
 // --- 1. COMPONENT IMPORTS ---
 let showDbPassword = $state(false);
 let showAdminPassword = $state(false);
 let showConfirmPassword = $state(false);
-let initialDataSnapshot = $state('');
+let initialDataSnapshot = $state("");
 let currentLanguageTag = $state(getLocale());
 
 // --- 4. LIFECYCLE HOOKS ---
@@ -72,12 +79,12 @@ onMount(() => {
 	initialDataSnapshot = JSON.stringify(wizard);
 	setupPersistenceFn();
 
-	const welcomeShown = sessionStorage.getItem('sveltycms_welcome_modal_shown');
+	const welcomeShown = sessionStorage.getItem("sveltycms_welcome_modal_shown");
 	if (!welcomeShown) {
 		requestAnimationFrame(() => {
 			setTimeout(() => {
 				showWelcomeModal();
-				sessionStorage.setItem('sveltycms_welcome_modal_shown', 'true');
+				sessionStorage.setItem("sveltycms_welcome_modal_shown", "true");
 			}, 100);
 		});
 	}
@@ -87,10 +94,10 @@ onMount(() => {
 			e.preventDefault();
 		}
 	};
-	window.addEventListener('beforeunload', handleBeforeUnload);
+	window.addEventListener("beforeunload", handleBeforeUnload);
 
 	return () => {
-		window.removeEventListener('beforeunload', handleBeforeUnload);
+		window.removeEventListener("beforeunload", handleBeforeUnload);
 	};
 });
 
@@ -106,10 +113,15 @@ const hasUnsavedChanges = $derived(() => {
 	return JSON.stringify(wizard) !== initialDataSnapshot;
 });
 const systemLanguages = $derived.by(() => {
-	return [...availableLocales].sort((a: string, b: string) => getLanguageName(a, 'en').localeCompare(getLanguageName(b, 'en')));
+	return [...availableLocales].sort((a: string, b: string) =>
+		getLanguageName(a, "en").localeCompare(getLanguageName(b, "en")),
+	);
 });
 const isFullUri = $derived(() => {
-	return wizard.dbConfig.host.includes('mongodb://') || wizard.dbConfig.host.includes('mongodb+srv://');
+	return (
+		wizard.dbConfig.host.includes("mongodb://") ||
+		wizard.dbConfig.host.includes("mongodb+srv://")
+	);
 });
 
 // STEPPER CONFIG
@@ -118,13 +130,13 @@ const steps = $derived([
 	{ label: setup_step_admin(), shortDesc: setup_step_admin_desc() },
 	{ label: setup_step_system(), shortDesc: setup_step_system_desc() },
 	{ label: setup_step_email(), shortDesc: setup_step_email_desc() },
-	{ label: setup_step_complete(), shortDesc: setup_step_complete_desc() }
+	{ label: setup_step_complete(), shortDesc: setup_step_complete_desc() },
 ]);
 const totalSteps = $derived(steps.length);
 const legendItems = [
-	{ key: 'completed', label: setup_legend_completed(), content: '✓' },
-	{ key: 'current', label: setup_legend_current(), content: '●' },
-	{ key: 'pending', label: setup_legend_pending(), content: '•' }
+	{ key: "completed", label: setup_legend_completed(), content: "✓" },
+	{ key: "current", label: setup_legend_current(), content: "●" },
+	{ key: "pending", label: setup_legend_pending(), content: "•" },
 ];
 
 // --- 6. CORE LOGIC & API CALLS (Now delegated to store) ---
@@ -134,7 +146,7 @@ let dbConfigComponent: {
 
 async function focusStepContent() {
 	await tick();
-	const stepContent = document.getElementById('step-content');
+	const stepContent = document.getElementById("step-content");
 	if (stepContent) {
 		stepContent.focus();
 	}
@@ -145,12 +157,18 @@ async function nextStep() {
 		return;
 	}
 	if (wizard.currentStep === 0) {
-		if (dbConfigComponent && typeof dbConfigComponent.installDatabaseDriver === 'function') {
+		if (
+			dbConfigComponent &&
+			typeof dbConfigComponent.installDatabaseDriver === "function"
+		) {
 			await dbConfigComponent.installDatabaseDriver(wizard.dbConfig.type);
 		}
 		await seedDatabase();
 	}
-	if ((wizard.currentStep === 1 || wizard.currentStep === 2) && !validateStep(wizard.currentStep, true)) {
+	if (
+		(wizard.currentStep === 1 || wizard.currentStep === 2) &&
+		!validateStep(wizard.currentStep, true)
+	) {
 		return;
 	}
 	if (wizard.currentStep < totalSteps - 1) {
@@ -166,15 +184,15 @@ async function nextStep() {
 async function prevStep() {
 	if (wizard.currentStep > 0) {
 		wizard.currentStep--;
-		wizard.errorMessage = '';
+		wizard.errorMessage = "";
 		await focusStepContent();
 	}
 }
 
 async function handleCompleteSetup() {
-	console.log('[SetupPage] Complete Setup button clicked');
+	console.log("[SetupPage] Complete Setup button clicked");
 	const success = await completeSetup((redirectPath: string) => {
-		console.log('[SetupPage] Setup successful, redirecting to:', redirectPath);
+		console.log("[SetupPage] Setup successful, redirecting to:", redirectPath);
 		initialDataSnapshot = JSON.stringify(wizard);
 		goto(redirectPath);
 	});
@@ -185,7 +203,7 @@ async function handleCompleteSetup() {
 
 // --- 7. UI HANDLERS ---
 function selectLanguage(lang: string) {
-	app.systemLanguage = lang as import('@src/paraglide/runtime').Locale;
+	app.systemLanguage = lang as import("@src/paraglide/runtime").Locale;
 	currentLanguageTag = lang as typeof currentLanguageTag;
 }
 </script>

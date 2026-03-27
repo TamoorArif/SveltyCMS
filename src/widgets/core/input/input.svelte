@@ -22,19 +22,19 @@
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import Icon from '@iconify/svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { app, validationStore } from '@src/stores/store.svelte';
-import { getFieldName } from '@src/utils/utils';
-import { logger } from '@utils/logger';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import Icon from "@iconify/svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { app, validationStore } from "@src/stores/store.svelte";
+import { getFieldName } from "@src/utils/utils";
+import { logger } from "@utils/logger";
 // Unified error handling
-import { handleWidgetValidation } from '@widgets/widget-error-handler';
-import { untrack } from 'svelte';
+import { handleWidgetValidation } from "@widgets/widget-error-handler";
+import { untrack } from "svelte";
 // Valibot validation
-import { parse } from 'valibot';
-import type { FieldType } from '.';
-import { createValidationSchema } from '.'; // ✅ SSOT: Import validation schema from index.ts
+import { parse } from "valibot";
+import type { FieldType } from ".";
+import { createValidationSchema } from "."; // ✅ SSOT: Import validation schema from index.ts
 
 // Props
 interface Props {
@@ -51,7 +51,13 @@ interface Props {
 }
 
 // ✅ ENHANCEMENT: Auto-enable validateOnMount for required fields to instantly disable save button
-let { field, value = $bindable(), validateOnChange = true, validateOnBlur = true, debounceMs = 300 }: Props = $props();
+let {
+	field,
+	value = $bindable(),
+	validateOnChange = true,
+	validateOnBlur = true,
+	debounceMs = 300,
+}: Props = $props();
 
 // New derived state for validateOnMount
 // Disable immediate validation for required fields to prevent error spam on new entries
@@ -61,17 +67,29 @@ const validateOnMount = $derived(false);
 const MAX_INPUT_LENGTH = 100_000; // 100KB
 
 // Apply truncation before processing
-if (value && typeof value === 'string' && (value as string).length > MAX_INPUT_LENGTH) {
+if (
+	value &&
+	typeof value === "string" &&
+	(value as string).length > MAX_INPUT_LENGTH
+) {
 	value = (value as string).substring(0, MAX_INPUT_LENGTH) as any;
 }
 
 // Use current content language for translated fields, default for non-translated
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
 
 // Initialize value if null/undefined
 // Safe value access with fallback
 // Safe value access with fallback
-let safeValue = $derived(field.translated ? ((value as Record<string, string>)?.[LANGUAGE] ?? '') : ((value as string) ?? ''));
+let safeValue = $derived(
+	field.translated
+		? ((value as Record<string, string>)?.[LANGUAGE] ?? "")
+		: ((value as string) ?? ""),
+);
 
 // Character count
 let count = $derived(safeValue?.length ?? 0);
@@ -89,28 +107,30 @@ let isTouched = $state(false);
 let translateLoading = $state(false);
 
 async function translateValue() {
-	const sourceLang = ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase();
+	const sourceLang = (
+		(publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en"
+	).toLowerCase();
 	const sourceText = (value as Record<string, string>)?.[sourceLang];
 
 	if (!sourceText || sourceLang === LANGUAGE) return;
 
 	translateLoading = true;
 	try {
-		const response = await fetch('/api/ai/enrich', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/ai/enrich", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				text: sourceText,
-				action: 'translate',
-				language: LANGUAGE
-			})
+				action: "translate",
+				language: LANGUAGE,
+			}),
 		});
 		const data = await response.json();
 		if (data.result) {
 			updateValue(data.result);
 		}
 	} catch (err) {
-		logger.error('[AI Translation] Error:', err);
+		logger.error("[AI Translation] Error:", err);
 	} finally {
 		translateLoading = false;
 	}
@@ -119,31 +139,31 @@ async function translateValue() {
 // ✨ SECURITY ENHANCEMENT: Prevent homograph attacks
 function sanitizeInput(input: string): string {
 	// Remove zero-width characters that could be used for spoofing
-	const sanitized = input.replace(/[\u200B-\u200D\uFEFF]/g, '');
+	const sanitized = input.replace(/[\u200B-\u200D\uFEFF]/g, "");
 
 	// Normalize Unicode to prevent homograph attacks
-	return sanitized.normalize('NFKC');
+	return sanitized.normalize("NFKC");
 }
 
 // Memoized badge class calculation using $derived
 let badgeClass = $derived(() => {
 	const length = count;
 	if (field?.minLength && length < (field?.minLength as number)) {
-		return 'bg-error-500'; // Semantic error color
+		return "bg-error-500"; // Semantic error color
 	}
 	if (field?.maxLength && length > (field?.maxLength as number)) {
-		return 'bg-error-500';
+		return "bg-error-500";
 	}
 	if (field?.count && length === (field?.count as number)) {
-		return 'bg-primary-500'; // Semantic success color
+		return "bg-primary-500"; // Semantic success color
 	}
 	if (field?.count && length > (field?.count as number)) {
-		return 'bg-warning-500'; // Semantic warning color
+		return "bg-warning-500"; // Semantic warning color
 	}
 	if (field?.minLength) {
-		return '!preset-filled-surface-500';
+		return "!preset-filled-surface-500";
 	}
-	return '!preset-outlined-surface-500';
+	return "!preset-outlined-surface-500";
 });
 
 // ✅ SSOT: Use validation schema from index.ts
@@ -165,16 +185,23 @@ async function validateInput(immediate = false): Promise<string | null> {
 
 		try {
 			// ✅ UNIFIED: Use handleWidgetValidation for standardized error handling
-			const result = handleWidgetValidation(() => parse(validationSchema, field.translated ? (value ?? undefined) : currentValue), {
-				fieldName,
-				updateStore: true,
-				requireTouch: false,
-				isTouched
-			});
+			const result = handleWidgetValidation(
+				() =>
+					parse(
+						validationSchema,
+						field.translated ? (value ?? undefined) : currentValue,
+					),
+				{
+					fieldName,
+					updateStore: true,
+					requireTouch: false,
+					isTouched,
+				},
+			);
 			return result.valid ? null : (result.message ?? null);
 		} catch (error) {
-			logger.error('Validation error:', error);
-			const errorMessage = 'An unexpected error occurred during validation';
+			logger.error("Validation error:", error);
+			const errorMessage = "An unexpected error occurred during validation";
 			validationStore.setError(fieldName, errorMessage);
 			return errorMessage;
 		} finally {
@@ -220,7 +247,7 @@ function updateValue(newValue: string) {
 	const sanitized = sanitizeInput(newValue);
 
 	if (field.translated) {
-		if (!value || typeof value !== 'object') {
+		if (!value || typeof value !== "object") {
 			value = {};
 		}
 		// Ensure value is treated as a new object for reactivity

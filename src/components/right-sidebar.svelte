@@ -12,11 +12,11 @@
 -->
 
 <script lang="ts">
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
 // Components
-import Toggles from '@src/components/system/inputs/toggles.svelte';
-import { StatusTypes } from '@src/content/types';
+import Toggles from "@src/components/system/inputs/toggles.svelte";
+import { StatusTypes } from "@src/content/types";
 // ParaglideJs
 import {
 	button_delete,
@@ -27,24 +27,36 @@ import {
 	siedabar_publish_options,
 	status_publish,
 	status_unpublish,
-	validation_fix_before_save
-} from '@src/paraglide/messages';
-import { getLocale } from '@src/paraglide/runtime';
-import { collection, collectionValue, mode } from '@src/stores/collection-store.svelte';
+	validation_fix_before_save,
+} from "@src/paraglide/messages";
+import { getLocale } from "@src/paraglide/runtime";
+import {
+	collection,
+	collectionValue,
+	mode,
+} from "@src/stores/collection-store.svelte";
 // Stores
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { statusStore } from '@src/stores/status-store.svelte';
-import { app, dataChangeStore, validationStore } from '@src/stores/store.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { statusStore } from "@src/stores/status-store.svelte";
+import {
+	app,
+	dataChangeStore,
+	validationStore,
+} from "@src/stores/store.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
 
 // Utils
-import { logger } from '@utils/logger';
-import { showScheduleModal } from '@utils/modal-utils';
-import { navigationManager } from '@utils/navigation-manager';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { page } from '$app/state';
+import { logger } from "@utils/logger";
+import { showScheduleModal } from "@utils/modal-utils";
+import { navigationManager } from "@utils/navigation-manager";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { page } from "$app/state";
 // Utils
-import { cloneCurrentEntry, deleteCurrentEntry, saveEntry } from '../utils/entry-actions';
+import {
+	cloneCurrentEntry,
+	deleteCurrentEntry,
+	saveEntry,
+} from "../utils/entry-actions";
 
 interface Entry {
 	_scheduled?: string | number | Date;
@@ -66,22 +78,36 @@ let currentEntry = $derived(collectionValue.value as Entry | null);
 let isFormValid = $derived(validationStore.isValid);
 let hasChanges = $derived(dataChangeStore.hasChanges);
 
-let canWrite = $derived(currentCollection?.permissions?.[user?.role]?.write !== false);
-let canCreate = $derived(currentCollection?.permissions?.[user?.role]?.create !== false);
-let canDelete = $derived(currentCollection?.permissions?.[user?.role]?.delete !== false);
-
-let scheduleTimestamp = $derived(currentEntry?._scheduled ? Number(currentEntry._scheduled) : null);
-
-// --- Permissions & UI logic ---
-let showSidebar = $derived(['edit', 'create'].includes(currentMode) && canWrite);
-
-let shouldDisableStatusToggle = $derived(
-	(currentMode === 'create' && !ui.isRightSidebarVisible) ||
-		(currentMode === 'edit' && !ui.isRightSidebarVisible && !screen.isDesktop) ||
-		statusStore.isLoading
+let canWrite = $derived(
+	currentCollection?.permissions?.[user?.role]?.write !== false,
+);
+let canCreate = $derived(
+	currentCollection?.permissions?.[user?.role]?.create !== false,
+);
+let canDelete = $derived(
+	currentCollection?.permissions?.[user?.role]?.delete !== false,
 );
 
-let isMenuCollection = $derived(currentCollection?.name === 'Menu' || currentCollection?.slug === 'menu');
+let scheduleTimestamp = $derived(
+	currentEntry?._scheduled ? Number(currentEntry._scheduled) : null,
+);
+
+// --- Permissions & UI logic ---
+let showSidebar = $derived(
+	["edit", "create"].includes(currentMode) && canWrite,
+);
+
+let shouldDisableStatusToggle = $derived(
+	(currentMode === "create" && !ui.isRightSidebarVisible) ||
+		(currentMode === "edit" &&
+			!ui.isRightSidebarVisible &&
+			!screen.isDesktop) ||
+		statusStore.isLoading,
+);
+
+let isMenuCollection = $derived(
+	currentCollection?.name === "Menu" || currentCollection?.slug === "menu",
+);
 
 // --- Next button handling ---
 // Restore logic for MegaMenu wizard support
@@ -89,7 +115,7 @@ let nextAction = $state<(() => void | Promise<void>) | null>(null);
 
 $effect(() => {
 	// Logic: If it's the Menu collection in create mode, we ENABLE the Next button.
-	if (isMenuCollection && currentMode === 'create') {
+	if (isMenuCollection && currentMode === "create") {
 		app.shouldShowNextButton = true;
 		// If app.saveLayerStore is explicitly set (by widget?), use it.
 		nextAction = app.saveLayerStore;
@@ -102,12 +128,14 @@ $effect(() => {
 // --- Helpers ---
 function isUUID(str: string): boolean {
 	// Support both standard UUIDs (with dashes) and dashless UUIDs (32 hex chars)
-	return /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(str);
+	return /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(
+		str,
+	);
 }
 
 function getDisplayName(value: string | undefined | null): string {
 	if (!value) {
-		return 'system';
+		return "system";
 	}
 
 	if (isUUID(value)) {
@@ -117,10 +145,10 @@ function getDisplayName(value: string | undefined | null): string {
 				return user.username;
 			}
 			if (user.firstName || user.lastName) {
-				return [user.firstName, user.lastName].filter(Boolean).join(' ');
+				return [user.firstName, user.lastName].filter(Boolean).join(" ");
 			}
 			if (user.email) {
-				return user.email.split('@')[0];
+				return user.email.split("@")[0];
 			}
 		}
 		// TODO: Add lookup for other users if needed (requires a user store or API call)
@@ -134,24 +162,24 @@ function getDisplayName(value: string | undefined | null): string {
 
 function formatDate(dateStr: string | undefined | null): string {
 	if (!dateStr) {
-		return '-';
+		return "-";
 	}
 	try {
 		return new Date(dateStr).toLocaleString(getLocale(), {
-			year: 'numeric',
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
+			year: "numeric",
+			month: "short",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
 		});
 	} catch {
-		return '-';
+		return "-";
 	}
 }
 
 let dates = $derived({
 	created: formatDate(currentEntry?.createdAt as string),
-	updated: formatDate(currentEntry?.updatedAt as string)
+	updated: formatDate(currentEntry?.updatedAt as string),
 });
 
 // --- Actions ---
@@ -164,33 +192,34 @@ function handleDelete() {
 }
 
 async function toggleStatus(newValue: boolean): Promise<boolean> {
-	return await statusStore.toggleStatus(newValue, 'RightSidebar');
+	return await statusStore.toggleStatus(newValue, "RightSidebar");
 }
 
 function openSchedule() {
 	showScheduleModal({
-		initialAction: currentEntry?.status === StatusTypes.publish ? 'publish' : 'unpublish',
+		initialAction:
+			currentEntry?.status === StatusTypes.publish ? "publish" : "unpublish",
 		onSchedule: (date: Date, action: string) => {
 			const timestamp = date.getTime();
 			collectionValue.value = {
 				...currentEntry!,
 				status: StatusTypes.schedule,
-				_scheduled: timestamp
+				_scheduled: timestamp,
 			};
 			toast.success(`Entry scheduled for ${action}.`);
-		}
+		},
 	});
 }
 
 onMount(() => {
 	registerHotkey(
-		'mod+s',
+		"mod+s",
 		() => {
 			if (isFormValid && canWrite) {
 				save();
 			}
 		},
-		'Save entry'
+		"Save entry",
 	);
 });
 
@@ -201,8 +230,8 @@ async function save() {
 	}
 
 	// In edit mode: no changes → just navigate back
-	if (currentMode === 'edit' && !hasChanges) {
-		logger.debug('[RightSidebar] No changes – navigating to list');
+	if (currentMode === "edit" && !hasChanges) {
+		logger.debug("[RightSidebar] No changes – navigating to list");
 		ui.forceUpdate();
 		await navigationManager.navigateToList();
 		return;
@@ -220,14 +249,16 @@ async function save() {
 	}
 
 	// Metadata
-	if (currentMode === 'create') {
+	if (currentMode === "create") {
 		dataToSave.createdBy = getDisplayName(user?.username);
 	}
 	dataToSave.updatedBy = getDisplayName(user?.username);
 
-	const isProd = typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV === 'production';
+	const isProd =
+		typeof globalThis !== "undefined" &&
+		(globalThis as any).process?.env?.NODE_ENV === "production";
 	if (!isProd) {
-		logger.debug('[RightSidebar] Saving entry:', dataToSave);
+		logger.debug("[RightSidebar] Saving entry:", dataToSave);
 	}
 
 	const success = await saveEntry(dataToSave);

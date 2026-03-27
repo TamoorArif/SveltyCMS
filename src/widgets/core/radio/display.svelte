@@ -24,12 +24,12 @@ Renders: "Option Two" (looks up label from field.options)
 -->
 
 <script lang="ts">
-import type { FieldType } from './';
-import type { RadioProps } from './types';
+import type { FieldType } from "./";
+import type { RadioProps } from "./types";
 
 const {
 	field,
-	value
+	value,
 }: {
 	field: FieldType & RadioProps;
 	value: string | number | null | undefined;
@@ -38,9 +38,11 @@ const {
 // Find the label that corresponds to the stored value.
 const displayLabel = $derived.by(() => {
 	if (value === null || value === undefined) {
-		return '–';
+		return "–";
 	}
-	const selectedOption = field.options?.find((opt: { label: string; value: string | number }) => opt.value === value);
+	const selectedOption = field.options?.find(
+		(opt: { label: string; value: string | number }) => opt.value === value,
+	);
 	return selectedOption?.label || String(value); // Fallback to showing the raw value
 });
 </script>

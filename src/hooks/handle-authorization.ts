@@ -82,10 +82,10 @@ async function getCachedUserCount(
   } else {
     // 2. Check distributed cache
     try {
-      const cached = await cacheService.get<{ count: number; timestamp: number }>(
-        "userCount",
-        tenantId,
-      );
+      const cached = await cacheService.get<{
+        count: number;
+        timestamp: number;
+      }>("userCount", tenantId);
       if (cached && now - cached.timestamp < USER_COUNT_CACHE_TTL_MS) {
         userCountCache = cached; // Update in-memory cache from distributed cache
         userCount = cached.count;

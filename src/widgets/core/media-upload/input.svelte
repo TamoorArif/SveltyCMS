@@ -10,16 +10,16 @@ Features:
 -->
 
 <script lang="ts">
-import MediaLibraryModal from '@components/media-library-modal.svelte';
-import { logger } from '@utils/logger';
-import { modalState } from '@utils/modal-state.svelte';
-import { flip } from 'svelte/animate';
-import { dndzone } from 'svelte-dnd-action';
-import { page } from '$app/state';
-import type { FieldType } from './';
-import type { MediaFile } from './types';
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
+import MediaLibraryModal from "@components/media-library-modal.svelte";
+import { logger } from "@utils/logger";
+import { modalState } from "@utils/modal-state.svelte";
+import { flip } from "svelte/animate";
+import { dndzone } from "svelte-dnd-action";
+import { page } from "$app/state";
+import type { FieldType } from "./";
+import type { MediaFile } from "./types";
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
 
 const tenantId = $derived(page.data?.tenantId);
 
@@ -27,7 +27,7 @@ let {
 	field,
 	value = $bindable(),
 	error,
-	collectionName
+	collectionName,
 }: {
 	field: FieldType;
 	value: string | string[] | null | undefined;
@@ -38,7 +38,7 @@ let {
 let selectedFiles = $state<MediaFile[]>([]);
 
 onMount(() => {
-	registerHotkey('mod+o', openMediaLibrary, 'Open Media Library');
+	registerHotkey("mod+o", openMediaLibrary, "Open Media Library");
 });
 
 async function fetchMediaData(ids: string[]): Promise<MediaFile[]> {
@@ -54,13 +54,13 @@ async function fetchMediaData(ids: string[]): Promise<MediaFile[]> {
 					type: found.mimeType,
 					size: found.size,
 					url: found.url,
-					thumbnailUrl: found.thumbnails?.md?.url || found.url
+					thumbnailUrl: found.thumbnails?.md?.url || found.url,
 				} as any);
 			}
 		}
 		return results;
 	} catch (e) {
-		logger.error('Fetch failed', e);
+		logger.error("Fetch failed", e);
 		return [];
 	}
 }
@@ -83,15 +83,19 @@ $effect(() => {
 });
 
 function openMediaLibrary() {
-	const dynamicFolder = (field as any).folder || (collectionName ? `collections/${collectionName.toLowerCase()}` : tenantId || 'global');
+	const dynamicFolder =
+		(field as any).folder ||
+		(collectionName
+			? `collections/${collectionName.toLowerCase()}`
+			: tenantId || "global");
 
 	modalState.trigger(
 		MediaLibraryModal as any,
 		{
-			selectionMode: field.multiupload ? 'multiple' : 'single',
+			selectionMode: field.multiupload ? "multiple" : "single",
 			allowedTypes: field.allowedTypes || [],
 			folder: dynamicFolder,
-			size: 'fullscreen'
+			size: "fullscreen",
 		},
 		(files: any[]) => {
 			if (files && Array.isArray(files)) {
@@ -101,11 +105,13 @@ function openMediaLibrary() {
 					type: f.mimeType,
 					size: f.size,
 					url: f.url,
-					thumbnailUrl: f.thumbnails?.md?.url || f.url
+					thumbnailUrl: f.thumbnails?.md?.url || f.url,
 				}));
-				selectedFiles = field.multiupload ? [...selectedFiles, ...mapped] : [mapped[0]];
+				selectedFiles = field.multiupload
+					? [...selectedFiles, ...mapped]
+					: [mapped[0]];
 			}
-		}
+		},
 	);
 }
 

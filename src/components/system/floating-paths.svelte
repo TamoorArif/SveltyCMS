@@ -18,7 +18,7 @@ behavior using native Svelte 5 $state and requestAnimationFrame.
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onMount } from "svelte";
 
 interface Props {
 	background?: string;
@@ -26,7 +26,11 @@ interface Props {
 	position?: number;
 }
 
-const { background = 'white', position = 1, mirrorAnimation = false }: Props = $props();
+const {
+	background = "white",
+	position = 1,
+	mirrorAnimation = false,
+}: Props = $props();
 
 // Generate paths with their animation configs
 const pathConfigs = Array.from({ length: 36 }, (_, i) => ({
@@ -36,21 +40,25 @@ const pathConfigs = Array.from({ length: 36 }, (_, i) => ({
 	} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
 	width: 0.05 + i * 0.01,
 	duration: 20 + (i % 15) * 0.7, // Duration in seconds (matching original)
-	baseOpacity: 0.1 + i * 0.03
+	baseOpacity: 0.1 + i * 0.03,
 }));
 
 // Reactive state for all path animations - using array to store animation values
-let pathStates = $state<Array<{ pathLength: number; opacity: number; pathOffset: number }>>(
+let pathStates = $state<
+	Array<{ pathLength: number; opacity: number; pathOffset: number }>
+>(
 	pathConfigs.map(() => ({
 		pathLength: 0.3,
 		opacity: 0.3,
-		pathOffset: mirrorAnimation ? 1 : 0
-	}))
+		pathOffset: mirrorAnimation ? 1 : 0,
+	})),
 );
 
 onMount(() => {
 	// Check for reduced motion preference
-	const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const prefersReducedMotion = window.matchMedia(
+		"(prefers-reduced-motion: reduce)",
+	).matches;
 	if (prefersReducedMotion) {
 		return;
 	}
@@ -80,7 +88,7 @@ onMount(() => {
 			return {
 				pathLength,
 				opacity,
-				pathOffset
+				pathOffset,
 			};
 		});
 

@@ -9,10 +9,10 @@ Features:
 -->
 
 <script lang="ts">
-import TablePagination from '@src/components/system/table/table-pagination.svelte';
-import type { MediaBase, MediaImage } from '@utils/media/media-models';
-import { formatBytes } from '@utils/utils';
-import type { SvelteSet } from 'svelte/reactivity';
+import TablePagination from "@src/components/system/table/table-pagination.svelte";
+import type { MediaBase, MediaImage } from "@utils/media/media-models";
+import { formatBytes } from "@utils/utils";
+import type { SvelteSet } from "svelte/reactivity";
 
 interface Props {
 	filteredFiles?: (MediaBase | MediaImage)[];
@@ -22,13 +22,24 @@ interface Props {
 	onEditImage?: (file: MediaImage) => void;
 }
 
-let { filteredFiles = [], isSelectionMode = false, selectedFiles = $bindable(), ondeleteImage = () => {}, onEditImage = () => {} }: Props = $props();
+let {
+	filteredFiles = [],
+	isSelectionMode = false,
+	selectedFiles = $bindable(),
+	ondeleteImage = () => {},
+	onEditImage = () => {},
+}: Props = $props();
 
 // Pagination
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
 const pagesCount = $derived(Math.ceil(filteredFiles.length / rowsPerPage) || 1);
-const paginatedFiles = $derived(filteredFiles.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage));
+const paginatedFiles = $derived(
+	filteredFiles.slice(
+		(currentPage - 1) * rowsPerPage,
+		currentPage * rowsPerPage,
+	),
+);
 
 function toggleSelection(file: MediaBase | MediaImage) {
 	const fileId = file._id?.toString() || file.filename;
@@ -46,7 +57,7 @@ function handleRowClick(file: MediaBase | MediaImage) {
 }
 
 function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
-	if (e.key === 'Enter' || e.key === ' ') {
+	if (e.key === "Enter" || e.key === " ") {
 		e.preventDefault();
 		toggleSelection(file);
 	}

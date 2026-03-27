@@ -27,14 +27,14 @@ Interactive selector with "Select" button and clear functionality
 -->
 
 <script lang="ts">
-import { app } from '@src/stores/store.svelte';
-import { showModal } from '@utils/modal-utils';
-import type { FieldType } from './';
+import { app } from "@src/stores/store.svelte";
+import { showModal } from "@utils/modal-utils";
+import type { FieldType } from "./";
 
 let {
 	field,
 	value,
-	error
+	error,
 }: {
 	field: FieldType;
 	value: string | string[] | null | undefined;
@@ -51,7 +51,7 @@ async function fetchEntryData(ids: string[]): Promise<Record<string, any>[]> {
 	// This should return an array of entry objects
 	return ids.map((id) => ({
 		_id: id,
-		[field.displayField as string]: `Entry ${id}`
+		[field.displayField as string]: `Entry ${id}`,
 	}));
 }
 
@@ -68,7 +68,7 @@ $effect(() => {
 // Function to open the selection/creation modal.
 function openRelationModal() {
 	showModal({
-		component: 'relationModal',
+		component: "relationModal",
 		meta: {
 			collectionId: field.collection,
 			multiple: field.multiple,
@@ -77,7 +77,9 @@ function openRelationModal() {
 				if (selected) {
 					if (field.multiple) {
 						// If multiple, ensuring we have an array
-						const newSelection = Array.isArray(selected) ? selected : [selected];
+						const newSelection = Array.isArray(selected)
+							? selected
+							: [selected];
 						// Merge with existing if needed, or replace.
 						// For now, let's assume the modal returns the *full* new selection
 						value = newSelection;
@@ -86,8 +88,8 @@ function openRelationModal() {
 						value = Array.isArray(selected) ? selected[0] : selected;
 					}
 				}
-			}
-		}
+			},
+		},
 	});
 }
 

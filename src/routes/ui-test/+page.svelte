@@ -1,103 +1,112 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { themeStore, toggleDarkMode, initializeDarkMode } from '@src/stores/theme-store.svelte';
-import Button from '@components/ui/button.svelte';
-import Badge from '@components/ui/badge.svelte';
-import Card from '@components/ui/card.svelte';
-import Input from '@components/ui/input.svelte';
-import Toggle from '@components/ui/toggle.svelte';
-import FloatingInput from '@components/ui/floating-input.svelte';
-import Progress from '@components/ui/progress.svelte';
-import SegmentedControl from '@components/ui/segmented-control.svelte';
-import Tabs from '@components/ui/tabs';
-import Modal from '@components/ui/modal.svelte';
-import Popover from '@components/ui/popover.svelte';
-import Tooltip from '@components/ui/tooltip.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import Tags from '@components/ui/tags.svelte';
-import Combobox from '@components/ui/combobox.svelte';
-import DatePicker from '@components/ui/date-picker.svelte';
-import Breadcrumb from '@components/ui/breadcrumb.svelte';
-import TreeView from '@components/ui/tree-view.svelte';
-import Drawer from '@components/ui/drawer.svelte';
-import Table from '@components/ui/table.svelte';
-import Alert from '@components/ui/alert.svelte';
+import { onMount } from "svelte";
+import {
+	themeStore,
+	toggleDarkMode,
+	initializeDarkMode,
+} from "@src/stores/theme-store.svelte";
+import Button from "@components/ui/button.svelte";
+import Badge from "@components/ui/badge.svelte";
+import Card from "@components/ui/card.svelte";
+import Input from "@components/ui/input.svelte";
+import Toggle from "@components/ui/toggle.svelte";
+import FloatingInput from "@components/ui/floating-input.svelte";
+import Progress from "@components/ui/progress.svelte";
+import SegmentedControl from "@components/ui/segmented-control.svelte";
+import Tabs from "@components/ui/tabs";
+import Modal from "@components/ui/modal.svelte";
+import Popover from "@components/ui/popover.svelte";
+import Tooltip from "@components/ui/tooltip.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import Tags from "@components/ui/tags.svelte";
+import Combobox from "@components/ui/combobox.svelte";
+import DatePicker from "@components/ui/date-picker.svelte";
+import Breadcrumb from "@components/ui/breadcrumb.svelte";
+import TreeView from "@components/ui/tree-view.svelte";
+import Drawer from "@components/ui/drawer.svelte";
+import Table from "@components/ui/table.svelte";
+import Alert from "@components/ui/alert.svelte";
 
-let name = $state('SveltyCMS Developer');
+let name = $state("SveltyCMS Developer");
 let count = $state(0);
-let error = $state('');
+let error = $state("");
 let isToggled = $state(false);
-let floatingValue = $state('');
-let segmentValue = $state('day');
-let activeTab = $state('general');
+let floatingValue = $state("");
+let segmentValue = $state("day");
+let activeTab = $state("general");
 let isModalOpen = $state(false);
 
 // Batch 4 State
-let selectedTags = $state(['Svelte 5', 'Tailwind 4', 'Premium']);
-let comboboxValue = $state('opt1');
-let dateValue = $state(new Date().toISOString().split('T')[0]);
+let selectedTags = $state(["Svelte 5", "Tailwind 4", "Premium"]);
+let comboboxValue = $state("opt1");
+let dateValue = $state(new Date().toISOString().split("T")[0]);
 
 // Batch 5 State
-let treeExpandedIds = $state(new Set(['root']));
+let treeExpandedIds = $state(new Set(["root"]));
 
 // Batch 6 State
 let isDrawerOpen = $state(false);
-let tableSortKey = $state('name');
-let tableSortOrder = $state<'asc'|'desc'>('asc');
-let tableSelectedIds = $state(new Set(['1']));
+let tableSortKey = $state("name");
+let tableSortOrder = $state<"asc" | "desc">("asc");
+let tableSelectedIds = $state(new Set(["1"]));
 
 const tableData = [
-    { id: '1', name: 'Dashboard Module', status: 'Active', version: 'v1.4.2' },
-    { id: '2', name: 'Auth Service', status: 'Warning', version: 'v2.1.0' },
-    { id: '3', name: 'Media Library', status: 'Draft', version: 'v1.0.5' }
+	{ id: "1", name: "Dashboard Module", status: "Active", version: "v1.4.2" },
+	{ id: "2", name: "Auth Service", status: "Warning", version: "v2.1.0" },
+	{ id: "3", name: "Media Library", status: "Draft", version: "v1.0.5" },
 ];
 
 const tableColumns = [
-    { key: 'name', label: 'Component Name', sortable: true },
-    { key: 'status', label: 'Current Status', sortable: true },
-    { key: 'version', label: 'Version', class: 'text-right' }
+	{ key: "name", label: "Component Name", sortable: true },
+	{ key: "status", label: "Current Status", sortable: true },
+	{ key: "version", label: "Version", class: "text-right" },
 ];
 
 const treeItems = [
-    {
-        id: 'root',
-        label: 'SveltyCMS',
-        icon: 'mdi:folder-home',
-        children: [
-            {
-                id: 'src',
-                label: 'src',
-                icon: 'mdi:folder',
-                children: [
-                    { id: 'components', label: 'components', icon: 'mdi:folder-outline' },
-                    { id: 'routes', label: 'routes', icon: 'mdi:folder-outline' },
-                    { id: 'app-css', label: 'app.css', icon: 'mdi:language-css3' }
-                ]
-            },
-            { id: 'package-json', label: 'package.json', icon: 'mdi:language-json' },
-            { id: 'readme', label: 'README.md', icon: 'mdi:markdown' }
-        ]
-    }
+	{
+		id: "root",
+		label: "SveltyCMS",
+		icon: "mdi:folder-home",
+		children: [
+			{
+				id: "src",
+				label: "src",
+				icon: "mdi:folder",
+				children: [
+					{ id: "components", label: "components", icon: "mdi:folder-outline" },
+					{ id: "routes", label: "routes", icon: "mdi:folder-outline" },
+					{ id: "app-css", label: "app.css", icon: "mdi:language-css3" },
+				],
+			},
+			{ id: "package-json", label: "package.json", icon: "mdi:language-json" },
+			{ id: "readme", label: "README.md", icon: "mdi:markdown" },
+		],
+	},
 ];
 
 const segmentOptions = [
-    { label: 'Day', value: 'day', icon: 'mdi:calendar-today' },
-    { label: 'Week', value: 'week', icon: 'mdi:calendar-week' },
-    { label: 'Month', value: 'month', icon: 'mdi:calendar-month', disabled: true }
+	{ label: "Day", value: "day", icon: "mdi:calendar-today" },
+	{ label: "Week", value: "week", icon: "mdi:calendar-week" },
+	{
+		label: "Month",
+		value: "month",
+		icon: "mdi:calendar-month",
+		disabled: true,
+	},
 ];
 
 const tabItems = [
-    { label: 'General', value: 'general', icon: 'mdi:cog' },
-    { label: 'Security', value: 'security', icon: 'mdi:shield' },
-    { label: 'Themes', value: 'themes', icon: 'mdi:palette' }
+	{ label: "General", value: "general", icon: "mdi:cog" },
+	{ label: "Security", value: "security", icon: "mdi:shield" },
+	{ label: "Themes", value: "themes", icon: "mdi:palette" },
 ];
 
 onMount(() => {
-    initializeDarkMode();
+	initializeDarkMode();
 });
 
 function toggleError() {
-    error = error ? '' : 'This is a sample error message';
+	error = error ? "" : "This is a sample error message";
 }
 </script>
 

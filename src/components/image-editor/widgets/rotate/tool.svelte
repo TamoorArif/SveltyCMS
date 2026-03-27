@@ -4,23 +4,25 @@
 Rotate tool using svelte-canvas compatible state.
 -->
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import RotateControls from './controls.svelte';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import RotateControls from "./controls.svelte";
 
 const storeState = imageEditorStore.state;
 
 $effect(() => {
 	const activeState = imageEditorStore.state.activeState;
-	if (activeState === 'rotate') {
+	if (activeState === "rotate") {
 		updateToolbarControls();
-	} else if (imageEditorStore.state.toolbarControls?.component === RotateControls) {
+	} else if (
+		imageEditorStore.state.toolbarControls?.component === RotateControls
+	) {
 		imageEditorStore.setToolbarControls(null);
 	}
 });
 
 // Update toolbar when state changes
 $effect(() => {
-	if (imageEditorStore.state.activeState === 'rotate') {
+	if (imageEditorStore.state.activeState === "rotate") {
 		updateToolbarControls();
 	}
 });
@@ -36,8 +38,8 @@ function updateToolbarControls() {
 			onRotateRight: () => setRotation(storeState.rotation + 90),
 			onRotationChange: setRotation,
 			onFlipHorizontal: toggleFlipH,
-			onFlipVertical: toggleFlipV
-		}
+			onFlipVertical: toggleFlipV,
+		},
 	});
 }
 

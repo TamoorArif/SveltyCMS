@@ -61,7 +61,10 @@ export class MongoThemeMethods {
             return {
               success: false,
               message: "Default theme not found",
-              error: { code: "THEME_NOT_FOUND", message: "Default theme not found" },
+              error: {
+                code: "THEME_NOT_FOUND",
+                message: "Default theme not found",
+              },
             };
           }
           return { success: true, data: theme as Theme };

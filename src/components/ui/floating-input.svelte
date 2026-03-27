@@ -6,8 +6,8 @@
  -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import 'iconify-icon';
+import { cn } from "@utils/cn";
+import "iconify-icon";
 
 interface Props {
 	value?: string;
@@ -24,7 +24,7 @@ interface Props {
 	required?: boolean;
 	passwordIconColor?: string;
 	textColor?: string;
-	type?: 'text' | 'email' | 'password';
+	type?: "text" | "email" | "password";
 	tabindex?: number;
 	id?: string;
 	autocomplete?: any;
@@ -43,29 +43,29 @@ interface Props {
 }
 
 let {
-	value = $bindable(''),
+	value = $bindable(""),
 	showPassword = $bindable(false),
 	disabled = false,
-	icon = '',
-	iconColor = 'gray',
-	inputClass = '',
-	label = '',
-	labelClass = '',
+	icon = "",
+	iconColor = "gray",
+	inputClass = "",
+	label = "",
+	labelClass = "",
 	minlength,
 	maxlength,
-	name = '',
+	name = "",
 	required = false,
-	passwordIconColor = 'gray',
-	textColor = '',
-	type = 'text',
+	passwordIconColor = "gray",
+	textColor = "",
+	type = "text",
 	tabindex = 0,
-	id = '',
+	id = "",
 	autocomplete,
-	autocapitalize = 'none',
+	autocapitalize = "none",
 	spellcheck = false,
 	autofocus = false,
 	invalid = false,
-	errorMessage = '',
+	errorMessage = "",
 	bgTransparent = false,
 	white = false,
 	onClick,
@@ -76,10 +76,14 @@ let {
 }: Props = $props();
 
 let inputElement = $state<HTMLInputElement | null>(null);
-const generatedId = $derived(label ? label.toLowerCase().replace(/\s+/g, '-') : 'defaultInputId');
+const generatedId = $derived(
+	label ? label.toLowerCase().replace(/\s+/g, "-") : "defaultInputId",
+);
 const currentId = $derived(id || generatedId);
 const errorId = $derived(errorMessage ? `error-${currentId}` : undefined);
-const effectiveType = $derived(showPassword && type === 'password' ? 'text' : type);
+const effectiveType = $derived(
+	showPassword && type === "password" ? "text" : type,
+);
 
 $effect(() => {
 	if (autofocus && inputElement) {
@@ -93,7 +97,7 @@ function togglePasswordVisibility(event: Event): void {
 }
 
 function handleIconKeyDown(event: KeyboardEvent): void {
-	if (event.key === 'Enter' || event.key === ' ') {
+	if (event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		togglePasswordVisibility(event);
 	}

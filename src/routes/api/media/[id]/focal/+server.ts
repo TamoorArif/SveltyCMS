@@ -63,7 +63,11 @@ export const PATCH: RequestHandler = apiHandler(async ({ params, request, locals
       data: { focalPoint: { x, y } },
     });
   } catch (err) {
-    logger.error("Error updating focal point", { error: err, mediaId: id, tenantId });
+    logger.error("Error updating focal point", {
+      error: err,
+      mediaId: id,
+      tenantId,
+    });
     throw error(
       err instanceof Error && "status" in err ? (err as any).status : 500,
       (err as Error).message,

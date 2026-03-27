@@ -13,10 +13,10 @@ This component acts as an intercept layer. It either renders a fully dynamic JSO
 -->
 
 <script lang="ts">
-import { Renderer, JSONUIProvider, type Spec } from 'json-render-svelte';
-import { sveltyRegistry } from '@src/services/json-render/catalog';
-import type { Snippet } from 'svelte';
-import { logger } from '@utils/logger';
+import { Renderer, JSONUIProvider, type Spec } from "json-render-svelte";
+import { sveltyRegistry } from "@src/services/json-render/catalog";
+import type { Snippet } from "svelte";
+import { logger } from "@utils/logger";
 
 interface Props {
 	spec?: Spec | null;
@@ -26,7 +26,7 @@ interface Props {
 
 let { spec = null, context = {}, children }: Props = $props();
 
-let prompt = $state('');
+let prompt = $state("");
 let isRegenerating = $state(false);
 let currentSpec = $state<Spec | null>(null);
 
@@ -39,21 +39,22 @@ async function handleRegenerate() {
 	if (!prompt.trim()) return;
 	isRegenerating = true;
 	try {
-		const response = await fetch('/api/ai/generate-layout', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/ai/generate-layout", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				prompt: prompt,
-				contextRules: 'Connect to mcp.sveltycms.com for live context. Return only valid JSON.'
-			})
+				contextRules:
+					"Connect to mcp.sveltycms.com for live context. Return only valid JSON.",
+			}),
 		});
 		const result = await response.json();
 		if (result.spec) {
 			currentSpec = result.spec;
-			logger.info('AI Dashboard updated via Knowledge Core.');
+			logger.info("AI Dashboard updated via Knowledge Core.");
 		}
 	} catch (error) {
-		logger.error('Regeneration failed:', error);
+		logger.error("Regeneration failed:", error);
 	} finally {
 		isRegenerating = false;
 	}

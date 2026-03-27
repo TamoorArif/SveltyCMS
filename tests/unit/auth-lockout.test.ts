@@ -242,8 +242,14 @@ describe("Security Policy Enforcement", () => {
       securityLogs.push(JSON.stringify({ event, details, timestamp: Date.now() }));
     };
 
-    logSecurityEvent("ACCOUNT_LOCKED", { userId: "user-123", reason: "Failed login attempts" });
-    logSecurityEvent("ACCOUNT_UNLOCKED", { userId: "user-123", reason: "Admin action" });
+    logSecurityEvent("ACCOUNT_LOCKED", {
+      userId: "user-123",
+      reason: "Failed login attempts",
+    });
+    logSecurityEvent("ACCOUNT_UNLOCKED", {
+      userId: "user-123",
+      reason: "Admin action",
+    });
     logSecurityEvent("SESSION_EXPIRED", { sessionId: "session-456" });
 
     expect(securityLogs.length).toBe(3);

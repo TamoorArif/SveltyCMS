@@ -48,7 +48,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
   // Security Check: Verify password before disabling 2FA
   if (!user.password) {
-    logger.error("2FA disable failed: User has no password set", { userId: user._id });
+    logger.error("2FA disable failed: User has no password set", {
+      userId: user._id,
+    });
     throw new AppError(
       "Authentication method not supported for 2FA management",
       400,
@@ -58,7 +60,10 @@ export const POST = apiHandler(async ({ request, locals }) => {
 
   const isPasswordValid = await verifyPassword(validatedBody.password, user.password);
   if (!isPasswordValid) {
-    logger.warn("2FA disable failed: Incorrect password", { userId: user._id, tenantId });
+    logger.warn("2FA disable failed: Incorrect password", {
+      userId: user._id,
+      tenantId,
+    });
     throw new AppError("Incorrect password. Please try again.", 401, "INVALID_PASSWORD");
   }
 

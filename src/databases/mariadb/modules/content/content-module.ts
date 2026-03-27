@@ -35,7 +35,9 @@ export class ContentModule {
     publish: (draftId: DatabaseId): Promise<DatabaseResult<void>> =>
       this.adapter.wrap(async () => {
         // Simplified: in a real implementation this would merge draft into main content
-        await this.adapter.crud.update("content_drafts", draftId, { status: "archived" } as any);
+        await this.adapter.crud.update("content_drafts", draftId, {
+          status: "archived",
+        } as any);
       }, "PUBLISH_DRAFT_FAILED"),
 
     publishMany: (draftIds: DatabaseId[]): Promise<DatabaseResult<{ publishedCount: number }>> =>
@@ -69,7 +71,9 @@ export class ContentModule {
       this.adapter.crud.delete("content_drafts", draftId),
 
     deleteMany: (draftIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>> =>
-      this.adapter.crud.deleteMany("content_drafts", { _id: { $in: draftIds } } as any),
+      this.adapter.crud.deleteMany("content_drafts", {
+        _id: { $in: draftIds },
+      } as any),
   };
 
   public readonly nodes = {
@@ -114,7 +118,11 @@ export class ContentModule {
 
     bulkUpdate: (
       updates: { path: string; id?: string; changes: Partial<ContentNode> }[],
-      _options?: { tenantId?: string | null; bypassTenantCheck?: boolean; bypassCache?: boolean },
+      _options?: {
+        tenantId?: string | null;
+        bypassTenantCheck?: boolean;
+        bypassCache?: boolean;
+      },
     ): Promise<DatabaseResult<ContentNode[]>> =>
       this.adapter.wrap(async () => {
         const results: ContentNode[] = [];
@@ -127,7 +135,9 @@ export class ContentModule {
 
     delete: (path: string): Promise<DatabaseResult<void>> =>
       this.adapter.wrap(async () => {
-        await this.adapter.crud.deleteMany("system_content_structure", { path } as any);
+        await this.adapter.crud.deleteMany("system_content_structure", {
+          path,
+        } as any);
       }, "DELETE_NODE_FAILED"),
 
     deleteMany: (
@@ -149,14 +159,23 @@ export class ContentModule {
       }, "REORDER_NODES_FAILED"),
 
     reorderStructure: (
-      items: Array<{ id: string; parentId: string | null; order: number; path: string }>,
+      items: Array<{
+        id: string;
+        parentId: string | null;
+        order: number;
+        path: string;
+      }>,
     ): Promise<DatabaseResult<void>> =>
       this.adapter.wrap(async () => {
         for (const item of items) {
           await this.adapter.crud.update(
             "system_content_structure",
             item.id as any,
-            { parentId: item.parentId, order: item.order, path: item.path } as any,
+            {
+              parentId: item.parentId,
+              order: item.order,
+              path: item.path,
+            } as any,
           );
         }
       }, "REORDER_STRUCTURE_FAILED"),
@@ -189,7 +208,9 @@ export class ContentModule {
       this.adapter.crud.delete("content_revisions", revisionId),
 
     deleteMany: (revisionIds: DatabaseId[]): Promise<DatabaseResult<{ deletedCount: number }>> =>
-      this.adapter.crud.deleteMany("content_revisions", { _id: { $in: revisionIds } } as any),
+      this.adapter.crud.deleteMany("content_revisions", {
+        _id: { $in: revisionIds },
+      } as any),
 
     cleanup: (
       contentId: DatabaseId,

@@ -35,17 +35,17 @@ Interactive menu builder with add/edit/reorder capabilities
 -->
 
 <script lang="ts">
-import { app } from '@src/stores/store.svelte';
-import { showModal } from '@utils/modal-utils';
-import type { FieldType } from './';
-import MegaMenuInput from './input.svelte';
-import MenuItemEditorModal from './menu-item-editor-modal.svelte';
-import type { MenuEditContext, MenuItem } from './types';
+import { app } from "@src/stores/store.svelte";
+import { showModal } from "@utils/modal-utils";
+import type { FieldType } from "./";
+import MegaMenuInput from "./input.svelte";
+import MenuItemEditorModal from "./menu-item-editor-modal.svelte";
+import type { MenuEditContext, MenuItem } from "./types";
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
 	value: MenuItem[] | null | undefined;
@@ -68,16 +68,16 @@ function addItem() {
 		{
 			_id: crypto.randomUUID(),
 			_fields: {},
-			children: []
-		}
+			children: [],
+		},
 	];
 }
 
 // Function to handle drag start
 function handleDragStart(event: DragEvent, item: MenuItem) {
 	draggedItem = item;
-	event.dataTransfer!.effectAllowed = 'move';
-	event.dataTransfer?.setData('text/plain', item._id);
+	event.dataTransfer!.effectAllowed = "move";
+	event.dataTransfer?.setData("text/plain", item._id);
 }
 
 // Function to handle drag over
@@ -128,19 +128,25 @@ function handleKeyDown(event: KeyboardEvent, index: number) {
 	if (!value) {
 		return;
 	}
-	if (event.key === 'ArrowUp') {
+	if (event.key === "ArrowUp") {
 		event.preventDefault();
 		if (index > 0) {
 			const newValue = [...value];
-			[newValue[index - 1], newValue[index]] = [newValue[index], newValue[index - 1]];
+			[newValue[index - 1], newValue[index]] = [
+				newValue[index],
+				newValue[index - 1],
+			];
 			value = newValue;
 			// Focus management would be ideal here, but Svelte's reactivity might rebuild DOM
 		}
-	} else if (event.key === 'ArrowDown') {
+	} else if (event.key === "ArrowDown") {
 		event.preventDefault();
 		if (index < value.length - 1) {
 			const newValue = [...value];
-			[newValue[index + 1], newValue[index]] = [newValue[index], newValue[index + 1]];
+			[newValue[index + 1], newValue[index]] = [
+				newValue[index],
+				newValue[index + 1],
+			];
 			value = newValue;
 		}
 	}
@@ -160,12 +166,12 @@ function editItem(item: MenuItem, level: number) {
 		},
 		onCancel: () => {
 			// Modal closed without saving
-		}
+		},
 	};
 
 	showModal({
 		component: MenuItemEditorModal,
-		meta: modalContext
+		meta: modalContext,
 	});
 }
 
@@ -175,7 +181,9 @@ function deleteItem(itemToDelete: MenuItem) {
 		return;
 	}
 
-	const confirmDelete = confirm('Are you sure you want to delete this menu item and all its children?');
+	const confirmDelete = confirm(
+		"Are you sure you want to delete this menu item and all its children?",
+	);
 	if (!confirmDelete) {
 		return;
 	}
@@ -188,7 +196,7 @@ function addChildItem(parentItem: MenuItem) {
 	const newChild: MenuItem = {
 		_id: crypto.randomUUID(),
 		_fields: {},
-		children: []
+		children: [],
 	};
 
 	parentItem.children = [...(parentItem.children || []), newChild];

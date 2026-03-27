@@ -32,14 +32,14 @@ SveltyCMS provides a **Hardened 2FA System** using Time-based One-Time Passwords
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| POST | `/api/auth/2fa/setup` | Generate new TOTP secret and QR code. |
-| POST | `/api/auth/2fa/verify-setup` | Validate the first code to enable 2FA. |
-| POST | `/api/auth/2fa/verify` | Standard verification during login/actions. |
-| POST | `/api/auth/2fa/disable` | Deactivate 2FA for the current user. |
-| GET | `/api/auth/2fa/backup-codes` | Retrieve 2FA status and remaining code count. |
-| POST | `/api/auth/2fa/backup-codes` | Regenerate a new set of backup codes. |
+| Method | Endpoint                     | Description                                   |
+| :----- | :--------------------------- | :-------------------------------------------- |
+| POST   | `/api/auth/2fa/setup`        | Generate new TOTP secret and QR code.         |
+| POST   | `/api/auth/2fa/verify-setup` | Validate the first code to enable 2FA.        |
+| POST   | `/api/auth/2fa/verify`       | Standard verification during login/actions.   |
+| POST   | `/api/auth/2fa/disable`      | Deactivate 2FA for the current user.          |
+| GET    | `/api/auth/2fa/backup-codes` | Retrieve 2FA status and remaining code count. |
+| POST   | `/api/auth/2fa/backup-codes` | Regenerate a new set of backup codes.         |
 
 ---
 
@@ -48,8 +48,10 @@ SveltyCMS provides a **Hardened 2FA System** using Time-based One-Time Passwords
 The setup process requires a two-step handshake: **Handshake** (Setup) → **Confirmation** (Verify Setup).
 
 ### A. Initiation (POST)
+
 **Endpoint**: `/api/auth/2fa/setup`
 **Response**:
+
 ```json
 {
   "success": true,
@@ -62,6 +64,7 @@ The setup process requires a two-step handshake: **Handshake** (Setup) → **Con
 ```
 
 ### B. Confirmation (POST)
+
 **Endpoint**: `/api/auth/2fa/verify-setup`
 **Payload**: `{ "verificationCode": "123456", "secret": "..." }`
 **Mechanics**: Finalizes the activation in the database. 2FA is not enforced until this step succeeds.
@@ -71,9 +74,11 @@ The setup process requires a two-step handshake: **Handshake** (Setup) → **Con
 ## 2. Verification Endpoints
 
 ### Standard Validation (POST)
+
 **Endpoint**: `/api/auth/2fa/verify`
 **Payload**: `{ "userId": "...", "code": "..." }`
-**Logic**: 
+**Logic**:
+
 - Accepts both **6-digit TOTP** codes and **8-character backup codes**.
 - Implements a ±30s time window to account for clock drift.
 - **Security**: Failed attempts are logged and may trigger account lockout via the Security Middleware.
@@ -83,8 +88,10 @@ The setup process requires a two-step handshake: **Handshake** (Setup) → **Con
 ## 3. Recovery & Status
 
 ### Regenerate Backup Codes (POST)
+
 **Endpoint**: `/api/auth/2fa/backup-codes`
 **Mechanics**: Immediately invalidates all existing backup codes and generates a new set of 10.
+
 > [!WARNING]
 > This endpoint returns raw codes **once**. They are immediately hashed in the database using Argon2id and cannot be retrieved again.
 
@@ -103,6 +110,7 @@ SveltyCMS 2026 protects 2FA seeds against future decryption by quantum computers
 ## 5. Sequence Diagrams
 
 ### Login with 2FA
+
 ```mermaid
 sequenceDiagram
     participant User

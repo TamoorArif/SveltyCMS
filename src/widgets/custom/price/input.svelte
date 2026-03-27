@@ -11,8 +11,8 @@ Renders a currency selector and a number input side-by-side.
 -->
 
 <script lang="ts">
-import type { FieldType } from './index';
-import type { PriceValue } from './types';
+import type { FieldType } from "./index";
+import type { PriceValue } from "./types";
 
 interface Props {
 	field: FieldType;
@@ -23,13 +23,19 @@ let { field, value = $bindable() }: Props = $props();
 
 // Initialize value if null/undefined with a reactive default
 $effect(() => {
-	if (value === null || value === undefined || typeof value !== 'object') {
-		const defaultCurr = (field as any).defaultCurrency || (field as any).defaults?.defaultCurrency || 'EUR';
+	if (value === null || value === undefined || typeof value !== "object") {
+		const defaultCurr =
+			(field as any).defaultCurrency ||
+			(field as any).defaults?.defaultCurrency ||
+			"EUR";
 		value = { amount: null, currency: defaultCurr };
 	}
 });
 
-const currencies = $derived((field as any).allowedCurrencies || (field as any).defaults?.allowedCurrencies || ['EUR', 'USD', 'GBP']);
+const currencies = $derived(
+	(field as any).allowedCurrencies ||
+		(field as any).defaults?.allowedCurrencies || ["EUR", "USD", "GBP"],
+);
 </script>
 
 <div class="flex gap-2 w-full">

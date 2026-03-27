@@ -13,14 +13,14 @@
  -->
 
 <script lang="ts">
-import Sanitize from '@src/utils/sanitize.svelte';
+import Sanitize from "@src/utils/sanitize.svelte";
 
 let {
-	body = '',
-	value = '',
-	type = 'text',
+	body = "",
+	value = "",
+	type = "text",
 	// The close function is passed down automatically by DialogManager
-	close
+	close,
 }: {
 	body?: string;
 	value?: string;

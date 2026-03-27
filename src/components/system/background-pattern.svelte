@@ -32,26 +32,38 @@ and configurable quality settings for weaker devices.
 -->
 
 <script lang="ts">
-import { onDestroy, onMount, untrack } from 'svelte';
-import { cubicOut } from 'svelte/easing';
-import { Tween } from 'svelte/motion';
-import { SvelteMap } from 'svelte/reactivity';
-import { browser } from '$app/environment';
+import { onDestroy, onMount, untrack } from "svelte";
+import { cubicOut } from "svelte/easing";
+import { Tween } from "svelte/motion";
+import { SvelteMap } from "svelte/reactivity";
+import { browser } from "$app/environment";
 
 // Define props with default values
 const {
-	background = 'white',
-	startDirection = 'TopLeft',
-	endDirection = 'BottomRight',
-	animationDirection = 'normal',
-	quality = 'medium', // New quality setting
-	autoDetectPerformance = true // Automatically adjust quality based on device
+	background = "white",
+	startDirection = "TopLeft",
+	endDirection = "BottomRight",
+	animationDirection = "normal",
+	quality = "medium", // New quality setting
+	autoDetectPerformance = true, // Automatically adjust quality based on device
 } = $props<{
-	background?: 'white' | '#242728';
-	startDirection?: 'TopLeft' | 'TopRight' | 'MiddleLeft' | 'MiddleRight' | 'BottomLeft' | 'BottomRight';
-	endDirection?: 'TopLeft' | 'TopRight' | 'MiddleLeft' | 'MiddleRight' | 'BottomLeft' | 'BottomRight';
-	animationDirection?: 'normal' | 'reverse';
-	quality?: 'low' | 'medium' | 'high';
+	background?: "white" | "#242728";
+	startDirection?:
+		| "TopLeft"
+		| "TopRight"
+		| "MiddleLeft"
+		| "MiddleRight"
+		| "BottomLeft"
+		| "BottomRight";
+	endDirection?:
+		| "TopLeft"
+		| "TopRight"
+		| "MiddleLeft"
+		| "MiddleRight"
+		| "BottomLeft"
+		| "BottomRight";
+	animationDirection?: "normal" | "reverse";
+	quality?: "low" | "medium" | "high";
 	autoDetectPerformance?: boolean;
 }>();
 
@@ -69,19 +81,19 @@ let shouldReduceMotion = $state(false);
 // Single animation progress value
 const animationProgress = new Tween(0, {
 	duration: 8000,
-	easing: cubicOut
+	easing: cubicOut,
 });
 
 // Performance detection with proper types
-function detectPerformance(): 'low' | 'medium' | 'high' {
+function detectPerformance(): "low" | "medium" | "high" {
 	if (!browser) {
-		return 'medium';
+		return "medium";
 	}
 
 	// Properly typed Network Information API
 	interface NavigatorConnection extends Navigator {
 		connection?: {
-			effectiveType?: '4g' | '3g' | '2g' | 'slow-2g';
+			effectiveType?: "4g" | "3g" | "2g" | "slow-2g";
 		};
 	}
 
@@ -118,11 +130,11 @@ function detectPerformance(): 'low' | 'medium' | 'high' {
 
 	// Connection speed
 	if (connection?.effectiveType) {
-		if (connection.effectiveType === '4g') {
+		if (connection.effectiveType === "4g") {
 			score += 1;
-		} else if (connection.effectiveType === '3g') {
+		} else if (connection.effectiveType === "3g") {
 			score -= 1;
-		} else if (connection.effectiveType === '2g') {
+		} else if (connection.effectiveType === "2g") {
 			score -= 2;
 		}
 	}
@@ -133,20 +145,20 @@ function detectPerformance(): 'low' | 'medium' | 'high' {
 	}
 
 	if (score >= 3) {
-		return 'high';
+		return "high";
 	}
 	if (score >= 1) {
-		return 'medium';
+		return "medium";
 	}
-	return 'low';
+	return "low";
 }
 
 // Apply quality settings
-function applyQualitySettings(detectedQuality: 'low' | 'medium' | 'high') {
+function applyQualitySettings(detectedQuality: "low" | "medium" | "high") {
 	const settings = {
 		low: { paths: 6, duration: 6000 },
 		medium: { paths: 12, duration: 8000 },
-		high: { paths: 18, duration: 10_000 }
+		high: { paths: 18, duration: 10_000 },
 	};
 
 	const config = settings[detectedQuality];
@@ -159,7 +171,12 @@ function applyQualitySettings(detectedQuality: 'low' | 'medium' | 'high') {
 // Optimized path generation with memoization
 const pathCache = new SvelteMap<string, string>();
 
-function generatePath(start: string, end: string, index: number, position: number): string {
+function generatePath(
+	start: string,
+	end: string,
+	index: number,
+	position: number,
+): string {
 	const cacheKey = `${start}-${end}-${index}-${position}`;
 	if (pathCache.has(cacheKey)) {
 		return pathCache.get(cacheKey)!;
@@ -172,7 +189,7 @@ function generatePath(start: string, end: string, index: number, position: numbe
 		MiddleLeft: { x: -200, y: 158 },
 		MiddleRight: { x: 896, y: 158 },
 		BottomLeft: { x: -200, y: 416 },
-		BottomRight: { x: 896, y: 416 }
+		BottomRight: { x: 896, y: 416 },
 	};
 
 	const startCoord = coords[start as keyof typeof coords];
@@ -198,9 +215,12 @@ const paths = $derived(
 			d: generatePath(startDirection, endDirection, i, i % 2 === 0 ? 1 : -1),
 			width: 0.8 + i * 0.1,
 			opacity: baseOpacity,
-			color: background === 'white' ? `rgba(15,23,42,${baseOpacity})` : `rgba(255,255,255,${baseOpacity})`
+			color:
+				background === "white"
+					? `rgba(15,23,42,${baseOpacity})`
+					: `rgba(255,255,255,${baseOpacity})`,
 		};
-	})
+	}),
 );
 
 // Animation control
@@ -255,7 +275,7 @@ function setupIntersectionObserver() {
 				}
 			});
 		},
-		{ threshold: 0.1 }
+		{ threshold: 0.1 },
 	);
 
 	observer.observe(svgElement);
@@ -267,7 +287,9 @@ function setupIntersectionObserver() {
 onMount(() => {
 	if (browser) {
 		// Check for reduced motion preference
-		shouldReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		shouldReduceMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
 
 		// Auto-detect performance if enabled
 		if (autoDetectPerformance) {
@@ -301,7 +323,9 @@ function getStrokeDashOffset(pathIndex: number): number {
 	const staggerDelay = pathIndex * 0.1;
 	const adjustedProgress = Math.max(0, Math.min(1, progress - staggerDelay));
 
-	return animationDirection === 'reverse' ? 1000 * adjustedProgress : 1000 * (1 - adjustedProgress);
+	return animationDirection === "reverse"
+		? 1000 * adjustedProgress
+		: 1000 * (1 - adjustedProgress);
 }
 </script>
 

@@ -16,8 +16,8 @@
 -->
 
 <script lang="ts">
-import { browser } from '$app/environment';
-import type { PageData } from './$types';
+import { browser } from "$app/environment";
+import type { PageData } from "./$types";
 
 // props
 interface Props {
@@ -29,7 +29,7 @@ const { data }: Props = $props();
 // Use $derived to ensure reactivity
 const emailList = $derived({
 	...data,
-	path: data.path ?? null
+	path: data.path ?? null,
 });
 </script>
 

@@ -9,16 +9,16 @@ Features:
 -->
 
 <script lang="ts">
-import TagEditorModal from '@src/components/media/tag-editor/tag-editor-modal.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import type { MediaBase, MediaImage } from '@utils/media/media-models';
-import { formatBytes } from '@utils/utils';
-import type { SvelteSet } from 'svelte/reactivity';
-import { scale } from 'svelte/transition';
+import TagEditorModal from "@src/components/media/tag-editor/tag-editor-modal.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import type { MediaBase, MediaImage } from "@utils/media/media-models";
+import { formatBytes } from "@utils/utils";
+import type { SvelteSet } from "svelte/reactivity";
+import { scale } from "svelte/transition";
 
 interface Props {
 	filteredFiles?: (MediaBase | MediaImage)[];
-	gridSize?: 'tiny' | 'small' | 'medium' | 'large';
+	gridSize?: "tiny" | "small" | "medium" | "large";
 	isSelectionMode?: boolean;
 	selectedFiles: SvelteSet<string>;
 	ondeleteImage?: (file: MediaBase | MediaImage) => void;
@@ -28,37 +28,37 @@ interface Props {
 
 let {
 	filteredFiles = [],
-	gridSize = 'medium',
+	gridSize = "medium",
 	isSelectionMode = false,
 	selectedFiles = $bindable(),
 	ondeleteImage = () => {},
 	onEditImage = () => {},
-	onUpdateImage = () => {}
+	onUpdateImage = () => {},
 }: Props = $props();
 
 let showTagModal = $state(false);
 let taggingFile = $state<MediaImage | null>(null);
 
 function formatMimeType(mime?: string): string {
-	if (!mime) return 'Unknown';
-	const parts = mime.split('/');
+	if (!mime) return "Unknown";
+	const parts = mime.split("/");
 	return parts[1] ? parts[1].toUpperCase() : parts[0].toUpperCase();
 }
 
 function getFileIcon(file: MediaBase): string {
-	const fileName = file.filename || '';
-	const fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+	const fileName = file.filename || "";
+	const fileExt = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 	switch (true) {
-		case file.type === 'image':
-			return 'fa-solid:image';
-		case file.type === 'video':
-			return 'fa-solid:video';
-		case file.type === 'audio':
-			return 'fa-solid:play-circle';
-		case fileExt === '.pdf':
-			return 'vscode-icons:file-type-pdf2';
+		case file.type === "image":
+			return "fa-solid:image";
+		case file.type === "video":
+			return "fa-solid:video";
+		case file.type === "audio":
+			return "fa-solid:play-circle";
+		case fileExt === ".pdf":
+			return "vscode-icons:file-type-pdf2";
 		default:
-			return 'vscode-icons:file';
+			return "vscode-icons:file";
 	}
 }
 
@@ -78,7 +78,7 @@ function handleItemClick(file: MediaBase | MediaImage) {
 }
 
 function handleKeyDown(e: KeyboardEvent, file: MediaBase | MediaImage) {
-	if (e.key === 'Enter' || e.key === ' ') {
+	if (e.key === "Enter" || e.key === " ") {
 		e.preventDefault();
 		toggleSelection(file);
 	}

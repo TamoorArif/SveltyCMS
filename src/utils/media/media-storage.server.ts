@@ -123,7 +123,10 @@ export async function deleteFile(url: string): Promise<void> {
 
   if (!full.startsWith(MEDIA_ROOT_FULL)) {
     const { logger } = await import("@utils/logger.server");
-    logger.error("Attempted path traversal delete blocked", { path: rel, resolved: full });
+    logger.error("Attempted path traversal delete blocked", {
+      path: rel,
+      resolved: full,
+    });
     return;
   }
 

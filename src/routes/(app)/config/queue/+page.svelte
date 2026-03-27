@@ -4,12 +4,12 @@
 -->
 
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { page } from '$app/stores';
-import PageTitle from '@src/components/page-title.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { formatDistanceToNow } from 'date-fns';
+import { enhance } from "$app/forms";
+import { invalidateAll } from "$app/navigation";
+import { page } from "$app/stores";
+import PageTitle from "@src/components/page-title.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { formatDistanceToNow } from "date-fns";
 
 let { data } = $props();
 
@@ -18,43 +18,43 @@ let isDeleting = $state(false);
 let isClearing = $state(false);
 
 const statusColors: Record<string, string> = {
-	pending: 'preset-tonal-surface',
-	running: 'preset-filled-primary-500',
-	completed: 'preset-filled-success-500',
-	failed: 'preset-filled-error-500'
+	pending: "preset-tonal-surface",
+	running: "preset-filled-primary-500",
+	completed: "preset-filled-success-500",
+	failed: "preset-filled-error-500",
 };
 
 const statusIcons: Record<string, string> = {
-	pending: 'mdi:clock-outline',
-	running: 'mdi:loading animate-spin',
-	completed: 'mdi:check-circle-outline',
-	failed: 'mdi:alert-circle-outline'
+	pending: "mdi:clock-outline",
+	running: "mdi:loading animate-spin",
+	completed: "mdi:check-circle-outline",
+	failed: "mdi:alert-circle-outline",
 };
 
 function formatDate(date: string | Date | undefined) {
-	if (!date) return 'N/A';
+	if (!date) return "N/A";
 	try {
-		const d = typeof date === 'string' ? new Date(date) : date;
+		const d = typeof date === "string" ? new Date(date) : date;
 		return formatDistanceToNow(d, { addSuffix: true });
 	} catch (_e) {
-		return 'Invalid Date';
+		return "Invalid Date";
 	}
 }
 
 function getPaginationUrl(offset: number) {
 	const params = new URLSearchParams($page.url.searchParams);
-	params.set('offset', offset.toString());
+	params.set("offset", offset.toString());
 	return `?${params.toString()}`;
 }
 
 function getFilterUrl(status?: string) {
 	const params = new URLSearchParams($page.url.searchParams);
 	if (status) {
-		params.set('status', status);
+		params.set("status", status);
 	} else {
-		params.delete('status');
+		params.delete("status");
 	}
-	params.set('offset', '0'); // Reset to first page
+	params.set("offset", "0"); // Reset to first page
 	return `?${params.toString()}`;
 }
 </script>

@@ -54,7 +54,13 @@ export class MongoSystemVirtualFolderMethods {
 
       const result = await SystemVirtualFolderModel.findOneAndUpdate(
         query,
-        { $setOnInsert: { ...folder, _id: generateId(), ...(tenantId && { tenantId }) } },
+        {
+          $setOnInsert: {
+            ...folder,
+            _id: generateId(),
+            ...(tenantId && { tenantId }),
+          },
+        },
         { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
       )
         .lean()
@@ -153,7 +159,10 @@ export class MongoSystemVirtualFolderMethods {
       if (!updatedFolder) {
         return {
           success: false,
-          error: { code: "NOT_FOUND", message: "Folder not found or access denied" },
+          error: {
+            code: "NOT_FOUND",
+            message: "Folder not found or access denied",
+          },
           message: "Folder not found",
         };
       }
@@ -190,12 +199,17 @@ export class MongoSystemVirtualFolderMethods {
 
       const updateQuery: any = { _id: contentId };
       if (tenantId) updateQuery.tenantId = tenantId;
-      const result = await MediaModel.updateOne(updateQuery, { $set: { folderId: folder._id } });
+      const result = await MediaModel.updateOne(updateQuery, {
+        $set: { folderId: folder._id },
+      });
 
       if (result.matchedCount === 0) {
         return {
           success: false,
-          error: { code: "NOT_FOUND", message: "Media item not found or access denied" },
+          error: {
+            code: "NOT_FOUND",
+            message: "Media item not found or access denied",
+          },
           message: "Media item not found",
         };
       }

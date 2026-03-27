@@ -83,7 +83,9 @@ export class PostgreSQLAdapter extends AdapterCore implements IDBAdapter {
       jobs: new JobsModule(this),
       tenants: {
         create: async (
-          tenant: import("../../db-interface").EntityCreate<Tenant> & { _id?: DatabaseId },
+          tenant: import("../../db-interface").EntityCreate<Tenant> & {
+            _id?: DatabaseId;
+          },
         ) =>
           this.wrap(async () => {
             const id = (tenant._id || utils.generateId()) as string;

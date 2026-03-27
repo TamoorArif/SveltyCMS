@@ -135,7 +135,9 @@ export const POST = apiHandler(async ({ request, locals, url }) => {
 
   const result = safeParse(addUserTokenSchema, formData);
   if (!result.success) {
-    logger.warn("Invalid form data for user creation", { issues: result.issues });
+    logger.warn("Invalid form data for user creation", {
+      issues: result.issues,
+    });
     throw new AppError("Invalid form data", 400, "VALIDATION_ERROR");
   }
 
@@ -153,11 +155,17 @@ export const POST = apiHandler(async ({ request, locals, url }) => {
     throw new AppError("Invalid value for token validity", 400, "INVALID_EXPIRATION");
   }
 
-  const checkCriteria: { email: string; tenantId?: string | null } = { email, tenantId };
+  const checkCriteria: { email: string; tenantId?: string | null } = {
+    email,
+    tenantId,
+  };
   const existingUser = await auth.checkUser(checkCriteria);
 
   if (existingUser) {
-    logger.warn("Attempted to create a user that already exists", { email, tenantId });
+    logger.warn("Attempted to create a user that already exists", {
+      email,
+      tenantId,
+    });
     throw new AppError("User already exists in this tenant", 409, "USER_EXISTS");
   }
 
@@ -176,7 +184,10 @@ export const POST = apiHandler(async ({ request, locals, url }) => {
     tenantId,
   });
 
-  logger.info("User invitation created successfully", { userId: newUser._id, tenantId });
+  logger.info("User invitation created successfully", {
+    userId: newUser._id,
+    tenantId,
+  });
 
   // Trigger email invitation
   await sendUserToken(url.origin, email, token, role, expirationTime);
@@ -219,7 +230,11 @@ async function sendUserToken(
 
   if (!response.ok) {
     const errorBody = await response.text();
-    logger.error("Failed to send invite email", { status: response.status, errorBody, email });
+    logger.error("Failed to send invite email", {
+      status: response.status,
+      errorBody,
+      email,
+    });
     throw new AppError(`Failed to send email: ${response.statusText}`, 502, "EMAIL_SEND_FAILED");
   }
 

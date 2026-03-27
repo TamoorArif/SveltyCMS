@@ -33,7 +33,12 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
     window.sessionStorage.setItem("sveltycms_welcome_modal_shown", "true");
     window.localStorage.setItem(
       "sveltycms_consent",
-      JSON.stringify({ responded: true, necessary: true, analytics: false, marketing: false }),
+      JSON.stringify({
+        responded: true,
+        necessary: true,
+        analytics: false,
+        marketing: false,
+      }),
     );
   });
 

@@ -24,17 +24,21 @@
 - Enhanced visual feedback for drag & drop
 -->
 <script lang="ts">
-import type { ContentNode, DatabaseId } from '@databases/db-interface';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { sortContentNodes } from '@src/content/content-utils';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { tick } from 'svelte';
-import { flip } from 'svelte/animate';
-import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS } from 'svelte-dnd-action';
-import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { screen } from '@src/stores/screen-size-store.svelte.ts';
+import type { ContentNode, DatabaseId } from "@databases/db-interface";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { sortContentNodes } from "@src/content/content-utils";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { tick } from "svelte";
+import { flip } from "svelte/animate";
+import {
+	dndzone,
+	SHADOW_ITEM_MARKER_PROPERTY_NAME,
+	TRIGGERS,
+} from "svelte-dnd-action";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { screen } from "@src/stores/screen-size-store.svelte.ts";
 // Components
-import TreeViewNode from './tree-view-node.svelte';
+import TreeViewNode from "./tree-view-node.svelte";
 
 export interface TreeViewItem extends Record<string, any> {
 	_id?: any;
@@ -43,7 +47,7 @@ export interface TreeViewItem extends Record<string, any> {
 	isDraggable?: boolean;
 	isDropAllowed?: boolean;
 	name: string;
-	nodeType: 'category' | 'collection';
+	nodeType: "category" | "collection";
 	order?: number;
 	parent: string | null;
 	path: string;
@@ -71,11 +75,11 @@ let {
 	onDeleteNode,
 	onDuplicateNode,
 	selectedCategoryId = null,
-	onSelectCategory
+	onSelectCategory,
 }: Props = $props();
 
 // Search and UI State
-let searchText = $state('');
+let searchText = $state("");
 let treeRoots = $state<EnhancedTreeViewItem[]>([]);
 let initialized = $state(false);
 // eslint-disable-next-line svelte/no-unnecessary-state-wrap
@@ -83,21 +87,21 @@ let expandedNodes = $state(new SvelteSet<string>());
 let isDragging = $state(false);
 // eslint-disable-next-line svelte/no-unnecessary-state-wrap
 let nodeSnapshot = $state(new SvelteMap<string, EnhancedTreeViewItem>());
-let lastContentNodesHash = $state('');
+let lastContentNodesHash = $state("");
 /** Hash of the nodes we last sent in saveTreeData; skip rebuilding until contentNodes matches this (avoids revert on same-level or next move). */
-let lastPushedHash = $state('');
+let lastPushedHash = $state("");
 /** Last structureKey we saw; when it changes, clear hash guards to force rebuild from server order. */
 let lastStructureKey = $state(0);
 let rebuildTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Accessibility State
-let announcement = $state('');
+let announcement = $state("");
 let announcementId = $state(0);
 let keyboardReorderMode = $state<string | null>(null);
 let rovingTabIndex = $state<string | null>(null); // ID of node with tabindex="0"
 
 // Typeahead State
-let typeaheadBuffer = $state('');
+let typeaheadBuffer = $state("");
 let typeaheadTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Enhanced Item Type
@@ -128,15 +132,15 @@ $effect(() => {
 	// When parent signals fresh server data (e.g. after save), clear hash guards so we rebuild from server order
 	if (structureKey !== lastStructureKey) {
 		lastStructureKey = structureKey;
-		lastContentNodesHash = '';
-		lastPushedHash = '';
+		lastContentNodesHash = "";
+		lastPushedHash = "";
 	}
 
 	const currentHash =
 		contentNodes
 			.map((n) => `${n._id}:${n.parentId}:${n.order}`)
 			.sort()
-			.join('|') + contentNodes.length;
+			.join("|") + contentNodes.length;
 
 	// Never rebuild from stale contentNodes when we've pushed an update that parent hasn't reflected yet
 	if (lastPushedHash && currentHash !== lastPushedHash) {
@@ -144,7 +148,7 @@ $effect(() => {
 	}
 	// Parent synced (contentNodes matches what we sent); clear guard so server-driven updates can rebuild later
 	if (lastPushedHash && currentHash === lastPushedHash) {
-		lastPushedHash = '';
+		lastPushedHash = "";
 	}
 
 	if (currentHash !== lastContentNodesHash) {
@@ -154,31 +158,31 @@ $effect(() => {
 
 		rebuildTimeout = setTimeout(() => {
 			lastContentNodesHash = currentHash;
-			lastPushedHash = '';
+			lastPushedHash = "";
 
 			// Sort by parent then order so UI always reflects DB order (do not rely on array order)
 			const sortedNodes = [...contentNodes].sort((a, b) => {
-				const parentA = a.parentId != null ? String(a.parentId) : '';
-				const parentB = b.parentId != null ? String(b.parentId) : '';
+				const parentA = a.parentId != null ? String(a.parentId) : "";
+				const parentB = b.parentId != null ? String(b.parentId) : "";
 				if (parentA !== parentB) return parentA.localeCompare(parentB);
 				const orderDiff = (a.order ?? 0) - (b.order ?? 0);
 				if (orderDiff !== 0) return orderDiff;
-				return (a.name ?? '').localeCompare(b.name ?? '');
+				return (a.name ?? "").localeCompare(b.name ?? "");
 			});
 
 			const flatItems: TreeViewItem[] = sortedNodes.map((n) => ({
 				id: String(n._id),
 				_id: n._id,
 				name: n.name,
-				nodeType: n.nodeType || (n as any).type || 'collection',
+				nodeType: n.nodeType || (n as any).type || "collection",
 				parent: n.parentId ? String(n.parentId) : null,
 				order: n.order ?? 0,
-				path: '', // Set below from id (path = id for root, parentPath.id for nested)
+				path: "", // Set below from id (path = id for root, parentPath.id for nested)
 				icon: n.icon,
 				slug: n.slug,
 				description: n.description,
 				isDraggable: true,
-				isDropAllowed: true
+				isDropAllowed: true,
 			}));
 			const flatItemsWithPaths = recalculatePaths(flatItems);
 			treeRoots = buildTree(flatItemsWithPaths);
@@ -232,11 +236,19 @@ function buildTree(flatItems: TreeViewItem[]): EnhancedTreeViewItem[] {
 	return roots;
 }
 
-function flattenTree(nodes: EnhancedTreeViewItem[], parentId: string | null = null): TreeViewItem[] {
+function flattenTree(
+	nodes: EnhancedTreeViewItem[],
+	parentId: string | null = null,
+): TreeViewItem[] {
 	let flat: TreeViewItem[] = [];
 
 	nodes.forEach((node, index) => {
-		const { children, level: _level, isDndShadowItem: _isDndShadowItem, ...rest } = node;
+		const {
+			children,
+			level: _level,
+			isDndShadowItem: _isDndShadowItem,
+			...rest
+		} = node;
 		const newItem: TreeViewItem = { ...rest, parent: parentId, order: index };
 		flat.push(newItem);
 
@@ -248,7 +260,10 @@ function flattenTree(nodes: EnhancedTreeViewItem[], parentId: string | null = nu
 	return flat;
 }
 
-function findNode(nodes: EnhancedTreeViewItem[], id: string): EnhancedTreeViewItem | null {
+function findNode(
+	nodes: EnhancedTreeViewItem[],
+	id: string,
+): EnhancedTreeViewItem | null {
 	for (const node of nodes) {
 		if (node.id === id) {
 			return node;
@@ -263,7 +278,10 @@ function findNode(nodes: EnhancedTreeViewItem[], id: string): EnhancedTreeViewIt
 	return null;
 }
 
-function getParent(rootNodes: EnhancedTreeViewItem[], childId: string): EnhancedTreeViewItem | null {
+function getParent(
+	rootNodes: EnhancedTreeViewItem[],
+	childId: string,
+): EnhancedTreeViewItem | null {
 	for (const node of rootNodes) {
 		if (node.children.some((c) => c.id === childId)) {
 			return node;
@@ -276,7 +294,9 @@ function getParent(rootNodes: EnhancedTreeViewItem[], childId: string): Enhanced
 	return null;
 }
 
-function getVisibleNodes(nodes: EnhancedTreeViewItem[]): EnhancedTreeViewItem[] {
+function getVisibleNodes(
+	nodes: EnhancedTreeViewItem[],
+): EnhancedTreeViewItem[] {
 	const visible: EnhancedTreeViewItem[] = [];
 
 	function traverse(items: EnhancedTreeViewItem[]) {
@@ -292,7 +312,11 @@ function getVisibleNodes(nodes: EnhancedTreeViewItem[]): EnhancedTreeViewItem[] 
 	return visible;
 }
 
-function collectIdsToExpand(nodes: EnhancedTreeViewItem[], search: string, ids: Set<string>): boolean {
+function collectIdsToExpand(
+	nodes: EnhancedTreeViewItem[],
+	search: string,
+	ids: Set<string>,
+): boolean {
 	let hasMatch = false;
 	for (const node of nodes) {
 		const matches = node.name.toLowerCase().includes(search);
@@ -326,26 +350,26 @@ function expandAll() {
 		});
 	};
 	recurse(treeRoots);
-	announce('Expanded all categories');
+	announce("Expanded all categories");
 }
 
 function collapseAll() {
 	expandedNodes.clear();
-	announce('Collapsed all categories');
+	announce("Collapsed all categories");
 }
 
 function clearSearch() {
-	searchText = '';
-	announce('Search cleared');
+	searchText = "";
+	announce("Search cleared");
 }
 
 function toggleNode(id: string) {
 	if (expandedNodes.has(id)) {
 		expandedNodes.delete(id);
-		announce('Collapsed');
+		announce("Collapsed");
 	} else {
 		expandedNodes.add(id);
-		announce('Expanded');
+		announce("Expanded");
 	}
 }
 
@@ -354,7 +378,7 @@ function announce(message: string) {
 	announcementId++;
 	setTimeout(() => {
 		if (announcement === message) {
-			announcement = '';
+			announcement = "";
 		}
 	}, 1000);
 }
@@ -364,7 +388,7 @@ function announce(message: string) {
 function handleRootConsider(e: CustomEvent) {
 	const { items, info } = e.detail;
 
-	if (info.trigger === 'dragStarted') {
+	if (info.trigger === "dragStarted") {
 		isDragging = true;
 		// Take snapshot of current tree state including all children
 		nodeSnapshot.clear();
@@ -378,7 +402,7 @@ function handleRootConsider(e: CustomEvent) {
 function handleNestedConsider(e: CustomEvent, parentId: string) {
 	const { items, info } = e.detail;
 
-	if (info.trigger === 'dragStarted') {
+	if (info.trigger === "dragStarted") {
 		isDragging = true;
 		nodeSnapshot.clear();
 		takeSnapshot(treeRoots);
@@ -387,7 +411,9 @@ function handleNestedConsider(e: CustomEvent, parentId: string) {
 	const parent = findNode(treeRoots, parentId);
 	if (parent) {
 		// Rehydrate to preserve children
-		parent.children = items.map((item: EnhancedTreeViewItem) => rehydrateItem(item));
+		parent.children = items.map((item: EnhancedTreeViewItem) =>
+			rehydrateItem(item),
+		);
 		treeRoots = [...treeRoots]; // Trigger reactivity
 	}
 }
@@ -398,18 +424,26 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 	if (info?.trigger === TRIGGERS.DROPPED_INTO_ANOTHER) return;
 
 	// Get IDs of items being moved
-	const movingIds = new Set<string>(newZoneItems.map((i: EnhancedTreeViewItem) => i.id));
+	const movingIds = new Set<string>(
+		newZoneItems.map((i: EnhancedTreeViewItem) => i.id),
+	);
 
 	// CYCLE DETECTION: Prevent dropping parent into its own child
 	if (targetParentId && movingIds.size > 0) {
 		for (const movedId of movingIds) {
 			if (isAncestorOf(movedId, targetParentId, treeRoots)) {
 				const movedNode = findNode(treeRoots, movedId);
-				announce(`Cannot move "${movedNode?.name || 'item'}" into its own sub-category`);
+				announce(
+					`Cannot move "${movedNode?.name || "item"}" into its own sub-category`,
+				);
 
 				// Revert to snapshot
 				if (nodeSnapshot.size > 0) {
-					treeRoots = buildTree(flattenTree(Array.from(nodeSnapshot.values()).filter((n) => !n.parent)));
+					treeRoots = buildTree(
+						flattenTree(
+							Array.from(nodeSnapshot.values()).filter((n) => !n.parent),
+						),
+					);
 				}
 				isDragging = false;
 				return;
@@ -419,19 +453,30 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 
 	// DUPLICATE NAME IN TARGET: No two siblings with same name (case-insensitive, trimmed)
 	const nameNorm = (name: unknown) =>
-		String(name ?? '')
+		String(name ?? "")
 			.trim()
 			.toLowerCase();
 	for (const movedItem of newZoneItems) {
 		if (!movingIds.has(movedItem.id)) continue;
 		const movedName = nameNorm(movedItem.name);
 		if (!movedName) continue;
-		const hasDuplicate = newZoneItems.some((other: EnhancedTreeViewItem) => other.id !== movedItem.id && nameNorm(other.name) === movedName);
+		const hasDuplicate = newZoneItems.some(
+			(other: EnhancedTreeViewItem) =>
+				other.id !== movedItem.id && nameNorm(other.name) === movedName,
+		);
 		if (hasDuplicate) {
-			announce('A collection with this name already exists in the target category.');
-			toast.warning('A collection with this name already exists in the target category.');
+			announce(
+				"A collection with this name already exists in the target category.",
+			);
+			toast.warning(
+				"A collection with this name already exists in the target category.",
+			);
 			if (nodeSnapshot.size > 0) {
-				treeRoots = buildTree(flattenTree(Array.from(nodeSnapshot.values()).filter((n) => !n.parent)));
+				treeRoots = buildTree(
+					flattenTree(
+						Array.from(nodeSnapshot.values()).filter((n) => !n.parent),
+					),
+				);
 			}
 			isDragging = false;
 			return;
@@ -445,7 +490,7 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 			.filter((n) => !movingIds.has(n.id))
 			.map((n) => ({
 				...n,
-				children: cleanTree(n.children || [])
+				children: cleanTree(n.children || []),
 			}));
 	}
 
@@ -462,12 +507,16 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 			return {
 				...item,
 				parent: null,
-				children: fromCleaned ? fromCleaned.children || [] : item.children || []
+				children: fromCleaned
+					? fromCleaned.children || []
+					: item.children || [],
 			};
 		});
 	} else {
 		// Dropped into a parent - find target and update its children. Use children from cleanedRoots per item.
-		const updateTargetParent = (nodes: EnhancedTreeViewItem[]): EnhancedTreeViewItem[] => {
+		const updateTargetParent = (
+			nodes: EnhancedTreeViewItem[],
+		): EnhancedTreeViewItem[] => {
 			return nodes.map((n) => {
 				if (n.id === targetParentId) {
 					return {
@@ -477,14 +526,16 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 							return {
 								...item,
 								parent: targetParentId,
-								children: fromCleaned ? fromCleaned.children || [] : item.children || []
+								children: fromCleaned
+									? fromCleaned.children || []
+									: item.children || [],
 							};
-						})
+						}),
 					};
 				}
 				return {
 					...n,
-					children: updateTargetParent(n.children || [])
+					children: updateTargetParent(n.children || []),
 				};
 			});
 		};
@@ -492,25 +543,37 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 	}
 
 	// Ensure moved items appear only in their new location: strip them from any other node's children
-	function stripMovedFromTreeExceptTarget(nodes: EnhancedTreeViewItem[], ids: Set<string>, targetParentId: string | null): EnhancedTreeViewItem[] {
+	function stripMovedFromTreeExceptTarget(
+		nodes: EnhancedTreeViewItem[],
+		ids: Set<string>,
+		targetParentId: string | null,
+	): EnhancedTreeViewItem[] {
 		return nodes.map((n) => {
 			const isDropTarget = targetParentId !== null && n.id === targetParentId;
 			const children = n.children || [];
-			const filtered = isDropTarget ? children : children.filter((c) => !ids.has(c.id));
+			const filtered = isDropTarget
+				? children
+				: children.filter((c) => !ids.has(c.id));
 			return {
 				...n,
-				children: stripMovedFromTreeExceptTarget(filtered, ids, targetParentId)
+				children: stripMovedFromTreeExceptTarget(filtered, ids, targetParentId),
 			};
 		});
 	}
-	newTreeRoots = stripMovedFromTreeExceptTarget(newTreeRoots, movingIds, targetParentId);
+	newTreeRoots = stripMovedFromTreeExceptTarget(
+		newTreeRoots,
+		movingIds,
+		targetParentId,
+	);
 
 	// Recompute path (and parent/order) for every node so moved items get correct path
 	const flatAfterMove = flattenTree(newTreeRoots);
 	const withPaths = recalculatePaths(flatAfterMove);
 	const treeWithPaths = buildTree(withPaths);
 	// Update state - JSON round-trip to strip proxies for svelte-dnd-action
-	treeRoots = JSON.parse(JSON.stringify(treeWithPaths)) as EnhancedTreeViewItem[];
+	treeRoots = JSON.parse(
+		JSON.stringify(treeWithPaths),
+	) as EnhancedTreeViewItem[];
 
 	// Save and notify parent (path/parentId already correct in treeRoots)
 	saveTreeData();
@@ -523,7 +586,11 @@ function handleFinalize(e: CustomEvent, targetParentId: string | null) {
 }
 
 // Helper: Check if potentialAncestor is actually an ancestor of nodeId
-function isAncestorOf(potentialAncestorId: string, nodeId: string, nodes: EnhancedTreeViewItem[]): boolean {
+function isAncestorOf(
+	potentialAncestorId: string,
+	nodeId: string,
+	nodes: EnhancedTreeViewItem[],
+): boolean {
 	const targetNode = findNode(nodes, nodeId);
 	if (!targetNode) {
 		return false;
@@ -552,7 +619,7 @@ function takeSnapshot(nodes: EnhancedTreeViewItem[]) {
 	nodes.forEach((node) => {
 		nodeSnapshot.set(node.id, {
 			...node,
-			children: [...(node.children || [])]
+			children: [...(node.children || [])],
 		});
 		if (node.children?.length) {
 			takeSnapshot(node.children);
@@ -566,7 +633,7 @@ function rehydrateItem(item: EnhancedTreeViewItem): EnhancedTreeViewItem {
 	if (snap) {
 		return {
 			...item,
-			children: snap.children.map((child) => rehydrateItem(child))
+			children: snap.children.map((child) => rehydrateItem(child)),
 		};
 	}
 	return { ...item, children: item.children || [] };
@@ -581,7 +648,7 @@ function saveTreeData() {
 		nodes
 			.map((n) => `${n._id}:${n.parentId}:${n.order}`)
 			.sort()
-			.join('|') + nodes.length;
+			.join("|") + nodes.length;
 
 	// Set hash and guard so we don't rebuild from stale contentNodes until parent syncs
 	lastContentNodesHash = pushedHash;
@@ -603,7 +670,7 @@ function recalculatePaths(items: TreeViewItem[]): TreeViewItem[] {
 
 	const childrenByParent = new SvelteMap<string, TreeViewItem[]>();
 	for (const item of items) {
-		const parentKey = item.parent || '__root__';
+		const parentKey = item.parent || "__root__";
 		if (!childrenByParent.has(parentKey)) {
 			childrenByParent.set(parentKey, []);
 		}
@@ -614,7 +681,7 @@ function recalculatePaths(items: TreeViewItem[]): TreeViewItem[] {
 	// Sorting by sortContentNodes (which uses node.order) will use stale order values and break DnD.
 
 	function assignPaths(parentId: string | null, parentPath: string): void {
-		const key = parentId || '__root__';
+		const key = parentId || "__root__";
 		const children = childrenByParent.get(key);
 		if (!children) return;
 
@@ -630,7 +697,7 @@ function recalculatePaths(items: TreeViewItem[]): TreeViewItem[] {
 		});
 	}
 
-	assignPaths(null, '');
+	assignPaths(null, "");
 	return Array.from(itemMap.values());
 }
 
@@ -648,7 +715,7 @@ function toFlatContentNodes(flatItems: TreeViewItem[]): ContentNode[] {
 			path: item.path,
 			order: item.order ?? 0,
 			parent: undefined,
-			text: undefined
+			text: undefined,
 		} as unknown as ContentNode;
 	});
 }
@@ -666,7 +733,9 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 		return;
 	}
 
-	const activeElement = document.activeElement?.closest('[data-item-id]') as HTMLElement | null;
+	const activeElement = document.activeElement?.closest(
+		"[data-item-id]",
+	) as HTMLElement | null;
 	const currentId = activeElement?.dataset.itemId;
 	let currentIndex = visibleNodes.findIndex((n) => n.id === currentId);
 
@@ -680,7 +749,7 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 	let handled = true;
 
 	switch (e.key) {
-		case 'ArrowUp': {
+		case "ArrowUp": {
 			e.preventDefault();
 			if (currentIndex > 0) {
 				nextNode = visibleNodes[currentIndex - 1];
@@ -688,7 +757,7 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 			break;
 		}
 
-		case 'ArrowDown': {
+		case "ArrowDown": {
 			e.preventDefault();
 			if (currentIndex < visibleNodes.length - 1) {
 				nextNode = visibleNodes[currentIndex + 1];
@@ -696,7 +765,7 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 			break;
 		}
 
-		case 'ArrowLeft': {
+		case "ArrowLeft": {
 			e.preventDefault();
 			if (expandedNodes.has(currentNode.id) && currentNode.children?.length) {
 				toggleNode(currentNode.id);
@@ -709,7 +778,7 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 			break;
 		}
 
-		case 'ArrowRight': {
+		case "ArrowRight": {
 			e.preventDefault();
 			if (!expandedNodes.has(currentNode.id) && currentNode.children?.length) {
 				toggleNode(currentNode.id);
@@ -719,19 +788,19 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 			break;
 		}
 
-		case 'Home': {
+		case "Home": {
 			e.preventDefault();
 			nextNode = visibleNodes[0] ?? null;
 			break;
 		}
 
-		case 'End': {
+		case "End": {
 			e.preventDefault();
 			nextNode = visibleNodes.at(-1) ?? null;
 			break;
 		}
 
-		case '*': {
+		case "*": {
 			e.preventDefault();
 			const parent = getParent(treeRoots, currentNode.id);
 			const siblings = parent ? parent.children : treeRoots;
@@ -740,7 +809,7 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 					expandedNodes.add(s.id);
 				}
 			});
-			announce('Expanded all siblings');
+			announce("Expanded all siblings");
 			break;
 		}
 
@@ -764,20 +833,29 @@ function handleTreeKeyDown(e: KeyboardEvent) {
 	}
 }
 
-function handleTypeahead(char: string, visibleNodes: EnhancedTreeViewItem[], currentIndex: number) {
+function handleTypeahead(
+	char: string,
+	visibleNodes: EnhancedTreeViewItem[],
+	currentIndex: number,
+) {
 	typeaheadBuffer += char.toLowerCase();
 
 	if (typeaheadTimeout) {
 		clearTimeout(typeaheadTimeout);
 	}
 	typeaheadTimeout = setTimeout(() => {
-		typeaheadBuffer = '';
+		typeaheadBuffer = "";
 	}, 500);
 
 	// Search from current position + 1, then wrap around
-	const searchNodes = [...visibleNodes.slice(currentIndex + 1), ...visibleNodes.slice(0, currentIndex + 1)];
+	const searchNodes = [
+		...visibleNodes.slice(currentIndex + 1),
+		...visibleNodes.slice(0, currentIndex + 1),
+	];
 
-	const match = searchNodes.find((n) => n.name.toLowerCase().startsWith(typeaheadBuffer));
+	const match = searchNodes.find((n) =>
+		n.name.toLowerCase().startsWith(typeaheadBuffer),
+	);
 
 	if (match) {
 		focusNode(match.id);
@@ -792,8 +870,8 @@ function focusNode(id: string) {
 		if (element) {
 			(element as HTMLElement).focus();
 			(element as HTMLElement).scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest'
+				behavior: "smooth",
+				block: "nearest",
 			});
 		}
 	});
@@ -801,7 +879,7 @@ function focusNode(id: string) {
 
 // --- Keyboard Reordering ---
 
-async function moveItem(itemId: string, direction: 'up' | 'down') {
+async function moveItem(itemId: string, direction: "up" | "down") {
 	const parent = getParent(treeRoots, itemId);
 	const list = parent ? parent.children : treeRoots;
 	const index = list.findIndex((i) => i.id === itemId);
@@ -810,7 +888,7 @@ async function moveItem(itemId: string, direction: 'up' | 'down') {
 		return;
 	}
 
-	const newIndex = direction === 'up' ? index - 1 : index + 1;
+	const newIndex = direction === "up" ? index - 1 : index + 1;
 	if (newIndex < 0 || newIndex >= list.length) {
 		return;
 	}
@@ -833,11 +911,11 @@ async function moveItem(itemId: string, direction: 'up' | 'down') {
 }
 
 async function moveItemUp(itemId: string) {
-	await moveItem(itemId, 'up');
+	await moveItem(itemId, "up");
 }
 
 async function moveItemDown(itemId: string) {
-	await moveItem(itemId, 'down');
+	await moveItem(itemId, "down");
 }
 
 async function moveItemToParent(itemId: string) {
@@ -853,11 +931,21 @@ async function moveItemToParent(itemId: string) {
 
 	const grandparent = getParent(treeRoots, parent.id);
 	const targetList = grandparent ? grandparent.children : treeRoots;
-	const nameNorm = (n: string) => (n ?? '').trim().toLowerCase();
-	const itemNameNorm = nameNorm(item.name ?? '');
-	if (itemNameNorm && targetList.some((sibling) => sibling.id !== item.id && nameNorm(sibling.name ?? '') === itemNameNorm)) {
-		toast.warning('A collection with this name already exists in the target category.');
-		announce('A collection with this name already exists in the target category.');
+	const nameNorm = (n: string) => (n ?? "").trim().toLowerCase();
+	const itemNameNorm = nameNorm(item.name ?? "");
+	if (
+		itemNameNorm &&
+		targetList.some(
+			(sibling) =>
+				sibling.id !== item.id && nameNorm(sibling.name ?? "") === itemNameNorm,
+		)
+	) {
+		toast.warning(
+			"A collection with this name already exists in the target category.",
+		);
+		announce(
+			"A collection with this name already exists in the target category.",
+		);
 		return;
 	}
 
@@ -893,7 +981,10 @@ function handleDeleteNode(node: Partial<ContentNode>) {
 
 	if (visibleNodes.length > 1) {
 		// Prefer next sibling, then previous, then parent
-		const nextIndex = currentIndex < visibleNodes.length - 1 ? currentIndex + 1 : Math.max(0, currentIndex - 1);
+		const nextIndex =
+			currentIndex < visibleNodes.length - 1
+				? currentIndex + 1
+				: Math.max(0, currentIndex - 1);
 		nextFocusId = visibleNodes[nextIndex]?.id || null;
 	} else if (treeRoots.length > 0) {
 		// If this was the last visible node, focus first root
@@ -926,7 +1017,7 @@ function toPartialContentNode(item: TreeViewItem): Partial<ContentNode> {
 		slug: item.slug,
 		description: item.description,
 		icon: item.icon,
-		path: item.path
+		path: item.path,
 	};
 }
 

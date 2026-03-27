@@ -40,7 +40,14 @@ vi.mock("@src/routes/(app)/config/system-settings/settings-groups", () => ({
     name: id,
     fields:
       id === "site"
-        ? [{ key: "SITE_NAME", label: "Site Name", type: "text", category: "public" }]
+        ? [
+            {
+              key: "SITE_NAME",
+              label: "Site Name",
+              type: "text",
+              category: "public",
+            },
+          ]
         : [],
     adminOnly: true,
   })),
@@ -61,8 +68,16 @@ import {
 import { dbAdapter } from "@src/databases/db";
 
 describe("Settings API Security - Tenant Isolation and RBAC", () => {
-  const mockAdmin = { _id: "admin1", role: "admin", email: "admin@tenant1.com" };
-  const mockSuperAdmin = { _id: "super1", role: "super-admin", email: "super@cms.com" };
+  const mockAdmin = {
+    _id: "admin1",
+    role: "admin",
+    email: "admin@tenant1.com",
+  };
+  const mockSuperAdmin = {
+    _id: "super1",
+    role: "super-admin",
+    email: "super@cms.com",
+  };
   const myTenant = "tenant-1";
   const otherTenant = "tenant-2";
 

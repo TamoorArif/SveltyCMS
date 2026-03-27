@@ -592,7 +592,11 @@ export interface ICrudAdapter {
   exists<T extends BaseEntity>(
     collection: string,
     query: QueryFilter<T>,
-    options?: { tenantId?: string | null; bypassTenantCheck?: boolean; includeDeleted?: boolean },
+    options?: {
+      tenantId?: string | null;
+      bypassTenantCheck?: boolean;
+      includeDeleted?: boolean;
+    },
   ): Promise<DatabaseResult<boolean>>;
   findByIds<T extends BaseEntity>(
     collection: string,
@@ -737,7 +741,13 @@ export interface IMediaAdapter {
       folderId?: DatabaseId,
       options?: PaginationOptions,
       tenantId?: string | null,
-    ): Promise<DatabaseResult<{ folders: MediaFolder[]; files: MediaItem[]; totalCount: number }>>;
+    ): Promise<
+      DatabaseResult<{
+        folders: MediaFolder[];
+        files: MediaItem[];
+        totalCount: number;
+      }>
+    >;
     move(
       folderId: DatabaseId,
       targetParentId?: DatabaseId,
@@ -782,11 +792,23 @@ export interface IContentAdapter {
       changes: Partial<ContentNodeType>,
     ): Promise<DatabaseResult<ContentNodeType>>;
     bulkUpdate(
-      updates: { path: string; id?: string; changes: Partial<ContentNodeType> }[],
-      options?: { tenantId?: string | null; bypassTenantCheck?: boolean; bypassCache?: boolean },
+      updates: {
+        path: string;
+        id?: string;
+        changes: Partial<ContentNodeType>;
+      }[],
+      options?: {
+        tenantId?: string | null;
+        bypassTenantCheck?: boolean;
+        bypassCache?: boolean;
+      },
     ): Promise<DatabaseResult<ContentNodeType[]>>;
     fixMismatchedNodeIds?(
-      nodes: { path: string; expectedId: string; changes: Partial<ContentNodeType> }[],
+      nodes: {
+        path: string;
+        expectedId: string;
+        changes: Partial<ContentNodeType>;
+      }[],
     ): Promise<DatabaseResult<{ fixed: number }>>;
     delete(path: string): Promise<DatabaseResult<void>>;
     deleteMany(
@@ -797,7 +819,12 @@ export interface IContentAdapter {
       nodeUpdates: Array<{ path: string; newOrder: number }>,
     ): Promise<DatabaseResult<ContentNodeType[]>>;
     reorderStructure(
-      items: Array<{ id: string; parentId: string | null; order: number; path: string }>,
+      items: Array<{
+        id: string;
+        parentId: string | null;
+        order: number;
+        path: string;
+      }>,
     ): Promise<DatabaseResult<void>>;
   };
   revisions: {

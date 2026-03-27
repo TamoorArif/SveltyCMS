@@ -130,7 +130,10 @@ describe("Critical Security Fixes Verification", () => {
     });
 
     it("should allow public IPs", async () => {
-      mockLookup.mockResolvedValueOnce({ address: "8.8.8.8", family: 4 } as any);
+      mockLookup.mockResolvedValueOnce({
+        address: "8.8.8.8",
+        family: 4,
+      } as any);
       await validateRemoteUrl("https://google.com/logo.png");
     });
 

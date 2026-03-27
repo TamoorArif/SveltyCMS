@@ -21,7 +21,9 @@ vi.mock("@src/services/settings-service", () => ({
 vi.mock("ollama", () => {
   const mockFn = vi.fn((params: any) => {
     if (params?.format === "json") {
-      return Promise.resolve({ message: { content: '{"root":"mock", "elements":{}}' } });
+      return Promise.resolve({
+        message: { content: '{"root":"mock", "elements":{}}' },
+      });
     }
     return Promise.resolve({ message: { content: "AI response" } });
   });

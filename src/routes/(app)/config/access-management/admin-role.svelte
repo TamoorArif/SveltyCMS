@@ -19,11 +19,11 @@ It provides functionality to:
 
 <script lang="ts">
 // Types
-import type { Role } from '@src/databases/auth/types';
+import type { Role } from "@src/databases/auth/types";
 // Components
-import { toast } from '@src/stores/toast.svelte.ts';
-import { showConfirm } from '@utils/modal-utils';
-import { tick } from 'svelte';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { showConfirm } from "@utils/modal-utils";
+import { tick } from "svelte";
 
 const { roleData, setRoleData } = $props();
 
@@ -36,7 +36,9 @@ let notification: string | null = $state(null); // Explicitly type as string | n
 let selectedAdminRole: string | null = $state(null);
 
 // Derived state for computed values
-const availableRoles = $derived(roleData.filter((role: Role) => role._id !== currentAdminRole));
+const availableRoles = $derived(
+	roleData.filter((role: Role) => role._id !== currentAdminRole),
+);
 const hasChanges = $derived(selectedAdminRole !== currentAdminRole);
 
 // Initialize component data (run once)
@@ -64,7 +66,7 @@ const saveAdminRole = async () => {
 	const newRoleName = newRole?.name || selectedAdminRole;
 
 	showConfirm({
-		title: 'Change Administrator Role',
+		title: "Change Administrator Role",
 		body: `Are you sure you want to change the Administrator Role to "${newRoleName}"? This is a critical security action that will change who has full system access.`,
 		onConfirm: async () => {
 			try {
@@ -88,16 +90,17 @@ const saveAdminRole = async () => {
 					});
 					setRoleData(result);
 				} catch (_error) {
-					toast.error('Network error occurred while updating config file');
+					toast.error("Network error occurred while updating config file");
 				}
-				notification = 'Admin role changed. Click "Save" at the top to apply changes.';
-				toast.success('Admin role updated locally.');
+				notification =
+					'Admin role changed. Click "Save" at the top to apply changes.';
+				toast.success("Admin role updated locally.");
 			} catch (err) {
 				notification = `Failed to save admin role: ${err instanceof Error ? err.message : String(err)}`;
 			} finally {
 				isSaving = false;
 			}
-		}
+		},
 	});
 };
 

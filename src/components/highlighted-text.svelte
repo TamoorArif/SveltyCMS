@@ -31,8 +31,8 @@ Intelligent text highlighting with character limits and expand/collapse function
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
-import { fade } from 'svelte/transition';
+import { onMount } from "svelte";
+import { fade } from "svelte/transition";
 
 interface Props {
 	caseSensitive?: boolean;
@@ -43,11 +43,11 @@ interface Props {
 }
 
 const {
-	text = '',
-	term = '',
+	text = "",
+	term = "",
 	charLimit = 200,
-	highlightClass = 'bg-warning-500 text-warning-900 dark:bg-warning-600 dark:text-warning-100',
-	caseSensitive = false
+	highlightClass = "bg-warning-500 text-warning-900 dark:bg-warning-600 dark:text-warning-100",
+	caseSensitive = false,
 }: Props = $props();
 
 // State
@@ -56,7 +56,7 @@ let prefersReducedMotion = $state(false);
 
 // Escape regex special characters
 function escapeRegex(str: string): string {
-	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // Build regex from multiple terms
@@ -73,14 +73,14 @@ const highlightingRegex = $derived.by(() => {
 	}
 
 	// Create regex with all terms
-	const pattern = terms.join('|');
-	return new RegExp(`(${pattern})`, caseSensitive ? 'g' : 'gi');
+	const pattern = terms.join("|");
+	return new RegExp(`(${pattern})`, caseSensitive ? "g" : "gi");
 });
 
 // Determine display text (truncated or full)
 const displayText = $derived.by(() => {
 	if (!text) {
-		return '';
+		return "";
 	}
 
 	const shouldLimit = !isExpanded && charLimit > 0 && text.length > charLimit;
@@ -107,14 +107,14 @@ const textSegments = $derived.by(() => {
 		if (index > lastIndex) {
 			segments.push({
 				text: currentText.slice(lastIndex, index),
-				isHighlighted: false
+				isHighlighted: false,
 			});
 		}
 
 		// Add highlighted match
 		segments.push({
 			text: match,
-			isHighlighted: true
+			isHighlighted: true,
 		});
 
 		lastIndex = index + match.length;
@@ -125,7 +125,7 @@ const textSegments = $derived.by(() => {
 	if (lastIndex < currentText.length) {
 		segments.push({
 			text: currentText.slice(lastIndex),
-			isHighlighted: false
+			isHighlighted: false,
 		});
 	}
 
@@ -153,15 +153,15 @@ function toggleText(): void {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 </script>
 

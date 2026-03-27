@@ -10,11 +10,11 @@
 
 <script lang="ts">
 // Components
-import Button from '@src/components/system/buttons/button.svelte';
-import ImportExportManager from './import-export-manager.svelte';
-import { logger } from '@utils/logger';
-import { onMount, untrack } from 'svelte';
-import { goto } from '$app/navigation';
+import Button from "@src/components/system/buttons/button.svelte";
+import ImportExportManager from "./import-export-manager.svelte";
+import { logger } from "@utils/logger";
+import { onMount, untrack } from "svelte";
+import { goto } from "$app/navigation";
 
 // Types
 interface WelcomeStep {
@@ -44,52 +44,56 @@ function openImportExportModal() {
 // Welcome steps for new admin users
 const welcomeSteps = $state<WelcomeStep[]>([
 	{
-		id: 'data-management',
-		title: 'Data Import & Export',
-		description: 'Backup and restore your content with our import/export tools. Essential for data migration and backups.',
-		icon: 'mdi:database-import',
-		action: 'Open Import/Export',
-		completed: false
+		id: "data-management",
+		title: "Data Import & Export",
+		description:
+			"Backup and restore your content with our import/export tools. Essential for data migration and backups.",
+		icon: "mdi:database-import",
+		action: "Open Import/Export",
+		completed: false,
 	},
 	{
-		id: 'collections',
-		title: 'Create Collections',
-		description: 'Build your content structure by creating collections. These define the types of content you can manage.',
-		icon: 'mdi:folder-plus',
-		action: 'Create Collection',
-		actionUrl: '/config/collectionbuilder/create',
-		completed: false
+		id: "collections",
+		title: "Create Collections",
+		description:
+			"Build your content structure by creating collections. These define the types of content you can manage.",
+		icon: "mdi:folder-plus",
+		action: "Create Collection",
+		actionUrl: "/config/collectionbuilder/create",
+		completed: false,
 	},
 	{
-		id: 'users',
-		title: 'Manage Users',
-		description: 'Invite team members and manage user permissions to collaborate on your content.',
-		icon: 'mdi:account-group',
-		action: 'Manage Users',
-		actionUrl: '/config/accessManagement',
-		completed: false
+		id: "users",
+		title: "Manage Users",
+		description:
+			"Invite team members and manage user permissions to collaborate on your content.",
+		icon: "mdi:account-group",
+		action: "Manage Users",
+		actionUrl: "/config/accessManagement",
+		completed: false,
 	},
 	{
-		id: 'settings',
-		title: 'System Settings',
-		description: 'Configure your site settings, themes, and system preferences to match your needs.',
-		icon: 'mdi:cog',
-		action: 'Open Settings',
-		actionUrl: '/config/system-settings',
-		completed: false
-	}
+		id: "settings",
+		title: "System Settings",
+		description:
+			"Configure your site settings, themes, and system preferences to match your needs.",
+		icon: "mdi:cog",
+		action: "Open Settings",
+		actionUrl: "/config/system-settings",
+		completed: false,
+	},
 ]);
 
 onMount(() => {
 	// Check if user has already seen the welcome screen
-	const hasSeenWelcome = localStorage.getItem('sveltycms-welcome-seen');
+	const hasSeenWelcome = localStorage.getItem("sveltycms-welcome-seen");
 	if (hasSeenWelcome) {
 		showWelcome = false;
 	}
 
 	// Load saved progress
 	try {
-		const savedProgress = localStorage.getItem('sveltycms-welcome-progress');
+		const savedProgress = localStorage.getItem("sveltycms-welcome-progress");
 		if (savedProgress) {
 			const completedSteps = JSON.parse(savedProgress);
 			welcomeSteps.forEach((step) => {
@@ -99,12 +103,12 @@ onMount(() => {
 			});
 		}
 	} catch (error) {
-		logger.error('Error loading welcome progress:', error);
+		logger.error("Error loading welcome progress:", error);
 	}
 });
 
 function handleStepAction(step: WelcomeStep) {
-	if (step.id === 'data-management') {
+	if (step.id === "data-management") {
 		openImportExportModal();
 	} else if (step.actionUrl) {
 		goto(step.actionUrl);
@@ -119,14 +123,19 @@ function markStepCompleted(stepId: string) {
 	}
 
 	// Save progress to localStorage
-	const completedSteps = welcomeSteps.filter((s) => s.completed).map((s) => s.id);
-	localStorage.setItem('sveltycms-welcome-progress', JSON.stringify(completedSteps));
+	const completedSteps = welcomeSteps
+		.filter((s) => s.completed)
+		.map((s) => s.id);
+	localStorage.setItem(
+		"sveltycms-welcome-progress",
+		JSON.stringify(completedSteps),
+	);
 }
 
 function dismissWelcome() {
 	dismissedWelcome = true;
 	showWelcome = false;
-	localStorage.setItem('sveltycms-welcome-seen', 'true');
+	localStorage.setItem("sveltycms-welcome-seen", "true");
 }
 
 function nextStep() {
@@ -143,7 +152,7 @@ function previousStep() {
 
 function goToDashboard() {
 	dismissWelcome();
-	goto('/dashboard');
+	goto("/dashboard");
 }
 </script>
 

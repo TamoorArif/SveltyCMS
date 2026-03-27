@@ -105,7 +105,11 @@ export const contentManager = {
     }
 
     const first = contentCollections.getSmartFirst(tenantId);
-    contentCache.firstCollectionCache = { collection: first, timestamp: now, tenantId };
+    contentCache.firstCollectionCache = {
+      collection: first,
+      timestamp: now,
+      tenantId,
+    };
     return first;
   },
 

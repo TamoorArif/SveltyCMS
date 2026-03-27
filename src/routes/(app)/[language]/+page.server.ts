@@ -42,7 +42,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       throw error;
     }
 
-    logger.error("Error in language redirect, falling back to root", { error, language, tenantId });
+    logger.error("Error in language redirect, falling back to root", {
+      error,
+      language,
+      tenantId,
+    });
     throw redirect(302, "/");
   }
 };

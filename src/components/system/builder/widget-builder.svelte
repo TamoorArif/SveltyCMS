@@ -23,14 +23,18 @@
 - AddWidget: Component for adding widgets
 -->
 <script lang="ts">
-import type { FieldInstance } from '@content/types';
-import { WidgetBuilder_AddColectionField } from '@src/paraglide/messages';
-import AddWidget from './add-widget.svelte';
-import type { WidgetBuilderProps } from './types';
-import WidgetFields from './widget-fields.svelte';
+import type { FieldInstance } from "@content/types";
+import { WidgetBuilder_AddColectionField } from "@src/paraglide/messages";
+import AddWidget from "./add-widget.svelte";
+import type { WidgetBuilderProps } from "./types";
+import WidgetFields from "./widget-fields.svelte";
 
 // Props
-let { addField = $bindable(false), fields = $bindable([]), onFieldsChange }: WidgetBuilderProps = $props();
+let {
+	addField = $bindable(false),
+	fields = $bindable([]),
+	onFieldsChange,
+}: WidgetBuilderProps = $props();
 
 function toggleAddField() {
 	addField = true;

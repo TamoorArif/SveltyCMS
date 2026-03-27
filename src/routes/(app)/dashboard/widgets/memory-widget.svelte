@@ -26,9 +26,9 @@ Features:
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Memory Usage',
-	icon: 'mdi:memory',
-	defaultSize: { w: 1, h: 2 }
+	name: "Memory Usage",
+	icon: "mdi:memory",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

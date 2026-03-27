@@ -141,7 +141,10 @@ export class MongoContentMethods {
     const cacheKey = `content:structure:${mode}:${tenantId}:${filterKey}`;
 
     const fetchData = async (): Promise<DatabaseResult<ContentNode[]>> => {
-      const fetchOptions: { tenantId?: string | null; bypassTenantCheck?: boolean } = {
+      const fetchOptions: {
+        tenantId?: string | null;
+        bypassTenantCheck?: boolean;
+      } = {
         bypassTenantCheck,
       };
       if (tenantId) {
@@ -534,10 +537,18 @@ export class MongoContentMethods {
       ]);
 
       if (!itemsRes.success) {
-        return { success: false, message: itemsRes.message, error: itemsRes.error };
+        return {
+          success: false,
+          message: itemsRes.message,
+          error: itemsRes.error,
+        };
       }
       if (!totalRes.success) {
-        return { success: false, message: totalRes.message, error: totalRes.error };
+        return {
+          success: false,
+          message: totalRes.message,
+          error: totalRes.error,
+        };
       }
 
       return {
@@ -616,7 +627,11 @@ export class MongoContentMethods {
         query as unknown as QueryFilter<ContentRevision>,
       );
       if (!totalRes.success) {
-        return { success: false, message: totalRes.message, error: totalRes.error };
+        return {
+          success: false,
+          message: totalRes.message,
+          error: totalRes.error,
+        };
       }
 
       const items = await this.revisionsRepo.model
@@ -672,7 +687,9 @@ export class MongoContentMethods {
       // deleteMany returns DatabaseResult
       return await this.revisionsRepo.deleteMany({
         contentId,
-        _id: { $nin: keepIds } as unknown as QueryFilter<ContentRevision>["_id"],
+        _id: {
+          $nin: keepIds,
+        } as unknown as QueryFilter<ContentRevision>["_id"],
       } as QueryFilter<ContentRevision>);
     } catch (error) {
       return {

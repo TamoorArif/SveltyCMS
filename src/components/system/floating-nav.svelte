@@ -12,24 +12,24 @@
 -->
 
 <script lang="ts">
-import { fade } from 'svelte/transition';
+import { fade } from "svelte/transition";
 
 type Any = any;
 
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // Auth
-import type { User } from '@src/databases/auth/types';
+import type { User } from "@src/databases/auth/types";
 // Stores
-import { setMode } from '@src/stores/collection-store.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { motion } from '@src/utils/utils';
-import { logger } from '@utils/logger';
+import { setMode } from "@src/stores/collection-store.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { motion } from "@src/utils/utils";
+import { logger } from "@utils/logger";
 // Modals/Tooltips
-import { modalState } from '@utils/modal-state.svelte';
-import { onDestroy, onMount, tick } from 'svelte';
-import { linear } from 'svelte/easing';
-import { browser } from '$app/environment';
-import { page } from '$app/state';
+import { modalState } from "@utils/modal-state.svelte";
+import { onDestroy, onMount, tick } from "svelte";
+import { linear } from "svelte/easing";
+import { browser } from "$app/environment";
+import { page } from "$app/state";
 
 // Constants
 const BUTTON_RADIUS = 25;
@@ -57,66 +57,66 @@ const user = $derived(page.data.user as User | undefined);
 // Endpoint definitions
 const ALL_ENDPOINTS: Endpoint[] = [
 	{
-		tooltip: 'Home',
-		url: { external: false, path: '/' },
-		icon: 'solar:home-bold'
+		tooltip: "Home",
+		url: { external: false, path: "/" },
+		icon: "solar:home-bold",
 	},
 	{
-		tooltip: 'Dashboard',
-		url: { external: false, path: '/dashboard' },
-		icon: 'mdi:view-dashboard',
-		color: 'bg-blue-500'
+		tooltip: "Dashboard",
+		url: { external: false, path: "/dashboard" },
+		icon: "mdi:view-dashboard",
+		color: "bg-blue-500",
 	},
 	{
-		tooltip: 'User Profile',
-		url: { external: false, path: '/user' },
-		icon: 'radix-icons:avatar',
-		color: 'bg-orange-500'
+		tooltip: "User Profile",
+		url: { external: false, path: "/user" },
+		icon: "radix-icons:avatar",
+		color: "bg-orange-500",
 	},
 	{
-		tooltip: 'Collection Builder',
-		url: { external: false, path: '/config/collectionbuilder' },
-		icon: 'fluent-mdl2:build-definition',
-		color: 'bg-green-500'
+		tooltip: "Collection Builder",
+		url: { external: false, path: "/config/collectionbuilder" },
+		icon: "fluent-mdl2:build-definition",
+		color: "bg-green-500",
 	},
 
 	{
-		tooltip: 'GraphQL Explorer',
-		url: { external: true, path: '/api/graphql' },
-		icon: 'teenyicons:graphql-outline',
-		color: 'bg-pink-500'
+		tooltip: "GraphQL Explorer",
+		url: { external: true, path: "/api/graphql" },
+		icon: "teenyicons:graphql-outline",
+		color: "bg-pink-500",
 	},
 	{
-		tooltip: 'System Configuration',
-		url: { external: false, path: '/config' },
-		icon: 'mynaui:config',
-		color: 'bg-surface-400'
+		tooltip: "System Configuration",
+		url: { external: false, path: "/config" },
+		icon: "mynaui:config",
+		color: "bg-surface-400",
 	},
 	{
-		tooltip: 'Access Management',
-		url: { external: false, path: '/config/accessManagement' },
-		icon: 'mdi:shield-account',
-		color: 'bg-purple-500'
+		tooltip: "Access Management",
+		url: { external: false, path: "/config/accessManagement" },
+		icon: "mdi:shield-account",
+		color: "bg-purple-500",
 	},
 	{
-		tooltip: 'Marketplace',
-		url: { external: true, path: 'https://www.sveltycms.com' },
-		icon: 'icon-park-outline:shopping-bag',
-		color: 'bg-primary-700'
-	}
+		tooltip: "Marketplace",
+		url: { external: true, path: "https://www.sveltycms.com" },
+		icon: "icon-park-outline:shopping-bag",
+		color: "bg-primary-700",
+	},
 ];
 
 // Filter endpoints based on user role
 const endpoints = $derived(
 	ALL_ENDPOINTS.filter((endpoint) => {
-		if (user?.role === 'admin') {
+		if (user?.role === "admin") {
 			return true;
 		}
-		if (endpoint.url.path === '/collection') {
+		if (endpoint.url.path === "/collection") {
 			return false;
 		}
 		return true;
-	})
+	}),
 );
 
 // State
@@ -127,12 +127,12 @@ let motionMs = $state(MOTION_MS_DEFAULT);
 let buttonInfo = $state({
 	x: 0,
 	y: 0,
-	radius: BUTTON_RADIUS
+	radius: BUTTON_RADIUS,
 });
 
 let center = $state({
 	x: browser ? window.innerWidth / 2 : 0,
-	y: browser ? window.innerHeight / 2 : 0
+	y: browser ? window.innerHeight / 2 : 0,
 });
 
 // Refs
@@ -148,18 +148,21 @@ const endpointsWithPos = $derived(
 		const X = center.x + MENU_RADIUS * Math.cos(ANGLE);
 		const Y = center.y + MENU_RADIUS * Math.sin(ANGLE);
 		return { ...endpoint, x: X, y: Y, angle: ANGLE };
-	})
+	}),
 );
 
 // Helper functions
 function getBasePath(pathname: string): string {
 	const PARAMS = Object.values(page.params);
-	const REPLACED = PARAMS.reduce((acc, param) => acc.replace(param, ''), pathname);
+	const REPLACED = PARAMS.reduce(
+		(acc, param) => acc.replace(param, ""),
+		pathname,
+	);
 	return PARAMS.length > 0 ? REPLACED : pathname;
 }
 
 function isRightToLeft(): boolean {
-	return browser && document.documentElement.dir === 'rtl';
+	return browser && document.documentElement.dir === "rtl";
 }
 
 function vibrate(duration: number): void {
@@ -178,24 +181,28 @@ function loadSavedPosition(): void {
 	}
 
 	try {
-		const NAVIGATION_INFO = JSON.parse(localStorage.getItem('navigation') || '{}');
+		const NAVIGATION_INFO = JSON.parse(
+			localStorage.getItem("navigation") || "{}",
+		);
 		const KEY = getBasePath(page.url.pathname);
-		const SAVED = NAVIGATION_INFO[KEY] as { x?: number; y?: number } | undefined;
+		const SAVED = NAVIGATION_INFO[KEY] as
+			| { x?: number; y?: number }
+			| undefined;
 
-		if (SAVED && typeof SAVED.x === 'number' && typeof SAVED.y === 'number') {
+		if (SAVED && typeof SAVED.x === "number" && typeof SAVED.y === "number") {
 			buttonInfo = { x: SAVED.x, y: SAVED.y, radius: BUTTON_RADIUS };
 		} else {
 			buttonInfo = {
 				x: window.innerWidth - (BUTTON_RADIUS + EDGE_MARGIN),
 				y: window.innerHeight - (BUTTON_RADIUS + EDGE_MARGIN),
-				radius: BUTTON_RADIUS
+				radius: BUTTON_RADIUS,
 			};
 		}
 	} catch {
 		buttonInfo = {
 			x: window.innerWidth - (BUTTON_RADIUS + EDGE_MARGIN),
 			y: window.innerHeight - (BUTTON_RADIUS + EDGE_MARGIN),
-			radius: BUTTON_RADIUS
+			radius: BUTTON_RADIUS,
 		};
 	}
 }
@@ -206,12 +213,14 @@ function savePosition(): void {
 	}
 
 	try {
-		const NAVIGATION_INFO = JSON.parse(localStorage.getItem('navigation') || '{}');
+		const NAVIGATION_INFO = JSON.parse(
+			localStorage.getItem("navigation") || "{}",
+		);
 		const KEY = getBasePath(page.url.pathname);
 		NAVIGATION_INFO[KEY] = { x: buttonInfo.x, y: buttonInfo.y };
-		localStorage.setItem('navigation', JSON.stringify(NAVIGATION_INFO));
+		localStorage.setItem("navigation", JSON.stringify(NAVIGATION_INFO));
 	} catch (error) {
-		logger.error('Failed to save position:', error);
+		logger.error("Failed to save position:", error);
 	}
 }
 
@@ -230,8 +239,8 @@ async function handleResize(): Promise<void> {
 	center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
 	if (firstLine && firstCircle) {
-		firstLine.setAttribute('x1', firstCircle.offsetLeft.toString());
-		firstLine.setAttribute('y1', firstCircle.offsetTop.toString());
+		firstLine.setAttribute("x1", firstCircle.offsetLeft.toString());
+		firstLine.setAttribute("y1", firstCircle.offsetTop.toString());
 		await tick();
 		firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
 	}
@@ -260,21 +269,21 @@ async function toggleMenuOpen(): Promise<void> {
 }
 
 function onKeyDown(e: KeyboardEvent): void {
-	if (e.key === 'Escape') {
+	if (e.key === "Escape") {
 		closeMenu();
 	}
 }
 
 function handleNavigateToEndpoint(): void {
-	setMode('view');
+	setMode("view");
 	showRoutes = false;
 	// Navigation is handled by <a> tag href attribute
 }
 
 function handleNavigateHome(): void {
-	setMode('view');
+	setMode("view");
 	modalState.clear();
-	ui.toggle('leftSidebar', 'hidden');
+	ui.toggle("leftSidebar", "hidden");
 	showRoutes = false;
 	// Navigation will be handled by <a> tag
 }
@@ -310,11 +319,13 @@ function drag(node: HTMLDivElement) {
 				buttonInfo = {
 					...buttonInfo,
 					x: moveEvent.clientX - OFFSET_X,
-					y: moveEvent.clientY - OFFSET_Y
+					y: moveEvent.clientY - OFFSET_Y,
 				};
 
 				if (firstLine) {
-					firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
+					firstLine.style.strokeDasharray = firstLine
+						.getTotalLength()
+						.toString();
 				}
 			}
 		};
@@ -333,47 +344,80 @@ function drag(node: HTMLDivElement) {
 		}
 
 		// Snap to nearest edge
-		const DISTANCES = [buttonInfo.x, window.innerWidth - buttonInfo.x, buttonInfo.y, window.innerHeight - buttonInfo.y];
+		const DISTANCES = [
+			buttonInfo.x,
+			window.innerWidth - buttonInfo.x,
+			buttonInfo.y,
+			window.innerHeight - buttonInfo.y,
+		];
 
 		const NEAREST_EDGE_INDEX = DISTANCES.indexOf(Math.min(...DISTANCES));
 		let promise: Promise<void> = Promise.resolve();
 
 		switch (NEAREST_EDGE_INDEX) {
 			case 0: // Left edge
-				promise = motion([buttonInfo.x], [BUTTON_RADIUS + EDGE_MARGIN], motionMs, async (t) => {
-					buttonInfo.x = t[0];
-					await tick();
-					if (firstLine) {
-						firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
-					}
-				});
+				promise = motion(
+					[buttonInfo.x],
+					[BUTTON_RADIUS + EDGE_MARGIN],
+					motionMs,
+					async (t) => {
+						buttonInfo.x = t[0];
+						await tick();
+						if (firstLine) {
+							firstLine.style.strokeDasharray = firstLine
+								.getTotalLength()
+								.toString();
+						}
+					},
+				);
 				break;
 			case 1: // Right edge
-				promise = motion([buttonInfo.x], [window.innerWidth - (BUTTON_RADIUS + EDGE_MARGIN)], motionMs, async (t) => {
-					buttonInfo.x = t[0];
-					await tick();
-					if (firstLine) {
-						firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
-					}
-				});
+				promise = motion(
+					[buttonInfo.x],
+					[window.innerWidth - (BUTTON_RADIUS + EDGE_MARGIN)],
+					motionMs,
+					async (t) => {
+						buttonInfo.x = t[0];
+						await tick();
+						if (firstLine) {
+							firstLine.style.strokeDasharray = firstLine
+								.getTotalLength()
+								.toString();
+						}
+					},
+				);
 				break;
 			case 2: // Top edge
-				promise = motion([buttonInfo.y], [BUTTON_RADIUS + EDGE_MARGIN], motionMs, async (t) => {
-					buttonInfo.y = t[0];
-					await tick();
-					if (firstLine) {
-						firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
-					}
-				});
+				promise = motion(
+					[buttonInfo.y],
+					[BUTTON_RADIUS + EDGE_MARGIN],
+					motionMs,
+					async (t) => {
+						buttonInfo.y = t[0];
+						await tick();
+						if (firstLine) {
+							firstLine.style.strokeDasharray = firstLine
+								.getTotalLength()
+								.toString();
+						}
+					},
+				);
 				break;
 			case 3: // Bottom edge
-				promise = motion([buttonInfo.y], [window.innerHeight - (BUTTON_RADIUS + EDGE_MARGIN)], motionMs, async (t) => {
-					buttonInfo.y = t[0];
-					await tick();
-					if (firstLine) {
-						firstLine.style.strokeDasharray = firstLine.getTotalLength().toString();
-					}
-				});
+				promise = motion(
+					[buttonInfo.y],
+					[window.innerHeight - (BUTTON_RADIUS + EDGE_MARGIN)],
+					motionMs,
+					async (t) => {
+						buttonInfo.y = t[0];
+						await tick();
+						if (firstLine) {
+							firstLine.style.strokeDasharray = firstLine
+								.getTotalLength()
+								.toString();
+						}
+					},
+				);
 				break;
 		}
 
@@ -390,8 +434,10 @@ function setDash(node: SVGSVGElement): void {
 		EL.style.strokeDasharray = TOTAL_LENGTH;
 		EL.style.strokeDashoffset = TOTAL_LENGTH;
 		setTimeout(() => {
-			EL.style.transition = first ? 'stroke-dashoffset 0.2s' : 'stroke-dashoffset 0.2s 0.2s';
-			EL.style.strokeDashoffset = '0';
+			EL.style.transition = first
+				? "stroke-dashoffset 0.2s"
+				: "stroke-dashoffset 0.2s 0.2s";
+			EL.style.strokeDashoffset = "0";
 			first = false;
 		}, 0);
 	}
@@ -405,7 +451,9 @@ function reverse(): void {
 	let first = true;
 	for (const LINE_ELEMENT of svg.children as Any) {
 		const EL = LINE_ELEMENT as SVGLineElement;
-		EL.style.transition = first ? 'stroke-dashoffset 0.2s 0.2s' : 'stroke-dashoffset 0.2s';
+		EL.style.transition = first
+			? "stroke-dashoffset 0.2s 0.2s"
+			: "stroke-dashoffset 0.2s";
 		const TOTAL_LENGTH = EL.getTotalLength().toString();
 		EL.style.strokeDasharray = TOTAL_LENGTH;
 		EL.style.strokeDashoffset = TOTAL_LENGTH;
@@ -414,13 +462,16 @@ function reverse(): void {
 
 	for (const CIRCLE of circles as HTMLAnchorElement[]) {
 		if (CIRCLE) {
-			CIRCLE.style.display = 'none';
+			CIRCLE.style.display = "none";
 		}
 	}
 }
 
-function keepAlive(_node: HTMLElement, { delay = 0, duration = 200, easing: easingFn = linear } = {}) {
-	return { delay, duration, easing: easingFn, css: (_: number) => '' };
+function keepAlive(
+	_node: HTMLElement,
+	{ delay = 0, duration = 200, easing: easingFn = linear } = {},
+) {
+	return { delay, duration, easing: easingFn, css: (_: number) => "" };
 }
 
 // Effects
@@ -436,14 +487,16 @@ onMount(() => {
 		return;
 	}
 
-	prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	prefersReducedMotion = window.matchMedia(
+		"(prefers-reduced-motion: reduce)",
+	).matches;
 	motionMs = prefersReducedMotion ? 0 : MOTION_MS_DEFAULT;
 
 	center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 	loadSavedPosition();
 
-	window.addEventListener('resize', handleResize, { passive: true });
-	window.addEventListener('keydown', onKeyDown);
+	window.addEventListener("resize", handleResize, { passive: true });
+	window.addEventListener("keydown", onKeyDown);
 });
 
 onDestroy(() => {
@@ -451,8 +504,8 @@ onDestroy(() => {
 		return;
 	}
 
-	window.removeEventListener('resize', handleResize);
-	window.removeEventListener('keydown', onKeyDown);
+	window.removeEventListener("resize", handleResize);
+	window.removeEventListener("keydown", onKeyDown);
 });
 </script>
 

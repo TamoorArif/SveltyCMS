@@ -16,79 +16,87 @@ Slide-out panel using the HTML5 <dialog> element.
 -->
 
 <script lang="ts">
-	import { cn } from '@utils/cn';
-	import type { Snippet } from 'svelte';
-	import Portal from './portal.svelte';
-	import { fly } from 'svelte/transition';
+import { cn } from "@utils/cn";
+import type { Snippet } from "svelte";
+import Portal from "./portal.svelte";
+import { fly } from "svelte/transition";
 
-	interface Props {
-		open?: boolean;
-		position?: 'left' | 'right' | 'top' | 'bottom';
-		size?: string;
-		color?: 'surface' | 'primary' | 'secondary' | 'tertiary';
-		title?: string;
-		class?: string;
-		children?: Snippet;
-		footer?: Snippet;
-		[key: string]: any;
+interface Props {
+	open?: boolean;
+	position?: "left" | "right" | "top" | "bottom";
+	size?: string;
+	color?: "surface" | "primary" | "secondary" | "tertiary";
+	title?: string;
+	class?: string;
+	children?: Snippet;
+	footer?: Snippet;
+	[key: string]: any;
+}
+
+let {
+	open = $bindable(false),
+	position = "right",
+	size,
+	color = "surface",
+	title,
+	class: className,
+	children,
+	footer,
+	...rest
+}: Props = $props();
+
+let dialogEl = $state<HTMLDialogElement | null>(null);
+
+$effect(() => {
+	if (open) {
+		dialogEl?.showModal();
+		document.body.style.overflow = "hidden";
+	} else {
+		dialogEl?.close();
+		document.body.style.overflow = "";
 	}
+});
 
-	let { 
-		open = $bindable(false), 
-		position = 'right', 
-		size, 
-		color = 'surface',
-		title,
-		class: className,
-		children, 
-		footer,
-		...rest 
-	}: Props = $props();
+const positionClasses = {
+	left: "left-0 right-auto h-full w-80",
+	right: "right-0 left-auto h-full w-80",
+	top: "top-0 bottom-auto w-full h-80",
+	bottom: "bottom-0 top-auto w-full h-80",
+};
 
-	let dialogEl = $state<HTMLDialogElement | null>(null);
-
-	$effect(() => {
-		if (open) {
-			dialogEl?.showModal();
-			document.body.style.overflow = 'hidden';
-		} else {
-			dialogEl?.close();
-			document.body.style.overflow = '';
-		}
-	});
-
-	const positionClasses = {
-		left: 'left-0 right-auto h-full w-80',
-		right: 'right-0 left-auto h-full w-80',
-		top: 'top-0 bottom-auto w-full h-80',
-		bottom: 'bottom-0 top-auto w-full h-80'
-	};
-
-	const flyParams = $derived.by(() => {
-		switch (position) {
-			case 'left': return { x: -320, duration: 300 };
-			case 'right': return { x: 320, duration: 300 };
-			case 'top': return { y: -320, duration: 300 };
-			case 'bottom': return { y: 320, duration: 300 };
-		}
-	});
-
-	const colorClasses = {
-		surface: 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800',
-		primary: 'bg-primary-50 dark:bg-primary-950 border-primary-200 dark:border-primary-800',
-		secondary: 'bg-secondary-50 dark:bg-secondary-950 border-secondary-200 dark:border-secondary-800',
-		tertiary: 'bg-tertiary-50 dark:bg-tertiary-950 border-tertiary-200 dark:border-tertiary-800'
-	};
-
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === dialogEl) {
-			open = false;
-		}
+const flyParams = $derived.by(() => {
+	switch (position) {
+		case "left":
+			return { x: -320, duration: 300 };
+		case "right":
+			return { x: 320, duration: 300 };
+		case "top":
+			return { y: -320, duration: 300 };
+		case "bottom":
+			return { y: 320, duration: 300 };
 	}
+});
 
-	function handleClose() {
+const colorClasses = {
+	surface:
+		"bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800",
+	primary:
+		"bg-primary-50 dark:bg-primary-950 border-primary-200 dark:border-primary-800",
+	secondary:
+		"bg-secondary-50 dark:bg-secondary-950 border-secondary-200 dark:border-secondary-800",
+	tertiary:
+		"bg-tertiary-50 dark:bg-tertiary-950 border-tertiary-200 dark:border-tertiary-800",
+};
+
+function handleBackdropClick(e: MouseEvent) {
+	if (e.target === dialogEl) {
 		open = false;
 	}
+}
+
+function handleClose() {
+	open = false;
+}
 </script>
 
 <Portal>

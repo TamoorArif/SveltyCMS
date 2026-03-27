@@ -20,9 +20,9 @@ Features:
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Online Users',
-	icon: 'mdi:account-multiple-outline',
-	defaultSize: { w: 1, h: 2 }
+	name: "Online Users",
+	icon: "mdi:account-multiple-outline",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

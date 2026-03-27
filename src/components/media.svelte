@@ -34,18 +34,18 @@ Advanced media gallery with search, thumbnails, grid/list views, and selection.
 -->
 
 <script lang="ts">
-import { goto } from '$app/navigation';
-import { mediagallery_nomedia } from '@src/paraglide/messages';
-import { logger } from '@utils/logger';
-import type { MediaImage } from '@utils/media/media-models';
+import { goto } from "$app/navigation";
+import { mediagallery_nomedia } from "@src/paraglide/messages";
+import { logger } from "@utils/logger";
+import type { MediaImage } from "@utils/media/media-models";
 // Removed axios import
-import { onDestroy, onMount } from 'svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import { fade, scale } from 'svelte/transition';
+import { onDestroy, onMount } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
+import { fade, scale } from "svelte/transition";
 
-type ThumbnailSize = 'sm' | 'md' | 'lg';
-type ViewMode = 'grid' | 'list';
-type SortBy = 'name' | 'date' | 'size';
+type ThumbnailSize = "sm" | "md" | "lg";
+type ViewMode = "grid" | "list";
+type SortBy = "name" | "date" | "size";
 
 interface Props {
 	multiple?: boolean;
@@ -53,15 +53,19 @@ interface Props {
 	viewMode?: ViewMode;
 }
 
-const { onselect = () => {}, multiple = false, viewMode = 'grid' }: Props = $props();
+const {
+	onselect = () => {},
+	multiple = false,
+	viewMode = "grid",
+}: Props = $props();
 
 // Constants
-const THUMBNAIL_SIZES: ThumbnailSize[] = ['sm', 'md', 'lg'];
+const THUMBNAIL_SIZES: ThumbnailSize[] = ["sm", "md", "lg"];
 const DEBOUNCE_MS = 300;
 
 // State
 let files = $state<MediaImage[]>([]);
-let search = $state('');
+let search = $state("");
 let isLoading = $state(true);
 let error = $state<string | null>(null);
 let showInfoSet = new SvelteSet<number>();
@@ -74,10 +78,10 @@ let currentViewMode = {
 	},
 	set value(v: ViewMode) {
 		localViewMode = v;
-	}
+	},
 };
 
-let sortBy = $state<SortBy>('name');
+let sortBy = $state<SortBy>("name");
 let sortAscending = $state(true);
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let prefersReducedMotion = $state(false);
@@ -89,7 +93,9 @@ const filteredFiles = $derived.by(() => {
 	// Apply search filter
 	if (search.trim()) {
 		const searchLower = search.toLowerCase();
-		result = result.filter((file) => file.filename.toLowerCase().includes(searchLower));
+		result = result.filter((file) =>
+			file.filename.toLowerCase().includes(searchLower),
+		);
 	}
 
 	// Apply sorting
@@ -97,14 +103,14 @@ const filteredFiles = $derived.by(() => {
 		let comparison = 0;
 
 		switch (sortBy) {
-			case 'name':
+			case "name":
 				comparison = a.filename.localeCompare(b.filename);
 				break;
-			case 'date':
+			case "date":
 				// Assuming files have a created/modified date
 				comparison = 0; // Implement based on your data structure
 				break;
-			case 'size':
+			case "size":
 				// Implement size comparison if available
 				comparison = 0;
 				break;
@@ -165,16 +171,16 @@ async function fetchMedia(): Promise<void> {
 	error = null;
 
 	try {
-		const response = await fetch('/api/media');
+		const response = await fetch("/api/media");
 		if (!response.ok) {
-			throw new Error('Failed to load media');
+			throw new Error("Failed to load media");
 		}
 		files = await response.json();
 		showInfoSet.clear();
 		selectedFiles.clear();
 	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to load media';
-		logger.error('Error fetching media:', err);
+		error = err instanceof Error ? err.message : "Failed to load media";
+		logger.error("Error fetching media:", err);
 	} finally {
 		isLoading = false;
 	}
@@ -203,21 +209,21 @@ function clearSelection(): void {
 
 // Handle keyboard selection
 function handleKeydown(event: KeyboardEvent, file: MediaImage): void {
-	if (event.key === 'Enter' || event.key === ' ') {
+	if (event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		toggleSelection(file);
 	}
 }
 
 // Get thumbnail URL
-function getThumbnailUrl(file: MediaImage, size: ThumbnailSize = 'sm'): string {
-	return file.thumbnails?.[size]?.url || '';
+function getThumbnailUrl(file: MediaImage, size: ThumbnailSize = "sm"): string {
+	return file.thumbnails?.[size]?.url || "";
 }
 
 // Get thumbnail dimensions
 function getThumbnailDimensions(file: MediaImage, size: ThumbnailSize): string {
 	const thumbnail = file.thumbnails?.[size];
-	return thumbnail ? `${thumbnail.width}×${thumbnail.height}` : 'N/A';
+	return thumbnail ? `${thumbnail.width}×${thumbnail.height}` : "N/A";
 }
 
 // Debounced search
@@ -240,17 +246,17 @@ function goToEditor(event: Event, file: MediaImage): void {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
 	fetchMedia();
 
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 
 onDestroy(() => {

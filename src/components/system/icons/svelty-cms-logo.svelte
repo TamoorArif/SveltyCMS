@@ -17,9 +17,9 @@ interface Props {
 }
 
 const {
-	fill = 'currentColor', // Better default - respects text color
-	className = '',
-	size = 72
+	fill = "currentColor", // Better default - respects text color
+	className = "",
+	size = 72,
 }: Props = $props();
 </script>
 

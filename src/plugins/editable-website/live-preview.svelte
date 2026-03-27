@@ -4,13 +4,13 @@
  Renders an iframe and syncs CMS state with the previewed website using the Enterprise Handshake Protocol.
 -->
 <script lang="ts">
-import type { User } from '@auth/types';
-import type { CollectionEntry, Schema } from '@src/content/types';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
-import type { CmsUpdateMessage } from './types';
-import { logger } from '@src/utils/logger';
+import type { User } from "@auth/types";
+import type { CollectionEntry, Schema } from "@src/content/types";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onMount } from "svelte";
+import type { CmsUpdateMessage } from "./types";
+import { logger } from "@src/utils/logger";
 
 interface Props {
 	collection: { value: Schema };
@@ -21,18 +21,24 @@ interface Props {
 	active?: boolean;
 }
 
-let { collection, currentCollectionValue, contentLanguage, tenantId, active = false }: Props = $props();
+let {
+	collection,
+	currentCollectionValue,
+	contentLanguage,
+	tenantId,
+	active = false,
+}: Props = $props();
 
 let iframeEl = $state<HTMLIFrameElement | null>(null);
 let isConnected = $state(false);
 let visualEditingEnabled = $state(true);
-let previewWidth = $state('100%');
-let authorizedUrl = $state('');
+let previewWidth = $state("100%");
+let authorizedUrl = $state("");
 let isLoadingUrl = $state(false);
 let shouldRender = $state(false);
 
 // Derived Props
-const hostProd = publicEnv.HOST_PROD || 'http://localhost:5173';
+const hostProd = publicEnv.HOST_PROD || "http://localhost:5173";
 
 /**
  * Fetch authorized preview URL from server to respect Handshake Protocol & PREVIEW_SECRET
@@ -42,15 +48,15 @@ async function refreshAuthorizedUrl() {
 
 	isLoadingUrl = true;
 	try {
-		const response = await fetch('/api/preview/generate', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/preview/generate", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				schema: collection.value,
 				entry: currentCollectionValue,
 				contentLanguage,
-				tenantId
-			})
+				tenantId,
+			}),
 		});
 
 		if (response.ok) {
@@ -58,11 +64,11 @@ async function refreshAuthorizedUrl() {
 			authorizedUrl = data.previewUrl;
 		} else {
 			// Fallback to direct URL if handshake generation fails (likely missing pattern)
-			const entryId = currentCollectionValue?._id || 'draft';
+			const entryId = currentCollectionValue?._id || "draft";
 			authorizedUrl = `${hostProd}?preview=${entryId}&lang=${contentLanguage}`;
 		}
 	} catch (err) {
-		console.error('Failed to generate authorized preview URL:', err);
+		console.error("Failed to generate authorized preview URL:", err);
 	} finally {
 		isLoadingUrl = false;
 	}
@@ -71,7 +77,7 @@ async function refreshAuthorizedUrl() {
 // Deferred Activation: Only start handshake when tab is first activated
 $effect(() => {
 	if (active && !shouldRender) {
-		logger.info('[Live Preview] Deferred activation triggered');
+		logger.info("[Live Preview] Deferred activation triggered");
 		shouldRender = true;
 	}
 });
@@ -79,7 +85,10 @@ $effect(() => {
 // Refresh URL when slug or ID changes (to handle path changes in preview)
 $effect(() => {
 	// Only refresh if slug or ID changed to avoid infinite loops on keystrokes
-	if (shouldRender && (currentCollectionValue?._id || currentCollectionValue?.slug)) {
+	if (
+		shouldRender &&
+		(currentCollectionValue?._id || currentCollectionValue?.slug)
+	) {
 		refreshAuthorizedUrl();
 	}
 });
@@ -92,16 +101,16 @@ function sendUpdate() {
 		return;
 	}
 
-	const collectionName = (collection.value?.name as string) || 'unknown';
+	const collectionName = (collection.value?.name as string) || "unknown";
 
 	const message: CmsUpdateMessage = {
-		type: 'svelty:update',
+		type: "svelty:update",
 		collection: collectionName,
-		data: currentCollectionValue
+		data: currentCollectionValue,
 	};
 
 	// We use '*' for targetOrigin in dev, but in prod we should use the hostProd origin
-	const targetOrigin = hostProd.startsWith('http') ? hostProd : '*';
+	const targetOrigin = hostProd.startsWith("http") ? hostProd : "*";
 	iframeEl.contentWindow.postMessage(message, targetOrigin);
 }
 
@@ -123,36 +132,40 @@ function handleLoad() {
 onMount(() => {
 	const handleMessage = (event: MessageEvent) => {
 		// ORIGIN VALIDATION: Only accept messages from our configured frontend
-		const allowedOrigins = [hostProd, publicEnv.HOST_DEV, 'http://localhost:5173'].filter(Boolean);
+		const allowedOrigins = [
+			hostProd,
+			publicEnv.HOST_DEV,
+			"http://localhost:5173",
+		].filter(Boolean);
 		if (!allowedOrigins.some((origin) => event.origin.startsWith(origin!))) {
 			// Skip validation in dev if needed, but log it
 			// console.warn('Blocked message from unauthorized origin:', event.origin);
 		}
 
 		// HANDSHAKE COMPLETION
-		if (event.data?.type === 'svelty:init') {
+		if (event.data?.type === "svelty:init") {
 			isConnected = true;
 			sendUpdate();
 		}
 
 		// VISUAL EDITING: Field Clicked
-		if (event.data?.type === 'svelty:field:click' && visualEditingEnabled) {
+		if (event.data?.type === "svelty:field:click" && visualEditingEnabled) {
 			const fieldName = event.data.fieldName;
-			const customEvent = new CustomEvent('svelty:focus-field', {
+			const customEvent = new CustomEvent("svelty:focus-field", {
 				detail: { fieldName },
 				bubbles: true,
-				composed: true
+				composed: true,
 			});
 			document.dispatchEvent(customEvent);
 		}
 	};
-	window.addEventListener('message', handleMessage);
-	return () => window.removeEventListener('message', handleMessage);
+	window.addEventListener("message", handleMessage);
+	return () => window.removeEventListener("message", handleMessage);
 });
 
 function copyUrl() {
 	navigator.clipboard.writeText(authorizedUrl);
-	toast.success('Preview URL Copied');
+	toast.success("Preview URL Copied");
 }
 </script>
 

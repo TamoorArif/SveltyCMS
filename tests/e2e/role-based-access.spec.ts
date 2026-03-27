@@ -31,7 +31,12 @@ async function login(page: Page, user: { email: string; password: string }) {
     window.sessionStorage.setItem("sveltycms_welcome_modal_shown", "true");
     window.localStorage.setItem(
       "sveltycms_consent",
-      JSON.stringify({ responded: true, necessary: true, analytics: false, marketing: false }),
+      JSON.stringify({
+        responded: true,
+        necessary: true,
+        analytics: false,
+        marketing: false,
+      }),
     );
   });
 
@@ -119,7 +124,9 @@ test.describe("Role-Based Access Control", () => {
 
     // Developer CAN access system configuration
     await page.goto("/config/system-settings");
-    await expect(page).toHaveURL(/\/config\/system-settings/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/\/config\/system-settings/, {
+      timeout: 10_000,
+    });
     // Use a more specific selector to avoid strict mode violation (multiple matches)
     await expect(
       page

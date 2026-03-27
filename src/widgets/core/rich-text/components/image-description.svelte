@@ -25,7 +25,13 @@ interface Props {
 	value?: string;
 }
 
-let { show = false, value: propValue = '', key = '', active = $bindable(''), onSubmit }: Props = $props();
+let {
+	show = false,
+	value: propValue = "",
+	key = "",
+	active = $bindable(""),
+	onSubmit,
+}: Props = $props();
 
 let localValue = $state<string | undefined>(undefined);
 
@@ -36,7 +42,7 @@ let VALUE = {
 
 	set value(v: string) {
 		localValue = v;
-	}
+	},
 };
 
 let showInput = $state(false);
@@ -54,7 +60,7 @@ $effect(() => {
 });
 
 function handleKeydown(e: KeyboardEvent & { currentTarget: HTMLInputElement }) {
-	if (e.key === 'Enter') {
+	if (e.key === "Enter") {
 		showInput = false;
 
 		onSubmit?.(VALUE.value as string);

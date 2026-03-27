@@ -223,9 +223,10 @@ export async function loadSettingsFromDB(criticalOnly = false): Promise<boolean>
     }
 
     // Merge and cache
-    const mergedPrivate = { ...privateConfig, ...privateDynamic } as InferOutput<
-      typeof privateConfigSchema
-    >;
+    const mergedPrivate = {
+      ...privateConfig,
+      ...privateDynamic,
+    } as InferOutput<typeof privateConfigSchema>;
     await setSettingsCache(mergedPrivate, settings as unknown as PublicEnv);
 
     // Reconfigure CacheService to reflect potentially new Redis settings

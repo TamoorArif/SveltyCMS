@@ -293,12 +293,20 @@ describe("Token API Endpoints", () => {
         safeFetch(`${API_BASE_URL}/api/token/create-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Cookie: authCookie },
-          body: JSON.stringify({ email: email1, role: "editor", expiresIn: "2 days" }),
+          body: JSON.stringify({
+            email: email1,
+            role: "editor",
+            expiresIn: "2 days",
+          }),
         }),
         safeFetch(`${API_BASE_URL}/api/token/create-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Cookie: authCookie },
-          body: JSON.stringify({ email: email2, role: "editor", expiresIn: "2 days" }),
+          body: JSON.stringify({
+            email: email2,
+            role: "editor",
+            expiresIn: "2 days",
+          }),
         }),
       ]);
 
@@ -498,7 +506,11 @@ describe("Token API Endpoints", () => {
       const createA = await safeFetch(`${API_BASE_URL}/api/token/create-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: authCookie },
-        body: JSON.stringify({ email: tenantAEmail, role: "editor", expiresIn: "2 days" }),
+        body: JSON.stringify({
+          email: tenantAEmail,
+          role: "editor",
+          expiresIn: "2 days",
+        }),
       });
       const resultA = await createA.json();
       const tenantAToken = resultA.token.value;
@@ -519,7 +531,11 @@ describe("Token API Endpoints", () => {
       const createBatchA = await safeFetch(`${API_BASE_URL}/api/token/create-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: authCookie },
-        body: JSON.stringify({ email: batchEmail1, role: "editor", expiresIn: "2 days" }),
+        body: JSON.stringify({
+          email: batchEmail1,
+          role: "editor",
+          expiresIn: "2 days",
+        }),
       });
       const t1 = (await createBatchA.json()).token.value;
 

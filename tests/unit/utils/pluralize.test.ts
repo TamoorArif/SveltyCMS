@@ -31,7 +31,12 @@ describe("internationalized pluralize utility", () => {
     // "one" for 1, 21, 31...
     // "few" for 2-4, 22-24...
     // "many" for 0, 5-20, 25-30...
-    const appleRu = { one: "яблоко", few: "яблока", many: "яблок", other: "яблок" };
+    const appleRu = {
+      one: "яблоко",
+      few: "яблока",
+      many: "яблок",
+      other: "яблок",
+    };
 
     expect(pluralize(1, appleRu, "ru-RU")).toBe("яблоко");
     expect(pluralize(2, appleRu, "ru-RU")).toBe("яблока");

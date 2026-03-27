@@ -1,14 +1,14 @@
 <script lang="ts">
-import { collections } from '@src/stores/collection-store.svelte';
-import type { AIEnrichmentProps } from './types';
-import Icon from '@iconify/svelte';
-import { logger } from '@utils/logger';
-import { getFieldName } from '@utils/utils';
+import { collections } from "@src/stores/collection-store.svelte";
+import type { AIEnrichmentProps } from "./types";
+import Icon from "@iconify/svelte";
+import { logger } from "@utils/logger";
+import { getFieldName } from "@utils/utils";
 
 let {
 	field,
 	value = $bindable(),
-	contentLanguage
+	contentLanguage,
 } = $props<{
 	field: AIEnrichmentProps;
 	value: any;
@@ -23,17 +23,20 @@ const errorId = $derived(`ai-enrich-error-${fieldName}`);
 
 async function runEnrichment() {
 	if (!field.sourceField) {
-		error = 'No source field configured';
+		error = "No source field configured";
 		return;
 	}
 
 	const sourceData = collections.activeValue[field.sourceField];
-	let sourceText = '';
+	let sourceText = "";
 
-	if (typeof sourceData === 'string') {
+	if (typeof sourceData === "string") {
 		sourceText = sourceData;
-	} else if (typeof sourceData === 'object' && sourceData !== null) {
-		sourceText = (sourceData as any)[contentLanguage] || (sourceData as any).content || JSON.stringify(sourceData);
+	} else if (typeof sourceData === "object" && sourceData !== null) {
+		sourceText =
+			(sourceData as any)[contentLanguage] ||
+			(sourceData as any).content ||
+			JSON.stringify(sourceData);
 	}
 
 	if (!sourceText) {
@@ -45,15 +48,15 @@ async function runEnrichment() {
 	error = null;
 
 	try {
-		const response = await fetch('/api/ai/enrich', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/ai/enrich", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				text: sourceText,
 				action: field.action,
 				customPrompt: field.customPrompt,
-				language: contentLanguage
-			})
+				language: contentLanguage,
+			}),
 		});
 
 		if (!response.ok) {
@@ -68,10 +71,12 @@ async function runEnrichment() {
 			value = data.result;
 		}
 
-		logger.info(`[AIEnrichment] Successfully enriched from ${field.sourceField}`);
+		logger.info(
+			`[AIEnrichment] Successfully enriched from ${field.sourceField}`,
+		);
 	} catch (err: any) {
-		error = err.message || 'AI Enrichment failed';
-		logger.error('[AIEnrichment] Error:', err);
+		error = err.message || "AI Enrichment failed";
+		logger.error("[AIEnrichment] Error:", err);
 	} finally {
 		loading = false;
 	}

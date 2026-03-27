@@ -3,9 +3,9 @@
 @component Advanced Video Transcoding Interface
  -->
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import { slide } from 'svelte/transition';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import { slide } from "svelte/transition";
 
 interface Props {
 	video: { _id: string; filename: string; url: string };
@@ -14,39 +14,39 @@ interface Props {
 
 let { video, onClose }: Props = $props();
 
-let format = $state<'hls' | 'mp4'>('hls');
-let resolutions = $state(['1080p', '720p', '480p']);
-let bitrate = $state('auto');
+let format = $state<"hls" | "mp4">("hls");
+let resolutions = $state(["1080p", "720p", "480p"]);
+let bitrate = $state("auto");
 let isProcessing = $state(false);
 let progress = $state(0);
 
-const availableResolutions = ['1080p', '720p', '480p', '360p'];
+const availableResolutions = ["1080p", "720p", "480p", "360p"];
 
 async function startTranscoding() {
 	isProcessing = true;
 	progress = 0;
 
 	try {
-		const response = await fetch('/api/media/transcode', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/media/transcode", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				mediaId: video._id,
 				format,
 				resolutions,
-				bitrate
-			})
+				bitrate,
+			}),
 		});
 
 		if (response.ok) {
-			toast.success('Transcoding started. You will be notified when complete.');
+			toast.success("Transcoding started. You will be notified when complete.");
 			onClose();
 		} else {
-			throw new Error('Failed to start transcoding');
+			throw new Error("Failed to start transcoding");
 		}
 	} catch (err) {
-		logger.error('Transcode error', err);
-		toast.error('Transcoding failed to start.');
+		logger.error("Transcode error", err);
+		toast.error("Transcoding failed to start.");
 	} finally {
 		isProcessing = false;
 	}

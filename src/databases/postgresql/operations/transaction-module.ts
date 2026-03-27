@@ -48,7 +48,10 @@ export class TransactionModule {
         return {
           success: false,
           message: "Transaction rolled back",
-          error: { code: "TRANSACTION_ROLLED_BACK", message: "Transaction rolled back" },
+          error: {
+            code: "TRANSACTION_ROLLED_BACK",
+            message: "Transaction rolled back",
+          },
         };
       }
       return this.core.handleError(error, "TRANSACTION_FAILED");

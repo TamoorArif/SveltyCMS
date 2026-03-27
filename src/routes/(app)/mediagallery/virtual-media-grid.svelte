@@ -9,28 +9,50 @@ Features:
 -->
 
 <script lang="ts">
-import type { MediaBase, MediaImage } from '@utils/media/media-models';
-import { formatBytes } from '@utils/utils';
-import { onMount } from 'svelte';
-import type { SvelteSet } from 'svelte/reactivity';
+import type { MediaBase, MediaImage } from "@utils/media/media-models";
+import { formatBytes } from "@utils/utils";
+import { onMount } from "svelte";
+import type { SvelteSet } from "svelte/reactivity";
 
 interface Props {
 	filteredFiles?: (MediaBase | MediaImage)[];
-	gridSize?: 'tiny' | 'small' | 'medium' | 'large';
+	gridSize?: "tiny" | "small" | "medium" | "large";
 	isSelectionMode?: boolean;
 	selectedFiles: SvelteSet<string>;
 	onEditImage?: (file: MediaImage) => void;
 }
 
-let { filteredFiles = [], gridSize = 'medium', isSelectionMode = false, selectedFiles = $bindable(), onEditImage = () => {} }: Props = $props();
+let {
+	filteredFiles = [],
+	gridSize = "medium",
+	isSelectionMode = false,
+	selectedFiles = $bindable(),
+	onEditImage = () => {},
+}: Props = $props();
 
 // Virtual scrolling state
 let container: HTMLDivElement | undefined = $state();
 let scrollTop = $state(0);
 let viewportHeight = $state(600);
 
-const itemHeight = $derived(gridSize === 'tiny' ? 120 : gridSize === 'small' ? 180 : gridSize === 'medium' ? 280 : 400);
-const itemWidth = $derived(gridSize === 'tiny' ? 100 : gridSize === 'small' ? 160 : gridSize === 'medium' ? 240 : 360);
+const itemHeight = $derived(
+	gridSize === "tiny"
+		? 120
+		: gridSize === "small"
+			? 180
+			: gridSize === "medium"
+				? 280
+				: 400,
+);
+const itemWidth = $derived(
+	gridSize === "tiny"
+		? 100
+		: gridSize === "small"
+			? 160
+			: gridSize === "medium"
+				? 240
+				: 360,
+);
 
 let itemsPerRow = $state(4);
 
@@ -42,9 +64,13 @@ function updateLayout() {
 
 const totalRows = $derived(Math.ceil(filteredFiles.length / itemsPerRow));
 const startRow = $derived(Math.max(0, Math.floor(scrollTop / itemHeight) - 1));
-const endRow = $derived(Math.min(totalRows, startRow + Math.ceil(viewportHeight / itemHeight) + 2));
+const endRow = $derived(
+	Math.min(totalRows, startRow + Math.ceil(viewportHeight / itemHeight) + 2),
+);
 
-const visibleItems = $derived(filteredFiles.slice(startRow * itemsPerRow, endRow * itemsPerRow));
+const visibleItems = $derived(
+	filteredFiles.slice(startRow * itemsPerRow, endRow * itemsPerRow),
+);
 
 function toggleSelection(file: MediaBase | MediaImage) {
 	const id = file._id?.toString() || file.filename;

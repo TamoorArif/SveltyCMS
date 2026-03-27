@@ -4,7 +4,7 @@
 Pintura-style controls for the Blur tool with responsive design and keyboard support.
 -->
 <script lang="ts">
-import type { BlurPattern, BlurShape } from '../widgets/blur/types';
+import type { BlurPattern, BlurShape } from "../widgets/blur/types";
 
 // Constants
 const BLUR_MIN = 5;
@@ -28,7 +28,7 @@ let {
 	onFlipHorizontal,
 	onReset,
 	onCancel,
-	onApply
+	onApply,
 }: {
 	blurStrength: number;
 	shape: BlurShape;
@@ -49,9 +49,9 @@ let {
 } = $props();
 
 // Derived values
-const minStrength = $derived(pattern === 'pixelate' ? PIXELATE_MIN : BLUR_MIN);
-const maxStrength = $derived(pattern === 'pixelate' ? PIXELATE_MAX : BLUR_MAX);
-const strengthLabel = $derived(pattern === 'pixelate' ? 'Size' : 'Strength');
+const minStrength = $derived(pattern === "pixelate" ? PIXELATE_MIN : BLUR_MIN);
+const maxStrength = $derived(pattern === "pixelate" ? PIXELATE_MAX : BLUR_MAX);
+const strengthLabel = $derived(pattern === "pixelate" ? "Size" : "Strength");
 
 function handleStrengthInput(e: Event) {
 	const target = e.currentTarget as HTMLInputElement;
@@ -60,33 +60,33 @@ function handleStrengthInput(e: Event) {
 
 // Keyboard shortcuts
 function handleKeyDown(e: KeyboardEvent) {
-	if (e.target && (e.target as HTMLElement).tagName === 'INPUT') {
+	if (e.target && (e.target as HTMLElement).tagName === "INPUT") {
 		return;
 	}
 
 	switch (e.key) {
-		case 'r':
-		case 'R':
+		case "r":
+		case "R":
 			e.preventDefault();
-			onShapeChange('rectangle');
+			onShapeChange("rectangle");
 			break;
-		case 'e':
-		case 'E':
+		case "e":
+		case "E":
 			e.preventDefault();
-			onShapeChange('ellipse');
+			onShapeChange("ellipse");
 			break;
-		case 'b':
-		case 'B':
+		case "b":
+		case "B":
 			e.preventDefault();
-			onPatternChange('blur');
+			onPatternChange("blur");
 			break;
-		case 'p':
-		case 'P':
+		case "p":
+		case "P":
 			e.preventDefault();
-			onPatternChange('pixelate');
+			onPatternChange("pixelate");
 			break;
-		case 'Delete':
-		case 'Backspace':
+		case "Delete":
+		case "Backspace":
 			if (hasActiveRegion) {
 				e.preventDefault();
 				onDeleteRegion();

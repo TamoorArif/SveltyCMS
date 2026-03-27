@@ -16,7 +16,7 @@ A premium Svelte 5 Breadcrumb primitive with customizable separators and icons.
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
+import { cn } from "@utils/cn";
 
 interface Crumb {
 	label: string;
@@ -30,10 +30,10 @@ interface Props {
 	class?: string;
 }
 
-let { 
-	items = [], 
-	separator = 'mdi:chevron-right',
-	class: className 
+let {
+	items = [],
+	separator = "mdi:chevron-right",
+	class: className,
 }: Props = $props();
 </script>
 

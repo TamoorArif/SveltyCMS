@@ -4,8 +4,14 @@
 Shows horizontal stepper on mobile, vertical stepper on desktop with legend.
 -->
 <script lang="ts">
-
-const { steps, currentStep, stepCompleted, stepClickable, legendItems, onselectStep = () => {} } = $props();
+const {
+	steps,
+	currentStep,
+	stepCompleted,
+	stepClickable,
+	legendItems,
+	onselectStep = () => {},
+} = $props();
 
 function handleStepClick(stepIndex: number) {
 	if (stepClickable[stepIndex] || stepIndex === currentStep) {

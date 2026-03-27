@@ -13,10 +13,10 @@ Features:
 - Roving tabindex for accessibility
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte.ts';
-import { goto } from '$app/navigation';
-import type { TreeViewItem } from './tree-view-board.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte.ts";
+import { goto } from "$app/navigation";
+import type { TreeViewItem } from "./tree-view-board.svelte";
 
 interface Props {
 	isOpen?: boolean;
@@ -55,33 +55,35 @@ let {
 	onMoveToParent,
 	onEnterReorderMode,
 	onExitReorderMode,
-	tabindex = -1
+	tabindex = -1,
 }: Props = $props();
 
 // Computed properties
-const name = $derived(item.name || 'Untitled');
-const icon = $derived(item.icon || (item.nodeType === 'category' ? 'bi:folder' : 'bi:collection'));
-const isCategory = $derived(item.nodeType === 'category');
+const name = $derived(item.name || "Untitled");
+const icon = $derived(
+	item.icon || (item.nodeType === "category" ? "bi:folder" : "bi:collection"),
+);
+const isCategory = $derived(item.nodeType === "category");
 
 // Enhanced styling with better visual hierarchy; selected category = primary highlight (one at a time)
 const containerClass = $derived(
 	keyboardReorderMode
-		? 'group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-primary-500/20 to-primary-600/10 border-2 border-primary-500 ring-2 ring-primary-500/50 flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300 ease-out min-w-0 overflow-hidden'
+		? "group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-primary-500/20 to-primary-600/10 border-2 border-primary-500 ring-2 ring-primary-500/50 flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300 ease-out min-w-0 overflow-hidden"
 		: isCategory && isSelectedCategory
-			? 'group w-full min-h-[48px] p-2 sm:p-3 rounded bg-primary-500/20 dark:bg-primary-600/25 border-2 border-primary-500 ring-2 ring-primary-500/50 flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300 ease-out min-w-0 overflow-hidden'
+			? "group w-full min-h-[48px] p-2 sm:p-3 rounded bg-primary-500/20 dark:bg-primary-600/25 border-2 border-primary-500 ring-2 ring-primary-500/50 flex items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-300 ease-out min-w-0 overflow-hidden"
 			: isCategory
-				? 'group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-tertiary-500/10 to-tertiary-600/5 border-2 border-l-4 border-l-tertiary-500 border-tertiary-500/30 flex items-center gap-2 sm:gap-3 cursor-pointer hover:border-tertiary-500 hover:shadow-lg hover:from-tertiary-500/20 hover:to-tertiary-600/10 transition-all duration-300 ease-out min-w-0 overflow-hidden'
-				: 'group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-surface-100 to-surface-50 dark:from-surface-700 dark:to-surface-800 border-2 border-l-4 border-l-primary-500 border-surface-500/40 flex items-center gap-2 sm:gap-3 cursor-pointer hover:border-surface-500 hover:shadow-lg hover:translate-x-1 transition-all duration-300 ease-out min-w-0 overflow-hidden'
+				? "group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-tertiary-500/10 to-tertiary-600/5 border-2 border-l-4 border-l-tertiary-500 border-tertiary-500/30 flex items-center gap-2 sm:gap-3 cursor-pointer hover:border-tertiary-500 hover:shadow-lg hover:from-tertiary-500/20 hover:to-tertiary-600/10 transition-all duration-300 ease-out min-w-0 overflow-hidden"
+				: "group w-full min-h-[48px] p-2 sm:p-3 rounded bg-gradient-to-r from-surface-100 to-surface-50 dark:from-surface-700 dark:to-surface-800 border-2 border-l-4 border-l-primary-500 border-surface-500/40 flex items-center gap-2 sm:gap-3 cursor-pointer hover:border-surface-500 hover:shadow-lg hover:translate-x-1 transition-all duration-300 ease-out min-w-0 overflow-hidden",
 );
 
 const iconClass = $derived(
 	isCategory
-		? 'text-tertiary-500 group-hover:text-tertiary-600 transition-colors duration-200'
-		: 'text-error-500 group-hover:text-error-600 transition-colors duration-200'
+		? "text-tertiary-500 group-hover:text-tertiary-600 transition-colors duration-200"
+		: "text-error-500 group-hover:text-error-600 transition-colors duration-200",
 );
 
 function handleClick(e: MouseEvent) {
-	if ((e.target as HTMLElement).closest('button, .drag-handle')) {
+	if ((e.target as HTMLElement).closest("button, .drag-handle")) {
 		return;
 	}
 	// Category row click = toggle selection (highlight); expand/collapse via chevron only
@@ -98,23 +100,23 @@ function handleKeyDown(e: KeyboardEvent) {
 	}
 
 	switch (e.key) {
-		case 'ArrowUp':
+		case "ArrowUp":
 			e.preventDefault();
 			onMoveUp?.();
 			break;
-		case 'ArrowDown':
+		case "ArrowDown":
 			e.preventDefault();
 			onMoveDown?.();
 			break;
-		case 'ArrowLeft':
+		case "ArrowLeft":
 			e.preventDefault();
 			onMoveToParent?.();
 			break;
-		case 'Escape':
+		case "Escape":
 			e.preventDefault();
 			onExitReorderMode?.();
 			break;
-		case 'Enter':
+		case "Enter":
 			e.preventDefault();
 			onExitReorderMode?.();
 			break;

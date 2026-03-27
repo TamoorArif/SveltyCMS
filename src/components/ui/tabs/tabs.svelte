@@ -3,37 +3,39 @@
 @component ROOT
 -->
 <script lang="ts">
-	import { setContext, type Snippet } from 'svelte';
-	import { cn } from '@utils/cn';
+import { setContext, type Snippet } from "svelte";
+import { cn } from "@utils/cn";
 
-	interface TabsContext {
-		value: any;
-		setTab: (val: any) => void;
-	}
+interface TabsContext {
+	value: any;
+	setTab: (val: any) => void;
+}
 
-	interface Props {
-		value: any;
-		onValueChange?: (event: { value: any }) => void;
-		fluid?: boolean;
-		children?: Snippet;
-		class?: string;
-	}
+interface Props {
+	value: any;
+	onValueChange?: (event: { value: any }) => void;
+	fluid?: boolean;
+	children?: Snippet;
+	class?: string;
+}
 
-	let {
-		value = $bindable(),
-		onValueChange,
-		fluid = false,
-		children,
-		class: className = ''
-	}: Props = $props();
+let {
+	value = $bindable(),
+	onValueChange,
+	fluid = false,
+	children,
+	class: className = "",
+}: Props = $props();
 
-	setContext<TabsContext>('TABS_CONTEXT', {
-		get value() { return value; },
-		setTab: (val) => {
-			value = val;
-			onValueChange?.({ value: val });
-		}
-	});
+setContext<TabsContext>("TABS_CONTEXT", {
+	get value() {
+		return value;
+	},
+	setTab: (val) => {
+		value = val;
+		onValueChange?.({ value: val });
+	},
+});
 </script>
 
 <div class={cn("tabs-container flex flex-col", className, fluid && "w-full")}>

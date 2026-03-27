@@ -26,12 +26,16 @@ SveltyCMS provides a comprehensive programmatic surface for building custom fron
 All API endpoints are gated by the **Security Middleware Pipeline** (Rate Limiting, Firewall, and Auth).
 
 ### 1. Developer Access Tokens (Programmatic)
+
 For long-lived scripts or server-to-server integrations, use **Bearer Tokens**.
+
 - [🔐 **API Access Tokens**](./api-access-tokens.mdx) — Guide to generating and using tokens.
 - [🛡️ **User Token Management**](./user-token-management-api.mdx) — Programmatic revocation and rotation.
 
 ### 2. Session Cookies (Web App)
+
 Used by the Admin Studio and local frontend components.
+
 - [👥 **User Management API**](./user-management-api.mdx) — Authentication, registration, and profile updates.
 - [🔐 **2FA API**](./authentication-2fa-api.mdx) — Two-factor setup and verification.
 
@@ -42,6 +46,7 @@ Used by the Admin Studio and local frontend components.
 SveltyCMS provides granular endpoints for every core service. Use these links to explore specific technical references.
 
 ### Data & Content
+
 - [📚 **Collection API**](./collection-api.mdx) — CRUD operations for content entries.
 - [🔍 **Search API**](./search-api.mdx) — Full-text search across collections.
 - [📊 **GraphQL API**](./graphql-api.mdx) — Flexible querying and subscriptions.
@@ -49,21 +54,25 @@ SveltyCMS provides granular endpoints for every core service. Use these links to
 - [🗑️ **Trash API**](./trash-api.mdx) — Managing soft-deleted content.
 
 ### Media & Assets
+
 - [🖼️ **Media API**](./media-api.mdx) — Uploading, cropping, and managing assets.
 
 ### System & Configuration
+
 - [🧩 **Widget API**](./widget-api.mdx) — Managing widget lifecycle and dependencies.
 - [⚙️ **Settings API**](./settings-api.mdx) — Global and tenant-specific configuration.
 - [⚙️ **Setup Actions API**](./setup-actions-api.mdx) — Maintenance and system initialization.
 - [✉️ **Email API**](./email-api.mdx) — Programmatic email sending via Svelte templates.
 
 ### Integration Tools
+
 - [🤖 **Automation System API**](../guides/development/automation-system.mdx) — Event-driven callbacks.
 - [🪝 **Webhooks Guide**](./Webhooks.mdx) — Real-time HTTP event notifications.
 - [🌐 **SCIM v2.0 API**](./scim-v2-api.mdx) — Standardized user and group provisioning.
 - [🔐 **SAML SSO API**](./saml-sso-api.mdx) — Enterprise identity provider integration.
 
 ### Observability & Real-Time
+
 - [📈 **Dashboard API**](./dashboard-api.mdx) — Metrics, performance, and health data.
 - [⚡ **Real-Time Events API**](./real-time-events-api.mdx) — SSE stream for activity and AI tokens.
 
@@ -74,6 +83,7 @@ SveltyCMS provides granular endpoints for every core service. Use these links to
 All REST endpoints follow a unified response shape to ensure consistent client-side handling.
 
 ### Success Format (200 OK / 201 Created)
+
 ```json
 {
   "success": true,
@@ -83,6 +93,7 @@ All REST endpoints follow a unified response shape to ensure consistent client-s
 ```
 
 ### Error Format (4xx / 5xx)
+
 ```json
 {
   "success": false,

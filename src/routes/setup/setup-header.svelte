@@ -5,36 +5,48 @@ Middle-ground height (h-[38px]), fixed dropdown borders, and right-aligned mobil
 -->
 <script lang="ts">
 // Skeleton V4
-import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
+import { Menu, Portal } from "@skeletonlabs/skeleton-svelte";
 
 // Components
-import SiteName from '@src/components/site-name.svelte';
-import AccessibilityHelp from '@src/components/system/accessibility-help.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import ThemeToggle from '@src/components/theme-toggle.svelte';
-import VersionCheck from '@src/components/version-check.svelte';
+import SiteName from "@src/components/site-name.svelte";
+import AccessibilityHelp from "@src/components/system/accessibility-help.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import ThemeToggle from "@src/components/theme-toggle.svelte";
+import VersionCheck from "@src/components/version-check.svelte";
 // Paraglide Messages
-import { applayout_systemlanguage, setup_heading_subtitle, setup_search_placeholder } from '@src/paraglide/messages';
-import { getLanguageName } from '@utils/language-utils';
+import {
+	applayout_systemlanguage,
+	setup_heading_subtitle,
+	setup_search_placeholder,
+} from "@src/paraglide/messages";
+import { getLanguageName } from "@utils/language-utils";
 // Utils
-import { modalState } from '@utils/modal-state.svelte';
+import { modalState } from "@utils/modal-state.svelte";
 
-let { siteName, systemLanguages, currentLanguageTag, onselectLanguage = () => {} } = $props();
+let {
+	siteName,
+	systemLanguages,
+	currentLanguageTag,
+	onselectLanguage = () => {},
+} = $props();
 
-let langSearch = $state('');
+let langSearch = $state("");
 
 const filteredLanguages = $derived(
 	systemLanguages
 		.filter((lang: string) => lang !== currentLanguageTag)
 		.filter((lang: string) => {
 			const searchLower = langSearch.toLowerCase();
-			return getLanguageName(lang).toLowerCase().includes(searchLower) || lang.toLowerCase().includes(searchLower);
-		})
+			return (
+				getLanguageName(lang).toLowerCase().includes(searchLower) ||
+				lang.toLowerCase().includes(searchLower)
+			);
+		}),
 );
 
 function selectLanguage(lang: string) {
 	onselectLanguage(lang);
-	langSearch = ''; // Reset search on selection
+	langSearch = ""; // Reset search on selection
 }
 </script>
 

@@ -18,15 +18,15 @@
 -->
 
 <script lang="ts">
-import { twMerge } from 'tailwind-merge';
+import { twMerge } from "tailwind-merge";
 
 // Define props using $props
 const {
 	items, // Array of selectable items
 	selected, // Currently selected item (no default here, handled dynamically)
-	label = '', // Optional label for the dropdown
+	label = "", // Optional label for the dropdown
 	modifier = (input: any) => input, // Function to modify how items are displayed
-	class: className = '' // Custom class for the dropdown container
+	class: className = "", // Custom class for the dropdown container
 } = $props();
 
 // --- STATE ---
@@ -49,11 +49,13 @@ let currentSelected = {
 	},
 	set value(v: any) {
 		localSelected = v;
-	}
+	},
 };
 
 // Derived state for filtered items
-const filteredItems = $derived(items.filter((item: any) => item !== currentSelected.value));
+const filteredItems = $derived(
+	items.filter((item: any) => item !== currentSelected.value),
+);
 
 // Toggle dropdown expansion
 function toggleExpanded() {

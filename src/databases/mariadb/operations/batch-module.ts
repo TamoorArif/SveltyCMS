@@ -141,7 +141,11 @@ export class BatchModule {
           } as unknown as Record<string, unknown>)
           .where(
             eq(
-              (table as unknown as { _id: import("drizzle-orm/mysql-core").MySqlColumn })._id,
+              (
+                table as unknown as {
+                  _id: import("drizzle-orm/mysql-core").MySqlColumn;
+                }
+              )._id,
               update.id as string,
             ),
           );
@@ -161,7 +165,11 @@ export class BatchModule {
         .delete(table as unknown as import("drizzle-orm/mysql-core").MySqlTable)
         .where(
           inArray(
-            (table as unknown as { _id: import("drizzle-orm/mysql-core").MySqlColumn })._id,
+            (
+              table as unknown as {
+                _id: import("drizzle-orm/mysql-core").MySqlColumn;
+              }
+            )._id,
             ids as string[],
           ),
         );

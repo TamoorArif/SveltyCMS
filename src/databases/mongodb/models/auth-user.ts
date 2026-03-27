@@ -153,7 +153,9 @@ export class UserAdapter {
       };
 
       // Validate tenant context if multi-tenant is enabled
-      safeQuery({}, userData.tenantId, { bypassTenantCheck: options?.bypassTenantCheck });
+      safeQuery({}, userData.tenantId, {
+        bypassTenantCheck: options?.bypassTenantCheck,
+      });
 
       // Log exactly what we received (redacted)
       logger.debug("UserAdapter.createUser received data:", {

@@ -15,7 +15,7 @@ A premium range slider with Tailwind styling and bindable value.
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
+import { cn } from "@utils/cn";
 
 interface Props {
 	value?: number;
@@ -33,8 +33,8 @@ let {
 	max = 100,
 	step = 1,
 	disabled = false,
-	class: className = '',
-	onchange
+	class: className = "",
+	onchange,
 }: Props = $props();
 
 const percentage = $derived(((value - min) / (max - min)) * 100);

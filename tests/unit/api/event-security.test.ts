@@ -59,7 +59,11 @@ describe("Events API Security - Tenant Isolation", () => {
       expect(mockController).toBeDefined();
 
       // Simulate events from different tenants
-      const myEvent = { event: "entry:create", tenantId: myTenant, data: { name: "My Tenant" } };
+      const myEvent = {
+        event: "entry:create",
+        tenantId: myTenant,
+        data: { name: "My Tenant" },
+      };
       const otherEvent = {
         event: "entry:create",
         tenantId: otherTenant,

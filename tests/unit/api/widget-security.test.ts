@@ -104,7 +104,9 @@ describe("Widget API Security - IDOR and Tenant Isolation", () => {
           roles: ["admin"],
           dbAdapter: {
             system: {
-              widgets: { findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })) },
+              widgets: {
+                findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+              },
             },
           },
         },
@@ -127,7 +129,9 @@ describe("Widget API Security - IDOR and Tenant Isolation", () => {
           roles: ["admin"],
           dbAdapter: {
             system: {
-              widgets: { findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })) },
+              widgets: {
+                findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+              },
             },
           },
         },
@@ -191,7 +195,9 @@ describe("Widget API Security - IDOR and Tenant Isolation", () => {
           roles: ["super-admin"],
         },
         request: {
-          headers: { get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null) },
+          headers: {
+            get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null),
+          },
         },
       } as any;
 
@@ -233,7 +239,10 @@ describe("Widget API Security - IDOR and Tenant Isolation", () => {
                   }),
                 ),
                 update: vi.fn(() =>
-                  Promise.resolve({ success: true, data: { name: "my-widget" } }),
+                  Promise.resolve({
+                    success: true,
+                    data: { name: "my-widget" },
+                  }),
                 ),
               },
             },

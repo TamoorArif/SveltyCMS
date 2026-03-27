@@ -19,10 +19,14 @@ interface Props {
 	selectedMediaType: string;
 }
 
-let { globalSearchValue = $bindable(), selectedMediaType = $bindable(), mediaTypes }: Props = $props();
+let {
+	globalSearchValue = $bindable(),
+	selectedMediaType = $bindable(),
+	mediaTypes,
+}: Props = $props();
 
 function clearSearch() {
-	globalSearchValue = '';
+	globalSearchValue = "";
 }
 </script>
 

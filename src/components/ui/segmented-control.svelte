@@ -12,8 +12,8 @@
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from "@utils/cn";
+import type { HTMLAttributes } from "svelte/elements";
 
 type Option = {
 	label: string;
@@ -22,7 +22,7 @@ type Option = {
 	disabled?: boolean;
 };
 
-type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value' | 'onchange'> & {
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "value" | "onchange"> & {
 	options: Option[];
 	value: any;
 	name?: string;
@@ -32,23 +32,25 @@ type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value' | 'onchange'> & {
 	onchange?: (value: any) => void;
 };
 
-let { 
-	options = [], 
-	value = $bindable(), 
-	name = crypto.randomUUID(), 
-	disabled = false, 
-	rounded = 'rounded-token',
+let {
+	options = [],
+	value = $bindable(),
+	name = crypto.randomUUID(),
+	disabled = false,
+	rounded = "rounded-token",
 	class: className,
 	onchange,
-	...rest 
+	...rest
 }: Props = $props();
 
-const segmentClasses = $derived(cn(
-	'flex bg-surface-200/50 dark:bg-surface-800/50 p-1',
-	rounded,
-	disabled && 'opacity-50 pointer-events-none',
-	className
-));
+const segmentClasses = $derived(
+	cn(
+		"flex bg-surface-200/50 dark:bg-surface-800/50 p-1",
+		rounded,
+		disabled && "opacity-50 pointer-events-none",
+		className,
+	),
+);
 
 function select(val: any) {
 	if (disabled) return;

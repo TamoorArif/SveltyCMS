@@ -34,17 +34,17 @@ The Widget API manages the lifecycle of SveltyCMS extensions. Unlike standard co
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| GET | `/api/widgets/list` | List all widgets (core + custom) |
-| GET | `/api/widgets/active` | List only active widgets for the current tenant |
-| GET | `/api/widgets/installed` | List non-core, user-installed widgets |
-| GET | `/api/widgets/required` | List system-required widgets that cannot be deactivated |
-| POST | `/api/widgets/sync` | Scan the filesystem and update the widget registry |
-| POST | `/api/widgets/status` | Toggle a widget's active/inactive state |
-| POST | `/api/widgets/validate` | Validate a widget's definition and dependency graph |
-| POST | `/api/widgets/install` | Install a widget from the marketplace |
-| POST | `/api/widgets/uninstall` | Remove a marketplace-installed widget |
+| Method | Endpoint                 | Description                                             |
+| :----- | :----------------------- | :------------------------------------------------------ |
+| GET    | `/api/widgets/list`      | List all widgets (core + custom)                        |
+| GET    | `/api/widgets/active`    | List only active widgets for the current tenant         |
+| GET    | `/api/widgets/installed` | List non-core, user-installed widgets                   |
+| GET    | `/api/widgets/required`  | List system-required widgets that cannot be deactivated |
+| POST   | `/api/widgets/sync`      | Scan the filesystem and update the widget registry      |
+| POST   | `/api/widgets/status`    | Toggle a widget's active/inactive state                 |
+| POST   | `/api/widgets/validate`  | Validate a widget's definition and dependency graph     |
+| POST   | `/api/widgets/install`   | Install a widget from the marketplace                   |
+| POST   | `/api/widgets/uninstall` | Remove a marketplace-installed widget                   |
 
 ---
 
@@ -59,6 +59,7 @@ Discovery endpoints allow the Admin Studio to map field types to their correspon
 Returns every widget registered in the system — both core and custom. Results respect the current tenant's configuration.
 
 **Response Excerpt**:
+
 ```json
 {
   "success": true,
@@ -111,6 +112,7 @@ Widgets are not just static files — they have an operational state maintained 
 Forces the CMS to scan the `/src/widgets` directory and update the database registry to match what's on disk. Run this after manually adding a new widget folder or updating an `index.ts` definition file.
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -128,6 +130,7 @@ Forces the CMS to scan the `/src/widgets` directory and update the database regi
 **Endpoint**: `POST /api/widgets/status`
 
 **Payload**:
+
 ```json
 {
   "widgetName": "myCustomWidget",
@@ -145,6 +148,7 @@ Forces the CMS to scan the `/src/widgets` directory and update the database regi
 Checks a widget's definition against its dependency tree. If a widget requires another widget (e.g., `MediaUpload`) that is not installed or active, validation fails.
 
 **Response (failure example)**:
+
 ```json
 {
   "success": false,
@@ -164,6 +168,7 @@ These endpoints manage widgets sourced from the SveltyCMS marketplace.
 **Endpoint**: `POST /api/widgets/install`
 
 **Payload**:
+
 ```json
 {
   "widgetId": "marketplace-widget-slug",
@@ -176,12 +181,12 @@ These endpoints manage widgets sourced from the SveltyCMS marketplace.
 
 **Security Scan**: Before installation, the widget source code is checked for dangerous patterns:
 
-| Pattern | Reason Blocked |
-| :------ | :------------- |
-| `eval()` | Arbitrary code execution |
-| `child_process` | OS-level process spawning |
-| `exec()` / `spawn()` | Shell command injection |
-| `fs.*` | Direct filesystem access |
+| Pattern              | Reason Blocked            |
+| :------------------- | :------------------------ |
+| `eval()`             | Arbitrary code execution  |
+| `child_process`      | OS-level process spawning |
+| `exec()` / `spawn()` | Shell command injection   |
+| `fs.*`               | Direct filesystem access  |
 
 > [!IMPORTANT]
 > The current scan is regex-based and can be bypassed by obfuscated code. A production-grade AST sandbox (e.g., QuickJS) is planned for the marketplace launch.
@@ -195,6 +200,7 @@ These endpoints manage widgets sourced from the SveltyCMS marketplace.
 Removes a non-core, marketplace-installed widget from the current tenant's configuration.
 
 **Payload**:
+
 ```json
 { "widgetName": "myCustomWidget" }
 ```
@@ -217,10 +223,10 @@ Authorization: Bearer <token>
 
 ### Multi-Tenant Isolation
 
-| Widget Type | Scope |
-| :---------- | :---- |
-| **Core Widgets** | Shared across all tenants automatically. |
-| **Custom Widgets** | Can be globally installed or scoped to a specific `tenantId`. |
+| Widget Type             | Scope                                                                                                                                                          |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core Widgets**        | Shared across all tenants automatically.                                                                                                                       |
+| **Custom Widgets**      | Can be globally installed or scoped to a specific `tenantId`.                                                                                                  |
 | **Discovery Endpoints** | `GET /api/widgets/list` and `GET /api/widgets/active` respect the `tenantId` from the authenticated session, showing only what the tenant is permitted to use. |
 
 ---

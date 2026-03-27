@@ -37,8 +37,18 @@ describe("MediaService (Whitebox)", () => {
   describe("Batch Processing Logic", () => {
     it("should process multiple images in parallel", async () => {
       const mockItems = [
-        { _id: "id1", type: "image", filename: "test1.jpg", path: "global/test1.jpg" },
-        { _id: "id2", type: "image", filename: "test2.jpg", path: "global/test2.jpg" },
+        {
+          _id: "id1",
+          type: "image",
+          filename: "test1.jpg",
+          path: "global/test1.jpg",
+        },
+        {
+          _id: "id2",
+          type: "image",
+          filename: "test2.jpg",
+          path: "global/test2.jpg",
+        },
       ];
 
       // Setup findOne mock
@@ -69,7 +79,12 @@ describe("MediaService (Whitebox)", () => {
       (mockDbAdapter.crud.findOne as any)
         .mockResolvedValueOnce({
           success: true,
-          data: { _id: "id1", type: "image", filename: "test1.jpg", path: "path1" },
+          data: {
+            _id: "id1",
+            type: "image",
+            filename: "test1.jpg",
+            path: "path1",
+          },
         })
         .mockResolvedValueOnce({ success: false, error: "Not found" });
 

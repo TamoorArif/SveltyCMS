@@ -16,19 +16,19 @@ All dynamic CMS settings organized into logical groups
 
 <script lang="ts">
 // Components
-import PageTitle from '@src/components/page-title.svelte';
-import GDPRSettings from '@src/components/system/gdpr-settings.svelte';
-import { groupsNeedingConfig } from '@src/stores/config-store.svelte.ts';
-import { logger } from '@utils/logger';
-import { onMount } from 'svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
-import GenericSettingsGroup from './generic-settings-group.svelte';
-import type { SettingGroup } from './settings-groups';
+import PageTitle from "@src/components/page-title.svelte";
+import GDPRSettings from "@src/components/system/gdpr-settings.svelte";
+import { groupsNeedingConfig } from "@src/stores/config-store.svelte.ts";
+import { logger } from "@utils/logger";
+import { onMount } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
+import GenericSettingsGroup from "./generic-settings-group.svelte";
+import type { SettingGroup } from "./settings-groups";
 // Import settings structure
-import { getSettingGroupsByRole } from './settings-groups';
-import { beforeNavigate } from '$app/navigation';
+import { getSettingGroupsByRole } from "./settings-groups";
+import { beforeNavigate } from "$app/navigation";
 
 // Get user admin status from page data (set by +page.server.ts)
 const { data } = $props();
@@ -36,33 +36,37 @@ const isAdmin = $derived(data.isAdmin);
 
 //  Use $state for all component state
 let availableGroups: SettingGroup[] = $state([]);
-let searchTerm = $state('');
+let searchTerm = $state("");
 let hasUnsavedChanges = $state(false);
 
 // Unsaved changes guard
 beforeNavigate(({ cancel }) => {
 	if (hasUnsavedChanges) {
-		if (!confirm('You have unsaved changes. Leave anyway?')) {
+		if (!confirm("You have unsaved changes. Leave anyway?")) {
 			cancel();
 		}
 	}
 });
 
 // Derived selection from URL
-const selectedGroupId = $derived(page.url.searchParams.get('group'));
+const selectedGroupId = $derived(page.url.searchParams.get("group"));
 
 // Track which groups need configuration
 const unconfiguredCount = $derived(groupsNeedingConfig.size);
 
 // Filter groups based on search term
 const filteredGroups = $derived(
-	availableGroups.filter((g) => g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.description.toLowerCase().includes(searchTerm.toLowerCase()))
+	availableGroups.filter(
+		(g) =>
+			g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			g.description.toLowerCase().includes(searchTerm.toLowerCase()),
+	),
 );
 
 // Check all groups for empty fields on page load using batch endpoint
 async function checkAllGroupsForEmptyFields() {
 	try {
-		const response = await fetch('/api/settings/all');
+		const response = await fetch("/api/settings/all");
 		const data = await response.json();
 
 		if (data.success && data.groups) {
@@ -74,8 +78,13 @@ async function checkAllGroupsForEmptyFields() {
 
 				const hasEmptyFields = group.fields.some((field) => {
 					const value = values[field.key];
-					if (typeof value === 'string') {
-						return value === '' && (field.required || field.key.includes('HOST') || field.key.includes('EMAIL'));
+					if (typeof value === "string") {
+						return (
+							value === "" &&
+							(field.required ||
+								field.key.includes("HOST") ||
+								field.key.includes("EMAIL"))
+						);
 					}
 					return false;
 				});
@@ -96,29 +105,33 @@ async function checkAllGroupsForEmptyFields() {
 
 async function exportAll() {
 	try {
-		const res = await fetch('/api/settings/all');
+		const res = await fetch("/api/settings/all");
 		const data = await res.json();
 		if (data.success) {
-			const blob = new Blob([JSON.stringify(data.groups, null, 2)], { type: 'application/json' });
+			const blob = new Blob([JSON.stringify(data.groups, null, 2)], {
+				type: "application/json",
+			});
 			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
+			const a = document.createElement("a");
 			a.href = url;
 			a.download = `sveltycms-settings-${new Date().toISOString().slice(0, 10)}.json`;
 			a.click();
 			URL.revokeObjectURL(url);
 		}
 	} catch (err) {
-		logger.error('Failed to export settings:', err);
+		logger.error("Failed to export settings:", err);
 	}
 }
 
 onMount(() => {
-	availableGroups = getSettingGroupsByRole(isAdmin).sort((a, b) => a.name.localeCompare(b.name));
+	availableGroups = getSettingGroupsByRole(isAdmin).sort((a, b) =>
+		a.name.localeCompare(b.name),
+	);
 
 	// Default selection if none in URL
 	if (!selectedGroupId && availableGroups.length > 0) {
 		const url = new URL(window.location.href);
-		url.searchParams.set('group', availableGroups[0].id);
+		url.searchParams.set("group", availableGroups[0].id);
 		goto(url.toString(), { replaceState: true });
 	}
 

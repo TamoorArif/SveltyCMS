@@ -16,7 +16,7 @@
 -->
 
 <script lang="ts">
-import Media from '@src/components/media.svelte';
+import Media from "@src/components/media.svelte";
 import {
 	widget_ImageUpload_Allowed,
 	widget_ImageUpload_BrowseNew,
@@ -24,13 +24,19 @@ import {
 	widget_ImageUpload_Replace,
 	widget_ImageUpload_SelectImage,
 	widget_ImageUpload_SelectMedia,
-	widget_ImageUpload_Upload
-} from '@src/paraglide/messages';
-import type { MediaImage } from '@utils/media/media-models';
-import { twMerge } from 'tailwind-merge';
+	widget_ImageUpload_Upload,
+} from "@src/paraglide/messages";
+import type { MediaImage } from "@utils/media/media-models";
+import { twMerge } from "tailwind-merge";
 
 // Props
-let { value = $bindable(), multiple = $bindable(false), show = $bindable(true), className = '', onChange } = $props();
+let {
+	value = $bindable(),
+	multiple = $bindable(false),
+	show = $bindable(true),
+	className = "",
+	onChange,
+} = $props();
 
 // Declare reactive state with $state
 let input: HTMLInputElement | null = $state(null);
@@ -74,14 +80,14 @@ function handleDrop(e: DragEvent) {
 function handleDragOver(e: DragEvent) {
 	e.preventDefault();
 	const target = e.target as HTMLElement;
-	target.style.borderColor = '#6bdfff';
+	target.style.borderColor = "#6bdfff";
 }
 
 // Handle drag leave
 function handleDragLeave(e: DragEvent) {
 	e.preventDefault();
 	const target = e.target as HTMLElement;
-	target.style.removeProperty('border-color');
+	target.style.removeProperty("border-color");
 }
 
 // Open file input dialog

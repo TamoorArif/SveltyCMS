@@ -35,11 +35,11 @@ The `safeQuery` middleware automatically filters out trashed items from all stan
 
 ## 🚀 Quick Reference
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| GET | `/api/trash` | List all soft-deleted items across collections |
-| POST | `/api/trash` (body: `restore` action) | Restore a soft-deleted item |
-| DELETE | `/api/collections/[id]/[entryId]?permanent=true` | Permanently delete (skip trash) |
+| Method | Endpoint                                         | Description                                    |
+| :----- | :----------------------------------------------- | :--------------------------------------------- |
+| GET    | `/api/trash`                                     | List all soft-deleted items across collections |
+| POST   | `/api/trash` (body: `restore` action)            | Restore a soft-deleted item                    |
+| DELETE | `/api/collections/[id]/[entryId]?permanent=true` | Permanently delete (skip trash)                |
 
 ---
 
@@ -53,9 +53,9 @@ Lists soft-deleted items across all collections for the current tenant, sorted b
 
 **Query Parameters**:
 
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `limit` | `number` | `50` | Maximum number of results **per collection**. Keep this value small for large instances. |
+| Parameter | Type     | Default | Description                                                                              |
+| :-------- | :------- | :------ | :--------------------------------------------------------------------------------------- |
+| `limit`   | `number` | `50`    | Maximum number of results **per collection**. Keep this value small for large instances. |
 
 **Response**:
 

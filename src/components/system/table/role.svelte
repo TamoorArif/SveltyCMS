@@ -19,7 +19,7 @@
 <script lang="ts">
 // Using iconify-icon web component
 // Auth
-import type { Role } from '@src/databases/auth/types';
+import type { Role } from "@src/databases/auth/types";
 
 // Ensure roles is an array
 const { value, roles = [] } = $props();
@@ -27,28 +27,28 @@ const { value, roles = [] } = $props();
 const roleClasses = (roleId: string) => {
 	const role = roles.find((r: Role) => r._id === roleId);
 	if (!role) {
-		const defaultRole = roles.find((r: Role) => r._id === 'user');
-		return defaultRole?.color || 'text-white';
+		const defaultRole = roles.find((r: Role) => r._id === "user");
+		return defaultRole?.color || "text-white";
 	}
-	return role.color || 'text-white';
+	return role.color || "text-white";
 };
 
 const iconForRole = (roleId: string) => {
 	const role = roles.find((r: Role) => r._id === roleId);
 	if (!role) {
-		const defaultRole = roles.find((r: Role) => r._id === 'user');
-		return defaultRole?.icon || 'material-symbols:person';
+		const defaultRole = roles.find((r: Role) => r._id === "user");
+		return defaultRole?.icon || "material-symbols:person";
 	}
-	return role.icon || 'material-symbols:person';
+	return role.icon || "material-symbols:person";
 };
 
 const roleName = (roleId: string) => {
 	const role = roles.find((r: Role) => r._id === roleId);
 	if (!role) {
-		const defaultRole = roles.find((r: Role) => r._id === 'user');
-		return defaultRole?.name || 'User';
+		const defaultRole = roles.find((r: Role) => r._id === "user");
+		return defaultRole?.name || "User";
 	}
-	return role.name || 'User';
+	return role.name || "User";
 };
 </script>
 

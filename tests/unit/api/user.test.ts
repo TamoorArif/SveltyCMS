@@ -78,8 +78,14 @@ describe("User API Unit Tests", () => {
 
       // Mock dbAdapter results with success structure
       if (mockDbAdapter) {
-        mockDbAdapter.auth.getAllUsers.mockResolvedValue({ success: true, data: mockUsers });
-        mockDbAdapter.auth.getUserCount.mockResolvedValue({ success: true, data: 1 });
+        mockDbAdapter.auth.getAllUsers.mockResolvedValue({
+          success: true,
+          data: mockUsers,
+        });
+        mockDbAdapter.auth.getUserCount.mockResolvedValue({
+          success: true,
+          data: 1,
+        });
       }
 
       const event = {
@@ -103,7 +109,10 @@ describe("User API Unit Tests", () => {
 
   describe("POST /api/user/batch - Batch Operations", () => {
     it("should delete users within tenant", async () => {
-      mockAuth.getUserById.mockResolvedValue({ _id: "u1", tenantId: "tenant-1" });
+      mockAuth.getUserById.mockResolvedValue({
+        _id: "u1",
+        tenantId: "tenant-1",
+      });
       mockAuth.deleteUserAndSessions.mockResolvedValue({
         success: true,
         data: { deletedSessionCount: 1 },
@@ -129,9 +138,16 @@ describe("User API Unit Tests", () => {
 
       const event = {
         request: {
-          json: vi.fn().mockResolvedValue({ user_id: "u1", newUserData: { username: "new" } }),
+          json: vi.fn().mockResolvedValue({
+            user_id: "u1",
+            newUserData: { username: "new" },
+          }),
         },
-        locals: { user: { _id: "u1" }, tenantId: "tenant-1", hasAdminPermission: false },
+        locals: {
+          user: { _id: "u1" },
+          tenantId: "tenant-1",
+          hasAdminPermission: false,
+        },
         cookies: { get: vi.fn() },
       } as any;
 
@@ -143,11 +159,16 @@ describe("User API Unit Tests", () => {
     it("should block non-admin from editing others (IDOR Protection)", async () => {
       const event = {
         request: {
-          json: vi
-            .fn()
-            .mockResolvedValue({ user_id: "other", newUserData: { username: "hacked" } }),
+          json: vi.fn().mockResolvedValue({
+            user_id: "other",
+            newUserData: { username: "hacked" },
+          }),
         },
-        locals: { user: { _id: "u1" }, tenantId: "tenant-1", hasAdminPermission: false },
+        locals: {
+          user: { _id: "u1" },
+          tenantId: "tenant-1",
+          hasAdminPermission: false,
+        },
       } as any;
 
       try {
@@ -159,16 +180,24 @@ describe("User API Unit Tests", () => {
     });
 
     it("should allow admin to edit others", async () => {
-      mockAuth.getUserById.mockResolvedValue({ _id: "other", tenantId: "tenant-1" });
+      mockAuth.getUserById.mockResolvedValue({
+        _id: "other",
+        tenantId: "tenant-1",
+      });
       mockAuth.updateUserAttributes.mockResolvedValue({ _id: "other" });
 
       const event = {
         request: {
-          json: vi
-            .fn()
-            .mockResolvedValue({ user_id: "other", newUserData: { username: "admin-fix" } }),
+          json: vi.fn().mockResolvedValue({
+            user_id: "other",
+            newUserData: { username: "admin-fix" },
+          }),
         },
-        locals: { user: { _id: "admin" }, tenantId: "tenant-1", hasAdminPermission: true },
+        locals: {
+          user: { _id: "admin" },
+          tenantId: "tenant-1",
+          hasAdminPermission: true,
+        },
         cookies: { get: vi.fn() },
       } as any;
 
@@ -183,7 +212,11 @@ describe("User API Unit Tests", () => {
         request: {
           json: vi.fn().mockResolvedValue({ userId: "other" }),
         },
-        locals: { user: { _id: "u1" }, tenantId: "tenant-1", hasAdminPermission: false },
+        locals: {
+          user: { _id: "u1" },
+          tenantId: "tenant-1",
+          hasAdminPermission: false,
+        },
       } as any;
 
       try {
@@ -226,13 +259,20 @@ describe("User API Unit Tests", () => {
     });
 
     it("should protect Default_User.svg from deletion", async () => {
-      mockAuth.getUserById.mockResolvedValue({ _id: "u1", avatar: "/Default_User.svg" });
+      mockAuth.getUserById.mockResolvedValue({
+        _id: "u1",
+        avatar: "/Default_User.svg",
+      });
 
       const event = {
         request: {
           json: vi.fn().mockResolvedValue({ userId: "u1" }),
         },
-        locals: { user: { _id: "u1" }, tenantId: "tenant-1", hasAdminPermission: false },
+        locals: {
+          user: { _id: "u1" },
+          tenantId: "tenant-1",
+          hasAdminPermission: false,
+        },
       } as any;
 
       const response = await deleteAvatarHandlers.DELETE(event);

@@ -17,15 +17,15 @@
 -->
 
 <script lang="ts">
-import MediaGrid from '@src/routes/(app)/mediagallery/media-grid.svelte';
-import LocalUpload from '@src/routes/(app)/mediagallery/upload-media/local-upload.svelte';
-import RemoteUpload from '@src/routes/(app)/mediagallery/upload-media/remote-upload.svelte';
-import { logger } from '@utils/logger';
-import type { MediaBase, MediaImage } from '@utils/media/media-models';
-import { modalState } from '@utils/modal-state.svelte';
-import { onMount } from 'svelte';
+import MediaGrid from "@src/routes/(app)/mediagallery/media-grid.svelte";
+import LocalUpload from "@src/routes/(app)/mediagallery/upload-media/local-upload.svelte";
+import RemoteUpload from "@src/routes/(app)/mediagallery/upload-media/remote-upload.svelte";
+import { logger } from "@utils/logger";
+import type { MediaBase, MediaImage } from "@utils/media/media-models";
+import { modalState } from "@utils/modal-state.svelte";
+import { onMount } from "svelte";
 
-import { SvelteSet } from 'svelte/reactivity';
+import { SvelteSet } from "svelte/reactivity";
 
 // Props interface
 
@@ -35,9 +35,9 @@ interface Props {
 	parent?: unknown;
 }
 
-let { allowedTypes = [], folder = 'global' }: Props = $props();
+let { allowedTypes = [], folder = "global" }: Props = $props();
 
-let activeTab = $state<'library' | 'local' | 'remote'>('local');
+let activeTab = $state<"library" | "local" | "remote">("local");
 let files = $state<(MediaBase | MediaImage)[]>([]);
 // eslint-disable-next-line svelte/no-unnecessary-state-wrap
 let selectedFiles = $state(new SvelteSet<string>());
@@ -49,18 +49,21 @@ async function fetchMedia() {
 	error = null;
 	try {
 		// Construct query with allowedTypes if provided
-		const typesQuery = allowedTypes.length > 0 ? `&types=${allowedTypes.join(',')}` : '';
+		const typesQuery =
+			allowedTypes.length > 0 ? `&types=${allowedTypes.join(",")}` : "";
 		// Fetch more files for the library, e.g., 50, recursively from all folders
-		const response = await fetch(`/api/media?limit=100&recursive=true${typesQuery}`);
+		const response = await fetch(
+			`/api/media?limit=100&recursive=true${typesQuery}`,
+		);
 		if (!response.ok) {
-			throw new Error('Failed to fetch media');
+			throw new Error("Failed to fetch media");
 		}
 		const data = await response.json();
-		logger.debug('Fetched media files:', data);
+		logger.debug("Fetched media files:", data);
 		files = data;
 	} catch (e) {
-		logger.error('Error fetching media for modal:', e);
-		error = 'Failed to load media library.';
+		logger.error("Error fetching media for modal:", e);
+		error = "Failed to load media library.";
 	} finally {
 		isLoading = false;
 	}
@@ -71,7 +74,9 @@ onMount(() => {
 });
 
 function handleConfirm() {
-	const selectedItems = files.filter((f) => selectedFiles.has(f._id?.toString() || f.filename));
+	const selectedItems = files.filter((f) =>
+		selectedFiles.has(f._id?.toString() || f.filename),
+	);
 	if (selectedItems.length > 0) {
 		modalState.close(selectedItems);
 	}

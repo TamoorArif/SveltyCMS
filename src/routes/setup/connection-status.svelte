@@ -65,10 +65,10 @@ import {
 	setup_troubleshoot_user_2,
 	setup_troubleshoot_user_3,
 	setup_troubleshoot_user_4,
-	setup_troubleshoot_user_5
-} from '@src/paraglide/messages';
+	setup_troubleshoot_user_5,
+} from "@src/paraglide/messages";
 
-type ConnectionState = 'idle' | 'testing' | 'success' | 'error';
+type ConnectionState = "idle" | "testing" | "success" | "error";
 
 interface TestResult {
 	atlas?: boolean;
@@ -91,39 +91,42 @@ interface TestResult {
 const { state, result, onRetry } = $props();
 
 function getStatusIcon(state: ConnectionState): string {
-	if (state === 'testing') {
-		return '⏳';
+	if (state === "testing") {
+		return "⏳";
 	}
-	if (state === 'success') {
-		return '✅';
+	if (state === "success") {
+		return "✅";
 	}
-	if (state === 'error') {
-		return '❌';
+	if (state === "error") {
+		return "❌";
 	}
-	return '⚪';
+	return "⚪";
 }
 
 function getStatusColor(state: ConnectionState): string {
-	if (state === 'testing') {
-		return 'text-blue-600 dark:text-blue-400';
+	if (state === "testing") {
+		return "text-blue-600 dark:text-blue-400";
 	}
-	if (state === 'success') {
-		return 'text-emerald-600 dark:text-emerald-400';
+	if (state === "success") {
+		return "text-emerald-600 dark:text-emerald-400";
 	}
-	if (state === 'error') {
-		return 'text-red-600 dark:text-red-400';
+	if (state === "error") {
+		return "text-red-600 dark:text-red-400";
 	}
-	return 'text-surface-400 dark:text-surface-600';
+	return "text-surface-400 dark:text-surface-600";
 }
 
-function getStatusText(state: ConnectionState, result: TestResult | null): string {
-	if (state === 'testing') {
+function getStatusText(
+	state: ConnectionState,
+	result: TestResult | null,
+): string {
+	if (state === "testing") {
 		return setup_connection_testing();
 	}
-	if (state === 'success') {
+	if (state === "success") {
 		return result?.message || setup_connection_success();
 	}
-	if (state === 'error') {
+	if (state === "error") {
 		return result?.userFriendly || result?.error || setup_connection_failed();
 	}
 	return setup_connection_ready();
@@ -131,63 +134,77 @@ function getStatusText(state: ConnectionState, result: TestResult | null): strin
 
 function formatBytes(bytes: number | undefined): string {
 	if (!bytes) {
-		return 'N/A';
+		return "N/A";
 	}
-	const sizes = ['B', 'KB', 'MB', 'GB'];
+	const sizes = ["B", "KB", "MB", "GB"];
 	const i = Math.floor(Math.log(bytes) / Math.log(1024));
 	return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`;
 }
 
 function getTroubleshootingTips(classification: string | undefined): string[] {
 	switch (classification) {
-		case 'atlas_ip_whitelist':
+		case "atlas_ip_whitelist":
 			return [
 				setup_troubleshoot_atlas_ip_1(),
 				setup_troubleshoot_atlas_ip_2(),
 				setup_troubleshoot_atlas_ip_3(),
 				setup_troubleshoot_atlas_ip_4(),
-				setup_troubleshoot_atlas_ip_5()
+				setup_troubleshoot_atlas_ip_5(),
 			];
-		case 'atlas_cluster_not_found':
-			return [setup_troubleshoot_cluster_1(), setup_troubleshoot_cluster_2(), setup_troubleshoot_cluster_3(), setup_troubleshoot_cluster_4()];
-		case 'atlas_user_not_found':
+		case "atlas_cluster_not_found":
+			return [
+				setup_troubleshoot_cluster_1(),
+				setup_troubleshoot_cluster_2(),
+				setup_troubleshoot_cluster_3(),
+				setup_troubleshoot_cluster_4(),
+			];
+		case "atlas_user_not_found":
 			return [
 				setup_troubleshoot_user_1(),
 				setup_troubleshoot_user_2(),
 				setup_troubleshoot_user_3(),
 				setup_troubleshoot_user_4(),
-				setup_troubleshoot_user_5()
+				setup_troubleshoot_user_5(),
 			];
-		case 'authentication_failed':
-		case 'wrong_password':
+		case "authentication_failed":
+		case "wrong_password":
 			return [
 				setup_troubleshoot_auth_1(),
 				setup_troubleshoot_auth_2(),
 				setup_troubleshoot_auth_3(),
 				setup_troubleshoot_auth_4(),
-				setup_troubleshoot_auth_5()
+				setup_troubleshoot_auth_5(),
 			];
-		case 'credentials_required':
-		case 'auth_required':
-			return [setup_troubleshoot_creds_1(), setup_troubleshoot_creds_2(), setup_troubleshoot_creds_3(), setup_troubleshoot_creds_4()];
-		case 'host_unreachable':
-		case 'connection_refused':
+		case "credentials_required":
+		case "auth_required":
+			return [
+				setup_troubleshoot_creds_1(),
+				setup_troubleshoot_creds_2(),
+				setup_troubleshoot_creds_3(),
+				setup_troubleshoot_creds_4(),
+			];
+		case "host_unreachable":
+		case "connection_refused":
 			return [
 				setup_troubleshoot_host_1(),
 				setup_troubleshoot_host_2(),
 				setup_troubleshoot_host_3(),
 				setup_troubleshoot_host_4(),
-				setup_troubleshoot_host_5()
+				setup_troubleshoot_host_5(),
 			];
-		case 'database_not_found':
-			return [setup_troubleshoot_dbnotfound_1(), setup_troubleshoot_dbnotfound_2(), setup_troubleshoot_dbnotfound_3()];
-		case 'timeout':
+		case "database_not_found":
+			return [
+				setup_troubleshoot_dbnotfound_1(),
+				setup_troubleshoot_dbnotfound_2(),
+				setup_troubleshoot_dbnotfound_3(),
+			];
+		case "timeout":
 			return [
 				setup_troubleshoot_timeout_1(),
 				setup_troubleshoot_timeout_2(),
 				setup_troubleshoot_timeout_3(),
 				setup_troubleshoot_timeout_4(),
-				setup_troubleshoot_timeout_5()
+				setup_troubleshoot_timeout_5(),
 			];
 		default:
 			return [
@@ -195,7 +212,7 @@ function getTroubleshootingTips(classification: string | undefined): string[] {
 				setup_troubleshoot_default_2(),
 				setup_troubleshoot_default_3(),
 				setup_troubleshoot_default_4(),
-				setup_troubleshoot_default_5()
+				setup_troubleshoot_default_5(),
 			];
 	}
 }

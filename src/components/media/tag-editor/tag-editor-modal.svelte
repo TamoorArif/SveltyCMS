@@ -9,29 +9,29 @@ Features:
 - Tag Management
 -->
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import type { MediaImage } from '@utils/media/media-models';
-import { SvelteSet } from 'svelte/reactivity';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import type { MediaImage } from "@utils/media/media-models";
+import { SvelteSet } from "svelte/reactivity";
 
 // Props
 let {
 	show = $bindable(),
 	file = $bindable(null),
-	onUpdate = () => {}
+	onUpdate = () => {},
 }: {
 	show: boolean;
 	file: MediaImage | null;
 	onUpdate?: (updatedFile: MediaImage) => void;
 } = $props();
 
-let newTagInput = $state('');
+let newTagInput = $state("");
 let isGenerating = $state(false);
 let isSaving = $state(false);
 
 // Edit state
 let editingTag = $state<{
-	type: 'ai' | 'user';
+	type: "ai" | "user";
 	index: number;
 	value: string;
 } | null>(null);
@@ -40,13 +40,13 @@ function getImageUrl(file: MediaImage) {
 	// Try to get thumbnail, fallback to original url
 	const thumbs = file.thumbnails || {};
 	// Map common keys
-	if ('sm' in thumbs) {
+	if ("sm" in thumbs) {
 		return thumbs.sm.url;
 	}
-	if ('thumbnail' in thumbs) {
+	if ("thumbnail" in thumbs) {
 		return thumbs.thumbnail.url;
 	}
-	if ('md' in thumbs) {
+	if ("md" in thumbs) {
 		return thumbs.md.url;
 	}
 	return file.url;
@@ -58,24 +58,24 @@ async function handleAITagging() {
 	}
 	isGenerating = true;
 	try {
-		const response = await fetch('/api/media/ai-tag', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ mediaId: file._id })
+		const response = await fetch("/api/media/ai-tag", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ mediaId: file._id }),
 		});
 		const result = await response.json();
 		if (!(response.ok && result.success)) {
-			throw new Error(result.error || 'Failed to generate tags');
+			throw new Error(result.error || "Failed to generate tags");
 		}
 
 		if (file) {
 			file = result.data;
 			onUpdate(result.data);
 		}
-		toast.success('AI tags generated!');
+		toast.success("AI tags generated!");
 	} catch (e: any) {
-		logger.error('AI Tagging error:', e);
-		toast.error({ description: e.message || 'An unexpected error occurred' });
+		logger.error("AI Tagging error:", e);
+		toast.error({ description: e.message || "An unexpected error occurred" });
 	} finally {
 		isGenerating = false;
 	}
@@ -88,14 +88,14 @@ async function addManualTag() {
 	try {
 		// Add to aiTags "pending" area
 		const response = await fetch(`/api/media/${file._id}`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				metadata: {
 					...file.metadata,
-					aiTags: [...(file.metadata?.aiTags || []), newTagInput.trim()]
-				}
-			})
+					aiTags: [...(file.metadata?.aiTags || []), newTagInput.trim()],
+				},
+			}),
 		});
 		const result = await response.json();
 		if (!(response.ok && result.success)) {
@@ -106,29 +106,29 @@ async function addManualTag() {
 			file = result.data;
 			onUpdate(result.data);
 		}
-		newTagInput = '';
-		toast.success('Tag added!');
+		newTagInput = "";
+		toast.success("Tag added!");
 	} catch (e: any) {
 		toast.error({ description: e.message });
 	}
 }
 
-async function removeTag(tag: string, type: 'ai' | 'user') {
+async function removeTag(tag: string, type: "ai" | "user") {
 	if (!file?._id) {
 		return;
 	}
 	try {
 		const metadata = { ...file.metadata };
-		if (type === 'ai') {
+		if (type === "ai") {
 			metadata.aiTags = metadata.aiTags?.filter((t) => t !== tag) || [];
 		} else {
 			metadata.tags = metadata.tags?.filter((t) => t !== tag) || [];
 		}
 
 		const response = await fetch(`/api/media/${file._id}`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ metadata })
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ metadata }),
 		});
 		const result = await response.json();
 		if (!(response.ok && result.success)) {
@@ -144,7 +144,7 @@ async function removeTag(tag: string, type: 'ai' | 'user') {
 	}
 }
 
-async function editTag(oldTag: string, newTag: string, type: 'ai' | 'user') {
+async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 	if (!(file?._id && newTag.trim()) || oldTag === newTag) {
 		editingTag = null;
 		return;
@@ -152,16 +152,18 @@ async function editTag(oldTag: string, newTag: string, type: 'ai' | 'user') {
 
 	try {
 		const metadata = { ...file.metadata };
-		if (type === 'ai') {
-			metadata.aiTags = metadata.aiTags?.map((t) => (t === oldTag ? newTag.trim() : t)) || [];
+		if (type === "ai") {
+			metadata.aiTags =
+				metadata.aiTags?.map((t) => (t === oldTag ? newTag.trim() : t)) || [];
 		} else {
-			metadata.tags = metadata.tags?.map((t) => (t === oldTag ? newTag.trim() : t)) || [];
+			metadata.tags =
+				metadata.tags?.map((t) => (t === oldTag ? newTag.trim() : t)) || [];
 		}
 
 		const response = await fetch(`/api/media/${file._id}`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ metadata })
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ metadata }),
 		});
 		const result = await response.json();
 		if (!(response.ok && result.success)) {
@@ -192,15 +194,15 @@ async function saveAITags() {
 		});
 
 		const response = await fetch(`/api/media/${file._id}`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				metadata: {
 					...file.metadata,
 					tags: Array.from(currentTags),
-					aiTags: [] // Clear AI tags after saving
-				}
-			})
+					aiTags: [], // Clear AI tags after saving
+				},
+			}),
 		});
 		const result = await response.json();
 		if (!(response.ok && result.success)) {
@@ -211,7 +213,7 @@ async function saveAITags() {
 			file = result.data;
 			onUpdate(result.data);
 		}
-		toast.success('Tags saved!');
+		toast.success("Tags saved!");
 	} catch (e: any) {
 		toast.error({ description: e.message });
 	} finally {

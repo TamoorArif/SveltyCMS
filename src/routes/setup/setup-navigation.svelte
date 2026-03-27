@@ -13,10 +13,15 @@ Features:
 -->
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 
 // Paraglide Messages
-import { button_complete, button_next, button_previous, setup_progress_step_of } from '@src/paraglide/messages';
+import {
+	button_complete,
+	button_next,
+	button_previous,
+	setup_progress_step_of,
+} from "@src/paraglide/messages";
 
 const {
 	currentStep,
@@ -27,7 +32,7 @@ const {
 	seedingProgress = 0,
 	onprev = () => {},
 	onnext = () => {},
-	oncomplete = () => {}
+	oncomplete = () => {},
 } = $props();
 </script>
 

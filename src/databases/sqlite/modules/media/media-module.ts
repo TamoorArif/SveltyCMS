@@ -263,7 +263,10 @@ export class MediaModule {
 
         const [updated] = await this.db
           .update(schema.mediaItems)
-          .set({ metadata: newMetadata, updatedAt: isoDateStringToDate(nowISODateString()) })
+          .set({
+            metadata: newMetadata,
+            updatedAt: isoDateStringToDate(nowISODateString()),
+          })
           .where(and(...conditions))
           .returning();
 

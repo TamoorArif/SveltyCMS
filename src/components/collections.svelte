@@ -7,26 +7,36 @@ Updated to use the modern Content Context and modular navigation engine.
 
 <script lang="ts">
 // Components
-import TreeView from '@src/components/system/tree-view.svelte';
-import type { NavigationNode, StatusType } from '@src/content/types';
-import { sortContentNodes } from '@src/content/content-utils';
-import { useContent } from '@src/content/content-context.svelte';
+import TreeView from "@src/components/system/tree-view.svelte";
+import type { NavigationNode, StatusType } from "@src/content/types";
+import { sortContentNodes } from "@src/content/content-utils";
+import { useContent } from "@src/content/content-context.svelte";
 
 // Paraglide Messages
-import { collection_no_collections_found, collections_search } from '@src/paraglide/messages';
-import { collection, setMode } from '@src/stores/collection-store.svelte.ts';
-import { app } from '@src/stores/store.svelte';
-import { ui } from '@src/stores/ui-store.svelte.ts';
-import { debounce } from '@utils/utils';
-import { SvelteSet } from 'svelte/reactivity';
-import { scale } from 'svelte/transition';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import {
+	collection_no_collections_found,
+	collections_search,
+} from "@src/paraglide/messages";
+import { collection, setMode } from "@src/stores/collection-store.svelte.ts";
+import { app } from "@src/stores/store.svelte";
+import { ui } from "@src/stores/ui-store.svelte.ts";
+import { debounce } from "@utils/utils";
+import { SvelteSet } from "svelte/reactivity";
+import { scale } from "svelte/transition";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
 
 interface CollectionTreeNode {
 	badge?: {
 		count?: number;
-		status?: 'draft' | 'publish' | 'archive' | 'schedule' | 'delete' | 'clone' | 'test';
+		status?:
+			| "draft"
+			| "publish"
+			| "archive"
+			| "schedule"
+			| "delete"
+			| "clone"
+			| "test";
 		color?: string;
 		visible?: boolean;
 		icon?: string;
@@ -47,8 +57,8 @@ interface CollectionTreeNode {
 const { content, navigation } = useContent();
 
 // Mutable state
-let search = $state('');
-let debouncedSearch = $state('');
+let search = $state("");
+let debouncedSearch = $state("");
 let isSearching = $state(false);
 let expandedNodes = new SvelteSet<string>();
 
@@ -63,7 +73,7 @@ $effect(() => {
 });
 
 // Derived UI & data
-let isFullSidebar = $derived(ui.state.leftSidebar === 'full');
+let isFullSidebar = $derived(ui.state.leftSidebar === "full");
 let currentLanguage = $derived(app.contentLanguage);
 let selectedId = $derived(collection.value?._id ?? null);
 
@@ -72,9 +82,11 @@ let selectedId = $derived(collection.value?._id ?? null);
  */
 let treeNodes = $derived.by(() => {
 	function mapToTreeNode(node: NavigationNode, depth = 0): CollectionTreeNode {
-		const translation = node.translations?.find((t: any) => t.languageTag === currentLanguage);
+		const translation = node.translations?.find(
+			(t: any) => t.languageTag === currentLanguage,
+		);
 		const label = translation?.translationName || node.name;
-		const isCategory = node.nodeType === 'category';
+		const isCategory = node.nodeType === "category";
 		const isExpanded = expandedNodes.has(node._id) || selectedId === node._id;
 
 		// Validation check for collections
@@ -84,32 +96,36 @@ let treeNodes = $derived.by(() => {
 		let children: CollectionTreeNode[] | undefined;
 		if (isCategory && node.children) {
 			const sorted = [...node.children].sort(sortContentNodes);
-			children = sorted.map((child: any) => mapToTreeNode(child as NavigationNode, depth + 1));
+			children = sorted.map((child: any) =>
+				mapToTreeNode(child as NavigationNode, depth + 1),
+			);
 		}
 
 		// Badge logic
-		let badge: CollectionTreeNode['badge'];
+		let badge: CollectionTreeNode["badge"];
 		if (isCategory) {
 			badge = {
-				count: node.children?.filter((c: any) => c.nodeType === 'collection').length ?? 0,
+				count:
+					node.children?.filter((c: any) => c.nodeType === "collection")
+						.length ?? 0,
 				visible: true,
-				color: 'bg-primary-500'
+				color: "bg-primary-500",
 			};
 		} else if (hasInactiveWidgets) {
 			badge = {
 				visible: true,
-				color: 'bg-warning-500',
-				icon: 'mdi:alert-circle',
-				title: 'This collection uses inactive widgets'
+				color: "bg-warning-500",
+				icon: "mdi:alert-circle",
+				title: "This collection uses inactive widgets",
 			};
 		} else if (node.status) {
 			// SAFELY map StatusType to UI-supported literals
 			const uiStatus = node.status as StatusType;
-			if (uiStatus !== 'unpublish') {
+			if (uiStatus !== "unpublish") {
 				badge = {
 					visible: true,
 					status: uiStatus as any,
-					color: 'bg-surface-500'
+					color: "bg-surface-500",
 				};
 			}
 		}
@@ -120,11 +136,13 @@ let treeNodes = $derived.by(() => {
 			isExpanded,
 			onClick: () => selectNode(node),
 			children,
-			icon: node.icon || (isCategory ? 'bi:folder' : 'bi:collection'),
+			icon: node.icon || (isCategory ? "bi:folder" : "bi:collection"),
 			badge,
-			path: isCategory ? undefined : `/${currentLanguage}${node.path || `/${node._id}`}`,
+			path: isCategory
+				? undefined
+				: `/${currentLanguage}${node.path || `/${node._id}`}`,
 			depth,
-			order: node.order ?? 0
+			order: node.order ?? 0,
 		};
 	}
 
@@ -137,18 +155,18 @@ async function navigate(path: string, force = false): Promise<void> {
 }
 
 function selectNode(node: any): void {
-	if (node.nodeType === 'category') {
+	if (node.nodeType === "category") {
 		toggleExpand(node._id);
 		return;
 	}
 
-	setMode('view');
+	setMode("view");
 	app.shouldShowNextButton = true;
 
 	document.dispatchEvent(
-		new CustomEvent('clearEntryListCache', {
-			detail: { resetState: true, reason: 'collection-switch' }
-		})
+		new CustomEvent("clearEntryListCache", {
+			detail: { resetState: true, reason: "collection-switch" },
+		}),
 	);
 
 	const target = `/${currentLanguage}${node.path || `/${node._id}`}`;
@@ -161,8 +179,8 @@ function toggleExpand(id: string): void {
 }
 
 function clearSearch(): void {
-	search = '';
-	debouncedSearch = '';
+	search = "";
+	debouncedSearch = "";
 }
 </script>
 

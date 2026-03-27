@@ -23,28 +23,32 @@ Part of the Three Pillars Architecture for widget system.
 -->
 
 <script lang="ts">
-import { validationStore } from '@src/stores/store.svelte';
-import { getFieldName } from '@src/utils/utils';
-import type { FieldType } from './';
+import { validationStore } from "@src/stores/store.svelte";
+import { getFieldName } from "@src/utils/utils";
+import type { FieldType } from "./";
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
-	value: { start: string; end: string } | null | undefined | Record<string, any>;
+	value:
+		| { start: string; end: string }
+		| null
+		| undefined
+		| Record<string, any>;
 	error?: string | null;
 } = $props();
 
 const fieldName = $derived(getFieldName(field));
 // Handle input changes
-function handleInput(type: 'start' | 'end', e: Event) {
+function handleInput(type: "start" | "end", e: Event) {
 	const input = e.currentTarget as HTMLInputElement;
 	const dateStr = input.value;
 
 	if (!value) {
-		value = { start: '', end: '' };
+		value = { start: "", end: "" };
 	}
 
 	if (dateStr) {
@@ -53,11 +57,11 @@ function handleInput(type: 'start' | 'end', e: Event) {
 
 			// Ensure value object exists before assignment
 			if (!value) {
-				value = { start: '', end: '' };
+				value = { start: "", end: "" };
 			}
 
 			// Assign properties safely to the reactive value
-			if (type === 'start') {
+			if (type === "start") {
 				(value as { start: string; end: string }).start = date.toISOString();
 			} else {
 				(value as { start: string; end: string }).end = date.toISOString();
@@ -70,12 +74,12 @@ function handleInput(type: 'start' | 'end', e: Event) {
 		}
 	} else {
 		if (!value) {
-			value = { start: '', end: '' };
+			value = { start: "", end: "" };
 		}
-		if (type === 'start') {
-			(value as { start: string; end: string }).start = '';
+		if (type === "start") {
+			(value as { start: string; end: string }).start = "";
 		} else {
-			(value as { start: string; end: string }).end = '';
+			(value as { start: string; end: string }).end = "";
 		}
 	}
 }
@@ -88,15 +92,15 @@ function validateRange() {
 	const end = new Date(value.end);
 
 	if (start > end) {
-		validationStore.setError(fieldName, 'End date must be after start date.');
+		validationStore.setError(fieldName, "End date must be after start date.");
 	} else {
 		validationStore.clearError(fieldName);
 	}
 }
 
 // derived values for inputs (needs YYYY-MM-DD)
-const startDateInput = $derived(value?.start ? value.start.split('T')[0] : '');
-const endDateInput = $derived(value?.end ? value.end.split('T')[0] : '');
+const startDateInput = $derived(value?.start ? value.start.split("T")[0] : "");
+const endDateInput = $derived(value?.end ? value.end.split("T")[0] : "");
 </script>
 
 <div class="mb-4 w-full">

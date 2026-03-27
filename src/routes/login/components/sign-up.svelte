@@ -23,14 +23,14 @@
 -->
 
 <script lang="ts">
-import PasswordStrength from '@src/components/password-strength.svelte';
-import SiteName from '@src/components/site-name.svelte';
+import PasswordStrength from "@src/components/password-strength.svelte";
+import SiteName from "@src/components/site-name.svelte";
 // Components
-import FloatingPaths from '@src/components/system/floating-paths.svelte';
-import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
-import SveltyCMSLogoFull from '@src/components/system/icons/svelty-cms-logo-full.svelte';
-import FloatingInput from '@src/components/system/inputs/floating-input.svelte';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import FloatingPaths from "@src/components/system/floating-paths.svelte";
+import SveltyCMSLogo from "@src/components/system/icons/svelty-cms-logo.svelte";
+import SveltyCMSLogoFull from "@src/components/system/icons/svelty-cms-logo-full.svelte";
+import FloatingInput from "@src/components/system/inputs/floating-input.svelte";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 // ParaglideJS
 import {
 	confirm_password,
@@ -40,36 +40,36 @@ import {
 	form_required,
 	form_signup,
 	registration_token,
-	username
-} from '@src/paraglide/messages';
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { Form } from '@utils/form.svelte.ts';
-import { signUpFormSchema } from '@utils/form-schemas';
-import { logger } from '@utils/logger';
-import { browser } from '$app/environment';
-import { enhance } from '$app/forms';
-import { preloadData } from '$app/navigation';
+	username,
+} from "@src/paraglide/messages";
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { Form } from "@utils/form.svelte.ts";
+import { signUpFormSchema } from "@utils/form-schemas";
+import { logger } from "@utils/logger";
+import { browser } from "$app/environment";
+import { enhance } from "$app/forms";
+import { preloadData } from "$app/navigation";
 // Stores
-import { page } from '$app/state';
-import type { PageData } from '../$types';
-import SignupIcon from './icons/signup-icon.svelte';
+import { page } from "$app/state";
+import type { PageData } from "../$types";
+import SignupIcon from "./icons/signup-icon.svelte";
 
 // Props
 const {
 	active = $bindable(undefined),
 	isInviteFlow = false,
-	token = '',
-	invitedEmail = '',
-	inviteError = '',
+	token = "",
+	invitedEmail = "",
+	inviteError = "",
 	onClick = () => {},
 	onPointerEnter = () => {},
 	onBack = () => {},
-	firstCollectionPath = ''
+	firstCollectionPath = "",
 } = $props();
 
-const siteName = $derived(publicEnv.SITE_NAME || 'SveltyCMS');
+const siteName = $derived(publicEnv.SITE_NAME || "SveltyCMS");
 
 const pageData = page.data as PageData;
 const firstUserExists = pageData.firstUserExists;
@@ -95,7 +95,7 @@ async function prefetchFirstCollection() {
 	try {
 		await preloadData(firstCollectionPath);
 	} catch (error) {
-		console.error('Prefetch failed:', error);
+		console.error("Prefetch failed:", error);
 	}
 }
 
@@ -108,7 +108,10 @@ const tokenTabIndex = 5;
 
 // Form setup
 // Form setup
-const signUpForm = new Form({ username: '', email: '', password: '', confirm_password: '', token: '' }, signUpFormSchema);
+const signUpForm = new Form(
+	{ username: "", email: "", password: "", confirm_password: "", token: "" },
+	signUpFormSchema,
+);
 
 const signUpSubmit = signUpForm.enhance({
 	onSubmit: ({ cancel }) => {
@@ -122,12 +125,12 @@ const signUpSubmit = signUpForm.enhance({
 	onResult: async ({ result, update }) => {
 		isSubmitting = false;
 
-		if (result.type === 'redirect') {
+		if (result.type === "redirect") {
 			isRedirecting = true;
 
 			toast.success({
-				title: 'Account Created!',
-				description: 'Welcome to SveltyCMS. Redirecting to your dashboard...'
+				title: "Account Created!",
+				description: "Welcome to SveltyCMS. Redirecting to your dashboard...",
 			});
 
 			setTimeout(() => {
@@ -138,38 +141,45 @@ const signUpSubmit = signUpForm.enhance({
 
 		isRedirecting = false;
 
-		if (result.type === 'failure' || result.type === 'error') {
+		if (result.type === "failure" || result.type === "error") {
 			const errorMessage =
-				result.type === 'failure' ? result.data?.message || 'Failed to create account' : result.error?.message || 'An unexpected error occurred';
+				result.type === "failure"
+					? result.data?.message || "Failed to create account"
+					: result.error?.message || "An unexpected error occurred";
 
 			toast.error({
-				title: 'Sign Up Failed',
-				description: errorMessage
+				title: "Sign Up Failed",
+				description: errorMessage,
 			});
 
-			formElement?.classList.add('wiggle');
+			formElement?.classList.add("wiggle");
 			setTimeout(() => {
-				formElement?.classList.remove('wiggle');
+				formElement?.classList.remove("wiggle");
 			}, 300);
 		}
 
-		if (result.type === 'success') {
+		if (result.type === "success") {
 			response = result.data?.message;
 			toast.success({
-				title: 'Account Created',
-				description: result.data?.message || 'Your account has been successfully created'
+				title: "Account Created",
+				description:
+					result.data?.message || "Your account has been successfully created",
 			});
 		}
 
 		await update();
-	}
+	},
 });
 
 // Reactive form values for easier access
 const currentFormToken = $derived(signUpForm.data.token);
 
 // URL parameter handling - update params when URL changes
-const params = $derived(browser ? new URL(window.location.href).searchParams : new URLSearchParams(''));
+const params = $derived(
+	browser
+		? new URL(window.location.href).searchParams
+		: new URLSearchParams(""),
+);
 
 // Initialize form with invite data when in invite flow
 $effect(() => {
@@ -181,14 +191,14 @@ $effect(() => {
 	}
 	// Handle URL parameters for invite tokens (both new and legacy formats)
 	if (browser && !isInviteFlow) {
-		const inviteToken = params.get('invite_token') || params.get('regToken');
+		const inviteToken = params.get("invite_token") || params.get("regToken");
 		if (inviteToken && inviteToken !== signUpForm.data.token) {
 			signUpForm.data.token = inviteToken;
 		}
 	}
 	// Also check if the form was pre-filled by the server (invalid token case)
 	if (browser && signUpForm.data.token && !isInviteFlow) {
-		logger.debug('Form token pre-filled by server:', signUpForm.data.token);
+		logger.debug("Form token pre-filled by server:", signUpForm.data.token);
 	}
 });
 
@@ -199,13 +209,13 @@ function handleOAuth() {
 	if (!(isInviteFlow || hasExistingOAuthUsers || currentFormToken)) {
 		// Show a helpful message
 		alert(
-			'⚠️ Please enter your invitation token first before using Google OAuth signup. OAuth registration requires an invitation from an administrator.'
+			"⚠️ Please enter your invitation token first before using Google OAuth signup. OAuth registration requires an invitation from an administrator.",
 		);
 		return;
 	}
 
-	const form = document.createElement('form');
-	form.method = 'post';
+	const form = document.createElement("form");
+	form.method = "post";
 
 	// Use signInOAuth action when in invite flow to preserve invite token
 	if (isInviteFlow && token) {
@@ -215,7 +225,7 @@ function handleOAuth() {
 		// User has entered a token in the form, pass it along
 		form.action = `?/signInOAuth&invite_token=${encodeURIComponent(currentFormToken)}`;
 	} else {
-		form.action = '?/signInOAuth';
+		form.action = "?/signInOAuth";
 	}
 
 	document.body.appendChild(form);
@@ -243,7 +253,7 @@ const isActive = $derived(active === 1);
 const isInactive = $derived(active !== undefined && active !== 1);
 const isHover = $derived(active === undefined || active === 0);
 
-const baseClasses = 'hover relative flex items-center overflow-y-auto';
+const baseClasses = "hover relative flex items-center overflow-y-auto";
 
 // Prefetch first collection data when active
 $effect(() => {

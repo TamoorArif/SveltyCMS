@@ -104,12 +104,17 @@ describe("SCIM API Unit Tests", () => {
       const data = await response.json();
 
       expect(data.totalResults).toBe(2);
-      expect(mockAuth.getAllUsers).toHaveBeenCalledWith({ filter: { tenantId: "tenant-1" } });
+      expect(mockAuth.getAllUsers).toHaveBeenCalledWith({
+        filter: { tenantId: "tenant-1" },
+      });
     });
 
     it("POST /Users should create user in tenant", async () => {
       mockAuth.checkUser.mockResolvedValue(null);
-      mockAuth.createUser.mockResolvedValue({ _id: "new-id", email: "new@t1.com" });
+      mockAuth.createUser.mockResolvedValue({
+        _id: "new-id",
+        email: "new@t1.com",
+      });
       // Mocking user creation is complex due to internal flows,
       // but we test that checkUser is called with tenantId.
       const event = {
@@ -190,7 +195,10 @@ describe("SCIM API Unit Tests", () => {
         success: true,
         data: { _id: "r1", name: "Role 1" },
       });
-      mockAuth.authInterface.getAllUsers.mockResolvedValue({ success: true, data: [] });
+      mockAuth.authInterface.getAllUsers.mockResolvedValue({
+        success: true,
+        data: [],
+      });
       mockAuth.getUserById.mockResolvedValue({ _id: "u1", roles: [] });
 
       const event = {

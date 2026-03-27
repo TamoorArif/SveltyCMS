@@ -14,9 +14,9 @@ Usage:
 -->
 
 <script lang="ts">
-import type { MediaItem } from '@utils/media/media-models';
-import WatermarkSelector from './watermark-selector.svelte';
-import WatermarkSettings from './watermark-settings.svelte';
+import type { MediaItem } from "@utils/media/media-models";
+import WatermarkSelector from "./watermark-selector.svelte";
+import WatermarkSettings from "./watermark-settings.svelte";
 
 interface Props {
 	// Props
@@ -27,7 +27,7 @@ const { mediaItems = [] }: Props = $props();
 
 // Local state
 let selectedMedia: MediaItem | null = $state(null);
-let size = $state('100%');
+let size = $state("100%");
 let opacity = $state(1);
 let positionX = $state(0);
 let positionY = $state(0);

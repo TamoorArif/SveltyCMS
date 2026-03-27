@@ -1,10 +1,10 @@
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Database Pool',
-	icon: 'mdi:database-cog',
-	description: 'Monitor database connection pool health and diagnostics',
+	name: "Database Pool",
+	icon: "mdi:database-cog",
+	description: "Monitor database connection pool health and diagnostics",
 	defaultSize: { w: 2, h: 3 },
-	category: 'monitoring'
+	category: "monitoring",
 };
 </script>
 

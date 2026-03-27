@@ -23,11 +23,18 @@ interface InputProps {
 	label?: string;
 	labelClass?: string;
 	placeholder?: string;
-	type: 'text' | 'password' | 'email';
+	type: "text" | "password" | "email";
 	value?: string;
 }
 
-let { type = 'text', label, labelClass, inputClass, placeholder, value = $bindable('') }: InputProps = $props();
+let {
+	type = "text",
+	label,
+	labelClass,
+	inputClass,
+	placeholder,
+	value = $bindable(""),
+}: InputProps = $props();
 function typeAction(node: HTMLInputElement) {
 	node.type = type;
 }

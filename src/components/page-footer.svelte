@@ -11,8 +11,8 @@
 -->
 
 <script lang="ts">
-import { collections } from '@src/stores/collection-store.svelte';
-import { page } from '$app/state';
+import { collections } from "@src/stores/collection-store.svelte";
+import { page } from "$app/state";
 
 const { user } = page.data;
 
@@ -20,29 +20,29 @@ const activeEntry = $derived(
 	collections.activeValue as {
 		createdAt?: string | number | Date;
 		updatedAt?: string | number | Date;
-	}
+	},
 );
 
 // Convert ISO date string to formatted date
 const dates = $derived({
 	created: activeEntry?.createdAt
-		? new Date(activeEntry.createdAt).toLocaleDateString('en-US', {
-				year: 'numeric',
-				month: '2-digit',
-				day: '2-digit',
-				hour: '2-digit',
-				minute: '2-digit'
+		? new Date(activeEntry.createdAt).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
 			})
-		: '-',
+		: "-",
 	updated: activeEntry?.updatedAt
-		? new Date(activeEntry.updatedAt).toLocaleDateString('en-US', {
-				year: 'numeric',
-				month: '2-digit',
-				day: '2-digit',
-				hour: '2-digit',
-				minute: '2-digit'
+		? new Date(activeEntry.updatedAt).toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
 			})
-		: '-'
+		: "-",
 });
 </script>
 

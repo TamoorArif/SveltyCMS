@@ -4,31 +4,35 @@
 **The Widget component is used to display the widget form used in the CollectionWidget component**
 -->
 <script lang="ts">
-import VerticalList from '@src/components/vertical-list.svelte';
+import VerticalList from "@src/components/vertical-list.svelte";
 import {
 	button_edit,
 	button_previous,
 	button_save,
 	collection_widgetfield_addFields,
 	collection_widgetfield_addrequired,
-	collection_widgetfield_drag
-} from '@src/paraglide/messages';
-import { collectionValue, setCollectionValue, setTargetWidget } from '@src/stores/collection-store.svelte';
-import { tabSet } from '@src/stores/store.svelte.ts';
-import { widgetFunctions } from '@src/stores/widget-store.svelte.ts';
+	collection_widgetfield_drag,
+} from "@src/paraglide/messages";
+import {
+	collectionValue,
+	setCollectionValue,
+	setTargetWidget,
+} from "@src/stores/collection-store.svelte";
+import { tabSet } from "@src/stores/store.svelte.ts";
+import { widgetFunctions } from "@src/stores/widget-store.svelte.ts";
 // Skeleton
-import { modalState } from '@utils/modal-state.svelte';
+import { modalState } from "@utils/modal-state.svelte";
 // Using iconify-icon web component
-import { getGuiFields } from '@utils/utils';
-import { get } from 'svelte/store';
-import type { DndEvent, Item } from 'svelte-dnd-action';
+import { getGuiFields } from "@utils/utils";
+import { get } from "svelte/store";
+import type { DndEvent, Item } from "svelte-dnd-action";
 // Stores
-import { page } from '$app/state';
-import ModalSelectWidget from './modal-select-widget.svelte';
-import ModalWidgetForm from './modal-widget-form.svelte';
+import { page } from "$app/state";
+import ModalSelectWidget from "./modal-select-widget.svelte";
+import ModalWidgetForm from "./modal-widget-form.svelte";
 
 interface Props {
-	'on:save'?: () => void;
+	"on:save"?: () => void;
 }
 
 // Field interface
@@ -46,7 +50,7 @@ interface Field extends Item {
 	[key: string]: unknown;
 }
 
-const { 'on:save': onSave = () => {} }: Props = $props() as Props;
+const { "on:save": onSave = () => {} }: Props = $props() as Props;
 
 // Extract the collection name from the URL
 const contentTypes = page.params.contentTypes;
@@ -56,29 +60,31 @@ let fields = $state<Field[]>(
 	((collectionValue.value.fields as any[]) || []).map((field, index) => {
 		const baseField = {
 			id: index + 1,
-			label: field.label || '',
-			widget: field.widget || { Name: '', key: '' },
-			permissions: field.permissions || {}
+			label: field.label || "",
+			widget: field.widget || { Name: "", key: "" },
+			permissions: field.permissions || {},
 		};
 		return { ...field, ...baseField };
-	})
+	}),
 );
 
 // Effect to update fields when collection value changes
 $effect.root(() => {
-	fields = ((collectionValue.value.fields as any[]) || []).map((field, index) => {
-		const baseField = {
-			id: index + 1,
-			label: field.label || '',
-			widget: field.widget || { Name: '', key: '' },
-			permissions: field.permissions || {}
-		};
-		return { ...field, ...baseField };
-	});
+	fields = ((collectionValue.value.fields as any[]) || []).map(
+		(field, index) => {
+			const baseField = {
+				id: index + 1,
+				label: field.label || "",
+				widget: field.widget || { Name: "", key: "" },
+				permissions: field.permissions || {},
+			};
+			return { ...field, ...baseField };
+		},
+	);
 });
 
 // Collection headers
-const headers = ['Id', 'Icon', 'Name', 'DBName', 'Widget'];
+const headers = ["Id", "Icon", "Name", "DBName", "Widget"];
 
 // svelte-dnd-action
 const flipDurationMs = 300;
@@ -100,9 +106,9 @@ function modalWidgetForm(selectedWidget: Field): void {
 	modalState.trigger(
 		ModalWidgetForm as any,
 		{
-			title: 'Define your Widget',
-			body: 'Setup your widget and then press Save.',
-			value: selectedWidget
+			title: "Define your Widget",
+			body: "Setup your widget and then press Save.",
+			value: selectedWidget,
 		},
 		(r: Field | null) => {
 			if (!r) {
@@ -114,10 +120,14 @@ function modalWidgetForm(selectedWidget: Field): void {
 			if (existingIndex !== -1) {
 				// If the existing widget is found, update its properties
 				const updatedField = { ...fields[existingIndex], ...r };
-				fields = [...fields.slice(0, existingIndex), updatedField, ...fields.slice(existingIndex + 1)];
+				fields = [
+					...fields.slice(0, existingIndex),
+					updatedField,
+					...fields.slice(existingIndex + 1),
+				];
 				setCollectionValue({
 					...collectionValue,
-					fields
+					fields,
 				});
 			} else {
 				// If the existing widget is not found, add it as a new widget
@@ -125,10 +135,10 @@ function modalWidgetForm(selectedWidget: Field): void {
 				fields = [...fields, newField];
 				setCollectionValue({
 					...collectionValue,
-					fields
+					fields,
 				});
 			}
-		}
+		},
 	);
 }
 
@@ -137,9 +147,9 @@ function modalSelectWidget(selected?: Field): void {
 	modalState.trigger(
 		ModalSelectWidget as any,
 		{
-			title: 'Select a Widget',
-			body: 'Select your widget and then press submit.',
-			value: selected
+			title: "Select a Widget",
+			body: "Select your widget and then press submit.",
+			value: selected,
 		},
 		(r: { selectedWidget: string } | null) => {
 			if (!r) {
@@ -148,11 +158,11 @@ function modalSelectWidget(selected?: Field): void {
 			const { selectedWidget } = r;
 			const widget = {
 				widget: { key: selectedWidget, Name: selectedWidget },
-				permissions: {}
+				permissions: {},
 			};
 			setTargetWidget(widget as any);
 			modalWidgetForm(widget as Field);
-		}
+		},
 	);
 }
 
@@ -165,9 +175,12 @@ async function handleCollectionSave() {
 			return field;
 		}
 
-		const GUI_FIELDS = getGuiFields({ key: field.widget.Name }, guiSchema as any);
+		const GUI_FIELDS = getGuiFields(
+			{ key: field.widget.Name },
+			guiSchema as any,
+		);
 		for (const [property, value] of Object.entries(field)) {
-			if (typeof value !== 'object' && property !== 'id') {
+			if (typeof value !== "object" && property !== "id") {
 				GUI_FIELDS[property] = value;
 			}
 		}
@@ -178,7 +191,7 @@ async function handleCollectionSave() {
 	// Update the collection fields
 	setCollectionValue({
 		...collectionValue.value,
-		fields
+		fields,
 	});
 
 	onSave();

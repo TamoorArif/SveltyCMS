@@ -73,5 +73,7 @@ test("should show error on invalid SMTP configuration", async ({ page }) => {
   const testEmailButton = page.locator("button", { hasText: /test email/i });
   await testEmailButton.click();
 
-  await expect(page.getByText(/invalid smtp|enotfound/i).first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/invalid smtp|enotfound/i).first()).toBeVisible({
+    timeout: 20_000,
+  });
 });

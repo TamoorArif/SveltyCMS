@@ -7,61 +7,70 @@ Features:
 -->
 
 <script lang="ts">
-import { onMount } from 'svelte';
-import type { PageData } from './$types';
-import MediaGrid from './media-grid.svelte';
-import MediaTable from './media-table.svelte';
-import VirtualMediaGrid from './virtual-media-grid.svelte';
-import { mediaUrl } from '@utils/media/media-utils';
-import ImageEditorModal from '@src/components/image-editor/image-editor-modal.svelte';
-import PageTitle from '@src/components/page-title.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import { type MediaBase, type MediaImage, MediaTypeEnum } from '@utils/media/media-models';
-import { modalState } from '@utils/modal-state.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import { registerHotkey } from '@src/utils/hotkeys';
-import { SvelteSet } from 'svelte/reactivity';
+import { onMount } from "svelte";
+import type { PageData } from "./$types";
+import MediaGrid from "./media-grid.svelte";
+import MediaTable from "./media-table.svelte";
+import VirtualMediaGrid from "./virtual-media-grid.svelte";
+import { mediaUrl } from "@utils/media/media-utils";
+import ImageEditorModal from "@src/components/image-editor/image-editor-modal.svelte";
+import PageTitle from "@src/components/page-title.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import {
+	type MediaBase,
+	type MediaImage,
+	MediaTypeEnum,
+} from "@utils/media/media-models";
+import { modalState } from "@utils/modal-state.svelte";
+import { showConfirm } from "@utils/modal-utils";
+import { registerHotkey } from "@src/utils/hotkeys";
+import { SvelteSet } from "svelte/reactivity";
 
 let { data }: { data: PageData } = $props();
 
 // State
 let files = $state<Array<MediaBase | MediaImage>>([]);
-let globalSearchValue = $state('');
-let selectedMediaType = $state<'All' | MediaTypeEnum>('All');
-let view = $state<'grid' | 'table'>('grid');
-let gridSize = $state<'tiny' | 'small' | 'medium' | 'large'>('small');
+let globalSearchValue = $state("");
+let selectedMediaType = $state<"All" | MediaTypeEnum>("All");
+let view = $state<"grid" | "table">("grid");
+let gridSize = $state<"tiny" | "small" | "medium" | "large">("small");
 let selectedFiles = $state(new SvelteSet<string>());
 let isSelectionMode = $state(false);
 
 const mediaTypes = [
-	{ value: 'All', label: 'ALL' },
-	{ value: MediaTypeEnum.Image, label: 'IMAGE' },
-	{ value: MediaTypeEnum.Document, label: 'DOCUMENT' },
-	{ value: MediaTypeEnum.Audio, label: 'AUDIO' },
-	{ value: MediaTypeEnum.Video, label: 'VIDEO' }
+	{ value: "All", label: "ALL" },
+	{ value: MediaTypeEnum.Image, label: "IMAGE" },
+	{ value: MediaTypeEnum.Document, label: "DOCUMENT" },
+	{ value: MediaTypeEnum.Audio, label: "AUDIO" },
+	{ value: MediaTypeEnum.Video, label: "VIDEO" },
 ];
 
 // Derived
 const filteredFiles = $derived.by(() => {
 	return files.filter((file) => {
-		const matchesSearch = (file.filename || '').toLowerCase().includes(globalSearchValue.toLowerCase());
-		const matchesType = selectedMediaType === 'All' || file.type === selectedMediaType;
+		const matchesSearch = (file.filename || "")
+			.toLowerCase()
+			.includes(globalSearchValue.toLowerCase());
+		const matchesType =
+			selectedMediaType === "All" || file.type === selectedMediaType;
 		return matchesSearch && matchesType;
 	});
 });
 
 const USE_VIRTUAL_THRESHOLD = 100;
-const useVirtualScrolling = $derived(filteredFiles.length > USE_VIRTUAL_THRESHOLD);
+const useVirtualScrolling = $derived(
+	filteredFiles.length > USE_VIRTUAL_THRESHOLD,
+);
 
 // Focus management
 let searchInput: HTMLInputElement | undefined = $state();
 
 onMount(() => {
 	// Register Keyboard Shortcuts
-	registerHotkey('mod+f', () => searchInput?.focus(), 'Focus Search');
+	registerHotkey("mod+f", () => searchInput?.focus(), "Focus Search");
 	registerHotkey(
-		'mod+a',
+		"mod+a",
 		() => {
 			if (isSelectionMode) {
 				filteredFiles.forEach((f) => selectedFiles.add(f._id as string));
@@ -70,27 +79,29 @@ onMount(() => {
 				filteredFiles.forEach((f) => selectedFiles.add(f._id as string));
 			}
 		},
-		'Select All'
+		"Select All",
 	);
 	registerHotkey(
-		'escape',
+		"escape",
 		() => {
 			if (selectedFiles.size > 0) selectedFiles.clear();
-			else if (globalSearchValue) globalSearchValue = '';
+			else if (globalSearchValue) globalSearchValue = "";
 			else if (isSelectionMode) isSelectionMode = false;
 		},
-		'Clear Selection/Search',
-		false
+		"Clear Selection/Search",
+		false,
 	);
 	registerHotkey(
-		'delete',
+		"delete",
 		() => {
 			if (selectedFiles.size > 0) {
-				const filesToDelete = files.filter((f) => selectedFiles.has(f._id as string));
+				const filesToDelete = files.filter((f) =>
+					selectedFiles.has(f._id as string),
+				);
 				handleBulkDelete(filesToDelete);
 			}
 		},
-		'Delete Selected'
+		"Delete Selected",
 	);
 
 	// Initial data hydration
@@ -100,49 +111,53 @@ onMount(() => {
 async function handleEditImage(file: any) {
 	const fullUrl = mediaUrl(file);
 	if (!fullUrl) {
-		toast.error('Invalid image URL');
+		toast.error("Invalid image URL");
 		return;
 	}
 
 	modalState.trigger(ImageEditorModal as any, {
 		image: { ...file, url: fullUrl },
 		onsave: handleEditorSave,
-		size: 'fullscreen'
+		size: "fullscreen",
 	});
 }
 
 async function handleEditorSave(detail: any) {
 	const formData = new FormData();
-	formData.append('file', detail.file);
-	if (detail.mediaId) formData.append('mediaId', detail.mediaId);
-	if (detail.operations) formData.append('operations', JSON.stringify(detail.operations));
-	if (detail.saveBehavior) formData.append('saveBehavior', detail.saveBehavior);
+	formData.append("file", detail.file);
+	if (detail.mediaId) formData.append("mediaId", detail.mediaId);
+	if (detail.operations)
+		formData.append("operations", JSON.stringify(detail.operations));
+	if (detail.saveBehavior) formData.append("saveBehavior", detail.saveBehavior);
 
 	try {
-		const response = await fetch('/api/media/edit', { method: 'POST', body: formData });
+		const response = await fetch("/api/media/edit", {
+			method: "POST",
+			body: formData,
+		});
 		if (response.ok) {
-			toast.success('Image updated');
+			toast.success("Image updated");
 			window.location.reload();
 		}
 	} catch (err) {
-		logger.error('Editor save failed', err);
+		logger.error("Editor save failed", err);
 	}
 }
 
 async function handleBulkDelete(filesToDelete: (MediaBase | MediaImage)[]) {
 	showConfirm({
 		title: `Delete ${filesToDelete.length} files?`,
-		body: 'This action cannot be undone.',
+		body: "This action cannot be undone.",
 		onConfirm: async () => {
 			for (const file of filesToDelete) {
 				const formData = new FormData();
-				formData.append('imageData', JSON.stringify(file));
-				await fetch('?/deleteMedia', { method: 'POST', body: formData });
+				formData.append("imageData", JSON.stringify(file));
+				await fetch("?/deleteMedia", { method: "POST", body: formData });
 			}
 			files = files.filter((f) => !selectedFiles.has(f._id as string));
 			selectedFiles.clear();
-			toast.success('Batch delete complete');
-		}
+			toast.success("Batch delete complete");
+		},
 	});
 }
 </script>

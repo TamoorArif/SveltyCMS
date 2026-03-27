@@ -11,21 +11,33 @@ interface Step {
 
 interface Props {
 	currentStep: number;
-	footer?: import('svelte').Snippet;
+	footer?: import("svelte").Snippet;
 
 	// Snippets for customization
-	header?: import('svelte').Snippet;
+	header?: import("svelte").Snippet;
 	onselectStep?: (index: number) => void;
 	stepClickable?: boolean[]; // Array of clickable status (for navigation)
 	stepCompleted?: boolean[]; // Array of completion status
 	steps: Step[];
 }
 
-let { steps, currentStep = $bindable(0), stepCompleted = [], stepClickable = [], onselectStep, header, footer }: Props = $props();
+let {
+	steps,
+	currentStep = $bindable(0),
+	stepCompleted = [],
+	stepClickable = [],
+	onselectStep,
+	header,
+	footer,
+}: Props = $props();
 
 // Default to all clickable/uncompleted if not provided
-let derivedCompleted = $derived(stepCompleted.length ? stepCompleted : steps.map((_, i) => i < currentStep));
-let derivedClickable = $derived(stepClickable.length ? stepClickable : steps.map((_, i) => i <= currentStep));
+let derivedCompleted = $derived(
+	stepCompleted.length ? stepCompleted : steps.map((_, i) => i < currentStep),
+);
+let derivedClickable = $derived(
+	stepClickable.length ? stepClickable : steps.map((_, i) => i <= currentStep),
+);
 
 function handleStepClick(index: number) {
 	if (derivedClickable[index]) {

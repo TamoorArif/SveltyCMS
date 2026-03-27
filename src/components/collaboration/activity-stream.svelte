@@ -8,27 +8,27 @@ with the AI collaboration assistant.
 -->
 
 <script lang="ts">
-import { collaboration } from '@src/stores/collaboration-store.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { registerHotkey } from '@src/utils/hotkeys';
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { onMount, tick } from 'svelte';
-import { slide } from 'svelte/transition';
-import { page } from '$app/state';
+import { collaboration } from "@src/stores/collaboration-store.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { registerHotkey } from "@src/utils/hotkeys";
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { onMount, tick } from "svelte";
+import { slide } from "svelte/transition";
+import { page } from "$app/state";
 
 let { ondrag } = $props();
 
 const totalUsers = $derived(page.data.totalUsers ?? 1);
-const chatLabel = $derived(totalUsers === 1 ? 'AI Assistant' : 'Chat');
+const chatLabel = $derived(totalUsers === 1 ? "AI Assistant" : "Chat");
 const aiEmptyText = $derived(
 	totalUsers === 1
-		? 'Ask me anything about your project'
+		? "Ask me anything about your project"
 		: collaboration.currentRoom
-			? 'Start collaborating with others'
-			: 'Ask me anything about your data'
+			? "Start collaborating with others"
+			: "Ask me anything about your data",
 );
 
-let newMessage = $state('');
+let newMessage = $state("");
 let scrollContainer: HTMLDivElement | undefined = $state(undefined);
 let inputEl: HTMLInputElement | undefined = $state(undefined);
 
@@ -36,26 +36,34 @@ let inputEl: HTMLInputElement | undefined = $state(undefined);
 onMount(() => {
 	// Focus input when chat tab is opened via hotkey or click
 	registerHotkey(
-		'mod+j',
+		"mod+j",
 		() => {
-			if (collaboration.activeTab === 'chat' && inputEl) {
+			if (collaboration.activeTab === "chat" && inputEl) {
 				inputEl.focus();
 			} else {
-				collaboration.activeTab = 'chat';
+				collaboration.activeTab = "chat";
 				tick().then(() => inputEl?.focus());
 			}
 		},
-		'Focus AI Chat'
+		"Focus AI Chat",
 	);
 
 	// Tab switching
-	registerHotkey('alt+1', () => (collaboration.activeTab = 'activity'), 'Switch to Activity Tab');
-	registerHotkey('alt+2', () => (collaboration.activeTab = 'chat'), 'Switch to Chat Tab');
+	registerHotkey(
+		"alt+1",
+		() => (collaboration.activeTab = "activity"),
+		"Switch to Activity Tab",
+	);
+	registerHotkey(
+		"alt+2",
+		() => (collaboration.activeTab = "chat"),
+		"Switch to Chat Tab",
+	);
 });
 
 // Auto-scroll to bottom of chat
 $effect(() => {
-	if (collaboration.activeTab === 'chat' && collaboration.aiHistory.length) {
+	if (collaboration.activeTab === "chat" && collaboration.aiHistory.length) {
 		tick().then(() => {
 			if (scrollContainer) {
 				scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -70,28 +78,28 @@ function handleSendMessage(event: Event) {
 		return;
 	}
 	collaboration.sendMessage(newMessage);
-	newMessage = '';
+	newMessage = "";
 }
 
 function formatTimestamp(ts: string) {
 	const date = new Date(ts);
-	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 function getEventIcon(event: string) {
 	switch (event) {
-		case 'entry:create':
-			return 'mdi:plus-circle';
-		case 'entry:update':
-			return 'mdi:pencil';
-		case 'entry:publish':
-			return 'mdi:publish';
-		case 'webhook:failure':
-			return 'mdi:alert-circle';
-		case 'ai:response':
-			return 'mdi:robot';
+		case "entry:create":
+			return "mdi:plus-circle";
+		case "entry:update":
+			return "mdi:pencil";
+		case "entry:publish":
+			return "mdi:publish";
+		case "webhook:failure":
+			return "mdi:alert-circle";
+		case "ai:response":
+			return "mdi:robot";
 		default:
-			return 'mdi:information';
+			return "mdi:information";
 	}
 }
 </script>

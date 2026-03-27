@@ -375,7 +375,9 @@ export class MariaDBQueryBuilder<T extends BaseEntity> implements QueryBuilder<T
       const result = await q;
       return {
         success: true,
-        data: { modifiedCount: (result as unknown as [{ affectedRows: number }])[0].affectedRows },
+        data: {
+          modifiedCount: (result as unknown as [{ affectedRows: number }])[0].affectedRows,
+        },
         meta: { executionTime: Date.now() - startTime },
       };
     } catch (error) {
@@ -395,7 +397,9 @@ export class MariaDBQueryBuilder<T extends BaseEntity> implements QueryBuilder<T
       const result = await q;
       return {
         success: true,
-        data: { deletedCount: (result as unknown as [{ affectedRows: number }])[0].affectedRows },
+        data: {
+          deletedCount: (result as unknown as [{ affectedRows: number }])[0].affectedRows,
+        },
         meta: { executionTime: Date.now() - startTime },
       };
     } catch (error) {

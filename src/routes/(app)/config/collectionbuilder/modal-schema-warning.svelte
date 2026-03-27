@@ -21,8 +21,8 @@ Requires user confirmation before proceeding with changes that may cause data lo
 -->
 
 <script lang="ts">
-import type { BreakingChange } from '@utils/collection-schema-warnings';
-import { fade, slide } from 'svelte/transition';
+import type { BreakingChange } from "@utils/collection-schema-warnings";
+import { fade, slide } from "svelte/transition";
 
 interface Props {
 	breakingChanges: BreakingChange[];
@@ -44,11 +44,11 @@ const canProceed = $derived(!hasDataLoss || confirmed);
 
 // Icon mapping for change types
 const typeIcons: Record<string, string> = {
-	field_removed: 'mdi:database-remove',
-	field_renamed: 'mdi:form-textbox',
-	type_changed: 'mdi:swap-horizontal',
-	required_added: 'mdi:asterisk',
-	unique_added: 'mdi:key-variant'
+	field_removed: "mdi:database-remove",
+	field_renamed: "mdi:form-textbox",
+	type_changed: "mdi:swap-horizontal",
+	required_added: "mdi:asterisk",
+	unique_added: "mdi:key-variant",
 };
 
 function handleConfirm() {
@@ -58,7 +58,7 @@ function handleConfirm() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'Escape') {
+	if (e.key === "Escape") {
 		onCancel();
 	}
 }

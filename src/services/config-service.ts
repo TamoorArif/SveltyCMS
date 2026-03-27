@@ -56,7 +56,10 @@ class ConfigService {
   public async performExport({
     uuids,
     tenantId,
-  }: { uuids?: string[]; tenantId?: string } = {}): Promise<{ dirPath: string }> {
+  }: {
+    uuids?: string[];
+    tenantId?: string;
+  } = {}): Promise<{ dirPath: string }> {
     logger.info(`Exporting configuration for tenant: ${tenantId || "global"}...`);
     const exportDir = path.resolve(
       process.cwd(),

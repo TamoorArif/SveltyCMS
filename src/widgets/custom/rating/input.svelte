@@ -28,13 +28,13 @@ Interactive star rating with hover states and click selection
 -->
 
 <script lang="ts">
-import { RatingGroup } from '@skeletonlabs/skeleton-svelte';
-import type { FieldType } from './';
+import { RatingGroup } from "@skeletonlabs/skeleton-svelte";
+import type { FieldType } from "./";
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
 	value?: number | null | undefined;

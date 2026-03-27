@@ -101,7 +101,10 @@ export class WidgetsModule {
     return this.core.wrap(async () => {
       await this.db
         .update(schema.widgets)
-        .set({ isActive: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          isActive: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(eq(schema.widgets._id, widgetId));
     }, "ACTIVATE_WIDGET_FAILED");
   }
@@ -110,7 +113,10 @@ export class WidgetsModule {
     return this.core.wrap(async () => {
       await this.db
         .update(schema.widgets)
-        .set({ isActive: false, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          isActive: false,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(eq(schema.widgets._id, widgetId));
     }, "DEACTIVATE_WIDGET_FAILED");
   }

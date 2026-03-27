@@ -26,37 +26,44 @@
 -->
 
 <script lang="ts">
-import FloatingChat from '@src/components/collaboration/floating-chat.svelte';
-import FloatingNav from '@src/components/system/floating-nav.svelte';
-import HeaderEdit from '@src/components/header-edit.svelte';
-import LeftSidebar from '@src/components/left-sidebar.svelte';
-import PageFooter from '@src/components/page-footer.svelte';
-import RightSidebar from '@src/components/right-sidebar.svelte';
-import SearchComponent from '@src/components/search-component.svelte';
+import FloatingChat from "@src/components/collaboration/floating-chat.svelte";
+import FloatingNav from "@src/components/system/floating-nav.svelte";
+import HeaderEdit from "@src/components/header-edit.svelte";
+import LeftSidebar from "@src/components/left-sidebar.svelte";
+import PageFooter from "@src/components/page-footer.svelte";
+import RightSidebar from "@src/components/right-sidebar.svelte";
+import SearchComponent from "@src/components/search-component.svelte";
 // Type Imports
-import type { User } from '@src/databases/auth/types';
+import type { User } from "@src/databases/auth/types";
 // Stores
-import { setCollection, setContentStructure, setMode } from '@src/stores/collection-store.svelte.ts';
-import { publicEnv } from '@src/stores/global-settings.svelte.ts';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { app } from '@src/stores/store.svelte';
-import { initializeDarkMode } from '@src/stores/theme-store.svelte.ts';
-import { ui } from '@src/stores/ui-store.svelte';
-import { widgets } from '@src/stores/widget-store.svelte.ts';
-import { Portal } from '@skeletonlabs/skeleton-svelte';
+import {
+	setCollection,
+	setContentStructure,
+	setMode,
+} from "@src/stores/collection-store.svelte.ts";
+import { publicEnv } from "@src/stores/global-settings.svelte.ts";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte.ts";
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { app } from "@src/stores/store.svelte";
+import { initializeDarkMode } from "@src/stores/theme-store.svelte.ts";
+import { ui } from "@src/stores/ui-store.svelte";
+import { widgets } from "@src/stores/widget-store.svelte.ts";
+import { Portal } from "@skeletonlabs/skeleton-svelte";
 // Utils
-import { isSearchVisible } from '@utils/global-search-index';
-import { getTextDirection } from '@utils/utils';
-import { onMount, untrack } from 'svelte';
-import { registerHotkey } from '@src/utils/hotkeys';
-import CommandBar from '@src/components/command-bar.svelte';
+import { isSearchVisible } from "@utils/global-search-index";
+import { getTextDirection } from "@utils/utils";
+import { onMount, untrack } from "svelte";
+import { registerHotkey } from "@src/utils/hotkeys";
+import CommandBar from "@src/components/command-bar.svelte";
 // SvelteKit Navigation
-import { afterNavigate, beforeNavigate } from '$app/navigation';
-import { page } from '$app/state';
-import type { ContentNode, Schema } from '../../content/types';
-import { setContentContext } from '@src/content/content-context.svelte';
-import { contentManager } from '@src/content/content-manager';
+import { afterNavigate, beforeNavigate } from "$app/navigation";
+import { page } from "$app/state";
+import type { ContentNode, Schema } from "../../content/types";
+import { setContentContext } from "@src/content/content-context.svelte";
+import { contentManager } from "@src/content/content-manager";
 
 // =============================================
 // TYPE DEFINITIONS
@@ -73,7 +80,7 @@ interface LayoutData {
 }
 
 interface Props {
-	children?: import('svelte').Snippet;
+	children?: import("svelte").Snippet;
 	data: LayoutData;
 }
 
@@ -94,7 +101,7 @@ let loadError = $state<Error | null>(null);
 // =============================================
 
 // seoDescription logic
-const siteName = publicEnv?.SITE_NAME || 'SveltyCMS';
+const siteName = publicEnv?.SITE_NAME || "SveltyCMS";
 const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`;
 
 // =============================================
@@ -103,15 +110,15 @@ const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS po
 
 // Sync mode from URL (helps UI store show/hide sidebars even on error pages)
 $effect(() => {
-	const isCreate = page.url.searchParams.get('create') === 'true';
-	const isEdit = page.url.searchParams.get('edit') === 'true';
+	const isCreate = page.url.searchParams.get("create") === "true";
+	const isEdit = page.url.searchParams.get("edit") === "true";
 
 	if (isCreate) {
-		setMode('create');
+		setMode("create");
 	} else if (isEdit) {
-		setMode('edit');
-	} else if (page.url.pathname.includes('/mediagallery')) {
-		setMode('media');
+		setMode("edit");
+	} else if (page.url.pathname.includes("/mediagallery")) {
+		setMode("media");
 	}
 });
 
@@ -119,7 +126,7 @@ $effect(() => {
 $effect(() => {
 	// Defer store updates to next microtask to prevent UpdatedAtError
 	const defer = (fn: () => void): void => {
-		if (typeof queueMicrotask === 'function') {
+		if (typeof queueMicrotask === "function") {
 			queueMicrotask(fn);
 		} else {
 			Promise.resolve().then(fn);
@@ -139,7 +146,7 @@ $effect(() => {
 			}
 		})
 		.catch((err) => {
-			console.error('Failed to load content structure', err);
+			console.error("Failed to load content structure", err);
 			loadError = err;
 		});
 
@@ -173,18 +180,21 @@ $effect(() => {
 
 // Initialize avatar from user data
 function initializeUserAvatar(user: User | null): void {
-	console.log('[AppLayout] initializeUserAvatar for user:', user?.username || 'Guest');
+	console.log(
+		"[AppLayout] initializeUserAvatar for user:",
+		user?.username || "Guest",
+	);
 	if (!user) {
-		app.avatarSrc = '/Default_User.svg';
+		app.avatarSrc = "/Default_User.svg";
 		return;
 	}
 
-	if (user.avatar && user.avatar !== '/Default_User.svg') {
+	if (user.avatar && user.avatar !== "/Default_User.svg") {
 		app.avatarSrc = user.avatar;
 	} else {
-		app.avatarSrc = '/Default_User.svg';
+		app.avatarSrc = "/Default_User.svg";
 	}
-	console.log('[AppLayout] Avatar source set to:', app.avatarSrc);
+	console.log("[AppLayout] Avatar source set to:", app.avatarSrc);
 }
 
 // =============================================
@@ -192,7 +202,7 @@ function initializeUserAvatar(user: User | null): void {
 // =============================================
 
 onMount(() => {
-	console.log('[AppLayout] Mounted. User:', data.user?.username || 'None');
+	console.log("[AppLayout] Mounted. User:", data.user?.username || "None");
 
 	// Start loading if content structure isn't ready yet
 	Promise.resolve(data.contentStructure).then((_) => {
@@ -210,29 +220,29 @@ onMount(() => {
 	initializeUserAvatar(data.user);
 
 	registerHotkey(
-		'mod+k',
+		"mod+k",
 		() => {
 			ui.isCommandBarVisible = !ui.isCommandBarVisible;
 		},
-		'Open command palette (AI-powered)'
+		"Open command palette (AI-powered)",
 	);
 
 	registerHotkey(
-		'mod+s',
+		"mod+s",
 		() => {
-			window.dispatchEvent(new CustomEvent('global-save-request'));
+			window.dispatchEvent(new CustomEvent("global-save-request"));
 		},
-		'Save (global)'
+		"Save (global)",
 	);
 
 	registerHotkey(
-		'escape',
+		"escape",
 		() => {
 			ui.isCommandBarVisible = false;
 			isSearchVisible.set(false);
 		},
-		'Close Overlays/Command Palette',
-		false
+		"Close Overlays/Command Palette",
+		false,
 	);
 });
 
@@ -245,7 +255,10 @@ beforeNavigate(({ from, to }) => {
 afterNavigate(() => {
 	globalLoadingStore.stopLoading(loadingOperations.navigation);
 	setTimeout(() => {
-		if (globalLoadingStore.loadingStack.size === 1 && globalLoadingStore.isLoadingReason(loadingOperations.navigation)) {
+		if (
+			globalLoadingStore.loadingStack.size === 1 &&
+			globalLoadingStore.isLoadingReason(loadingOperations.navigation)
+		) {
 			globalLoadingStore.stopLoading(loadingOperations.navigation);
 		}
 	}, 100);

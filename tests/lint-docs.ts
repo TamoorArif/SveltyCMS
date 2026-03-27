@@ -119,11 +119,12 @@ function checkInternalLinks(file: string, content: string): string[] {
 
     // Resolve relative to the file being checked
     const absoluteLinkPath = path.resolve(path.dirname(file), linkPath);
-    
+
     // Support both direct file matches and .mdx implied extensions
-    const exists = fs.existsSync(absoluteLinkPath) || 
-                   fs.existsSync(absoluteLinkPath + ".mdx") ||
-                   fs.existsSync(absoluteLinkPath + ".md");
+    const exists =
+      fs.existsSync(absoluteLinkPath) ||
+      fs.existsSync(absoluteLinkPath + ".mdx") ||
+      fs.existsSync(absoluteLinkPath + ".md");
 
     if (!exists) {
       const relativeToRoot = path.relative(process.cwd(), absoluteLinkPath);
@@ -186,7 +187,7 @@ for (const dir of SCAN_DIRS) {
 
     const result = safeParse(frontmatterSchema, data);
     const linkIssues = checkInternalLinks(file, raw);
-    
+
     // Path Alignment Check
     const filesystemPath = path.relative(PROJECT_ROOT, file).replace(/\\/g, "/");
     const frontmatterPath = (data.path as string)?.replace(/\\/g, "/");
@@ -197,11 +198,13 @@ for (const dir of SCAN_DIRS) {
     } else {
       invalidFiles++;
       const combinedIssues = [...(result.issues || [])];
-      
+
       if (pathMismatch) {
-        combinedIssues.push({ message: `Path mismatch! Expected "${filesystemPath}" but found "${frontmatterPath}"` } as any);
+        combinedIssues.push({
+          message: `Path mismatch! Expected "${filesystemPath}" but found "${frontmatterPath}"`,
+        } as any);
       }
-      
+
       for (const issue of linkIssues) {
         combinedIssues.push({ message: issue } as any);
       }
@@ -214,7 +217,7 @@ for (const dir of SCAN_DIRS) {
       console.error("─".repeat(80));
 
       // Print Valibot schema errors
-      for (const issue of (result.issues ?? [])) {
+      for (const issue of result.issues ?? []) {
         const fieldPath = issue.path?.map((p: any) => p.key ?? p).join(".") || "root";
         const fieldName = fieldPath === "root" ? "frontmatter" : `"${fieldPath}"`;
 
@@ -246,8 +249,10 @@ for (const dir of SCAN_DIRS) {
 
       // Print link and path-mismatch issues
       for (const issue of combinedIssues) {
-        if (typeof (issue as { message?: string }).message === "string" &&
-            !(result.issues ?? []).includes(issue as never)) {
+        if (
+          typeof (issue as { message?: string }).message === "string" &&
+          !(result.issues ?? []).includes(issue as never)
+        ) {
           console.error(`   • ${(issue as { message: string }).message}`);
         }
       }

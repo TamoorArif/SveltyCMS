@@ -28,15 +28,15 @@
 
 <script lang="ts">
 // Import types
-import type { SystemVirtualFolder } from '@src/databases/db-interface';
-import { setMode } from '@src/stores/collection-store.svelte.ts';
+import type { SystemVirtualFolder } from "@src/databases/db-interface";
+import { setMode } from "@src/stores/collection-store.svelte.ts";
 // Stores
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte.ts';
-import { ui } from '@src/stores/ui-store.svelte.ts';
-import { logger } from '@utils/logger';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte.ts";
+import { ui } from "@src/stores/ui-store.svelte.ts";
+import { logger } from "@utils/logger";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onMount } from "svelte";
 
 interface Props {
 	// Component props and state
@@ -45,12 +45,15 @@ interface Props {
 
 const { currentFolder = null }: Props = $props();
 let folders: SystemVirtualFolder[] = $state([]);
-let newFolderName = '';
+let newFolderName = "";
 let isLoading = $state(false);
 let error = $state<string | null>(null);
 
 // Determine if a folder is the root folder
-export function isRootFolder(folder: { name: string; parent?: string | null }): boolean {
+export function isRootFolder(folder: {
+	name: string;
+	parent?: string | null;
+}): boolean {
 	return folder.name === publicEnv.MEDIA_FOLDER && folder.parent === null;
 }
 
@@ -59,7 +62,7 @@ export async function fetchVirtualFolders(): Promise<void> {
 	isLoading = true;
 	error = null;
 	try {
-		const response = await fetch('/api/systemVirtualFolder');
+		const response = await fetch("/api/systemVirtualFolder");
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
@@ -68,10 +71,12 @@ export async function fetchVirtualFolders(): Promise<void> {
 		if (result.success && result.folders) {
 			folders = result.folders.map((folder: SystemVirtualFolder) => ({
 				...folder,
-				path: Array.isArray(folder.path) ? folder.path : (folder.path as string).split('/')
+				path: Array.isArray(folder.path)
+					? folder.path
+					: (folder.path as string).split("/"),
 			}));
 		} else {
-			throw new Error(result.error || 'Failed to fetch folders');
+			throw new Error(result.error || "Failed to fetch folders");
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
@@ -91,13 +96,13 @@ export async function createFolder(): Promise<void> {
 	isLoading = true;
 
 	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/systemVirtualFolder", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				name: newFolderName,
-				parent: currentFolder?._id
-			})
+				parent: currentFolder?._id,
+			}),
 		});
 
 		if (!response.ok) {
@@ -106,11 +111,11 @@ export async function createFolder(): Promise<void> {
 
 		const result = await response.json();
 		if (result.success) {
-			toast.success('Folder created successfully');
-			newFolderName = '';
+			toast.success("Folder created successfully");
+			newFolderName = "";
 			await fetchVirtualFolders();
 		} else {
-			throw new Error(result.error || 'Failed to create folder');
+			throw new Error(result.error || "Failed to create folder");
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
@@ -122,59 +127,62 @@ export async function createFolder(): Promise<void> {
 }
 
 // Update an existing folder
-export async function updateFolder(folderId: string, newName: string): Promise<void> {
+export async function updateFolder(
+	folderId: string,
+	newName: string,
+): Promise<void> {
 	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ folderId, name: newName })
+		const response = await fetch("/api/systemVirtualFolder", {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ folderId, name: newName }),
 		});
 		const result = await response.json();
 
 		if (result.success) {
-			toast.success('Folder updated successfully');
+			toast.success("Folder updated successfully");
 			await fetchVirtualFolders();
 		} else {
-			throw new Error(result.error || 'Failed to update folder');
+			throw new Error(result.error || "Failed to update folder");
 		}
 	} catch (error) {
-		logger.error('Error updating folder:', error);
-		toast.error('Error updating folder');
+		logger.error("Error updating folder:", error);
+		toast.error("Error updating folder");
 	}
 }
 
 // Delete a folder
 export async function deleteFolder(folderId: string): Promise<void> {
 	try {
-		const response = await fetch('/api/systemVirtualFolder', {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ folderId })
+		const response = await fetch("/api/systemVirtualFolder", {
+			method: "DELETE",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ folderId }),
 		});
 		const result = await response.json();
 
 		if (result.success) {
-			toast.success('Folder deleted successfully');
+			toast.success("Folder deleted successfully");
 			await fetchVirtualFolders();
 		} else {
-			throw new Error(result.error || 'Failed to delete folder');
+			throw new Error(result.error || "Failed to delete folder");
 		}
 	} catch (error) {
-		logger.error('Error deleting folder:', error);
-		toast.error('Error deleting folder');
+		logger.error("Error deleting folder:", error);
+		toast.error("Error deleting folder");
 	}
 }
 
 // Handle mobile sidebar close on navigation
 function handleMobileSidebarClose() {
 	if (screen.isMobile) {
-		ui.toggle('leftSidebar', 'hidden');
+		ui.toggle("leftSidebar", "hidden");
 	}
 }
 
 // Return to Collections - handle mode switching
 function handleReturnToCollections() {
-	setMode('view');
+	setMode("view");
 	handleMobileSidebarClose();
 }
 

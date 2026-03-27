@@ -306,7 +306,9 @@ class PluginRegistry implements IPluginService {
   private async ensureMigrationTable(dbAdapter: IDBAdapter): Promise<void> {
     const table = "pluginMigrations";
     try {
-      const count = await dbAdapter.crud.count(table, undefined, { bypassTenantCheck: true });
+      const count = await dbAdapter.crud.count(table, undefined, {
+        bypassTenantCheck: true,
+      });
       if (count.success) {
         return;
       }

@@ -23,9 +23,9 @@ This modal displays the QR code for setting up 2FA and handles verification.
 -->
 
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
+import { toast } from "@src/stores/toast.svelte.ts";
 // Utils
-import { logger } from '@utils/logger';
+import { logger } from "@utils/logger";
 
 // Skeleton
 // getModalStore deprecated - use modalState from @utils/modal-state.svelte;
@@ -46,8 +46,8 @@ import {
 	twofa_setup_complete_title,
 	twofa_verify_button,
 	twofa_verify_setup_description,
-	twofa_verifying
-} from '@src/paraglide/messages';
+	twofa_verifying,
+} from "@src/paraglide/messages";
 
 // Props
 interface Props {
@@ -64,25 +64,33 @@ interface Props {
 	title?: string;
 }
 
-const { parent = { regionFooter: 'modal-footer p-4' }, qrCodeUrl, secret, backupCodes, title, body, close }: Props = $props();
+const {
+	parent = { regionFooter: "modal-footer p-4" },
+	qrCodeUrl,
+	secret,
+	backupCodes,
+	title,
+	body,
+	close,
+}: Props = $props();
 
 // State
-let verificationCode = $state('');
+let verificationCode = $state("");
 let isVerifying = $state(false);
-let currentStep = $state<'setup' | 'complete'>('setup');
-let error = $state('');
+let currentStep = $state<"setup" | "complete">("setup");
+let error = $state("");
 
 // Copy text to clipboard
 async function copyToClipboard(text: string) {
 	try {
 		await navigator.clipboard.writeText(text);
 		toast.success({
-			title: 'Success',
-			description: `${button_copy()} successful`
+			title: "Success",
+			description: `${button_copy()} successful`,
 		});
 	} catch (err) {
-		logger.error('Failed to copy:', err);
-		toast.error({ title: 'Error', description: 'Failed to copy' });
+		logger.error("Failed to copy:", err);
+		toast.error({ title: "Error", description: "Failed to copy" });
 	}
 }
 
@@ -96,13 +104,13 @@ async function verifySetup(event: SubmitEvent) {
 	}
 
 	isVerifying = true;
-	error = '';
+	error = "";
 
 	try {
-		const response = await fetch('/api/auth/2fa/verify-setup', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ code: verificationCode.trim() })
+		const response = await fetch("/api/auth/2fa/verify-setup", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ code: verificationCode.trim() }),
 		});
 
 		const result = await response.json();
@@ -111,14 +119,14 @@ async function verifySetup(event: SubmitEvent) {
 			throw new Error(result.message || twofa_error_invalid_code());
 		}
 
-		currentStep = 'complete';
+		currentStep = "complete";
 		toast.success({
-			title: 'Success',
-			description: twofa_setup_complete_title()
+			title: "Success",
+			description: twofa_setup_complete_title(),
 		});
 	} catch (err) {
 		error = err instanceof Error ? err.message : twofa_error_invalid_code();
-		toast.error({ title: 'Error', description: error });
+		toast.error({ title: "Error", description: error });
 	} finally {
 		isVerifying = false;
 	}
@@ -143,20 +151,21 @@ function cancelSetup() {
 // Handle input for verification code (only allow 6 digits)
 function handleInput(event: Event) {
 	const input = event.target as HTMLInputElement;
-	const value = input.value.replace(/\D/g, '').slice(0, 6);
+	const value = input.value.replace(/\D/g, "").slice(0, 6);
 	verificationCode = value;
-	error = '';
+	error = "";
 }
 
 // Format secret key for better readability
 function formatSecret(secret: string): string {
-	return secret.replace(/(.{4})/g, '$1 ').trim();
+	return secret.replace(/(.{4})/g, "$1 ").trim();
 }
 
 // Base Classes
-const cBase = 'card p-4 w-modal shadow-xl space-y-4 bg-white dark:bg-surface-800';
-const cHeader = 'text-2xl font-bold';
-const cForm = 'border border-surface-500 p-4 space-y-4 rounded-xl';
+const cBase =
+	"card p-4 w-modal shadow-xl space-y-4 bg-white dark:bg-surface-800";
+const cHeader = "text-2xl font-bold";
+const cForm = "border border-surface-500 p-4 space-y-4 rounded-xl";
 </script>
 
 <div class="modal-example-form {cBase}">

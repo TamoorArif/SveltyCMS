@@ -3,17 +3,23 @@
 @component Widget Editor Component with Stepper
  -->
 <script lang="ts">
-import { registerHotkey } from '@src/utils/hotkeys';
-import { onMount } from 'svelte';
-import Stepper from '@src/components/system/stepper.svelte';
-import * as m from '@src/paraglide/messages';
-import { button_cancel, button_delete, button_next, button_previous, button_save } from '@src/paraglide/messages';
-import { collections } from '@src/stores/collection-store.svelte';
-import { widgets } from '@src/stores/widget-store.svelte.ts';
-import type { Component } from 'svelte';
-import Default from './tabs-fields/default.svelte';
-import Permission from './tabs-fields/permission.svelte';
-import Specific from './tabs-fields/specific.svelte';
+import { registerHotkey } from "@src/utils/hotkeys";
+import { onMount } from "svelte";
+import Stepper from "@src/components/system/stepper.svelte";
+import * as m from "@src/paraglide/messages";
+import {
+	button_cancel,
+	button_delete,
+	button_next,
+	button_previous,
+	button_save,
+} from "@src/paraglide/messages";
+import { collections } from "@src/stores/collection-store.svelte";
+import { widgets } from "@src/stores/widget-store.svelte.ts";
+import type { Component } from "svelte";
+import Default from "./tabs-fields/default.svelte";
+import Permission from "./tabs-fields/permission.svelte";
+import Specific from "./tabs-fields/specific.svelte";
 
 interface Props {
 	onCancel: () => void;
@@ -27,19 +33,41 @@ const { widgetData, onSave, onCancel }: Props = $props();
 let currentStep = $state(0);
 
 const target = $derived(collections.targetWidget as any);
-const widgetKey = $derived(target?.widget?.key || (target?.widget?.Name?.toLowerCase() as string));
+const widgetKey = $derived(
+	target?.widget?.key || (target?.widget?.Name?.toLowerCase() as string),
+);
 const availableWidgets = $derived(widgets.widgetFunctions || {});
-const guiSchema = $derived(((availableWidgets[widgetKey] as any)?.GuiSchema || {}) as Record<string, { widget: Component<any> }>);
+const guiSchema = $derived(
+	((availableWidgets[widgetKey] as any)?.GuiSchema || {}) as Record<
+		string,
+		{ widget: Component<any> }
+	>,
+);
 
 const options = $derived(guiSchema ? Object.keys(guiSchema) : []);
 const specificOptions = $derived(
-	options.filter((prop) => !['label', 'display', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width', 'permissions'].includes(prop))
+	options.filter(
+		(prop) =>
+			![
+				"label",
+				"display",
+				"db_fieldName",
+				"required",
+				"translated",
+				"icon",
+				"helper",
+				"width",
+				"permissions",
+			].includes(prop),
+	),
 );
 
 const steps = $derived([
-	{ label: 'General', shortDesc: 'Basic Settings' },
-	{ label: 'Permissions', shortDesc: 'Role Access' },
-	...(specificOptions.length > 0 ? [{ label: 'Specific', shortDesc: 'Widget Options' }] : [])
+	{ label: "General", shortDesc: "Basic Settings" },
+	{ label: "Permissions", shortDesc: "Role Access" },
+	...(specificOptions.length > 0
+		? [{ label: "Specific", shortDesc: "Widget Options" }]
+		: []),
 ]);
 
 onMount(() => {
@@ -48,10 +76,14 @@ onMount(() => {
 	}
 
 	// Standardized Hotkeys
-	registerHotkey('mod+s', () => onSave(collections.targetWidget), 'Save Widget');
-	registerHotkey('mod+enter', handleNext, 'Next Step / Finish');
-	registerHotkey('escape', handleBack, 'Back / Cancel', false);
-	registerHotkey('delete', handleDelete, 'Delete Widget');
+	registerHotkey(
+		"mod+s",
+		() => onSave(collections.targetWidget),
+		"Save Widget",
+	);
+	registerHotkey("mod+enter", handleNext, "Next Step / Finish");
+	registerHotkey("escape", handleBack, "Back / Cancel", false);
+	registerHotkey("delete", handleDelete, "Delete Widget");
 });
 
 function handleNext() {
@@ -71,10 +103,14 @@ function handleBack() {
 }
 
 function handleDelete() {
-	const confirmMsg = (m as any).widget_delete_confirm || 'Are you sure you want to delete this widget?';
+	const confirmMsg =
+		(m as any).widget_delete_confirm ||
+		"Are you sure you want to delete this widget?";
 	if (confirm(confirmMsg)) {
 		if (collections.active) {
-			const newFields = (collections.active.fields as any[]).filter((f: any) => f.id !== widgetData.id);
+			const newFields = (collections.active.fields as any[]).filter(
+				(f: any) => f.id !== widgetData.id,
+			);
 			collections.active.fields = newFields;
 		}
 		onCancel();

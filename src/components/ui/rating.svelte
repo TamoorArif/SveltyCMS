@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from "@utils/cn";
+import type { HTMLAttributes } from "svelte/elements";
 
-type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value'> & {
+type Props = Omit<HTMLAttributes<HTMLDivElement>, "value"> & {
 	value?: number;
 	count?: number;
 	icon?: string;
@@ -28,16 +28,16 @@ type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value'> & {
 	class?: string;
 };
 
-let { 
-	value = $bindable(0), 
-	count = 5, 
-	icon = 'mdi:star', 
-	iconEmpty = 'mdi:star-outline', 
-	disabled = false, 
-	readonly = false, 
-	color = 'text-warning-500',
+let {
+	value = $bindable(0),
+	count = 5,
+	icon = "mdi:star",
+	iconEmpty = "mdi:star-outline",
+	disabled = false,
+	readonly = false,
+	color = "text-warning-500",
 	class: className,
-	...rest 
+	...rest
 }: Props = $props();
 
 let hoveredValue = $state(0);

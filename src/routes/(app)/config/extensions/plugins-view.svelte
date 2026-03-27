@@ -29,10 +29,10 @@ async function handleToggle(plugin: any) {
 	plugin.enabled = newEnabledState;
 
 	try {
-		const response = await fetch('/api/plugins/toggle', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ pluginId: plugin.name, enabled: newEnabledState })
+		const response = await fetch("/api/plugins/toggle", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ pluginId: plugin.name, enabled: newEnabledState }),
 		});
 
 		const result = await response.json();
@@ -40,12 +40,12 @@ async function handleToggle(plugin: any) {
 		if (!result.success) {
 			// Revert on failure
 			plugin.enabled = !newEnabledState;
-			alert(result.message || 'Failed to toggle plugin');
+			alert(result.message || "Failed to toggle plugin");
 		}
 	} catch (error) {
 		// Revert on error
 		plugin.enabled = !newEnabledState;
-		alert('An error occurred while communicating with the server');
+		alert("An error occurred while communicating with the server");
 		console.error(error);
 	}
 }
@@ -56,7 +56,7 @@ function handleConfigure(plugin: any) {
 		return;
 	}
 
-	console.log('Configure plugin:', plugin);
+	console.log("Configure plugin:", plugin);
 	// Future: Open configuration modal
 	alert(`Configuration for ${plugin.displayName} coming soon!`);
 }

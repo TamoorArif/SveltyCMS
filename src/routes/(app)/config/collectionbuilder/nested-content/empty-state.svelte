@@ -5,9 +5,12 @@
 -->
 
 <script lang="ts">
-import { collection_add, collection_addcategory } from '@src/paraglide/messages';
-import { fade, scale } from 'svelte/transition';
-import { publicEnv } from '@src/stores/global-settings.svelte';
+import {
+	collection_add,
+	collection_addcategory,
+} from "@src/paraglide/messages";
+import { fade, scale } from "svelte/transition";
+import { publicEnv } from "@src/stores/global-settings.svelte";
 
 interface Props {
 	onAddCollection: () => void;

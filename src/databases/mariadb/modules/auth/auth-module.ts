@@ -286,7 +286,10 @@ export class AuthModule {
       }
       const result = await this.db
         .update(schema.authUsers)
-        .set({ blocked: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions));
       return { modifiedCount: result[0].affectedRows };
     }, "BLOCK_USERS_FAILED");
@@ -303,7 +306,10 @@ export class AuthModule {
       }
       const result = await this.db
         .update(schema.authUsers)
-        .set({ blocked: false, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: false,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions));
       return { modifiedCount: result[0].affectedRows };
     }, "UNBLOCK_USERS_FAILED");
@@ -379,7 +385,10 @@ export class AuthModule {
     return this.core.wrap(async () => {
       await this.db
         .update(schema.authSessions)
-        .set({ expires: new Date(newExpiry), updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          expires: new Date(newExpiry),
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(eq(schema.authSessions._id, sessionId as string));
       const [result] = await this.db
         .select()
@@ -575,10 +584,10 @@ export class AuthModule {
       }
       await this.db
         .update(schema.authTokens)
-        .set({ ...tokenData, updatedAt: isoDateStringToDate(nowISODateString()) } as Record<
-          string,
-          unknown
-        >)
+        .set({
+          ...tokenData,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        } as Record<string, unknown>)
         .where(and(...conditions));
       const [result] = await this.db
         .select()
@@ -620,7 +629,11 @@ export class AuthModule {
       if (!t) {
         return { success: false, message: "Invalid or expired token" };
       }
-      return { success: true, message: "Token is valid", email: t.email as string };
+      return {
+        success: true,
+        message: "Token is valid",
+        email: t.email as string,
+      };
     }, "VALIDATE_TOKEN_FAILED");
   }
 
@@ -644,7 +657,10 @@ export class AuthModule {
 
       const result = await this.db
         .update(schema.authTokens)
-        .set({ consumed: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          consumed: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions));
 
       return {
@@ -780,7 +796,10 @@ export class AuthModule {
       }
       const result = await this.db
         .update(schema.authTokens)
-        .set({ blocked: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(
           and(
             or(
@@ -805,7 +824,10 @@ export class AuthModule {
       }
       const result = await this.db
         .update(schema.authTokens)
-        .set({ blocked: false, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: false,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(
           and(
             or(
@@ -900,10 +922,10 @@ export class AuthModule {
       }
       await this.db
         .update(schema.roles)
-        .set({ ...roleData, updatedAt: isoDateStringToDate(nowISODateString()) } as Record<
-          string,
-          unknown
-        >)
+        .set({
+          ...roleData,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        } as Record<string, unknown>)
         .where(and(...conditions));
       const [result] = await this.db
         .select()

@@ -227,7 +227,10 @@ async function rotate() {
     const files = await promises.readdir(dir);
     const logFiles = files
       .filter((f) => f.startsWith("app.log.") && f.endsWith(".gz"))
-      .map((f) => ({ name: f, time: fs.statSync(path.join(dir, f)).mtime.getTime() }))
+      .map((f) => ({
+        name: f,
+        time: fs.statSync(path.join(dir, f)).mtime.getTime(),
+      }))
       .sort((a, b) => b.time - a.time);
 
     if (logFiles.length > 5) {

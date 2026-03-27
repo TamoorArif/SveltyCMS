@@ -383,7 +383,9 @@ export class SQLiteQueryBuilder<T extends BaseEntity> implements QueryBuilder<T>
       const result = await q;
       return {
         success: true,
-        data: { modifiedCount: (result as unknown as { changes: number }).changes },
+        data: {
+          modifiedCount: (result as unknown as { changes: number }).changes,
+        },
         meta: { executionTime: Date.now() - startTime },
       };
     } catch (error) {
@@ -403,7 +405,9 @@ export class SQLiteQueryBuilder<T extends BaseEntity> implements QueryBuilder<T>
       const result = await q;
       return {
         success: true,
-        data: { deletedCount: (result as unknown as { changes: number }).changes },
+        data: {
+          deletedCount: (result as unknown as { changes: number }).changes,
+        },
         meta: { executionTime: Date.now() - startTime },
       };
     } catch (error) {

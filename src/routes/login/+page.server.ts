@@ -125,7 +125,9 @@ async function checkDatabaseHealth(): Promise<{
 
     // Lightweight check: verify database has roles (indicates setup was completed)
     try {
-      const roles = await auth.getAllRoles(undefined, { bypassTenantCheck: true });
+      const roles = await auth.getAllRoles(undefined, {
+        bypassTenantCheck: true,
+      });
       if (!roles || roles.length === 0) {
         return {
           healthy: false,
@@ -665,7 +667,9 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
     try {
       if (auth) {
         // Optimization: Use count instead of fetching all users
-        const count = await auth.getUserCount(undefined, { bypassTenantCheck: true });
+        const count = await auth.getUserCount(undefined, {
+          bypassTenantCheck: true,
+        });
         hasExistingOAuthUsers = count > 0;
       }
     } catch (error) {

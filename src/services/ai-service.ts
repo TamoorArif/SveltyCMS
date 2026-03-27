@@ -322,7 +322,10 @@ ${contextRules}`;
         format: "json",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Source Fields: ${JSON.stringify(sourceSchema)}` },
+          {
+            role: "user",
+            content: `Source Fields: ${JSON.stringify(sourceSchema)}`,
+          },
         ],
       });
 

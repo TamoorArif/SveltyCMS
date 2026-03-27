@@ -7,9 +7,22 @@
  * Sent when database connection fails and automatic recovery attempts are exhausted
  */
 
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { Body, Button, Container, Head, Heading, Hr, Html, Img, Link, Preview, Section, Text } from 'better-svelte-email';
-import { dev } from '$app/environment';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import {
+	Body,
+	Button,
+	Container,
+	Head,
+	Heading,
+	Hr,
+	Html,
+	Img,
+	Link,
+	Preview,
+	Section,
+	Text,
+} from "better-svelte-email";
+import { dev } from "$app/environment";
 
 interface Props {
 	error?: {
@@ -36,32 +49,34 @@ interface Props {
 }
 
 const {
-	sitename = publicEnv?.SITE_NAME || 'SveltyCMS',
+	sitename = publicEnv?.SITE_NAME || "SveltyCMS",
 	error = {
-		code: 'CONNECTION_FAILED',
-		message: 'Database connection lost',
-		details: {}
+		code: "CONNECTION_FAILED",
+		message: "Database connection lost",
+		details: {},
 	},
 	metrics = {
 		totalReconnections: 0,
 		successfulReconnections: 0,
 		failedRetries: 0,
 		averageRecoveryTime: 0,
-		lastFailureTime: new Date().toISOString()
+		lastFailureTime: new Date().toISOString(),
 	},
 	systemState = {
-		overall: 'FAILED',
-		databaseStatus: 'unhealthy',
-		databaseMessage: 'Connection lost'
+		overall: "FAILED",
+		databaseStatus: "unhealthy",
+		databaseMessage: "Connection lost",
 	},
 	timestamp = new Date().toISOString(),
-	hostLink = dev ? publicEnv?.HOST_DEV : publicEnv?.HOST_PROD || 'http://localhost:5173',
-	languageTag = 'en'
+	hostLink = dev
+		? publicEnv?.HOST_DEV
+		: publicEnv?.HOST_PROD || "http://localhost:5173",
+	languageTag = "en",
 }: Props = $props();
 
 const logoSrc = publicEnv?.HOST_PROD
 	? `${publicEnv.HOST_PROD}/SveltyCMS.png`
-	: 'https://github.com/SveltyCMS/SveltyCMS/raw/main/static/SveltyCMS.png';
+	: "https://github.com/SveltyCMS/SveltyCMS/raw/main/static/SveltyCMS.png";
 </script>
 
 <Html lang={languageTag}>

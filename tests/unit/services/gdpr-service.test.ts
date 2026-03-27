@@ -26,7 +26,12 @@ describe("GDPRService", () => {
     (mockDbAdapter.auth.getUserById as any).mockImplementation((id: string, tid: string) =>
       Promise.resolve({
         success: true,
-        data: { _id: id, email: "test@example.com", username: "tester", tenantId: tid },
+        data: {
+          _id: id,
+          email: "test@example.com",
+          username: "tester",
+          tenantId: tid,
+        },
       }),
     );
     mockDbAdapter.auth.updateUserAttributes.mockImplementation(() =>

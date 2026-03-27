@@ -32,19 +32,26 @@
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { tokenTarget } from '@src/services/token/token-target';
-import { publicEnv } from '@src/stores/global-settings.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { tokenTarget } from "@src/services/token/token-target";
+import { publicEnv } from "@src/stores/global-settings.svelte";
 // Stores
-import { app, validationStore } from '@src/stores/store.svelte.ts';
-import { getFieldName } from '@utils/utils';
+import { app, validationStore } from "@src/stores/store.svelte.ts";
+import { getFieldName } from "@utils/utils";
 // Unified error handling
-import { handleWidgetValidation } from '@widgets/widget-error-handler';
-import { onDestroy } from 'svelte';
+import { handleWidgetValidation } from "@widgets/widget-error-handler";
+import { onDestroy } from "svelte";
 
 // Valibot validation
-import { maxValue, minValue, number as numberSchema, optional, parse, pipe } from 'valibot';
-import type { FieldType } from '.';
+import {
+	maxValue,
+	minValue,
+	number as numberSchema,
+	optional,
+	parse,
+	pipe,
+} from "valibot";
+import type { FieldType } from ".";
 
 interface Props {
 	field: FieldType;
@@ -55,7 +62,11 @@ let { field, value = $bindable() }: Props = $props();
 
 const fieldName = $derived(getFieldName(field));
 // Use current content language for translated fields, default for non-translated
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
 const language = $derived(app.contentLanguage);
 
 // Initialize value if null/undefined
@@ -75,14 +86,17 @@ let isValidating = $state(false);
 const validationSchemaFunc = $derived.by(() => {
 	const rules: any[] = [];
 
-	if (typeof field.min === 'number') {
+	if (typeof field.min === "number") {
 		rules.push(minValue(field.min, `Value must be at least ${field.min}`));
 	}
-	if (typeof field.max === 'number') {
+	if (typeof field.max === "number") {
 		rules.push(maxValue(field.max, `Value must not exceed ${field.max}`));
 	}
 
-	const schema = rules.length > 0 ? pipe(numberSchema('Value must be a number'), ...(rules as [])) : numberSchema('Value must be a number');
+	const schema =
+		rules.length > 0
+			? pipe(numberSchema("Value must be a number"), ...(rules as []))
+			: numberSchema("Value must be a number");
 
 	return field.required ? schema : optional(schema);
 });
@@ -98,9 +112,9 @@ function handleInput(event: Event) {
 	const target = event.target as HTMLInputElement;
 	const inputValue = target.value;
 
-	if (!inputValue || inputValue === '') {
+	if (!inputValue || inputValue === "") {
 		if (field.translated) {
-			if (!value || typeof value !== 'object') {
+			if (!value || typeof value !== "object") {
 				value = {};
 			}
 			value = { ...value, [LANGUAGE]: null };
@@ -119,12 +133,14 @@ function handleInput(event: Event) {
 	}
 
 	// Parse the number
-	const cleanedValue = inputValue.replace(new RegExp(`[^0-9${decimalSeparator}-]`, 'g'), '').replace(decimalSeparator, '.');
+	const cleanedValue = inputValue
+		.replace(new RegExp(`[^0-9${decimalSeparator}-]`, "g"), "")
+		.replace(decimalSeparator, ".");
 	const number = Number.parseFloat(cleanedValue);
 
 	if (!Number.isNaN(number)) {
 		if (field.translated) {
-			if (!value || typeof value !== 'object') {
+			if (!value || typeof value !== "object") {
 				value = {};
 			}
 			value = { ...value, [LANGUAGE]: number };
@@ -133,7 +149,8 @@ function handleInput(event: Event) {
 		}
 		// Format the display value
 		target.value = new Intl.NumberFormat(language, {
-			maximumFractionDigits: typeof field.step === 'number' && field.step < 1 ? 2 : 0
+			maximumFractionDigits:
+				typeof field.step === "number" && field.step < 1 ? 2 : 0,
 		}).format(number);
 	}
 
@@ -158,13 +175,19 @@ function validateInput(immediate = false) {
 			const currentValue = safeValue;
 
 			// Required validation
-			if (field?.required && (currentValue === null || currentValue === undefined)) {
-				validationStore.setError(fieldName, 'This field is required');
+			if (
+				field?.required &&
+				(currentValue === null || currentValue === undefined)
+			) {
+				validationStore.setError(fieldName, "This field is required");
 				return;
 			}
 
 			// If no value and not required, clear errors
-			if (!field?.required && (currentValue === null || currentValue === undefined)) {
+			if (
+				!field?.required &&
+				(currentValue === null || currentValue === undefined)
+			) {
 				validationStore.clearError(fieldName);
 				return;
 			}
@@ -172,7 +195,7 @@ function validateInput(immediate = false) {
 			// ✅ UNIFIED: Use handleWidgetValidation for standardized error handling
 			handleWidgetValidation(() => parse(validationSchemaFunc, currentValue), {
 				fieldName,
-				updateStore: true
+				updateStore: true,
 			});
 		} finally {
 			isValidating = false;

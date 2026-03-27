@@ -76,7 +76,11 @@ async function runBenchmark() {
   console.log(`Iterations per hook: ${ITERATIONS.toLocaleString()}\n`);
 
   const hooks = await getHooks();
-  const results: { "Hook Name": string; "Avg (µs)": string; "Total (ms)": string }[] = [];
+  const results: {
+    "Hook Name": string;
+    "Avg (µs)": string;
+    "Total (ms)": string;
+  }[] = [];
 
   for (const [name, hook] of Object.entries(hooks)) {
     // Warmup

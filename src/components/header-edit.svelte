@@ -28,28 +28,42 @@
 -->
 
 <script lang="ts">
-import TranslationStatus from '@src/components/collection-display/translation-status.svelte';
-import Toggles from '@src/components/system/inputs/toggles.svelte';
-import type { CollectionEntry } from '@src/content/types';
-import { StatusTypes } from '@src/content/types';
+import TranslationStatus from "@src/components/collection-display/translation-status.svelte";
+import Toggles from "@src/components/system/inputs/toggles.svelte";
+import type { CollectionEntry } from "@src/content/types";
+import { StatusTypes } from "@src/content/types";
 // ParaglideJS
-import { status_publish, status_unpublish, validation_fix_before_save } from '@src/paraglide/messages';
-import { collection, collectionValue, mode, setCollectionValue, setMode } from '@src/stores/collection-store.svelte';
-import { screen } from '@src/stores/screen-size-store.svelte';
-import { statusStore } from '@src/stores/status-store.svelte';
-import { app, dataChangeStore, validationStore } from '@src/stores/store.svelte';
-import { ui } from '@src/stores/ui-store.svelte';
-import { createEntry, invalidateCollectionCache } from '@utils/api-client';
-import { deleteCurrentEntry, saveEntry } from '@utils/entry-actions';
+import {
+	status_publish,
+	status_unpublish,
+	validation_fix_before_save,
+} from "@src/paraglide/messages";
+import {
+	collection,
+	collectionValue,
+	mode,
+	setCollectionValue,
+	setMode,
+} from "@src/stores/collection-store.svelte";
+import { screen } from "@src/stores/screen-size-store.svelte";
+import { statusStore } from "@src/stores/status-store.svelte";
+import {
+	app,
+	dataChangeStore,
+	validationStore,
+} from "@src/stores/store.svelte";
+import { ui } from "@src/stores/ui-store.svelte";
+import { createEntry, invalidateCollectionCache } from "@utils/api-client";
+import { deleteCurrentEntry, saveEntry } from "@utils/entry-actions";
 // --- Derived from page & stores ---
-import { logger } from '@utils/logger';
-import { showCloneModal, showScheduleModal } from '@utils/modal-utils';
-import { navigationManager } from '@utils/navigation-manager';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { untrack } from 'svelte';
+import { logger } from "@utils/logger";
+import { showCloneModal, showScheduleModal } from "@utils/modal-utils";
+import { navigationManager } from "@utils/navigation-manager";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { untrack } from "svelte";
 // Modal types import
 // Stores
-import { page } from '$app/state';
+import { page } from "$app/state";
 
 // --- Derived from page & stores ---
 let user = $derived(page.data.user);
@@ -64,9 +78,15 @@ let isDesktop = $derived(screen.isDesktop);
 let isFormValid = $derived(validationStore.isValid);
 let hasChanges = $derived(dataChangeStore.hasChanges);
 
-let canWrite = $derived(currentCollection?.permissions?.[user?.role]?.write !== false);
-let canCreate = $derived(currentCollection?.permissions?.[user?.role]?.create !== false);
-let canDelete = $derived(currentCollection?.permissions?.[user?.role]?.delete !== false);
+let canWrite = $derived(
+	currentCollection?.permissions?.[user?.role]?.write !== false,
+);
+let canCreate = $derived(
+	currentCollection?.permissions?.[user?.role]?.create !== false,
+);
+let canDelete = $derived(
+	currentCollection?.permissions?.[user?.role]?.delete !== false,
+);
 
 // --- Local mutable state ---
 let showMore = $state(false);
@@ -75,17 +95,23 @@ let previousTabSet = $state(app.tabSetState);
 let tempData = $state<Record<string, CollectionEntry>>({});
 
 // Schedule (not used in current logic – kept if needed later)
-let scheduleTimestamp = $derived(currentEntry?._scheduled ? Number(currentEntry._scheduled) : null);
+let scheduleTimestamp = $derived(
+	currentEntry?._scheduled ? Number(currentEntry._scheduled) : null,
+);
 
 // Status toggle state & disable logic
 let publishToggle = $derived(statusStore.isPublish);
 let disableStatusToggle = $derived(
-	(currentMode === 'create' && ui.isRightSidebarVisible) || (currentMode === 'edit' && ui.isRightSidebarVisible && isDesktop) || statusStore.isLoading
+	(currentMode === "create" && ui.isRightSidebarVisible) ||
+		(currentMode === "edit" && ui.isRightSidebarVisible && isDesktop) ||
+		statusStore.isLoading,
 );
 
 // Next button visibility (menu wizard)
 let showNextButton = $derived(
-	app.shouldShowNextButton && currentMode === 'create' && (currentCollection?.name === 'Menu' || currentCollection?.slug === 'menu')
+	app.shouldShowNextButton &&
+		currentMode === "create" &&
+		(currentCollection?.name === "Menu" || currentCollection?.slug === "menu"),
 );
 
 // --- Effects ---
@@ -99,20 +125,22 @@ $effect(() => {
 });
 
 $effect(() => {
-	if (currentMode === 'view') {
+	if (currentMode === "view") {
 		untrack(() => (tempData = {}));
 	}
 });
 
 $effect(() => {
-	if (['edit', 'create'].includes(currentMode)) {
+	if (["edit", "create"].includes(currentMode)) {
 		untrack(() => (showMore = false));
 	}
 });
 
 // --- Helpers ---
 function isUUID(str: string): boolean {
-	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+		str,
+	);
 }
 
 function getDisplayName(value?: string | null): string {
@@ -121,19 +149,19 @@ function getDisplayName(value?: string | null): string {
 			return user.username;
 		}
 		if (user?.firstName || user?.lastName) {
-			return [user.firstName, user.lastName].filter(Boolean).join(' ');
+			return [user.firstName, user.lastName].filter(Boolean).join(" ");
 		}
 		if (user?.email) {
-			return user.email.split('@')[0];
+			return user.email.split("@")[0];
 		}
-		return 'system';
+		return "system";
 	}
 	return value;
 }
 
 // --- Actions ---
 async function toggleStatus(newValue: boolean): Promise<void> {
-	await statusStore.toggleStatus(newValue, 'HeaderEdit');
+	await statusStore.toggleStatus(newValue, "HeaderEdit");
 }
 
 function openSchedule(): void {
@@ -142,9 +170,9 @@ function openSchedule(): void {
 			setCollectionValue({
 				...currentEntry!,
 				status: StatusTypes.schedule,
-				_scheduled: date.getTime()
+				_scheduled: date.getTime(),
 			});
-		}
+		},
 	});
 }
 
@@ -154,8 +182,8 @@ async function save(): Promise<void> {
 		return;
 	}
 
-	if (currentMode === 'edit' && !hasChanges) {
-		logger.debug('[HeaderEdit] No changes – returning to list');
+	if (currentMode === "edit" && !hasChanges) {
+		logger.debug("[HeaderEdit] No changes – returning to list");
 		await navigationManager.navigateToList();
 		return;
 	}
@@ -171,7 +199,7 @@ async function save(): Promise<void> {
 	}
 
 	// Metadata
-	if (currentMode === 'create') {
+	if (currentMode === "create") {
 		dataToSave.createdBy = getDisplayName(user?.username);
 	}
 	dataToSave.updatedBy = getDisplayName(user?.username);
@@ -185,11 +213,11 @@ async function save(): Promise<void> {
 }
 
 function cancel(): void {
-	document.dispatchEvent(new CustomEvent('cancelEdit', { bubbles: true }));
+	document.dispatchEvent(new CustomEvent("cancelEdit", { bubbles: true }));
 	setCollectionValue({});
-	ui.toggle('rightSidebar', 'hidden');
-	ui.toggle('leftSidebar', isDesktop ? 'full' : 'collapsed');
-	ui.toggle('pageheader', 'hidden');
+	ui.toggle("rightSidebar", "hidden");
+	ui.toggle("leftSidebar", isDesktop ? "full" : "collapsed");
+	ui.toggle("pageheader", "hidden");
 	navigationManager.navigateToList();
 }
 
@@ -202,7 +230,7 @@ function openClone(): void {
 		count: 1,
 		onConfirm: async () => {
 			if (!(currentEntry && currentCollection?._id)) {
-				toast.warning('No entry or collection selected.');
+				toast.warning("No entry or collection selected.");
 				return;
 			}
 			const payload = { ...currentEntry };
@@ -214,19 +242,19 @@ function openClone(): void {
 
 			const result = await createEntry(currentCollection._id, payload);
 			if (result.success) {
-				toast.success('Entry cloned successfully.');
+				toast.success("Entry cloned successfully.");
 				invalidateCollectionCache(currentCollection._id);
-				setMode('view');
+				setMode("view");
 			} else {
-				toast.error(result.error || 'Failed to clone');
+				toast.error(result.error || "Failed to clone");
 			}
-		}
+		},
 	});
 }
 
 // Menu wizard next action
 function next(): void {
-	logger.debug('[HeaderEdit] Next clicked');
+	logger.debug("[HeaderEdit] Next clicked");
 	if (app.saveLayerStore) {
 		app.saveLayerStore();
 	} else {

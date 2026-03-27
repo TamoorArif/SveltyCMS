@@ -46,12 +46,15 @@ import {
 	loading_tokenGeneration_bottom,
 	loading_tokenGeneration_top,
 	loading_widgetInit_bottom,
-	loading_widgetInit_top
-} from '@src/paraglide/messages';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte';
-import { onMount } from 'svelte';
-import { fade, scale } from 'svelte/transition';
-import SveltyCMSLogo from './system/icons/svelty-cms-logo.svelte';
+	loading_widgetInit_top,
+} from "@src/paraglide/messages";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte";
+import { onMount } from "svelte";
+import { fade, scale } from "svelte/transition";
+import SveltyCMSLogo from "./system/icons/svelty-cms-logo.svelte";
 
 // Loading text configuration
 interface LoadingText {
@@ -78,58 +81,58 @@ function getLoadingText(): LoadingText {
 	const loadingTextMap: Record<string, LoadingText> = {
 		[loadingOperations.navigation]: {
 			top: loading_navigation_top(),
-			bottom: loading_navigation_bottom()
+			bottom: loading_navigation_bottom(),
 		},
 		[loadingOperations.dataFetch]: {
 			top: loading_dataFetch_top(),
-			bottom: loading_dataFetch_bottom()
+			bottom: loading_dataFetch_bottom(),
 		},
 		[loadingOperations.authentication]: {
 			top: loading_authentication_top(),
-			bottom: loading_authentication_bottom()
+			bottom: loading_authentication_bottom(),
 		},
 		[loadingOperations.initialization]: {
 			top: loading_initialization_top(),
-			bottom: loading_initialization_bottom()
+			bottom: loading_initialization_bottom(),
 		},
 		[loadingOperations.imageUpload]: {
 			top: loading_imageUpload_top(),
-			bottom: loading_imageUpload_bottom()
+			bottom: loading_imageUpload_bottom(),
 		},
 		[loadingOperations.formSubmission]: {
 			top: loading_formSubmission_top(),
-			bottom: loading_formSubmission_bottom()
+			bottom: loading_formSubmission_bottom(),
 		},
 		[loadingOperations.configSave]: {
 			top: loading_configSave_top(),
-			bottom: loading_configSave_bottom()
+			bottom: loading_configSave_bottom(),
 		},
 		[loadingOperations.roleManagement]: {
 			top: loading_roleManagement_top(),
-			bottom: loading_roleManagement_bottom()
+			bottom: loading_roleManagement_bottom(),
 		},
 		[loadingOperations.permissionUpdate]: {
 			top: loading_permissionUpdate_top(),
-			bottom: loading_permissionUpdate_bottom()
+			bottom: loading_permissionUpdate_bottom(),
 		},
 		[loadingOperations.tokenGeneration]: {
 			top: loading_tokenGeneration_top(),
-			bottom: loading_tokenGeneration_bottom()
+			bottom: loading_tokenGeneration_bottom(),
 		},
 		[loadingOperations.collectionLoad]: {
 			top: loading_collectionLoad_top(),
-			bottom: loading_collectionLoad_bottom()
+			bottom: loading_collectionLoad_bottom(),
 		},
 		[loadingOperations.widgetInit]: {
 			top: loading_widgetInit_top(),
-			bottom: loading_widgetInit_bottom()
-		}
+			bottom: loading_widgetInit_bottom(),
+		},
 	};
 
 	return (
 		(reason && loadingTextMap[reason]) || {
 			top: loading_pleasewait(),
-			bottom: loading_loading()
+			bottom: loading_loading(),
 		}
 	);
 }
@@ -175,15 +178,15 @@ $effect(() => {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 </script>
 

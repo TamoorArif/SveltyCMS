@@ -263,7 +263,9 @@ describe("Token API Unit Tests", () => {
         _id: "token-xyz",
         tenantId: "tenant-1",
       });
-      (mockAuth.updateToken as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
+      (mockAuth.updateToken as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+      });
 
       const event = createMockPutEvent(
         "token-xyz",
@@ -625,7 +627,9 @@ describe("Token API Unit Tests", () => {
     });
 
     it("should reject if user already exists", async () => {
-      (mockAuth.checkUser as ReturnType<typeof vi.fn>).mockResolvedValue({ _id: "existing-user" });
+      (mockAuth.checkUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+        _id: "existing-user",
+      });
 
       const event = createMockCreateEvent({
         email: "existing@example.com",

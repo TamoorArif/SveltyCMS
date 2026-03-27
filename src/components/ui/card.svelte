@@ -1,46 +1,64 @@
 <script lang="ts">
-import { cn } from '@utils/cn';
-import type { Snippet } from 'svelte';
-import type { HTMLAttributes } from 'svelte/elements';
+import { cn } from "@utils/cn";
+import type { Snippet } from "svelte";
+import type { HTMLAttributes } from "svelte/elements";
 
 type Props = HTMLAttributes<HTMLDivElement> & {
-	variant?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
-	preset?: 'filled' | 'tonal' | 'outlined';
-	color?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
+	variant?:
+		| "primary"
+		| "secondary"
+		| "tertiary"
+		| "success"
+		| "warning"
+		| "error"
+		| "surface";
+	preset?: "filled" | "tonal" | "outlined";
+	color?:
+		| "primary"
+		| "secondary"
+		| "tertiary"
+		| "success"
+		| "warning"
+		| "error"
+		| "surface";
 	header?: Snippet;
 	footer?: Snippet;
 	children?: Snippet;
 	class?: string;
 };
 
-let { 
+let {
 	variant,
 	preset: propPreset,
 	color: propColor,
-	header, 
-	footer, 
-	children, 
-	class: className, 
-	...rest 
+	header,
+	footer,
+	children,
+	class: className,
+	...rest
 }: Props = $props();
 
-const finalPreset = $derived(propPreset || (variant ? 'filled' : '') || '');
-const finalColor = $derived(propColor || variant || '');
+const finalPreset = $derived(propPreset || (variant ? "filled" : "") || "");
+const finalColor = $derived(propColor || variant || "");
 
 // Skeleton v4 Preset Classes
 const getPresetClass = $derived(() => {
-	if (!finalPreset && !finalColor) return '';
-	if (finalPreset === 'tonal') return `preset-tonal-${finalColor}`;
-	if (finalPreset === 'outlined') return `preset-outlined-${finalColor}-500`;
+	if (!finalPreset && !finalColor) return "";
+	if (finalPreset === "tonal") return `preset-tonal-${finalColor}`;
+	if (finalPreset === "outlined") return `preset-outlined-${finalColor}-500`;
 	return `preset-filled-${finalColor}-500`;
 });
 
-const classes = $derived(cn(
-	'card',
-	getPresetClass(),
-	!finalPreset && !finalColor && 'border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 text-surface-900 dark:text-surface-50 shadow-sm',
-	className
-));
+const classes = $derived(
+	cn(
+		"card",
+		getPresetClass(),
+		!finalPreset &&
+			!finalColor &&
+			"border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 text-surface-900 dark:text-surface-50 shadow-sm",
+		className,
+	),
+);
 </script>
 
 <div class={classes} {...rest}>

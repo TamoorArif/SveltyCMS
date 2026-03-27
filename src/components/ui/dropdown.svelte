@@ -19,9 +19,9 @@ A premium Svelte 5 Dropdown/Menu primitive using Popover for positioning.
 -->
 
 <script lang="ts">
-import { cn } from '@utils/cn';
-import Popover from './popover.svelte';
-import type { Snippet } from 'svelte';
+import { cn } from "@utils/cn";
+import Popover from "./popover.svelte";
+import type { Snippet } from "svelte";
 
 interface Option {
 	label: string;
@@ -36,11 +36,23 @@ interface Props {
 	onchange?: (value: any) => void;
 	closeOnSelect?: boolean;
 	class?: string;
-	position?: 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'left-start' | 'left-end' | 'right' | 'right-start' | 'right-end';
+	position?:
+		| "top"
+		| "top-start"
+		| "top-end"
+		| "bottom"
+		| "bottom-start"
+		| "bottom-end"
+		| "left"
+		| "left-start"
+		| "left-end"
+		| "right"
+		| "right-start"
+		| "right-end";
 	// Snippets
 	trigger: Snippet;
 	children?: Snippet; // Optional: custom content instead of options
-	option?: Snippet<[{ item: Option, selected: boolean }]>;
+	option?: Snippet<[{ item: Option; selected: boolean }]>;
 }
 
 let {
@@ -48,11 +60,11 @@ let {
 	options = [],
 	onchange,
 	closeOnSelect = true,
-	class: className = '',
-	position = 'bottom',
+	class: className = "",
+	position = "bottom",
 	trigger: triggerSnippet,
 	children,
-	option: optionSnippet
+	option: optionSnippet,
 }: Props = $props();
 
 let isOpen = $state(false);

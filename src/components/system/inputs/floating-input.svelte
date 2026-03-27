@@ -35,32 +35,32 @@
 
 <script lang="ts">
 // Using iconify-icon web component
-import type { FloatingInputProps } from './types';
+import type { FloatingInputProps } from "./types";
 
 let {
-	value = $bindable(''),
+	value = $bindable(""),
 	showPassword = $bindable(false),
 	disabled = false,
-	icon = '',
-	iconColor = 'gray',
-	inputClass = '',
-	label = '',
-	labelClass = '',
+	icon = "",
+	iconColor = "gray",
+	inputClass = "",
+	label = "",
+	labelClass = "",
 	minlength,
 	maxlength,
-	name = '',
+	name = "",
 	required = false,
-	passwordIconColor = 'gray',
-	textColor = 'black',
-	type = 'text',
+	passwordIconColor = "gray",
+	textColor = "black",
+	type = "text",
 	tabindex = 0,
-	id = '',
+	id = "",
 	autocomplete,
-	autocapitalize = 'none',
+	autocapitalize = "none",
 	spellcheck = false,
 	autofocus = false,
 	invalid = false,
-	errorMessage = '',
+	errorMessage = "",
 	onClick,
 	onInput,
 	onkeydown,
@@ -69,10 +69,16 @@ let {
 }: FloatingInputProps = $props();
 
 let inputElement = $state<HTMLInputElement | null>(null);
-const currentId = $derived(id || (label ? label.toLowerCase().replace(/\s+/g, '-') : 'defaultInputId'));
+const currentId = $derived(
+	id || (label ? label.toLowerCase().replace(/\s+/g, "-") : "defaultInputId"),
+);
 const errorId = $derived(errorMessage ? `error-${currentId}` : undefined);
-const effectiveType = $derived(showPassword && type === 'password' ? 'text' : type);
-const isTextColorClass = $derived(textColor.includes('text-') || textColor.includes(' '));
+const effectiveType = $derived(
+	showPassword && type === "password" ? "text" : type,
+);
+const isTextColorClass = $derived(
+	textColor.includes("text-") || textColor.includes(" "),
+);
 
 $effect(() => {
 	if (autofocus && inputElement) {
@@ -86,7 +92,7 @@ function togglePasswordVisibility(event: Event): void {
 }
 
 function handleIconKeyDown(event: KeyboardEvent): void {
-	if (event.key === 'Enter' || event.key === ' ') {
+	if (event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		togglePasswordVisibility(event);
 	}

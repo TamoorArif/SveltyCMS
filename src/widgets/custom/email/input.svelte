@@ -22,22 +22,29 @@
 -->
 
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { activeInput } from '@src/stores/active-input-store.svelte';
-import { collection } from '@src/stores/collection-store.svelte';
-import { publicEnv } from '@src/stores/global-settings.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { activeInput } from "@src/stores/active-input-store.svelte";
+import { collection } from "@src/stores/collection-store.svelte";
+import { publicEnv } from "@src/stores/global-settings.svelte";
 // Stores
 // Stores
-import { app, validationStore } from '@src/stores/store.svelte.ts';
+import { app, validationStore } from "@src/stores/store.svelte.ts";
 // Utils
-import { getFieldName } from '@utils/utils';
+import { getFieldName } from "@utils/utils";
 // Unified error handling
-import { handleWidgetValidation } from '@widgets/widget-error-handler';
-import { onDestroy, onMount } from 'svelte';
+import { handleWidgetValidation } from "@widgets/widget-error-handler";
+import { onDestroy, onMount } from "svelte";
 
 // Valibot validation
-import { email as emailValidator, minLength, optional, parse, pipe, string } from 'valibot';
-import type { FieldType } from '.';
+import {
+	email as emailValidator,
+	minLength,
+	optional,
+	parse,
+	pipe,
+	string,
+} from "valibot";
+import type { FieldType } from ".";
 
 interface Props {
 	field: FieldType;
@@ -49,16 +56,22 @@ let { field, value = $bindable() }: Props = $props();
 // Use current content language for translated fields, default for non-translated
 // Use current content language for translated fields, default for non-translated
 const fieldName = $derived(getFieldName(field));
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
 
 // Initialize value if null/undefined
 $effect(() => {
 	if (value === undefined || value === null) {
-		value = field.translated ? { [LANGUAGE]: '' } : '';
+		value = field.translated ? { [LANGUAGE]: "" } : "";
 	}
 });
 
-const safeValue = $derived(((value as Record<string, string>)?.[LANGUAGE] ?? (value as string)) || '');
+const safeValue = $derived(
+	((value as Record<string, string>)?.[LANGUAGE] ?? (value as string)) || "",
+);
 const validationError = $derived(validationStore.getError(fieldName));
 let debounceTimeout: number | undefined;
 let inputElement = $state<HTMLInputElement | null>(null);
@@ -68,8 +81,15 @@ let isValidating = $state(false);
 // Create validation schema for email
 const emailSchema = $derived(
 	field?.required
-		? pipe(string(), minLength(1, 'This field is required'), emailValidator('Please enter a valid email address'))
-		: optional(pipe(string(), emailValidator('Please enter a valid email address')), '')
+		? pipe(
+				string(),
+				minLength(1, "This field is required"),
+				emailValidator("Please enter a valid email address"),
+			)
+		: optional(
+				pipe(string(), emailValidator("Please enter a valid email address")),
+				"",
+			),
 );
 
 // Validation function with debounce
@@ -84,17 +104,17 @@ function validateInput(immediate = false) {
 			const currentValue = safeValue;
 
 			// First validate if required
-			if (field?.required && (!currentValue || currentValue.trim() === '')) {
-				validationStore.setError(fieldName, 'This field is required');
+			if (field?.required && (!currentValue || currentValue.trim() === "")) {
+				validationStore.setError(fieldName, "This field is required");
 				return;
 			}
 
 			// Then validate email format if value exists
-			if (currentValue && currentValue.trim() !== '') {
+			if (currentValue && currentValue.trim() !== "") {
 				// ✅ UNIFIED: Use handleWidgetValidation for standardized error handling
 				handleWidgetValidation(() => parse(emailSchema, currentValue), {
 					fieldName,
-					updateStore: true
+					updateStore: true,
 				});
 				return;
 			}
@@ -115,10 +135,10 @@ function validateInput(immediate = false) {
 // ✨ SECURITY ENHANCEMENT: Prevent homograph attacks
 function sanitizeInput(input: string): string {
 	// Remove zero-width characters that could be used for spoofing
-	const sanitized = input.replace(/[\u200B-\u200D\uFEFF]/g, '');
+	const sanitized = input.replace(/[\u200B-\u200D\uFEFF]/g, "");
 
 	// Normalize Unicode to prevent homograph attacks
-	return sanitized.normalize('NFKC');
+	return sanitized.normalize("NFKC");
 }
 
 // Handle input changes
@@ -129,7 +149,7 @@ function handleInput(e: Event) {
 	const sanitized = sanitizeInput(target.value);
 
 	if (field.translated) {
-		if (!value || typeof value !== 'object') {
+		if (!value || typeof value !== "object") {
 			value = {};
 		}
 		value = { ...value, [LANGUAGE]: sanitized };
@@ -154,8 +174,8 @@ function handleFocus(e: FocusEvent) {
 			field: {
 				name: field.db_fieldName,
 				label: field.label,
-				collection: collection.value?.name
-			}
+				collection: collection.value?.name,
+			},
 		});
 	}
 }

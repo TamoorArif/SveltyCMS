@@ -21,7 +21,7 @@
 
 -->
 <script lang="ts">
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 import {
 	form_confirmpassword,
 	form_email,
@@ -40,11 +40,11 @@ import {
 	setup_help_admin_password_requirements_letter,
 	setup_help_admin_password_requirements_match,
 	setup_help_admin_password_requirements_number,
-	setup_help_admin_username
-} from '@src/paraglide/messages';
-import type { ValidationErrors } from '@src/stores/setup-store.svelte.ts';
-import { setupAdminSchema } from '@utils/form-schemas';
-import { safeParse } from 'valibot';
+	setup_help_admin_username,
+} from "@src/paraglide/messages";
+import type { ValidationErrors } from "@src/stores/setup-store.svelte.ts";
+import { setupAdminSchema } from "@utils/form-schemas";
+import { safeParse } from "valibot";
 
 // Props from parent
 let {
@@ -55,7 +55,7 @@ let {
 	showConfirmPassword = $bindable(),
 	toggleAdminPassword,
 	toggleConfirmPassword,
-	checkPasswordRequirements // This is still called by oninput
+	checkPasswordRequirements, // This is still called by oninput
 } = $props(); // Now uses imported type
 
 // Local real-time validation state
@@ -67,8 +67,8 @@ const validationResult = $derived(
 		username: adminUser.username,
 		email: adminUser.email,
 		password: adminUser.password,
-		confirmPassword: adminUser.confirmPassword
-	})
+		confirmPassword: adminUser.confirmPassword,
+	}),
 );
 
 // ✅ FIX: Removed unused getIsValid() function.

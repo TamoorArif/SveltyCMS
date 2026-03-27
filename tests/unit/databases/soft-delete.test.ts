@@ -134,7 +134,11 @@ describe("Soft Delete Engine", () => {
 
   describe("Restore Operation (De-mangle & Collision Check)", () => {
     it("should restore and de-mangle unique fields", async () => {
-      const deletedDoc = { _id: "123", slug: "my-slug_DELETED_1710793389", isDeleted: true };
+      const deletedDoc = {
+        _id: "123",
+        slug: "my-slug_DELETED_1710793389",
+        isDeleted: true,
+      };
       // Mock first findOne (finding the doc to restore)
       mockModel.findOne.mockReturnValueOnce({
         lean: vi.fn().mockReturnThis(),
@@ -163,7 +167,11 @@ describe("Soft Delete Engine", () => {
     });
 
     it("should fail restore if a collision is detected", async () => {
-      const deletedDoc = { _id: "123", slug: "my-slug_DELETED_1710793389", isDeleted: true };
+      const deletedDoc = {
+        _id: "123",
+        slug: "my-slug_DELETED_1710793389",
+        isDeleted: true,
+      };
       const collidingDoc = { _id: "456", slug: "my-slug" };
 
       mockModel.findOne.mockReturnValueOnce({

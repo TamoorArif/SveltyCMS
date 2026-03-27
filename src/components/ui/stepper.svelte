@@ -16,32 +16,32 @@
 - Accessible with ARIA roles
 -->
 <script lang="ts">
-	interface Step {
-		label: string;
-		description?: string;
-		icon?: string;
-	}
+interface Step {
+	label: string;
+	description?: string;
+	icon?: string;
+}
 
-	let { 
-		steps = [], 
-		currentStep = 0, 
-		completedSteps = new Set(), 
-		orientation = 'vertical',
-		compact = false,
-		onStepClick = (index: number) => {}
-	} = $props<{
-		steps: Step[];
-		currentStep: number;
-		completedSteps: Set<number>;
-		orientation?: 'horizontal' | 'vertical';
-		compact?: boolean;
-		onStepClick?: (index: number) => void;
-	}>();
+let {
+	steps = [],
+	currentStep = 0,
+	completedSteps = new Set(),
+	orientation = "vertical",
+	compact = false,
+	onStepClick = (_index: number) => {},
+} = $props<{
+	steps: Step[];
+	currentStep: number;
+	completedSteps: Set<number>;
+	orientation?: "horizontal" | "vertical";
+	compact?: boolean;
+	onStepClick?: (index: number) => void;
+}>();
 
-	function isClickable(index: number) {
-		// Allow clicking completed steps or the next one
-		return completedSteps.has(index) || index <= currentStep + 1;
-	}
+function isClickable(index: number) {
+	// Allow clicking completed steps or the next one
+	return completedSteps.has(index) || index <= currentStep + 1;
+}
 </script>
 
 <div class="stepper-container {orientation === 'vertical' ? 'flex-col space-y-4' : 'flex-row space-x-4 items-center justify-between'} flex w-full">

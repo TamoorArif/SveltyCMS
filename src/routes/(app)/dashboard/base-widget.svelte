@@ -12,8 +12,8 @@ New Features:
 - All features opt-in and backward compatible
 -->
 <script lang="ts">
-import type { WidgetSize } from '@src/content/types';
-import { logger } from '@utils/logger';
+import type { WidgetSize } from "@src/content/types";
+import { logger } from "@utils/logger";
 
 // Lucide icons
 
@@ -29,8 +29,8 @@ interface ChildSnippetProps {
 }
 
 const {
-	label = 'Widget',
-	theme = 'light',
+	label = "Widget",
+	theme = "light",
 	endpoint = undefined,
 	pollInterval = 0,
 	widgetId = undefined,
@@ -46,10 +46,10 @@ const {
 	cacheKey = undefined as string | undefined,
 	cacheTTL = 300_000,
 	retryCount = 3,
-	retryDelay = 1000
+	retryDelay = 1000,
 } = $props<{
 	label: string;
-	theme?: 'light' | 'dark';
+	theme?: "light" | "dark";
 	endpoint?: string;
 	pollInterval?: number;
 	widgetId?: string;
@@ -83,7 +83,7 @@ $effect(() => {
 
 // Cache management (localStorage)
 function getCachedData(): any | null {
-	if (!cacheKey || typeof window === 'undefined') {
+	if (!cacheKey || typeof window === "undefined") {
 		return null;
 	}
 	try {
@@ -104,7 +104,7 @@ function getCachedData(): any | null {
 }
 
 function setCachedData(data: any) {
-	if (!cacheKey || typeof window === 'undefined') {
+	if (!cacheKey || typeof window === "undefined") {
 		return;
 	}
 	try {
@@ -112,8 +112,8 @@ function setCachedData(data: any) {
 			`widget_cache_${cacheKey}`,
 			JSON.stringify({
 				data,
-				timestamp: Date.now()
-			})
+				timestamp: Date.now(),
+			}),
 		);
 	} catch (err) {
 		logger.warn(`Failed to cache widget data for ${label}:`, err);
@@ -144,7 +144,7 @@ async function fetchData(retryAttempt = 0): Promise<void> {
 
 	try {
 		// Add cache-busting param, use & if endpoint already has query params
-		const separator = endpoint.includes('?') ? '&' : '?';
+		const separator = endpoint.includes("?") ? "&" : "?";
 		const res = await fetch(`${endpoint}${separator}_=${Date.now()}`);
 		if (!res.ok) {
 			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -158,11 +158,15 @@ async function fetchData(retryAttempt = 0): Promise<void> {
 		currentRetry = 0;
 		error = null;
 	} catch (err) {
-		const errorMsg = err instanceof Error ? err.message : 'Failed to fetch data';
+		const errorMsg =
+			err instanceof Error ? err.message : "Failed to fetch data";
 
 		// Retry logic with exponential backoff
 		if (retryAttempt < retryCount) {
-			logger.warn(`[${label}] Retry ${retryAttempt + 1}/${retryCount}:`, errorMsg);
+			logger.warn(
+				`[${label}] Retry ${retryAttempt + 1}/${retryCount}:`,
+				errorMsg,
+			);
 			const delay = retryDelay * 2 ** retryAttempt; // Exponential backoff
 			await new Promise((resolve) => setTimeout(resolve, delay));
 			return fetchData(retryAttempt + 1);
@@ -178,7 +182,7 @@ async function fetchData(retryAttempt = 0): Promise<void> {
 // Manual refresh function
 async function refresh() {
 	// Clear cache on manual refresh
-	if (cacheKey && typeof window !== 'undefined') {
+	if (cacheKey && typeof window !== "undefined") {
 		localStorage.removeItem(`widget_cache_${cacheKey}`);
 	}
 	currentRetry = 0;
@@ -233,7 +237,7 @@ function getSizeLabel(s: WidgetSize): string {
 
 function getLastUpdateText(): string {
 	if (!lastFetchTime) {
-		return '';
+		return "";
 	}
 	const seconds = Math.floor((Date.now() - lastFetchTime) / 1000);
 	if (seconds < 60) {
@@ -269,7 +273,7 @@ const availableSizes: WidgetSize[] = [
 	{ w: 1, h: 4 },
 	{ w: 2, h: 4 },
 	{ w: 3, h: 4 },
-	{ w: 4, h: 4 }
+	{ w: 4, h: 4 },
 ];
 
 function handleResizePointerDown(e: PointerEvent) {
@@ -280,12 +284,16 @@ function handleResizePointerDown(e: PointerEvent) {
 	e.stopPropagation();
 
 	const target = e.target as HTMLElement;
-	const direction = target.dataset.direction || target.closest('[data-direction]')?.getAttribute('data-direction');
+	const direction =
+		target.dataset.direction ||
+		target.closest("[data-direction]")?.getAttribute("data-direction");
 
 	isResizing = true;
 	const startX = e.clientX;
 	const startY = e.clientY;
-	const gridContainer = widgetEl.closest('.responsive-dashboard-grid') as HTMLElement;
+	const gridContainer = widgetEl.closest(
+		".responsive-dashboard-grid",
+	) as HTMLElement;
 
 	if (!gridContainer) {
 		isResizing = false;
@@ -295,7 +303,8 @@ function handleResizePointerDown(e: PointerEvent) {
 	const gridGap = Number.parseFloat(getComputedStyle(gridContainer).gap) || 16;
 	const gridCols = 4;
 	const totalGapWidth = gridGap * (gridCols - 1);
-	const singleColumnWidth = (gridContainer.offsetWidth - totalGapWidth) / gridCols;
+	const singleColumnWidth =
+		(gridContainer.offsetWidth - totalGapWidth) / gridCols;
 	const singleRowHeight = 180;
 
 	const currentColumns = size.w;
@@ -306,16 +315,16 @@ function handleResizePointerDown(e: PointerEvent) {
 		const deltaY = moveEvent.clientY - startY;
 
 		let columnChange = 0;
-		if (direction?.includes('e')) {
+		if (direction?.includes("e")) {
 			columnChange = deltaX / (singleColumnWidth + gridGap);
-		} else if (direction?.includes('w')) {
+		} else if (direction?.includes("w")) {
 			columnChange = -deltaX / (singleColumnWidth + gridGap);
 		}
 
 		let rowChange = 0;
-		if (direction?.includes('s')) {
+		if (direction?.includes("s")) {
 			rowChange = deltaY / (singleRowHeight + gridGap);
-		} else if (direction?.includes('n')) {
+		} else if (direction?.includes("n")) {
 			rowChange = -deltaY / (singleRowHeight + gridGap);
 		}
 
@@ -329,8 +338,8 @@ function handleResizePointerDown(e: PointerEvent) {
 	};
 
 	const handlePointerUp = () => {
-		window.removeEventListener('pointermove', handlePointerMove);
-		window.removeEventListener('pointerup', handlePointerUp);
+		window.removeEventListener("pointermove", handlePointerMove);
+		window.removeEventListener("pointerup", handlePointerUp);
 		isResizing = false;
 		if (previewSize && (previewSize.w !== size.w || previewSize.h !== size.h)) {
 			onSizeChange(previewSize);
@@ -338,8 +347,8 @@ function handleResizePointerDown(e: PointerEvent) {
 		previewSize = null;
 	};
 
-	window.addEventListener('pointermove', handlePointerMove);
-	window.addEventListener('pointerup', handlePointerUp, { once: true });
+	window.addEventListener("pointermove", handlePointerMove);
+	window.addEventListener("pointerup", handlePointerUp, { once: true });
 }
 
 function handleMenuSizeChange(newSize: WidgetSize) {
@@ -355,11 +364,11 @@ function handleClickOutside(event: MouseEvent) {
 
 $effect(() => {
 	if (showSizeMenu) {
-		document.addEventListener('click', handleClickOutside);
+		document.addEventListener("click", handleClickOutside);
 	} else {
-		document.removeEventListener('click', handleClickOutside);
+		document.removeEventListener("click", handleClickOutside);
 	}
-	return () => document.removeEventListener('click', handleClickOutside);
+	return () => document.removeEventListener("click", handleClickOutside);
 });
 </script>
 

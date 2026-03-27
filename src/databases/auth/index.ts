@@ -273,7 +273,11 @@ export class Auth {
   }
 
   async createSession(
-    sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
+    sessionData: {
+      user_id: string;
+      expires: ISODateString;
+      tenantId?: string | null;
+    },
     options?: { bypassTenantCheck?: boolean },
   ): Promise<Session> {
     const sr = (await this.db.auth.createSession(sessionData)) as unknown;
@@ -633,12 +637,19 @@ export class Auth {
   }
 
   async checkUser(
-    fields: { user_id?: string; email?: string; samlId?: string; tenantId?: string | null },
+    fields: {
+      user_id?: string;
+      email?: string;
+      samlId?: string;
+      tenantId?: string | null;
+    },
     options?: { bypassTenantCheck?: boolean },
   ): Promise<User | null> {
     if (fields.samlId) {
       // Workaround for DB adapter missing native getBySamlId - search all users
-      const result = await this.db.auth.getAllUsers({ filter: { tenantId: fields.tenantId } });
+      const result = await this.db.auth.getAllUsers({
+        filter: { tenantId: fields.tenantId },
+      });
       if (result?.success) {
         return result.data.find((u) => u.samlId === fields.samlId) || null;
       }

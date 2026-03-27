@@ -243,7 +243,10 @@ export class MongoMediaMethods {
       delete (copy as any).__v;
 
       const result = await this.mediaModel.create(copy as any);
-      return { success: true, data: (result as any).toObject() as unknown as MediaItem };
+      return {
+        success: true,
+        data: (result as any).toObject() as unknown as MediaItem,
+      };
     } catch (error) {
       return {
         success: false,
@@ -327,7 +330,9 @@ export class MongoMediaMethods {
         // Add fallback for legacy/untenanted media if tenantId is provided
         if (tenantId && (secureQuery as Record<string, unknown>).tenantId === tenantId) {
           // Allow items matching tenantId OR having no tenantId (legacy/system)
-          (secureQuery as Record<string, unknown>).tenantId = { $in: [tenantId, null, undefined] };
+          (secureQuery as Record<string, unknown>).tenantId = {
+            $in: [tenantId, null, undefined],
+          };
         }
 
         const skip = (page - 1) * pageSize;

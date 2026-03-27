@@ -4,20 +4,20 @@
  * @description Smart CMS Importer Page for migrating content from external sources.
  */
 
-import { onMount } from 'svelte';
-import { toast } from '@src/stores/toast.svelte';
-import { getCollections } from '@utils/api-client';
-import type { Schema } from '@src/content/types';
-import { Progress as ProgressBar } from '@skeletonlabs/skeleton-svelte';
+import { onMount } from "svelte";
+import { toast } from "@src/stores/toast.svelte";
+import { getCollections } from "@utils/api-client";
+import type { Schema } from "@src/content/types";
+import { Progress as ProgressBar } from "@skeletonlabs/skeleton-svelte";
 
 // State using Svelte 5 Runes
 let loading = $state(false);
 let collections = $state<Schema[]>([]);
-let sourceType = $state('drupal');
-let sourceUrl = $state('');
-let apiKey = $state('');
-let contentType = $state('');
-let targetCollection = $state('');
+let sourceType = $state("drupal");
+let sourceUrl = $state("");
+let apiKey = $state("");
+let contentType = $state("");
+let targetCollection = $state("");
 let mapping = $state<Record<string, any>>({});
 let step = $state(1); // 1: Source, 2: Mapping, 3: Import
 let importResult = $state<any>(null);
@@ -33,7 +33,7 @@ onMount(async () => {
 async function nextStep() {
 	if (step === 1) {
 		if (!sourceUrl || !contentType || !targetCollection) {
-			toast.error('Please fill in all required fields');
+			toast.error("Please fill in all required fields");
 			return;
 		}
 		step = 2;
@@ -48,27 +48,27 @@ async function nextStep() {
 async function runAIMapping() {
 	try {
 		loading = true;
-		const response = await fetch('/api/importer/external', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/importer/external", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				sourceType,
 				sourceUrl,
 				apiKey,
 				contentType,
 				targetCollection,
-				dryRun: true
-			})
+				dryRun: true,
+			}),
 		});
 		const result = await response.json();
 		if (result.success) {
 			mapping = result.mapping;
-			toast.success('AI suggested field mappings!');
+			toast.success("AI suggested field mappings!");
 		} else {
-			toast.error('Failed to get AI mapping: ' + result.message);
+			toast.error("Failed to get AI mapping: " + result.message);
 		}
 	} catch (err) {
-		toast.error('Error connecting to AI service');
+		toast.error("Error connecting to AI service");
 	} finally {
 		loading = false;
 	}
@@ -78,17 +78,17 @@ async function startImport() {
 	try {
 		loading = true;
 		progress = 10;
-		const response = await fetch('/api/importer/external', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/importer/external", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				sourceType,
 				sourceUrl,
 				apiKey,
 				contentType,
 				targetCollection,
-				mapping
-			})
+				mapping,
+			}),
 		});
 		const result = await response.json();
 		if (result.success) {
@@ -96,17 +96,17 @@ async function startImport() {
 			progress = 100;
 			toast.success(`Import complete! ${result.imported} items imported.`);
 		} else {
-			toast.error('Import failed');
+			toast.error("Import failed");
 		}
 	} catch (err) {
-		toast.error('Connection error during import');
+		toast.error("Connection error during import");
 	} finally {
 		loading = false;
 	}
 }
 
 function addMapping() {
-	mapping = { ...mapping, '': '' };
+	mapping = { ...mapping, "": "" };
 }
 
 function removeMapping(field: string) {
@@ -118,19 +118,19 @@ function removeMapping(field: string) {
 async function handleScaffold() {
 	try {
 		loading = true;
-		const name = prompt('Enter a name for the new collection:', contentType);
+		const name = prompt("Enter a name for the new collection:", contentType);
 		if (!name) return;
 
-		const response = await fetch('/api/importer/scaffold', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/importer/scaffold", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				sourceType,
 				sourceUrl,
 				apiKey,
 				sourceTypeIdentifier: contentType,
-				collectionName: name
-			})
+				collectionName: name,
+			}),
 		});
 		const result = await response.json();
 		if (result.success) {
@@ -142,10 +142,10 @@ async function handleScaffold() {
 				targetCollection = result.slug;
 			}
 		} else {
-			toast.error('Scaffold failed: ' + result.message);
+			toast.error("Scaffold failed: " + result.message);
 		}
 	} catch (err) {
-		toast.error('Error during scaffolding');
+		toast.error("Error during scaffolding");
 	} finally {
 		loading = false;
 	}

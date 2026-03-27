@@ -150,7 +150,10 @@ export class PreferencesModule {
       if (exists.length > 0) {
         await this.db
           .update(schema.systemPreferences)
-          .set({ value: value as unknown as Record<string, unknown>, updatedAt: new Date() })
+          .set({
+            value: value as unknown as Record<string, unknown>,
+            updatedAt: new Date(),
+          })
           .where(and(...conditions));
       } else {
         await this.db.insert(schema.systemPreferences).values({

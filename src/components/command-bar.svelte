@@ -1,12 +1,12 @@
 <script lang="ts">
-import { globalSearchIndex } from '@utils/global-search-index';
-import { ui } from '@src/stores/ui-store.svelte';
-import { onMount } from 'svelte';
-import { goto } from '$app/navigation';
-import Icon from '@iconify/svelte';
-import { fade, fly } from 'svelte/transition';
+import { globalSearchIndex } from "@utils/global-search-index";
+import { ui } from "@src/stores/ui-store.svelte";
+import { onMount } from "svelte";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import { fade, fly } from "svelte/transition";
 
-let searchQuery = $state('');
+let searchQuery = $state("");
 let inputRef = $state<HTMLInputElement | null>(null);
 let selectedIndex = $state(0);
 
@@ -16,15 +16,39 @@ interface ActionItem {
 	icon?: string;
 	path?: string;
 	shortcut?: string;
-	type: 'action' | 'search';
+	type: "action" | "search";
 }
 
 // Navigation shortcuts for Linear-style quick access
 const quickActions: ActionItem[] = [
-	{ title: 'Go to Dashboard', icon: 'mdi:view-dashboard', path: '/dashboard', shortcut: 'G D', type: 'action' },
-	{ title: 'Media Gallery', icon: 'mdi:image-multiple', path: '/mediagallery', shortcut: 'G M', type: 'action' },
-	{ title: 'Collection Builder', icon: 'mdi:database-edit', path: '/config/collectionbuilder', shortcut: 'G C', type: 'action' },
-	{ title: 'System Settings', icon: 'mdi:cog', path: '/config', shortcut: 'G S', type: 'action' }
+	{
+		title: "Go to Dashboard",
+		icon: "mdi:view-dashboard",
+		path: "/dashboard",
+		shortcut: "G D",
+		type: "action",
+	},
+	{
+		title: "Media Gallery",
+		icon: "mdi:image-multiple",
+		path: "/mediagallery",
+		shortcut: "G M",
+		type: "action",
+	},
+	{
+		title: "Collection Builder",
+		icon: "mdi:database-edit",
+		path: "/config/collectionbuilder",
+		shortcut: "G C",
+		type: "action",
+	},
+	{
+		title: "System Settings",
+		icon: "mdi:cog",
+		path: "/config",
+		shortcut: "G S",
+		type: "action",
+	},
 ];
 
 const filteredResults = $derived.by(() => {
@@ -35,11 +59,15 @@ const filteredResults = $derived.by(() => {
 		title: item.title,
 		description: item.description,
 		path: Object.values(item.triggers)[0]?.path,
-		type: 'search'
+		type: "search",
 	}));
 
 	return searchItems
-		.filter((item) => item.title.toLowerCase().includes(query) || (item.description && item.description.toLowerCase().includes(query)))
+		.filter(
+			(item) =>
+				item.title.toLowerCase().includes(query) ||
+				(item.description && item.description.toLowerCase().includes(query)),
+		)
 		.slice(0, 8);
 });
 
@@ -50,17 +78,18 @@ $effect(() => {
 });
 
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'ArrowDown') {
+	if (e.key === "ArrowDown") {
 		e.preventDefault();
 		selectedIndex = (selectedIndex + 1) % filteredResults.length;
-	} else if (e.key === 'ArrowUp') {
+	} else if (e.key === "ArrowUp") {
 		e.preventDefault();
-		selectedIndex = (selectedIndex - 1 + filteredResults.length) % filteredResults.length;
-	} else if (e.key === 'Enter') {
+		selectedIndex =
+			(selectedIndex - 1 + filteredResults.length) % filteredResults.length;
+	} else if (e.key === "Enter") {
 		e.preventDefault();
 		const selected = filteredResults[selectedIndex];
 		if (selected) executeAction(selected);
-	} else if (e.key === 'Escape') {
+	} else if (e.key === "Escape") {
 		ui.isCommandBarVisible = false;
 	}
 }
@@ -70,7 +99,7 @@ async function executeAction(item: ActionItem) {
 		await goto(item.path);
 	}
 	ui.isCommandBarVisible = false;
-	searchQuery = '';
+	searchQuery = "";
 }
 
 onMount(() => {

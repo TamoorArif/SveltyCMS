@@ -13,26 +13,26 @@
 <script lang="ts">
 // Types
 
-import { Progress as ProgressBar } from '@skeletonlabs/skeleton-svelte';
-import Input from '@src/components/system/inputs/input.svelte';
-import Toggles from '@src/components/system/inputs/toggles.svelte';
-import type { Schema } from '@src/content/types';
+import { Progress as ProgressBar } from "@skeletonlabs/skeleton-svelte";
+import Input from "@src/components/system/inputs/input.svelte";
+import Toggles from "@src/components/system/inputs/toggles.svelte";
+import type { Schema } from "@src/content/types";
 // Utils
-import { getCollections } from '@utils/api-client';
-import { logger } from '@utils/logger';
+import { getCollections } from "@utils/api-client";
+import { logger } from "@utils/logger";
 // Skeleton components
-import { toast } from '@src/stores/toast.svelte.ts';
+import { toast } from "@src/stores/toast.svelte.ts";
 
 interface ExportOptions {
 	collections: string[];
-	format: 'json' | 'csv';
+	format: "json" | "csv";
 	includeMetadata: boolean;
 	limit?: number;
 }
 
 interface ImportOptions {
 	batchSize: number;
-	format: 'json' | 'csv';
+	format: "json" | "csv";
 	overwrite: boolean;
 	skipInvalid: boolean;
 	validate: boolean;
@@ -56,27 +56,27 @@ let showResultsModal = $state(false);
 
 // Export state
 const exportOptions = $state<ExportOptions>({
-	format: 'json',
+	format: "json",
 	collections: [],
 	includeMetadata: true,
-	limit: undefined
+	limit: undefined,
 });
 let exportProgress = $state(0);
-let exportUrl = $state('');
-let exportLimitString = $state('');
+let exportUrl = $state("");
+let exportLimitString = $state("");
 
 // Import state
 const importOptions = $state<ImportOptions>({
-	format: 'json',
+	format: "json",
 	overwrite: false,
 	validate: true,
 	skipInvalid: true,
-	batchSize: 100
+	batchSize: 100,
 });
 let importFiles = $state<FileList | null>(null);
 let importProgress = $state(0);
 let importResult = $state<ImportResult | null>(null);
-let importBatchSizeString = $state('100');
+let importBatchSizeString = $state("100");
 
 // Sync string and number values
 $effect(() => {
@@ -102,7 +102,11 @@ async function loadCollections() {
 			let rawCollections: any[] = [];
 			if (Array.isArray(response.data)) {
 				rawCollections = response.data;
-			} else if (response.data && typeof response.data === 'object' && 'collections' in response.data) {
+			} else if (
+				response.data &&
+				typeof response.data === "object" &&
+				"collections" in response.data
+			) {
 				rawCollections = (response.data as any).collections || [];
 			}
 
@@ -111,17 +115,17 @@ async function loadCollections() {
 				id: col.id || col.name,
 				name: col.name,
 				label: col.label || col.name,
-				description: col.description
+				description: col.description,
 			}));
 
 			// Select all collections by default
 			exportOptions.collections = collections.map((c) => String(c.id));
 		} else {
-			showAlertMessage('Failed to load collections', 'error');
+			showAlertMessage("Failed to load collections", "error");
 		}
 	} catch (error) {
-		logger.error('Error loading collections:', error);
-		showAlertMessage('Error loading collections', 'error');
+		logger.error("Error loading collections:", error);
+		showAlertMessage("Error loading collections", "error");
 	} finally {
 		loading = false;
 	}
@@ -137,22 +141,22 @@ async function exportAllData() {
 			exportProgress = Math.min(exportProgress + 10, 90);
 		}, 200);
 
-		const response = await fetch('/api/exportData', {
-			method: 'GET'
+		const response = await fetch("/api/exportData", {
+			method: "GET",
 		});
 
 		clearInterval(progressInterval);
 		exportProgress = 100;
 
 		if (response.ok) {
-			showAlertMessage('Data export completed successfully', 'success');
+			showAlertMessage("Data export completed successfully", "success");
 		} else {
 			const error = await response.text();
-			showAlertMessage(`Export failed: ${error}`, 'error');
+			showAlertMessage(`Export failed: ${error}`, "error");
 		}
 	} catch (error) {
-		logger.error('Export error:', error);
-		showAlertMessage('Export failed', 'error');
+		logger.error("Export error:", error);
+		showAlertMessage("Export failed", "error");
 	} finally {
 		loading = false;
 		exportProgress = 0;
@@ -161,7 +165,10 @@ async function exportAllData() {
 
 async function exportSelectedCollections() {
 	if (exportOptions.collections.length === 0) {
-		showAlertMessage('Please select at least one collection to export', 'warning');
+		showAlertMessage(
+			"Please select at least one collection to export",
+			"warning",
+		);
 		return;
 	}
 
@@ -180,11 +187,13 @@ async function exportSelectedCollections() {
 			const collectionId = exportOptions.collections[i];
 
 			const params = new URLSearchParams({
-				format: 'json',
-				...(exportOptions.limit && { limit: exportOptions.limit.toString() })
+				format: "json",
+				...(exportOptions.limit && { limit: exportOptions.limit.toString() }),
 			});
 
-			const response = await fetch(`/api/collections/${collectionId}/export?${params}`);
+			const response = await fetch(
+				`/api/collections/${collectionId}/export?${params}`,
+			);
 
 			if (response.ok) {
 				const data = await response.json();
@@ -199,14 +208,17 @@ async function exportSelectedCollections() {
 
 		// Create download
 		const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-			type: 'application/json'
+			type: "application/json",
 		});
 		exportUrl = URL.createObjectURL(blob);
 
-		showAlertMessage(`Successfully exported ${exportOptions.collections.length} collections`, 'success');
+		showAlertMessage(
+			`Successfully exported ${exportOptions.collections.length} collections`,
+			"success",
+		);
 	} catch (error) {
-		logger.error('Export error:', error);
-		showAlertMessage('Export failed', 'error');
+		logger.error("Export error:", error);
+		showAlertMessage("Export failed", "error");
 	} finally {
 		loading = false;
 		exportProgress = 0;
@@ -217,7 +229,7 @@ async function exportSelectedCollections() {
 // --- Import Functions ---
 async function handleImport() {
 	if (!importFiles || importFiles.length === 0) {
-		showAlertMessage('Please select a file to import', 'warning');
+		showAlertMessage("Please select a file to import", "warning");
 		return;
 	}
 
@@ -229,7 +241,7 @@ async function handleImport() {
 		let importData: any = null;
 
 		// Read file content
-		if (importOptions.format === 'json') {
+		if (importOptions.format === "json") {
 			const text = await file.text();
 			importData = JSON.parse(text);
 		} else {
@@ -243,15 +255,15 @@ async function handleImport() {
 		}, 200);
 
 		// Import data
-		const response = await fetch('/api/importData', {
-			method: 'POST',
+		const response = await fetch("/api/importData", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				collections: importData,
-				options: importOptions
-			})
+				options: importOptions,
+			}),
 		});
 
 		clearInterval(progressInterval);
@@ -263,11 +275,11 @@ async function handleImport() {
 			showImportModal = false;
 		} else {
 			const errorText = await response.text();
-			showAlertMessage(`Import failed: ${errorText}`, 'error');
+			showAlertMessage(`Import failed: ${errorText}`, "error");
 		}
 	} catch (error) {
-		logger.error('Import error:', error);
-		showAlertMessage('Import failed', 'error');
+		logger.error("Import error:", error);
+		showAlertMessage("Import failed", "error");
 	} finally {
 		loading = false;
 		importProgress = 0;
@@ -276,12 +288,15 @@ async function handleImport() {
 
 // --- UI & Utility Functions ---
 
-function showAlertMessage(message: string, type: 'success' | 'error' | 'info' | 'warning') {
-	if (type === 'success') {
+function showAlertMessage(
+	message: string,
+	type: "success" | "error" | "info" | "warning",
+) {
+	if (type === "success") {
 		toast.success(message);
-	} else if (type === 'error') {
+	} else if (type === "error") {
 		toast.error(message);
-	} else if (type === 'warning') {
+	} else if (type === "warning") {
 		toast.warning(message);
 	} else {
 		toast.info(message);
@@ -290,14 +305,14 @@ function showAlertMessage(message: string, type: 'success' | 'error' | 'info' | 
 
 function downloadExport() {
 	if (exportUrl) {
-		const a = document.createElement('a');
+		const a = document.createElement("a");
 		a.href = exportUrl;
-		a.download = `collections-export-${new Date().toISOString().split('T')[0]}.json`;
+		a.download = `collections-export-${new Date().toISOString().split("T")[0]}.json`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 		URL.revokeObjectURL(exportUrl);
-		exportUrl = '';
+		exportUrl = "";
 	}
 }
 
@@ -319,7 +334,7 @@ function clearCollectionSelection() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-	if (event.key === 'Escape') {
+	if (event.key === "Escape") {
 		if (showExportModal) {
 			showExportModal = false;
 		}

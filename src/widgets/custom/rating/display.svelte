@@ -27,12 +27,15 @@ Renders: ★★★★☆ (4 filled stars, 1 empty star)
 
 <script lang="ts">
 // Using iconify-icon web component
-import type { FieldType } from './';
+import type { FieldType } from "./";
 
-const { field, value }: { field: FieldType; value: number | null | undefined } = $props();
+const { field, value }: { field: FieldType; value: number | null | undefined } =
+	$props();
 
 // Create an array to easily loop for displaying stars.
-const stars = $derived.by(() => Array.from({ length: (field.max as number) || 5 }).fill(0));
+const stars = $derived.by(() =>
+	Array.from({ length: (field.max as number) || 5 }).fill(0),
+);
 </script>
 
 {#if typeof value === 'number' && value > 0}

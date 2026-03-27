@@ -4,7 +4,7 @@
  * @description Dedicated "Access Denied" page for authenticated users with insufficient permissions.
  * Includes data-testid="access-denied" for reliable E2E testing.
  */
-import { page } from '$app/state';
+import { page } from "$app/state";
 </script>
 <svelte:head>
 	<title>Access Denied | SveltyCMS</title>

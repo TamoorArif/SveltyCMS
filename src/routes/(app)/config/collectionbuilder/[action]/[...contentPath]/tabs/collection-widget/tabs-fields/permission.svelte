@@ -9,11 +9,11 @@ Features: Visibility (public/private), requiredAuth, readRoles, writeRoles (mult
 -->
 
 <script lang="ts">
-import { SvelteSet } from 'svelte/reactivity';
-import type { Role } from '@src/databases/auth/types';
-import type { WidgetFieldPermissions } from '@src/content/types';
-import { collections } from '@src/stores/collection-store.svelte';
-import { modalState } from '@utils/modal-state.svelte';
+import { SvelteSet } from "svelte/reactivity";
+import type { Role } from "@src/databases/auth/types";
+import type { WidgetFieldPermissions } from "@src/content/types";
+import { collections } from "@src/stores/collection-store.svelte";
+import { modalState } from "@utils/modal-state.svelte";
 
 interface Props {
 	/** Roles for role-based access (e.g. from edit page data). Used when not in modal. */
@@ -23,18 +23,19 @@ interface Props {
 const { roles: rolesProp = [] }: Props = $props();
 
 const DEFAULT_PERMISSIONS: WidgetFieldPermissions = {
-	visibility: 'public',
+	visibility: "public",
 	requiredAuth: false,
 	readRoles: [],
-	writeRoles: []
+	writeRoles: [],
 };
 
 function isWidgetFieldPermissions(p: unknown): p is WidgetFieldPermissions {
-	if (!p || typeof p !== 'object') return false;
+	if (!p || typeof p !== "object") return false;
 	const o = p as Record<string, unknown>;
 	return (
-		('visibility' in o && (o.visibility === 'public' || o.visibility === 'private')) ||
-		('requiredAuth' in o && typeof o.requiredAuth === 'boolean') ||
+		("visibility" in o &&
+			(o.visibility === "public" || o.visibility === "private")) ||
+		("requiredAuth" in o && typeof o.requiredAuth === "boolean") ||
 		Array.isArray(o.readRoles) ||
 		Array.isArray(o.writeRoles)
 	);
@@ -47,10 +48,10 @@ function normalizePermissions(raw: unknown): WidgetFieldPermissions {
 			visibility: raw.visibility ?? DEFAULT_PERMISSIONS.visibility,
 			requiredAuth: raw.requiredAuth ?? DEFAULT_PERMISSIONS.requiredAuth,
 			readRoles: Array.isArray(raw.readRoles) ? [...raw.readRoles] : [],
-			writeRoles: Array.isArray(raw.writeRoles) ? [...raw.writeRoles] : []
+			writeRoles: Array.isArray(raw.writeRoles) ? [...raw.writeRoles] : [],
 		};
 	}
-	if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+	if (raw && typeof raw === "object" && !Array.isArray(raw)) {
 		const matrix = raw as Record<string, Record<string, boolean>>;
 		const readRoles: string[] = [];
 		const writeRoles: string[] = [];
@@ -59,10 +60,10 @@ function normalizePermissions(raw: unknown): WidgetFieldPermissions {
 			if (perms?.write || perms?.update) writeRoles.push(roleId);
 		}
 		return {
-			visibility: 'public',
+			visibility: "public",
 			requiredAuth: false,
 			readRoles,
-			writeRoles
+			writeRoles,
 		};
 	}
 	return { ...DEFAULT_PERMISSIONS };
@@ -72,15 +73,21 @@ function normalizePermissions(raw: unknown): WidgetFieldPermissions {
 const inModal = $derived(!!modalState.active);
 const target = $derived(
 	(collections.targetWidget as Record<string, unknown> | undefined) ??
-		(inModal ? (modalState.active?.props?.value as Record<string, unknown> | undefined) : undefined)
+		(inModal
+			? (modalState.active?.props?.value as Record<string, unknown> | undefined)
+			: undefined),
 );
-const roles = $derived(inModal ? ((modalState.active?.props as { roles?: Role[] })?.roles ?? rolesProp) : rolesProp);
+const roles = $derived(
+	inModal
+		? ((modalState.active?.props as { roles?: Role[] })?.roles ?? rolesProp)
+		: rolesProp,
+);
 const permissions = $derived(normalizePermissions(target?.permissions));
 
 function updatePermissions(next: Partial<WidgetFieldPermissions>) {
 	const merged: WidgetFieldPermissions = {
 		...permissions,
-		...next
+		...next,
 	};
 	if (!target) return;
 	const updatedTarget = { ...target, permissions: merged };
@@ -90,7 +97,7 @@ function updatePermissions(next: Partial<WidgetFieldPermissions>) {
 
 function toggleVisibility() {
 	updatePermissions({
-		visibility: permissions.visibility === 'public' ? 'private' : 'public'
+		visibility: permissions.visibility === "public" ? "private" : "public",
 	});
 }
 

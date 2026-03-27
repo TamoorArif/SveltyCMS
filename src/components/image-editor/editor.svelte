@@ -3,13 +3,13 @@
  @component Primary shell for the Image Editor
  -->
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { onMount, onDestroy } from 'svelte';
-import { fade } from 'svelte/transition';
-import { registerHotkey } from '@src/utils/hotkeys';
-import Canvas from './editor-canvas.svelte';
-import Toolbar from './editor-toolbar.svelte';
-import { editorWidgets } from './widgets/registry';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { onMount, onDestroy } from "svelte";
+import { fade } from "svelte/transition";
+import { registerHotkey } from "@src/utils/hotkeys";
+import Canvas from "./editor-canvas.svelte";
+import Toolbar from "./editor-toolbar.svelte";
+import { editorWidgets } from "./widgets/registry";
 
 let { image, onsave, oncancel } = $props<{
 	image: { url: string; _id?: string };
@@ -22,15 +22,15 @@ onMount(async () => {
 	imageEditorStore.reset();
 
 	// Register Standard Hotkeys
-	registerHotkey('mod+s', handleSave, 'Save Image');
-	registerHotkey('mod+z', () => imageEditorStore.undo(), 'Undo');
-	registerHotkey('mod+shift+z', () => imageEditorStore.redo(), 'Redo');
-	registerHotkey('mod+y', () => imageEditorStore.redo(), 'Redo (Alternate)');
-	registerHotkey('escape', oncancel, 'Cancel Editing', false);
+	registerHotkey("mod+s", handleSave, "Save Image");
+	registerHotkey("mod+z", () => imageEditorStore.undo(), "Undo");
+	registerHotkey("mod+shift+z", () => imageEditorStore.redo(), "Redo");
+	registerHotkey("mod+y", () => imageEditorStore.redo(), "Redo (Alternate)");
+	registerHotkey("escape", oncancel, "Cancel Editing", false);
 
 	// Load image element
 	const img = new Image();
-	img.crossOrigin = 'anonymous';
+	img.crossOrigin = "anonymous";
 	img.onload = () => {
 		imageEditorStore.imageElement = img;
 		imageEditorStore.state.crop = {
@@ -39,28 +39,28 @@ onMount(async () => {
 			width: img.width,
 			height: img.height,
 			aspectRatio: undefined,
-			shape: 'rect'
+			shape: "rect",
 		};
 		imageEditorStore.saveHistory();
 	};
 	img.src = image.url;
 
 	// Global event bridges
-	window.addEventListener('image-editor-save', handleSave);
+	window.addEventListener("image-editor-save", handleSave);
 });
 
 onDestroy(() => {
-	window.removeEventListener('image-editor-save', handleSave);
+	window.removeEventListener("image-editor-save", handleSave);
 });
 
 async function handleSave() {
-	const canvas = document.querySelector('canvas');
+	const canvas = document.querySelector("canvas");
 	if (!canvas) return;
 
-	const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+	const dataURL = canvas.toDataURL("image/jpeg", 0.9);
 	const res = await fetch(dataURL);
 	const blob = await res.blob();
-	const file = new File([blob], 'edited-image.jpg', { type: 'image/jpeg' });
+	const file = new File([blob], "edited-image.jpg", { type: "image/jpeg" });
 
 	onsave({
 		dataURL,
@@ -71,10 +71,10 @@ async function handleSave() {
 			crop: $state.snapshot(imageEditorStore.state.crop),
 			rotation: imageEditorStore.state.rotation,
 			flipH: imageEditorStore.state.flipH,
-			flipV: imageEditorStore.state.flipV
+			flipV: imageEditorStore.state.flipV,
 		},
 		focalPoint: $state.snapshot(imageEditorStore.state.focalPoint),
-		saveBehavior: imageEditorStore.saveBehavior
+		saveBehavior: imageEditorStore.saveBehavior,
 	});
 }
 </script>

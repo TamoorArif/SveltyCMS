@@ -53,8 +53,8 @@ All tests run on a dedicated server:
 
 Our performance tests are located in `tests/benchmarks/` and cover the following areas:
 
-| Service        | Test Script                                                            | Description                                                           |
-| :------------- | :--------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| Service        | Test Script                                                               | Description                                                           |
+| :------------- | :------------------------------------------------------------------------ | :-------------------------------------------------------------------- |
 | **Database**   | [database-performance.ts](../../tests/benchmarks/database-performance.ts) | Raw CRUD operations via `dbAdapter` (Agnostic).                       |
 | **GraphQL**    | [graphql-stress.ts](../../tests/benchmarks/graphql-stress.ts)             | High-concurrency stress testing with AST validation.                  |
 | **REST API**   | [rest-api-performance.ts](../../tests/benchmarks/rest-api-performance.ts) | Standard RESTful endpoint latency and throughput (`test:bench:rest`). |

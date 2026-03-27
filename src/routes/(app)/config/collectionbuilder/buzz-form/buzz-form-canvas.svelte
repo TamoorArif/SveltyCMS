@@ -14,10 +14,10 @@
 -->
 
 <script lang="ts">
-import { collection as collections } from '@src/stores/collection-store.svelte';
-import { flip } from 'svelte/animate';
-import type { DndEvent } from 'svelte-dnd-action';
-import { dndzone } from 'svelte-dnd-action';
+import { collection as collections } from "@src/stores/collection-store.svelte";
+import { flip } from "svelte/animate";
+import type { DndEvent } from "svelte-dnd-action";
+import { dndzone } from "svelte-dnd-action";
 
 interface Props {
 	fields: any[];
@@ -26,12 +26,21 @@ interface Props {
 	selectedFieldId?: number | string;
 }
 
-let { fields = [], onNodeUpdate, onSelectField, selectedFieldId }: Props = $props();
+let {
+	fields = [],
+	onNodeUpdate,
+	onSelectField,
+	selectedFieldId,
+}: Props = $props();
 
 // Local list for dndzone so we don't update the store during drag. Updating the store in
 // consider() causes fields to change, re-render, and the dragged node to be replaced —
 // svelte-dnd-action then hits "Cannot read properties of undefined (reading 'parentElement')".
-type Item = { id: number | string; widget?: { key?: string }; [key: string]: unknown };
+type Item = {
+	id: number | string;
+	widget?: { key?: string };
+	[key: string]: unknown;
+};
 let items = $state<Item[]>([]);
 let isDragging = $state(false);
 
@@ -39,7 +48,7 @@ $effect(() => {
 	if (isDragging) return;
 	const next: Item[] = (fields || []).map((f: any, i: number) => ({
 		id: f.id ?? i + 1,
-		...f
+		...f,
 	}));
 	items = next;
 });

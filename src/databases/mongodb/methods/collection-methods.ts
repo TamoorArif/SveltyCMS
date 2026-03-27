@@ -159,7 +159,10 @@ export class MongoCollectionMethods {
       },
     };
 
-    this.models.set(collectionId, { model: model as any, wrapped: wrappedModel });
+    this.models.set(collectionId, {
+      model: model as any,
+      wrapped: wrappedModel,
+    });
     logger.info(`Collection model created: ${collectionId} (${modelName})`);
 
     // Create database indexes in background to avoid blocking system initialization

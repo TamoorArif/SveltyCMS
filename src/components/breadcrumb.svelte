@@ -57,7 +57,7 @@ const visibleBreadcrumb = $derived(() => {
 	}
 
 	// Show first, ellipsis, and last two items
-	return [breadcrumb[0], '...', ...breadcrumb.slice(-2)];
+	return [breadcrumb[0], "...", ...breadcrumb.slice(-2)];
 });
 
 // Get visible indices (maps visible items to original indices)
@@ -70,7 +70,7 @@ const visibleIndices = $derived(() => {
 		0,
 		-1, // Ellipsis
 		breadcrumb.length - 2,
-		breadcrumb.length - 1
+		breadcrumb.length - 1,
 	];
 });
 
@@ -96,18 +96,18 @@ function handleBreadcrumbClick(visibleIndex: number) {
 
 // Copy path to clipboard
 async function copyPath() {
-	const path = breadcrumb.join(' > ');
+	const path = breadcrumb.join(" > ");
 	try {
 		await navigator.clipboard.writeText(path);
 		// Could show a toast notification here
 	} catch (err) {
-		console.error('Failed to copy path:', err);
+		console.error("Failed to copy path:", err);
 	}
 }
 
 // Handle keyboard navigation
 function handleKeydown(event: KeyboardEvent, index: number) {
-	if (event.key === 'Enter' || event.key === ' ') {
+	if (event.key === "Enter" || event.key === " ") {
 		event.preventDefault();
 		handleBreadcrumbClick(index);
 	}

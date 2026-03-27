@@ -12,14 +12,14 @@ Renders a list of forms, one for each item in the array. Supports Drag-and-Drop 
 -->
 
 <script lang="ts">
-import WidgetLoader from '@src/components/collection-display/widget-loader.svelte';
-import { widgets } from '@src/stores/widget-store.svelte';
-import { getFieldName } from '@utils/utils';
-import { flip } from 'svelte/animate';
-import type { DndEvent } from 'svelte-dnd-action';
-import { dndzone } from 'svelte-dnd-action';
-import { v4 as uuidv4 } from 'uuid'; // Ensure uuid is available, or use a simple generator
-import type { FieldType } from './index';
+import WidgetLoader from "@src/components/collection-display/widget-loader.svelte";
+import { widgets } from "@src/stores/widget-store.svelte";
+import { getFieldName } from "@utils/utils";
+import { flip } from "svelte/animate";
+import type { DndEvent } from "svelte-dnd-action";
+import { dndzone } from "svelte-dnd-action";
+import { v4 as uuidv4 } from "uuid"; // Ensure uuid is available, or use a simple generator
+import type { FieldType } from "./index";
 
 interface Props {
 	collectionName?: string;
@@ -28,7 +28,12 @@ interface Props {
 	value: Record<string, any>[] | null | undefined;
 }
 
-let { field, value = $bindable([]), tenantId, collectionName }: Props = $props();
+let {
+	field,
+	value = $bindable([]),
+	tenantId,
+	collectionName,
+}: Props = $props();
 
 // Ensure value is an array and handle null/undefined safely
 $effect(() => {
@@ -38,10 +43,11 @@ $effect(() => {
 });
 
 // --- WIDGET LOADING LOGIC ---
-const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../**/*.svelte') as Record<
-	string,
-	() => Promise<{ default: any }>
->;
+const modules: Record<string, () => Promise<{ default: any }>> =
+	import.meta.glob("../../**/*.svelte") as Record<
+		string,
+		() => Promise<{ default: any }>
+	>;
 
 function getWidgetLoader(widgetName: string) {
 	if (!widgetName) return null;
@@ -51,7 +57,8 @@ function getWidgetLoader(widgetName: string) {
 	if (fn?.__inputComponent) return fn.__inputComponent;
 
 	// 1. Exact match via store
-	const storePath = (fn as any)?.componentPath || (fn as any)?.inputComponentPath;
+	const storePath =
+		(fn as any)?.componentPath || (fn as any)?.inputComponentPath;
 	if (storePath && storePath in modules) {
 		return modules[storePath];
 	}
@@ -90,7 +97,7 @@ $effect(() => {
 	if (safeValue.length !== items.length) {
 		items = safeValue.map((item) => ({
 			id: (item._dndId as string) || uuidv4(),
-			data: item
+			data: item,
 		}));
 	}
 });
@@ -101,11 +108,15 @@ function updateValue() {
 	value = items.map((i) => i.data);
 }
 
-function handleDndConsider(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
+function handleDndConsider(
+	e: CustomEvent<DndEvent<{ id: string; data: any }>>,
+) {
 	items = e.detail.items;
 }
 
-function handleDndFinalize(e: CustomEvent<DndEvent<{ id: string; data: any }>>) {
+function handleDndFinalize(
+	e: CustomEvent<DndEvent<{ id: string; data: any }>>,
+) {
 	items = e.detail.items;
 	updateValue();
 }
@@ -136,10 +147,16 @@ function getItemLabel(itemData: Record<string, any>, index: number) {
 	const fields = (field as any).fields;
 	if (fields && fields.length > 0) {
 		// Try to find a title/name field
-		const titleField = fields.find((f: any) => f.label.toLowerCase().includes('title') || f.label.toLowerCase().includes('name'));
-		const fieldName = titleField ? titleField.db_fieldName || getFieldName(titleField) : fields[0].db_fieldName || getFieldName(fields[0]);
+		const titleField = fields.find(
+			(f: any) =>
+				f.label.toLowerCase().includes("title") ||
+				f.label.toLowerCase().includes("name"),
+		);
+		const fieldName = titleField
+			? titleField.db_fieldName || getFieldName(titleField)
+			: fields[0].db_fieldName || getFieldName(fields[0]);
 		const val = itemData[fieldName];
-		if (val && typeof val === 'string') {
+		if (val && typeof val === "string") {
 			return val;
 		}
 	}
@@ -148,7 +165,7 @@ function getItemLabel(itemData: Record<string, any>, index: number) {
 
 let collapsedItems = $state<Record<string, boolean>>({});
 
-import { onMount } from 'svelte';
+import { onMount } from "svelte";
 
 function toggleCollapse(id: string) {
 	collapsedItems[id] = !collapsedItems[id];
@@ -156,9 +173,16 @@ function toggleCollapse(id: string) {
 
 onMount(() => {
 	const handleMessage = (event: MessageEvent) => {
-		if (event.data?.type === 'svelty:block:reorder' && event.data?.fieldName === (field.db_fieldName || getFieldName(field))) {
+		if (
+			event.data?.type === "svelty:block:reorder" &&
+			event.data?.fieldName === (field.db_fieldName || getFieldName(field))
+		) {
 			const { fromIndex, toIndex } = event.data;
-			if (fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
+			if (
+				fromIndex !== undefined &&
+				toIndex !== undefined &&
+				fromIndex !== toIndex
+			) {
 				const newItems = [...items];
 				const [movedItem] = newItems.splice(fromIndex, 1);
 				newItems.splice(toIndex, 0, movedItem);
@@ -167,8 +191,8 @@ onMount(() => {
 			}
 		}
 	};
-	window.addEventListener('message', handleMessage);
-	return () => window.removeEventListener('message', handleMessage);
+	window.addEventListener("message", handleMessage);
+	return () => window.removeEventListener("message", handleMessage);
 });
 </script>
 

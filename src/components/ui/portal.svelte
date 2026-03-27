@@ -12,29 +12,30 @@ Completely Skeleton-free.
 -->
 
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { Snippet } from 'svelte';
+import { onMount } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		target?: HTMLElement | string | null;
-		children: Snippet;
-	}
+interface Props {
+	target?: HTMLElement | string | null;
+	children: Snippet;
+}
 
-	let { target = 'body', children }: Props = $props();
-	let portalEl = $state<HTMLElement | null>(null);
+let { target = "body", children }: Props = $props();
+let portalEl = $state<HTMLElement | null>(null);
 
-	onMount(() => {
-		const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
-		if (!targetEl || !portalEl) return;
-		
-		targetEl.appendChild(portalEl);
-		
-		return () => {
-			if (portalEl?.parentNode) {
-				portalEl.parentNode.removeChild(portalEl);
-			}
-		};
-	});
+onMount(() => {
+	const targetEl =
+		typeof target === "string" ? document.querySelector(target) : target;
+	if (!targetEl || !portalEl) return;
+
+	targetEl.appendChild(portalEl);
+
+	return () => {
+		if (portalEl?.parentNode) {
+			portalEl.parentNode.removeChild(portalEl);
+		}
+	};
+});
 </script>
 
 <div bind:this={portalEl} class="contents">

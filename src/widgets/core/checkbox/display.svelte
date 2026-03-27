@@ -21,20 +21,20 @@ Part of the CMS widget system.
 -->
 
 <script lang="ts">
-import type { CheckboxWidgetData } from './';
+import type { CheckboxWidgetData } from "./";
 
 interface Props {
-	size?: 'sm' | 'md' | 'lg';
+	size?: "sm" | "md" | "lg";
 	value: CheckboxWidgetData;
 }
 
-const { value, size = 'md' }: Props = $props();
+const { value, size = "md" }: Props = $props();
 
 // Size classes for icons
 const sizeClasses = {
-	sm: 'w-4 h-4',
-	md: 'w-5 h-5',
-	lg: 'w-6 h-6'
+	sm: "w-4 h-4",
+	md: "w-5 h-5",
+	lg: "w-6 h-6",
 };
 
 const sizeClass = $derived(sizeClasses[size]);

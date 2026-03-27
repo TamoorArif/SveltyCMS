@@ -66,7 +66,9 @@ export async function exportSettings(
   settings: Record<string, unknown>;
   sensitive: Record<string, unknown>;
 }> {
-  logger.info(`Exporting settings for tenant: ${tenantId || "global"}`, { options });
+  logger.info(`Exporting settings for tenant: ${tenantId || "global"}`, {
+    options,
+  });
 
   // Passing tenantId to getAllSettings ensures we only get settings for this tenant
   const allSettings = await getAllSettings(tenantId);
@@ -94,7 +96,9 @@ export async function exportCollections(
   availableCollections: Record<string, Schema>,
   tenantId?: string,
 ): Promise<CollectionExport[]> {
-  logger.info(`Exporting collections for tenant: ${tenantId || "global"}`, { options });
+  logger.info(`Exporting collections for tenant: ${tenantId || "global"}`, {
+    options,
+  });
 
   const exportedCollections: CollectionExport[] = [];
   const isMultiTenant = getPrivateSettingSync("MULTI_TENANT");

@@ -28,27 +28,27 @@ Interactive form with map, country selector, and address validation
 -->
 
 <script lang="ts">
-import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
-import { tokenTarget } from '@src/services/token/token-target';
-import { publicEnv } from '@src/stores/global-settings.svelte';
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+import { tokenTarget } from "@src/services/token/token-target";
+import { publicEnv } from "@src/stores/global-settings.svelte";
 /* global google */
-import { app, validationStore } from '@src/stores/store.svelte';
-import { getFieldName } from '@utils/utils';
+import { app, validationStore } from "@src/stores/store.svelte";
+import { getFieldName } from "@utils/utils";
 // Unified error handling
-import { handleWidgetValidation } from '@widgets/widget-error-handler';
-import { onMount } from 'svelte';
+import { handleWidgetValidation } from "@widgets/widget-error-handler";
+import { onMount } from "svelte";
 // Valibot validation
-import { minLength, object, optional, parse, pipe, string } from 'valibot';
-import type { FieldType } from './';
-import { countryStore } from './country-store.svelte';
-import type { AddressData } from './types';
+import { minLength, object, optional, parse, pipe, string } from "valibot";
+import type { FieldType } from "./";
+import { countryStore } from "./country-store.svelte";
+import type { AddressData } from "./types";
 
 // Define google namespace for TypeScript if not globally available
 
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType;
 	value: Record<string, AddressData> | AddressData | null | undefined;
@@ -59,7 +59,11 @@ let {
 
 // Data Language: Which language version of the address are we editing?
 // If field is translated, align with contentLanguage. Otherwise use default.
-const DATA_LANGUAGE = $derived(field.translated ? app.contentLanguage : (publicEnv.DEFAULT_CONTENT_LANGUAGE || 'en').toLowerCase());
+const DATA_LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: (publicEnv.DEFAULT_CONTENT_LANGUAGE || "en").toLowerCase(),
+);
 
 // UI Language: Which language should the Country Dropdown LABELS be in?
 // Always use systemLanguage for UI elements.
@@ -67,9 +71,11 @@ const UI_LANGUAGE = $derived(app.systemLanguage);
 
 // Safe Value Access: Get the address object for the current data language
 let safeValue = $derived.by(() => {
-	if (field.translated && value && typeof value === 'object') {
+	if (field.translated && value && typeof value === "object") {
 		// It's a multilingual object { en: {...}, de: {...} }
-		return (value as Record<string, AddressData>)[DATA_LANGUAGE] as AddressData | undefined;
+		return (value as Record<string, AddressData>)[DATA_LANGUAGE] as
+			| AddressData
+			| undefined;
 	}
 	// It's a single address object
 	return value as AddressData | undefined;
@@ -78,13 +84,13 @@ let safeValue = $derived.by(() => {
 // Value Updater: Helper to update specific fields while preserving multilingual structure
 function updateAddressField(key: keyof AddressData, newValue: any) {
 	const currentAddress = safeValue || {
-		street: '',
-		houseNumber: '',
-		postalCode: '',
-		city: '',
-		country: (field.defaultCountry as string) || 'DE',
+		street: "",
+		houseNumber: "",
+		postalCode: "",
+		city: "",
+		country: (field.defaultCountry as string) || "DE",
 		latitude: (field.mapCenter as { lat: number; lng: number })?.lat || 0,
-		longitude: (field.mapCenter as { lat: number; lng: number })?.lng || 0
+		longitude: (field.mapCenter as { lat: number; lng: number })?.lng || 0,
 	};
 
 	const updatedAddress = { ...currentAddress, [key]: newValue };
@@ -92,8 +98,8 @@ function updateAddressField(key: keyof AddressData, newValue: any) {
 	if (field.translated) {
 		// Merge into multilingual object
 		value = {
-			...(typeof value === 'object' ? value : {}),
-			[DATA_LANGUAGE]: updatedAddress
+			...(typeof value === "object" ? value : {}),
+			[DATA_LANGUAGE]: updatedAddress,
 		} as Record<string, AddressData>;
 	} else {
 		// Direct update
@@ -111,19 +117,19 @@ const fieldName = $derived(getFieldName(field));
 const addressSchema = $derived(
 	field?.required
 		? object({
-				street: pipe(string(), minLength(1, 'Street is required')),
-				city: pipe(string(), minLength(1, 'City is required')),
-				postalCode: pipe(string(), minLength(1, 'Postal code is required')),
-				country: pipe(string(), minLength(2, 'Country is required'))
+				street: pipe(string(), minLength(1, "Street is required")),
+				city: pipe(string(), minLength(1, "City is required")),
+				postalCode: pipe(string(), minLength(1, "Postal code is required")),
+				country: pipe(string(), minLength(2, "Country is required")),
 			})
 		: optional(
 				object({
 					street: optional(string()),
 					city: optional(string()),
 					postalCode: optional(string()),
-					country: optional(string())
-				})
-			)
+					country: optional(string()),
+				}),
+			),
 );
 
 function validateAddress(addressData: AddressData | undefined) {
@@ -132,18 +138,18 @@ function validateAddress(addressData: AddressData | undefined) {
 		return;
 	}
 	if (!addressData && field?.required) {
-		validationStore.setError(fieldName, 'Address is required');
+		validationStore.setError(fieldName, "Address is required");
 		return;
 	}
 	handleWidgetValidation(() => parse(addressSchema, addressData), {
 		fieldName,
-		updateStore: true
+		updateStore: true,
 	});
 }
 
 // --- 2. Country Data & Search ---
 
-let countrySearch = $state('');
+let countrySearch = $state("");
 
 // Reactive list of countries from store
 const countries = $derived(countryStore.countries);
@@ -162,9 +168,11 @@ const filteredCountries = $derived(
 			return true;
 		}
 		const term = countrySearch.toLowerCase();
-		const name = countryStore.getCountryName(c.alpha2, UI_LANGUAGE).toLowerCase();
+		const name = countryStore
+			.getCountryName(c.alpha2, UI_LANGUAGE)
+			.toLowerCase();
 		return name.includes(term) || c.alpha2.toLowerCase().includes(term);
-	})
+	}),
 );
 
 // --- 3. Google Maps Integration ---
@@ -180,13 +188,13 @@ onMount(async () => {
 	// Initialize value if completely missing
 	if (!value) {
 		const initialAddress = {
-			street: '',
-			houseNumber: '',
-			postalCode: '',
-			city: '',
-			country: (field.defaultCountry as string) || 'DE',
+			street: "",
+			houseNumber: "",
+			postalCode: "",
+			city: "",
+			country: (field.defaultCountry as string) || "DE",
 			latitude: (field.mapCenter as { lat: number; lng: number })?.lat || 0,
-			longitude: (field.mapCenter as { lat: number; lng: number })?.lng || 0
+			longitude: (field.mapCenter as { lat: number; lng: number })?.lng || 0,
 		};
 
 		if (field.translated) {
@@ -196,33 +204,37 @@ onMount(async () => {
 		}
 	}
 
-	if (googleMapsApiKey && !(field.hiddenFields as string[])?.includes('map')) {
+	if (googleMapsApiKey && !(field.hiddenFields as string[])?.includes("map")) {
 		await initMap();
 	}
 });
 
 async function initMap() {
 	if (!googleMapsApiKey) {
-		console.warn('Google Maps API Key is missing. Map functionality disabled.');
+		console.warn("Google Maps API Key is missing. Map functionality disabled.");
 		return;
 	}
 
 	setOptions({
 		key: googleMapsApiKey,
-		v: 'weekly',
-		libraries: ['places']
+		v: "weekly",
+		libraries: ["places"],
 	});
 
 	try {
-		const { Map } = (await importLibrary('maps')) as google.maps.MapsLibrary;
-		const { Marker } = (await importLibrary('marker')) as google.maps.MarkerLibrary;
-		const { Autocomplete } = (await importLibrary('places')) as google.maps.PlacesLibrary;
+		const { Map } = (await importLibrary("maps")) as google.maps.MapsLibrary;
+		const { Marker } = (await importLibrary(
+			"marker",
+		)) as google.maps.MarkerLibrary;
+		const { Autocomplete } = (await importLibrary(
+			"places",
+		)) as google.maps.PlacesLibrary;
 
 		// Initialize Map
 		if (mapElement) {
 			const center = {
 				lat: safeValue?.latitude || (field.mapCenter as any)?.lat || 51.1657,
-				lng: safeValue?.longitude || (field.mapCenter as any)?.lng || 10.4515
+				lng: safeValue?.longitude || (field.mapCenter as any)?.lng || 10.4515,
 			};
 
 			map = new Map(mapElement, {
@@ -230,7 +242,7 @@ async function initMap() {
 				zoom: safeValue?.latitude ? 15 : (field.zoom as number) || 6,
 				mapTypeControl: false,
 				streetViewControl: false,
-				fullscreenControl: true
+				fullscreenControl: true,
 			});
 
 			// Initialize Marker
@@ -238,54 +250,64 @@ async function initMap() {
 				position: center,
 				map,
 				draggable: true,
-				title: 'Location'
+				title: "Location",
 			});
 
-			marker.addListener('dragend', () => {
+			marker.addListener("dragend", () => {
 				const pos = marker?.getPosition();
 				if (pos) {
-					updateAddressField('latitude', pos.lat());
-					updateAddressField('longitude', pos.lng());
+					updateAddressField("latitude", pos.lat());
+					updateAddressField("longitude", pos.lng());
 				}
 			});
 
 			// Locate Me Button
-			const locationButton = document.createElement('button');
-			locationButton.textContent = 'Locate Me';
-			locationButton.classList.add('btn', 'variant-filled-primary', 'btn-sm', 'm-2', 'absolute', 'bottom-0', 'left-0');
-			locationButton.type = 'button';
+			const locationButton = document.createElement("button");
+			locationButton.textContent = "Locate Me";
+			locationButton.classList.add(
+				"btn",
+				"variant-filled-primary",
+				"btn-sm",
+				"m-2",
+				"absolute",
+				"bottom-0",
+				"left-0",
+			);
+			locationButton.type = "button";
 
-			locationButton.addEventListener('click', () => {
+			locationButton.addEventListener("click", () => {
 				if (navigator.geolocation) {
 					navigator.geolocation.getCurrentPosition(
 						(position) => {
 							const pos = {
 								lat: position.coords.latitude,
-								lng: position.coords.longitude
+								lng: position.coords.longitude,
 							};
 							map?.setCenter(pos);
 							map?.setZoom(17);
 							marker?.setPosition(pos);
-							updateAddressField('latitude', pos.lat);
-							updateAddressField('longitude', pos.lng);
+							updateAddressField("latitude", pos.lat);
+							updateAddressField("longitude", pos.lng);
 						},
 						() => {
 							// handleLocationError(true, infoWindow, map.getCenter()!);
-						}
+						},
 					);
 				}
 			});
-			map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(locationButton);
+			map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(
+				locationButton,
+			);
 		}
 
 		// Initialize Autocomplete
 		if (searchInput) {
 			autocomplete = new Autocomplete(searchInput, {
-				fields: ['address_components', 'geometry', 'formatted_address'],
-				types: ['address']
+				fields: ["address_components", "geometry", "formatted_address"],
+				types: ["address"],
 			});
 
-			autocomplete.addListener('place_changed', () => {
+			autocomplete.addListener("place_changed", () => {
 				const place = autocomplete?.getPlace();
 				if (!place?.geometry?.location) {
 					return;
@@ -303,47 +325,47 @@ async function initMap() {
 			});
 		}
 	} catch (e) {
-		console.error('Google Maps Load Error:', e);
+		console.error("Google Maps Load Error:", e);
 	}
 }
 
 function fillInAddress(place: google.maps.places.PlaceResult) {
-	let street = '';
-	let houseNumber = '';
-	let postalCode = '';
-	let city = '';
-	let country = '';
+	let street = "";
+	let houseNumber = "";
+	let postalCode = "";
+	let city = "";
+	let country = "";
 
 	for (const component of place.address_components || []) {
 		const type = component.types[0];
 		switch (type) {
-			case 'route':
+			case "route":
 				street = component.long_name;
 				break;
-			case 'street_number':
+			case "street_number":
 				houseNumber = component.long_name;
 				break;
-			case 'postal_code':
+			case "postal_code":
 				postalCode = component.long_name;
 				break;
-			case 'locality':
+			case "locality":
 				city = component.long_name;
 				break;
-			case 'country':
+			case "country":
 				country = component.short_name; // ISO 2 code
 				break;
 		}
 	}
 
-	updateAddressField('street', street);
-	updateAddressField('houseNumber', houseNumber);
-	updateAddressField('postalCode', postalCode);
-	updateAddressField('city', city);
-	updateAddressField('country', country);
+	updateAddressField("street", street);
+	updateAddressField("houseNumber", houseNumber);
+	updateAddressField("postalCode", postalCode);
+	updateAddressField("city", city);
+	updateAddressField("country", country);
 
 	if (place.geometry?.location) {
-		updateAddressField('latitude', place.geometry.location.lat());
-		updateAddressField('longitude', place.geometry.location.lng());
+		updateAddressField("latitude", place.geometry.location.lat());
+		updateAddressField("longitude", place.geometry.location.lng());
 	}
 }
 </script>

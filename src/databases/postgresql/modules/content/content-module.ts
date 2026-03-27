@@ -109,7 +109,9 @@ export class ContentModule {
     deleteMany: async (
       draftIds: DatabaseId[],
     ): Promise<DatabaseResult<{ deletedCount: number }>> => {
-      return this.crud.deleteMany("content_drafts", { _id: { $in: draftIds } } as any);
+      return this.crud.deleteMany("content_drafts", {
+        _id: { $in: draftIds },
+      } as any);
     },
   };
 
@@ -151,7 +153,10 @@ export class ContentModule {
       return this.core.wrap(async () => {
         const [updated] = await this.db
           .update(schema.contentNodes)
-          .set({ ...changes, updatedAt: isoDateStringToDate(nowISODateString()) } as any)
+          .set({
+            ...changes,
+            updatedAt: isoDateStringToDate(nowISODateString()),
+          } as any)
           .where(eq(schema.contentNodes.path, path))
           .returning();
         return utils.convertDatesToISO(updated) as unknown as ContentNode;
@@ -160,7 +165,11 @@ export class ContentModule {
 
     bulkUpdate: async (
       updates: { path: string; id?: string; changes: Partial<ContentNode> }[],
-      _options?: { tenantId?: string | null; bypassTenantCheck?: boolean; bypassCache?: boolean },
+      _options?: {
+        tenantId?: string | null;
+        bypassTenantCheck?: boolean;
+        bypassCache?: boolean;
+      },
     ): Promise<DatabaseResult<ContentNode[]>> => {
       return this.core.wrap(async () => {
         const results: ContentNode[] = [];
@@ -205,13 +214,22 @@ export class ContentModule {
     },
 
     reorderStructure: async (
-      items: Array<{ id: string; parentId: string | null; order: number; path: string }>,
+      items: Array<{
+        id: string;
+        parentId: string | null;
+        order: number;
+        path: string;
+      }>,
     ): Promise<DatabaseResult<void>> => {
       return this.core.wrap(async () => {
         for (const item of items) {
           await this.db
             .update(schema.contentNodes)
-            .set({ parentId: item.parentId, order: item.order, path: item.path })
+            .set({
+              parentId: item.parentId,
+              order: item.order,
+              path: item.path,
+            })
             .where(eq(schema.contentNodes._id, item.id));
         }
       }, "REORDER_STRUCTURE_FAILED");
@@ -263,7 +281,9 @@ export class ContentModule {
     deleteMany: async (
       revisionIds: DatabaseId[],
     ): Promise<DatabaseResult<{ deletedCount: number }>> => {
-      return this.crud.deleteMany("content_revisions", { _id: { $in: revisionIds } } as any);
+      return this.crud.deleteMany("content_revisions", {
+        _id: { $in: revisionIds },
+      } as any);
     },
 
     cleanup: async (
@@ -271,7 +291,9 @@ export class ContentModule {
       keepLatest: number,
     ): Promise<DatabaseResult<{ deletedCount: number }>> => {
       return this.core.wrap(async () => {
-        const history = await this.revisions.getHistory(contentId, { pageSize: 1000 });
+        const history = await this.revisions.getHistory(contentId, {
+          pageSize: 1000,
+        });
         if (!history.success || history.data.items.length <= keepLatest) return { deletedCount: 0 };
         const toDelete = history.data.items.slice(keepLatest).map((i) => i._id);
         const deleteRes = await this.revisions.deleteMany(toDelete);

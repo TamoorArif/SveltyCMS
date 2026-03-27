@@ -43,13 +43,24 @@ export class CacheModule {
     }, "CACHE_DELETE_FAILED");
   }
 
-  async clear(): Promise<DatabaseResult<void>> {
+  async clear(tags?: string[]): Promise<DatabaseResult<void>> {
     return this.core.wrap(async () => {
-      this._cache.clear();
+      if (tags && tags.length > 0) {
+        for (const [key] of this._cache) {
+          if (tags.some((tag) => key.includes(tag))) {
+            this._cache.delete(key);
+          }
+        }
+      } else {
+        this._cache.clear();
+      }
     }, "CACHE_CLEAR_FAILED");
   }
 
-  async invalidateCollection(collection: string): Promise<DatabaseResult<void>> {
+  async invalidateCollection(
+    collection: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
     return this.core.wrap(async () => {
       for (const key of this._cache.keys()) {
         if (key.includes(collection)) {
@@ -57,5 +68,18 @@ export class CacheModule {
         }
       }
     }, "CACHE_INVALIDATE_COLLECTION_FAILED");
+  }
+
+  async invalidateCategory(
+    category: string,
+    _tenantId?: string | null,
+  ): Promise<DatabaseResult<void>> {
+    return this.core.wrap(async () => {
+      for (const key of this._cache.keys()) {
+        if (key.includes(category)) {
+          this._cache.delete(key);
+        }
+      }
+    }, "CACHE_INVALIDATE_CATEGORY_FAILED");
   }
 }

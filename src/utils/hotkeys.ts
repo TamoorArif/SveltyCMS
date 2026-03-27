@@ -121,7 +121,9 @@ export function registerHotkey(
   onDestroy(() => {
     hotkeys.delete(norm);
     if (hotkeys.size === 0 && listenerActive) {
-      window.removeEventListener("keydown", globalKeydownHandler, { capture: true });
+      window.removeEventListener("keydown", globalKeydownHandler, {
+        capture: true,
+      });
       listenerActive = false;
     }
   });

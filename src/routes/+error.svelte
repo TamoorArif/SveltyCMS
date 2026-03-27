@@ -17,8 +17,8 @@
 <script lang="ts">
 // Stores
 
-import SiteName from '@src/components/site-name.svelte';
-import SveltyCMSLogo from '@src/components/system/icons/svelty-cms-logo.svelte';
+import SiteName from "@src/components/site-name.svelte";
+import SveltyCMSLogo from "@src/components/system/icons/svelty-cms-logo.svelte";
 import {
 	db_error_description,
 	db_error_title,
@@ -26,19 +26,22 @@ import {
 	error_page_moved,
 	error_pagenotfound,
 	error_skip_content,
-	error_wrong
-} from '@src/paraglide/messages';
-import { app } from '@src/stores/store.svelte';
-import { page } from '$app/state';
+	error_wrong,
+} from "@src/paraglide/messages";
+import { app } from "@src/stores/store.svelte";
+import { page } from "$app/state";
 
 const size = 140;
 const font = 0.9;
 const repeat = 3;
-const separator = ' • ';
+const separator = " • ";
 
-const siteName = page.data?.settings?.SITE_NAME || 'SveltyCMS';
-const combinedString = Array.from({ length: repeat }, () => siteName + separator).join('');
-const array: string[] = combinedString.split('').filter((char) => char !== ' ');
+const siteName = page.data?.settings?.SITE_NAME || "SveltyCMS";
+const combinedString = Array.from(
+	{ length: repeat },
+	() => siteName + separator,
+).join("");
+const array: string[] = combinedString.split("").filter((char) => char !== " ");
 const patternLength = array.length / repeat;
 
 function isCMSChar(index: number): boolean {
@@ -47,13 +50,27 @@ function isCMSChar(index: number): boolean {
 }
 
 // Dynamic Error Handling logic
-const msg = (page.error?.message || '').toLowerCase();
-const isDatabaseError = page.status === 503 && (msg.includes('database') || msg.includes('connection') || msg.includes('failed to initialize'));
-const isSetupMode = page.status === 503 && msg.includes('setup');
+const msg = (page.error?.message || "").toLowerCase();
+const isDatabaseError =
+	page.status === 503 &&
+	(msg.includes("database") ||
+		msg.includes("connection") ||
+		msg.includes("failed to initialize"));
+const isSetupMode = page.status === 503 && msg.includes("setup");
 
-const errorTitle = isDatabaseError ? db_error_title() : page.status === 404 ? error_pagenotfound() : 'Error';
+const errorTitle = isDatabaseError
+	? db_error_title()
+	: page.status === 404
+		? error_pagenotfound()
+		: "Error";
 
-const errorSummary = isDatabaseError ? db_error_description() : isSetupMode ? 'System in Setup Mode' : page.status === 404 ? error_pagenotfound() : error_wrong();
+const errorSummary = isDatabaseError
+	? db_error_description()
+	: isSetupMode
+		? "System in Setup Mode"
+		: page.status === 404
+			? error_pagenotfound()
+			: error_wrong();
 </script>
 
 <svelte:head><title>{page.status} - {errorTitle} | {siteName}</title></svelte:head>

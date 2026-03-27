@@ -67,7 +67,12 @@ async function runDatabaseBenchmark() {
       process.exit(1);
     }
     const Schema = new mongoose.Schema(
-      { firstName: String, lastName: String, status: String, benchmarkId: String },
+      {
+        firstName: String,
+        lastName: String,
+        status: String,
+        benchmarkId: String,
+      },
       { timestamps: true },
     );
     BenchModel = mongoose.models[COLLECTION] || mongoose.model(COLLECTION, Schema);

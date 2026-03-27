@@ -16,23 +16,26 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
-import PageTitle from '@src/components/page-title.svelte';
-import { system_permission, system_roles } from '@src/paraglide/messages';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import { page } from '$app/state';
-import { beforeNavigate } from '$app/navigation';
-import { showConfirm } from '@utils/modal-utils';
-import { modalState } from '@utils/modal-state.svelte';
-import AdminRole from './admin-role.svelte';
-import Permissions from './permissions.svelte';
-import Roles from './roles.svelte';
-import WebsiteTokens from './website-tokens.svelte';
+import { Tabs } from "@skeletonlabs/skeleton-svelte";
+import PageTitle from "@src/components/page-title.svelte";
+import { system_permission, system_roles } from "@src/paraglide/messages";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import { page } from "$app/state";
+import { beforeNavigate } from "$app/navigation";
+import { showConfirm } from "@utils/modal-utils";
+import { modalState } from "@utils/modal-state.svelte";
+import AdminRole from "./admin-role.svelte";
+import Permissions from "./permissions.svelte";
+import Roles from "./roles.svelte";
+import WebsiteTokens from "./website-tokens.svelte";
 
 // Use $state for local component state
-let currentTab = $state('0'); // Initial tab set to string '0' for Tabs component
+let currentTab = $state("0"); // Initial tab set to string '0' for Tabs component
 
 // Use $state for page data that needs to be mutable
 let rolesData = $state(page.data.roles); // Renamed from `roles` to `rolesData` for clarity with internal `roles` in sub-components
@@ -59,30 +62,30 @@ const saveAllChanges = async () => {
 		async () => {
 			try {
 				// Send the `rolesData` (which includes modifications from children) to the API
-				const response = await fetch('/api/permission/update', {
-					method: 'POST',
+				const response = await fetch("/api/permission/update", {
+					method: "POST",
 					headers: {
-						'Content-Type': 'application/json'
+						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ roles: rolesData })
+					body: JSON.stringify({ roles: rolesData }),
 				});
 
 				if (response.status === 200) {
-					toast.success('Configuration updated successfully!');
+					toast.success("Configuration updated successfully!");
 					hasModifiedChanges = false;
 					modifiedCount = 0;
 				} else if (response.status === 304) {
-					toast.info('No changes detected, configuration not updated.');
+					toast.info("No changes detected, configuration not updated.");
 				} else {
 					const responseText = await response.text();
 					toast.error(`Error updating configuration: ${responseText}`);
 				}
 			} catch (error) {
-				logger.error('Network error during save:', error);
-				toast.error('Network error occurred while updating configuration.');
+				logger.error("Network error during save:", error);
+				toast.error("Network error occurred while updating configuration.");
 			}
 		},
-		'Saving access control configuration'
+		"Saving access control configuration",
 	);
 };
 
@@ -90,7 +93,7 @@ const resetChanges = async () => {
 	rolesData = page.data.roles;
 	hasModifiedChanges = false;
 	modifiedCount = 0;
-	toast.info('Changes have been reset.');
+	toast.info("Changes have been reset.");
 };
 
 // Accessibility: Unsaved changes warning
@@ -98,18 +101,18 @@ beforeNavigate(({ cancel }) => {
 	if (hasModifiedChanges || modalState.isOpen) {
 		cancel();
 		if (modalState.isOpen) {
-			toast.warning('Please close the edit modal before navigating away.');
+			toast.warning("Please close the edit modal before navigating away.");
 			return;
 		}
 		showConfirm({
-			title: 'Unsaved Changes',
-			body: 'You have unsaved changes in the Access Management configuration. Are you sure you want to leave this page?',
+			title: "Unsaved Changes",
+			body: "You have unsaved changes in the Access Management configuration. Are you sure you want to leave this page?",
 			onConfirm: () => {
 				hasModifiedChanges = false; // Bypass next check
 				// We can't easily "resume" navigation in SvelteKit without re-triggering or manual URL change
 				// but setting flag and letting user click again is a safe standard pattern
-				toast.info('Changes discarded. You can now navigate away.');
-			}
+				toast.info("Changes discarded. You can now navigate away.");
+			},
 		});
 	}
 });

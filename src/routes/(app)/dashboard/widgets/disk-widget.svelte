@@ -21,9 +21,9 @@ This widget fetches and displays real-time disk usage data, including:
 -->
 <script lang="ts" module>
 export const widgetMeta = {
-	name: 'Disk Usage',
-	icon: 'mdi:disk',
-	defaultSize: { w: 1, h: 2 }
+	name: "Disk Usage",
+	icon: "mdi:disk",
+	defaultSize: { w: 1, h: 2 },
 };
 </script>
 

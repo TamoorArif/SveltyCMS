@@ -7,25 +7,27 @@ Sidebar navigation for System Settings
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import type { SettingGroup } from '@src/routes/(app)/config/system-settings/settings-groups';
-import { getSettingGroupsByRole } from '@src/routes/(app)/config/system-settings/settings-groups';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import type { SettingGroup } from "@src/routes/(app)/config/system-settings/settings-groups";
+import { getSettingGroupsByRole } from "@src/routes/(app)/config/system-settings/settings-groups";
 // Stores
-import { groupsNeedingConfig } from '@src/stores/config-store.svelte';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import { groupsNeedingConfig } from "@src/stores/config-store.svelte";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
 
 // Props
 let { isFullSidebar = true } = $props();
 
 // State
-let searchTerm = $state('');
+let searchTerm = $state("");
 
 // Derived
 const user = $derived(page.data.user);
-const isAdmin = $derived(user?.role === 'admin'); // Simple admin check, should match +page logic
-const availableGroups: SettingGroup[] = $derived(getSettingGroupsByRole(isAdmin).sort((a, b) => a.name.localeCompare(b.name)));
-const selectedGroupId = $derived(page.url.searchParams.get('group'));
+const isAdmin = $derived(user?.role === "admin"); // Simple admin check, should match +page logic
+const availableGroups: SettingGroup[] = $derived(
+	getSettingGroupsByRole(isAdmin).sort((a, b) => a.name.localeCompare(b.name)),
+);
+const selectedGroupId = $derived(page.url.searchParams.get("group"));
 
 // Filter logic
 const filteredGroups = $derived.by(() => {
@@ -41,7 +43,11 @@ const filteredGroups = $derived.by(() => {
 			return true;
 		}
 		if (
-			group.fields.some((field) => field.label.toLowerCase().includes(lowerCaseSearchTerm) || field.key.toLowerCase().includes(lowerCaseSearchTerm))
+			group.fields.some(
+				(field) =>
+					field.label.toLowerCase().includes(lowerCaseSearchTerm) ||
+					field.key.toLowerCase().includes(lowerCaseSearchTerm),
+			)
 		) {
 			return true;
 		}
@@ -52,7 +58,7 @@ const filteredGroups = $derived.by(() => {
 function handleGroupClick(groupId: string) {
 	// Update URL query param to switch groups
 	const url = new URL(page.url);
-	url.searchParams.set('group', groupId);
+	url.searchParams.set("group", groupId);
 
 	goto(url.toString());
 }

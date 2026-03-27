@@ -65,7 +65,10 @@ async function isGitDirty(): Promise<boolean> {
 }
 
 async function ensureRemote(): Promise<string> {
-  const { stdout } = await runCommand("git", ["remote", "-v"], { capture: true, silent: true });
+  const { stdout } = await runCommand("git", ["remote", "-v"], {
+    capture: true,
+    silent: true,
+  });
   if (stdout.includes(UPSTREAM_URL)) {
     const lines = stdout.split("\n");
     const upstreamLine = lines.find((line) => line.includes(UPSTREAM_URL));

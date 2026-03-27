@@ -23,7 +23,7 @@ let {
 	onZoomChange = (_percent: number) => {},
 	onFitToScreen = () => {},
 	onFillScreen = () => {},
-	onActualSize = () => {}
+	onActualSize = () => {},
 }: {
 	zoomLevel?: number;
 	minZoom?: number;
@@ -44,7 +44,7 @@ let sliderValue = {
 	},
 	set value(v: number) {
 		localSliderValue = v;
-	}
+	},
 };
 
 function handleSliderChange(e: Event) {

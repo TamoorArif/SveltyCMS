@@ -30,7 +30,9 @@ async function cleanup(exitCode = 0) {
   console.log("\n🧹 Cleaning up test environment...");
   if (previewProcess && previewProcess.pid) {
     if (process.platform === "win32") {
-      spawn("taskkill", ["/F", "/T", "/PID", previewProcess.pid.toString()], { stdio: "ignore" });
+      spawn("taskkill", ["/F", "/T", "/PID", previewProcess.pid.toString()], {
+        stdio: "ignore",
+      });
     } else {
       // Using negative PID kills the entire process group (prevents orphaned children)
       try {

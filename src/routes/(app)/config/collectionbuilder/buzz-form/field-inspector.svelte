@@ -17,14 +17,14 @@
 -->
 
 <script lang="ts">
-import { Tabs } from '@skeletonlabs/skeleton-svelte';
-import InputSwitch from '@src/components/system/builder/input-switch.svelte';
-import { collections } from '@src/stores/collection-store.svelte';
-import { widgets } from '@src/stores/widget-store.svelte.ts';
-import { asAny } from '@utils/utils';
-import type { Component } from 'svelte';
-import Permission from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte';
-import Specific from '../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/specific.svelte';
+import { Tabs } from "@skeletonlabs/skeleton-svelte";
+import InputSwitch from "@src/components/system/builder/input-switch.svelte";
+import { collections } from "@src/stores/collection-store.svelte";
+import { widgets } from "@src/stores/widget-store.svelte.ts";
+import { asAny } from "@utils/utils";
+import type { Component } from "svelte";
+import Permission from "../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/permission.svelte";
+import Specific from "../[action]/[...contentPath]/tabs/collection-widget/tabs-fields/specific.svelte";
 
 interface Props {
 	onDelete: () => void;
@@ -32,20 +32,39 @@ interface Props {
 }
 const { onDelete, onDuplicate }: Props = $props();
 
-let activeTab = $state('general');
+let activeTab = $state("general");
 
 const target = $derived(collections.targetWidget) as any;
-const widgetKey = $derived(target?.widget?.key || target?.widget?.Name?.toLowerCase() || '');
+const widgetKey = $derived(
+	target?.widget?.key || target?.widget?.Name?.toLowerCase() || "",
+);
 const availableWidgets = $derived(widgets.widgetFunctions || {});
-const guiSchema = $derived((asAny<any>(availableWidgets)[widgetKey]?.GuiSchema || {}) as Record<string, { widget: Component<any> }>);
+const guiSchema = $derived(
+	(asAny<any>(availableWidgets)[widgetKey]?.GuiSchema || {}) as Record<
+		string,
+		{ widget: Component<any> }
+	>,
+);
 
 const allProperties = $derived(Object.keys(guiSchema || {}));
-const standardProperties = ['label', 'db_fieldName', 'required', 'translated', 'icon', 'helper', 'width'];
+const standardProperties = [
+	"label",
+	"db_fieldName",
+	"required",
+	"translated",
+	"icon",
+	"helper",
+	"width",
+];
 const displayProperties = $derived([...standardProperties]);
-const specificProperties = $derived(allProperties.filter((prop) => !standardProperties.includes(prop) && prop !== 'permissions'));
+const specificProperties = $derived(
+	allProperties.filter(
+		(prop) => !standardProperties.includes(prop) && prop !== "permissions",
+	),
+);
 
 function defaultValue(property: string) {
-	if (property === 'required' || property === 'translated') {
+	if (property === "required" || property === "translated") {
 		return false;
 	}
 	return (target.widget as any)?.Name;

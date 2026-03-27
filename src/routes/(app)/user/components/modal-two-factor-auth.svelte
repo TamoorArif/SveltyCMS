@@ -24,7 +24,7 @@ This component provides a user interface for managing 2FA settings:
 -->
 
 <script lang="ts">
-import type { User } from '@src/databases/auth/types';
+import type { User } from "@src/databases/auth/types";
 // ParaglideJS
 import {
 	button_cancel,
@@ -57,14 +57,14 @@ import {
 	twofa_verify_button,
 	twofa_verify_setup_description,
 	twofa_verify_setup_title,
-	twofa_verifying
-} from '@src/paraglide/messages';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { logger } from '@utils/logger';
-import { invalidateAll } from '$app/navigation';
+	twofa_verifying,
+} from "@src/paraglide/messages";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { logger } from "@utils/logger";
+import { invalidateAll } from "$app/navigation";
 // Skeleton & Stores
 // getModalStore deprecated - use modalState from @utils/modal-state.svelte;
-import TwoFactorVerifyModal from './two-factor-verify-modal.svelte';
+import TwoFactorVerifyModal from "./two-factor-verify-modal.svelte";
 
 interface Props {
 	body?: string;
@@ -88,7 +88,7 @@ let setupData = $state<{
 	secret: string;
 	backupCodes: string[];
 } | null>(null);
-let verificationCode = $state('');
+let verificationCode = $state("");
 
 // Check if 2FA is enabled
 const is2FAEnabled = $derived(user?.is2FAEnabled);
@@ -102,10 +102,10 @@ $effect(() => {
 
 // Show success toast
 function showSuccessToast(message: string) {
-	toast.success({ title: 'Success', description: message });
+	toast.success({ title: "Success", description: message });
 }
 function showErrorToast(message: string) {
-	toast.error({ title: 'Error', description: message });
+	toast.error({ title: "Error", description: message });
 }
 
 // Load setup data (QR code, secret, backup codes)
@@ -117,35 +117,40 @@ async function loadSetupData() {
 	isLoading = true;
 
 	try {
-		const response = await fetch('/api/auth/2fa/setup', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
+		const response = await fetch("/api/auth/2fa/setup", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 		});
 
 		const result = await response.json();
 
 		if (!response.ok) {
-			throw new Error(result.message || 'Failed to setup 2FA');
+			throw new Error(result.message || "Failed to setup 2FA");
 		}
 
 		// The data is nested inside result.data
 		const data = result.data || result;
 
 		// Get the otpauth URL
-		const otpauthUrl = data.qrCodeURL || data.qrCodeUrl || data.qrCode || data.qr_code_url || '';
+		const otpauthUrl =
+			data.qrCodeURL || data.qrCodeUrl || data.qrCode || data.qr_code_url || "";
 
 		// Generate QR code image URL using a QR code API
 		// Using qrcode.show API (simple, no registration needed)
-		const qrCodeImageUrl = otpauthUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(otpauthUrl)}` : '';
+		const qrCodeImageUrl = otpauthUrl
+			? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(otpauthUrl)}`
+			: "";
 
 		setupData = {
 			qrCodeUrl: qrCodeImageUrl,
-			secret: data.secret || data.secretKey || data.secret_key || '',
-			backupCodes: data.backupCodes || data.backup_codes || []
+			secret: data.secret || data.secretKey || data.secret_key || "",
+			backupCodes: data.backupCodes || data.backup_codes || [],
 		};
 	} catch (error) {
-		logger.error('2FA setup error:', error);
-		showErrorToast(error instanceof Error ? error.message : twofa_error_setup_failed());
+		logger.error("2FA setup error:", error);
+		showErrorToast(
+			error instanceof Error ? error.message : twofa_error_setup_failed(),
+		);
 	} finally {
 		isLoading = false;
 	}
@@ -160,24 +165,26 @@ async function verify2FA() {
 	isLoading = true;
 
 	try {
-		const response = await fetch('/api/auth/2fa/verify', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ code: verificationCode })
+		const response = await fetch("/api/auth/2fa/verify", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ code: verificationCode }),
 		});
 
 		const result = await response.json();
 
 		if (!response.ok) {
-			throw new Error(result.message || 'Failed to verify 2FA code');
+			throw new Error(result.message || "Failed to verify 2FA code");
 		}
 
 		showSuccessToast(twofa_success_enabled());
 		await invalidateAll();
 		close?.({ success: true });
 	} catch (error) {
-		logger.error('2FA verification error:', error);
-		showErrorToast(error instanceof Error ? error.message : twofa_error_invalid_code());
+		logger.error("2FA verification error:", error);
+		showErrorToast(
+			error instanceof Error ? error.message : twofa_error_invalid_code(),
+		);
 	} finally {
 		isLoading = false;
 	}
@@ -190,13 +197,13 @@ async function disable2FA() {
 	}
 
 	// Show verification modal first
-	const { modalState } = await import('@utils/modal-state.svelte');
+	const { modalState } = await import("@utils/modal-state.svelte");
 
 	modalState.trigger(
 		TwoFactorVerifyModal as any,
 		{
 			title: twofa_disable_verify_title(),
-			description: twofa_disable_verify_description()
+			description: twofa_disable_verify_description(),
 		},
 		async (code: string | null) => {
 			if (!code) {
@@ -206,27 +213,29 @@ async function disable2FA() {
 			isLoading = true;
 
 			try {
-				const response = await fetch('/api/auth/2fa/disable', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ code })
+				const response = await fetch("/api/auth/2fa/disable", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ code }),
 				});
 
 				const result = await response.json();
 
 				if (!response.ok) {
-					throw new Error(result.message || 'Failed to disable 2FA');
+					throw new Error(result.message || "Failed to disable 2FA");
 				}
 
 				showSuccessToast(twofa_success_disabled());
 				await invalidateAll();
 			} catch (error) {
-				logger.error('2FA disable error:', error);
-				showErrorToast(error instanceof Error ? error.message : 'Failed to disable 2FA');
+				logger.error("2FA disable error:", error);
+				showErrorToast(
+					error instanceof Error ? error.message : "Failed to disable 2FA",
+				);
 			} finally {
 				isLoading = false;
 			}
-		}
+		},
 	);
 }
 
@@ -239,30 +248,35 @@ async function generateBackupCodes() {
 	isLoading = true;
 
 	try {
-		const response = await fetch('/api/auth/2fa/backup-codes', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
+		const response = await fetch("/api/auth/2fa/backup-codes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 		});
 
 		const result = await response.json();
 
 		if (!response.ok) {
-			throw new Error(result.message || 'Failed to generate backup codes');
+			throw new Error(result.message || "Failed to generate backup codes");
 		}
 
 		backupCodes = result.backupCodes;
 		showSuccessToast(twofa_backup_codes_generated());
 	} catch (error) {
-		logger.error('Backup codes error:', error);
-		showErrorToast(error instanceof Error ? error.message : 'Failed to generate backup codes');
+		logger.error("Backup codes error:", error);
+		showErrorToast(
+			error instanceof Error
+				? error.message
+				: "Failed to generate backup codes",
+		);
 	} finally {
 		isLoading = false;
 	}
 }
 
 // Base Classes for modal
-const cHeader = 'text-2xl font-bold';
-const cForm = 'border border-surface-500 p-3 space-y-3 rounded-xl overflow-y-auto flex-1';
+const cHeader = "text-2xl font-bold";
+const cForm =
+	"border border-surface-500 p-3 space-y-3 rounded-xl overflow-y-auto flex-1";
 </script>
 
 <!-- Main Modal Component -->

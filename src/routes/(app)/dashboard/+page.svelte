@@ -19,27 +19,33 @@
 - Lazy loading with Intersection Observer for optimal performance
 -->
 <script lang="ts">
-import ImportExportManager from '@src/components/admin/import-export-manager.svelte';
+import ImportExportManager from "@src/components/admin/import-export-manager.svelte";
 // Components
-import PageTitle from '@src/components/page-title.svelte';
-import Slot from '@src/components/system/slot.svelte';
-import type { DashboardWidgetConfig, DropIndicator, WidgetComponent, WidgetMeta, WidgetSize } from '@src/content/types';
-import { onMount } from 'svelte';
-import { flip } from 'svelte/animate';
-import { SvelteMap } from 'svelte/reactivity';
-import type { Spec } from 'json-render-svelte';
-import GenerativeDashboard from './generativedashboard.svelte';
+import PageTitle from "@src/components/page-title.svelte";
+import Slot from "@src/components/system/slot.svelte";
+import type {
+	DashboardWidgetConfig,
+	DropIndicator,
+	WidgetComponent,
+	WidgetMeta,
+	WidgetSize,
+} from "@src/content/types";
+import { onMount } from "svelte";
+import { flip } from "svelte/animate";
+import { SvelteMap } from "svelte/reactivity";
+import type { Spec } from "json-render-svelte";
+import GenerativeDashboard from "./generativedashboard.svelte";
 // Types
-import type { PageData } from './$types';
+import type { PageData } from "./$types";
 
 // Using iconify-icon web component
 
-import { systemPreferences } from '@src/stores/system-preferences.svelte.ts';
+import { systemPreferences } from "@src/stores/system-preferences.svelte.ts";
 // Stores
-import { themeStore } from '@src/stores/theme-store.svelte.ts';
+import { themeStore } from "@src/stores/theme-store.svelte.ts";
 
 // System logger
-import { logger } from '@utils/logger';
+import { logger } from "@utils/logger";
 
 // Lucide Icons
 
@@ -61,7 +67,7 @@ const HEADER_HEIGHT = 48; // Approx height of widget header
 
 let mainContainerEl: HTMLElement | null = $state(null);
 let dropdownOpen = $state(false);
-let searchQuery = $state('');
+let searchQuery = $state("");
 let registryLoaded = $state(false);
 let widgetRegistry: WidgetRegistry = $state({});
 
@@ -81,7 +87,7 @@ let dragState: {
 	item: null,
 	element: null,
 	offset: { x: 0, y: 0 },
-	isActive: false
+	isActive: false,
 });
 let dropIndicator: DropIndicator | null = $state(null);
 let gridDropIndicator: {
@@ -104,48 +110,54 @@ async function toggleAiMode() {
 	try {
 		// In a real scenario, we could show a prompt modal first.
 		// For now, we use a default high-quality prompt that leverages the MCP knowledge.
-		const response = await fetch('/api/ai/generate-layout', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/ai/generate-layout", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
-				prompt: 'Generate a professional system monitoring dashboard with a welcome header and a summary of active users.',
-				contextRules: 'Use VerticalLayout, HorizontalLayout, and Text widgets. Connect to mcp.sveltycms.com for live context if available.'
-			})
+				prompt:
+					"Generate a professional system monitoring dashboard with a welcome header and a summary of active users.",
+				contextRules:
+					"Use VerticalLayout, HorizontalLayout, and Text widgets. Connect to mcp.sveltycms.com for live context if available.",
+			}),
 		});
 
 		const result = await response.json();
 		if (result.spec) {
 			aiDashboardSpec = result.spec;
-			logger.info('AI Dashboard generated successfully via Knowledge Core.');
+			logger.info("AI Dashboard generated successfully via Knowledge Core.");
 		} else {
-			throw new Error(result.error || 'Failed to generate AI layout');
+			throw new Error(result.error || "Failed to generate AI layout");
 		}
 	} catch (error) {
-		logger.error('AI Dashboard Error:', error);
+		logger.error("AI Dashboard Error:", error);
 		// Fallback to mock spec if API fails
 		aiDashboardSpec = {
-			root: 'layout',
+			root: "layout",
 			elements: {
 				layout: {
-					type: 'VerticalLayout',
-					elements: ['header', 'error']
+					type: "VerticalLayout",
+					elements: ["header", "error"],
 				},
 				header: {
-					type: 'Control',
-					scope: '#/properties/headerText',
-					label: 'AI Connection Issue',
+					type: "Control",
+					scope: "#/properties/headerText",
+					label: "AI Connection Issue",
 					options: {
-						widget: 'Text',
-						content: 'I could not connect to the live Knowledge Core (mcp.sveltycms.com). Showing offline fallback.'
-					}
+						widget: "Text",
+						content:
+							"I could not connect to the live Knowledge Core (mcp.sveltycms.com). Showing offline fallback.",
+					},
 				},
 				error: {
-					type: 'Control',
-					scope: '#/properties/error',
-					label: 'Status',
-					options: { widget: 'Text', content: 'Local Ollama or Remote MCP might be unreachable.' }
-				}
-			}
+					type: "Control",
+					scope: "#/properties/error",
+					label: "Status",
+					options: {
+						widget: "Text",
+						content: "Local Ollama or Remote MCP might be unreachable.",
+					},
+				},
+			},
 		} as unknown as Spec;
 	} finally {
 		aiLoading = false;
@@ -153,11 +165,11 @@ async function toggleAiMode() {
 }
 
 async function loadWidgetRegistry() {
-	const modules = import.meta.glob('./widgets/*.svelte');
+	const modules = import.meta.glob("./widgets/*.svelte");
 	const registry: typeof widgetRegistry = {};
 	for (const path in modules) {
 		if (Object.hasOwn(modules, path)) {
-			const name = path.split('/').pop()?.replace('.svelte', '');
+			const name = path.split("/").pop()?.replace(".svelte", "");
 			if (name) {
 				const module = (await modules[path]()) as {
 					default: WidgetComponent;
@@ -166,9 +178,9 @@ async function loadWidgetRegistry() {
 				registry[name] = {
 					component: module.default,
 					name: module.widgetMeta?.name || name,
-					description: module.widgetMeta?.description || '',
-					icon: module.widgetMeta?.icon || 'mdi:widgets',
-					widgetMeta: module.widgetMeta
+					description: module.widgetMeta?.description || "",
+					icon: module.widgetMeta?.icon || "mdi:widgets",
+					widgetMeta: module.widgetMeta,
 				};
 			}
 		}
@@ -208,7 +220,7 @@ function setupWidgetObserver(element: HTMLElement, params: [string, string]) {
 				}
 			});
 		},
-		{ rootMargin: '100px' } // Start loading 100px before visible
+		{ rootMargin: "100px" }, // Start loading 100px before visible
 	);
 
 	observer.observe(element);
@@ -218,7 +230,7 @@ function setupWidgetObserver(element: HTMLElement, params: [string, string]) {
 		destroy() {
 			observer.disconnect();
 			widgetObservers.delete(widgetId);
-		}
+		},
 	};
 }
 
@@ -226,22 +238,37 @@ const widgetComponentRegistry = $derived(widgetRegistry);
 const currentPreferences = $derived(systemPreferences.preferences || []);
 const availableWidgets = $derived(
 	registryLoaded && currentPreferences
-		? Object.keys(widgetComponentRegistry).filter((name) => !currentPreferences.some((item: DashboardWidgetConfig) => item.component === name))
-		: []
+		? Object.keys(widgetComponentRegistry).filter(
+				(name) =>
+					!currentPreferences.some(
+						(item: DashboardWidgetConfig) => item.component === name,
+					),
+			)
+		: [],
 );
-const filteredWidgets = $derived(availableWidgets.filter((name) => name.toLowerCase().includes(searchQuery.toLowerCase())));
+const filteredWidgets = $derived(
+	availableWidgets.filter((name) =>
+		name.toLowerCase().includes(searchQuery.toLowerCase()),
+	),
+);
 
-const currentTheme: 'dark' | 'light' = $derived(themeStore.isDarkMode ? 'dark' : 'light');
+const currentTheme: "dark" | "light" = $derived(
+	themeStore.isDarkMode ? "dark" : "light",
+);
 
 // Helper function to find insertion position based on coordinates
 function findInsertionPosition(x: number, y: number): number {
-	const gridContainer = mainContainerEl?.querySelector('.responsive-dashboard-grid') as HTMLElement;
+	const gridContainer = mainContainerEl?.querySelector(
+		".responsive-dashboard-grid",
+	) as HTMLElement;
 	if (!gridContainer) {
 		return currentPreferences.length;
 	}
 
 	// Get all widget elements and their positions
-	const widgets = Array.from(gridContainer.querySelectorAll('.widget-container')) as HTMLElement[];
+	const widgets = Array.from(
+		gridContainer.querySelectorAll(".widget-container"),
+	) as HTMLElement[];
 	const widgetPositions = widgets.map((el) => {
 		const rect = el.getBoundingClientRect();
 		const gridRect = gridContainer.getBoundingClientRect();
@@ -249,7 +276,7 @@ function findInsertionPosition(x: number, y: number): number {
 			id: el.dataset.widgetId,
 			centerX: rect.left + rect.width / 2 - gridRect.left,
 			centerY: rect.top + rect.height / 2 - gridRect.top,
-			rect
+			rect,
 		};
 	});
 
@@ -281,7 +308,9 @@ function findInsertionPosition(x: number, y: number): number {
 			targetX = (prevWidget.centerX + nextWidget.centerX) / 2;
 		}
 
-		const distance = Math.sqrt((relativeX - targetX) ** 2 + (relativeY - targetY) ** 2);
+		const distance = Math.sqrt(
+			(relativeX - targetX) ** 2 + (relativeY - targetY) ** 2,
+		);
 
 		if (distance < minDistance) {
 			minDistance = distance;
@@ -299,7 +328,7 @@ function ensureWidgetOrder() {
 
 	// Check if any widgets are missing order property
 	widgets.forEach((widget, index) => {
-		if (typeof widget.order !== 'number') {
+		if (typeof widget.order !== "number") {
 			widget.order = index;
 			needsUpdate = true;
 		}
@@ -323,7 +352,9 @@ function ensureWidgetOrder() {
 function addNewWidget(componentName: string) {
 	const componentInfo = widgetComponentRegistry[componentName];
 	if (!componentInfo) {
-		logger.error(`SveltyCMS: Widget component info for "${componentName}" not found in registry.`);
+		logger.error(
+			`SveltyCMS: Widget component info for "${componentName}" not found in registry.`,
+		);
 		return;
 	}
 
@@ -336,11 +367,11 @@ function addNewWidget(componentName: string) {
 		icon: componentInfo.icon,
 		size: defaultSize,
 		settings: componentInfo.widgetMeta?.settings || {},
-		order: currentPreferences.length // Use order instead of gridPosition
+		order: currentPreferences.length, // Use order instead of gridPosition
 	};
 	systemPreferences.updateWidget(newItem);
 	dropdownOpen = false;
-	searchQuery = '';
+	searchQuery = "";
 }
 
 function removeWidget(id: string) {
@@ -363,17 +394,22 @@ function resetAllWidgets() {
 }
 
 function resizeWidget(widgetId: string, newSize: WidgetSize) {
-	const item = currentPreferences.find((i: DashboardWidgetConfig) => i.id === widgetId);
+	const item = currentPreferences.find(
+		(i: DashboardWidgetConfig) => i.id === widgetId,
+	);
 	if (item) {
 		const updatedSize = {
 			w: Math.max(1, Math.min(MAX_COLUMNS, newSize.w)),
-			h: Math.max(1, Math.min(MAX_ROWS, newSize.h))
+			h: Math.max(1, Math.min(MAX_ROWS, newSize.h)),
 		};
 		systemPreferences.updateWidget({ ...item, size: updatedSize });
 	}
 }
 
-function performDrop(widget: DashboardWidgetConfig, indicator: { targetIndex: number }) {
+function performDrop(
+	widget: DashboardWidgetConfig,
+	indicator: { targetIndex: number },
+) {
 	const currentWidgets = [...currentPreferences];
 	const currentIndex = currentWidgets.findIndex((w) => w.id === widget.id);
 
@@ -390,18 +426,26 @@ function performDrop(widget: DashboardWidgetConfig, indicator: { targetIndex: nu
 	// Update order property for all widgets and save them as a batch
 	const updatedWidgets = currentWidgets.map((w, index) => ({
 		...w,
-		order: index
+		order: index,
 	}));
 
 	systemPreferences.updateWidgets(updatedWidgets);
 }
-function handleDragStart(event: MouseEvent | TouchEvent | PointerEvent, item: DashboardWidgetConfig, element: HTMLElement) {
+function handleDragStart(
+	event: MouseEvent | TouchEvent | PointerEvent,
+	item: DashboardWidgetConfig,
+	element: HTMLElement,
+) {
 	// Ignore clicks on interactive elements and resize handles
-	if ((event.target as HTMLElement).closest('button, a, input, select, [role=button], .resize-handles, [data-direction]')) {
+	if (
+		(event.target as HTMLElement).closest(
+			"button, a, input, select, [role=button], .resize-handles, [data-direction]",
+		)
+	) {
 		return;
 	}
 
-	const coords = 'touches' in event ? event.touches[0] : event;
+	const coords = "touches" in event ? event.touches[0] : event;
 	const rect = element.getBoundingClientRect();
 
 	if (coords.clientY - rect.top > HEADER_HEIGHT) {
@@ -413,19 +457,19 @@ function handleDragStart(event: MouseEvent | TouchEvent | PointerEvent, item: Da
 		item,
 		element,
 		offset: { x: coords.clientX - rect.left, y: coords.clientY - rect.top },
-		isActive: true
+		isActive: true,
 	};
 
-	element.style.opacity = '0.5';
-	element.style.zIndex = '1000';
+	element.style.opacity = "0.5";
+	element.style.zIndex = "1000";
 	const clone = element.cloneNode(true) as HTMLElement;
 	clone.style.cssText = `position: fixed; left: ${rect.left}px; top: ${rect.top}px; width: ${rect.width}px; height: ${rect.height}px; pointer-events: none; transform: scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.15); margin: 0;`;
 	document.body.appendChild(clone);
 	dragState.element = clone;
 
 	// Use pointer events to cover mouse, touch, and pen with a passive move listener
-	document.addEventListener('pointermove', handleDragMove, { passive: true });
-	document.addEventListener('pointerup', handleDragEnd, { once: true });
+	document.addEventListener("pointermove", handleDragMove, { passive: true });
+	document.addEventListener("pointerup", handleDragEnd, { once: true });
 }
 
 function handleDragMove(event: PointerEvent) {
@@ -442,12 +486,19 @@ function handleDragMove(event: PointerEvent) {
 
 	// Show visual feedback for insertion position
 	if (dragState.item) {
-		const currentIndex = currentPreferences.findIndex((p: DashboardWidgetConfig) => p.id === dragState.item?.id);
-		if (currentIndex !== -1 && insertionIndex !== currentIndex && insertionIndex !== currentIndex + 1) {
+		const currentIndex = currentPreferences.findIndex(
+			(p: DashboardWidgetConfig) => p.id === dragState.item?.id,
+		);
+		if (
+			currentIndex !== -1 &&
+			insertionIndex !== currentIndex &&
+			insertionIndex !== currentIndex + 1
+		) {
 			dropIndicator = {
 				show: true,
 				position: insertionIndex,
-				targetIndex: insertionIndex > currentIndex ? insertionIndex - 1 : insertionIndex
+				targetIndex:
+					insertionIndex > currentIndex ? insertionIndex - 1 : insertionIndex,
 			};
 		} else {
 			dropIndicator = null;
@@ -463,10 +514,12 @@ function handleDragEnd() {
 		return;
 	}
 
-	const originalElement = mainContainerEl?.querySelector(`[data-widget-id="${dragState.item?.id}"]`) as HTMLElement;
+	const originalElement = mainContainerEl?.querySelector(
+		`[data-widget-id="${dragState.item?.id}"]`,
+	) as HTMLElement;
 	if (originalElement) {
-		originalElement.style.opacity = '';
-		originalElement.style.zIndex = '';
+		originalElement.style.opacity = "";
+		originalElement.style.zIndex = "";
 	}
 
 	if (dragState.element) {
@@ -474,7 +527,11 @@ function handleDragEnd() {
 	}
 
 	// Handle repositioning based on drop indicator
-	if (dropIndicator && dragState.item && dropIndicator.targetIndex !== undefined) {
+	if (
+		dropIndicator &&
+		dragState.item &&
+		dropIndicator.targetIndex !== undefined
+	) {
 		performDrop(dragState.item, { targetIndex: dropIndicator.targetIndex });
 	}
 
@@ -482,16 +539,19 @@ function handleDragEnd() {
 		item: null,
 		element: null,
 		offset: { x: 0, y: 0 },
-		isActive: false
+		isActive: false,
 	};
 	dropIndicator = null;
 	gridDropIndicator = null;
 
-	document.removeEventListener('pointermove', handleDragMove);
+	document.removeEventListener("pointermove", handleDragMove);
 }
 
 // Keyboard Reordering
-function handleWidgetKeydown(event: KeyboardEvent, item: DashboardWidgetConfig) {
+function handleWidgetKeydown(
+	event: KeyboardEvent,
+	item: DashboardWidgetConfig,
+) {
 	const currentWidgets = [...currentPreferences];
 	const currentIndex = currentWidgets.findIndex((w) => w.id === item.id);
 
@@ -502,10 +562,10 @@ function handleWidgetKeydown(event: KeyboardEvent, item: DashboardWidgetConfig) 
 	let targetIndex = currentIndex;
 
 	if (event.ctrlKey || event.metaKey) {
-		if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+		if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
 			event.preventDefault();
 			targetIndex = Math.max(0, currentIndex - 1);
-		} else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+		} else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
 			event.preventDefault();
 			targetIndex = Math.min(currentWidgets.length - 1, currentIndex + 1);
 		}
@@ -518,14 +578,16 @@ function handleWidgetKeydown(event: KeyboardEvent, item: DashboardWidgetConfig) 
 
 		const updatedWidgets = currentWidgets.map((w, index) => ({
 			...w,
-			order: index
+			order: index,
 		}));
 
 		systemPreferences.updateWidgets(updatedWidgets);
 
 		// Maintain focus on the moved widget
 		setTimeout(() => {
-			const el = document.querySelector(`[data-widget-id="${item.id}"]`) as HTMLElement;
+			const el = document.querySelector(
+				`[data-widget-id="${item.id}"]`,
+			) as HTMLElement;
 			el?.focus();
 		}, 50);
 	}

@@ -15,17 +15,20 @@
 
 <script lang="ts">
 // Components
-import TableFilter from '@src/components/system/table/table-filter.svelte';
-import TablePagination from '@src/components/system/table/table-pagination.svelte';
-import type { Permission, User } from '@src/databases/auth/types';
-import type { WebsiteToken } from '@src/databases/schemas';
-import { globalLoadingStore, loadingOperations } from '@src/stores/loading-store.svelte.ts';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { showConfirm } from '@utils/modal-utils';
-import { onMount } from 'svelte';
-import { flip } from 'svelte/animate';
-import { SvelteDate, SvelteURLSearchParams } from 'svelte/reactivity';
-import { dndzone } from 'svelte-dnd-action';
+import TableFilter from "@src/components/system/table/table-filter.svelte";
+import TablePagination from "@src/components/system/table/table-pagination.svelte";
+import type { Permission, User } from "@src/databases/auth/types";
+import type { WebsiteToken } from "@src/databases/schemas";
+import {
+	globalLoadingStore,
+	loadingOperations,
+} from "@src/stores/loading-store.svelte.ts";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { showConfirm } from "@utils/modal-utils";
+import { onMount } from "svelte";
+import { flip } from "svelte/animate";
+import { SvelteDate, SvelteURLSearchParams } from "svelte/reactivity";
+import { dndzone } from "svelte-dnd-action";
 
 interface TableHeader {
 	id: string;
@@ -41,44 +44,48 @@ let tokens: WebsiteToken[] = $state([]);
 let users: User[] = $state([]);
 
 // User Map for display
-const userMap = $derived(new Map(users.map((u) => [u._id, u.username || u.email])));
+const userMap = $derived(
+	new Map(users.map((u) => [u._id, u.username || u.email])),
+);
 
 // Token Generation State
-let newTokenName = $state('');
+let newTokenName = $state("");
 let selectedPermissions: string[] = $state([]);
-let expirationOption = $state('90d');
-let customExpirationDate = $state('');
-let permissionSearchTerm = $state('');
+let expirationOption = $state("90d");
+let customExpirationDate = $state("");
+let permissionSearchTerm = $state("");
 
 // Visibility / Display State
 let showSecretMap: Record<string, boolean> = $state({});
 let selectedTokens = $state(new Set<string>());
 
 // Filter state
-let globalSearchValue = $state('');
+let globalSearchValue = $state("");
 let searchShow = $state(false);
 let filterShow = $state(false);
 let columnShow = $state(false);
-let density = $state('normal');
+let density = $state("normal");
 let filters: Record<string, string | undefined> = $state({});
 
 // Sorting and Pagination
-let sorting = $state({ sortedBy: 'createdAt', isSorted: -1 }); // Sort by createdAt desc by default
+let sorting = $state({ sortedBy: "createdAt", isSorted: -1 }); // Sort by createdAt desc by default
 let currentPage = $state(1);
 let rowsPerPage = $state(10);
 let totalItems = $state(0);
 const pagesCount = $derived(Math.ceil(totalItems / rowsPerPage) || 1);
 
 const tableHeaders = [
-	{ label: 'Name', key: 'name' },
-	{ label: 'Token', key: 'token' },
-	{ label: 'Expiration', key: 'expiresAt' },
-	{ label: 'Created At', key: 'createdAt' },
-	{ label: 'Created By', key: 'createdBy' }
+	{ label: "Name", key: "name" },
+	{ label: "Token", key: "token" },
+	{ label: "Expiration", key: "expiresAt" },
+	{ label: "Created At", key: "createdAt" },
+	{ label: "Created By", key: "createdBy" },
 ];
 
 // Column visibility
-let displayTableHeaders = $state(tableHeaders.map((h) => ({ ...h, visible: true, id: `header-${h.key}` })));
+let displayTableHeaders = $state(
+	tableHeaders.map((h) => ({ ...h, visible: true, id: `header-${h.key}` })),
+);
 let selectAllColumns = $state(true);
 
 function handleDndConsider(event: CustomEvent) {
@@ -91,15 +98,19 @@ function handleDndFinalize(event: CustomEvent) {
 
 const filteredAvailablePermissions = $derived(
 	permissions.filter(
-		(p) => p.name.toLowerCase().includes(permissionSearchTerm.toLowerCase()) || p.action.toLowerCase().includes(permissionSearchTerm.toLowerCase())
-	)
+		(p) =>
+			p.name.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
+			p.action.toLowerCase().includes(permissionSearchTerm.toLowerCase()),
+	),
 );
 
 function handleCheckboxChange() {
-	const allColumnsVisible = displayTableHeaders.every((header) => header.visible);
+	const allColumnsVisible = displayTableHeaders.every(
+		(header) => header.visible,
+	);
 	displayTableHeaders = displayTableHeaders.map((header) => ({
 		...header,
-		visible: !allColumnsVisible
+		visible: !allColumnsVisible,
 	}));
 	selectAllColumns = !allColumnsVisible;
 }
@@ -129,15 +140,15 @@ onMount(async () => {
 async function fetchUsers() {
 	const usersRef = { value: users };
 	try {
-		const response = await fetch('/api/user');
+		const response = await fetch("/api/user");
 		if (response.ok) {
 			const result = await response.json();
 			usersRef.value = result.data;
 		} else {
-			toast.error('Failed to fetch users');
+			toast.error("Failed to fetch users");
 		}
 	} catch {
-		toast.error('An error occurred while fetching users');
+		toast.error("An error occurred while fetching users");
 	}
 	users = usersRef.value;
 }
@@ -155,15 +166,15 @@ async function fetchTokens() {
 		loadingOperations.tokenGeneration,
 		async () => {
 			const params = new SvelteURLSearchParams();
-			params.set('page', String(currentPageVal));
-			params.set('limit', String(rowsPerPageVal));
-			params.set('sort', sortingVal.sortedBy);
+			params.set("page", String(currentPageVal));
+			params.set("limit", String(rowsPerPageVal));
+			params.set("sort", sortingVal.sortedBy);
 			if (sortingVal.isSorted !== 0) {
-				params.set('order', sortingVal.isSorted === 1 ? 'asc' : 'desc');
+				params.set("order", sortingVal.isSorted === 1 ? "asc" : "desc");
 			}
 
 			if (globalSearchValueVal) {
-				params.set('search', globalSearchValueVal);
+				params.set("search", globalSearchValueVal);
 			}
 
 			for (const [key, value] of Object.entries(filtersVal)) {
@@ -173,41 +184,45 @@ async function fetchTokens() {
 			}
 
 			try {
-				const response = await fetch(`/api/website-tokens?${params.toString()}`);
+				const response = await fetch(
+					`/api/website-tokens?${params.toString()}`,
+				);
 				if (response.ok) {
 					const result = await response.json();
 					tokensRef.value = result.data;
 					totalItemsRef.value = result.pagination.totalItems;
 				} else {
-					toast.error('Failed to fetch tokens');
+					toast.error("Failed to fetch tokens");
 				}
 			} catch {
-				toast.error('An error occurred while fetching tokens');
+				toast.error("An error occurred while fetching tokens");
 			}
 		},
-		'Fetching website tokens'
+		"Fetching website tokens",
 	);
 	tokens = tokensRef.value;
 	totalItems = totalItemsRef.value;
 }
 
 function getExpirationDate(): string | null {
-	if (expirationOption === 'never') {
+	if (expirationOption === "never") {
 		return null;
 	}
-	if (expirationOption === 'custom') {
-		return customExpirationDate ? new SvelteDate(customExpirationDate).toISOString() : null;
+	if (expirationOption === "custom") {
+		return customExpirationDate
+			? new SvelteDate(customExpirationDate).toISOString()
+			: null;
 	}
 
 	const now = new SvelteDate();
 	switch (expirationOption) {
-		case '30d':
+		case "30d":
 			now.setDate(now.getDate() + 30);
 			break;
-		case '90d':
+		case "90d":
 			now.setDate(now.getDate() + 90);
 			break;
-		case '1y':
+		case "1y":
 			now.setFullYear(now.getFullYear() + 1);
 			break;
 	}
@@ -216,7 +231,9 @@ function getExpirationDate(): string | null {
 
 function togglePermission(permissionId: string) {
 	if (selectedPermissions.includes(permissionId)) {
-		selectedPermissions = selectedPermissions.filter((id) => id !== permissionId);
+		selectedPermissions = selectedPermissions.filter(
+			(id) => id !== permissionId,
+		);
 	} else {
 		selectedPermissions = [...selectedPermissions, permissionId];
 	}
@@ -225,57 +242,57 @@ function togglePermission(permissionId: string) {
 async function generateToken() {
 	const currentNewTokenName = newTokenName;
 	if (!currentNewTokenName) {
-		toast.error('Please enter a name for the token.');
+		toast.error("Please enter a name for the token.");
 		return;
 	}
 
 	try {
-		const response = await fetch('/api/website-tokens', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+		const response = await fetch("/api/website-tokens", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				name: currentNewTokenName,
 				permissions: selectedPermissions,
-				expiresAt: getExpirationDate()
-			})
+				expiresAt: getExpirationDate(),
+			}),
 		});
 
 		if (response.ok) {
 			await fetchTokens();
 			toast.success(`Token generated for ${currentNewTokenName}`);
-			newTokenName = '';
+			newTokenName = "";
 			selectedPermissions = [];
-			expirationOption = '90d';
+			expirationOption = "90d";
 		} else if (response.status === 409) {
-			toast.error('A token with this name already exists');
+			toast.error("A token with this name already exists");
 		} else {
-			toast.error('Failed to generate token');
+			toast.error("Failed to generate token");
 		}
 	} catch {
-		toast.error('An error occurred while generating the token');
+		toast.error("An error occurred while generating the token");
 	}
 }
 
 async function deleteToken(id: string, name: string) {
 	showConfirm({
-		title: 'Delete Token',
+		title: "Delete Token",
 		body: `Are you sure you want to delete the token "${name}"? This action cannot be undone.`,
 		onConfirm: async () => {
 			try {
 				const response = await fetch(`/api/website-tokens/${id}`, {
-					method: 'DELETE'
+					method: "DELETE",
 				});
 
 				if (response.ok) {
 					await fetchTokens();
-					toast.success('Token deleted.');
+					toast.success("Token deleted.");
 				} else {
-					toast.error('Failed to delete token');
+					toast.error("Failed to delete token");
 				}
 			} catch {
-				toast.error('An error occurred while deleting the token');
+				toast.error("An error occurred while deleting the token");
 			}
-		}
+		},
 	});
 }
 
@@ -283,14 +300,16 @@ async function bulkDeleteTokens() {
 	if (selectedTokens.size === 0) return;
 
 	showConfirm({
-		title: 'Bulk Delete Tokens',
+		title: "Bulk Delete Tokens",
 		body: `Are you sure you want to delete ${selectedTokens.size} selected tokens? This action cannot be undone.`,
 		onConfirm: async () => {
 			await globalLoadingStore.withLoading(
 				loadingOperations.tokenGeneration,
 				async () => {
 					try {
-						const deletePromises = Array.from(selectedTokens).map((id) => fetch(`/api/website-tokens/${id}`, { method: 'DELETE' }));
+						const deletePromises = Array.from(selectedTokens).map((id) =>
+							fetch(`/api/website-tokens/${id}`, { method: "DELETE" }),
+						);
 						const results = await Promise.all(deletePromises);
 
 						const successCount = results.filter((r) => r.ok).length;
@@ -299,15 +318,15 @@ async function bulkDeleteTokens() {
 							selectedTokens.clear();
 							await fetchTokens();
 						} else {
-							toast.error('Failed to delete selected tokens');
+							toast.error("Failed to delete selected tokens");
 						}
 					} catch {
-						toast.error('An error occurred during bulk deletion');
+						toast.error("An error occurred during bulk deletion");
 					}
 				},
-				'Deleting multiple tokens'
+				"Deleting multiple tokens",
 			);
-		}
+		},
 	});
 }
 

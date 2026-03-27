@@ -17,7 +17,7 @@ Values form StatusTypes
 -->
 
 <script lang="ts">
-import { StatusTypes } from '@src/content/types';
+import { StatusTypes } from "@src/content/types";
 
 const { value } = $props(); // The status value to display
 
@@ -28,8 +28,8 @@ import {
 	entrylist_multibutton_draft,
 	entrylist_multibutton_publish,
 	entrylist_multibutton_schedule,
-	entrylist_multibutton_unpublish
-} from '@src/paraglide/messages';
+	entrylist_multibutton_unpublish,
+} from "@src/paraglide/messages";
 </script>
 
 <!-- Display different badges for different statuses -->

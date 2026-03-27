@@ -5,8 +5,8 @@
 -->
 
 <script lang="ts">
-import { onDestroy, onMount } from 'svelte';
-import BaseWidget from '../base-widget.svelte';
+import { onDestroy, onMount } from "svelte";
+import BaseWidget from "../base-widget.svelte";
 
 interface CacheStats {
 	hitRate: number;
@@ -17,7 +17,7 @@ interface CacheStats {
 }
 
 function formatNumber(num: number): string {
-	return new Intl.NumberFormat('en-US').format(num);
+	return new Intl.NumberFormat("en-US").format(num);
 }
 
 interface Props {
@@ -33,12 +33,12 @@ let interval: any;
 
 async function fetchStats() {
 	try {
-		const response = await fetch('/api/metrics/cache');
+		const response = await fetch("/api/metrics/cache");
 		if (response.ok) {
 			stats = await response.json();
 		}
 	} catch (error) {
-		console.error('Failed to fetch cache stats:', error);
+		console.error("Failed to fetch cache stats:", error);
 	} finally {
 		isLoading = false;
 	}
@@ -55,12 +55,12 @@ onDestroy(() => {
 
 function getHitRateColor(rate: number) {
 	if (rate >= 90) {
-		return 'text-success-500';
+		return "text-success-500";
 	}
 	if (rate >= 70) {
-		return 'text-warning-500';
+		return "text-warning-500";
 	}
-	return 'text-error-500';
+	return "text-error-500";
 }
 </script>
 

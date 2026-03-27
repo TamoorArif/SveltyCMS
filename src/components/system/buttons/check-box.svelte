@@ -18,7 +18,7 @@
 
 <script lang="ts">
 let checked = $state(false);
-const { svg, callback = () => {}, class: className = '' } = $props();
+const { svg, callback = () => {}, class: className = "" } = $props();
 
 function toggleCheckbox() {
 	checked = !checked;
@@ -26,7 +26,7 @@ function toggleCheckbox() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-	if (e.key === 'Enter' || e.key === ' ') {
+	if (e.key === "Enter" || e.key === " ") {
 		toggleCheckbox();
 	}
 }

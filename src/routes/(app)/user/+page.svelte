@@ -15,9 +15,9 @@
 -->
 
 <script lang="ts">
-import { Avatar } from '@skeletonlabs/skeleton-svelte';
-import PageTitle from '@src/components/page-title.svelte';
-import PermissionGuard from '@src/components/permission-guard.svelte';
+import { Avatar } from "@skeletonlabs/skeleton-svelte";
+import PageTitle from "@src/components/page-title.svelte";
+import PermissionGuard from "@src/components/permission-guard.svelte";
 // ParaglideJS
 import {
 	button_delete,
@@ -33,44 +33,49 @@ import {
 	userpage_edit_usersetting,
 	userpage_editavatar,
 	userpage_title,
-	userpage_user_id
-} from '@src/paraglide/messages';
+	userpage_user_id,
+} from "@src/paraglide/messages";
 // Stores
-import { collaboration } from '@src/stores/collaboration-store.svelte';
-import { avatarSrc, normalizeAvatarUrl } from '@src/stores/store.svelte.ts';
-import { onMount } from 'svelte';
-import { invalidateAll } from '$app/navigation';
-import AdminArea from './components/admin-area.svelte';
+import { collaboration } from "@src/stores/collaboration-store.svelte";
+import { avatarSrc, normalizeAvatarUrl } from "@src/stores/store.svelte.ts";
+import { onMount } from "svelte";
+import { invalidateAll } from "$app/navigation";
+import AdminArea from "./components/admin-area.svelte";
 // Auth
-import ModalTwoFactorAuth from './components/modal-two-factor-auth.svelte';
-import '@src/stores/store.svelte.ts';
-import { setCollection } from '@src/stores/collection-store.svelte';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { triggerActionStore } from '@utils/global-search-index';
-import { modalState } from '@utils/modal-state.svelte';
-import { showConfirm } from '@utils/modal-utils';
-import ModalEditAvatar from './components/modal-edit-avatar.svelte';
-import ModalEditForm from './components/modal-edit-form.svelte';
-import ModalPrivacyData from './components/modal-privacy-data.svelte';
+import ModalTwoFactorAuth from "./components/modal-two-factor-auth.svelte";
+import "@src/stores/store.svelte.ts";
+import { setCollection } from "@src/stores/collection-store.svelte";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { triggerActionStore } from "@utils/global-search-index";
+import { modalState } from "@utils/modal-state.svelte";
+import { showConfirm } from "@utils/modal-utils";
+import ModalEditAvatar from "./components/modal-edit-avatar.svelte";
+import ModalEditForm from "./components/modal-edit-form.svelte";
+import ModalPrivacyData from "./components/modal-privacy-data.svelte";
 
 // Props
 const { data } = $props();
-const { user: serverUser, isFirstUser, isMultiTenant, is2FAEnabledGlobal } = $derived(data);
+const {
+	user: serverUser,
+	isFirstUser,
+	isMultiTenant,
+	is2FAEnabledGlobal,
+} = $derived(data);
 
 // Make user data reactive
 const user = $derived({
-	_id: serverUser?._id ?? '',
-	email: serverUser?.email ?? '',
-	username: serverUser?.username ?? '',
-	role: serverUser?.role ?? '',
-	avatar: serverUser?.avatar ?? '/Default_User.svg',
-	tenantId: serverUser?.tenantId ?? '', // Add tenantId
+	_id: serverUser?._id ?? "",
+	email: serverUser?.email ?? "",
+	username: serverUser?.username ?? "",
+	role: serverUser?.role ?? "",
+	avatar: serverUser?.avatar ?? "/Default_User.svg",
+	tenantId: serverUser?.tenantId ?? "", // Add tenantId
 	is2FAEnabled: serverUser?.is2FAEnabled ?? false,
-	permissions: []
+	permissions: [],
 });
 
 // Define password as state
-let password = $state('hash-password');
+let password = $state("hash-password");
 
 // Function to open 2FA modal
 function open2FAModal(): void {
@@ -83,37 +88,37 @@ function open2FAModal(): void {
 }
 
 // Function to update RTC preferences
-async function updateRtcPreference(key: 'enabled' | 'sound', value: boolean) {
+async function updateRtcPreference(key: "enabled" | "sound", value: boolean) {
 	const newUserData = {
 		preferences: {
 			rtc: {
 				...serverUser?.preferences?.rtc,
-				[key]: value
-			}
-		}
+				[key]: value,
+			},
+		},
 	};
 
 	try {
-		const res = await fetch('/api/user/update-user-attributes', {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ user_id: 'self', newUserData })
+		const res = await fetch("/api/user/update-user-attributes", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ user_id: "self", newUserData }),
 		});
 
 		if (res.ok) {
-			toast.success('Preferences updated');
+			toast.success("Preferences updated");
 			await invalidateAll();
 			// If RTC was disabled, close connection
-			if (key === 'enabled' && !value) {
+			if (key === "enabled" && !value) {
 				collaboration.close();
-			} else if (key === 'enabled' && value) {
+			} else if (key === "enabled" && value) {
 				collaboration.connect();
 			}
 		} else {
-			toast.error('Failed to update preferences');
+			toast.error("Failed to update preferences");
 		}
 	} catch {
-		toast.error('Error updating preferences');
+		toast.error("Error updating preferences");
 	}
 }
 
@@ -145,7 +150,7 @@ onMount(() => {
 function modalUserForm(): void {
 	modalState.trigger(ModalEditForm, {
 		title: usermodaluser_edittitle(),
-		body: usermodaluser_settingbody() || 'Update your user details below.'
+		body: usermodaluser_settingbody() || "Update your user details below.",
 	});
 }
 
@@ -155,15 +160,16 @@ function modalEditAvatar(): void {
 		ModalEditAvatar,
 		{
 			title: usermodaluser_settingtitle(),
-			body: usermodaluser_settingbody()
+			body: usermodaluser_settingbody(),
 		},
 		async (r: any) => {
 			if (r) {
 				toast.success({
-					description: '<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated'
+					description:
+						'<iconify-icon icon="radix-icons:avatar" width={24} ></iconify-icon> Avatar Updated',
 				});
 			}
-		}
+		},
 	);
 }
 
@@ -179,15 +185,15 @@ function modalConfirm(): void {
 		body: usermodalconfirmbody(),
 		// confirmText: usermodalconfirmdeleteuser(),
 		onConfirm: async () => {
-			const res = await fetch('/api/user/deleteUsers', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify([user])
+			const res = await fetch("/api/user/deleteUsers", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify([user]),
 			});
 			if (res.status === 200) {
 				await invalidateAll();
 			}
-		}
+		},
 	});
 }
 </script>

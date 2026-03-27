@@ -46,7 +46,9 @@ bun run dev
 ```
 
 ### The Setup Wizard
+
 Navigate to `http://localhost:5173`. The system will automatically detect the absence of `config/private.ts` and launch the wizard:
+
 1.  **Choose Database**: Support for MongoDB, PostgreSQL, MariaDB, and SQLite (fastest for local).
 2.  **Test Connection**: The wizard auto-installs required drivers.
 3.  **Create Admin**: Set your master credentials.
@@ -57,9 +59,11 @@ Navigate to `http://localhost:5173`. The system will automatically detect the ab
 ## 2. First Steps (For Admins & Editors)
 
 ### Access the Admin Studio
+
 Once setup completes, navigate to `http://localhost:5173/admin` and login with your admin credentials.
 
 ### Understanding the Dashboard Layout
+
 The Studio is designed for clarity and speed.
 
 ```
@@ -78,9 +82,10 @@ The Studio is designed for clarity and speed.
 ```
 
 ### Key Editorial Tasks
+
 1.  **Configure Settings**: Go to **⚙️ Settings** to set your Site Name, Default Language, and Theme.
 2.  **Create a Collection**: Collections define your content structure. Go to **📚 Collections** → **+ New Collection**.
-    *   *Example*: Create a "posts" collection with fields for Title (text), Content (richtext), and Status (select).
+    - _Example_: Create a "posts" collection with fields for Title (text), Content (richtext), and Status (select).
 3.  **Add Your First Entry**: Open your new collection and click **+ New Entry**. Fill in the fields and click **Save**.
 
 ---
@@ -88,16 +93,19 @@ The Studio is designed for clarity and speed.
 ## 3. Common Workflow Templates
 
 ### Workflow 1: Blog Setup
+
 1.  **Collections**: Create `Posts`, `Categories`, and `Tags`.
 2.  **Relationships**: Link `Posts` to `Categories` (Multi-select) and `Users` (Author).
 3.  **Publishing**: Use the built-in `Status` field to manage Draft vs. Published states.
 
 ### Workflow 2: E-Commerce Catalog
+
 1.  **Collections**: Create `Products` (Price, SKU, Description) and `Inventory`.
 2.  **Media**: Upload product images to the **📁 Media Hub** and link them to product entries.
 3.  **API**: Query products via `/api/collections/products` for your frontend.
 
 ### Workflow 3: Multi-Language Sites
+
 1.  **Enable i18n**: Go to **⚙️ Settings** → **Languages** and add your target languages.
 2.  **Translate**: Open any entry and use the language switcher to enter localized content. Paraglide JS handles the compile-time switching.
 
@@ -106,6 +114,7 @@ The Studio is designed for clarity and speed.
 ## 🛡️ User Roles & Permissions
 
 SveltyCMS uses a granular **Role-Based Access Control (RBAC)** system.
+
 - **Admin**: Full access.
 - **Editor**: Can manage all content and media.
 - **Contributor**: Can create content but cannot publish without approval.
@@ -118,12 +127,15 @@ SveltyCMS uses a granular **Role-Based Access Control (RBAC)** system.
 For developers needing to understand the system's resilience:
 
 ### The State Machine
+
 SveltyCMS transitions through specific states during boot:
+
 - `IDLE`: Initializing memory and checking `config/private.ts`.
 - `SYSTEM_READY`: Core services (Auth, Media, DB) are successfully connected.
 - `FAILED`: A critical path error occurred (Wizard enters recovery mode).
 
 ### Driver Auto-Installation
+
 During the Setup Wizard, SveltyCMS uses `spawn` to dynamically install database drivers (e.g., `mongoose`, `mariadb`) based on your selection, ensuring a lean initial footprint.
 
 ---

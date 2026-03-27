@@ -78,7 +78,9 @@ describe("AI API Security - Authentication and Tenant Isolation", () => {
     it("should reject unauthenticated users", async () => {
       const event = {
         locals: { user: null },
-        request: { json: vi.fn().mockResolvedValue({ text: "Some text", action: "summarize" }) },
+        request: {
+          json: vi.fn().mockResolvedValue({ text: "Some text", action: "summarize" }),
+        },
       } as any;
 
       const response = await aiEnrich(event);
@@ -89,9 +91,11 @@ describe("AI API Security - Authentication and Tenant Isolation", () => {
       const event = {
         locals: { user: mockUser, tenantId: myTenant },
         request: {
-          json: vi
-            .fn()
-            .mockResolvedValue({ text: "Some text", action: "summarize", language: "en" }),
+          json: vi.fn().mockResolvedValue({
+            text: "Some text",
+            action: "summarize",
+            language: "en",
+          }),
         },
       } as any;
 
@@ -105,7 +109,9 @@ describe("AI API Security - Authentication and Tenant Isolation", () => {
     it("should reject unauthenticated users", async () => {
       const event = {
         locals: { user: null },
-        request: { json: vi.fn().mockResolvedValue({ prompt: "Design a form" }) },
+        request: {
+          json: vi.fn().mockResolvedValue({ prompt: "Design a form" }),
+        },
       } as any;
 
       const response = await aiGenerateLayout(event);
@@ -115,7 +121,9 @@ describe("AI API Security - Authentication and Tenant Isolation", () => {
     it("should allow authenticated users with tenantId", async () => {
       const event = {
         locals: { user: mockUser, tenantId: myTenant },
-        request: { json: vi.fn().mockResolvedValue({ prompt: "Design a form" }) },
+        request: {
+          json: vi.fn().mockResolvedValue({ prompt: "Design a form" }),
+        },
       } as any;
 
       const response = await aiGenerateLayout(event);

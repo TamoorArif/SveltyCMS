@@ -99,6 +99,10 @@ export const POST = apiHandler(async ({ request, url, locals }) => {
     throw new Error("Failed to create group");
   }
 
-  logger.info("SCIM Group created", { groupId: newRole._id, name: body.displayName, tenantId });
+  logger.info("SCIM Group created", {
+    groupId: newRole._id,
+    name: body.displayName,
+    tenantId,
+  });
   return json(buildScimGroup(newRole, url.origin), { status: 201 });
 });

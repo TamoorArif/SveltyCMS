@@ -27,10 +27,10 @@ Renders radio group with options from field.options array
 -->
 
 <script lang="ts">
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { app } from '@src/stores/store.svelte';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { app } from "@src/stores/store.svelte";
 
-import type { FieldType } from './';
+import type { FieldType } from "./";
 
 interface RadioProps {
 	color?: string;
@@ -41,7 +41,7 @@ interface RadioProps {
 let {
 	field,
 	value = $bindable(),
-	error
+	error,
 }: {
 	field: FieldType & RadioProps;
 	value?: string | number | null | undefined | Record<string, any>;
@@ -49,7 +49,11 @@ let {
 } = $props();
 
 const fieldId = $derived(field.db_fieldName);
-const LANGUAGE = $derived(field.translated ? app.contentLanguage : ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || 'en').toLowerCase());
+const LANGUAGE = $derived(
+	field.translated
+		? app.contentLanguage
+		: ((publicEnv.DEFAULT_CONTENT_LANGUAGE as string) || "en").toLowerCase(),
+);
 
 // Local state to bind the radio group to
 let localValue = $state<string | number | null>(null);
@@ -59,9 +63,12 @@ $effect(() => {
 	const parentVal = value;
 	let extracted: string | number | null = null;
 
-	if (field.translated && typeof parentVal === 'object' && parentVal !== null) {
+	if (field.translated && typeof parentVal === "object" && parentVal !== null) {
 		extracted = (parentVal as Record<string, any>)[LANGUAGE] ?? null;
-	} else if (!field.translated && (typeof parentVal === 'string' || typeof parentVal === 'number')) {
+	} else if (
+		!field.translated &&
+		(typeof parentVal === "string" || typeof parentVal === "number")
+	) {
 		extracted = parentVal;
 	}
 
@@ -74,7 +81,7 @@ $effect(() => {
 // Update parent value when localValue changes
 function updateParent(newVal: string | number | null) {
 	if (field.translated) {
-		if (!value || typeof value !== 'object') {
+		if (!value || typeof value !== "object") {
 			value = {};
 		}
 		value = { ...(value as object), [LANGUAGE]: newVal };

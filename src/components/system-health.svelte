@@ -18,12 +18,12 @@ Displays real-time system state and individual service health with comprehensive
 -->
 
 <script lang="ts">
-import { systemState } from '@src/stores/system/state';
-import type { ServiceHealth, SystemState } from '@src/stores/system/types';
-import { formatDisplayDate } from '@utils/date-utils';
-import { logger } from '@utils/logger';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onDestroy, onMount } from 'svelte';
+import { systemState } from "@src/stores/system/state";
+import type { ServiceHealth, SystemState } from "@src/stores/system/types";
+import { formatDisplayDate } from "@utils/date-utils";
+import { logger } from "@utils/logger";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onDestroy, onMount } from "svelte";
 
 // Type for service data
 interface ServiceData {
@@ -35,47 +35,47 @@ interface ServiceData {
 
 // State configuration maps
 const STATE_CONFIG = {
-	IDLE: { icon: '💤', color: 'text-surface-500', label: 'Idle' },
+	IDLE: { icon: "💤", color: "text-surface-500", label: "Idle" },
 	INITIALIZING: {
-		icon: '⏳',
-		color: 'text-primary-500',
-		label: 'Initializing'
+		icon: "⏳",
+		color: "text-primary-500",
+		label: "Initializing",
 	},
-	WARMING: { icon: '🔥', color: 'text-tertiary-500', label: 'Warming Up' },
-	WARMED: { icon: '🚀', color: 'text-primary-600', label: 'Warmed Up' },
-	READY: { icon: '✅', color: 'text-primary-500', label: 'Ready' },
-	DEGRADED: { icon: '⚠️', color: 'text-warning-500', label: 'Degraded' },
-	FAILED: { icon: '❌', color: 'text-error-500', label: 'Failed' },
-	SETUP: { icon: '🛠️', color: 'text-secondary-500', label: 'Setup Mode' },
-	MAINTENANCE: { icon: '🔧', color: 'text-warning-600', label: 'Maintenance' }
+	WARMING: { icon: "🔥", color: "text-tertiary-500", label: "Warming Up" },
+	WARMED: { icon: "🚀", color: "text-primary-600", label: "Warmed Up" },
+	READY: { icon: "✅", color: "text-primary-500", label: "Ready" },
+	DEGRADED: { icon: "⚠️", color: "text-warning-500", label: "Degraded" },
+	FAILED: { icon: "❌", color: "text-error-500", label: "Failed" },
+	SETUP: { icon: "🛠️", color: "text-secondary-500", label: "Setup Mode" },
+	MAINTENANCE: { icon: "🔧", color: "text-warning-600", label: "Maintenance" },
 } as const;
 
 const SERVICE_CONFIG = {
-	healthy: { color: 'preset-filled-primary-500', icon: '✓', label: 'Healthy' },
+	healthy: { color: "preset-filled-primary-500", icon: "✓", label: "Healthy" },
 	unhealthy: {
-		color: 'preset-filled-error-500',
-		icon: '✗',
-		label: 'Unhealthy'
+		color: "preset-filled-error-500",
+		icon: "✗",
+		label: "Unhealthy",
 	},
 	initializing: {
-		color: 'preset-filled-primary-500',
-		icon: '⟳',
-		label: 'Initializing'
+		color: "preset-filled-primary-500",
+		icon: "⟳",
+		label: "Initializing",
 	},
-	skipped: { color: 'preset-filled-surface-500', icon: '⏭️', label: 'Skipped' },
+	skipped: { color: "preset-filled-surface-500", icon: "⏭️", label: "Skipped" },
 	maintenance: {
-		color: 'preset-filled-warning-500',
-		icon: '🔧',
-		label: 'Maintenance'
+		color: "preset-filled-warning-500",
+		icon: "🔧",
+		label: "Maintenance",
 	},
-	unknown: { color: 'preset-filled-surface-500', icon: '?', label: 'Unknown' }
+	unknown: { color: "preset-filled-surface-500", icon: "?", label: "Unknown" },
 } as const;
 
 const REFRESH_INTERVAL_MS = 5000;
 const MAX_RETRIES = 3;
 
 // Reactive state
-let currentState = $state<SystemState>('IDLE');
+let currentState = $state<SystemState>("IDLE");
 let services = $state<Record<string, ServiceData>>({});
 let initializationStartedAt = $state<number | null>(null);
 let lastChecked = $state(new Date().toISOString());
@@ -101,21 +101,31 @@ const uptime = $derived.by(() => {
 const serviceEntries = $derived(Object.entries(services));
 const serviceCount = $derived(serviceEntries.length);
 
-const healthyServices = $derived(serviceEntries.filter(([, service]) => service.status === 'healthy').length);
-
-const unhealthyServices = $derived(serviceEntries.filter(([, service]) => service.status === 'unhealthy').length);
-
-const formattedLastChecked = $derived(
-	formatDisplayDate(lastChecked, 'en', {
-		hour: '2-digit',
-		minute: '2-digit',
-		second: '2-digit'
-	})
+const healthyServices = $derived(
+	serviceEntries.filter(([, service]) => service.status === "healthy").length,
 );
 
-const apiHealthUrl = $derived(typeof window !== 'undefined' ? `${window.location.origin}/api/system?action=health` : '/api/system?action=health');
+const unhealthyServices = $derived(
+	serviceEntries.filter(([, service]) => service.status === "unhealthy").length,
+);
 
-const healthPercentage = $derived(serviceCount > 0 ? Math.round((healthyServices / serviceCount) * 100) : 0);
+const formattedLastChecked = $derived(
+	formatDisplayDate(lastChecked, "en", {
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	}),
+);
+
+const apiHealthUrl = $derived(
+	typeof window !== "undefined"
+		? `${window.location.origin}/api/system?action=health`
+		: "/api/system?action=health",
+);
+
+const healthPercentage = $derived(
+	serviceCount > 0 ? Math.round((healthyServices / serviceCount) * 100) : 0,
+);
 
 // Subscribe to store with proper cleanup
 $effect(() => {
@@ -159,11 +169,11 @@ async function fetchHealth(): Promise<void> {
 	isLoading = true;
 
 	try {
-		const response = await fetch('/api/system?action=health', {
-			method: 'GET',
+		const response = await fetch("/api/system?action=health", {
+			method: "GET",
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				"Content-Type": "application/json",
+			},
 		});
 
 		// Even if status is 503, we should try to parse the body as it contains health report
@@ -173,23 +183,31 @@ async function fetchHealth(): Promise<void> {
 			// Update local reactive state from API response
 			currentState = data.overallStatus;
 			services = data.components || {};
-			initializationStartedAt = data.initializationStartedAt || data.uptime ? Date.now() - data.uptime : null;
+			initializationStartedAt =
+				data.initializationStartedAt || data.uptime
+					? Date.now() - data.uptime
+					: null;
 			lastChecked = new Date().toISOString();
 			retryCount = 0; // Reset on success
 		} else if (!response.ok) {
 			throw new Error(`Health check failed: ${response.status}`);
 		}
 	} catch (err) {
-		logger.error('Failed to fetch health:', err);
+		logger.error("Failed to fetch health:", err);
 
 		if (retryCount < MAX_RETRIES) {
 			retryCount++;
-			toast.warning(`Health check failed. Retrying... (${retryCount}/${MAX_RETRIES})`, { duration: 2000 });
+			toast.warning(
+				`Health check failed. Retrying... (${retryCount}/${MAX_RETRIES})`,
+				{ duration: 2000 },
+			);
 
 			// Exponential backoff
 			setTimeout(() => fetchHealth(), 1000 * 2 ** retryCount);
 		} else {
-			toast.error('Failed to fetch system health after multiple retries', { duration: 5000 });
+			toast.error("Failed to fetch system health after multiple retries", {
+				duration: 5000,
+			});
 			retryCount = 0;
 		}
 	} finally {
@@ -203,7 +221,9 @@ async function reinitializeSystem(): Promise<void> {
 		return;
 	}
 
-	const confirmed = confirm('Are you sure you want to reinitialize the system? This may cause temporary downtime.');
+	const confirmed = confirm(
+		"Are you sure you want to reinitialize the system? This may cause temporary downtime.",
+	);
 	if (!confirmed) {
 		return;
 	}
@@ -211,32 +231,35 @@ async function reinitializeSystem(): Promise<void> {
 	isReinitializing = true;
 
 	try {
-		toast.warning('Reinitializing system...');
+		toast.warning("Reinitializing system...");
 
-		const response = await fetch('/api/system', {
-			method: 'POST',
+		const response = await fetch("/api/system", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json'
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				action: 'reinitialize',
-				force: true
-			})
+				action: "reinitialize",
+				force: true,
+			}),
 		});
 
 		if (response.ok) {
 			const result = await response.json();
-			toast.success(result.message || `System reinitialized: ${result.status}`, { duration: 5000 });
+			toast.success(
+				result.message || `System reinitialized: ${result.status}`,
+				{ duration: 5000 },
+			);
 
 			// Wait a bit before fetching health
 			setTimeout(() => fetchHealth(), 1000);
 		} else {
 			const error = await response.json();
-			throw new Error(error.error || 'Reinitialization failed');
+			throw new Error(error.error || "Reinitialization failed");
 		}
 	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Unknown error';
-		logger.error('Reinitialization failed:', err);
+		const message = err instanceof Error ? err.message : "Unknown error";
+		logger.error("Reinitialization failed:", err);
 		toast.error(`Reinitialization failed: ${message}`);
 
 		toast.error(`Failed to reinitialize: ${message}`, { duration: 5000 });
@@ -250,14 +273,14 @@ async function copyEndpoint(): Promise<void> {
 	try {
 		await navigator.clipboard.writeText(apiHealthUrl);
 		copiedEndpoint = true;
-		toast.success('Endpoint copied to clipboard', { duration: 2000 });
+		toast.success("Endpoint copied to clipboard", { duration: 2000 });
 
 		setTimeout(() => {
 			copiedEndpoint = false;
 		}, 2000);
 	} catch (err) {
-		logger.error('Failed to copy:', err);
-		toast.error('Failed to copy endpoint', { duration: 2000 });
+		logger.error("Failed to copy:", err);
+		toast.error("Failed to copy endpoint", { duration: 2000 });
 	}
 }
 
@@ -267,11 +290,11 @@ function getStateColor(state: SystemState): string {
 }
 
 function getStateIcon(state: SystemState): string {
-	return STATE_CONFIG[state]?.icon || '❓';
+	return STATE_CONFIG[state]?.icon || "❓";
 }
 
 function getStateLabel(state: SystemState): string {
-	return STATE_CONFIG[state]?.label || 'Unknown';
+	return STATE_CONFIG[state]?.label || "Unknown";
 }
 
 function getServiceColor(status: ServiceHealth): string {
@@ -283,12 +306,12 @@ function getServiceIcon(status: ServiceHealth): string {
 }
 
 function getServiceLabel(status: ServiceHealth): string {
-	return SERVICE_CONFIG[status]?.label || 'Unknown';
+	return SERVICE_CONFIG[status]?.label || "Unknown";
 }
 
 function formatUptime(ms: number): string {
 	if (ms <= 0) {
-		return '0s';
+		return "0s";
 	}
 
 	const seconds = Math.floor(ms / 1000);
@@ -313,7 +336,7 @@ function formatServiceName(name: string): string {
 		name.charAt(0).toUpperCase() +
 		name
 			.slice(1)
-			.replace(/([A-Z])/g, ' $1')
+			.replace(/([A-Z])/g, " $1")
 			.trim()
 	);
 }
@@ -321,20 +344,20 @@ function formatServiceName(name: string): string {
 // Lifecycle
 onMount(() => {
 	// Check reduced motion preference
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleMotionChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleMotionChange);
+	mediaQuery.addEventListener("change", handleMotionChange);
 
 	// Initial health check
 	fetchHealth();
 
 	return () => {
-		mediaQuery.removeEventListener('change', handleMotionChange);
+		mediaQuery.removeEventListener("change", handleMotionChange);
 	};
 });
 

@@ -23,9 +23,9 @@
 <script lang="ts">
 // Stores
 
-import { button_cancel } from '@src/paraglide/messages';
-import { modalState } from '@utils/modal-state.svelte';
-import type { SvelteComponent } from 'svelte';
+import { button_cancel } from "@src/paraglide/messages";
+import { modalState } from "@utils/modal-state.svelte";
+import type { SvelteComponent } from "svelte";
 
 // Props
 interface Props {
@@ -37,8 +37,8 @@ interface Props {
 	roleDescription: string;
 	roleName: string;
 	selectedPermissions?: string[];
-	permissions?: import('@src/databases/auth/types').Permission[];
-	roles?: import('@src/databases/auth/types').Role[];
+	permissions?: import("@src/databases/auth/types").Permission[];
+	roles?: import("@src/databases/auth/types").Role[];
 }
 
 const {
@@ -50,14 +50,14 @@ const {
 	currentGroupName,
 	selectedPermissions = [],
 	permissions = [],
-	roles = []
+	roles = [],
 }: Props = $props();
 
 // Local form state
-let formName = $state('');
-let formDescription = $state('');
+let formName = $state("");
+let formDescription = $state("");
 let localSelectedPermissions = $state<string[]>([]);
-let permSearch = $state('');
+let permSearch = $state("");
 
 $effect(() => {
 	formName = roleName;
@@ -66,7 +66,11 @@ $effect(() => {
 });
 
 const filteredPermissions = $derived(
-	permissions.filter((p) => p.name.toLowerCase().includes(permSearch.toLowerCase()) || p._id.toLowerCase().includes(permSearch.toLowerCase()))
+	permissions.filter(
+		(p) =>
+			p.name.toLowerCase().includes(permSearch.toLowerCase()) ||
+			p._id.toLowerCase().includes(permSearch.toLowerCase()),
+	),
 );
 
 function togglePermission(id: string) {
@@ -86,7 +90,7 @@ function handleCopyPermissions(event: Event) {
 		localSelectedPermissions = [...sourceRole.permissions];
 	}
 	// Reset the select element to "Copy permissions from..."
-	(event.target as HTMLSelectElement).value = '';
+	(event.target as HTMLSelectElement).value = "";
 }
 
 function onFormSubmit(event: SubmitEvent): void {
@@ -97,7 +101,7 @@ function onFormSubmit(event: SubmitEvent): void {
 		roleDescription: formDescription,
 		currentGroupName,
 		selectedPermissions: localSelectedPermissions,
-		currentRoleId
+		currentRoleId,
 	});
 }
 </script>

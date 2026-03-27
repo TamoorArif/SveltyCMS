@@ -10,19 +10,20 @@ menu item at a specific level. Uses the standard widget loading system.
 -->
 
 <script lang="ts">
-import WidgetLoader from '@src/components/collection-display/widget-loader.svelte';
-import { widgets } from '@src/stores/widget-store.svelte';
-import { modalState } from '@utils/modal-state.svelte';
-import { getFieldName } from '@utils/utils';
-import type { MenuEditContext } from './types';
+import WidgetLoader from "@src/components/collection-display/widget-loader.svelte";
+import { widgets } from "@src/stores/widget-store.svelte";
+import { modalState } from "@utils/modal-state.svelte";
+import { getFieldName } from "@utils/utils";
+import type { MenuEditContext } from "./types";
 
 let { meta }: { meta: MenuEditContext } = $props();
 
 // Locally import modules for widget loading to support code-splitting
-const modules: Record<string, () => Promise<{ default: any }>> = import.meta.glob('../../**/*.svelte') as Record<
-	string,
-	() => Promise<{ default: any }>
->;
+const modules: Record<string, () => Promise<{ default: any }>> =
+	import.meta.glob("../../**/*.svelte") as Record<
+		string,
+		() => Promise<{ default: any }>
+	>;
 
 /**
  * Resolves the appropriate widget loader for a given widget name.
@@ -35,7 +36,8 @@ function getWidgetLoader(widgetName: string) {
 	if (fn?.__inputComponent) return fn.__inputComponent;
 
 	// 1. Try exact path from widget store
-	const storePath = (fn as any)?.componentPath || (fn as any)?.inputComponentPath;
+	const storePath =
+		(fn as any)?.componentPath || (fn as any)?.inputComponentPath;
 	if (storePath && storePath in modules) {
 		return modules[storePath];
 	}

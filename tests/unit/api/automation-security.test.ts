@@ -39,7 +39,11 @@ vi.mock("@utils/logger.server", () => ({
 
 describe("Automation API Security - IDOR and Tenant Isolation", () => {
   const mockUser = { _id: "user1", role: "admin", email: "test@example.com" };
-  const mockSuperAdmin = { _id: "admin1", role: "super-admin", email: "super@example.com" };
+  const mockSuperAdmin = {
+    _id: "admin1",
+    role: "super-admin",
+    email: "super@example.com",
+  };
   const myTenant = "tenant-1";
   const otherTenant = "tenant-2";
 

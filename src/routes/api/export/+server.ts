@@ -73,7 +73,9 @@ export const POST = apiHandler(async ({ request, locals, url }) => {
       try {
         // SCALABILITY: For very large datasets, streaming would be preferred.
         // For now, we use the tenant-scoped filter.
-        const users = await dbAdapter.auth.getAllUsers({ filter: { tenantId: targetTenantId } });
+        const users = await dbAdapter.auth.getAllUsers({
+          filter: { tenantId: targetTenantId },
+        });
         exportData.type = "users";
         exportData.data = users;
       } catch (error) {

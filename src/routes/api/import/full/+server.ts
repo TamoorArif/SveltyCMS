@@ -73,7 +73,11 @@ async function applyImport(
   const db = getDb();
   if (!db || !dbAdapter) {
     result.success = false;
-    result.errors.push({ key: "database", message: "Database unavailable", code: "DB_ERROR" });
+    result.errors.push({
+      key: "database",
+      message: "Database unavailable",
+      code: "DB_ERROR",
+    });
     return result;
   }
 
@@ -98,7 +102,11 @@ async function applyImport(
         await db.system.preferences.set(key, value, scope as any, tenantId as any);
         result.imported++;
       } catch (error) {
-        result.errors.push({ key, message: String(error), code: "SETTING_IMPORT_FAILED" });
+        result.errors.push({
+          key,
+          message: String(error),
+          code: "SETTING_IMPORT_FAILED",
+        });
         result.success = false;
       }
     }

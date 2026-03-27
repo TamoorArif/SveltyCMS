@@ -3,29 +3,29 @@
  @component Controls for the Crop tool
  -->
 <script lang="ts">
-import { imageEditorStore } from '@src/stores/image-editor-store.svelte';
-import { ASPECT_RATIO_PRESETS } from './aspect';
-import type { CropShape } from './types';
+import { imageEditorStore } from "@src/stores/image-editor-store.svelte";
+import { ASPECT_RATIO_PRESETS } from "./aspect";
+import type { CropShape } from "./types";
 
 // Keyboard shortcuts for crop
 $effect(() => {
 	const handleKeydown = (e: KeyboardEvent) => {
-		if (imageEditorStore.activeToolId !== 'crop') return;
+		if (imageEditorStore.activeToolId !== "crop") return;
 
 		// R for rotate right, L for rotate left
-		if (e.key.toLowerCase() === 'r') imageEditorStore.rotate(90);
-		if (e.key.toLowerCase() === 'l') imageEditorStore.rotate(-90);
+		if (e.key.toLowerCase() === "r") imageEditorStore.rotate(90);
+		if (e.key.toLowerCase() === "l") imageEditorStore.rotate(-90);
 
 		// F for flip horizontal
-		if (e.key.toLowerCase() === 'f') imageEditorStore.flipH();
+		if (e.key.toLowerCase() === "f") imageEditorStore.flipH();
 
 		// Number keys for presets
-		if (e.key === '1') onAspectChange(1); // Square
-		if (e.key === '0') onAspectChange(null); // Free
+		if (e.key === "1") onAspectChange(1); // Square
+		if (e.key === "0") onAspectChange(null); // Free
 	};
 
-	window.addEventListener('keydown', handleKeydown);
-	return () => window.removeEventListener('keydown', handleKeydown);
+	window.addEventListener("keydown", handleKeydown);
+	return () => window.removeEventListener("keydown", handleKeydown);
 });
 
 function onAspectChange(ratio: number | null) {

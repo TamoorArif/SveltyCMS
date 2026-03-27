@@ -18,15 +18,15 @@ It provides the following functionality:
 
 <script lang="ts">
 // Store
-import { toast } from '@src/stores/toast.svelte.ts';
+import { toast } from "@src/stores/toast.svelte.ts";
 // Auth
-import type { Role } from '@src/databases/auth/types';
+import type { Role } from "@src/databases/auth/types";
 // Skeleton
-import { modalState } from '@utils/modal-state.svelte';
-import { SvelteSet } from 'svelte/reactivity';
-import { dndzone } from 'svelte-dnd-action';
+import { modalState } from "@utils/modal-state.svelte";
+import { SvelteSet } from "svelte/reactivity";
+import { dndzone } from "svelte-dnd-action";
 // Components
-import RoleModal from './role-modal.svelte';
+import RoleModal from "./role-modal.svelte";
 
 const flipDurationMs = 100;
 
@@ -34,21 +34,28 @@ interface Props {
 	roleData: any;
 	setRoleData: (data: any) => void;
 	updateModifiedCount?: (count: number) => void;
-	permissions?: import('@src/databases/auth/types').Permission[];
+	permissions?: import("@src/databases/auth/types").Permission[];
 }
 
-let { roleData, setRoleData, updateModifiedCount, permissions = [] }: Props = $props();
+let {
+	roleData,
+	setRoleData,
+	updateModifiedCount,
+	permissions = [],
+}: Props = $props();
 
 // Roles State
 let roles: (Role & { id: string })[] = $state([]);
-let roleSearchTerm = $state('');
+let roleSearchTerm = $state("");
 let error = $state<string | null>(null);
 
 // Derived items for display (filtering)
 const filteredRoles = $derived(
 	roles.filter(
-		(r) => r.name.toLowerCase().includes(roleSearchTerm.toLowerCase()) || r.description?.toLowerCase().includes(roleSearchTerm.toLowerCase())
-	)
+		(r) =>
+			r.name.toLowerCase().includes(roleSearchTerm.toLowerCase()) ||
+			r.description?.toLowerCase().includes(roleSearchTerm.toLowerCase()),
+	),
 );
 
 // Tracking changes
@@ -58,7 +65,7 @@ let selectedRoles = new SvelteSet<string>();
 // Modal state
 let isEditMode = $state(false);
 let currentRoleId: string | null = $state(null);
-let currentGroupName = $state('');
+let currentGroupName = $state("");
 
 // Initialize data when component mounts (run once)
 $effect(() => {
@@ -66,22 +73,22 @@ $effect(() => {
 	if (roles.length === 0 && roleData.length > 0) {
 		const rolesWithId = roleData.map((role: Role) => ({
 			...role,
-			id: role._id
+			id: role._id,
 		}));
 		roles = rolesWithId;
 	}
 });
 
-const openModal = (role: Role | null = null, groupName = '') => {
+const openModal = (role: Role | null = null, groupName = "") => {
 	isEditMode = !!role;
 	currentRoleId = role ? role._id : null;
-	currentGroupName = groupName || '';
+	currentGroupName = groupName || "";
 
 	modalState.trigger(RoleModal as any, {
 		isEditMode,
 		currentRoleId,
-		roleName: role?.name || '',
-		roleDescription: role?.description || '',
+		roleName: role?.name || "",
+		roleDescription: role?.description || "",
 		currentGroupName,
 		selectedPermissions: role?.permissions || [],
 		permissions, // Pass available permissions to the modal
@@ -91,7 +98,7 @@ const openModal = (role: Role | null = null, groupName = '') => {
 				saveRole(formData);
 			}
 		},
-		title: isEditMode ? 'Edit Role' : 'Create Role'
+		title: isEditMode ? "Edit Role" : "Create Role",
 	});
 };
 
@@ -102,31 +109,37 @@ const saveRole = async (role: {
 	selectedPermissions: string[];
 	currentRoleId: string | null;
 }) => {
-	const { roleName, roleDescription, currentGroupName, selectedPermissions, currentRoleId } = role;
+	const {
+		roleName,
+		roleDescription,
+		currentGroupName,
+		selectedPermissions,
+		currentRoleId,
+	} = role;
 	if (!roleName) {
 		return;
 	}
 
-	const roleId = currentRoleId ?? crypto.randomUUID().replace(/-/g, '');
+	const roleId = currentRoleId ?? crypto.randomUUID().replace(/-/g, "");
 	const newRole = {
 		_id: roleId,
 		id: roleId,
 		name: roleName,
 		description: roleDescription,
 		groupName: currentGroupName,
-		permissions: selectedPermissions
+		permissions: selectedPermissions,
 	};
 
 	if (!isEditMode) {
 		roles = [...roles, newRole];
 		modifiedRoles.add(roleId);
-		toast.info('Role added. Save to apply.');
+		toast.info("Role added. Save to apply.");
 	} else if (currentRoleId) {
 		const index = roles.findIndex((r) => r._id === currentRoleId);
 		roles[index] = newRole;
 		roles = [...roles];
 		modifiedRoles.add(currentRoleId);
-		toast.info('Role updated. Save to apply.');
+		toast.info("Role updated. Save to apply.");
 	}
 
 	// Sync to parent
@@ -148,7 +161,7 @@ const deleteSelectedRoles = async () => {
 	}
 	roles = [...roles];
 	selectedRoles.clear();
-	toast.info('Roles deleted. Save to apply.');
+	toast.info("Roles deleted. Save to apply.");
 
 	// Sync to parent
 	const cleanedRoles = roles.map(({ id, ...rest }) => rest);
@@ -172,7 +185,9 @@ const toggleRoleSelection = (roleId: string) => {
 
 function handleSort(e: CustomEvent) {
 	roles = [...e.detail.items];
-	const movedItem = e.detail.items.find((item: any) => item.id === e.detail.info.id);
+	const movedItem = e.detail.items.find(
+		(item: any) => item.id === e.detail.info.id,
+	);
 	if (movedItem) modifiedRoles.add(movedItem._id);
 
 	const cleanedRoles = roles.map(({ id, ...rest }) => rest);
@@ -182,7 +197,9 @@ function handleSort(e: CustomEvent) {
 
 function handleFinalize(e: CustomEvent) {
 	roles = [...e.detail.items];
-	const movedItem = e.detail.items.find((item: any) => item.id === e.detail.info.id);
+	const movedItem = e.detail.items.find(
+		(item: any) => item.id === e.detail.info.id,
+	);
 	if (movedItem) modifiedRoles.add(movedItem._id);
 
 	const cleanedRoles = roles.map(({ id, ...rest }) => rest);

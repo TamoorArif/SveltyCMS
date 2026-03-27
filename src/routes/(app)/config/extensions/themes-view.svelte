@@ -4,11 +4,11 @@
 -->
 
 <script lang="ts">
-import type { DatabaseId } from '@src/content/types';
-import type { Theme } from '@src/databases/db-interface';
-import { marketplace } from '@src/paraglide/messages';
-import { themeStore, updateTheme } from '@src/stores/theme-store.svelte';
-import { dateToISODateString } from '@utils/date-utils';
+import type { DatabaseId } from "@src/content/types";
+import type { Theme } from "@src/databases/db-interface";
+import { marketplace } from "@src/paraglide/messages";
+import { themeStore, updateTheme } from "@src/stores/theme-store.svelte";
+import { dateToISODateString } from "@utils/date-utils";
 
 let selectedTheme = $state<any | null>(null);
 let livePreviewTheme = $state<any | null>(null);
@@ -35,37 +35,42 @@ async function loadCustomThemes() {
 	// If I'm in src/routes/(app)/config/extensions
 	// I need ../themes/custom as well if themes are in src/routes/(app)/config/themes
 
-	const customThemesFiles = import.meta.glob('../../themes/custom/*/theme.css', { eager: true });
+	const customThemesFiles = import.meta.glob(
+		"../../themes/custom/*/theme.css",
+		{ eager: true },
+	);
 
 	// Convert the imported files to Theme objects
-	customThemes = Object.entries(customThemesFiles).map(([key, value], index) => {
-		const nowIso = dateToISODateString(new Date());
-		return {
-			_id: `custom-theme-${index}` as unknown as DatabaseId,
-			name: key.split('/')[3],
-			path: value as string,
-			isDefault: false,
-			isActive: false,
-			config: { tailwindConfigPath: '', assetsPath: '' },
-			createdAt: nowIso,
-			updatedAt: nowIso
-		} as Theme;
-	});
+	customThemes = Object.entries(customThemesFiles).map(
+		([key, value], index) => {
+			const nowIso = dateToISODateString(new Date());
+			return {
+				_id: `custom-theme-${index}` as unknown as DatabaseId,
+				name: key.split("/")[3],
+				path: value as string,
+				isDefault: false,
+				isActive: false,
+				config: { tailwindConfigPath: "", assetsPath: "" },
+				createdAt: nowIso,
+				updatedAt: nowIso,
+			} as Theme;
+		},
+	);
 }
 
 // Combine default theme with dynamically loaded custom themes
 const themes = $derived([
 	{
-		_id: 'default-theme' as unknown as DatabaseId,
-		name: 'SveltyCMSTheme',
-		path: '/path/to/default/theme.css',
+		_id: "default-theme" as unknown as DatabaseId,
+		name: "SveltyCMSTheme",
+		path: "/path/to/default/theme.css",
 		isDefault: true,
 		isActive: true,
-		config: { tailwindConfigPath: '', assetsPath: '' },
+		config: { tailwindConfigPath: "", assetsPath: "" },
 		createdAt: dateToISODateString(new Date()),
-		updatedAt: dateToISODateString(new Date())
+		updatedAt: dateToISODateString(new Date()),
 	} as Theme,
-	...customThemes
+	...customThemes,
 ]);
 
 // Effects for theme changes

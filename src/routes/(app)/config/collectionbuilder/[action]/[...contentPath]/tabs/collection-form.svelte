@@ -15,8 +15,7 @@
 
 <script lang="ts">
 // Svelte
-import { untrack } from 'svelte';
-import { page } from '$app/state';
+import { untrack } from "svelte";
 
 // Paraglide
 import {
@@ -27,37 +26,36 @@ import {
 	collection_slug_input,
 	collection_status,
 	collectionname_description,
-	collectionname_labelicon
-} from '@src/paraglide/messages';
+	collectionname_labelicon,
+} from "@src/paraglide/messages";
 
 // Stores
-import { collection, setCollection } from '@src/stores/collection-store.svelte';
+import { collection, setCollection } from "@src/stores/collection-store.svelte";
 
 // Components
-import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
+import IconifyIconsPicker from "@src/components/iconify-icons-picker.svelte";
 
 // UI Components
-import Input from '@src/components/ui/input.svelte';
-import Button from '@src/components/ui/button.svelte';
-import Card from '@src/components/ui/card.svelte';
-import { StatusTypes } from '@src/content/types';
+import Input from "@src/components/ui/input.svelte";
+import Button from "@src/components/ui/button.svelte";
+import Card from "@src/components/ui/card.svelte";
+import { StatusTypes } from "@src/content/types";
 
 // Props from parent
 let { data = $bindable(null), handlePageTitleUpdate } = $props();
 
 //action
-const action = page.params.action;
 
 // Form fields
-let searchQuery = $state('');
+let searchQuery = $state("");
 let autoUpdateSlug = $state(true);
-let selectedIcon = $state(data?.icon || '');
+let selectedIcon = $state(data?.icon || "");
 
 // Form field values
-let name = $state(data?.name ?? '');
-let slug = $state(data?.slug ?? '');
-let description = $state(data?.description ?? '');
-let status = $state(data?.status ?? 'unpublished');
+let name = $state(data?.name ?? "");
+let slug = $state(data?.slug ?? "");
+let description = $state(data?.description ?? "");
+let status = $state(data?.status ?? "unpublished");
 // Only sync from server data when collection identity changes (navigation/load), not on every store update (so typing in Name works)
 let lastSyncedId = $state<string | null>(null);
 
@@ -67,22 +65,30 @@ $effect(() => {
 	const fromData = data;
 	const fromStore = collection.value;
 
-	const id = fromData?._id ?? fromData?.path ?? fromStore?._id ?? fromStore?.path ?? null;
-	const idStr = id != null ? String(id) : '';
+	const id =
+		fromData?._id ??
+		fromData?.path ??
+		fromStore?._id ??
+		fromStore?.path ??
+		null;
+	const idStr = id != null ? String(id) : "";
 	if (fromData && idStr !== lastSyncedId) {
 		lastSyncedId = idStr;
-		name = fromData.name ?? '';
-		slug = fromData.slug ?? '';
-		description = fromData.description ?? '';
-		status = fromData.status ?? 'unpublished';
+		name = fromData.name ?? "";
+		slug = fromData.slug ?? "";
+		description = fromData.description ?? "";
+		status = fromData.status ?? "unpublished";
 		// Prefer load data over store so edit page always shows latest icon (no stale cache)
-		const iconValue = (fromData?.icon != null && String(fromData.icon).trim()) || (fromStore?.icon != null && String(fromStore.icon).trim()) || '';
+		const iconValue =
+			(fromData?.icon != null && String(fromData.icon).trim()) ||
+			(fromStore?.icon != null && String(fromStore.icon).trim()) ||
+			"";
 		selectedIcon = iconValue;
 	}
 });
 
 // Derived values
-const DB_NAME = $derived(name ? name.toLowerCase().replace(/ /g, '_') : '');
+const DB_NAME = $derived(name ? name.toLowerCase().replace(/ /g, "_") : "");
 
 // Update collection value when icon changes
 $effect(() => {
@@ -114,7 +120,8 @@ $effect(() => {
 			collection.value.description === currentDescription &&
 			collection.value.status === currentStatus &&
 			collection.value.icon === currentIcon
-		) return;
+		)
+			return;
 
 		setCollection({
 			...collection.value,
@@ -122,28 +129,28 @@ $effect(() => {
 			slug: currentSlug,
 			description: currentDescription,
 			status: currentStatus,
-			icon: currentIcon
+			icon: currentIcon,
 		});
 	});
 });
 
 function handleNameInput() {
-	if (typeof name === 'string' && name) {
+	if (typeof name === "string" && name) {
 		handlePageTitleUpdate(name);
 		if (autoUpdateSlug) {
-			slug = name.toLowerCase().replace(/\s+/g, '_');
+			slug = name.toLowerCase().replace(/\s+/g, "_");
 		}
 	}
 }
 
-// Update slug and page title when name changes 
+// Update slug and page title when name changes
 $effect(() => {
 	// Only track the name and autoUpdateSlug, not the collection
 	const currentName = name;
 	if (autoUpdateSlug && currentName) {
-		slug = currentName.toLowerCase().replace(/ /g, '_');
+		slug = currentName.toLowerCase().replace(/ /g, "_");
 	}
-	handlePageTitleUpdate(currentName || '');
+	handlePageTitleUpdate(currentName || "");
 });
 
 const statuses = Object.values(StatusTypes);

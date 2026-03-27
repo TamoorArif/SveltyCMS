@@ -52,10 +52,16 @@ export class MongoWebsiteTokenMethods {
     ]);
 
     if (!dataRes.success) {
-      return dataRes as unknown as DatabaseResult<{ data: WebsiteToken[]; total: number }>;
+      return dataRes as unknown as DatabaseResult<{
+        data: WebsiteToken[];
+        total: number;
+      }>;
     }
     if (!totalRes.success) {
-      return totalRes as unknown as DatabaseResult<{ data: WebsiteToken[]; total: number }>;
+      return totalRes as unknown as DatabaseResult<{
+        data: WebsiteToken[];
+        total: number;
+      }>;
     }
 
     return {

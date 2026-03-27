@@ -280,7 +280,10 @@ export class AuthModule {
       }
       const results = await this.db
         .update(schema.authUsers)
-        .set({ blocked: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions))
         .returning();
       return { modifiedCount: results.length };
@@ -298,7 +301,10 @@ export class AuthModule {
       }
       const results = await this.db
         .update(schema.authUsers)
-        .set({ blocked: false, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: false,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions))
         .returning();
       return { modifiedCount: results.length };
@@ -373,7 +379,10 @@ export class AuthModule {
     return this.core.wrap(async () => {
       const [result] = await this.db
         .update(schema.authSessions)
-        .set({ expires: new Date(newExpiry), updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          expires: new Date(newExpiry),
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(eq(schema.authSessions._id, sessionId as string))
         .returning();
       return utils.convertDatesToISO(result) as unknown as Session;
@@ -566,10 +575,10 @@ export class AuthModule {
       }
       const [result] = await this.db
         .update(schema.authTokens)
-        .set({ ...tokenData, updatedAt: isoDateStringToDate(nowISODateString()) } as Record<
-          string,
-          unknown
-        >)
+        .set({
+          ...tokenData,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        } as Record<string, unknown>)
         .where(and(...conditions))
         .returning();
       return utils.convertDatesToISO(result) as unknown as Token;
@@ -607,7 +616,11 @@ export class AuthModule {
       if (!t) {
         return { success: false, message: "Invalid or expired token" };
       }
-      return { success: true, message: "Token is valid", email: t.email as string };
+      return {
+        success: true,
+        message: "Token is valid",
+        email: t.email as string,
+      };
     }, "VALIDATE_TOKEN_FAILED");
   }
 
@@ -631,7 +644,10 @@ export class AuthModule {
 
       const results = await this.db
         .update(schema.authTokens)
-        .set({ consumed: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          consumed: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(and(...conditions))
         .returning();
 
@@ -768,7 +784,10 @@ export class AuthModule {
       }
       const results = await this.db
         .update(schema.authTokens)
-        .set({ blocked: true, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: true,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(
           and(
             or(
@@ -794,7 +813,10 @@ export class AuthModule {
       }
       const results = await this.db
         .update(schema.authTokens)
-        .set({ blocked: false, updatedAt: isoDateStringToDate(nowISODateString()) })
+        .set({
+          blocked: false,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        })
         .where(
           and(
             or(
@@ -878,10 +900,10 @@ export class AuthModule {
       }
       const [result] = await this.db
         .update(schema.roles)
-        .set({ ...roleData, updatedAt: isoDateStringToDate(nowISODateString()) } as Record<
-          string,
-          unknown
-        >)
+        .set({
+          ...roleData,
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        } as Record<string, unknown>)
         .where(and(...conditions))
         .returning();
       return this.mapRole(result);

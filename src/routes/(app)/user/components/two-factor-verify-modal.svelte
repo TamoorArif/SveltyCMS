@@ -40,18 +40,18 @@ import {
 	twofa_verify_button,
 	twofa_verify_description,
 	twofa_verify_title,
-	twofa_verifying
-} from '@src/paraglide/messages';
-import { modalState } from '@utils/modal-state.svelte';
+	twofa_verifying,
+} from "@src/paraglide/messages";
+import { modalState } from "@utils/modal-state.svelte";
 
 // Props
-const { parent, title = '', description = '' } = $props();
+const { parent, title = "", description = "" } = $props();
 
 // State
-let code = $state('');
+let code = $state("");
 let isVerifying = $state(false);
 let useBackupCode = $state(false);
-let error = $state('');
+let error = $state("");
 
 // Handle code input with validation
 function handleInput(event: Event) {
@@ -61,16 +61,16 @@ function handleInput(event: Event) {
 	if (useBackupCode) {
 		// For backup codes, allow alphanumeric and remove spaces
 		value = value
-			.replace(/[^a-zA-Z0-9]/g, '')
+			.replace(/[^a-zA-Z0-9]/g, "")
 			.toLowerCase()
 			.slice(0, 10);
 	} else {
 		// For TOTP codes, only allow 6 digits
-		value = value.replace(/\D/g, '').slice(0, 6);
+		value = value.replace(/\D/g, "").slice(0, 6);
 	}
 
 	code = value;
-	error = '';
+	error = "";
 }
 
 // Submit verification code
@@ -93,7 +93,7 @@ async function submitCode() {
 	}
 
 	isVerifying = true;
-	error = '';
+	error = "";
 
 	try {
 		// Return the code to the parent modal
@@ -102,7 +102,7 @@ async function submitCode() {
 		}
 		modalState.close();
 	} catch (err) {
-		error = err instanceof Error ? err.message : 'Verification failed';
+		error = err instanceof Error ? err.message : "Verification failed";
 	} finally {
 		isVerifying = false;
 	}
@@ -119,13 +119,13 @@ function cancelVerification() {
 // Toggle between authenticator and backup code
 function toggleCodeType() {
 	useBackupCode = !useBackupCode;
-	code = '';
-	error = '';
+	code = "";
+	error = "";
 }
 
 // Handle Enter key press
 function handleKeydown(event: KeyboardEvent) {
-	if (event.key === 'Enter' && !isVerifying) {
+	if (event.key === "Enter" && !isVerifying) {
 		submitCode();
 	}
 }

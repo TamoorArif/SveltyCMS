@@ -25,12 +25,14 @@ Renders: "Article Title" (fetched from related entry's display field)
 -->
 
 <script lang="ts">
-import type { FieldType } from './';
+import type { FieldType } from "./";
 
-const { value }: { field: FieldType; value: string | string[] | null | undefined } = $props();
+const {
+	value,
+}: { field: FieldType; value: string | string[] | null | undefined } = $props();
 
 // Local state for the resolved entry's display text.
-let displayText = $state('Loading...');
+let displayText = $state("Loading...");
 
 // Stub function for fetching entry display - implement with your API
 async function fetchEntryDisplay(_id: string): Promise<string | null> {
@@ -46,10 +48,10 @@ $effect(() => {
 		// Optimized fetch for multiple entries
 		Promise.all(ids.map((id) => fetchEntryDisplay(id))).then((texts) => {
 			const validTexts = texts.filter((t) => t !== null) as string[];
-			displayText = validTexts.join(', ') || '–';
+			displayText = validTexts.join(", ") || "–";
 		});
 	} else {
-		displayText = '–';
+		displayText = "–";
 	}
 });
 </script>

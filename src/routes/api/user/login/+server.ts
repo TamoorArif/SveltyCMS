@@ -53,7 +53,9 @@ export const POST = apiHandler(async ({ request, cookies, locals }) => {
     }
 
     // --- MULTI-TENANCY: Scope user lookup to the current tenant ---
-    const userLookupCriteria: { email: string; tenantId?: string | null } = { email };
+    const userLookupCriteria: { email: string; tenantId?: string | null } = {
+      email,
+    };
     if (getPrivateSettingSync("MULTI_TENANT")) {
       userLookupCriteria.tenantId = tenantId;
     }

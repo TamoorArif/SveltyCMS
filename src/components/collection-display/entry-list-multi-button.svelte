@@ -23,8 +23,8 @@
 
 <script lang="ts">
 // Components
-import SystemTooltip from '@src/components/system/system-tooltip.svelte';
-import { StatusTypes } from '@src/content/types';
+import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { StatusTypes } from "@src/content/types";
 import {
 	button_delete,
 	button_loading,
@@ -39,20 +39,27 @@ import {
 	entrylist_multibutton_toggle_menu,
 	entrylist_multibutton_unpublish,
 	entrylist_multibutton_viewing_active,
-	entrylist_multibutton_viewing_archived
-} from '@src/paraglide/messages';
-import { storeListboxValue } from '@src/stores/store.svelte';
-import { logger } from '@utils/logger';
-import { toast } from '@src/stores/toast.svelte.ts';
-import { onMount } from 'svelte';
-import { quintOut } from 'svelte/easing';
-import { scale } from 'svelte/transition';
+	entrylist_multibutton_viewing_archived,
+} from "@src/paraglide/messages";
+import { storeListboxValue } from "@src/stores/store.svelte";
+import { logger } from "@utils/logger";
+import { toast } from "@src/stores/toast.svelte.ts";
+import { onMount } from "svelte";
+import { quintOut } from "svelte/easing";
+import { scale } from "svelte/transition";
 
-import { registerHotkey } from '@src/utils/hotkeys';
+import { registerHotkey } from "@src/utils/hotkeys";
 
 // --- Types ---
-type ActionType = 'create' | 'publish' | 'unpublish' | 'draft' | 'schedule' | 'clone' | 'delete';
-type DangerLevel = 'low' | 'medium' | 'high';
+type ActionType =
+	| "create"
+	| "publish"
+	| "unpublish"
+	| "draft"
+	| "schedule"
+	| "clone"
+	| "delete";
+type DangerLevel = "low" | "medium" | "high";
 
 interface ActionConfig {
 	dangerLevel: DangerLevel;
@@ -93,80 +100,80 @@ let {
 	schedule,
 	delete: deleteAction,
 	clone,
-	create
+	create,
 }: Props = $props();
 
 // --- Action Configurations ---
 const ACTION_CONFIGS: ActionConfig[] = [
 	{
-		type: 'create',
+		type: "create",
 		label: entrylist_multibutton_create(),
-		gradient: 'gradient-tertiary',
-		icon: 'ic:round-plus',
-		textColor: 'text-white',
-		shortcut: 'mod+n',
+		gradient: "gradient-tertiary",
+		icon: "ic:round-plus",
+		textColor: "text-white",
+		shortcut: "mod+n",
 		requiresSelection: false,
-		dangerLevel: 'low'
+		dangerLevel: "low",
 	},
 	{
-		type: 'publish',
+		type: "publish",
 		label: entrylist_multibutton_publish(),
-		gradient: 'gradient-primary',
-		icon: 'bi:hand-thumbs-up-fill',
-		textColor: 'text-white',
-		shortcut: 'mod+enter',
+		gradient: "gradient-primary",
+		icon: "bi:hand-thumbs-up-fill",
+		textColor: "text-white",
+		shortcut: "mod+enter",
 		requiresSelection: true,
-		dangerLevel: 'medium'
+		dangerLevel: "medium",
 	},
 	{
-		type: 'unpublish',
+		type: "unpublish",
 		label: entrylist_multibutton_unpublish(),
-		gradient: 'gradient-warning',
-		icon: 'bi:pause-circle',
-		textColor: 'text-black',
-		shortcut: 'mod+u',
+		gradient: "gradient-warning",
+		icon: "bi:pause-circle",
+		textColor: "text-black",
+		shortcut: "mod+u",
 		requiresSelection: true,
-		dangerLevel: 'medium'
+		dangerLevel: "medium",
 	},
 	{
-		type: 'draft',
-		label: 'Draft',
-		gradient: 'gradient-secondary',
-		icon: 'ic:baseline-edit-note',
-		textColor: 'text-white',
-		shortcut: 'mod+s',
+		type: "draft",
+		label: "Draft",
+		gradient: "gradient-secondary",
+		icon: "ic:baseline-edit-note",
+		textColor: "text-white",
+		shortcut: "mod+s",
 		requiresSelection: true,
-		dangerLevel: 'low'
+		dangerLevel: "low",
 	},
 	{
-		type: 'schedule',
+		type: "schedule",
 		label: entrylist_multibutton_schedule(),
-		gradient: 'gradient-tertiary',
-		icon: 'ic:round-schedule',
-		textColor: 'text-white',
+		gradient: "gradient-tertiary",
+		icon: "ic:round-schedule",
+		textColor: "text-white",
 		requiresSelection: true,
-		dangerLevel: 'low'
+		dangerLevel: "low",
 	},
 	{
-		type: 'clone',
+		type: "clone",
 		label: entrylist_multibutton_clone(),
-		gradient: 'gradient-secondary',
-		icon: 'ic:round-content-copy',
-		textColor: 'text-white',
-		shortcut: 'mod+d',
+		gradient: "gradient-secondary",
+		icon: "ic:round-content-copy",
+		textColor: "text-white",
+		shortcut: "mod+d",
 		requiresSelection: true,
-		dangerLevel: 'low'
+		dangerLevel: "low",
 	},
 	{
-		type: 'delete',
+		type: "delete",
 		label: button_delete(),
-		gradient: 'gradient-error',
-		icon: 'ic:round-delete-forever',
-		textColor: 'text-white',
-		shortcut: 'delete',
+		gradient: "gradient-error",
+		icon: "ic:round-delete-forever",
+		textColor: "text-white",
+		shortcut: "delete",
 		requiresSelection: true,
-		dangerLevel: 'high'
-	}
+		dangerLevel: "high",
+	},
 ];
 
 // --- State ---
@@ -183,7 +190,9 @@ let isSlowConnection = $state(false);
 const batchSizeLimit = $derived(isSlowConnection ? 10 : 50);
 
 // --- Derived State ---
-const currentAction = $derived((storeListboxValue.value as ActionType) || 'create');
+const currentAction = $derived(
+	(storeListboxValue.value as ActionType) || "create",
+);
 
 const currentConfig = $derived.by(() => {
 	const config = ACTION_CONFIGS.find((c) => c.type === currentAction);
@@ -193,8 +202,12 @@ const currentConfig = $derived.by(() => {
 // Aggregate stats for smart filtering
 const stats = $derived.by(() => {
 	const items = selectedItems || [];
-	const published = items.filter((i: any) => i.status === StatusTypes.publish).length;
-	const drafts = items.filter((i: any) => (i.status || i.raw_status) === StatusTypes.draft).length;
+	const published = items.filter(
+		(i: any) => i.status === StatusTypes.publish,
+	).length;
+	const drafts = items.filter(
+		(i: any) => (i.status || i.raw_status) === StatusTypes.draft,
+	).length;
 	return { published, drafts, total: items.length };
 });
 
@@ -203,7 +216,7 @@ const dynamicLabel = $derived.by(() => {
 	if (isProcessing) {
 		return `${button_loading()}...`;
 	}
-	if (selectedCount < 2 || currentAction === 'create') {
+	if (selectedCount < 2 || currentAction === "create") {
 		return currentConfig.label;
 	}
 	return `Bulk ${currentConfig.label} (${selectedCount})`;
@@ -217,19 +230,23 @@ const availableActions = $derived.by(() => {
 			return false;
 		}
 		// Always hide create from dropdown
-		if (config.type === 'create') {
+		if (config.type === "create") {
 			return false;
 		}
 
 		// Hide redundant actions based on selection
 		if (hasSelections) {
-			if (config.type === 'publish' && stats.published === selectedCount) {
+			if (config.type === "publish" && stats.published === selectedCount) {
 				return false;
 			}
-			if (config.type === 'unpublish' && stats.drafts === selectedCount && stats.published === 0) {
+			if (
+				config.type === "unpublish" &&
+				stats.drafts === selectedCount &&
+				stats.published === 0
+			) {
 				return false;
 			}
-			if (config.type === 'draft' && stats.drafts === selectedCount) {
+			if (config.type === "draft" && stats.drafts === selectedCount) {
 				return false;
 			}
 		}
@@ -243,7 +260,7 @@ const availableActions = $derived.by(() => {
 // Smart action selection based on selection state
 $effect(() => {
 	if (isCollectionEmpty) {
-		storeListboxValue.set('create');
+		storeListboxValue.set("create");
 		manualActionSet = false;
 		return;
 	}
@@ -253,34 +270,37 @@ $effect(() => {
 	}
 
 	if (!hasSelections) {
-		if (currentAction !== 'create') {
-			storeListboxValue.set('create');
+		if (currentAction !== "create") {
+			storeListboxValue.set("create");
 		}
 		return;
 	}
 
 	// Selection logic: prioritize Unpublish if only published items are selected
 	if (stats.published > 0 && stats.published === selectedCount) {
-		if (currentAction !== 'unpublish') {
-			storeListboxValue.set('unpublish');
+		if (currentAction !== "unpublish") {
+			storeListboxValue.set("unpublish");
 		}
-	} else if (currentAction !== 'publish') {
+	} else if (currentAction !== "publish") {
 		// Mixed or Drafts: prioritize Publish
-		storeListboxValue.set('publish');
+		storeListboxValue.set("publish");
 	}
 });
 
 // Connection awareness
 $effect(() => {
-	if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+	if (typeof navigator !== "undefined" && "connection" in navigator) {
 		const conn = (navigator as any).connection;
 		if (conn) {
 			const checkConnection = () => {
-				isSlowConnection = conn.saveData || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g';
+				isSlowConnection =
+					conn.saveData ||
+					conn.effectiveType === "slow-2g" ||
+					conn.effectiveType === "2g";
 			};
 			checkConnection();
-			conn.addEventListener('change', checkConnection);
-			return () => conn.removeEventListener('change', checkConnection);
+			conn.addEventListener("change", checkConnection);
+			return () => conn.removeEventListener("change", checkConnection);
 		}
 	}
 });
@@ -299,12 +319,12 @@ $effect(() => {
 	};
 
 	const timer = setTimeout(() => {
-		document.addEventListener('click', handleClickOutside);
+		document.addEventListener("click", handleClickOutside);
 	}, 10);
 
 	return () => {
 		clearTimeout(timer);
-		document.removeEventListener('click', handleClickOutside);
+		document.removeEventListener("click", handleClickOutside);
 	};
 });
 
@@ -316,12 +336,14 @@ onMount(() => {
 				() => {
 					if (isDropdownOpen) return; // let dropdown handle keys if open
 					if (config.requiresSelection && !hasSelections) {
-						logger.debug(`[MultiButton] Keyboard shortcut ${config.shortcut} requires selection`);
+						logger.debug(
+							`[MultiButton] Keyboard shortcut ${config.shortcut} requires selection`,
+						);
 						return;
 					}
 					handleAction(config.type);
 				},
-				`Trigger action: ${config.label}`
+				`Trigger action: ${config.label}`,
 			);
 		}
 	});
@@ -335,7 +357,7 @@ async function handleAction(action: ActionType) {
 	if (selectedCount > batchSizeLimit && isSlowConnection) {
 		const limitMsg = entrylist_multibutton_limit_warning
 			? entrylist_multibutton_limit_warning({ count: batchSizeLimit })
-			: 'Slow connection: Batch size limited';
+			: "Slow connection: Batch size limited";
 		toast.warning(limitMsg);
 		return;
 	}
@@ -348,30 +370,30 @@ async function executeAction(action: ActionType) {
 	isProcessing = true;
 	try {
 		switch (action) {
-			case 'create':
+			case "create":
 				create();
 				break;
-			case 'publish':
+			case "publish":
 				await publish();
 				break;
-			case 'unpublish':
+			case "unpublish":
 				await unpublish();
 				break;
-			case 'draft':
+			case "draft":
 				await draft();
 				break;
-			case 'clone':
+			case "clone":
 				await clone();
 				break;
-			case 'delete':
+			case "delete":
 				// Delete usually has its own confirmation in parent if triggering via deleteAction?
 				// If not, we should probably confirm. But user said "only DELETE need a confirmation modal".
 				// Assuming deleteAction triggers the modal logic or actual delete.
 				await deleteAction(showDeleted);
 				break;
-			case 'schedule': {
+			case "schedule": {
 				const now = new Date().toISOString();
-				schedule(now, 'publish');
+				schedule(now, "publish");
 				break;
 			}
 		}

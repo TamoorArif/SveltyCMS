@@ -11,11 +11,11 @@ Features:
 - Integrated marketplace tab
 -->
 <script lang="ts">
-import { widgetStoreActions } from '@src/stores/widget-store.svelte.ts';
-import { logger } from '@utils/logger';
+import { widgetStoreActions } from "@src/stores/widget-store.svelte.ts";
+import { logger } from "@utils/logger";
 // Using iconify-icon web component
-import { onMount } from 'svelte';
-import WidgetCard from './widget-card.svelte';
+import { onMount } from "svelte";
+import WidgetCard from "./widget-card.svelte";
 
 // Props
 const { data }: { data: any } = $props();
@@ -38,19 +38,24 @@ interface Widget {
 // State
 let widgets: Widget[] = $state([]);
 let isLoading = $state(true);
-let searchQuery = $state('');
-let activeFilter = $state('all');
-let activeTab = $state('installed');
+let searchQuery = $state("");
+let activeFilter = $state("all");
+let activeTab = $state("installed");
 let error: string | null = $state(null);
 
 // Get tenant info from page data or user session
-const tenantId = $derived(data?.user?.tenantId || data?.tenantId || 'default-tenant');
+const tenantId = $derived(
+	data?.user?.tenantId || data?.tenantId || "default-tenant",
+);
 
 // User permissions
-const userRole = $derived(data?.user?.role || 'user');
+const userRole = $derived(data?.user?.role || "user");
 const userPermissions = $derived(data?.user?.permissions || []);
 const canManageWidgets = $derived(
-	userRole === 'admin' || userRole === 'super-admin' || userPermissions.includes('manage_widgets') || userPermissions.includes('widget_management')
+	userRole === "admin" ||
+		userRole === "super-admin" ||
+		userPermissions.includes("manage_widgets") ||
+		userPermissions.includes("widget_management"),
 );
 
 // Computed stats
@@ -61,7 +66,7 @@ const stats = $derived({
 	active: widgets.filter((w) => w.isActive).length,
 	inactive: widgets.filter((w) => !w.isActive).length,
 	withInput: widgets.filter((w) => w.pillar?.input?.exists).length,
-	withDisplay: widgets.filter((w) => w.pillar?.display?.exists).length
+	withDisplay: widgets.filter((w) => w.pillar?.display?.exists).length,
 });
 
 // Filtered widgets
@@ -69,32 +74,32 @@ const filteredWidgets = $derived(
 	widgets.filter((widget) => {
 		// Search filter
 		const matchesSearch =
-			searchQuery === '' ||
+			searchQuery === "" ||
 			widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			widget.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
 		// Category filter
 		let matchesFilter = false;
 		switch (activeFilter) {
-			case 'all':
+			case "all":
 				matchesFilter = true;
 				break;
-			case 'core':
+			case "core":
 				matchesFilter = widget.isCore;
 				break;
-			case 'custom':
+			case "custom":
 				matchesFilter = !widget.isCore;
 				break;
-			case 'active':
+			case "active":
 				matchesFilter = widget.isActive;
 				break;
-			case 'inactive':
+			case "inactive":
 				matchesFilter = !widget.isActive;
 				break;
 		}
 
 		return matchesSearch && matchesFilter;
-	})
+	}),
 );
 
 onMount(() => {
@@ -103,20 +108,20 @@ onMount(() => {
 	// Keyboard shortcuts
 	const handleKeyboard = (e: KeyboardEvent) => {
 		// Ctrl/Cmd + F: Focus search
-		if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+		if ((e.ctrlKey || e.metaKey) && e.key === "f") {
 			e.preventDefault();
 			(document.querySelector('input[type="text"]') as HTMLElement)?.focus();
 		}
 		// Escape: Clear search
-		if (e.key === 'Escape' && searchQuery) {
-			searchQuery = '';
+		if (e.key === "Escape" && searchQuery) {
+			searchQuery = "";
 		}
 	};
 
-	window.addEventListener('keydown', handleKeyboard);
+	window.addEventListener("keydown", handleKeyboard);
 
 	return () => {
-		window.removeEventListener('keydown', handleKeyboard);
+		window.removeEventListener("keydown", handleKeyboard);
 	};
 });
 
@@ -132,21 +137,21 @@ async function loadWidgets() {
 		}
 
 		const result = await response.json();
-		console.log('[WidgetDashboard] Full API response:', result);
-		console.log('[WidgetDashboard] result.widgets:', result.widgets);
-		console.log('[WidgetDashboard] result.data:', result.data);
+		console.log("[WidgetDashboard] Full API response:", result);
+		console.log("[WidgetDashboard] result.widgets:", result.widgets);
+		console.log("[WidgetDashboard] result.data:", result.data);
 
 		// Try both result.widgets and result.data.widgets
 		widgets = result.widgets || result.data?.widgets || [];
 
-		console.info('Loaded widgets:', {
+		console.info("Loaded widgets:", {
 			total: widgets.length,
 			core: widgets.filter((w) => w.isCore).length,
-			custom: widgets.filter((w) => !w.isCore).length
+			custom: widgets.filter((w) => !w.isCore).length,
 		});
 	} catch (err) {
-		error = err instanceof Error ? err.message : 'Failed to load widgets';
-		logger.error('Error loading widgets:', err);
+		error = err instanceof Error ? err.message : "Failed to load widgets";
+		logger.error("Error loading widgets:", err);
 	} finally {
 		isLoading = false;
 	}
@@ -154,7 +159,9 @@ async function loadWidgets() {
 
 async function toggleWidget(widgetName: string) {
 	if (!canManageWidgets) {
-		alert('You do not have permission to manage widgets. Contact your administrator.');
+		alert(
+			"You do not have permission to manage widgets. Contact your administrator.",
+		);
 		return;
 	}
 
@@ -166,16 +173,16 @@ async function toggleWidget(widgetName: string) {
 
 		const newStatus = !widget.isActive;
 
-		const response = await fetch('/api/widgets/status', {
-			method: 'POST',
+		const response = await fetch("/api/widgets/status", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json',
-				'X-Tenant-ID': tenantId
+				"Content-Type": "application/json",
+				"X-Tenant-ID": tenantId,
 			},
 			body: JSON.stringify({
 				widgetName,
-				isActive: newStatus
-			})
+				isActive: newStatus,
+			}),
 		});
 
 		if (!response.ok) {
@@ -187,32 +194,39 @@ async function toggleWidget(widgetName: string) {
 		await widgetStoreActions.initializeWidgets(tenantId);
 		await loadWidgets();
 
-		console.info(`Widget ${widgetName} ${newStatus ? 'activated' : 'deactivated'} - Store and UI refreshed`);
+		console.info(
+			`Widget ${widgetName} ${newStatus ? "activated" : "deactivated"} - Store and UI refreshed`,
+		);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Failed to update widget status';
-		logger.error('Error toggling widget:', err);
+		const message =
+			err instanceof Error ? err.message : "Failed to update widget status";
+		logger.error("Error toggling widget:", err);
 		alert(`Error: ${message}`);
 	}
 }
 
 async function uninstallWidget(widgetName: string) {
 	if (!canManageWidgets) {
-		alert('You do not have permission to uninstall widgets. Contact your administrator.');
+		alert(
+			"You do not have permission to uninstall widgets. Contact your administrator.",
+		);
 		return;
 	}
 
-	if (!confirm(`Are you sure you want to uninstall the widget "${widgetName}"?`)) {
+	if (
+		!confirm(`Are you sure you want to uninstall the widget "${widgetName}"?`)
+	) {
 		return;
 	}
 
 	try {
-		const response = await fetch('/api/widgets/uninstall', {
-			method: 'POST',
+		const response = await fetch("/api/widgets/uninstall", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json',
-				'X-Tenant-ID': tenantId
+				"Content-Type": "application/json",
+				"X-Tenant-ID": tenantId,
 			},
-			body: JSON.stringify({ widgetName })
+			body: JSON.stringify({ widgetName }),
 		});
 
 		if (!response.ok) {
@@ -223,8 +237,9 @@ async function uninstallWidget(widgetName: string) {
 		await loadWidgets();
 		console.info(`Widget ${widgetName} uninstalled`);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Failed to uninstall widget';
-		logger.error('Error uninstalling widget:', err);
+		const message =
+			err instanceof Error ? err.message : "Failed to uninstall widget";
+		logger.error("Error uninstalling widget:", err);
 		alert(`Error: ${message}`);
 	}
 }

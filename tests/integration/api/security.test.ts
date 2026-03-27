@@ -60,7 +60,10 @@ describe("Security Enhancements Verification", () => {
     for (let i = 0; i < 15; i++) {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email: `test-${i}@example.com`, password: "wrong" }),
+        body: JSON.stringify({
+          email: `test-${i}@example.com`,
+          password: "wrong",
+        }),
         headers: {
           "Content-Type": "application/json",
           "X-Test-Security": "true",

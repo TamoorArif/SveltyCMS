@@ -159,7 +159,11 @@ export class SessionAdapter {
 
   // Create a new session
   async createSession(
-    sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
+    sessionData: {
+      user_id: string;
+      expires: ISODateString;
+      tenantId?: string | null;
+    },
     options?: { bypassTenantCheck?: boolean },
   ): Promise<DatabaseResult<Session>> {
     try {
@@ -198,7 +202,11 @@ export class SessionAdapter {
 
   // Create a new session with options (optimized with atomic bulkWrite)
   async createSessionWithOptions(
-    sessionData: { user_id: string; expires: ISODateString; tenantId?: string | null },
+    sessionData: {
+      user_id: string;
+      expires: ISODateString;
+      tenantId?: string | null;
+    },
     options: { invalidateOthers?: boolean } = {},
   ): Promise<Session> {
     try {
@@ -510,7 +518,10 @@ export class SessionAdapter {
       });
 
       if (results.length > 0) {
-        const user = results[0] as User & { _sessionRotated?: boolean; _sessionRotatedTo?: string };
+        const user = results[0] as User & {
+          _sessionRotated?: boolean;
+          _sessionRotatedTo?: string;
+        };
 
         // Log rotation status if applicable
         if (user._sessionRotated && user._sessionRotatedTo) {

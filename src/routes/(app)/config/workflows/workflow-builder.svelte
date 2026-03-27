@@ -3,8 +3,8 @@
 @component Visual State Machine Editor for Content Lifecycles
  -->
 <script lang="ts">
-import { toast } from '@src/stores/toast.svelte.ts';
-import { fade } from 'svelte/transition';
+import { toast } from "@src/stores/toast.svelte.ts";
+import { fade } from "svelte/transition";
 
 interface State {
 	id: string;
@@ -23,22 +23,22 @@ interface Transition {
 }
 
 let states = $state<State[]>([
-	{ id: 'draft', label: 'Draft', color: '#94a3b8', isInitial: true },
-	{ id: 'review', label: 'In Review', color: '#fbbf24' },
-	{ id: 'published', label: 'Published', color: '#22c55e', isFinal: true }
+	{ id: "draft", label: "Draft", color: "#94a3b8", isInitial: true },
+	{ id: "review", label: "In Review", color: "#fbbf24" },
+	{ id: "published", label: "Published", color: "#22c55e", isFinal: true },
 ]);
 
 let transitions = $state<Transition[]>([
-	{ id: 't1', from: 'draft', to: 'review', label: 'Submit for Review' },
-	{ id: 't2', from: 'review', to: 'published', label: 'Approve & Publish' },
-	{ id: 't3', from: 'review', to: 'draft', label: 'Reject' }
+	{ id: "t1", from: "draft", to: "review", label: "Submit for Review" },
+	{ id: "t2", from: "review", to: "published", label: "Approve & Publish" },
+	{ id: "t3", from: "review", to: "draft", label: "Reject" },
 ]);
 
 let selectedNodeId = $state<string | null>(null);
 
 function addState() {
 	const id = `state_${Math.random().toString(36).substring(7)}`;
-	states.push({ id, label: 'New State', color: '#3b82f6' });
+	states.push({ id, label: "New State", color: "#3b82f6" });
 }
 
 function addTransition() {
@@ -48,7 +48,7 @@ function addTransition() {
 		id,
 		from: states[0].id,
 		to: states[1].id,
-		label: 'New Transition'
+		label: "New Transition",
 	});
 }
 

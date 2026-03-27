@@ -34,9 +34,9 @@ Visual password strength indicator with match validation and accessibility featu
 -->
 
 <script lang="ts">
-import { publicEnv } from '@src/stores/global-settings.svelte';
-import { onMount } from 'svelte';
-import { fade, slide } from 'svelte/transition';
+import { publicEnv } from "@src/stores/global-settings.svelte";
+import { onMount } from "svelte";
+import { fade, slide } from "svelte/transition";
 
 interface Props {
 	confirmPassword?: string;
@@ -44,7 +44,11 @@ interface Props {
 	showRequirements?: boolean;
 }
 
-const { password = '', confirmPassword = '', showRequirements = false }: Props = $props();
+const {
+	password = "",
+	confirmPassword = "",
+	showRequirements = false,
+}: Props = $props();
 
 // Configuration
 const MIN_PASSWORD_LENGTH = publicEnv?.PASSWORD_LENGTH ?? 8;
@@ -63,7 +67,7 @@ const complexityChecks = $derived.by(() => {
 		hasLower: /[a-z]/.test(pwd),
 		hasNumber: /\d/.test(pwd),
 		hasSpecial: /[^A-Za-z0-9]/.test(pwd),
-		hasMinLength: pwd.length >= MIN_PASSWORD_LENGTH
+		hasMinLength: pwd.length >= MIN_PASSWORD_LENGTH,
 	};
 });
 
@@ -85,7 +89,9 @@ function calculateScore(pwd: string, checks: Record<string, boolean>): number {
 	}
 
 	// Complexity bonus (excluding hasMinLength)
-	const complexityCount = Object.entries(checks).filter(([key, value]) => key !== 'hasMinLength' && value).length;
+	const complexityCount = Object.entries(checks).filter(
+		([key, value]) => key !== "hasMinLength" && value,
+	).length;
 
 	score += Math.floor(complexityCount / 2);
 
@@ -94,51 +100,63 @@ function calculateScore(pwd: string, checks: Record<string, boolean>): number {
 
 // Feedback messages
 const FEEDBACK_MESSAGES: Record<number, string> = {
-	0: 'Too Short',
-	1: 'Weak',
-	2: 'Fair',
-	3: 'Good',
-	4: 'Strong',
-	5: 'Very Strong'
+	0: "Too Short",
+	1: "Weak",
+	2: "Fair",
+	3: "Good",
+	4: "Strong",
+	5: "Very Strong",
 };
 
 // Color classes
 const COLOR_CLASSES: Record<number, string> = {
-	0: 'bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-300',
-	1: 'bg-red-500 text-white',
-	2: 'bg-orange-500 text-white',
-	3: 'bg-yellow-500 text-gray-900',
-	4: 'bg-green-600 text-white',
-	5: 'bg-green-500 text-white'
+	0: "bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-300",
+	1: "bg-red-500 text-white",
+	2: "bg-orange-500 text-white",
+	3: "bg-yellow-500 text-gray-900",
+	4: "bg-green-600 text-white",
+	5: "bg-green-500 text-white",
 };
 
 // Bar colors
 function getBarColor(barIndex: number, score: number): string {
 	if (score === 0) {
-		return 'bg-gray-200 dark:bg-gray-700';
+		return "bg-gray-200 dark:bg-gray-700";
 	}
 	if (barIndex === 0) {
-		return score >= 1 ? 'bg-red-500' : 'bg-gray-200 dark:bg-gray-700';
+		return score >= 1 ? "bg-red-500" : "bg-gray-200 dark:bg-gray-700";
 	}
 	if (barIndex === 1) {
-		return score >= 2 ? 'bg-yellow-500' : 'bg-gray-200 dark:bg-gray-700';
+		return score >= 2 ? "bg-yellow-500" : "bg-gray-200 dark:bg-gray-700";
 	}
-	return score >= 3 ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700';
+	return score >= 3 ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700";
 }
 
 // Derived values
-const longerPassword = $derived(password.length >= confirmPassword.length ? password : confirmPassword);
+const longerPassword = $derived(
+	password.length >= confirmPassword.length ? password : confirmPassword,
+);
 
 const score = $derived(calculateScore(longerPassword, complexityChecks));
-const feedback = $derived(FEEDBACK_MESSAGES[score] || 'Unknown');
+const feedback = $derived(FEEDBACK_MESSAGES[score] || "Unknown");
 const scoreColor = $derived(COLOR_CLASSES[score] || COLOR_CLASSES[0]);
-const showStrength = $derived(password.length > 0 || confirmPassword.length > 0);
-const percentage = $derived(Math.min(100, (longerPassword.length / GREEN_LENGTH) * 100));
-const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0 && password.length > 0);
+const showStrength = $derived(
+	password.length > 0 || confirmPassword.length > 0,
+);
+const percentage = $derived(
+	Math.min(100, (longerPassword.length / GREEN_LENGTH) * 100),
+);
+const passwordsMatch = $derived(
+	password === confirmPassword &&
+		confirmPassword.length > 0 &&
+		password.length > 0,
+);
 const showMatchIndicator = $derived(confirmPassword.length > 0);
 
 // Count met requirements
-const metRequirements = $derived(Object.values(complexityChecks).filter(Boolean).length);
+const metRequirements = $derived(
+	Object.values(complexityChecks).filter(Boolean).length,
+);
 const totalRequirements = $derived(Object.keys(complexityChecks).length);
 
 // Accessibility label
@@ -146,12 +164,12 @@ const strengthLabel = $derived(() => {
 	const parts = [`Password strength: ${feedback}`];
 
 	if (showMatchIndicator) {
-		parts.push(passwordsMatch ? 'Passwords match' : 'Passwords do not match');
+		parts.push(passwordsMatch ? "Passwords match" : "Passwords do not match");
 	}
 
 	parts.push(`${metRequirements} of ${totalRequirements} requirements met`);
 
-	return parts.join('. ');
+	return parts.join(". ");
 });
 
 // Toggle requirements list
@@ -161,15 +179,15 @@ function toggleRequirements() {
 
 // Lifecycle
 onMount(() => {
-	const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	prefersReducedMotion = mediaQuery.matches;
 
 	const handleChange = (e: MediaQueryListEvent) => {
 		prefersReducedMotion = e.matches;
 	};
 
-	mediaQuery.addEventListener('change', handleChange);
-	return () => mediaQuery.removeEventListener('change', handleChange);
+	mediaQuery.addEventListener("change", handleChange);
+	return () => mediaQuery.removeEventListener("change", handleChange);
 });
 </script>
 

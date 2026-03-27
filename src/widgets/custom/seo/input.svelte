@@ -1,21 +1,21 @@
 <script lang="ts">
-import { publicEnv } from '@src/stores/global-settings.svelte.ts';
+import { publicEnv } from "@src/stores/global-settings.svelte.ts";
 // Stores & Props
-import { app } from '@src/stores/store.svelte';
-import { onMount } from 'svelte';
-import { slide } from 'svelte/transition';
+import { app } from "@src/stores/store.svelte";
+import { onMount } from "svelte";
+import { slide } from "svelte/transition";
 
 // Lucide Icons
 
-import { tokenTarget } from '@src/services/token/token-target';
-import type { SeoWidgetData } from '.';
-import SeoAnalysisPanel from './components/seo-analysis-panel.svelte';
-import SeoField from './components/seo-field.svelte';
+import { tokenTarget } from "@src/services/token/token-target";
+import type { SeoWidgetData } from ".";
+import SeoAnalysisPanel from "./components/seo-analysis-panel.svelte";
+import SeoField from "./components/seo-field.svelte";
 // Components
-import SeoPreview from './components/seo-preview.svelte';
-import SocialPreview from './components/social-preview.svelte';
+import SeoPreview from "./components/seo-preview.svelte";
+import SocialPreview from "./components/social-preview.svelte";
 // Logic
-import { analyzeSeo } from './seo-analyzer';
+import { analyzeSeo } from "./seo-analyzer";
 
 interface Props {
 	field: any;
@@ -23,7 +23,11 @@ interface Props {
 	value?: Record<string, SeoWidgetData>;
 }
 
-let { field, value = $bindable(), validationError: _validationError }: Props = $props();
+let {
+	field,
+	value = $bindable(),
+	validationError: _validationError,
+}: Props = $props();
 
 // --- State ---
 let activeTab = $state(0);
@@ -37,7 +41,7 @@ let availableLanguages = $state<string[]>([]);
 // Use contentLanguage store value
 const currentLang = $derived(app.contentLanguage);
 // Fallback to 'en' if no language selected
-let lang = $derived(currentLang || 'en');
+let lang = $derived(currentLang || "en");
 
 // --- Lifecycle ---
 onMount(() => {
@@ -47,27 +51,30 @@ onMount(() => {
 	}
 	if (!value[lang]) {
 		value[lang] = {
-			title: '',
-			description: '',
-			focusKeyword: '',
-			robotsMeta: 'index, follow',
-			canonicalUrl: '',
-			ogTitle: '',
-			ogDescription: '',
-			ogImage: '',
-			twitterCard: 'summary_large_image',
-			twitterTitle: '',
-			twitterDescription: '',
-			twitterImage: '',
-			schemaMarkup: ''
+			title: "",
+			description: "",
+			focusKeyword: "",
+			robotsMeta: "index, follow",
+			canonicalUrl: "",
+			ogTitle: "",
+			ogDescription: "",
+			ogImage: "",
+			twitterCard: "summary_large_image",
+			twitterTitle: "",
+			twitterDescription: "",
+			twitterImage: "",
+			schemaMarkup: "",
 		} as SeoWidgetData;
 	}
 
 	// Get available languages from config/store if possible
 	if (publicEnv.AVAILABLE_CONTENT_LANGUAGES) {
-		availableLanguages = [publicEnv.DEFAULT_CONTENT_LANGUAGE || 'en', ...publicEnv.AVAILABLE_CONTENT_LANGUAGES];
+		availableLanguages = [
+			publicEnv.DEFAULT_CONTENT_LANGUAGE || "en",
+			...publicEnv.AVAILABLE_CONTENT_LANGUAGES,
+		];
 	} else {
-		availableLanguages = ['en'];
+		availableLanguages = ["en"];
 	}
 });
 
@@ -103,12 +110,12 @@ async function runAnalysis() {
 	isAnalyzing = true;
 
 	// TODO: Connect to actual content store when available
-	const contentBody = '';
+	const contentBody = "";
 
 	try {
 		analysisResults = await analyzeSeo(value[lang], contentBody);
 	} catch (e) {
-		console.error('SEO Analysis failed', e);
+		console.error("SEO Analysis failed", e);
 	} finally {
 		isAnalyzing = false;
 	}
@@ -130,7 +137,7 @@ function getFieldTranslationPercentage(fieldName: string): number {
 			return false;
 		}
 		const fieldData = langData[fieldName as keyof SeoWidgetData];
-		return typeof fieldData === 'string' && fieldData.trim() !== '';
+		return typeof fieldData === "string" && fieldData.trim() !== "";
 	}).length;
 	return Math.round((populatedCount / availableLanguages.length) * 100);
 }
@@ -148,7 +155,8 @@ const updateField = (fieldName: keyof SeoWidgetData, newVal: string) => {
 // Determine if field is translated based on widget config
 const isTranslated = $derived(field.translated);
 
-const placeholder = '{"@context": "https://schema.org", "@type": "Article", ...}';
+const placeholder =
+	'{"@context": "https://schema.org", "@type": "Article", ...}';
 </script>
 
 <div class="space-y-4">
