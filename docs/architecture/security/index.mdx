@@ -1,12 +1,12 @@
 ---
-path: "docs/security/index.mdx"
+path: "docs/architecture/security/index.mdx"
 title: "Security Documentation"
 description: "Comprehensive security documentation for SveltyCMS covering authentication, cryptography, widget security, and best practices"
 order: 1
 icon: "mdi:shield-lock"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-11-14"
-updated: "2026-03-15"
+updated: "2026-03-27"
 tags:
   - "security"
   - "documentation"
@@ -59,7 +59,7 @@ SveltyCMS security architecture includes:
 
 ### Widget & Content Security
 
-- **[Widget Security](/docs/security/widget-security.mdx)** ⭐ - Comprehensive security measures across all widgets
+- **[Widget Security](/docs/architecture/security/widget-security.mdx)** ⭐ - Comprehensive security measures across all widgets
   - XSS prevention
   - Injection attack protection
   - File upload validation
@@ -163,7 +163,7 @@ SveltyCMS security architecture includes:
 - ✅ File validation in MediaUpload widget
 - ✅ Format validation in Email, PhoneNumber, Currency widgets
 
-**Implementation Details**: See [Widget Security Documentation](/docs/security/widget-security.mdx)
+**Implementation Details**: See [Widget Security Documentation](/docs/architecture/security/widget-security.mdx)
 
 ### 5. Access Control
 
@@ -333,11 +333,11 @@ Recommended security testing tools:
 
 ### Widget Security
 
-- [x] All widgets reviewed for security - `docs/security/widget-security.mdx`
-- [x] Custom widgets follow security guidelines - `docs/security/widget-security.mdx`
+- [x] All widgets reviewed for security - `docs/architecture/security/widget-security.mdx`
+- [x] Custom widgets follow security guidelines - `docs/architecture/security/widget-security.mdx`
 - [x] File upload restrictions configured - `tests/unit/plugins/sandbox.test.ts`
 - [x] Input validation enabled - `tests/unit/hooks/firewall.test.ts`
-- [x] Output encoding verified - `docs/security/richtext-security.mdx`
+- [x] Output encoding verified - `docs/architecture/security/richtext-security.mdx`
 - [x] Widget permissions configured - RBAC tests
 
 ---
@@ -476,9 +476,9 @@ SveltyCMS security features support compliance with:
 
 ### Widget Security
 
-- [Widget Security](/docs/security/widget-security.mdx)
-- [Widget Development Guide](/docs/widgets/widget-development-guide.mdx)
-- [Widget Architecture](/docs/widgets/widget-architecture.mdx)
+- [Widget Security](/docs/architecture/security/widget-security.mdx)
+- [Widget Development Guide](/docs/guides/development/widgets/widget-development-guide.mdx)
+- [Widget Architecture](/docs/architecture/widgets/architecture.mdx)
 
 ### Testing
 

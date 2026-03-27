@@ -4,9 +4,9 @@ title: "SveltyCMS Complete Workflow Guide"
 description: "Comprehensive guide covering installation, initialization, testing, and CI/CD workflows for SveltyCMS"
 order: 10
 icon: "mdi:workflow"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-14"
-updated: "2025-10-25"
+updated: "2026-03-27"
 tags:
   - "architecture"
   - "initialization"
@@ -1182,7 +1182,7 @@ UUIDs are assigned **once** at compilation and **preserved** across restarts.
 ```typescript
 // Extract UUID from compiled JS file
 function extractUUIDFromJs(content: string): string | null {
-  const match = content.match(/_id:\s*["']([^"']+)["']/);
+  const match = content.match(new RegExp("_id:\\s*" + "[\"']" + "([^\"'\\s]+)" + "[\"']"));
   return match ? match[1] : null;
 }
 
@@ -1885,8 +1885,8 @@ The system is production-ready and fully automated for both local development an
 
 ### Database
 
-- [Core Infrastructure](/docs/database/core-infrastructure.mdx) - Database adapter system
-- [MongoDB Methods](/docs/database/mongodb-methods.mdx) - MongoDB-specific implementation
+- [Core Infrastructure](/docs/architecture/database/core-infrastructure.mdx) - Database adapter system
+- [MongoDB Methods](/docs/architecture/database/mongodb-methods.mdx) - MongoDB-specific implementation
 
 ### Guides
 

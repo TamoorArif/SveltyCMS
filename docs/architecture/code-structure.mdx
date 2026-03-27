@@ -1,12 +1,12 @@
 ---
-path: "docs/architecture/code-structure"
+path: "docs/architecture/code-structure.mdx"
 title: "Code Structure & Organization"
 description: "Comprehensive overview of SveltyCMS codebase organization, architecture, and design patterns including multilingual content management"
 order: 1
 icon: "mdi:folder-tree"
 author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-03-03"
+updated: "2026-03-27"
 tags:
   - "architecture"
   - "structure"
@@ -535,7 +535,7 @@ db.insertOne("users", fieldData);
 | `translated: true`  | Reads `value.en` | Reads `value.de`     | `{ en: "...", de: "..." }` |
 | `translated: false` | Reads `value`    | Reads `value` (same) | `"single value"`           |
 
-See [Widget System Architecture](../widgets/widget-system-architecture.mdx) for details.
+See [Widget System Architecture](./widgets/architecture.mdx) for details.
 
 ---
 
@@ -1564,9 +1564,9 @@ await goto(`/${contentLanguage.value}/${path}`, { invalidateAll: true });
 
 ## �📚 Additional Resources
 
-- **[API Documentation](../api/)** - Complete API reference
-- **[Widget System](../widgets/)** - Widget architecture
-- **[Database Architecture](./database-methods.mdx)** - Database adapter pattern
+- **[API Documentation](../api/index.mdx)** - Complete API reference
+- **[Widget System](../guides/development/widgets/index.mdx)** - Widget architecture
+- **[Database Architecture](./database/database-methods.mdx)** - Database adapter pattern
 - **[Security Plugin](./security-plugin.mdx)** - Security implementation
 - **[Contributing Guide](../../CONTRIBUTING.md)** - How to contribute
 

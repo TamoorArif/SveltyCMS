@@ -1,83 +1,98 @@
 ---
 path: "docs/api/scim-v2-api.mdx"
-title: "SCIM v2.0 API"
-description: "Enterprise user and group provisioning via SCIM 2.0 protocol."
-order: 55
-icon: "mdi:account-group"
-author: "admin"
+title: "SCIM v2.0 API Reference"
+description: "Enterprise user provisioning via the SCIM 2.0 protocol (RFC 7643/7644) — Automate Okta and Azure AD directory synchronization."
+order: 46
+icon: "mdi:account-swapping-outline"
+author: "SveltyCMS Team"
 created: "2026-03-18"
-updated: "2026-03-18"
+updated: "2026-03-27"
 tags:
   - "api"
   - "scim"
   - "provisioning"
   - "enterprise"
+  - "okta"
+  - "azure-ad"
 ---
 
-# SCIM v2.0 API (Enterprise Provisioning)
+# SCIM v2.0 API Reference
 
-SveltyCMS implements the SCIM 2.0 (System for Cross-domain Identity Management) protocol for automated user and group provisioning. This allows integration with identity providers like Okta and Azure AD to manage users and roles across the organization.
+SveltyCMS implements the **System for Cross-domain Identity Management (SCIM) 2.0** protocol. This standardizes how users and groups (Roles) are provisioned from enterprise directory services like Okta, Azure AD (Entra ID), or Ping Identity.
 
-## Base URL
+---
 
-`/api/scim/v2`
+## 👥 Choose Your Path
 
-## Authentication
+- 🏢 **[Enterprise Setup](../guides/configuration/access-management.mdx#scim-provisioning)** — Enabling SCIM for your tenant.
+- 👤 **[Users Endpoint](#1-users-resource)** — Provisioning and deactivating users.
+- 👥 **[Groups (Roles)](#2-groups-resource-mapping-to-roles)** — Syncing directory groups to CMS roles.
+- 🔍 **[Discovery](#3-service-discovery)** — Schemas and service configuration.
 
-SCIM requests must be authenticated using a **Bearer Token**.
-Tokens can be generated in the SveltyCMS Admin Panel under **Settings > API Access**.
+---
 
-## Resources
+## 1. Users Resource
 
-### Users
+The `/Users` endpoint manages the lifecycle of individual identities. SveltyCMS maps SCIM User attributes to the internal `auth_users` collection.
 
-| Method | Endpoint      | Description                      |
-| ------ | ------------- | -------------------------------- |
-| GET    | `/Users`      | List users (supports filtration) |
-| POST   | `/Users`      | Create a new user                |
-| GET    | `/Users/{id}` | Get user details                 |
-| PUT    | `/Users/{id}` | Replace user details             |
-| PATCH  | `/Users/{id}` | Partial user update              |
-| DELETE | `/Users/{id}` | Deactivate user                  |
+**Base Path**: `/api/scim/v2/Users`
 
-#### Filtering Users
+| Method | Endpoint | RFC | Description |
+| :--- | :--- | :--- | :--- |
+| GET | `/Users` | §3.4.1 | List users (supports filtration and pagination). |
+| POST | `/Users` | §3.3 | Create a new user resource. |
+| GET | `/Users/{id}` | §3.4.1 | Get user details. |
+| PUT | `/Users/{id}` | §3.5.1 | Replace user details (full update). |
+| PATCH | `/Users/{id}` | §3.5.2 | Partial update (e.g. `active: false`). |
+| DELETE | `/Users/{id}` | §3.6 | Deactivate or remove user. |
 
-Supports `filter` query parameter with `eq`, `co`, `sw`, `pr`, etc.
-Example: `GET /Users?filter=userName eq "john@example.com"`
+### Filtration & Pagination
+- **`filter`**: Supports RFC 7644 operators like `eq` (Equal), `co` (Contains), `sw` (Starts with), and `pr` (Present).
+- **`startIndex`**: 1-based index (Default: `1`).
+- **`count`**: Items per page (Default: `100`, Max: `200`).
 
-### Groups (Roles)
+---
 
-In SveltyCMS, SCIM Groups map directly to **Roles**.
+## 2. Groups Resource (Mapping to Roles)
 
-| Method | Endpoint       | Description                  |
-| ------ | -------------- | ---------------------------- |
-| GET    | `/Groups`      | List all roles               |
-| POST   | `/Groups`      | Create a new role            |
-| GET    | `/Groups/{id}` | Get role details and members |
-| PATCH  | `/Groups/{id}` | Add/remove members from role |
-| DELETE | `/Groups/{id}` | Delete role                  |
+In SveltyCMS, SCIM **Groups** map 1:1 to **System Roles**. This allows your IdP to manage permissions by assigning users to directory groups.
 
-## Tenant Isolation
+**Base Path**: `/api/scim/v2/Groups`
 
-The SCIM API is fully multi-tenant aware:
+| Method | Endpoint | RFC | Description |
+| :--- | :--- | :--- | :--- |
+| GET | `/Groups` | §3.4.1 | List all roles in the current tenant. |
+| POST | `/Groups` | §3.3 | Create a new system role. |
+| GET | `/Groups/{id}` | §3.4.1 | Get role details and membership list. |
+| PATCH | `/Groups/{id}` | §3.5.2 | Update members (add/remove from role). |
+| DELETE | `/Groups/{id}` | §3.6 | Delete the system role. |
 
-- Authentication tokens are scoped to a specific tenant.
-- All operations (CRUD) only affect resources within the authorized tenant.
-- Filters and searches are automatically scoped to the tenant.
+---
 
-## SCIM v2 Discovery
+## 3. Service Discovery
 
-### Service Provider Configuration
+These endpoints provide metadata to the IdP to ensure compatibility between the provider and the SveltyCMS SCIM implementation.
 
-**GET** `/api/scim/v2/service-provider-config`
-Returns metadata about the SCIM implementation features (e.g., patch support, bulk support).
+- **GET `/api/scim/v2/ServiceProviderConfig`**: Capabilities including Patch and Bulk support.
+- **GET `/api/scim/v2/ResourceTypes`**: Definitions for `User` and `Group`.
+- **GET `/api/scim/v2/Schemas`**: Exact JSON schemas used for data validation.
 
-### Resource Types
+---
 
-**GET** `/api/scim/v2/ResourceTypes`
-Lists the supported resource types (`User`, `Group`).
+## 4. Multi-Tenant Architecture
 
-### Schemas
+### Secure Scoping
+The SCIM API is **tenant-isolated**. Authentication is handled via a Bearer Token that is cryptographically bound to a specific `tenantId`.
+> [!IMPORTANT]
+> **Isolation Guarantee**: A token generated for "Tenant A" is mathematically incapable of reading or modifying resources for "Tenant B". This ensures strict data sovereignty in SaaS environments.
 
-**GET** `/api/scim/v2/Schemas`
-Lists the supported SCIM schemas.
+### Conflict Resolution & Identity Linking
+When an identity provider attempts to create a user that already exists in the global CMS identity pool (but not yet in the target tenant), SveltyCMS performs **Identity Linking**:
+1.  Matches the user by `email` (case-insensitive).
+2.  Links the existing `userId` to the new `tenantId` context.
+3.  Responds with a `201 Created` or `200 OK` (if already linked) to the IdP.
+This prevents duplicate user accounts while allowing a single user to exist across multiple tenants.
+
+---
+
+**Next Steps**: For deeper security analysis, see the [Security Architecture](../architecture/security/index.mdx).

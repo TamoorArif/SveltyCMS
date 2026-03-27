@@ -1,41 +1,64 @@
 ---
 path: "docs/api/saml-sso-api.mdx"
 title: "SAML 2.0 / Enterprise SSO API"
-description: "SAML 2.0 integration for enterprise identity providers with multi-tenant isolation."
+description: "API reference for SAML 2.0 Single Sign-On integration — configure IdP connections, initiate SSO flows, and handle assertions with multi-tenant isolation."
 order: 54
-icon: "mdi:security"
-author: "admin"
+icon: "mdi:shield-key-outline"
+author: "SveltyCMS Team"
 created: "2026-03-18"
-updated: "2026-03-18"
+updated: "2026-03-27"
 tags:
   - "api"
   - "saml"
   - "sso"
   - "enterprise"
+  - "okta"
+  - "azure-ad"
 ---
+
 
 # SAML 2.0 / Enterprise SSO API
 
-SveltyCMS provides a robust SAML 2.0 integration for enterprise identity providers (IdPs) like Okta, Azure AD, and PingIdentity. This system is built on top of BoxyHQ's SAML Jackson and supports multi-tenant isolation.
+SveltyCMS provides SAML 2.0 integration for enterprise identity providers like Okta, Azure AD (Entra ID), and PingIdentity. This is built on **BoxyHQ SAML Jackson** and supports multi-tenant isolation with Just-In-Time (JIT) user provisioning.
+
+---
+
+## 👥 Choose Your Path
+
+- 🏗️ **[Configure Your IdP](#1-configure-saml-connection)** — Register IdP metadata for your tenant.
+- 🔐 **[Initiate SSO Login](#2-initiate-saml-login)** — Redirect users to their Identity Provider.
+- 📬 **[ACS Callback](#3-assertion-consumer-service-acs)** — How the IdP posts assertions back.
+- 🏢 **[Multi-Tenant & JIT](#4-multi-tenant--just-in-time-provisioning)** — Tenant scoping and auto-provisioning.
+
+---
+
+## 🚀 Quick Reference
+
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| POST | `/api/auth/saml/config` | Admin | Register or update an IdP SAML connection |
+| GET | `/api/auth/saml/login` | Public | Initiate SSO — redirects to the configured IdP |
+| POST | `/api/auth/saml/acs` | Public (IdP callback) | Assertion Consumer Service — receives SAML assertions |
+
+---
 
 ## Endpoints
 
 ### 1. Configure SAML Connection
 
-**POST** `/api/auth/saml/config`
+**Endpoint**: `POST /api/auth/saml/config`  
+**Auth**: Required (Admin role)
 
-Configures or updates a SAML connection for a specific tenant.
+Registers or updates a SAML 2.0 connection for a specific tenant by providing the IdP's XML metadata.
 
-**Authentication**: Required (Admin role)
+**Payload**:
 
-**Body Parameters**:
-
-- `tenant` (string): The tenant identifier.
-- `product` (string): The product identifier (usually `sveltycms`).
-- `rawMetadata` (string): The XML metadata from the IdP.
-- `defaultRedirectUrl` (string): The URL to redirect to after successful SSO.
-
-**Example Request**:
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `tenant` | `string` | The tenant identifier this connection is scoped to. |
+| `product` | `string` | Product identifier — use `sveltycms`. |
+| `rawMetadata` | `string` | The full XML metadata document from your IdP. |
+| `defaultRedirectUrl` | `string` | URL to redirect to after a successful SSO authentication. |
 
 ```json
 {
@@ -45,6 +68,9 @@ Configures or updates a SAML connection for a specific tenant.
   "defaultRedirectUrl": "https://cms.example.com/admin"
 }
 ```
+
+> [!NOTE]
+> In multi-tenant mode, admins may only register SAML connections for their own `tenantId`. Super-admins may configure connections for any tenant.
 
 ### 2. Initiate SAML Login
 
@@ -77,18 +103,24 @@ The callback endpoint where the IdP sends the SAML assertion.
 - **Tenant Isolation**: Strictly enforces that users are logged into the correct tenant.
 - **Security**: Validates signatures, audiences, and expirations.
 
-## Multi-Tenant Considerations
+## 4. Multi-Tenant & Just-In-Time Provisioning
+
+### Multi-Tenant Considerations
 
 When `MULTI_TENANT` is enabled:
 
 - Admins can only configure SAML for their own `tenantId`.
-- Login requests must include the `tenant` parameter.
-- The ACS endpoint validates that the assertion belongs to the requested tenant.
+- `GET /api/auth/saml/login` requests **must** include the `tenant` query parameter.
+- The ACS endpoint validates that the assertion's audience and recipient belong to the requested tenant before creating a session.
 
-## Just-In-Time (JIT) Provisioning
+### Just-In-Time (JIT) Provisioning
 
-If `SAML_JIT_PROVISIONING` is set to `true` in system settings:
+If `SAML_JIT_PROVISIONING` is enabled in system settings, user accounts are created automatically on first successful login:
 
-- New users will be created automatically upon successful SAML authentication.
-- Default role for JIT users is `VIEWER` (configurable).
-- Users are automatically associated with the authenticated tenant.
+- New users receive the default role `VIEWER` (configurable per tenant).
+- Users are automatically associated with the authenticated `tenantId`.
+- Subsequent logins link to the existing account without creating duplicates.
+
+---
+
+**Next Steps**: For automated directory provisioning, see the [SCIM v2.0 API Reference](./scim-v2-api.mdx).

@@ -1,0 +1,140 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 SveltyCMS Documentation Frontmatter Validation
+📅 Mar 27, 2026, 22:09:07
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ docs/guides/development/ai-integration.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./architecture/components/Dashboard.mdx" (Resolved to: docs/guides/development/architecture/components/Dashboard.mdx)
+   • Broken internal link: "./architecture/components/WidgetBuilder.mdx" (Resolved to: docs/guides/development/architecture/components/WidgetBuilder.mdx)
+   • Broken internal link: "./api/ai-service.mdx" (Resolved to: docs/guides/development/api/ai-service.mdx)
+   • Broken internal link: "../plugin-architecture.mdx" (Resolved to: docs/guides/plugin-architecture.mdx)
+   • Broken internal link: "../smart-importer.mdx" (Resolved to: docs/guides/smart-importer.mdx)
+
+❌ docs/guides/development/workflow-engine.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./configuration/access-management.mdx" (Resolved to: docs/guides/development/configuration/access-management.mdx)
+
+❌ docs/guides/development/widgets/index.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./architecture.mdx" (Resolved to: docs/guides/development/widgets/architecture.mdx)
+   • Broken internal link: "../../../guides/content/collections.mdx" (Resolved to: docs/guides/content/collections.mdx)
+   • Broken internal link: "../../../security/index.mdx" (Resolved to: docs/security/index.mdx)
+
+❌ docs/guides/content/smart-importer.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../api/export-import-api.mdx" (Resolved to: docs/guides/api/export-import-api.mdx)
+
+❌ docs/guides/content/image-editor.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./media-gallery.mdx" (Resolved to: docs/guides/content/media-gallery.mdx)
+   • Broken internal link: "../api/media-api.mdx" (Resolved to: docs/guides/api/media-api.mdx)
+   • Broken internal link: "../project/roadmap-2026.mdx" (Resolved to: docs/guides/project/roadmap-2026.mdx)
+
+❌ docs/guides/deployment/production-deployment.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../architecture/server-hooks.mdx" (Resolved to: docs/guides/architecture/server-hooks.mdx)
+   • Broken internal link: "../architecture/cache-system.mdx" (Resolved to: docs/guides/architecture/cache-system.mdx)
+   • Broken internal link: "../architecture/security-plugin.mdx" (Resolved to: docs/guides/architecture/security-plugin.mdx)
+   • Broken internal link: "../architecture/database-methods.mdx" (Resolved to: docs/guides/architecture/database-methods.mdx)
+
+❌ docs/architecture/components/EntryList.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./entry-list-multibutton.mdx" (Resolved to: docs/architecture/components/entry-list-multibutton.mdx)
+   • Broken internal link: "./fields.mdx" (Resolved to: docs/architecture/components/fields.mdx)
+
+❌ docs/architecture/components/entrylist-multibutton.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./entry-list.mdx" (Resolved to: docs/architecture/components/entry-list.mdx)
+   • Broken internal link: "./fields.mdx" (Resolved to: docs/architecture/components/fields.mdx)
+   • Broken internal link: "./schedule-modal.mdx" (Resolved to: docs/architecture/components/schedule-modal.mdx)
+
+❌ docs/architecture/components/ScheduleModal.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./entry-list-multibutton.mdx" (Resolved to: docs/architecture/components/entry-list-multibutton.mdx)
+   • Broken internal link: "./entry-list.mdx" (Resolved to: docs/architecture/components/entry-list.mdx)
+
+❌ docs/architecture/initialization-workflow.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "[^"']+" (Resolved to: docs/architecture/[^"']+)
+
+❌ docs/architecture/logger-levels.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./logger-performance-refinements.md" (Resolved to: docs/architecture/logger-performance-refinements.md)
+   • Broken internal link: "./logger-audit-final-report.md" (Resolved to: docs/architecture/logger-audit-final-report.md)
+   • Broken internal link: "./architecture-overview.mdx" (Resolved to: docs/architecture/architecture-overview.mdx)
+
+❌ docs/architecture/code-structure.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../widgets/widget-system-architecture.mdx" (Resolved to: docs/widgets/widget-system-architecture.mdx)
+   • Broken internal link: "../widgets/" (Resolved to: docs/widgets)
+   • Broken internal link: "./database-methods.mdx" (Resolved to: docs/architecture/database-methods.mdx)
+
+❌ docs/architecture/multilingual-data-loading.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./database-methods.mdx" (Resolved to: docs/architecture/database-methods.mdx)
+
+❌ docs/architecture/content-system.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../api/content-api.mdx" (Resolved to: docs/api/content-api.mdx)
+
+❌ docs/architecture/login-error-handling.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./database-health.mdx" (Resolved to: docs/architecture/database-health.mdx)
+   • Broken internal link: "../guides/setup-wizard.mdx" (Resolved to: docs/guides/setup-wizard.mdx)
+
+❌ docs/architecture/language-architecture.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./database-methods.mdx" (Resolved to: docs/architecture/database-methods.mdx)
+   • Broken internal link: "../widgets/widget-development-guide.mdx" (Resolved to: docs/widgets/widget-development-guide.mdx)
+
+❌ docs/architecture/security-plugin.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "./01-authentication/authentication-system.mdx" (Resolved to: docs/architecture/01-authentication/authentication-system.mdx)
+   • Broken internal link: "../user-guide/admin-user-management.md" (Resolved to: docs/user-guide/admin-user-management.md)
+   • Broken internal link: "./00-installation/environment-variables.md" (Resolved to: docs/architecture/00-installation/environment-variables.md)
+
+❌ docs/architecture/cache-system.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../database/database-methods.mdx" (Resolved to: docs/database/database-methods.mdx)
+
+❌ docs/project/benchmarks.mdx
+────────────────────────────────────────────────────────────────────────────────
+   • Broken internal link: "../tests/benchmarks/database-performance.ts" (Resolved to: docs/tests/benchmarks/database-performance.ts)
+   • Broken internal link: "../tests/benchmarks/graphql-stress.ts" (Resolved to: docs/tests/benchmarks/graphql-stress.ts)
+   • Broken internal link: "../tests/benchmarks/rest-api-performance.ts" (Resolved to: docs/tests/benchmarks/rest-api-performance.ts)
+   • Broken internal link: "../tests/benchmarks/upgrade-performance.ts" (Resolved to: docs/tests/benchmarks/upgrade-performance.ts)
+   • Broken internal link: "../tests/benchmarks/hooks-performance.ts" (Resolved to: docs/tests/benchmarks/hooks-performance.ts)
+   • Broken internal link: "../tests/benchmarks/media-performance.ts" (Resolved to: docs/tests/benchmarks/media-performance.ts)
+   • Broken internal link: "../docs/architecture/database/index.mdx" (Resolved to: docs/docs/architecture/database/index.mdx)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 SveltyCMS Documentation Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total files:     158 (158 .mdx, 0 .md)
+Validation:      ✅ 139 valid  |  ❌ 19 invalid
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  19 file(s) with invalid frontmatter:
+   ❌ docs/guides/development/ai-integration.mdx
+   ❌ docs/guides/development/workflow-engine.mdx
+   ❌ docs/guides/development/widgets/index.mdx
+   ❌ docs/guides/content/smart-importer.mdx
+   ❌ docs/guides/content/image-editor.mdx
+   ❌ docs/guides/deployment/production-deployment.mdx
+   ❌ docs/architecture/components/EntryList.mdx
+   ❌ docs/architecture/components/entrylist-multibutton.mdx
+   ❌ docs/architecture/components/ScheduleModal.mdx
+   ❌ docs/architecture/initialization-workflow.mdx
+   ❌ docs/architecture/logger-levels.mdx
+   ❌ docs/architecture/code-structure.mdx
+   ❌ docs/architecture/multilingual-data-loading.mdx
+   ❌ docs/architecture/content-system.mdx
+   ❌ docs/architecture/login-error-handling.mdx
+   ❌ docs/architecture/language-architecture.mdx
+   ❌ docs/architecture/security-plugin.mdx
+   ❌ docs/architecture/cache-system.mdx
+   ❌ docs/project/benchmarks.mdx
+
+Please fix the errors above.
+

@@ -64,6 +64,7 @@ let installError = $state('');
 let installSuccess = $state('');
 let showConnectionStringHelper = $state(false);
 let showAtlasHelper = $state(true); // Collapsible Atlas helper
+let showTroubleshooting = $state(false); // Collapsible troubleshooting steps
 
 // Track which fields have been touched (blurred)
 let touchedFields = $state(new Set<string>());
@@ -673,6 +674,30 @@ $effect(() => {
 					Connection Failed
 				</div>
 				<div class="mt-1">{errorMessage}</div>
+
+				{#if setupStore.wizard.lastDbTestResult?.hint}
+					<div class="mt-4 border-t border-white/20 pt-3">
+						<button
+							type="button"
+							onclick={() => (showTroubleshooting = !showTroubleshooting)}
+							class="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-white/80 hover:text-white"
+						>
+							<span>Troubleshooting Steps</span>
+							<iconify-icon icon={showTroubleshooting ? 'mdi:chevron-up' : 'mdi:chevron-down'} width="16"></iconify-icon>
+						</button>
+
+						{#if showTroubleshooting}
+							<div class="mt-2 space-y-2 text-xs leading-relaxed text-white/90">
+								{#each setupStore.wizard.lastDbTestResult.hint.split('\n') as step}
+									<div class="flex gap-2">
+										<span class="shrink-0 text-white/50">•</span>
+										<span>{step.replace(/^\d+\.\s*/, '')}</span>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		{/if}
 		{#if successMessage && !dbConfigChangedSinceTest}

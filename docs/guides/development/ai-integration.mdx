@@ -4,9 +4,9 @@ title: "AI Integration & Local Knowledge Core"
 description: "Guide to the high-performance local MPC Server and RAG pipeline."
 order: 50
 icon: "mdi:robot"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2026-02-07"
-updated: "2026-02-24"
+updated: "2026-03-27"
 tags:
   - "ai"
   - "mcp"
@@ -50,9 +50,9 @@ When a user prompts the MCP Server or the local AI service to build a complex co
 
 #### Where Generative UI is Integrated:
 
-- **[Agentic Dashboard](./architecture/components/Dashboard.mdx)**: The main dashboard features an "AI Dashboard Mode" that bypasses manual grid configuration. It now supports **interactive re-prompting**, allowing users to refine the layout in real-time. A live status indicator confirms connection to the hosted Knowledge Core at `mcp.sveltycms.com`.
-- **[Collection Builder](./architecture/components/WidgetBuilder.mdx)**: Translates schema configurations into live preview specs for immediate visual feedback of your custom fields using the same rendering engine.
-- **[AI Service](./api/ai-service.mdx)**: The robust local `AIService` directly integrates with Ollama to expose the `generateLayoutSpec()` method, which utilizes a specialized catalog of components including `VerticalLayout`, `HorizontalLayout`, and `Text`.
+- **[Agentic Dashboard](../../architecture/index.mdx)**: The main dashboard features an "AI Dashboard Mode" that bypasses manual grid configuration. It now supports **interactive re-prompting**, allowing users to refine the layout in real-time. A live status indicator confirms connection to the hosted Knowledge Core at `mcp.sveltycms.com`.
+- **[Collection Builder](../../architecture/components/fields.mdx)**: Translates schema configurations into live preview specs for immediate visual feedback of your custom fields using the same rendering engine.
+- **[AI Service](../../api/real-time-events-api.mdx)**: The robust local `AIService` directly integrates with Ollama to expose the `generateLayoutSpec()` method, which utilizes a specialized catalog of components including `VerticalLayout`, `HorizontalLayout`, and `Text`.
 
 ---
 
@@ -99,10 +99,10 @@ Most headless CMS platforms boast "AI Integration," but essentially just boast a
 
 1.  **Bulk AI Content Localization**: SveltyCMS features a dedicated background utility for translating entire collections. Using the `/api/utils/translate-collection` endpoint, developers can dispatch a job that iterates through thousands of entries, identifying missing locales and autonomously generating high-quality translations while respecting field-level constraints.
 2.  **Zero-Boilerplate Customization**: Need a highly specific dashboard for a niche real estate tenant? You no longer write manual Svelte code. The MCP understands your available widgets and generates the interface instantly via `json-render-svelte`.
-3.  **Plugin Superpowers**: Any [Marketplace Plugin](../plugin-architecture.mdx) that registers itself with `jsonRender: true` instantly becomes part of the AI's vocabulary, meaning third-party tools can be effortlessly composed into Generative Layouts.
+3.  **Plugin Superpowers**: Any [Marketplace Plugin](../../architecture/plugin-architecture.mdx) that registers itself with `jsonRender: true` instantly becomes part of the AI's vocabulary, meaning third-party tools can be effortlessly composed into Generative Layouts.
 4.  **Local Privacy First**: By splitting knowledge (Hosted MCP Server) from inference (Local Ollama via `AIService`), enterprise users get the intelligence of the official docs without sending their private schema or dashboard data to third-party endpoints.
 5.  **Self-Healing & Understanding**: The MCP Server constantly indexes your `src/` and `docs/`, meaning SveltyCMS understands its own architecture.
-6.  **AI-Powered Migration**: The **[Smart Importer](../smart-importer.mdx)** uses the Knowledge Core to intelligently map legacy Drupal or WordPress schemas to modern Svelte widgets, drastically reducing the manual labor of content migration.
+6.  **AI-Powered Migration**: The **[Smart Importer](../content/smart-importer.mdx)** uses the Knowledge Core to intelligently map legacy Drupal or WordPress schemas to modern Svelte widgets, drastically reducing the manual labor of content migration.
 
 ## ⌨️ Keyboard Shortcuts (Efficiency)
 

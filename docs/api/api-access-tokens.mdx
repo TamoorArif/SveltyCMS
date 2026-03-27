@@ -1,104 +1,235 @@
 ---
 path: "docs/api/api-access-tokens.mdx"
-title: "API & Website Tokens"
-description: "Secure programmatic access to SveltyCMS APIs via Website Tokens and Access Tokens with Multi-Tenancy 2.0 support."
+title: "API & Invitation Tokens"
+description: "Reference for managing API access tokens and user invitation tokens — listing, creating, and batch-deleting tokens with multi-tenant isolation."
+order: 12
 author: "SveltyCMS Team"
 created: "2025-12-16"
-updated: "2026-03-05"
+updated: "2026-03-27"
+icon: "mdi:key-chain"
 tags:
   - "api"
   - "security"
   - "tokens"
+  - "invitations"
   - "multi-tenancy"
 ---
 
-# API & Website Tokens
+# API & Invitation Tokens
 
-SveltyCMS provides robust mechanisms for programmatic access, ensuring that external applications and integrations can interact with the CMS securely and with proper tenant isolation.
+SveltyCMS uses two distinct token mechanisms for programmatic access:
 
-## Token Types
+1. **Invitation Tokens** — Time-limited, single-use tokens for onboarding new users via email.
+2. **Website / API Tokens** — Long-lived tokens for headless frontends and CI/CD pipelines.
 
-1.  **Website Tokens (Long-Lived)**: Designed for frontend applications (e.g., a SvelteKit or Next.js site fetching content). These are managed in **Config > Access Management**.
-2.  **API Access Tokens (Short/Medium-Lived)**: Designed for CI/CD pipelines, one-off scripts, or developer integrations.
-3.  **Invitation Tokens**: Single-use tokens for onboarding new users.
-
----
-
-## 🛡️ Website Tokens (Recommended)
-
-Website tokens are the primary way to connect headlessly. They are **Tenant-Aware** and **Scoped**.
-
-### Scoping
-
-When creating a Website Token, you can define exactly what it can access:
-
-- **Collection-Level**: Restrict to specific collections (e.g., only `Posts` and `Products`).
-- **Action-Level**: Restrict to `Read-Only` or `Read/Write`.
-- **Environment**: Scoped to a specific `tenantId`.
-
-### Header Usage
-
-```bash
-# Authorization Header
-GET /api/collections/posts
-Authorization: Bearer st_live_abc123...
-```
+> [!NOTE]
+> Invitation tokens are tied to an **email** and a **role**. They are not the same as session cookies — they provide a one-time registration link, not ongoing API access. For ongoing API access, use API tokens configured in **Settings > Access Management**.
 
 ---
 
-## 🔑 Technical Implementation
+## 👥 Choose Your Path
 
-### Multi-Tenancy 2.0 Integration
-
-Tokens are validated by the `handleTokenResolution` middleware. The process is:
-
-1.  **Extract**: Middleware identifies the token from the `Authorization` header.
-2.  **Verify**: Token is checked against the database for the current `tenantId` (resolved via hostname).
-3.  **Hydrate**: If valid, `event.locals.user` is populated with a "Token User" object containing the associated role and permissions.
-4.  **Sandbox**: The request proceeds within the strict security boundaries of the resolved role.
-
-### Security Features
-
-- **SHA-256 Hashing**: Token values are never stored in plain text.
-- **Nonce-Based Validation**: Prevents replay attacks for sensitive operations.
-- **Audit Logging**: Every API request authenticated via token is logged with its unique token ID.
+- 📋 **[List Tokens](#1-list-tokens)** — Paginated, searchable token registry.
+- ✉️ **[Create Invitation Token](#2-create-invitation-token)** — Send a timed invite link to a new team member.
+- 🗂️ **[Manage a Single Token](#3-single-token-management)** — View or delete a specific token by ID.
+- 📦 **[Batch Operations](#4-batch-token-operations)** — Bulk-delete stale tokens.
+- 🔒 **[Auth Middleware](#5-how-tokens-are-validated)** — How `handleTokenResolution` works at request time.
 
 ---
 
-## Accessing Tokens via API
+## 🚀 Quick Reference
 
-### List All Tokens
+| Method | Endpoint | Permission | Description |
+| :--- | :--- | :--- | :--- |
+| GET | `/api/token` | `manage_users` | List all invitation tokens (paginated) |
+| POST | `/api/token/create-token` | `manage_users` | Create an invitation token and send an email |
+| GET | `/api/token/[tokenID]` | `manage_users` | Retrieve a single token by its ID |
+| DELETE | `/api/token/[tokenID]` | `manage_users` | Delete a specific token |
+| POST | `/api/token/batch` | `manage_users` | Bulk-delete multiple tokens |
 
-**Endpoint:** `GET /api/token`
-**Auth:** Admin only (Tenant-scoped)
+---
 
-### Create a Token
+## 1. List Tokens
 
-**Endpoint:** `POST /api/token/create-token`
-**Auth:** Admin only
+**Endpoint**: `GET /api/token`
+
+Returns a paginated, searchable list of invitation tokens for the current tenant.
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `page` | `number` | `1` | Current page. |
+| `limit` | `number` | `10` | Results per page. |
+| `sort` | `string` | `createdAt` | Field to sort by (e.g., `expires`, `email`). |
+| `order` | `asc\|desc` | `desc` | Sort direction. |
+| `search` | `string` | `""` | Case-insensitive match against `email` or token value. |
+
+### Response Shape
 
 ```json
 {
-  "name": "Production Frontend",
-  "role": "editor",
-  "expiresAt": "2026-12-31T23:59:59Z"
+  "success": true,
+  "data": [
+    {
+      "_id": "token_abc123",
+      "email": "newuser@example.com",
+      "type": "invite",
+      "expires": "2026-04-03T09:00:00.000Z",
+      "tenantId": "tenant_xyz"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalItems": 4,
+    "totalPages": 1
+  }
 }
 ```
 
 ---
 
-## Performance Metrics
+## 2. Create Invitation Token
 
-| Metric               | Performance                            |
-| :------------------- | :------------------------------------- |
-| **Token Validation** | < 1ms (Redis Cached)                   |
-| **RBAC Overhead**    | Negligible                             |
-| **Database Load**    | 0 (per request, after initial caching) |
+**Endpoint**: `POST /api/token/create-token`
+
+Creates an invitation token for a new user and sends them a registration link via email.
+
+### Payload
+
+```json
+{
+  "email": "neweditor@example.com",
+  "role": "editor",
+  "expiresIn": "2 days"
+}
+```
+
+| Field | Type | Required | Description |
+| :---- | :--- | :------- | :---------- |
+| `email` | `string` | ✅ | The invitee's email address. |
+| `role` | `string` | ✅ | Role ID to grant on registration (e.g., `editor`, `admin`). |
+| `expiresIn` | `string` | ✅ | Token validity window (see table below). |
+
+### Valid `expiresIn` Values
+
+| Value | Expiry |
+| :---- | :----- |
+| `"2 hrs"` | 2 hours |
+| `"12 hrs"` | 12 hours |
+| `"2 days"` | 2 days |
+| `"1 week"` | 7 days |
+| `"2 weeks"` | 14 days |
+| `"1 month"` | 30 days |
+
+> [!IMPORTANT]
+> Only one invitation token may exist per email address within a tenant. Attempting to create a second one returns `409 TOKEN_EXISTS`. Delete the existing token first, then re-invite.
+
+### Pre-flight Checks
+
+Before creating the token, the endpoint verifies:
+1. No existing **user** account has this email in the current tenant (`409 USER_EXISTS` if so).
+2. No existing **token** already targets this email (`409 TOKEN_EXISTS` if so).
+3. The `role` value corresponds to a valid system role.
+
+### Response
+
+**Success (SMTP configured)**:
+```json
+{
+  "success": true,
+  "message": "Token created and email sent successfully.",
+  "token": { "value": "<token>", "expires": "2026-04-03T..." },
+  "email_sent": true
+}
+```
+
+**Success (SMTP not configured — token preserved for manual delivery)**:
+```json
+{
+  "success": true,
+  "message": "Token created; email not sent - SMTP not configured.",
+  "token": { "value": "<token>", "expires": "2026-04-03T..." },
+  "email_sent": false,
+  "smtp_not_configured": true
+}
+```
+
+> [!TIP]
+> Even when email delivery fails or SMTP is not configured, the token is **preserved** in the database. Admins can retrieve the `token.value` from this response and deliver the link manually: `<origin>/login?invite_token=<token>`.
+
+---
+
+## 3. Single Token Management
+
+### Get Token
+
+**Endpoint**: `GET /api/token/[tokenID]`
+
+Fetches the details of a specific token by its database ID. Useful for checking expiry status before resending an invite.
+
+### Delete Token
+
+**Endpoint**: `DELETE /api/token/[tokenID]`
+
+Immediately invalidates the token. The invitation link becomes unusable. The user record is not affected (if they already registered before deletion).
+
+---
+
+## 4. Batch Token Operations
+
+**Endpoint**: `POST /api/token/batch`
+
+Bulk-delete multiple expired or redundant tokens.
+
+**Payload**:
+```json
+{
+  "tokenIds": ["token_id_1", "token_id_2"],
+  "action": "delete"
+}
+```
+
+---
+
+## 5. How Tokens Are Validated
+
+API and invitation tokens pass through the `handleTokenResolution` middleware on every authenticated request:
+
+```mermaid
+flowchart LR
+    A([Request]) --> B[Extract Bearer Token\nfrom Authorization header]
+    B --> C{Token in DB\nfor this tenant?}
+    C -- No --> D([401 Unauthorized])
+    C -- Yes --> E{Token expired?}
+    E -- Yes --> F([401 Unauthorized])
+    E -- No --> G[Hydrate locals.user\nwith Token User + Role]
+    G --> H([Request proceeds\nwith role-scoped permissions])
+```
+
+### Security Properties
+
+| Property | Detail |
+| :-------- | :----- |
+| **Storage** | SHA-256 hashed in the database. Raw value is never stored. |
+| **Tenant Isolation** | A token from Tenant A is mathematically invalid for Tenant B. |
+| **Audit Logging** | Every request authenticated via token is logged with its unique token ID. |
+| **Replay Protection** | Nonce-based validation prevents replay attacks on sensitive operations. |
 
 ---
 
 ## Troubleshooting
 
-- **401 Unauthorized**: Token mismatch, expired token, or token deactivated.
-- **403 Forbidden**: Token is valid but lacks permissions for the requested collection/action.
-- **404 Not Found**: Token ID does not exist in the current tenant's space.
+| Error | HTTP | Meaning |
+| :---- | :--- | :------ |
+| `TOKEN_EXISTS` | 409 | An invite for this email already exists. Delete it first. |
+| `USER_EXISTS` | 409 | A user account with this email already exists in the tenant. |
+| `INVALID_ROLE` | 400 | The `role` field does not match a valid system role ID. |
+| `INVALID_EXPIRATION` | 400 | The `expiresIn` value is not one of the six allowed strings. |
+| Unauthorized | 401 | Token is expired, missing, or invalid for this tenant. |
+| Forbidden | 403 | Token is valid but lacks permissions for the requested resource. |
+
+---
+
+**Next Steps**: For long-lived website/API tokens, see **Settings > Access Management** in the Admin Studio. For understanding the full auth flow, see the [User Management API](./user-management-api.mdx).

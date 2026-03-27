@@ -1,12 +1,12 @@
 ---
-path: "docs/widgets/development.mdx"
+path: "docs/guides/development/widgets/development.mdx"
 title: "Widget Development Guide"
 description: "Complete guide to creating, translating, and testing custom widgets for SveltyCMS."
 order: 3
 icon: "mdi:code-tags"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-17"
-updated: "2026-02-03"
+updated: "2026-03-27"
 tags:
   - "developer"
   - "widgets"
@@ -38,7 +38,7 @@ src/widgets/custom/my-widget/
 This file defines your widget's capabilities, validation, and metadata.
 
 ```typescript
-import { createWidget } from "@widgets/widgetFactory";
+import { createWidget } from "@widgets/widget-factory";
 import * as v from "valibot";
 
 export default createWidget({

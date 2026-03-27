@@ -187,21 +187,19 @@ async function signOut(): Promise<void> {
 	{/if}
 
 	<!-- Expand/Collapse Button -->
-	<SystemTooltip title={isSidebarFull ? 'Collapse Sidebar' : 'Expand Sidebar'} positioning={{ placement: 'right' }}>
 		<button
 			type="button"
 			onclick={toggleSidebar}
 			aria-label={isSidebarFull ? 'Collapse Sidebar' : 'Expand Sidebar'}
 			aria-expanded={isSidebarFull}
-			class="absolute top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full! border border-black p-0 dark:border-black ltr:-right-4 rtl:-left-4"
+			class="absolute top-10 z-20 flex h-8 w-8 items-center justify-center rounded-full! border border-black p-0 dark:border-black ltr:-right-4 rtl:-left-4"
 		>
 			<iconify-icon
 				icon="bi:arrow-left-circle-fill"
-				width="34"
+				width="32"
 				class="rounded-full bg-surface-500 text-white transition-transform hover:cursor-pointer hover:bg-error-600 dark:bg-white dark:text-surface-600 dark:hover:bg-error-600 {isSidebarFull ? 'rotate-0 rtl:rotate-180' : 'rotate-180 rtl:rotate-0'}"
 			></iconify-icon>
 		</button>
-	</SystemTooltip>
 
 	<!-- Navigation: Collections, Media Folders, or Settings -->
 	{#if isSettingsMode}

@@ -1,10 +1,10 @@
 ---
-path: "docs/security/tested-security-features.mdx"
+path: "docs/architecture/security/tested-security-features.mdx"
 title: "Tested Security Features"
 description: "Comprehensive list of security features covered by automated tests"
 author: "SveltyCMS Team"
 created: "2026-03-13"
-updated: "2026-03-21"
+updated: "2026-03-27"
 tags:
   - security
   - testing
@@ -139,7 +139,7 @@ All tests adhere to strict no-backdoor principles:
 | Email format validation      | `tests/integration/routes/login/signup.test.ts` | ✅     |
 | Password mismatch rejection  | `tests/integration/routes/login/signup.test.ts` | ✅     |
 | Invalid OAuth data rejection | `tests/integration/routes/login/signup.test.ts` | ✅     |
-| Input sanitization           | `docs/security/richtext-security.mdx`           | ✅     |
+| Input sanitization           | `docs/architecture/security/richtext-security.mdx`           | ✅     |
 
 ---
 
@@ -163,8 +163,8 @@ All tests adhere to strict no-backdoor principles:
 | ---------------------------------- | ---------------------------------------- | ------ |
 | Widget sandbox isolation           | `tests/unit/plugins/sandbox.test.ts`     | ✅     |
 | Protected collection access denied | `tests/unit/plugins/sandbox.test.ts`     | ✅     |
-| File upload restrictions           | `docs/security/widget-security.mdx`      | ✅     |
-| XSS prevention in widgets          | `docs/security/widget-security.mdx`      | ✅     |
+| File upload restrictions           | `docs/architecture/security/widget-security.mdx`      | ✅     |
+| XSS prevention in widgets          | `docs/architecture/security/widget-security.mdx`      | ✅     |
 | Widget permission system           | `tests/unit/hooks/authorization.test.ts` | ✅     |
 
 ---
@@ -231,8 +231,8 @@ bun run test:all
 
 ## Related Documentation
 
-- **[Security Index](/docs/security/index.mdx)** - Main security documentation
-- **[No Backdoor Policy](/docs/security/index.mdx#no-backdoor-policy)** - Testing security philosophy
+- **[Security Index](/docs/architecture/security/index.mdx)** - Main security documentation
+- **[No Backdoor Policy](/docs/architecture/security/index.mdx#no-backdoor-policy)** - Testing security philosophy
 - **[Black-Box Testing](/docs/tests/black-box-testing.mdx)** - Test architecture
-- **[Widget Security](/docs/security/widget-security.mdx)** - Widget security guidelines
-- **[RichText Security](/docs/security/richtext-security.mdx)** - Rich text editor security
+- **[Widget Security](/docs/architecture/security/widget-security.mdx)** - Widget security guidelines
+- **[RichText Security](/docs/architecture/security/richtext-security.mdx)** - Rich text editor security

@@ -14,10 +14,11 @@
 -->
 
 <script lang="ts">
-// Paraglide Messages
+// Svelte
+import { untrack } from 'svelte';
+import { page } from '$app/state';
 
-// Components
-import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
+// Paraglide
 import {
 	collection_description_placeholder,
 	collection_name,
@@ -29,13 +30,17 @@ import {
 	collectionname_labelicon
 } from '@src/paraglide/messages';
 
-import { collection, setCollection } from '@src/stores/collection-store.svelte';
-import { untrack } from 'svelte';
 // Stores
-import { page } from '$app/state';
+import { collection, setCollection } from '@src/stores/collection-store.svelte';
 
-// Skeleton
-// Collection Manager
+// Components
+import IconifyIconsPicker from '@src/components/iconify-icons-picker.svelte';
+
+// UI Components
+import Input from '@src/components/ui/input.svelte';
+import Button from '@src/components/ui/button.svelte';
+import Card from '@src/components/ui/card.svelte';
+import { StatusTypes } from '@src/content/types';
 
 // Props from parent
 let { data = $bindable(null), handlePageTitleUpdate } = $props();
@@ -86,10 +91,7 @@ $effect(() => {
 
 	untrack(() => {
 		if (collection.value && currentIcon !== collection.value.icon) {
-			setCollection({
-				...collection.value,
-				icon: currentIcon
-			});
+			setCollection({ ...collection.value, icon: currentIcon });
 		}
 	});
 });
@@ -112,9 +114,7 @@ $effect(() => {
 			collection.value.description === currentDescription &&
 			collection.value.status === currentStatus &&
 			collection.value.icon === currentIcon
-		) {
-			return;
-		}
+		) return;
 
 		setCollection({
 			...collection.value,
@@ -125,136 +125,110 @@ $effect(() => {
 			icon: currentIcon
 		});
 	});
-
-	console.log('collection.value', JSON.stringify(collection.value));
 });
 
 function handleNameInput() {
 	if (typeof name === 'string' && name) {
-		// Update the URL
-		window.history.replaceState({}, '', `/config/collectionbuilder/${action}/${slug}`);
-
-		// Update the page title
 		handlePageTitleUpdate(name);
-
-		// Update the linked slug input
-		slug = name.toLowerCase().replace(/\s+/g, '_');
-
-		// Call the `onSlugInput` function to update the slug variable
-		onSlugInput();
+		if (autoUpdateSlug) {
+			slug = name.toLowerCase().replace(/\s+/g, '_');
+		}
 	}
 }
 
-function onSlugInput() {
-	// Update the slug field whenever the name field is changed
-	if (name) {
-		slug = name.toLowerCase().replace(/\s+/g, '_');
-		return slug;
-	}
-	// Disable automatic slug updates
-	autoUpdateSlug = false;
-}
-
-// Update slug and page title when name changes
+// Update slug and page title when name changes 
 $effect(() => {
 	// Only track the name and autoUpdateSlug, not the collection
 	const currentName = name;
-	const shouldAutoUpdate = autoUpdateSlug;
-
-	// Automatically update slug when name changes
-	if (shouldAutoUpdate && currentName) {
+	if (autoUpdateSlug && currentName) {
 		slug = currentName.toLowerCase().replace(/ /g, '_');
 	}
-
-	// Update page title based on action and collection name
-	if (action === 'edit') {
-		handlePageTitleUpdate(currentName);
-	} else if (currentName) {
-		handlePageTitleUpdate(currentName);
-	} else {
-		handlePageTitleUpdate('new');
-	}
+	handlePageTitleUpdate(currentName || '');
 });
-
-// Import status types from the content types
-import { StatusTypes } from '@src/content/types';
 
 const statuses = Object.values(StatusTypes);
 </script>
 
-<!-- Single Column Layout Container -->
-<div class="flex w-full flex-col space-y-6">
-	<!-- Form Fields Section -->
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-		<!-- Left Side: Basic Info -->
-		<div class="space-y-4">
-			<!-- Collection Name -->
-			<div class="flex flex-col">
-				<label for="name" class="mb-1 flex items-center font-bold text-sm">
-					{collection_name()} <span class="mx-1 text-error-500">*</span>
-					<iconify-icon icon="material-symbols:info-outline" width="16" class="ml-auto opacity-50"></iconify-icon>
-				</label>
-				<input
-					type="text"
-					required
-					id="name"
-					name="name"
-					bind:value={name}
-					oninput={handleNameInput}
-					placeholder={collection_name_placeholder()}
-					class="input w-full"
-				/>
-				{#if name}
-					<p class="mt-1 text-[10px] uppercase tracking-wider text-surface-500">
-						Database ID: <span class="font-bold text-primary-500">{DB_NAME}</span>
-					</p>
-				{/if}
-			</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full flex-col">
+	<!-- Left Side: Basic Info -->
+	 <Card class="wrapper">
+			<h3 class="text-lg font-bold flex items-center gap-2 border-b border-surface-200 dark:border-surface-700 pb-2">
+				<iconify-icon icon="mdi:information-outline" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+				Basic Information
+			</h3>
+			
+			<Input
+				bind:value={name}
+				oninput={handleNameInput}
+				label={collection_name()}
+				placeholder={collection_name_placeholder()}
+				required
+			/>
+			{#if name}
+				<p class="text-[10px] uppercase tracking-wider text-surface-500 dark:text-surface-50 -mt-2">
+					Database ID: <span class="font-bold text-primary-500">{DB_NAME}</span>
+				</p>
+			{/if}
 
-			<!-- Slug -->
-			<div class="flex flex-col">
-				<label for="slug" class="mb-1 flex items-center font-bold text-sm">
-					{collection_slug()}
-					<iconify-icon icon="material-symbols:link" width="16" class="ml-auto opacity-50"></iconify-icon>
-				</label>
-				<div class="input-group grid-cols-[1fr_auto] overflow-hidden">
-					<input type="text" id="slug" bind:value={slug} placeholder={collection_slug_input()} />
-					<button class="bg-surface-200-800 px-2" onclick={() => (autoUpdateSlug = !autoUpdateSlug)} title="Toggle Auto-update">
+			<div class="space-y-2">
+				<label for="slug" class="text-sm font-medium leading-none text-surface-500 dark:text-surface-50">{collection_slug()}</label>
+				<div class="flex gap-2">
+					<div class="relative flex-1">
+						<iconify-icon icon="mdi:link" class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" width="18"></iconify-icon>
+						<input 
+							type="text" 
+							id="slug" 
+							bind:value={slug} 
+							placeholder={collection_slug_input()} 
+							class="flex h-10 w-full rounded-md border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-900 pl-10 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+						/>
+					</div>
+					<Button 
+						variant={autoUpdateSlug ? 'primary' : 'outline'} 
+						size="sm" 
+						onclick={() => (autoUpdateSlug = !autoUpdateSlug)}
+						title="Toggle Auto-update"
+					>
 						<iconify-icon icon={autoUpdateSlug ? 'mdi:sync' : 'mdi:sync-off'} width="18"></iconify-icon>
-					</button>
+					</Button>
 				</div>
 			</div>
 
-			<!-- Status -->
-			<div class="flex flex-col">
-				<label for="status" class="mb-1 flex items-center font-bold text-sm"> {collection_status()} </label>
-				<select id="status" bind:value={status} class="select w-full">
-					{#each statuses as statusOption (statusOption)}
+			<div class="space-y-2">
+				<label for="status" class="text-sm font-medium leading-none text-surface-500 dark:text-surface-50">{collection_status()}</label>
+				<select 
+					id="status" 
+					bind:value={status} 
+					class="flex h-10 w-full rounded-md border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 appearance-none cursor-pointer"
+				>
+					{#each statuses as statusOption}
 						<option value={statusOption}>{statusOption}</option>
 					{/each}
 				</select>
 			</div>
-		</div>
+		</Card>
+	
+	<!-- Right Side: Style & Metadata -->
+	 <Card class="wrapper">
+			<h3 class="text-lg font-bold flex items-center gap-2 border-b border-surface-200 dark:border-surface-700 pb-2">
+				<iconify-icon icon="mdi:palette-outline" class="text-tertiary-500 dark:text-primary-500"></iconify-icon>
+				Visuals & Description
+			</h3>
 
-		<!-- Right Side: Visuals & Desc -->
-		<div class="space-y-4">
-			<!-- Icon -->
-			<div class="flex flex-col">
-				<label for="icon" class="mb-1 flex items-center font-bold text-sm"> {collectionname_labelicon()} </label>
+			<div class="space-y-2">
+				<label for="icon" class="text-sm font-medium leading-none text-surface-500 dark:text-surface-50">{collectionname_labelicon()}</label>
 				<IconifyIconsPicker bind:iconselected={selectedIcon} icon={selectedIcon} bind:searchQuery />
 			</div>
 
-			<!-- Description -->
-			<div class="flex flex-col flex-1">
-				<label for="description" class="mb-1 flex items-center font-bold text-sm"> {collectionname_description()} </label>
+			<div class="space-y-2 flex flex-col flex-1">
+				<label for="description" class="text-sm font-medium leading-none text-surface-500 dark:text-surface-50">{collectionname_description()}</label>
 				<textarea
 					id="description"
-					rows="4"
 					bind:value={description}
 					placeholder={collection_description_placeholder()}
-					class="input w-full flex-1 resize-none"
+					class="flex-1 w-full rounded-md border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-900 p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 resize-none min-h-[120px]"
 				></textarea>
 			</div>
-		</div>
-	</div>
+		</Card>
+	
 </div>

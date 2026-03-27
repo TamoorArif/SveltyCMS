@@ -1,12 +1,12 @@
 ---
-path: "/docs/database/mongodb-implementation"
+path: "docs/architecture/database/mongodb-implementation.mdx"
 title: "MongoDB Implementation Guide"
 description: "Complete MongoDB-specific implementation guide covering optimizations, indexes, connection pooling, cursor pagination, streaming, and performance tuning for SveltyCMS."
 order: 4
 icon: "mdi:leaf"
 author: "SveltyCMS Team"
 created: "2024-01-15"
-updated: "2026-02-09"
+updated: "2026-03-27"
 tags:
   - database
   - mongodb
@@ -17,7 +17,7 @@ tags:
 
 # MongoDB Implementation Guide
 
-This guide covers the **MongoDB-specific** implementation in SveltyCMS, including optimizations, indexing strategy, connection pooling, and advanced features. For database-agnostic architecture, see the [Core Infrastructure](/docs/database/core-infrastructure) documentation.
+This guide covers the **MongoDB-specific** implementation in SveltyCMS, including optimizations, indexing strategy, connection pooling, and advanced features. For database-agnostic architecture, see the [Core Infrastructure](/docs/architecture/database/core-infrastructure) documentation.
 
 ---
 
@@ -743,7 +743,7 @@ async paginate(options: PaginateOptions): Promise<DatabaseResult<T[]>> {
   if (cursor) {
     const [field, value] = cursor.split(':');
     const operator = sortDirection === 'desc' ? '$lt' : '$gt';
-    query = query.where(field)[operator](value);
+    query = query.where(field)[operator] (value);
   }
 
   // Apply sorting and limit
@@ -1398,9 +1398,9 @@ console.log("Cached:", result.meta?.cached);
 
 ## 📚 Related Documentation
 
-- [Core Infrastructure](/docs/database/core-infrastructure) - Database-agnostic architecture
+- [Core Infrastructure](/docs/architecture/database/core-infrastructure) - Database-agnostic architecture
 - [Cache System](/docs/architecture/cache-system) - Dual-layer caching strategy (Redis + MongoDB)
-- [Authentication System](/docs/database/authentication-system) - Auth & session management
+- [Authentication System](/docs/architecture/database/authentication-system) - Auth & session management
 
 ---
 
@@ -1436,8 +1436,8 @@ MongoDB delivers **enterprise-ready performance** with sub-10ms response times f
 
 For detailed implementation information, see:
 
-- [Cache System Architecture](/docs/database/cache-system.mdx)
-- [Performance Architecture](/docs/database/performance-architecture.mdx)
+- [Cache System Architecture](/docs/architecture/database/cache-system.mdx)
+- [Performance Architecture](/docs/architecture/database/performance-architecture.mdx)
 - ✅ **Query Hints** (Force indexes, set timeouts)
 - ✅ **.lean() Queries** (40% memory reduction, 40% faster)
 - ✅ **Cache Integration** (92% hit rate)
@@ -1454,5 +1454,5 @@ For detailed implementation information, see:
 
 For complete architecture details, see:
 
-- [Performance Architecture](/docs/database/performance-architecture.mdx)
-- [Cache System Architecture](/docs/database/cache-system.mdx)
+- [Performance Architecture](/docs/architecture/database/performance-architecture.mdx)
+- [Cache System Architecture](/docs/architecture/database/cache-system.mdx)

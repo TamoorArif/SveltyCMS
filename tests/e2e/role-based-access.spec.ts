@@ -238,6 +238,28 @@ test.describe("Role-Based Access Control", () => {
     await logout(page);
   });
 
+  test("IDOR Prevention: Non-admins cannot access sensitive APIs", async ({ page }) => {
+    // 1. Editor tries to fetch Users via API
+    await login(page, USERS.editor);
+    const userApiResponse = await page.evaluate(async () => {
+      const res = await fetch("/api/user");
+      return { status: res.status, ok: res.ok };
+    });
+    // Should be Forbidden (403) or Unauthorized (401)
+    expect(userApiResponse.ok).toBeFalsy();
+    expect([401, 403]).toContain(userApiResponse.status);
+
+    // 2. Editor tries to fetch System Config via API
+    const configApiResponse = await page.evaluate(async () => {
+      const res = await fetch("/api/config");
+      return { status: res.status, ok: res.ok };
+    });
+    expect(configApiResponse.ok).toBeFalsy();
+    expect([401, 403]).toContain(configApiResponse.status);
+
+    await logout(page);
+  });
+
   test("Verify all roles can login and logout", async ({ page }) => {
     // Test admin
     await login(page, USERS.admin);

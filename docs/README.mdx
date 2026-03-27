@@ -1,13 +1,13 @@
 ---
 path: "docs/README.mdx"
 title: "SveltyCMS Documentation"
-description: "Complete documentation for SveltyCMS - a powerful, modern Headless CMS built with SvelteKit and Svelte 5. Designed for both users and developers."
+description: "The complete technical and editorial map for SveltyCMS — a powerful, modern Headless CMS built for high-performance content delivery."
 icon: "mdi:book-open-variant"
 published: true
 order: 1
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-08-05"
-updated: "2026-02-22"
+updated: "2026-03-27"
 tags:
   - "documentation"
   - "guide"
@@ -15,272 +15,69 @@ tags:
   - "getting-started"
 ---
 
-# SveltyCMS Documentation
+# 📚 SveltyCMS Documentation Hub
 
-Welcome to SveltyCMS - a powerful, modern Headless CMS built with SvelteKit and Svelte 5. Our documentation is designed with two clear goals:
+Welcome to the SveltyCMS Documentation. This site serves two primary audiences:
+- **Content Creators & Admins**: Who need to manage collections, media, and security without touching code.
+- **Engineers & Developers**: Who need to extend the core, build custom widgets, or integrate via REST/GraphQL.
 
-## 🎯 Documentation Goals
+---
 
-### 👥 **For Users**: Understand Every Feature + Feel Confident About Security
+## 🎯 Choose Your Path
 
-- Complete feature guides with security confidence
-- Built-in safety features explained
-- Best practices for secure content management
+### 👥 For Administrators & Editors
+Focus on **Features & Security Confidence**.
+- [🚀 **Getting Started**](./getting-started.mdx) — Quick tour of the Studio and first steps.
+- [🛡️ **User Management**](./guides/configuration/user-registration.mdx) — Handling roles, permissions, and 2FA.
+- [🖼️ **Media Hub**](./architecture/media-system.mdx) — Managing assets and video transcoding.
 
-### 🛠️ **For Developers**: Understand How SveltyCMS Works
+### 🛠️ For Developers & Engineers
+Focus on **Architecture & Implementation**.
+- [🏗️ **Architecture Overview**](./architecture/index.mdx) — Svelte 5 Runes, adapters, and setup.
+- [📡 **API Reference**](./api/index.mdx) — Exhaustive REST and GraphQL documentation.
+- [🧩 **Widget Development**](./guides/development/widgets/index.mdx) — Building custom UI components.
 
-- Deep dive into architecture and systems
-- Implementation patterns and best practices
-- Extension and customization guides
+---
 
-## 📚 Choose Your Path
+## 🚀 Key Feature Highlights
 
-### 👥 User Guide - **Features & Security Confidence**
+SveltyCMS is designed for speed, security, and developer ergonomics.
 
-Perfect for content creators, editors, and administrators who need to:
+- **⚡ Sub-1ms Performance**: Dual-layer caching (Redis + DB) and Svelte 5 no-runtime reactivity.
+- **🛡️ Secure by Design**: JWT + OAuth, SCIM 2.0 provisioning, and crypto-chained audit logs.
+- **🌍 Global Ready**: Compiled zero-runtime i18n via Paraglide JS and multi-tenant isolation.
+- **🤖 AI-First**: Automated CMS migration (Drupal/WP), local RAG support, and AI-assisted content.
+- **🔗 Flexible Schema**: Hybrid Code+GUI collection builder with bi-directional sync.
 
-- ✅ **Use Features Safely** - Complete guides with security best practices
-- ✅ **Manage Content** - Create, edit, and publish with confidence
-- ✅ **Understand Security** - Built-in protection features explained
-- ✅ **Troubleshoot Issues** - Safe solutions to common problems
+---
 
-**Key Security Highlights:**
+## 🏆 Competitive Awareness
 
-- 🛡️ Enterprise-grade authentication (JWT + OAuth)
-- 🔐 Role-based permissions and access control
-- 🔒 Encrypted data storage and transmission
-- 📊 Audit logging and activity tracking
-
-### 🛠️ Developer Guide - **How It Works**
-
-Essential for developers who need to understand:
-
-- ⚙️ **System Architecture** - How components work together
-- 🔧 **Setup & Configuration** - Automated CLI installer explained
-- 🧩 **Extension Development** - Building custom functionality
-- 📡 **API Integration** - REST and GraphQL implementation
-
-**Core Systems Explained:**
-
-- 🚀 Automated setup via vite.config.ts
-- 🔐 JWT + OAuth authentication flow
-- 🏗️ SvelteKit + Svelte 5 architecture
-- 📊 Database abstraction and optimization
-
-## 🏆 Competitive Awareness (SveltyCMS Advantage)
-
-SveltyCMS is designed to outperform competitors like Payload CMS, Strapi, and Directus by leveraging Svelte 5's no-runtime compilation and unique features.
+How SveltyCMS compares to traditional and modern CMS platforms:
 
 | Feature           | SveltyCMS Approach                  | Why Better than Competitors                               |
 | ----------------- | ----------------------------------- | --------------------------------------------------------- |
 | **Core Tech**     | SvelteKit + Svelte 5 (Runes)        | No VDOM/hydration tax vs. React-based (Payload, Strapi).  |
 | **Cold Start**    | <1s (Progressive, self-healing)     | Faster than 3s+ in Payload/Strapi; edge-ready.            |
 | **i18n**          | Paraglide (Compiled, zero-runtime)  | Type-safe, no runtime lookups vs. i18next in rivals.      |
-| **Schemas**       | Hybrid (Code + GUI, bi-directional) | Flexible vs. code-only (Payload) or GUI-only (Strapi).    |
 | **Multi-Tenancy** | Native (tenantId isolation)         | Core/free vs. enterprise-gated in Strapi/Contentful.      |
 | **SCIM 2.0**      | Native endpoints (RFC 7644)         | Automated provisioning vs. manual/enterprise in others.   |
 | **Audit Logs**    | Crypto-chained (SHA-256)            | Compliance-ready vs. basic/manual in competitors.         |
 | **Accessibility** | WCAG 3.0 Functional Perf            | High-precision hotkeys vs. basic ARIA in rivals.          |
-| **Media Engine**  | Sharp.js + ffmpeg + AI              | Transcoding & Batch Editing vs. simple uploads.           |
-| **Workflows**     | Visual FSM Editor                   | Drag-and-drop state machines vs. linear status dropdowns. |
-| **Migrations**    | AI Smart Importer (Drupal/WP)       | Instant schema mirroring vs. manual field mapping.        |
-| **Localization**  | Agentic Localization (v4.0)         | Context-aware AI translation vs. static i18n in others.   |
-
-## 🚀 Quick Start
-
-### For Users (Content Management)
-
-```
-1. 🌐 Access your CMS URL
-2. 🔑 Log in securely
-3. 📝 Start creating content
-4. 🪄 Use AI & Batch tools to automate workflows
-5. 🔄 Use Smart Importer to migrate from WordPress/Drupal
-```
-
-### For Developers (Technical Setup)
-
-```bash
-# Clone the repository
-git clone https://github.com/SveltyCMS/SveltyCMS.git
-cd SveltyCMS
-
-# Install dependencies (Bun is recommended for speed)
-bun install
-bun run dev  # CLI installer launches automatically
-```
-
-## 🔧 Key Features & Security
-
-- **🎨 Modern Interface**: Built with Svelte 5 (Runes) and Tailwind CSS v4
-- **🚀 Automated Setup**: CLI installer handles all configuration
-- **🔐 Security First**: JWT + OAuth with granular permissions and Signed Preview Tokens
-- **📱 Responsive**: Virtualized grids for 10,000+ assets
-- **🌍 i18n Ready**: Agentic Localization v4.0 with context-aware AI translation
-- **⚡ Performance**: Sub-1ms API hot-paths with dual-layer caching
-- **🔄 Reactive Content**: Real-time updates with versioning and SSE stream
-- **🧩 Extensible**: 3-Pillar Widget Architecture and Enterprise Plugin Slots
-- **🎬 Media Hub**: Advanced Video Transcoding (HLS/MP4) and Multi-Image Batch Editing
-- **🤖 AI Driven**: Local Ollama RAG integration and Hosted MCP Context Server
-- **⛓️ Workflows**: Visual Finite State Machine (FSM) engine for content lifecycles
-- **🪄 Smart Importer**: AI-powered "Instant Scaffold" for one-click legacy migrations (Drupal/WordPress)
-
-## 📖 Essential Documentation
-
-### User Documentation (Security-Focused)
-
-- [🚀 Getting Started](/docs/getting-started) - Get started safely
-- [👥 User Registration](/docs/guides/user-registration) - Secure account creation
-- [🛡️ Admin Management](/docs/guides/admin-user-management) - Secure administration
-
-## 📚 Documentation Portal
-
-### 🚀 Getting Started
-
-- **[Quick Start Guide](./getting-started.mdx)** - Installation and first steps
-- **[Setup Wizard](./guides/configuration/setup-wizard.mdx)** - Initial configuration
-- **[System Settings](./guides/configuration/system-settings.mdx)** - Global configuration
-- **[Upgrading SveltyCMS](./guides/configuration/Upgrading.mdx)** - Update guide
-
-### 📖 User Guides
-
-- **[Content Management](./architecture/media-system.mdx)** - Managing media and content
-- **[Token System](./architecture/token-system.mdx)** - Dynamic content tokens
-- **[User Management](./guides/configuration/user-registration.mdx)** - Users and permissions
-
-### 💻 Developer Resources
-
-- **[API Reference](./api/index.mdx)** - REST and GraphQL API
-- **[Architecture](./architecture/index.mdx)** - System design and patterns
-- **[Database](./database/index.mdx)** - Database schema and adapters
-- **[Widget System](./widgets/index.mdx)** - Custom widget development
-- **[Testing](./tests/index.mdx)** - Test suites and workflows
-
-### 🛠️ DevOps & Deployment
-
-- **[Production Deployment](./guides/deployment/production-deployment.mdx)** - Server setup and optimization
-- **[Cloud Storage](./guides/deployment/cloud-storage.mdx)** - S3/R2 integration
-- **[Security](./security/index.mdx)** - Security best practices
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Technical Stack (2026+)
 
-SveltyCMS is built on a modern, headless architecture:
-
-- **Frontend**: SvelteKit (SSR + CSR)
-- **Backend**: Node.js / Bun
-- **Database**: MongoDB, PostgreSQL, MariaDB, or SQLite
-- **Cache**: Redis + In-Memory
-- **Content**: Reactive System (Versioning + Polling)
-- **API**: REST + GraphQL
-
-For a deep dive, see the **[Architecture Documentation](./architecture/index.mdx)**.
+- **Frontend**: SvelteKit / Svelte 5 (Runes) / Tailwind CSS v4 / Skeleton.dev v4.
+- **Backend**: Node.js 24+ or Bun (3-4x faster runtime).
+- **Adapters**: MongoDB, PostgreSQL, MariaDB, SQLite (Official Support).
+- **Communication**: REST API / GraphQL / SSE Real-time Streams.
 
 ---
 
-## 🤝 Contributing
+## 🤝 Community & Support
 
-We welcome contributions! Please see our **[Contributing Guide](./contributing/contributing-docs.mdx)** for details on:
-
-- Code of Conduct
-- Development Workflow
-- Pull Request Process
-- Coding Standards
-
----
-
-## 📄 License
-
-SveltyCMS is open-source software licensed under the **MIT License**.
-
----
-
-**[SveltyCMS](https://sveltycms.com)** • **[GitHub](https://github.com/SveltyCMS/SveltyCMS)** • **[Discord](https://discord.gg/sveltycms)**
-
-- **[GitHub Issues](https://github.com/SveltyCMS/SveltyCMS/issues)** - Bug reports and feature requests
-- **[GitHub Discussions](https://github.com/SveltyCMS/SveltyCMS/discussions)** - Community support
-- **[Security Reports](mailto:security@sveltycms.dev)** - Responsible disclosure
-
-## 📋 System Requirements
-
-- **Browser**: Chrome, Firefox, Safari, Edge (latest versions)
-- **JavaScript**: Required (security features depend on it)
-- **Node.js**: 24+ (latest stable recommended)
-- **Database**: MongoDB, PostgreSQL, MariaDB/MySQL, or SQLite (all production-ready)
-- **Redis**: Optional but recommended for caching
-
----
-
-## System Architecture (2026+)
-
-### Database-Driven Configuration
-
-SveltyCMS uses a **modern, database-driven approach** for all configuration:
-
-#### Dynamic Settings (Database)
-
-- ✅ 75+ settings across 13 groups (General, Email, Security, Cache, etc.)
-- ✅ Real-time updates without server restart
-- ✅ Role-based access control
-- ✅ Admin GUI at `/config/system-settings`
-- ✅ RESTful API: `/api/settings/[group]`
-
-#### Static Config (Minimal)
-
-- Database connection strings
-- JWT secrets and encryption keys
-- OAuth client credentials
-- Environment-specific startup config
-
-### Import/Export System
-
-**Drupal CMS-inspired configuration management:**
-
-#### Export Configuration
-
-```bash
-POST /api/export/full
-{
-  "includeSettings": true,
-  "includeCollections": false,
-  "includeSensitive": false
-}
-```
-
-#### Import Configuration
-
-```bash
-POST /api/import/full
-{
-  "data": { /* exported config */ },
-  "options": {
-    "strategy": "merge",  // skip | overwrite | merge
-    "dryRun": true        // validate before applying
-  }
-}
-```
-
-#### Workflows Enabled
-
-- ✅ **Staging → Production**: Export from staging, import to production
-- ✅ **Version Control**: Store configs in git
-- ✅ **Team Collaboration**: Share configuration files
-- ✅ **Backup & Restore**: Daily automated backups
-- ✅ **Environment-Specific**: Dev/staging/prod configs
-
-### Cache System
-
-**Dual-layer caching for exceptional performance:**
-
-- **Layer 1 (Redis)**: Ultra-fast in-memory cache (~1ms reads)
-- **Layer 2 (Database)**: Persistent cache across restarts
-- **8 TTL Categories**: Static, Dynamic, API, Query, Session, Widget, Computed, Media
-- **Automatic Expiration**: TTL-based with configurable values
-- **UI Management**: Configure via System Settings
-
-See [Cache System Documentation](/docs/architecture/cache-system) for details.
-
----
-
-**New to SveltyCMS?** Start with [Getting Started](/docs/getting-started) for users or [Installation](/docs/installation) for developers.
+- **Bug Reports**: [GitHub Issues](https://github.com/SveltyCMS/SveltyCMS/issues)
+- **Discussions**: [Community Forums](https://github.com/SveltyCMS/SveltyCMS/discussions)
+- **Contribution**: [Documentation Standards](./contributing/contributing-docs.mdx)

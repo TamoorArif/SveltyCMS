@@ -1,12 +1,12 @@
 ---
-path: "docs/database/index.mdx"
+path: "docs/architecture/database/index.mdx"
 title: "Database Documentation"
 description: "Complete guide to SveltyCMS database architecture, covering both database-agnostic infrastructure and MongoDB-specific implementation."
 order: 1
 icon: "mdi:database"
 author: "SveltyCMS Team"
 created: "2024-01-15"
-updated: "2026-02-15"
+updated: "2026-03-27"
 tags:
   - "database"
   - "architecture"
@@ -33,7 +33,7 @@ These documents explain the core database infrastructure that works with **any**
    - `theme-manager.ts` - Theme service
    - How the adapter pattern enables database agnosticism
 
-2. **[Cache System](./cache-system.mdx)**
+2. **[Cache System](../cache-system.mdx)**
    - `cache-service.ts` - Dual-layer caching (Redis + MongoDB)
    - `CacheMetrics.ts` - Performance monitoring
    - `CacheWarmingService.ts` - Predictive prefetching
@@ -41,7 +41,7 @@ These documents explain the core database infrastructure that works with **any**
    - **NEW**: Pattern-based predictive prefetching with custom fetchers
    - **ContentManager**: LRU cache & batch initialization optimization
 
-3. **[Authentication System](./authentication-system.mdx)**
+3. **[Authentication System](../authentication-system.mdx)**
    - Complete auth infrastructure (12 files)
    - User authentication & authorization
    - Session management & cleanup
@@ -90,15 +90,15 @@ Implementation guides for specific database backends:
 ### I want to...
 
 - **Understand the overall architecture** → Read [Core Infrastructure](./core-infrastructure.mdx)
-- **Learn about caching** → Read [Cache System](./cache-system.mdx)
-- **Understand authentication** → Read [Authentication System](./authentication-system.mdx)
+- **Learn about caching** → Read [Cache System](../cache-system.mdx)
+- **Understand authentication** → Read [Authentication System](../authentication-system.mdx)
 - **Optimize MongoDB** → Read [MongoDB Implementation](./mongodb-implementation.mdx)
 - **Implement MariaDB** → Read [MariaDB Implementation](./mariadb-implementation.mdx)
 - **Implement PostgreSQL** → Read [PostgreSQL Implementation](./postgresql-implementation.mdx)
 - **Implement SQLite** → Read [SQLite Implementation](./sqlite-implementation.mdx)
 - **Add a new database** → Read [Core Infrastructure](./core-infrastructure.mdx) section "Adding New Adapters"
-- **Check cache performance** → Read [Cache System](./cache-system.mdx) section "Metrics"
-- **Implement permissions** → Read [Authentication System](./authentication-system.mdx) section "Permissions"
+- **Check cache performance** → Read [Cache System](../cache-system.mdx) section "Metrics"
+- **Implement permissions** → Read [Authentication System](../authentication-system.mdx) section "Permissions"
 
 ---
 
@@ -107,8 +107,8 @@ Implementation guides for specific database backends:
 ### For New Developers
 
 1. Start with [Core Infrastructure](./core-infrastructure.mdx) to understand the 3-layer architecture
-2. Read [Cache System](./cache-system.mdx) to understand performance optimization
-3. Read [Authentication System](./authentication-system.mdx) to understand security
+2. Read [Cache System](../cache-system.mdx) to understand performance optimization
+3. Read [Authentication System](../authentication-system.mdx) to understand security
 
 ### For MongoDB Users
 
@@ -289,11 +289,11 @@ SveltyCMS mitigates this initial overhead through its **Unified Caching Layer**,
 
 ### API Documentation
 
-- [Database Agnostic Verification](../api/database-agnostic-verification.mdx) - API endpoint verification
+- [Database Agnostic Verification](../../api/database-agnostic-verification.mdx) - API endpoint verification
 
 ### Development Guides
 
-- [Contributing](../contributing/contributing-docs.mdx) - How to contribute to docs
+- [Contributing](../../contributing/contributing-docs.mdx) - How to contribute to docs
 
 ---
 
@@ -309,7 +309,7 @@ All database documentation follows these standards:
 - ✅ How components work together
 - ✅ Real-world usage examples
 
-See [Contributing Guidelines](../contributing/contributing-docs.mdx) for more details.
+See [Contributing Guidelines](../../contributing/contributing-docs.mdx) for more details.
 
 ---
 
@@ -317,7 +317,7 @@ See [Contributing Guidelines](../contributing/contributing-docs.mdx) for more de
 
 Want to improve the database documentation?
 
-1. Follow the [Contributing Guidelines](../contributing/contributing-docs.mdx)
+1. Follow the [Contributing Guidelines](../../contributing/contributing-docs.mdx)
 2. Ensure `.mdx` format with proper frontmatter
 3. Include code examples and performance data
 4. Add to this README if adding new docs

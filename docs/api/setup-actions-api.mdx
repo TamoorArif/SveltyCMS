@@ -4,9 +4,9 @@ title: "Configuration & Setup Actions"
 description: "Reference for SvelteKit Server Actions used for system configuration and setup, replacing traditional REST endpoints."
 order: 10
 icon: "mdi:cog"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-02-06"
+updated: "2026-03-27"
 tags:
   - "api"
   - "configuration"
@@ -47,7 +47,7 @@ Tests the database connection settings.
 
 ```typescript
 {
-  type: 'mongodb' | 'mariadb' | 'postgresql';
+  type: 'mongodb' | 'mariadb' | 'postgresql' | 'sqlite';
   host: string;
   port: number;
   name: string;
@@ -144,7 +144,7 @@ Automatically installs missing database drivers (e.g., `mongoose`, `mysql2`).
 
 | Field    | Type   | Description              |
 | -------- | ------ | ------------------------ |
-| `dbType` | string | 'mongodb', 'mysql', etc. |
+| `dbType` | string | `'mongodb'`, `'mariadb'`, `'postgresql'`, `'sqlite'` |
 
 ---
 

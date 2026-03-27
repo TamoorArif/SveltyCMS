@@ -1,12 +1,12 @@
 ---
 path: "docs/api/trash-api.mdx"
 title: "Trash & Soft Delete API"
-description: "API reference for the SveltyCMS Trash system, enabling safe content deletion and recovery."
+description: "API reference for the SveltyCMS Trash system — list, restore, and permanently delete soft-deleted content entries."
 order: 16
 icon: "mdi:trash-can-outline"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2026-03-18"
-updated: "2026-03-18"
+updated: "2026-03-27"
 tags:
   - "api"
   - "trash"
@@ -33,13 +33,29 @@ The `safeQuery` middleware automatically filters out trashed items from all stan
 
 ---
 
+## 🚀 Quick Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| GET | `/api/trash` | List all soft-deleted items across collections |
+| POST | `/api/trash` (body: `restore` action) | Restore a soft-deleted item |
+| DELETE | `/api/collections/[id]/[entryId]?permanent=true` | Permanently delete (skip trash) |
+
+---
+
 ## 📡 Endpoints
 
 ### 1. List Trashed Items
 
-**GET** `/api/trash`
+**Endpoint**: `GET /api/trash`
 
-Lists all soft-deleted items across all collections for the current tenant.
+Lists soft-deleted items across all collections for the current tenant, sorted by deletion date (newest first). The endpoint queries each collection in sequence and filters for items where `isDeleted === true`.
+
+**Query Parameters**:
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `limit` | `number` | `50` | Maximum number of results **per collection**. Keep this value small for large instances. |
 
 **Response**:
 
@@ -74,14 +90,17 @@ Restores a specific item from the trash, de-mangling its unique fields and resto
 }
 ```
 
-**Collision Handling**:
-If restoring an item would cause a collision (e.g., another active post now uses the same slug), the API will return a `409 Conflict` error.
+> [!NOTE]
+> **Collision Handling**: If restoring an item would cause a unique-index collision (e.g., another active entry now uses the same slug), the API returns `409 Conflict`. The mangled suffix (e.g., `_DELETED_1710793389`) must be manually resolved before retrying.
 
 ### 3. Permanent Deletion
 
-To permanently remove an item without sending it to the trash, use the `permanent` query parameter on the standard delete endpoint.
+To hard-delete an item without sending it to the trash, pass `?permanent=true` on the standard collection delete endpoint.
 
-**DELETE** `/api/collections/[collectionId]/[entryId]?permanent=true`
+**Endpoint**: `DELETE /api/collections/[collectionId]/[entryId]?permanent=true`
+
+> [!CAUTION]
+> This action is irreversible. The entry and all its revision history will be permanently removed from the database.
 
 ---
 

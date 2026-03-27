@@ -1,12 +1,12 @@
 ---
-path: "docs/widgets/architecture.mdx"
+path: "docs/architecture/widgets/architecture.mdx"
 title: "Widget System Architecture"
 description: "Technical deep-dive into the SveltyCMS widget system, covering the Factory Pattern, Runtime Discovery, and Data Flow."
 order: 2
 icon: "mdi:cube-outline"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-17"
-updated: "2026-02-03"
+updated: "2026-03-27"
 tags:
   - "architecture"
   - "widgets"
@@ -62,7 +62,7 @@ graph TB
 The `createWidget` function is the core of the system. It enforces the 3-Pillar structure and generates the necessary TypeSafety for consumers.
 
 ```typescript
-// src/widgets/widgetFactory.ts
+// src/widgets/widget-factory.ts
 export function createWidget<TProps extends WidgetProps>(config: WidgetConfig<TProps>) {
   // 1. Create immutable widget definition
   const widgetDefinition: WidgetDefinition = {

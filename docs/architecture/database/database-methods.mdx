@@ -1,12 +1,12 @@
 ---
-path: "docs/database/database-methods.mdx"
+path: "docs/architecture/database/database-methods.mdx"
 title: "Database Methods Architecture"
 description: "Complete reference for MongoDB method modules including authentication, collections, CRUD operations, content management, media, themes, widgets, and system settings."
 order: 6
 icon: "mdi:database-cog"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-03"
-updated: "2026-02-09"
+updated: "2026-03-27"
 tags:
   - "database"
   - "mongodb"
@@ -1465,5 +1465,5 @@ await usersRepo.update(userId, { $set: { name: "New Name" } });
 - [Database Interface](/docs/dev-guide/database-interface) - Abstract database interface
 - [MongoDB Adapter](/docs/dev-guide/mongodb-adapter) - MongoDB-specific implementation
 - [Authentication System](/docs/dev-guide/authentication-system) - Uses authMethods
-- [Content Management](/docs/dev-guide/content-management) - Uses contentMethods
+- [Content Management](/docs/guides/content/smart-importer) - Uses contentMethods
 - [Database Resilience](./database-resilience.mdx) - Unified guide for resilience features, integration, metrics, and roadmap

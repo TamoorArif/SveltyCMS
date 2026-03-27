@@ -1,12 +1,12 @@
 ---
-path: "docs/widgets/index.mdx"
+path: "docs/guides/development/widgets/index.mdx"
 title: "Widget System Overview"
 description: "Complete widget system overview covering 3-pillar architecture, management, and simplified navigation."
 order: 1
 icon: "mdi:widgets"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-17"
-updated: "2026-03-03"
+updated: "2026-03-27"
 tags:
   - "developer"
   - "widgets"
@@ -22,12 +22,12 @@ Welcome to the comprehensive SveltyCMS widget system documentation. The widget s
 
 | Guide                                                  | Description                                                           |
 | :----------------------------------------------------- | :-------------------------------------------------------------------- |
-| **[Architecture](./architecture.mdx)**                 | Deep dive into the Factory Pattern, Runtime Discovery, and Data Flow. |
+| **[Architecture](../../../architecture/widgets/architecture.mdx)**                 | Deep dive into the Factory Pattern, Runtime Discovery, and Data Flow. |
 | **[Development Guide](./development.mdx)**             | Practical tutorial for building, testing, and translating widgets.    |
 | **[Marketplace](./marketplace.mdx)**                   | Discovering, installing, and publishing widgets to the ecosystem.     |
-| **[Select Widget](../.. $args[0].Value.ToLower() )**   | Standard dropdown selection widget.                                   |
-| **[Repeater Widget](../.. $args[0].Value.ToLower() )** | Documentation for the core Repeater widget.                           |
-| **[Price Widget](../.. $args[0].Value.ToLower() )**    | Documentation for the custom Price widget.                            |
+| **[Select Widget](../../../../src/widgets/core/select/readme.mdx)**   | Standard dropdown selection widget.                                   |
+| **[Repeater Widget](../../../../src/widgets/core/repeater/readme.mdx)** | Documentation for the core Repeater widget.                           |
+| **[Price Widget](../../../../src/widgets/custom/price/readme.mdx)**    | Documentation for the custom Price widget.                            |
 
 ---
 
@@ -101,7 +101,7 @@ Use the `createWidget` factory:
 
 ```typescript
 // src/widgets/custom/rating/index.ts
-import { createWidget } from "@widgets/widgetFactory";
+import { createWidget } from "@widgets/widget-factory";
 import * as v from "valibot";
 
 export default createWidget({
@@ -150,6 +150,6 @@ Access `/config/widgetManagement` to:
 
 ## 🔗 Related Resources
 
-- **[Content Types](../dev-guide/05-collections/)**: Using widgets in collections.
-- **[API Development](../dev-guide/04-api/)**: Widget API integration.
-- **[Security](../dev-guide/14-security/)**: Widget security considerations.
+- **[Content Types](../collection-builder.mdx)**: Using widgets in collections.
+- **[API Development](../../../api/index.mdx)**: Widget API integration.
+- **[Security](../../../architecture/security/index.mdx)**: Widget security considerations.

@@ -314,7 +314,7 @@ afterNavigate(() => {
 
 					{#if ui.state.pagefooter !== 'hidden'}
 						<footer class="mt-auto w-full bg-surface-50 bg-linear-to-b px-1 text-center dark:from-surface-700 dark:to-surface-900">
-							<PageFooter />
+								<PageFooter />
 						</footer>
 					{/if}
 				</main>

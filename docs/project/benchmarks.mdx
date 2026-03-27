@@ -55,11 +55,11 @@ Our performance tests are located in `tests/benchmarks/` and cover the following
 
 | Service        | Test Script                                                            | Description                                                           |
 | :------------- | :--------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| **Database**   | [database-performance.ts](../tests/benchmarks/database-performance.ts) | Raw CRUD operations via `dbAdapter` (Agnostic).                       |
-| **GraphQL**    | [graphql-stress.ts](../tests/benchmarks/graphql-stress.ts)             | High-concurrency stress testing with AST validation.                  |
-| **REST API**   | [rest-api-performance.ts](../tests/benchmarks/rest-api-performance.ts) | Standard RESTful endpoint latency and throughput (`test:bench:rest`). |
-| **Upgrade**    | [upgrade-performance.ts](../tests/benchmarks/upgrade-performance.ts)   | Maintenance and codemod transformation overhead.                      |
-| **Middleware** | [hooks-performance.ts](../tests/benchmarks/hooks-performance.ts)       | Sequential execution overhead of the SvelteKit pipeline.              |
+| **Database**   | [database-performance.ts](../../tests/benchmarks/database-performance.ts) | Raw CRUD operations via `dbAdapter` (Agnostic).                       |
+| **GraphQL**    | [graphql-stress.ts](../../tests/benchmarks/graphql-stress.ts)             | High-concurrency stress testing with AST validation.                  |
+| **REST API**   | [rest-api-performance.ts](../../tests/benchmarks/rest-api-performance.ts) | Standard RESTful endpoint latency and throughput (`test:bench:rest`). |
+| **Upgrade**    | [upgrade-performance.ts](../../tests/benchmarks/upgrade-performance.ts)   | Maintenance and codemod transformation overhead.                      |
+| **Middleware** | [hooks-performance.ts](../../tests/benchmarks/hooks-performance.ts)       | Sequential execution overhead of the SvelteKit pipeline.              |
 
 ### Maintenance & Upgrade Performance
 
@@ -73,7 +73,7 @@ Measured via `tests/benchmarks/upgrade-performance.ts`. These metrics ensure tha
 > [!TIP]
 > **Sub-second Upgrades**: SveltyCMS can perform a full safety analysis and execute complex code migrations in under 1 second, ensuring zero friction during version transitions.
 
-| **Media** | [media-performance.ts](../tests/benchmarks/media-performance.ts) | Image processing, storage, and retrieval throughput. |
+| **Media** | [media-performance.ts](../../tests/benchmarks/media-performance.ts) | Image processing, storage, and retrieval throughput. |
 
 ### The GraphQL JIT Engine
 
@@ -106,7 +106,7 @@ Our most recent stress tests cover various load profiles, from workstation-level
 
 ## Multi-Database Performance Comparison
 
-SveltyCMS is database-agnostic. While performance varies by engine and storage medium (NVMe vs SATA), our [Unified Caching Layer](../docs/database/index.mdx#unified-caching-flow) ensures sub-millisecond response times for hot paths across all adapters.
+SveltyCMS is database-agnostic. While performance varies by engine and storage medium (NVMe vs SATA), our [Unified Caching Layer](../architecture/database/index.mdx#unified-caching-flow) ensures sub-millisecond response times for hot paths across all adapters.
 
 ### Steady-State Latency (Server-Native)
 

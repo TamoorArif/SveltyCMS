@@ -4,9 +4,9 @@ title: "Collection Builder Architecture"
 description: "Technical deep-dive into the Collection Builder architecture, explaining the reconciliation loop between Filesystem, Database, and UI."
 order: 10
 icon: "mdi:server-network"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2026-01-31"
-updated: "2026-01-31"
+updated: "2026-03-27"
 tags:
   - "architecture"
   - "collection-builder"
@@ -39,7 +39,7 @@ graph TD
         CM_Validation["Path & Integrity Validation"]
     end
 
-    subgraph Database ["MongoDB (State Persistence)"]
+    subgraph Database ["Database (State Persistence)"]
         DB_Nodes["system_content_structure"]
         DB_IDs["Stable _ids"]
     end
@@ -92,7 +92,7 @@ Located at `src/content/content-manager.ts`, this singleton is responsible for b
 
 **Key responsibilities:**
 
-- **Startup Sync**: On boot, it scans `compiledCollections` and compares them against the `system_content_structure` collection in MongoDB.
+- **Startup Sync**: On boot, it scans `compiledCollections` and compares them against the `system_content_structure` table/collection in the active database adapter.
 - **Defensive Import**: It actively filters out "garbage" nodes from the database (e.g., nodes where `path` is a UUID instead of a valid file path) to prevent database corruption from looping back into the application state.
 - **ID Persistence**: It ensures that while the _structure_ comes from disk, the `_id` and relationship data (`parentId`, `order`) are preserved from the database.
 
@@ -106,7 +106,7 @@ Located in `src/utils/schema/` and `src/services/MigrationEngine.ts`, this layer
 
 ### 3. Database (State & Metadata)
 
-MongoDB stores the _metadata_ that cannot live in static files, specifically:
+The active database adapter stores the _metadata_ that cannot live in static files, specifically:
 
 - **`_id`**: The stable UUID for the collection.
 - **`parentId`**: Which category or folder the collection currently resides in.

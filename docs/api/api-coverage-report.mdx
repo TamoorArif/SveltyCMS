@@ -4,9 +4,9 @@ title: "API Coverage Report"
 description: "Complete overview of all documented API endpoints in SveltyCMS."
 order: 100
 icon: "mdi:check-circle"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2025-10-05"
+updated: "2026-03-27"
 tags:
   - "api"
   - "documentation"
@@ -23,7 +23,7 @@ This document provides a comprehensive overview of all API endpoints in SveltyCM
 **Total API Endpoint Files:** 95  
 **Documented Endpoint Groups:** 13  
 **Documentation Coverage:** ~95%  
-**Last Updated:** 2025-10-05
+**Last Updated:** 2026-03-27
 
 ---
 
@@ -41,13 +41,16 @@ This document provides a comprehensive overview of all API endpoints in SveltyCM
 
 #### User Management API
 
+- ✅ `GET /api/user` - List users (paginated)
+- ✅ `POST /api/user` - Create user + send invite email
 - ✅ `POST /api/user/login` - User login
 - ✅ `POST /api/user/logout` - User logout
-- ✅ `POST /api/user/create-user` - Create user
+- ✅ `POST /api/user/create-user` - Create user directly
 - ✅ `PATCH /api/user/update-user-attributes` - Update user
-- ✅ `POST /api/user/batch` - Batch operations
 - ✅ `POST /api/user/save-avatar` - Upload avatar
 - ✅ `DELETE /api/user/delete-avatar` - Delete avatar
+- ✅ `POST /api/user/verify-password` - Verify password
+- ✅ `POST /api/user/batch` - Batch operations
 
 #### User Token Management API
 
@@ -149,16 +152,14 @@ This document provides a comprehensive overview of all API endpoints in SveltyCM
 #### Widget API
 
 - ✅ `GET /api/widgets/list` - List widgets
-- ✅ `POST /api/widgets/install` - Install widget
-- ✅ `POST /api/widgets/uninstall` - Uninstall widget
-- ✅ `POST /api/widgets/activate` - Activate widget
-- ✅ `POST /api/widgets/deactivate` - Deactivate widget
-- ✅ `GET /api/widgets/status/[name]` - Get status
-- ✅ `POST /api/widgets/validate` - Validate widget
-- ✅ `POST /api/widgets/sync` - Sync widgets
-- ✅ `GET /api/widgets/required` - Required widgets
 - ✅ `GET /api/widgets/active` - Active widgets
 - ✅ `GET /api/widgets/installed` - Installed widgets
+- ✅ `GET /api/widgets/required` - Required/protected widgets
+- ✅ `POST /api/widgets/install` - Install widget
+- ✅ `POST /api/widgets/uninstall` - Uninstall widget
+- ✅ `POST /api/widgets/status` - Toggle widget status
+- ✅ `POST /api/widgets/validate` - Validate widget
+- ✅ `POST /api/widgets/sync` - Sync widgets
 
 ---
 
@@ -273,26 +274,24 @@ All documented endpoints verified to be database-agnostic:
 ### Main API Documentation (13 files)
 
 1. `docs/api/index.mdx` - API overview and navigation
-2. `docs/api/Authentication_2FA_API.mdx` - 2FA authentication (646 lines)
-3. `docs/api/User_Management_API.mdx` - User management (700+ lines)
-4. `docs/api/User_Token_Management_API.mdx` - API tokens (500+ lines)
-5. `docs/api/Collection_API.mdx` - Collections CRUD (800+ lines)
-6. `docs/api/Export_Import_API.mdx` - Data portability (700+ lines)
-7. `docs/api/Search_API.mdx` - Full-text search (600+ lines)
-8. `docs/api/GraphQL_API.mdx` - GraphQL queries (700+ lines)
-9. `docs/api/Media_API.mdx` - Media management (600+ lines)
-10. `docs/api/Settings_API.mdx` - Settings management (325 lines)
-11. `docs/api/Setup_Actions_API.mdx` - System configuration (650+ lines)
-12. `docs/api/Widget_API.mdx` - Widget system (700+ lines)
-13. `docs/api/Dashboard_API.mdx` - Monitoring & analytics (550+ lines)
-14. `docs/api/Miscellaneous_API.mdx` - Utilities (650+ lines)
+2. `docs/api/authentication-2fa-api.mdx` - 2FA authentication
+3. `docs/api/user-management-api.mdx` - User management
+4. `docs/api/api-access-tokens.mdx` - API & invitation tokens
+5. `docs/api/collection-api.mdx` - Collections CRUD
+6. `docs/api/export-import-api.mdx` - Data portability
+7. `docs/api/search-api.mdx` - Full-text search
+8. `docs/api/graphql-api.mdx` - GraphQL queries
+9. `docs/api/media-api.mdx` - Media management
+10. `docs/api/settings-api.mdx` - Settings management
+11. `docs/api/setup-actions-api.mdx` - System configuration
+12. `docs/api/widget-api.mdx` - Widget system
+13. `docs/api/dashboard-api.mdx` - Monitoring & analytics
+14. `docs/api/miscellaneous-api.mdx` - Utilities
 
-### Supporting Documentation (2 files)
+### Supporting Documentation
 
-15. `docs/api/Database_Agnostic_Verification.mdx` - Verification report (500+ lines)
-16. `docs/api/api-coverage-report.mdx` - This document (current)
-
-**Total Documentation:** 16 files, ~10,000 lines
+15. `docs/api/database-agnostic-verification.mdx` - Verification report
+16. `docs/api/api-coverage-report.mdx` - This document
 
 ---
 

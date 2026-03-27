@@ -4,9 +4,9 @@ title: "Technical Evaluation 2026"
 description: "Comparative analysis of architecture, performance, and enterprise readiness."
 order: 100
 icon: "mdi:chart-box-outline"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2026-01-18"
-updated: "2026-03-14"
+updated: "2026-03-27"
 tags:
   - "evaluation"
   - "technical"
@@ -34,6 +34,7 @@ To accurately assess SveltyCMS, one must establish the baseline for SOTA technol
   - **Formatting (Oxfmt):** Full project formatting in **~2.2s**.
   - **Production Builds (Rolldown):** Sub-18s full builds using the unified Rust-based bundler.
   - **Zero-Warning Codebase:** Automated and manual audit cleared all 84 legacy warnings.
+  - **Automated Doc Integrity (March 2026):** Native `lint-docs.ts` utility achieving **100% link integrity** and **Path Alignment Strategy** (filesystem matching) across 158 files.
 - **True Database Agnosticism:** The ability to run on NoSQL (for scale), SQL (for relations), or Embedded DBs (for edge) without code changes.
 - **Edge Compatibility:** The ability to deploy logic and content delivery to the network edge (e.g., Cloudflare Workers, Vercel Edge).
 - **Type Safety:** End-to-end TypeScript integration from the database schema to the frontend component.

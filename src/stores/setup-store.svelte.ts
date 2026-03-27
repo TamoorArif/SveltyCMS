@@ -93,6 +93,7 @@ export interface DatabaseTestResult {
   dbDoesNotExist?: boolean;
   details?: unknown;
   error?: string;
+  hint?: string;
   latencyMs?: number;
   message?: string;
   success: boolean;

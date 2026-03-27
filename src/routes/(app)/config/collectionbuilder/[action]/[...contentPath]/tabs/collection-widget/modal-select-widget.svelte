@@ -42,7 +42,7 @@ function onFormSubmit(selected: any): void {
 }
 
 // Base Classes
-const cBase = 'card p-6 w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl bg-white dark:bg-surface-800';
+const cBase = 'card p-6 w-[95vw] max-w-7xl h-[90vh] flex flex-col shadow-2xl bg-white dark:bg-surface-800';
 const cHeader = 'text-3xl font-bold text-center mb-6 text-surface-900 dark:text-white';
 
 // Tooltip not needed with new card design showing description

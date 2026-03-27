@@ -9,9 +9,8 @@
  * - Checks for invalid field values.
  * - Checks for invalid field formats.
  * - Checks for invalid field lengths.
- * - Checks for invalid field values.
- * - Checks for invalid field formats.
- * - Checks for invalid field lengths.
+ * - Checks for broken internal links.
+ * - Checks for Path Alignment Strategy (matches frontmatter path to filesystem).
  *
  * @note This is a specialized validator for MDX metadata. For code linting/formatting,
  * use `bun run lint` (Biome + ESLint) and `bun run format` (Biome).
@@ -107,6 +106,33 @@ function parseFrontmatter(content: string): Record<string, unknown> {
   return data;
 }
 
+// --- Check internal links ---
+function checkInternalLinks(file: string, content: string): string[] {
+  const fileIssues: string[] = [];
+  // Skip http/https URLs, anchor-only links, and absolute /path links (doc-server-relative)
+  const linkRegex = /\[.*?\]\((?!http|https|#|\/)(.*?)\)/g;
+  let match;
+
+  while ((match = linkRegex.exec(content)) !== null) {
+    const linkPath = match[1].split("#")[0]; // Remove hash
+    if (!linkPath) continue;
+
+    // Resolve relative to the file being checked
+    const absoluteLinkPath = path.resolve(path.dirname(file), linkPath);
+    
+    // Support both direct file matches and .mdx implied extensions
+    const exists = fs.existsSync(absoluteLinkPath) || 
+                   fs.existsSync(absoluteLinkPath + ".mdx") ||
+                   fs.existsSync(absoluteLinkPath + ".md");
+
+    if (!exists) {
+      const relativeToRoot = path.relative(process.cwd(), absoluteLinkPath);
+      fileIssues.push(`Broken internal link: "${linkPath}" (Resolved to: ${relativeToRoot})`);
+    }
+  }
+  return fileIssues;
+}
+
 // --- walk docs recursively ---
 function* walk(dir: string): Generator<string> {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -159,19 +185,37 @@ for (const dir of SCAN_DIRS) {
     const data = parseFrontmatter(raw);
 
     const result = safeParse(frontmatterSchema, data);
-    if (result.success) {
+    const linkIssues = checkInternalLinks(file, raw);
+    
+    // Path Alignment Check
+    const filesystemPath = path.relative(PROJECT_ROOT, file).replace(/\\/g, "/");
+    const frontmatterPath = (data.path as string)?.replace(/\\/g, "/");
+    const pathMismatch = frontmatterPath && frontmatterPath !== filesystemPath;
+
+    if (result.success && linkIssues.length === 0 && !pathMismatch) {
       validFiles++;
     } else {
       invalidFiles++;
-      errors.push({ file, issues: result.issues });
+      const combinedIssues = [...(result.issues || [])];
+      
+      if (pathMismatch) {
+        combinedIssues.push({ message: `Path mismatch! Expected "${filesystemPath}" but found "${frontmatterPath}"` } as any);
+      }
+      
+      for (const issue of linkIssues) {
+        combinedIssues.push({ message: issue } as any);
+      }
+
+      errors.push({ file, issues: combinedIssues });
 
       // Use relative path for cleaner output
       const relativePath = path.relative(PROJECT_ROOT, file);
       console.error(`\n❌ ${relativePath}`);
       console.error("─".repeat(80));
 
-      for (const issue of result.issues) {
-        const fieldPath = issue.path?.map((p) => p.key || p).join(".") || "root";
+      // Print Valibot schema errors
+      for (const issue of (result.issues ?? [])) {
+        const fieldPath = issue.path?.map((p: any) => p.key ?? p).join(".") || "root";
         const fieldName = fieldPath === "root" ? "frontmatter" : `"${fieldPath}"`;
 
         // Make the error message more user-friendly
@@ -200,7 +244,13 @@ for (const dir of SCAN_DIRS) {
         }
       }
 
-      console.error(""); // blank line after each error block
+      // Print link and path-mismatch issues
+      for (const issue of combinedIssues) {
+        if (typeof (issue as { message?: string }).message === "string" &&
+            !(result.issues ?? []).includes(issue as never)) {
+          console.error(`   • ${(issue as { message: string }).message}`);
+        }
+      }
     }
   }
 }

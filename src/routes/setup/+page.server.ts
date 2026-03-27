@@ -17,6 +17,7 @@ import nodemailer from "nodemailer";
 import { safeParse } from "valibot";
 import { version as pkgVersion } from "../../../package.json";
 import type { Actions, PageServerLoad } from "./$types";
+import { SetupDatabaseError } from "./setup-database-error";
 import { checkRedis, testRedisConnection } from "./utils";
 
 const execAsync = promisify(exec);
@@ -132,80 +133,74 @@ export const actions: Actions = {
         logger.info("✅ Ping successful!");
         await dbAdapter.disconnect();
 
-        const latencyMs = Math.round(performance.now() - start);
-        return {
-          success: true,
-          message: "Database connected successfully! ✨",
-          latencyMs,
-        };
-      } catch (err: any) {
-        logger.error("❌ Connection attempt failed:", err.message, err.code);
-        // Handle SQLite/SQL "database does not exist" for auto-creation
-        if (
-          err.message?.includes("does not exist") ||
-          err.message?.includes("Unknown database") ||
-          err.code === "ER_BAD_DB_ERROR" ||
-          err.code === "3D000"
-        ) {
-          if (createIfMissing) {
-            try {
-              logger.info("🛠 Attempting to create missing database:", dbConfig.name);
-              if (dbConfig.type === "sqlite") {
-                const { buildDatabaseConnectionString } = await import("./utils");
-                const dbPath = buildDatabaseConnectionString(dbConfig);
-                mkdirSync(dirname(dbPath), { recursive: true });
-              } else if (dbConfig.type === "postgresql") {
-                const postgres = (await import("postgres")).default;
-                const sql = postgres({
-                  host: dbConfig.host,
-                  port: dbConfig.port,
-                  user: dbConfig.user,
-                  password: dbConfig.password,
-                  database: "postgres",
-                });
-                await sql.unsafe(`CREATE DATABASE "${dbConfig.name}"`);
-                await sql.end();
-              } else if (dbConfig.type === "mariadb" || (dbConfig.type as any) === "mysql") {
-                const mysql = await import("mysql2/promise");
-                const connection = await mysql.createConnection({
-                  host: dbConfig.host,
-                  port: dbConfig.port,
-                  user: dbConfig.user,
-                  password: dbConfig.password,
-                });
-                await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.name}\``);
-                await connection.end();
-              }
+				const latencyMs = Math.round(performance.now() - start);
+				return {
+					success: true,
+					message: 'Database connected successfully! ✨',
+					latencyMs
+				};
+			} catch (err: any) {
+				// Special Case: Auto-creation logic for missing databases
+				const isMissing = err instanceof SetupDatabaseError && err.classification === 'DB_NOT_FOUND';
 
-              // Retry connection now that DB/file exists
-              const retry = await getSetupDatabaseAdapter(dbConfig, { createIfMissing: true });
-              const health = await retry.dbAdapter.getConnectionHealth();
-              if (health.success) {
-                await retry.dbAdapter.disconnect();
-                return {
-                  success: true,
-                  message: "Database created and connected successfully! ✨",
-                  latencyMs: Math.round(performance.now() - start),
-                };
-              }
-            } catch (createErr: any) {
-              logger.error("❌ Database creation failed:", createErr.message);
-              return { success: false, error: "Could not create database: " + createErr.message };
-            }
-          }
-          return {
-            success: false,
-            dbDoesNotExist: true,
-            error: err.message,
-          };
-        }
-        throw err;
-      }
-    } catch (err: any) {
-      logger.error("❌ Database test failed critically:", err);
-      return { success: false, error: err.message || String(err) };
-    }
-  },
+				if (isMissing && createIfMissing) {
+					try {
+						logger.info('🛠 Attempting to create missing database:', dbConfig.name);
+						if (dbConfig.type === 'sqlite') {
+							const { buildDatabaseConnectionString } = await import('./utils');
+							const dbPath = buildDatabaseConnectionString(dbConfig);
+							mkdirSync(dirname(dbPath), { recursive: true });
+						} else if (dbConfig.type === 'postgresql') {
+							const postgres = (await import('postgres')).default;
+							const sql = postgres({
+								host: dbConfig.host,
+								port: dbConfig.port,
+								user: dbConfig.user,
+								password: dbConfig.password,
+								database: 'postgres'
+							});
+							await sql.unsafe(`CREATE DATABASE "${dbConfig.name}"`);
+							await sql.end();
+						} else if (dbConfig.type === 'mariadb' || (dbConfig.type as any) === 'mysql') {
+							const mysql = await import('mysql2/promise');
+							const connection = await mysql.createConnection({
+								host: dbConfig.host,
+								port: dbConfig.port,
+								user: dbConfig.user,
+								password: dbConfig.password
+							});
+							await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.name}\``);
+							await connection.end();
+						}
+
+						// Retry connection
+						const retry = await getSetupDatabaseAdapter(dbConfig, { createIfMissing: true });
+						await retry.dbAdapter.disconnect();
+						return {
+							success: true,
+							message: 'Database created and connected successfully! ✨',
+							latencyMs: Math.round(performance.now() - start)
+						};
+					} catch (createErr: any) {
+						logger.error('❌ Database creation failed:', createErr.message);
+						return { success: false, error: 'Could not create database: ' + createErr.message };
+					}
+				}
+
+				// If it's a SetupDatabaseError, use its payload
+				if (err instanceof SetupDatabaseError) {
+					return err.toClientPayload();
+				}
+
+				// Fallback
+				logger.error('❌ Database test failed critically:', err);
+				return { success: false, error: err.message || String(err) };
+			}
+		} catch (err: any) {
+			logger.error('❌ Action: TestDatabase failed fatally:', err);
+			return { success: false, error: err.message || String(err) };
+		}
+	},
 
   /**
    * Seeds the database
@@ -904,15 +899,32 @@ export const actions: Actions = {
       };
     } catch (error: any) {
       logger.error("SMTP test failed:", error);
-      // User friendly error mapping
-      let msg = error.message;
-      if (error.code === "EAUTH") {
-        msg = "Authentication failed. Check credentials.";
+      
+      // Structured error classification for Email
+      let classification = 'EMAIL_FAILED';
+      let userFriendly = error.message;
+      let hint = 'Check your SMTP host, port, and security settings.';
+
+      if (error.code === 'EAUTH') {
+        classification = 'AUTH_FAILED';
+        userFriendly = 'SMTP Authentication failed. Please check your username and password.';
+        hint = 'Ensure your credentials are correct. For Gmail/Outlook, you might need an "App Password".';
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        classification = 'HOST_UNREACHABLE';
+        userFriendly = `Could not connect to SMTP host at ${host}:${port}.`;
+        hint = 'Verify the host and port. Ensure your firewall allows outgoing traffic on this port.';
+      } else if (error.code === 'ESOCKET') {
+        classification = 'CONNECTION_FAILED';
+        userFriendly = 'SSL/TLS handshake failed.';
+        hint = 'Try toggling the "Secure" option or check if the port matches the security protocol (e.g., 465 for SSL, 587 for STARTTLS).';
       }
-      if (error.code === "ECONNREFUSED") {
-        msg = "Connection refused. Check host/port.";
-      }
-      return { success: false, error: msg };
+
+      return { 
+        success: false, 
+        error: userFriendly,
+        classification,
+        hint
+      };
     }
   },
 

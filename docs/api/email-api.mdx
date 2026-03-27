@@ -1,12 +1,12 @@
 ---
 path: "docs/api/email-api.mdx"
 title: "Email API"
-description: "Programmatic email sending with Svelte templates."
+description: "Programmatic email sending with Svelte-rendered templates — internal system emails, user invitations, and custom notifications."
 order: 14
 icon: "mdi:email-outline"
-author: "admin"
+author: "SveltyCMS Team"
 created: "2026-02-13"
-updated: "2026-02-13"
+updated: "2026-03-27"
 tags:
   - "api"
   - "email"
@@ -72,7 +72,7 @@ Sends a rendered email to one or more recipients.
 ## Security
 
 - **Direct API Access**: Requires an active session or a valid API Bearer token with `email:send` or `admin` permissions.
-- **Internal Access**: Used by the **[Automation System](../guides/automation-system.mdx)** to send notifications triggered by CMS events.
+- **Internal Access**: Used by the **[Automation System](../guides/development/automation-system.mdx)** to send notifications triggered by CMS events.
 
 ## Advanced Usage
 
@@ -93,5 +93,5 @@ To send a custom HTML body (e.g. from an external editor), use the `customEmail`
 
 ## Related
 
-- **[Email System Guide](../guides/email-system.mdx)**: Conceptual overview and SMTP setup.
-- **[Automation System](../guides/automation-system.mdx)**: Triggering emails automatically.
+- **[Email System Guide](../guides/development/email-system.mdx)**: Conceptual overview and SMTP setup.
+- **[Automation System](../guides/development/automation-system.mdx)**: Triggering emails automatically.
