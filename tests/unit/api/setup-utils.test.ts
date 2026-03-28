@@ -101,9 +101,9 @@ describe("Error Classifier - MongoDB Errors", () => {
     const error = new Error("Authentication failed");
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/auth/i);
+    expect(result.classification).toBe("AUTH_FAILED");
     expect(result.userFriendly).toBeDefined();
-    expect(result.userFriendly).toMatch(/username|password|credentials/i);
+    expect(result.userFriendly).toContain("authentication failed");
   });
 
   it("should classify connection refused errors", () => {
@@ -112,8 +112,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/connection|refused/i);
-    expect(result.userFriendly).toMatch(/refused|down|unreachable/i);
+    expect(result.classification).toBe("CONNECTION_REFUSED");
+    expect(result.userFriendly).toContain("refused");
   });
 
   it("should classify DNS/hostname errors", () => {
@@ -122,8 +122,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/dns|hostname/i);
-    expect(result.userFriendly).toMatch(/hostname|resolve|address/i);
+    expect(result.classification).toBe("HOST_UNREACHABLE");
+    expect(result.userFriendly).toContain("host");
   });
 
   it("should classify timeout errors", () => {
@@ -131,8 +131,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/timeout/i);
-    expect(result.userFriendly).toMatch(/timeout|slow|network/i);
+    expect(result.classification).toBe("CONNECTION_REFUSED");
+    expect(result.userFriendly).toContain("timed out");
   });
 
   it("should detect MongoDB Atlas specific errors", () => {
@@ -148,8 +148,8 @@ describe("Error Classifier - MongoDB Errors", () => {
       ...dbConfig,
     });
 
-    expect(result.classification).toMatch(/atlas|whitelist|ip/i);
-    expect(result.userFriendly).toMatch(/Atlas|whitelist|IP address/i);
+    expect(result.classification).toBe("CONNECTION_REFUSED");
+    expect(result.userFriendly).toContain("Atlas");
   });
 
   it("should classify network unreachable errors", () => {
@@ -157,8 +157,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/network/i);
-    expect(result.userFriendly).toMatch(/network|firewall|connection/i);
+    expect(result.classification).toBe("CONNECTION_REFUSED");
+    expect(result.userFriendly).toContain("unreachable");
   });
 
   it("should classify TLS/SSL certificate errors", () => {
@@ -166,8 +166,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/tls|ssl|certificate/i);
-    expect(result.userFriendly).toMatch(/SSL|TLS|certificate|secure/i);
+    expect(result.classification).toBe("INVALID_CONFIG");
+    expect(result.userFriendly).toContain("SSL/TLS");
   });
 
   it("should classify database not found errors", () => {
@@ -175,8 +175,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/database|not found/i);
-    expect(result.userFriendly).toMatch(/database|created|exist/i);
+    expect(result.classification).toBe("DB_NOT_FOUND");
+    expect(result.userFriendly).toContain("not found");
   });
 
   it("should handle permission/authorization errors", () => {
@@ -184,8 +184,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toMatch(/auth/i);
-    expect(result.userFriendly).toMatch(/authentication|username|password/i);
+    expect(result.classification).toBe("AUTH_FAILED");
+    expect(result.userFriendly).toContain("authentication failed");
   });
   it("should provide raw error message in all cases", () => {
     const error = new Error("Unknown database error");
@@ -226,7 +226,7 @@ describe("Error Classifier - User-Friendly Messages", () => {
     const error = new Error("Authentication failed");
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.userFriendly).toMatch(/check|verify|correct/i);
+    expect(result.userFriendly).toContain("authentication failed");
   });
 
   it("should provide context-specific help for Atlas errors", () => {

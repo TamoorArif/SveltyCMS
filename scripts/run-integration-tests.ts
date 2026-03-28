@@ -19,7 +19,7 @@ const HOST = process.env.HOST || (process.env.CI ? "127.0.0.1" : "localhost");
 const PORT = "4173";
 const API_BASE_URL = process.env.API_BASE_URL || `http://${HOST}:${PORT}`;
 const pkgManager = process.env.npm_execpath || "bun";
-const TEST_API_SECRET = "test-secret-123456789";
+const TEST_API_SECRET = process.env.TEST_API_SECRET || "test-secret-123456789";
 
 // Export to environment for spawned processes
 process.env.TEST_API_SECRET = TEST_API_SECRET;
@@ -126,6 +126,10 @@ async function main() {
     const setupResult = await runCommand(pkgManager, ["run", "scripts/setup-system.ts"], {
       DB_TYPE: dbType,
       DB_HOST: dbHost,
+      DB_NAME: process.env.DB_NAME || "sveltycms_test",
+      DB_USER: process.env.DB_USER || "",
+      DB_PASSWORD: process.env.DB_PASSWORD || "",
+      DB_PORT: process.env.DB_PORT || "",
       TEST_MODE: "true",
       API_BASE_URL,
       TEST_API_SECRET,
@@ -278,6 +282,10 @@ async function startPreviewServer(dbHost?: string) {
         NODE_ENV: usePreview ? "production" : "development",
         DB_TYPE: process.env.DB_TYPE || "sqlite",
         DB_HOST: dbHost || process.env.DB_HOST || HOST,
+        DB_NAME: process.env.DB_NAME || "sveltycms_test",
+        DB_USER: process.env.DB_USER || "",
+        DB_PASSWORD: process.env.DB_PASSWORD || "",
+        DB_PORT: process.env.DB_PORT || "",
         TEST_MODE: "true",
         TEST_API_SECRET,
         ORIGIN: API_BASE_URL,
@@ -371,7 +379,8 @@ function findTestFiles(dir: string, list: string[] = []) {
       f.endsWith(".test.ts") &&
       !f.includes("setup-actions") &&
       !f.includes("setup-wizard") &&
-      !f.includes("setup-presets")
+      !f.includes("setup-presets") &&
+      !f.includes("setup-utils")
     ) {
       list.push(p);
     }

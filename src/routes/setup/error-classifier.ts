@@ -116,6 +116,7 @@ export function classifyDatabaseError(
   err: unknown,
   context: ClassifyContext = {},
 ): ClassifiedError {
+<<<<<<< HEAD
   // Better extraction of raw error message - try to find the "real" error in details
   let raw = "";
   if (err instanceof Error) {
@@ -133,6 +134,15 @@ export function classifyDatabaseError(
   } else {
     raw = String(err);
   }
+=======
+  // Handle both Error objects and generic result objects from adapters
+  const raw =
+    err instanceof Error
+      ? err.message
+      : (err as any)?.message || (err as any)?.error?.message || String(err);
+  const lower = raw.toLowerCase();
+  const code = (err as any)?.code || (err as any)?.error?.code || (err as any)?.originalCode || "";
+>>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
 
   const lower = raw.toLowerCase();
 
@@ -153,9 +163,14 @@ export function classifyDatabaseError(
   // 1. Connection Refused / Host Unreachable
   if (
     code === "ECONNREFUSED" ||
+    code === "DB_CONNECTION_FAILED" ||
     lower.includes("connection refused") ||
     lower.includes("failed to connect to server") ||
+<<<<<<< HEAD
     lower.includes("enotfound")
+=======
+    lower.includes("econnrefused")
+>>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
   ) {
     const hostHint =
       context.host === "localhost" || context.host === "127.0.0.1"
@@ -179,6 +194,22 @@ export function classifyDatabaseError(
     };
   }
 
+  // 1.5. Timeout / Network Unreachable
+  if (
+    lower.includes("timeout") ||
+    lower.includes("timed out") ||
+    lower.includes("network is unreachable") ||
+    lower.includes("etimedout") ||
+    code === "ETIMEDOUT"
+  ) {
+    return {
+      classification: "CONNECTION_REFUSED",
+      userFriendly: "Database connection timed out or network is unreachable.",
+      hint: "1. Check your internet connection.\n2. Verify if the database server is under heavy load.\n3. Ensure your firewall isn't blocking the connection.",
+      raw,
+    };
+  }
+
   // 2. Authentication Failures
   if (
     lower.includes("auth failed") ||
@@ -186,7 +217,10 @@ export function classifyDatabaseError(
     lower.includes("requires authentication") ||
     lower.includes("bad auth") ||
     lower.includes("not authorized") ||
+<<<<<<< HEAD
     lower.includes("access denied") ||
+=======
+>>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
     code === 18 || // MongoDB Auth failed
     code === "28P01" || // Postgres invalid_password
     code === 13 // MongoDB NotAuthorized
@@ -213,11 +247,33 @@ export function classifyDatabaseError(
     };
   }
 
+  // 2.5 Atlas Specific / IP Whitelisting
+  if (lower.includes("atlas") || lower.includes("whitelist") || lower.includes("ip address")) {
+    return {
+      classification: "CONNECTION_REFUSED",
+      userFriendly: "Connection rejected by MongoDB Atlas.",
+      hint: '1. Ensure your current IP address is added to the "Network Access" whitelist in MongoDB Atlas.\n2. Check if your Atlas cluster is currently active.',
+      raw,
+    };
+  }
+
+  // 2.6 SSL/TLS Issues
+  if (lower.includes("ssl") || lower.includes("tls") || lower.includes("certificate")) {
+    return {
+      classification: "INVALID_CONFIG",
+      userFriendly: "Database SSL/TLS handshake failed.",
+      hint: "1. Check if the database requires a secure connection.\n2. Verify if you need to provide a CA certificate.\n3. For MongoDB Atlas, ensure you are using the correct connection string format.",
+      raw,
+    };
+  }
+
   // 3. Database Not Found
   if (
-    lower.includes("database not found") ||
-    lower.includes("unknown database") ||
-    (lower.includes('database "') && lower.includes('" does not exist')) ||
+    (lower.includes("database") &&
+      (lower.includes("not found") ||
+        lower.includes("unknown") ||
+        lower.includes("does not exist") ||
+        lower.includes("no such database"))) ||
     code === "3D000" // Postgres database_does_not_exist
   ) {
     return {
