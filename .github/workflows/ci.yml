@@ -299,12 +299,18 @@ jobs:
         env:
           DB_TYPE: ${{ matrix.db }}
           DB_HOST: 127.0.0.1
+          DB_PORT: ${{ matrix.port || '' }}
           DB_NAME: sveltycms_test
           DB_USER: ${{ matrix.db == 'sqlite' && '' || 'testuser' }}
           DB_PASSWORD: ${{ matrix.db == 'sqlite' && '' || 'testpass' }}
           TEST_MODE: true
           SUPPRESS_JEST_WARNINGS: true
-        run: bun run scripts/run-integration-tests.ts --filter=${{ matrix.db }}
+        run: |
+          if [ -f tests/e2e/.auth/test-secret.txt ]; then
+            export TEST_API_SECRET=$(cat tests/e2e/.auth/test-secret.txt)
+            echo "Using pre-generated TEST_API_SECRET"
+          fi
+          bun run scripts/run-integration-tests.ts --filter=${{ matrix.db }}
 
       - name: Upload Logs
         if: always()

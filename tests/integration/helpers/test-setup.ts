@@ -102,6 +102,9 @@ export async function prepareAuthenticatedContext(): Promise<string> {
     throw new Error("Failed to seed database");
   }
 
+  // Small delay to ensure DB state is stable
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   // 3. Login as admin
   console.log("🔑 Logging in as admin...");
   const loginResp = await safeFetch(`${API_BASE_URL}/api/user/login`, {
