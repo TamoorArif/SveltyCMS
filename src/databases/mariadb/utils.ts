@@ -15,7 +15,7 @@
  * - Create a paginated result from an array of items (in-memory)
  */
 
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type {
   DatabaseError,
   DatabaseId,
@@ -56,14 +56,16 @@ export function isoToDate(iso: ISODateString | null | undefined): Date | undefin
 export function createDatabaseError(
   code: string,
   message: string,
-  details?: any,
+  details?: unknown,
   statusCode?: number,
 ): DatabaseError {
+  const errorDetails = details as Record<string, any> | undefined;
   return {
     code,
     message,
     statusCode,
-    originalCode: details?.errno || details?.code || (details as any)?.originalError?.code,
+    originalCode:
+      errorDetails?.errno || errorDetails?.code || (errorDetails?.originalError as any)?.code,
     details,
   };
 }

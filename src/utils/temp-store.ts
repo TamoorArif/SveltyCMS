@@ -5,7 +5,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import { logger } from "./logger.server";
 
 const TEMP_DIR = path.join(process.cwd(), "tmp", "job-payloads");

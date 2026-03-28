@@ -6,7 +6,7 @@
 
 import { logger } from "@utils/logger";
 import type { Model } from "mongoose";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { DatabaseId, Theme, DatabaseResult } from "../../db-interface";
 import { CacheCategory, invalidateCategoryCache, withCache } from "./mongodb-cache-utils";
 import { createDatabaseError } from "./mongodb-utils";

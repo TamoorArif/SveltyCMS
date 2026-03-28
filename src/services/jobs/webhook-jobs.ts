@@ -4,7 +4,7 @@
  */
 
 import crypto from "node:crypto";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import { logger } from "@utils/logger.server";
 import type { Webhook, WebhookEvent } from "@src/services/webhook-service";
 

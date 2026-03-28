@@ -286,13 +286,34 @@ export interface Widget extends BaseEntity {
   name: string;
 }
 
-export interface MediaMetadata {
+export interface CmsMediaMetadata {
   advancedMetadata?: Record<string, unknown>;
+  aiTags?: string[];
+  author?: string;
+  camera?: string;
   codec?: string;
+  copyright?: string;
+  description?: string;
   duration?: number;
+  exif?: Record<string, unknown>;
+  focalPoint?: { x: number; y: number };
   format?: string;
+  hasAlpha?: boolean;
+  hasProfile?: boolean;
   height?: number;
+  iptc?: Record<string, unknown>;
+  keywords?: string[];
+  location?: { latitude?: number; longitude?: number; altitude?: number };
+  originalFilename?: string;
+  processingTimeMs?: number;
+  software?: string;
+  tags?: string[];
+  title?: string;
+  uploadTimestamp?: string;
+  uploadedBy?: string;
+  watermarkApplied?: boolean;
   width?: number;
+  xmp?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -302,7 +323,7 @@ export interface MediaItem extends BaseEntity {
   filename: string;
   folderId?: DatabaseId | null;
   hash: string;
-  metadata: MediaMetadata;
+  metadata: CmsMediaMetadata;
   mimeType: string;
   originalFilename: string;
   originalId?: DatabaseId | null;
@@ -705,10 +726,10 @@ export interface IMediaAdapter {
     getMetadata(
       fileIds: DatabaseId[],
       tenantId?: string | null,
-    ): Promise<DatabaseResult<Record<string, MediaMetadata>>>;
+    ): Promise<DatabaseResult<Record<string, CmsMediaMetadata>>>;
     updateMetadata(
       fileId: DatabaseId,
-      metadata: Partial<MediaMetadata>,
+      metadata: Partial<CmsMediaMetadata>,
       tenantId?: string | null,
     ): Promise<DatabaseResult<MediaItem>>;
     move(

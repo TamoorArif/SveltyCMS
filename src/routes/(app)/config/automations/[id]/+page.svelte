@@ -31,7 +31,7 @@ import {
 import { toast } from "@src/stores/toast.svelte.ts";
 import { onMount } from "svelte";
 import { fade, slide } from "svelte/transition";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import { dndzone } from "svelte-dnd-action";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";

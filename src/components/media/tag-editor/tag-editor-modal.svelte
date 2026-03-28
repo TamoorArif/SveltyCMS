@@ -16,6 +16,7 @@ import { SvelteSet } from "svelte/reactivity";
 
 // Props
 let {
+	// biome-ignore lint/correctness/noUnusedVariables: Used in template
 	show = $bindable(),
 	file = $bindable(null),
 	onUpdate = () => {},
@@ -26,32 +27,37 @@ let {
 } = $props();
 
 let newTagInput = $state("");
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let isGenerating = $state(false);
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let isSaving = $state(false);
 
 // Edit state
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let editingTag = $state<{
 	type: "ai" | "user";
 	index: number;
 	value: string;
 } | null>(null);
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function getImageUrl(file: MediaImage) {
 	// Try to get thumbnail, fallback to original url
 	const thumbs = file.thumbnails || {};
-	// Map common keys
-	if ("sm" in thumbs) {
+	// Map common keys with optional chaining to handle undefined entries
+	if (thumbs.sm) {
 		return thumbs.sm.url;
 	}
-	if ("thumbnail" in thumbs) {
+	if (thumbs.thumbnail) {
 		return thumbs.thumbnail.url;
 	}
-	if ("md" in thumbs) {
+	if (thumbs.md) {
 		return thumbs.md.url;
 	}
 	return file.url;
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function handleAITagging() {
 	if (!file?._id) {
 		return;
@@ -73,14 +79,16 @@ async function handleAITagging() {
 			onUpdate(result.data);
 		}
 		toast.success("AI tags generated!");
-	} catch (e: any) {
-		logger.error("AI Tagging error:", e);
-		toast.error({ description: e.message || "An unexpected error occurred" });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : "An unexpected error occurred";
+		logger.error("AI Tagging error:", error);
+		toast.error({ description: msg });
 	} finally {
 		isGenerating = false;
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function addManualTag() {
 	if (!(file?._id && newTagInput.trim())) {
 		return;
@@ -108,11 +116,13 @@ async function addManualTag() {
 		}
 		newTagInput = "";
 		toast.success("Tag added!");
-	} catch (e: any) {
-		toast.error({ description: e.message });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : "Failed to add tag";
+		toast.error({ description: msg });
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function removeTag(tag: string, type: "ai" | "user") {
 	if (!file?._id) {
 		return;
@@ -139,11 +149,13 @@ async function removeTag(tag: string, type: "ai" | "user") {
 			file = result.data;
 			onUpdate(result.data);
 		}
-	} catch (e: any) {
-		toast.error({ description: e.message });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : "Failed to remove tag";
+		toast.error({ description: msg });
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 	if (!(file?._id && newTag.trim()) || oldTag === newTag) {
 		editingTag = null;
@@ -174,13 +186,15 @@ async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 			file = result.data;
 			onUpdate(result.data);
 		}
-	} catch (e: any) {
-		toast.error({ description: e.message });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : "Failed to edit tag";
+		toast.error({ description: msg });
 	} finally {
 		editingTag = null;
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function saveAITags() {
 	if (!file?._id) {
 		return;
@@ -214,17 +228,20 @@ async function saveAITags() {
 			onUpdate(result.data);
 		}
 		toast.success("Tags saved!");
-	} catch (e: any) {
-		toast.error({ description: e.message });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : "Failed to save tags";
+		toast.error({ description: msg });
 	} finally {
 		isSaving = false;
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function close() {
 	show = false;
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function autofocus(node: HTMLElement) {
 	node.focus();
 }

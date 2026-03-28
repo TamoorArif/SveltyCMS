@@ -15,7 +15,7 @@
  * - Create a paginated result from an array of items (in-memory)
  */
 
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type {
   DatabaseError,
   DatabaseId,

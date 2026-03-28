@@ -4,7 +4,7 @@
  * Pure logic for calculating reconciliation operations.
  */
 import { dateToISODateString } from "@utils/date-utils";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { ContentNode, Schema, DatabaseId } from "../types";
 
 /**

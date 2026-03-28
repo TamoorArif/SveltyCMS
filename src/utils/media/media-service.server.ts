@@ -32,49 +32,48 @@ import os from "node:os";
 import Path from "node:path";
 import { promisify } from "node:util";
 import { error } from "@sveltejs/kit";
-import mime from "mime-types";
-
-const execAsync = promisify(exec);
-
-// Types
-import type { BaseEntity, ISODateString } from "@src/content/types";
-import type { Role, User } from "@src/databases/auth/types";
-// Media Cache
+import sharp from "sharp";
 import { cacheService } from "@src/databases/cache/cache-service";
-// Database Interface
-import type { DatabaseId, IDBAdapter } from "@src/databases/db-interface";
 import { getPublicSettingSync } from "@src/services/settings-service";
-import { isCloud } from "@src/utils/media/cloud-storage";
+import { jobQueue } from "@src/services/jobs/job-queue-service";
+import { AppError } from "@utils/error-handling";
+import { logger } from "@utils/logger.server";
 import { getSanitizedFileName } from "@src/utils/media/media-processing";
 import { hashFileContent, mediaProcessingService } from "@src/utils/media/media-processing.server";
+import { isCloud } from "@src/utils/media/cloud-storage";
 import {
   deleteFile,
   saveFileToDisk,
   saveResizedImages,
 } from "@src/utils/media/media-storage.server";
-// IMPORT SERVER-SIDE VALIDATION
 import { validateMediaFileServer } from "@src/utils/media/media-utils";
-import { AppError } from "@utils/error-handling";
-// System Logger
-import { logger } from "@utils/logger.server";
-import { jobQueue } from "@src/services/jobs/job-queue-service";
+import mime from "./mime-utils";
+
+// Types
+import type { BaseEntity, DatabaseId, ISODateString } from "@src/content/types";
+import type { Role, User } from "@src/databases/auth/types";
 import type {
-  MediaAccess,
-  MediaBase,
-  MediaItem,
-  MediaMetadata,
-  MediaTypeEnum,
-  ResizedImage,
-  WatermarkOptions,
-} from "@utils/media/media-models";
-import { MediaType as MediaTypeEnumValue } from "@utils/media/media-models";
-import sharp from "sharp";
+  EntityCreate,
+  IDBAdapter,
+  MediaItem as DbMediaItem,
+} from "@src/databases/db-interface";
+import {
+  MediaType as MediaTypeEnumValue,
+  type CmsMediaMetadata,
+  type MediaAccess,
+  type MediaBase,
+  type MediaItem,
+  type ResizedImage,
+  type WatermarkOptions,
+} from "./media-models";
+
+const execAsync = promisify(exec);
 
 // Extended MediaBase interface to include thumbnails
 interface MediaBaseWithThumbnails extends MediaBase {
   height?: number;
   originalId?: DatabaseId | null;
-  thumbnails?: Record<string, ResizedImage>;
+  thumbnails?: Record<string, { url: string; width: number; height: number } | undefined>;
   width?: number;
 }
 
@@ -139,11 +138,10 @@ export class MediaService {
       if (watermarkOptions && mimeType.startsWith("image/")) {
         try {
           const watermarkImagePath = Path.join(process.cwd(), "static", watermarkOptions.url);
+          const metadata = await sharp(imageBuffer).metadata();
           const watermarkBuffer = await sharp(watermarkImagePath)
             .resize({
-              width: Math.floor(
-                (await sharp(imageBuffer).metadata()).width! * (watermarkOptions.scale / 100),
-              ),
+              width: Math.floor((metadata.width ?? 0) * (watermarkOptions.scale / 100)),
             })
             .png()
             .toBuffer();
@@ -256,29 +254,29 @@ export class MediaService {
     let mimeType = file.type || mime.lookup(file.name) || "application/octet-stream";
     let extension = mime.extension(mimeType) || getSanitizedFileName(file.name).ext;
 
-    // --- ENHANCED MIME TYPE & EXTENSION DETECTION ---
+    // --- ENHANCED MIME TYPE & EXTENSION DETECTION (SlimSniffer) ---
     try {
-      const { fileTypeFromBuffer } = await import("file-type");
-      const detectedType = await fileTypeFromBuffer(buffer);
-      if (detectedType) {
-        logger.debug("Detected file type from buffer:", detectedType);
+      const { sniffMimeType } = await import("@utils/media/slim-sniffer.server");
+      const detected = sniffMimeType(buffer);
+      if (detected) {
+        logger.debug("Detected file type from buffer (SlimSniffer):", detected);
         // Override if it was generic or unknown, or if we trust binary inspection more
         if (mimeType === "application/octet-stream" || !mimeType) {
-          mimeType = detectedType.mime;
-          extension = detectedType.ext;
-        } else if (mimeType !== detectedType.mime) {
-          // Log mismatch but maybe trust detected type for consistency
+          mimeType = detected.mime;
+          extension = detected.ext;
+        } else if (mimeType !== detected.mime) {
+          // Log mismatch but trust detected type for consistency
           logger.warn(
-            `MIME type mismatch: provided=${mimeType}, detected=${detectedType.mime}. Using detected.`,
+            `MIME type mismatch: provided=${mimeType}, detected=${detected.mime}. Using detected.`,
           );
-          mimeType = detectedType.mime;
-          extension = detectedType.ext;
+          mimeType = detected.mime;
+          extension = detected.ext;
         }
       } else {
-        logger.warn("Could not detect file type from buffer.");
+        logger.warn("SlimSniffer could not detect file type from buffer.");
       }
     } catch (err) {
-      logger.warn("Error during file-type detection:", err);
+      logger.warn("Error during SlimSniffer detection:", err);
     }
 
     // Fix keys in file object if possible, effectively wrapped in new File below or just used directly
@@ -350,7 +348,7 @@ export class MediaService {
 
       const isImage = mimeType.startsWith("image/");
       const isVideo = mimeType.startsWith("video/");
-      let advancedMetadata: MediaMetadata = {};
+      let advancedMetadata: CmsMediaMetadata = {};
       let width: number | undefined;
       let height: number | undefined;
 
@@ -395,11 +393,14 @@ export class MediaService {
         type: mediaType,
         hash,
         filename: safeFileName, // Use the sanitized filename with extension
+        originalFilename: file.name, // For DB agnosticism
         path, // Store the relative path
         url, // Store the public URL
         mimeType,
         size: file.size,
         user: userId as DatabaseId,
+        createdBy: userId as DatabaseId, // For DB agnosticism
+        updatedBy: userId as DatabaseId, // For DB agnosticism
         createdAt: new Date().toISOString() as ISODateString,
         updatedAt: new Date().toISOString() as ISODateString,
         metadata: {
@@ -414,8 +415,8 @@ export class MediaService {
           {
             version: 1,
             url,
-            createdAt: new Date().toISOString() as ISODateString,
             createdBy: userId as DatabaseId,
+            createdAt: new Date().toISOString() as ISODateString,
           },
         ],
         width,
@@ -434,7 +435,10 @@ export class MediaService {
 
       // Use db-agnostic media adapter
       // Use db-agnostic media adapter with tenantId enforcement
-      const result = await this.db.media.files.upload(cleanMedia as any, tenantId);
+      const result = await this.db.media.files.upload(
+        cleanMedia as EntityCreate<DbMediaItem>,
+        tenantId,
+      );
 
       if (!result.success) {
         throw result.error;
@@ -556,12 +560,12 @@ export class MediaService {
       thumbnails: object.thumbnails || {},
       metadata: object.metadata || {},
       access: object.access,
-      user: object.user as DatabaseId,
+      user: object.user,
+      createdBy: object.user,
+      updatedBy: object.user,
       type: object.type,
       width: object.width,
       height: object.height,
-      createdBy: object.user as DatabaseId,
-      updatedBy: object.user as DatabaseId,
       folderId: null,
     };
 
@@ -675,7 +679,7 @@ export class MediaService {
       }
       if (sepia && sepia > 0) {
         // Sepia matrix implementation (normalized)
-        instance = (instance as any).colorMatrix([
+        (instance as unknown as { colorMatrix: (matrix: number[]) => sharp.Sharp }).colorMatrix([
           0.3588, 0.7044, 0.1355, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0.2392, 0.4696, 0.0912, 0, 0, 0,
           0, 0, 1, 0,
         ]);
@@ -733,7 +737,7 @@ export class MediaService {
 
     if (manipulations.saveBehavior === "new") {
       // Create a COMPLETELY NEW media record
-      const newMedia: any = {
+      const newMedia: Partial<MediaItem> = {
         ...mediaItem,
         url: publicUrl,
         path: relativePath,
@@ -755,7 +759,10 @@ export class MediaService {
       delete newMedia.createdAt;
       delete newMedia.updatedAt;
 
-      const result = await db.media.files.upload(newMedia, tenantId);
+      const result = await db.media.files.upload(
+        newMedia as unknown as EntityCreate<DbMediaItem>,
+        tenantId,
+      );
       if (!result.success) {
         throw result.error;
       }
@@ -783,7 +790,12 @@ export class MediaService {
     }
     try {
       const db = await this.getDb();
-      const result = await db.crud.update("media", id as DatabaseId, updates as any, tenantId);
+      const result = await db.crud.update(
+        "media",
+        id as DatabaseId,
+        updates as Partial<MediaItem>,
+        tenantId,
+      );
 
       if (!result.success) {
         throw result.error;
@@ -884,7 +896,7 @@ export class MediaService {
         }
         // Also delete thumbnails if present
         if (mediaItem.thumbnails) {
-          for (const thumb of Object.values(mediaItem.thumbnails)) {
+          for (const thumb of Object.values(mediaItem.thumbnails as Record<string, ResizedImage>)) {
             if (thumb.url) await deleteFile(thumb.url);
           }
         }
@@ -919,7 +931,12 @@ export class MediaService {
     // Access is now a string union, not array
     try {
       const db = await this.getDb();
-      const result = await db.crud.update("media", id as DatabaseId, { access } as any, tenantId);
+      const result = await db.crud.update(
+        "media",
+        id as DatabaseId,
+        { access } as Partial<MediaItem>,
+        tenantId,
+      );
       if (!result.success) {
         throw result.error;
       }
@@ -1051,7 +1068,7 @@ export class MediaService {
           }
           // Also delete thumbnails
           if (item.thumbnails) {
-            for (const thumb of Object.values(item.thumbnails)) {
+            for (const thumb of Object.values(item.thumbnails as Record<string, ResizedImage>)) {
               if (thumb.url) await deleteFile(thumb.url);
             }
           }
@@ -1132,7 +1149,7 @@ export class MediaService {
       const options = { offset: (page - 1) * limit, limit, tenantId };
 
       const [mediaResult, totalResult] = await Promise.all([
-        db.crud.findMany<MediaItem>("media", filter, options as any),
+        db.crud.findMany<MediaItem>("media", filter as Partial<MediaItem>, options),
         db.crud.count("media", filter, { tenantId: tenantId ?? undefined }),
       ]);
 
@@ -1179,7 +1196,7 @@ export class MediaService {
   }
 
   // Determines the media type based on the MIME type
-  private getMediaType(mimeType: string): MediaTypeEnum {
+  private getMediaType(mimeType: string): MediaTypeEnumValue {
     if (!mimeType) {
       throw new Error("Mime type is required");
     }

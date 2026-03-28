@@ -18,7 +18,7 @@ import { getFieldName } from "@utils/utils";
 import { flip } from "svelte/animate";
 import type { DndEvent } from "svelte-dnd-action";
 import { dndzone } from "svelte-dnd-action";
-import { v4 as uuidv4 } from "uuid"; // Ensure uuid is available, or use a simple generator
+import { generateUUID as uuidv4 } from "@utils/native-utils"; // Ensure uuid is available, or use a simple generator
 import type { FieldType } from "./index";
 
 interface Props {

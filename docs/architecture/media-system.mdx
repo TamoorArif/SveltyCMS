@@ -17,7 +17,7 @@ tags:
 
 # Media System Architecture & Guide
 
-The SveltyCMS Media system is a decoupled, high-performance engine optimized for Svelte 5 and Sharp.js. It balances enterprise-grade Digital Asset Management (DAM) requirements with a seamless, accessible user experience.
+The SveltyCMS Media system is a decoupled, performance-first engine. Built with Svelte 5 and Sharp.js, it prioritizes native Node/Bun utilities over heavy third-party dependencies to ensure sub-millisecond latency and reduced bundle size.
 
 ---
 
@@ -83,7 +83,7 @@ sequenceDiagram
 
     User->>Gallery: Drop Image
     Gallery->>API: POST multipart/form-data
-    API->>Engine: Validate & Hash (SHA-256)
+    API->>Engine: Validate & Hash (Native SHA-256)
     Engine->>Storage: Save Original File
     Engine-->>API: ⚡ Return Success (0.17ms)
     API-->>Gallery: Render Thumbnail
@@ -113,6 +113,15 @@ Unlike standard CMS platforms that use simple keyword matching, SveltyCMS featur
 - **Batch Image Processor**: Apply Vivid, B&W, Sepia, and HDR filters to 100+ images simultaneously.
 - **Deep Metadata Extraction**: Automatically parses **EXIF, IPTC, and XMP** data into searchable database fields.
 - **Document Thumbnails**: Automated extraction of the first page of PDFs as a high-quality preview (Requires `imagemagick` and `ghostscript`).
+
+### 4. Performance-First Philosophy
+
+SveltyCMS has been optimized to remove legacy dependencies, replacing them with modern native counterparts:
+
+- **Hashing**: Powered by native `crypto` (SHA-256).
+- **ID Generation**: Uses high-entropy `crypto.randomUUID()`.
+- **MIME Detection**: Implemented via **SlimSniffer**, a lightweight native Magic Byte inspector that replaces `file-type`.
+- **Type Safety**: Unified `CmsMediaMetadata` interface ensures strict database agnosticism across all adapters.
 
 ---
 

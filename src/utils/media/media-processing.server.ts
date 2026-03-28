@@ -7,7 +7,7 @@ import { error } from "@sveltejs/kit";
 import { logger } from "@utils/logger.server";
 import { sha256 } from "@utils/utils";
 import sharp from "sharp";
-import type { MediaMetadata } from "./media-models";
+import type { CmsMediaMetadata } from "./media-models";
 
 /** Hash file content (SHA-256, 20-char hex) */
 export async function hashFileContent(buffer: ArrayBuffer | Buffer): Promise<string> {
@@ -72,11 +72,11 @@ export class MediaProcessingService {
   /**
    * Extract deep metadata from an image buffer
    */
-  public async getMetadata(buffer: Buffer): Promise<MediaMetadata> {
+  public async getMetadata(buffer: Buffer): Promise<CmsMediaMetadata> {
     try {
       const meta = await sharp(buffer).metadata();
 
-      const results: MediaMetadata = {
+      const results: CmsMediaMetadata = {
         format: meta.format,
         width: meta.width,
         height: meta.height,

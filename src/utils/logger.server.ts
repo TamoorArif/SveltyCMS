@@ -30,19 +30,19 @@ const LOG_LEVELS = LOG_LEVELS_RAW.split(",")
   .filter(Boolean);
 const DISABLED = LOG_LEVELS.includes("none");
 
+import { pc } from "@utils/native-utils";
+
 // Log levels
 type LogLevel = "none" | "fatal" | "error" | "warn" | "info" | "debug" | "trace";
-const LEVELS: Record<LogLevel, { prio: number; color: string }> = {
-  none: { prio: 0, color: "" },
-  fatal: { prio: 1, color: "\x1b[35m" }, // magenta
-  error: { prio: 2, color: "\x1b[31m" }, // red
-  warn: { prio: 3, color: "\x1b[33m" }, // yellow
-  info: { prio: 4, color: "\x1b[32m" }, // green
-  debug: { prio: 5, color: "\x1b[34m" }, // blue
-  trace: { prio: 6, color: "\x1b[36m" }, // cyan
+const LEVELS: Record<LogLevel, { prio: number; color: (s: string) => string }> = {
+  none: { prio: 0, color: (s) => s },
+  fatal: { prio: 1, color: pc.magenta },
+  error: { prio: 2, color: pc.red },
+  warn: { prio: 3, color: pc.yellow },
+  info: { prio: 4, color: pc.green },
+  debug: { prio: 5, color: pc.blue },
+  trace: { prio: 6, color: pc.cyan },
 };
-
-const RESET = "\x1b[0m";
 export type LoggableValue = string | number | boolean | null | undefined | object | Date | Error;
 
 const maxPrio = DISABLED ? 0 : Math.max(...LOG_LEVELS.map((l) => LEVELS[l as LogLevel]?.prio ?? 0));
@@ -59,21 +59,21 @@ const ICONS: Record<string, string> = {
 
 // Message token highlighting
 const patterns = [
-  { re: /\b\d+(\.\d+)?(ms|s)\b/g, color: "\x1b[32m" }, // durations
+  { re: /\b\d+(\.\d+)?(ms|s)\b/g, color: pc.green }, // durations
   {
     re: /([a-f0-9]{24}|[a-f0-9]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi,
-    color: "\x1b[33m",
+    color: pc.yellow,
   }, // IDs/UUIDs
-  { re: /\/api\/[^\s]+/g, color: "\x1b[36m" }, // API paths
-  { re: /\b(true)\b/g, color: "\x1b[32m" },
-  { re: /\b(false)\b/g, color: "\x1b[31m" },
-  { re: /\b-?\d+\.?\d*\b/g, color: "\x1b[34m" },
+  { re: /\/api\/[^\s]+/g, color: pc.cyan }, // API paths
+  { re: /\b(true)\b/g, color: pc.green },
+  { re: /\b(false)\b/g, color: pc.red },
+  { re: /\b-?\d+\.?\d*\b/g, color: pc.blue },
 ];
 
 function colorMessage(msg: string): string {
   let out = msg;
   for (const { re, color } of patterns) {
-    out = out.replace(re, `${color}$&${RESET}`);
+    out = out.replace(re, (m) => color(m));
   }
   return out;
 }
@@ -81,38 +81,38 @@ function colorMessage(msg: string): string {
 // Value formatting
 function formatValue(v: unknown): string {
   if (v === null) {
-    return "\x1b[35mnull\x1b[0m";
+    return pc.magenta("null");
   }
   if (v === undefined) {
-    return "\x1b[90mundefined\x1b[0m";
+    return pc.gray("undefined");
   }
   if (typeof v === "boolean") {
-    return v ? "\x1b[32mtrue\x1b[0m" : "\x1b[31mfalse\x1b[0m";
+    return v ? pc.green("true") : pc.red("false");
   }
   if (typeof v === "number") {
-    return `\x1b[34m${v}\x1b[0m`;
+    return pc.blue(String(v));
   }
   if (typeof v === "string") {
     return colorMessage(v);
   }
   if (v instanceof Date) {
-    return `\x1b[36m${v.toISOString()}\x1b[0m`;
+    return pc.cyan(v.toISOString());
   }
   if (Array.isArray(v)) {
-    return `\x1b[33m[${v.map(formatValue).join(", ")}]\x1b[0m`;
+    return pc.yellow(`[${v.map(formatValue).join(", ")}]`);
   }
   if (v instanceof Error) {
-    const parts = [`message: \x1b[31m${v.message}\x1b[0m`, `name: \x1b[31m${v.name}\x1b[0m`];
+    const parts = [`message: ${pc.red(v.message)}`, `name: ${pc.red(v.name)}`];
     if ("code" in v) {
-      parts.push(`code: \x1b[31m${(v as { code: unknown }).code}\x1b[0m`);
+      parts.push(`code: ${pc.red(String((v as { code: unknown }).code))}`);
     }
-    return `\x1b[33m{${parts.join(", ")}}\x1b[0m`;
+    return pc.yellow(`{${parts.join(", ")}}`);
   }
   if (typeof v === "object") {
-    const entries = Object.entries(v)
+    const entries = Object.entries(v as object)
       .map(([k, val]) => `${k}: ${formatValue(val)}`)
       .join(", ");
-    return `\x1b[33m{${entries}}\x1b[0m`;
+    return pc.yellow(`{${entries}}`);
   }
   return String(v);
 }
@@ -274,7 +274,7 @@ async function flush() {
         const plainText = `${ts} [${e.level.toUpperCase().padEnd(5)}] ${e.msg} ${JSON.stringify(masked)}`;
         lastHash = calculateHash(lastHash, plainText);
 
-        const logLine = `${ts} ${color}${icon} [${e.level.toUpperCase().padEnd(5)}]${RESET} ${msg} ${args} [CHAIN:${lastHash}]\n`;
+        const logLine = `${ts} ${color(`${icon} [${e.level.toUpperCase().padEnd(5)}]`)} ${msg} ${args} [CHAIN:${lastHash}]\n`;
         s.write(logLine);
       }
     }
@@ -311,11 +311,11 @@ function enqueue(level: LogLevel, msg: string, args: unknown[]) {
     const argsStr = masked.map(formatValue).join(" ");
     const pretty = colorMessage(msg);
 
-    const ts = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const ts = pc.gray(new Date().toISOString().slice(0, 19).replace("T", " "));
     const safeMsg = pretty.replace(/\r?\n/g, " ");
     const safeArgs = argsStr.replace(/\r?\n/g, " ");
     process.stdout.write(
-      `${ts} ${color}${icon} [${level.toUpperCase().padEnd(5)}]${RESET} ${safeMsg} ${safeArgs}\n`,
+      `${ts} ${color(`${icon} [${level.toUpperCase().padEnd(5)}]`)} ${safeMsg} ${safeArgs}\n`,
     );
   }
 

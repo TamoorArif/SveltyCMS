@@ -8,7 +8,7 @@ import type {
   DatabaseResult,
   MediaFolder,
   MediaItem,
-  MediaMetadata,
+  CmsMediaMetadata,
   PaginationOptions,
   PaginatedResult,
   EntityCreate,
@@ -93,14 +93,14 @@ export class MediaModule {
     getMetadata: (
       fileIds: DatabaseId[],
       tenantId?: string | null,
-    ): Promise<DatabaseResult<Record<string, MediaMetadata>>> =>
+    ): Promise<DatabaseResult<Record<string, CmsMediaMetadata>>> =>
       this.adapter.wrap(async () => {
         const res = await this.adapter.crud.findMany<MediaItem>(
           "media",
           { _id: { $in: fileIds } } as any,
           { tenantId },
         );
-        const metadata: Record<string, MediaMetadata> = {};
+        const metadata: Record<string, CmsMediaMetadata> = {};
         if (res.success && res.data) {
           for (const item of res.data) {
             metadata[item._id as string] = item.metadata;
@@ -111,7 +111,7 @@ export class MediaModule {
 
     updateMetadata: (
       fileId: DatabaseId,
-      metadata: Partial<MediaMetadata>,
+      metadata: Partial<CmsMediaMetadata>,
       tenantId?: string | null,
     ): Promise<DatabaseResult<MediaItem>> =>
       this.adapter.crud.update("media", fileId, { metadata } as any, tenantId),

@@ -3,7 +3,7 @@
  * @description PostgreSQL utility functions for error handling and data transformation.
  */
 
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { DatabaseError, DatabaseId } from "../db-interface";
 
 // Create a standardized database error object

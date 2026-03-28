@@ -20,7 +20,7 @@ import { nowISODateString } from "@utils/date-utils";
 
 // System Logger
 import { logger } from "@utils/logger.server";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 // Validation
 import * as v from "valibot";
 

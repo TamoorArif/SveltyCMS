@@ -4,6 +4,7 @@
  */
 
 import { logger } from "@utils/logger";
+import { pc } from "@utils/native-utils";
 import type { BaseIssue, BaseSchema, InferOutput } from "valibot";
 import {
   array,
@@ -284,18 +285,6 @@ export const createPublicConfig = (arg: PublicConfig): PublicConfig => arg;
 // ----------------- ENHANCED VALIDATION & LOGGING -----------------
 let validationLogPrinted = false;
 
-const colors = {
-  reset: "",
-  red: "",
-  green: "",
-  yellow: "",
-  blue: "",
-  magenta: "",
-  cyan: "",
-  white: "",
-  gray: "",
-};
-
 function formatPath(path: BaseIssue<unknown>["path"]): string {
   if (!path || path.length === 0) {
     return "root";
@@ -304,17 +293,13 @@ function formatPath(path: BaseIssue<unknown>["path"]): string {
 }
 
 function logValidationErrors(issues: BaseIssue<unknown>[], configFile: string): void {
-  logger.error(
-    `\n${colors.yellow}⚠️ Invalid configuration in ${colors.cyan}${configFile}${colors.reset}`,
-  );
+  logger.error(`\n${pc.yellow("⚠️ Invalid configuration in")} ${pc.cyan(configFile)}`);
   issues.forEach((issue) => {
     const fieldPath = formatPath(issue.path) || "Configuration object";
-    logger.error(`\n   - ${colors.white}Location:${colors.cyan} ${fieldPath}`);
-    logger.error(`     ${colors.red}Error: ${issue.message}${colors.reset}`);
+    logger.error(`\n   - ${pc.white("Location:")} ${pc.cyan(fieldPath)}`);
+    logger.error(`     ${pc.red(`Error: ${issue.message}`)}`);
     if (issue.input !== undefined) {
-      logger.error(
-        `     ${colors.magenta}Received: ${colors.red}${JSON.stringify(issue.input)}${colors.reset}`,
-      );
+      logger.error(`     ${pc.magenta("Received:")} ${pc.red(JSON.stringify(issue.input))}`);
     }
   });
 }

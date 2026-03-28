@@ -7,7 +7,7 @@
 
 import type { DatabaseId } from "@src/content/types";
 import { logger } from "@src/utils/logger.server";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { DatabaseError, PaginatedResult, PaginationOptions } from "../../db-interface";
 
 // Pre-compiled regex for UUIDv4 validation (with or without dashes) for performance.

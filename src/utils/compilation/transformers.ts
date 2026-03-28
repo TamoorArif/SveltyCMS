@@ -4,7 +4,7 @@
  */
 
 import * as ts from "typescript";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "../native-utils";
 
 // Transformer factory for widget-related changes
 export const widgetTransformer: ts.TransformerFactory<ts.SourceFile> =

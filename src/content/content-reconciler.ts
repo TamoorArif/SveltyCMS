@@ -9,7 +9,7 @@ import { logger } from "@src/utils/logger.server";
 import { contentStructure } from "./content-structure.svelte";
 import { contentCache } from "./content-cache.svelte";
 import { dateToISODateString } from "@utils/date-utils";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { ContentNode, Schema, DatabaseId } from "./types";
 import type { IDBAdapter } from "@src/databases/db-interface";
 

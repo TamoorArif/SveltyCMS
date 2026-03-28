@@ -20,7 +20,7 @@ import { generateId } from "@src/databases/mongodb/methods/mongodb-utils";
 import { logger } from "@utils/logger";
 import type { Model, QueryFilter } from "mongoose";
 import mongoose, { Schema } from "mongoose";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 
 // Define the Token schema
 export const TokenSchema = new Schema(

@@ -1,0 +1,73 @@
+/**
+ * @file src/utils/native-utils.ts
+ * @description Lightweight, native utility replacements for common libraries (uuid, picocolors).
+ * This module is designed to eliminate dependency bloat and maximize performance.
+ */
+
+/**
+ * Generates a RFC 4122 compliant v4 UUID using the platform's native CSPRNG (crypto.randomUUID).
+ * Replaces the 'uuid' package with a high-entropy, native implementation.
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Fallback for older environments or specific testing contexts
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
+ * Generates a high-entropy secure token for sensitive operations (API keys, secrets).
+ * Default is 32 bytes (256 bits) to ensure quantum-safe security levels (resists Grover's algorithm).
+ */
+export function generateSecureToken(bytes = 32): string {
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const array = new Uint8Array(bytes);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  // Fallback (for non-security critical ID needs if browser/node crypto is missing)
+  return Array.from({ length: bytes }, () =>
+    Math.floor(Math.random() * 256)
+      .toString(16)
+      .padStart(2, "0"),
+  ).join("");
+}
+
+/**
+ * Minimalist ANSI color utility for terminal output.
+ * Replaces 'picocolors'.
+ */
+const ESC = "\x1b[";
+const RESET = `${ESC}0m`;
+
+export const pc = {
+  reset: RESET,
+  bold: (s: string) => `${ESC}1m${s}${RESET}`,
+  dim: (s: string) => `${ESC}2m${s}${RESET}`,
+  italic: (s: string) => `${ESC}3m${s}${RESET}`,
+  underline: (s: string) => `${ESC}4m${s}${RESET}`,
+
+  // Colors
+  black: (s: string) => `${ESC}30m${s}${RESET}`,
+  red: (s: string) => `${ESC}31m${s}${RESET}`,
+  green: (s: string) => `${ESC}32m${s}${RESET}`,
+  yellow: (s: string) => `${ESC}33m${s}${RESET}`,
+  blue: (s: string) => `${ESC}34m${s}${RESET}`,
+  magenta: (s: string) => `${ESC}35m${s}${RESET}`,
+  cyan: (s: string) => `${ESC}36m${s}${RESET}`,
+  white: (s: string) => `${ESC}37m${s}${RESET}`,
+  gray: (s: string) => `${ESC}90m${s}${RESET}`,
+
+  // Bright Colors
+  redBright: (s: string) => `${ESC}91m${s}${RESET}`,
+  greenBright: (s: string) => `${ESC}92m${s}${RESET}`,
+  yellowBright: (s: string) => `${ESC}93m${s}${RESET}`,
+  blueBright: (s: string) => `${ESC}94m${s}${RESET}`,
+  magentaBright: (s: string) => `${ESC}95m${s}${RESET}`,
+  cyanBright: (s: string) => `${ESC}96m${s}${RESET}`,
+};

@@ -15,7 +15,7 @@ import { json } from "@sveltejs/kit";
 
 // System Logger
 import { logger } from "@utils/logger.server";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 
 // Validation
 import * as v from "valibot";

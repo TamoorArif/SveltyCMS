@@ -15,7 +15,7 @@ import type {
   DatabaseId,
   DatabaseResult,
   MediaItem,
-  MediaMetadata,
+  CmsMediaMetadata,
   PaginatedResult,
   PaginationOptions,
 } from "../../db-interface";
@@ -123,7 +123,7 @@ export class MongoMediaMethods {
   // Updates metadata for a single file
   async updateMetadata(
     fileId: DatabaseId,
-    metadata: Partial<MediaMetadata>,
+    metadata: Partial<CmsMediaMetadata>,
     tenantId?: string | null,
   ): Promise<DatabaseResult<MediaItem | null>> {
     try {
@@ -188,7 +188,7 @@ export class MongoMediaMethods {
   async getMetadata(
     fileIds: DatabaseId[],
     tenantId?: string | null,
-  ): Promise<DatabaseResult<Record<string, MediaMetadata>>> {
+  ): Promise<DatabaseResult<Record<string, CmsMediaMetadata>>> {
     try {
       const query = safeQuery(
         { _id: { $in: fileIds } as unknown as QueryFilter<IMedia>["_id"] },
@@ -199,9 +199,9 @@ export class MongoMediaMethods {
         .lean()
         .exec();
 
-      const metadataMap: Record<string, MediaMetadata> = {};
+      const metadataMap: Record<string, CmsMediaMetadata> = {};
       results.forEach((r: any) => {
-        metadataMap[r._id] = r.metadata as MediaMetadata;
+        metadataMap[r._id] = r.metadata as CmsMediaMetadata;
       });
       return { success: true, data: metadataMap };
     } catch (error) {

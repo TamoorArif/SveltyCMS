@@ -11,7 +11,7 @@ import type {
   DatabaseResult,
   MediaFolder,
   MediaItem,
-  MediaMetadata,
+  CmsMediaMetadata,
   PaginatedResult,
   PaginationOptions,
   EntityCreate,
@@ -220,7 +220,7 @@ export class MediaModule {
     getMetadata: async (
       fileIds: DatabaseId[],
       tenantId?: string | null,
-    ): Promise<DatabaseResult<Record<string, MediaMetadata>>> => {
+    ): Promise<DatabaseResult<Record<string, CmsMediaMetadata>>> => {
       return this.core.wrap(async () => {
         const conditions = [inArray(schema.mediaItems._id, fileIds as string[])];
         if (tenantId) conditions.push(eq(schema.mediaItems.tenantId, tenantId));
@@ -233,9 +233,9 @@ export class MediaModule {
           .from(schema.mediaItems)
           .where(and(...conditions));
 
-        const metadataMap: Record<string, MediaMetadata> = {};
+        const metadataMap: Record<string, CmsMediaMetadata> = {};
         results.forEach((r) => {
-          metadataMap[r._id] = r.metadata as MediaMetadata;
+          metadataMap[r._id] = r.metadata as CmsMediaMetadata;
         });
         return metadataMap;
       }, "GET_FILE_METADATA_FAILED");
@@ -243,7 +243,7 @@ export class MediaModule {
 
     updateMetadata: async (
       fileId: DatabaseId,
-      metadata: Partial<MediaMetadata>,
+      metadata: Partial<CmsMediaMetadata>,
       tenantId?: string | null,
     ): Promise<DatabaseResult<MediaItem>> => {
       return this.core.wrap(async () => {

@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import * as ts from "typescript";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "../native-utils";
 import {
   getCollectionsPath,
   getCompiledCollectionsPath,

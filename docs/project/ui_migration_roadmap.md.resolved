@@ -39,13 +39,26 @@ small components.
   - Dark mode support via native `media` and `class` selectors.
 
 ## Phase 4: Complex Layout & Data Components
-**Objective**: Final removal of Skeleton-specific layout and interaction logic.
-- **Components**:
+**Objective**: Final removal of Skeleton-specific layout and interaction logic with 1:1 functional parity.
+- **Migration Scope**:
   - `Modal`, `Drawer` (using the native `<dialog>` element + Svelte 5).
-  - `DataGrid` (custom lightweight table with virtualization).
-  - `Sidebar`, `AppBar`.
-- **Optimization**: Use Svelte 5's fine-grained reactivity to update only changed cells in large tables.
-- **Status**: [/] Complex components implemented; optimizing performance and deep state reactivity.
+  - **Interactive Primitives**: `Accordion`, `Collapsible`, `Stepper`, `Slider`, `Rating`, `FileUpload`, `StatusBadge`, `Tags`.
+  - **Data Display**: `DataGrid`, `Table`, `TreeView`, `Breadcrumb`.
+  - **Inputs**: `Combobox`, `DatePicker`, `FloatingInput`.
+- **Optimization**: Use Svelte 5's fine-grained reactivity to update only changed cells in large tables and complex forms.
+- **Verification**: Zero-dependency validation via the mapping lab.
+- **Status**: [x] 42+ Core Primitives and Interactive Components verified in the "Kitchen Sink" lab.
+
+---
+
+## Phase 5: Kitchen Sink Validation Lab
+**Objective**: Absolute source of truth for UI consistency and regression testing.
+- **Source**: `src/routes/ui-test/+page.svelte`
+- **Features**: 
+  - 1:1 Map of Legacy Skeleton v4 vs. Native Svelte 5 Primitives.
+  - Verification of 42+ modules under `src/components/ui/`.
+  - Zero Zag.js/Skeleton dependency requirement for native components.
+- **Status**: [x] Lab fully integrated and verified via `bun run check`.
 
 ---
 

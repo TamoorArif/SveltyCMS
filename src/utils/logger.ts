@@ -80,25 +80,27 @@ function mask(v: unknown, depth = 0): unknown {
   return o;
 }
 
+import { pc } from "@utils/native-utils";
+
 // Server formatting (ANSI)
 const serverFormat =
   IS_BROWSER || DISABLED
     ? (msg: string) => msg
     : (msg: string) => {
         const patterns = [
-          { re: /\b\d+(\.\d+)?(ms|s)\b/g, c: "\x1b[32m" },
+          { re: /\b\d+(\.\d+)?(ms|s)\b/g, c: pc.green },
           {
             re: /[a-f0-9]{24}|[a-f0-9]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-            c: "\x1b[33m",
+            c: pc.yellow,
           },
-          { re: /\/api\/[^\s]+/g, c: "\x1b[36m" },
-          { re: /\btrue\b/g, c: "\x1b[32m" },
-          { re: /\bfalse\b/g, c: "\x1b[31m" },
-          { re: /\b\d+\b/g, c: "\x1b[34m" },
+          { re: /\/api\/[^\s]+/g, c: pc.cyan },
+          { re: /\btrue\b/g, c: pc.green },
+          { re: /\bfalse\b/g, c: pc.red },
+          { re: /\b\d+\b/g, c: pc.blue },
         ];
         let out = msg;
         for (const { re, c } of patterns) {
-          out = out.replace(re, `${c}$&${"\x1b[0m"}`);
+          out = out.replace(re, (m) => c(m));
         }
         return out;
       };

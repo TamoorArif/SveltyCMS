@@ -18,7 +18,7 @@ import { join } from "node:path";
 import { error, json, redirect } from "@sveltejs/kit";
 // System Logger
 import { logger } from "@utils/logger.server";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import type { Actions, PageServerLoad } from "./$types";
 
 // Cache for discovered widgets

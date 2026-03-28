@@ -9,7 +9,8 @@
  * - Access control
  */
 
-import type { DatabaseId, ISODateString } from "@src/content/types";
+import type { DatabaseId, ISODateString, CmsMediaMetadata } from "@src/databases/db-interface";
+export type { CmsMediaMetadata };
 
 export type StorageType = "local" | "s3" | "r2" | "cloudinary";
 
@@ -23,26 +24,7 @@ export enum MediaType {
 
 export type MediaAccess = "public" | "private" | "protected";
 
-export interface MediaMetadata {
-  aiTags?: string[];
-  author?: string;
-  copyright?: string;
-  description?: string;
-  exif?: Record<string, unknown>;
-  /** Focal point for smart cropping (0-100 for x and y) */
-  focalPoint?: { x: number; y: number };
-  keywords?: string[];
-  location?: {
-    latitude?: number;
-    longitude?: number;
-    altitude?: number;
-  };
-  tags?: string[];
-  title?: string;
-  /** Whether a watermark has been applied to this media */
-  watermarkApplied?: boolean;
-  [key: string]: unknown;
-}
+// CmsMediaMetadata is now imported from db-interface.ts to ensure agnosticism compliance
 
 export interface WatermarkOptions {
   position:
@@ -64,11 +46,11 @@ export interface WatermarkOptions {
 }
 
 export interface ResizedImage {
+  url: string;
+  width: number;
   height: number;
   mimeType: string;
   size: number;
-  url: string;
-  width: number;
 }
 
 export interface MediaVersion {
@@ -82,18 +64,21 @@ export interface MediaBase {
   _id: DatabaseId; // Required for BaseEntity compatibility
   access?: MediaAccess;
   createdAt: ISODateString;
+  createdBy: DatabaseId; // For DB agnosticism
   filename: string;
   folderId?: DatabaseId | null;
   hash: string;
-  metadata?: MediaMetadata;
+  metadata: CmsMediaMetadata; // Mandatory for DB agnosticism
   mimeType: string;
+  originalFilename: string; // For DB agnosticism
   originalId?: DatabaseId | null;
   path: string; // storage-relative
   size: number;
   tenantId?: string | null; // For multi-tenant support
-  thumbnails?: Record<string, ResizedImage>;
+  thumbnails?: Record<string, { url: string; width: number; height: number } | undefined>; // Aligned with db-interface.ts
   type: MediaType;
   updatedAt: ISODateString;
+  updatedBy: DatabaseId; // For DB agnosticism
   url: string; // public URL
   user: DatabaseId;
   versions?: MediaVersion[];
@@ -124,7 +109,7 @@ export interface MediaDocument extends MediaBase {
 export interface MediaRemoteVideo extends MediaBase {
   externalId: string;
   provider: string; // youtube | vimeo | other
-  thumbnails?: Record<string, ResizedImage>;
+  thumbnails?: Record<string, { url: string; width: number; height: number } | undefined>; // Aligned
   type: MediaType.RemoteVideo;
 }
 

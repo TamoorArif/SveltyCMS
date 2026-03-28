@@ -27,7 +27,7 @@ import { AppError } from "@utils/error-handling";
 import { addUserTokenSchema } from "@utils/form-schemas";
 // System Logger
 import { logger } from "@utils/logger.server";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID as uuidv4 } from "@utils/native-utils";
 import { parse } from "valibot";
 
 export const POST = apiHandler(async ({ request, locals, fetch, url }) => {
