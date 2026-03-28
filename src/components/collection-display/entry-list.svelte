@@ -59,7 +59,7 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 	// =================================================================
 	import type { EntryListProps, PaginationSettings, TableHeader } from '@src/content/types';
 	import { StatusTypes } from '@src/content/types';
-	import { useContent } from '@src/content/content-context.svelte';
+	import { useContent } from '@src/content';
 	// ParaglideJS
 	import { EntryList_no_collection, entrylist_all, entrylist_dnd } from '@src/paraglide/messages';
 	// Stores

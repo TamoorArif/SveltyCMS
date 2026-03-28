@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
 
 // Mock all dependencies
-vi.mock("@src/content/content-manager", () => ({
+vi.mock("@src/content", () => ({
   contentManager: {
     getCollections: vi.fn(),
     getCollectionById: vi.fn(),
@@ -79,7 +79,7 @@ describe("Collections API Unit Tests", () => {
     vi.clearAllMocks();
 
     // Re-import modules to get fresh mock references
-    const contentModule = await import("@src/content/content-manager");
+    const contentModule = await import("@src/content");
     const cacheModule = await import("@src/databases/cache/cache-service");
     const settingsModule = await import("@src/services/settings-service");
     const tokenModule = await import("@src/services/token/engine");

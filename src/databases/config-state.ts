@@ -238,8 +238,13 @@ export function getDatabaseConnectionString(): string {
     case "postgresql":
       return `postgresql://${authPart}${host}:${port}/${name}`;
     case "sqlite": {
-      const path = host.endsWith("/") ? host : `${host}/`;
-      return `${path}${name}`;
+      // Standardize SQLite placement under config/database/ unless an absolute path is provided
+      const finalName = name.endsWith(".sqlite") ? name : `${name}.sqlite`;
+      if (host && (host.startsWith("/") || host.startsWith("C:"))) {
+        const path = host.endsWith("/") ? host : `${host}/`;
+        return `${path}${finalName}`;
+      }
+      return `config/database/${finalName}`;
     }
     default:
       return "";

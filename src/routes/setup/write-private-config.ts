@@ -1,7 +1,23 @@
 /**
- * @file src/routes/setup/writePrivateConfig.ts
- * @description Utility to write the `config/private.ts` file with database credentials
- * during the setup process.
+ * @file src/routes/setup/write-private-config.ts
+ * @description
+ * Configuration persistence engine for the SveltyCMS Setup Wizard.
+ * Manages the generation, validation, and atomic updates of the `config/private.ts` bootstrap file.
+ *
+ * Responsibilities include:
+ * - Generating standardized `privateEnv` objects with sanitized credentials.
+ * - Automating the creation of cryptographically secure JWT secrets and encryption keys.
+ * - Implementing safety guards to prevent accidental configuration overwrites post-setup.
+ * - Providing atomic update mechanisms for architectural modes (Demo, Multi-tenant).
+ * - Validating file write integrity to ensure system bootability.
+ *
+ * ### Features:
+ * - injection-safe credential sanitization
+ * - automated directory creation & file management
+ * - integrated JWT/Encryption key generation (Node Crypto)
+ * - post-write integrity verification
+ * - specialized TEST_MODE support for CI/CD pipelines
+ * - regex-based incremental configuration updates
  */
 
 import type { DatabaseConfig } from "@src/databases/schemas";

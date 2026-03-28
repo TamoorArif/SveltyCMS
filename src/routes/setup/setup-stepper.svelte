@@ -1,7 +1,24 @@
 <!--
-@file src/routes/setup/SetupStepper.svelte
-@description Stepper component for the setup wizard.
-Shows horizontal stepper on mobile, vertical stepper on desktop with legend.
+@file src/routes/setup/setup-stepper.svelte
+@component
+**Adaptive progress stepper for the SveltyCMS Setup Wizard.**
+Provides a responsive navigation guide that switches between a horizontal compact view for mobile and a detailed vertical legend for desktop.
+
+### Props
+- `steps` (Array): Detailed metadata for each setup step.
+- `currentStep` (number): The active step index.
+- `stepCompleted` (Record<number, boolean>): Tracks completion status for each step.
+- `stepClickable` (Record<number, boolean>): Defines interactive steps for backward navigation.
+- `legendItems` (Array): Metadata for the status legend (completed, current, pending).
+- `onselectStep` (function): Callback for manual step navigation.
+
+### Features:
+- adaptive layout (horizontal mobile / vertical desktop)
+- interactive backward navigation for completed steps
+- visual status indicators (Check, Bullet, Dot)
+- integrated status legend with standardized iconography
+- prefetch-ready hover states for navigation optimization
+- accessibility-first keyboard navigation and ARIA step signaling
 -->
 <script lang="ts">
 const {

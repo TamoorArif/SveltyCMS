@@ -1,10 +1,106 @@
 /**
  * @file src/routes/setup/error-classifier.ts
- * @description Helper functions to classify and format database connection errors for the setup wizard UI.
+ * @description
+ * Intelligent error classification and mapping for the Setup Wizard.
+ * Translates low-level database and system errors into actionable user feedback.
+ *
+ * Responsibilities include:
+ * - Parsing structured error objects from multiple database adapters.
+ * - Identifying specific failure modes (auth, networking, DNS, Atlas-specific).
+ * - Generating user-friendly troubleshooting suggestions.
+ * - Protecting internal stack traces from direct exposure in the UI.
+ *
+ * ### Features:
+ * - multi-adapter error normalization
+ * - MongoDB Atlas-specific heuristics
+ * - structured classification payloads
+ * - localized error message mapping
+ * - safe recursive error decomposition
  */
 
 import { logger } from "@utils/logger.server";
-import type { ClassifiedError, DbErrorClassification } from "./setup-database-error";
+
+export type DbErrorClassification =
+  | "CONNECTION_REFUSED"
+  | "AUTH_FAILED"
+  | "DB_NOT_FOUND"
+  | "HOST_UNREACHABLE"
+  | "INVALID_CONFIG"
+  | "DRIVER_MISSING"
+  | "PERMISSION_DENIED"
+  | "UNKNOWN";
+
+export interface ClassifiedError {
+  classification: DbErrorClassification;
+  userFriendly: string;
+  hint?: string;
+  raw: string;
+}
+
+/**
+ * Custom error class used during the setup wizard to provide
+ * structured feedback to the frontend.
+ */
+export class SetupDatabaseError extends Error {
+  public readonly classification: DbErrorClassification;
+  public readonly hint?: string;
+  public readonly userFriendly: string;
+  public readonly details?: unknown;
+
+  constructor(classified: ClassifiedError, originalError?: unknown) {
+    // Use the user-friendly message as the primary error message
+    super(classified.userFriendly);
+    this.name = "SetupDatabaseError";
+    this.classification = classified.classification;
+    this.userFriendly = classified.userFriendly;
+    this.hint = classified.hint;
+
+    // Preserve original error details for server-side logging
+    if (originalError) {
+      this.cause = originalError;
+      // Extract specifics if available (e.g., MongoDB error codes)
+      this.details =
+        originalError instanceof Error
+          ? {
+              message: originalError.message,
+              name: originalError.name,
+              stack: process.env.NODE_ENV === "development" ? originalError.stack : undefined,
+            }
+          : originalError;
+    }
+
+    // Ensure proper stack trace
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SetupDatabaseError);
+    }
+  }
+
+  /**
+   * Sanitizes the error for transmission to the client.
+   * Excludes sensitive details like internal stack traces.
+   */
+  public toClientPayload() {
+    return {
+      success: false,
+      error: this.userFriendly,
+      classification: this.classification,
+      hint: this.hint,
+      // We only send dbDoesNotExist flag for specific classification to trigger UI modals
+      dbDoesNotExist: this.classification === "DB_NOT_FOUND",
+    };
+  }
+
+  /**
+   * Static helper to wrap any error into a SetupDatabaseError using a classifier.
+   */
+  public static fromError(
+    error: unknown,
+    classifier: (err: unknown) => ClassifiedError,
+  ): SetupDatabaseError {
+    if (error instanceof SetupDatabaseError) return error;
+    return new SetupDatabaseError(classifier(error), error);
+  }
+}
 
 export interface ClassifyContext {
   isSrv?: boolean;
@@ -20,13 +116,36 @@ export function classifyDatabaseError(
   err: unknown,
   context: ClassifyContext = {},
 ): ClassifiedError {
-  const raw = err instanceof Error ? err.message : String(err);
-  const lower = raw.toLowerCase();
-  const code = (err as { code?: string | number })?.code ?? "";
+  // Better extraction of raw error message - try to find the "real" error in details
+  let raw = "";
+  if (err instanceof Error) {
+    raw = err.message;
+  } else if (typeof err === "object" && err !== null) {
+    const msg = (err as any).message;
+    const details = (err as any).details;
+    // If message is just a generic "Failed to..." prefix, prioritize the specific details
+    if (msg && details && typeof details === "string" && String(msg).includes("Failed to")) {
+      raw = details;
+    } else {
+      raw = `${msg || ""} ${typeof details === "string" ? details : ""}`.trim();
+    }
+    if (!raw) raw = String(err);
+  } else {
+    raw = String(err);
+  }
 
-  // Log for server-side troubleshooting
+  const lower = raw.toLowerCase();
+
+  // Try to find a code at multiple levels (top level, or nested in structured responses)
+  const code =
+    (err as { code?: string | number })?.code ??
+    (err as { originalCode?: string | number })?.originalCode ??
+    "";
+
+  // Log for server-side troubleshooting with more details
   logger.error("🔍 Classifying database error:", {
     code,
+    originalCode: (err as any)?.originalCode,
     message: raw,
     context,
   });
@@ -35,7 +154,8 @@ export function classifyDatabaseError(
   if (
     code === "ECONNREFUSED" ||
     lower.includes("connection refused") ||
-    lower.includes("failed to connect to server")
+    lower.includes("failed to connect to server") ||
+    lower.includes("enotfound")
   ) {
     const hostHint =
       context.host === "localhost" || context.host === "127.0.0.1"
@@ -63,16 +183,31 @@ export function classifyDatabaseError(
   if (
     lower.includes("auth failed") ||
     lower.includes("authentication failed") ||
+    lower.includes("requires authentication") ||
     lower.includes("bad auth") ||
+    lower.includes("not authorized") ||
+    lower.includes("access denied") ||
     code === 18 || // MongoDB Auth failed
-    code === "28P01" // Postgres invalid_password
+    code === "28P01" || // Postgres invalid_password
+    code === 13 // MongoDB NotAuthorized
   ) {
+    let userFriendly = "Database authentication failed.";
+
+    if (lower.includes("requires authentication")) {
+      userFriendly =
+        "The database requires authentication, but no username/password was provided or they are incorrect.";
+    } else if (lower.includes("not authorized") || lower.includes("access denied")) {
+      userFriendly = `The provided user does not have permission to access the "${context.name}" database.`;
+    } else if (lower.includes("bad auth") || lower.includes("auth failed")) {
+      userFriendly = "Invalid database username or password.";
+    }
+
     const srvNote = context.isSrv
       ? 'Note: SRV connections often require the "admin" database as the auth source.'
       : "";
     return {
       classification: "AUTH_FAILED",
-      userFriendly: "Database authentication failed.",
+      userFriendly,
       hint: `1. Double-check your username and password.\n2. Verify if the user has permissions for the "${context.name}" database.\n3. ${srvNote}`,
       raw,
     };

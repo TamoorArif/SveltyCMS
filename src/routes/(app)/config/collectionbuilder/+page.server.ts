@@ -8,7 +8,7 @@
  */
 
 // System Logger
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 // Auth - Use cached roles from locals instead of global config
 import { hasPermissionWithRoles } from "@src/databases/auth/permissions";
 import { error, fail, redirect } from "@sveltejs/kit";
@@ -48,7 +48,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     const contentStructure = await contentManager.getContentStructureFromDatabase("flat", tenantId);
 
     // Serialize and sanitize structures for client-side usage
-    const serializedStructure = contentStructure.map((node) => {
+    const serializedStructure = contentStructure.map((node: any) => {
       // Deep clone and strip non-serializable properties (like validationSchema functions)
       const sanitizedNode = JSON.parse(JSON.stringify(node));
 
@@ -95,8 +95,8 @@ export const actions: Actions = {
         locals.tenantId,
       );
       const pathsToDelete = currentStructure
-        .filter((node) => ids.includes(node._id.toString()))
-        .map((node) => node.path);
+        .filter((node: any) => ids.includes(node._id.toString()))
+        .map((node: any) => node.path);
 
       const operations = pathsToDelete.map((path) => ({
         type: "delete" as const,
@@ -125,7 +125,7 @@ export const actions: Actions = {
         "flat",
         locals.tenantId,
       );
-      const serializedStructure = updatedStructure.map((node) => ({
+      const serializedStructure = updatedStructure.map((node: any) => ({
         ...node,
         _id: node._id.toString(),
         ...(node.parentId ? { parentId: node.parentId.toString() } : {}),

@@ -12,7 +12,7 @@
  * GET /api/collections/{collectionId}/export?format=json&limit=100&offset=0
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 // Unified Error Handling
 import { apiHandler } from "@utils/api-handler";

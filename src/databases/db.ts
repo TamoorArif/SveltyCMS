@@ -505,6 +505,9 @@ async function initializeSystem(
         if (dbAdapter?.ensureCollections) {
           await dbAdapter.ensureCollections();
         }
+        if (dbAdapter?.ensureContent) {
+          await dbAdapter.ensureContent();
+        }
         if (dbAdapter?.ensureMedia) {
           await dbAdapter.ensureMedia().catch((e) => logger.warn("Media activation issue:", e));
         }

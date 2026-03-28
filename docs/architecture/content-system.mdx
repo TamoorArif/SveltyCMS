@@ -1,98 +1,115 @@
 ---
 path: "docs/architecture/content-system.mdx"
 title: "Content System Architecture"
-description: "Detailed overview of the SveltyCMS Content System, including the modular Content Manager, Reconciler, and Reactivity model."
+description: "Detailed overview of the SveltyCMS Content System, consolidated into 5 core tree-shakable pillars."
 order: 5
 icon: "mdi:database-sync"
 author: "SveltyCMS Team"
 created: "2025-12-02"
-updated: "2026-03-27"
+updated: "2026-03-28"
 tags:
   - "architecture"
   - "content-system"
   - "reactivity"
   - "svelte5"
-  - "multi-tenancy"
 ---
 
 # Content System Architecture
 
-The Content System is the core of SveltyCMS, responsible for managing, indexing, and serving content and collections. It leverages Svelte 5 runes for fine-grained reactivity and supports multi-tenant isolation at the filesystem level.
+The Content System is the core of SveltyCMS, responsible for managing, indexing, and serving content and collections. In the 2026 consolidation, it was refactored from 19 disparate files into 5 core, tree-shakable pillars to eliminate architectural complexity and improve build performance.
 
-## Modular Architecture (2026 Refactor)
+## Consolidated 5-Pillar Architecture
 
-To ensure maintainability and tree-shakability, the Content System has been decomposed into specialized, decoupled modules. The legacy `index.ts` layer has been refactored into a thin bridge, delegating all complex logic to the following subsystems:
+The system is organized into specialized modules that strictly separate reactive state, server-side logic, and public APIs.
 
 ```mermaid
 graph TD
-    Bridge[Content Bridge Index.ts] --> CI[ContentInitializer]
-    Bridge --> CP[ContentPolling]
+    subgraph "Public API & Entry"
+        Index["src/content/index.ts (Manager)"]
+    end
 
-    CM[ContentManager Facade] --> CI
-    CM --> CN[ContentNavigation]
-    CM --> CR[ContentReconciler]
-    CM --> CMt[ContentMetrics]
+    subgraph "Reactive State"
+        CS["content-store.svelte.ts"]
+    end
 
-    CI --> CC[ContentCache]
-    CI --> CR
+    subgraph "Pure Logic"
+        CU["content-utils.ts"]
+    end
 
-    CR --> CS[ContentStructure $state]
-    CR --> Scan[ScanFiles Utility]
-    CR --> DB[(Database Adapter)]
+    subgraph "Server Services"
+        CSS["content-service.server.ts"]
+    end
 
-    CN --> CS
+    subgraph "Data Model"
+        T["types.ts"]
+    end
 
-    CC --> Srv[CacheService L1/L2]
+    Index --> CS
+    Index --> CU
+    Index -.->|Server Only| CSS
+    CSS --> CS
+    CU --> CS
+    CS --> T
 ```
 
-### Core Components
+### The 5 Pillars
 
-#### 1. Content Manager Facade (`src/content/content-manager.ts`)
+#### 1. Public API & Entry Point (`src/content/index.ts`)
 
-A thin coordinator providing a stable public API. It orchestrates the various specialized modules to ensure consistent data flow across the CMS.
+The primary entry point and **Content Manager**.
 
-#### 2. Content Structure (`src/content/content-structure.svelte.ts`)
+- **Lifecycle**: Orchestrates initialization (IDLE → READY) and self-healing.
+- **Caching**: Manages L1/L2 cache population and invalidation.
+- **Context**: Provides Svelte component context (`useContent`).
+- **Consolidation**: Merges legacy `content-manager`, `content-initializer`, `content-cache`, and `content-context`.
 
-The single source of truth for in-memory content state. It uses **Svelte 5 runes** (`$state`, `$derived`) to provide reactive access to the content node map and path lookup map. It includes a `sync()` method for atomic bulk updates.
+#### 2. Content Store (`src/content/content-store.svelte.ts`)
 
-#### 3. Content Initializer (`src/content/content-initializer.ts`)
+The single reactive source of truth.
 
-Manages the system lifecycle (IDLE → INITIALIZING → READY). It handles tenant-specific bootstrapping and implements self-healing retries with exponential backoff.
+- **State management**: Uses Svelte 5 runes (`$state`, `$derived`) for high-performance reactivity.
+- **Consolidation**: Merges legacy `content-structure`, `content-collections`, and `content-polling`.
+- **Key features**: Node indexing, collection sorting, and browser-side version polling.
 
-#### 4. Content Reconciler (`src/content/content-reconciler.ts`)
+#### 3. Content Utils (`src/content/content-utils.ts`)
 
-A **database-agnostic** module responsible for synchronizing filesystem definitions (`.compiledCollections/`) with the database. It delegates filesystem scanning to the high-performance `scan-files.ts` utility.
+Pure, stateless logic and monitoring.
 
-#### 5. Content Polling (`src/content/content-polling.svelte.ts`)
+- **Navigation**: Breadcrumbs, tree traversal, and progressive navigation loading.
+- **Metrics**: Performance tracking and health diagnostics.
+- **Consolidation**: Merges legacy `content-navigation`, `content-metrics`, and shared `utils`.
 
-A client-side service that synchronizes local state with the server by polling the `/api/content/version` endpoint. It triggers a reactive refresh only when a version mismatch is detected.
+#### 4. Content Service (Server) (`src/content/content-service.server.ts`)
 
-#### 6. Content Navigation (`src/content/content-navigation.ts`)
+Heavy lifting restricted to the server.
 
-Provides pure tree operations, including breadcrumb generation and descendant lookups, reading directly from the reactive `ContentStructure`.
+- **Reconciliation**: Syncs filesystem definitions with the database.
+- **Processing**: High-performance JS module evaluation and filesystem scanning.
+- **Security**: Bound by the `.server.ts` suffix to ensure zero leak to the client bundle.
+- **Consolidation**: Merges legacy `content-reconciler`, `scan-files`, and `module-processor`.
+
+#### 5. Types (`src/content/types.ts`)
+
+Universal type definitions for the entire system.
+
+- **Interfaces**: Defines `ContentNode`, `Schema`, `Field`, and `NavigationNode`.
+- **Validation**: Centralized types for system-wide consistency.
 
 ---
 
 ## Reactivity Model (Svelte 5)
 
-SveltyCMS uses a **Signal-based Reactivity Model**:
+SveltyCMS leverages a signal-driven reactivity model:
 
-1.  **State Tracking**: The system exposes reactive state via Svelte 5 runes.
-2.  **Version Propagation**: When content is modified on the server, the `contentVersion` increments.
-3.  **Client Sync**: The `ContentPolling` service detects version increments and triggers `contentInitializer.refresh()`, updating local stores without a full page reload.
-4.  **Fine-Grained Updates**: Components using `collections` or `contentStructure` re-render only for the specific nodes or paths that changed.
-
----
-
-## Performance & Scaling
-
-- **Smart Filesystem Scanning**: The reconciler uses a parallelized recursive scanner optimized for both `.ts` (development) and `.js` (production) files.
-- **Dual-Layer Caching**: Integrates with the global `CacheService` for sub-millisecond schema lookups using L1 (Redis) and L2 (In-memory) caches.
-- **Tree-Shakable API**: By decomposing the monolithic manager, the client bundle is reduced by isolating server-side reconciliation logic from client-side state.
+1. **Signal Generation**: The `contentStore` emits signals when nodes change or a new version is polled.
+2. **Granular Consumption**: Components using `useContent()` or `contentStore` react only to specific updates.
+3. **Zero-Runtime Overhead**: Svelte 5 runes eliminate the need for legacy stores or complex subscription management.
 
 ---
 
-## Documentation Updates
+## Performance Benefits
 
-- **API Documentation**: See [Collection API Reference](../api/collection-api.mdx) for endpoint details.
-- **Developer Guide**: See [Collection Builder Guide](../guides/development/collection-builder.mdx) for UI-driven schema management.
+- **Better Tree-Shaking**: Server-side code is physically isolated, reducing client bundle size.
+- **Reduced Complexity**: 19 files reduced to 5 logical units.
+- **Faster Cold Starts**: Optimized reconciliation logic with parallel scanning.
+- **Sub-10ms Persistence**: Highly optimized database operations for structure updates.

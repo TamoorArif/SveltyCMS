@@ -1,8 +1,19 @@
 <!--
-@file src/routes/setup/PresetSelector.svelte
+@file src/routes/setup/preset-selector.svelte
 @component
-Horizontal snap-scroll preset carousel for selecting project blueprints.
-Default value is 'blank'.
+**Solution template selector carousel.**
+Allows users to choose from pre-configured project blueprints (Blog, SaaS, etc.) to jumpstart their CMS configuration.
+
+### Props
+- `presets` (Preset[]): List of available project blueprints.
+- `selected` (string | null): Currently active preset ID (bindable).
+
+### Features:
+- horizontal snap-scroll carousel with mouse-drag support
+- intersection observer for active dot synchronization
+- visual complexity indicators for each preset
+- interactive feature list preview
+- real-time selection feedback and persistence
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";

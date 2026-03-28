@@ -37,7 +37,7 @@ None (TreeView has its own keyboard navigation)
 import { SvelteSet } from "svelte/reactivity";
 import type { ISODateString } from "@root/src/content/types";
 import type { ContentNode, DatabaseId } from "@root/src/databases/db-interface";
-import { hasDuplicateSiblingName } from "@src/content/content-utils";
+import { hasDuplicateSiblingName } from "@src/content";
 import PageTitle from "@src/components/page-title.svelte";
 import {
 	button_save,
@@ -53,7 +53,7 @@ import {
 	setContentStructure,
 	setMode,
 } from "@src/stores/collection-store.svelte";
-import { useContent } from "@src/content/content-context.svelte";
+import { useContent } from "@src/content";
 // Skeleton
 import { toast } from "@src/stores/toast.svelte.ts";
 import { setRouteContext } from "@src/stores/ui-store.svelte.ts";

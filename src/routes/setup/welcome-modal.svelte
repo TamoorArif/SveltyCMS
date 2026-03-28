@@ -1,13 +1,18 @@
-<!-- 
-@file src/routes/setup/WelcomeModal.svelte
+<!--
+@file src/routes/setup/welcome-modal.svelte
 @component
-**This component displays the welcome modal**
+**Initial system greeting and orientation modal.**
+Presents a friendly introduction to SveltyCMS, setting expectations for the setup duration and facilitating the entry point into the wizard.
 
-Features:
-- Close button
-- Get Started button
-- Close button
+### Props
+- `close` (function): Modal closure callback to initiate the setup workflow.
 
+### Features:
+- high-impact branding with SVG logo integration
+- localized welcome messaging and ETA indicators
+- standardized primary CTA for wizard initiation
+- automated focus management and keyboard accessibility
+- responsive and centered layout optimized for orientation
 -->
 
 <script lang="ts">

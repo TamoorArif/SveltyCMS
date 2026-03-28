@@ -24,38 +24,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
 
   logger.info("🔌 Webhook & EventBus Proxy Wrapper active on Database Adapter");
 
-  // --- Wrap CRUD Operations (Lazy Access) ---
-  let originalCrud: ICrudAdapter | undefined;
-
-  // Check instance first
-  if (Object.hasOwn(adapter, "crud")) {
-    originalCrud = adapter.crud;
-  } else {
-    // Check prototype chain
-    let proto = Object.getPrototypeOf(adapter);
-    while (proto) {
-      const desc = Object.getOwnPropertyDescriptor(proto, "crud");
-      if (desc) {
-        if (desc.get) {
-          originalCrud = desc.get.call(adapter);
-        } else {
-          originalCrud = desc.value;
-        }
-        break;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-  }
-
-  if (!originalCrud) {
-    const internalAdapter = adapter as unknown as Record<string, ICrudAdapter>;
-    originalCrud = internalAdapter._crud || internalAdapter._cachedCrud;
-  }
-
-  if (originalCrud) {
-    const capturedCrud = originalCrud;
-
-    // PERFORMANCE: Define wrapped methods once to avoid thrashing
+  // --- Helper: Wrap CRUD Operations ---
+  const wrapCrud = (capturedCrud: ICrudAdapter): ICrudAdapter => {
     const wrappedMethods: Partial<ICrudAdapter> = {
       insert: async (...args) => {
         const res = await capturedCrud.insert(...args);
@@ -66,11 +36,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         ) {
           const event: WebhookEvent = collection === "MediaItem" ? "media:upload" : "entry:create";
           webhookService.trigger(event, { collection, data: res.data as any }, tenantId);
-          eventBus.emit(event as any, {
-            collection,
-            data: res.data as any,
-            tenantId,
-          });
+          eventBus.emit(event as any, { collection, data: res.data as any, tenantId });
         }
         return res;
       },
@@ -80,11 +46,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
           for (const item of res.data) {
             webhookService.trigger("entry:create", { collection, data: item as any }, tenantId);
-            eventBus.emit("entry:create", {
-              collection,
-              data: item as any,
-              tenantId,
-            });
+            eventBus.emit("entry:create", { collection, data: item as any, tenantId });
           }
         }
         return res;
@@ -95,11 +57,8 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
           let event: WebhookEvent = "entry:update";
           if ("status" in (data as any)) {
-            if ((data as any).status === "publish") {
-              event = "entry:publish";
-            } else if ((data as any).status === "unpublish") {
-              event = "entry:unpublish";
-            }
+            if ((data as any).status === "publish") event = "entry:publish";
+            else if ((data as any).status === "unpublish") event = "entry:unpublish";
           }
           webhookService.trigger(
             event,
@@ -131,11 +90,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
           );
           eventBus.emit("entry:update", {
             collection,
-            data: {
-              query,
-              changes: data,
-              modifiedCount: res.data.modifiedCount,
-            },
+            data: { query, changes: data, modifiedCount: res.data.modifiedCount },
             tenantId,
           });
         }
@@ -150,11 +105,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         ) {
           const event: WebhookEvent = collection === "MediaItem" ? "media:delete" : "entry:delete";
           webhookService.trigger(event, { collection, id: id as any }, tenantId);
-          eventBus.emit(event as any, {
-            collection,
-            entryId: id as any,
-            tenantId,
-          });
+          eventBus.emit(event as any, { collection, entryId: id as any, tenantId });
         }
         return res;
       },
@@ -164,11 +115,7 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         if (res.success && collection.startsWith(CONTENT_COLLECTION_PREFIX)) {
           webhookService.trigger(
             "entry:delete",
-            {
-              collection,
-              query: query as any,
-              deletedCount: res.data.deletedCount,
-            },
+            { collection, query: query as any, deletedCount: res.data.deletedCount },
             tenantId,
           );
           eventBus.emit("entry:delete", {
@@ -188,18 +135,13 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
             { collection, query: query as any, data: res.data },
             tenantId,
           );
-          eventBus.emit("entry:update", {
-            collection,
-            data: { query, data: res.data },
-            tenantId,
-          });
+          eventBus.emit("entry:update", { collection, data: { query, data: res.data }, tenantId });
         }
         return res;
       },
     };
 
-    // PERFORMANCE: Create the proxy exactly once
-    const crudProxy = new Proxy(capturedCrud, {
+    return new Proxy(capturedCrud, {
       get(target, prop, receiver) {
         if (typeof prop === "string" && prop in wrappedMethods) {
           return wrappedMethods[prop as keyof ICrudAdapter];
@@ -208,39 +150,11 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
+  };
 
-    Object.defineProperty(adapter, "crud", {
-      get(): ICrudAdapter {
-        return crudProxy;
-      },
-    });
-  }
-
-  // --- Wrap Media Operations ---
-  let originalMedia: IMediaAdapter | undefined;
-  if (Object.hasOwn(adapter, "media")) {
-    originalMedia = adapter.media;
-  } else {
-    let proto = Object.getPrototypeOf(adapter);
-    while (proto) {
-      const desc = Object.getOwnPropertyDescriptor(proto, "media");
-      if (desc) {
-        if (desc.get) {
-          originalMedia = desc.get.call(adapter);
-        } else {
-          originalMedia = desc.value;
-        }
-        break;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-  }
-
-  if (originalMedia) {
-    const capturedMedia = originalMedia;
+  // --- Helper: Wrap Media Operations ---
+  const wrapMedia = (capturedMedia: IMediaAdapter): IMediaAdapter => {
     const originalFiles = capturedMedia.files;
-
-    // PERFORMANCE: Define wrapped files methods once
     const wrappedFiles: Partial<IMediaAdapter["files"]> = {
       upload: async (...args) => {
         const res = await originalFiles.upload(...args);
@@ -282,7 +196,6 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
       },
     };
 
-    // PERFORMANCE: Create files proxy once
     const filesProxy = new Proxy(originalFiles, {
       get(fTarget, fProp, fReceiver) {
         if (typeof fProp === "string" && fProp in wrappedFiles) {
@@ -293,21 +206,73 @@ export async function wrapAdapterWithWebhooks(adapter: IDBAdapter): Promise<IDBA
       },
     });
 
-    // PERFORMANCE: Create media proxy once
-    const mediaProxy = new Proxy(capturedMedia, {
+    return new Proxy(capturedMedia, {
       get(target, prop, receiver) {
-        if (prop === "files") {
-          return filesProxy;
-        }
+        if (prop === "files") return filesProxy;
         const value = Reflect.get(target, prop, receiver);
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
+  };
 
-    Object.defineProperty(adapter, "media", {
-      get(): IMediaAdapter {
-        return mediaProxy;
+  // --- Initial Wrapping for CRUD ---
+  let originalCrud: ICrudAdapter | undefined;
+  if (Object.hasOwn(adapter, "crud")) {
+    originalCrud = adapter.crud;
+  } else {
+    let proto = Object.getPrototypeOf(adapter);
+    while (proto) {
+      const desc = Object.getOwnPropertyDescriptor(proto, "crud");
+      if (desc) {
+        originalCrud = desc.get ? desc.get.call(adapter) : desc.value;
+        break;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+  }
+
+  if (!originalCrud) {
+    const internalAdapter = adapter as unknown as Record<string, ICrudAdapter>;
+    originalCrud = internalAdapter._crud || internalAdapter._cachedCrud;
+  }
+
+  if (originalCrud) {
+    let crudProxy = wrapCrud(originalCrud);
+    Object.defineProperty(adapter, "crud", {
+      get: () => crudProxy,
+      set: (v: ICrudAdapter) => {
+        crudProxy = wrapCrud(v);
       },
+      configurable: true,
+      enumerable: true,
+    });
+  }
+
+  // --- Initial Wrapping for Media ---
+  let originalMedia: IMediaAdapter | undefined;
+  if (Object.hasOwn(adapter, "media")) {
+    originalMedia = adapter.media;
+  } else {
+    let proto = Object.getPrototypeOf(adapter);
+    while (proto) {
+      const desc = Object.getOwnPropertyDescriptor(proto, "media");
+      if (desc) {
+        originalMedia = desc.get ? desc.get.call(adapter) : desc.value;
+        break;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+  }
+
+  if (originalMedia) {
+    let mediaProxy = wrapMedia(originalMedia);
+    Object.defineProperty(adapter, "media", {
+      get: () => mediaProxy,
+      set: (v: IMediaAdapter) => {
+        mediaProxy = wrapMedia(v);
+      },
+      configurable: true,
+      enumerable: true,
     });
   }
 

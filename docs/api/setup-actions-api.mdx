@@ -6,7 +6,7 @@ order: 10
 icon: "mdi:cog"
 author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-03-27"
+updated: "2026-03-28"
 tags:
   - "api"
   - "configuration"
@@ -29,7 +29,7 @@ SveltyCMS utilizes **SvelteKit Server Actions** (often referred to as "Remote Fu
 
 ## Setup Server Actions
 
-These actions are defined in `src/routes/setup/+page.server.ts`.
+These actions are defined in `src/routes/setup/+page.server.ts`, but heavily delegate driver execution and database logic to the tree-shakeable `setup-service.server.ts` service.
 
 ### 1. `testDatabase`
 
@@ -39,9 +39,8 @@ Tests the database connection settings.
 
 **Form Data:**
 
-| Field    | Type        | Description                      |
-| -------- | ----------- | -------------------------------- |
 | `config` | JSON String | Stringified configuration object |
+| `createIfMissing` | boolean | Automatically create the database if possible |
 
 **Config Object:**
 

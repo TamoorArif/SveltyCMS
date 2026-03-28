@@ -1,4 +1,4 @@
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { Locale } from "@src/paraglide/runtime";
 import { logger } from "@utils/logger.server";
 import { SvelteMap } from "svelte/reactivity";

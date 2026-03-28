@@ -9,8 +9,8 @@ Updated to use the modern Content Context and modular navigation engine.
 // Components
 import TreeView from "@src/components/system/tree-view.svelte";
 import type { NavigationNode, StatusType } from "@src/content/types";
-import { sortContentNodes } from "@src/content/content-utils";
-import { useContent } from "@src/content/content-context.svelte";
+import { sortContentNodes } from "@src/content";
+import { useContent } from "@src/content";
 
 // Paraglide Messages
 import {

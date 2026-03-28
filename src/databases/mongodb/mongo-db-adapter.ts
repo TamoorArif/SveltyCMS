@@ -161,7 +161,7 @@ export class MongoDBAdapter implements IDBAdapter {
         error: {
           code: "DB_CONNECTION_FAILED",
           message: err.message,
-          originalCode: err.code || err.originalError?.code,
+          originalCode: err.code || err.errno || err.originalError?.code,
           details: err,
         },
       };

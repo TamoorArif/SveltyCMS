@@ -11,7 +11,7 @@
  * - integration with content manager services
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 

@@ -12,7 +12,7 @@
  */
 
 // Auth
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 // Types
 import { type StatusType, StatusTypes } from "@src/content/types";
 import type { BaseEntity, DatabaseId } from "@src/databases/db-interface";

@@ -15,7 +15,7 @@
  * - Content Versioning is cached
  */
 
-import type { NavigationNode } from "@src/content/content-manager";
+import type { NavigationNode } from "@src/content";
 import type { Locale } from "@src/paraglide/runtime";
 import { getPrivateSettingSync, loadSettingsCache } from "@src/services/settings-service";
 import { version } from "../../package.json";
@@ -85,7 +85,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   const contentLanguage = (cookies.get("contentLanguage") as Locale) ?? defaultContentLanguage;
 
   // Content System Hydration with error handling for preview mode
-  const { contentManager } = await import("@src/content/content-manager");
+  const { contentManager } = await import("@src/content");
   let navigationStructure: NavigationNode[] = [];
   let contentNodes: any[] = [];
   let contentVersion = 0;

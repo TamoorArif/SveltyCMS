@@ -15,7 +15,7 @@
  */
 
 // Content Management
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { CollectionEntry, Schema } from "@src/content/types";
 // Database adapter
 import { dbAdapter } from "@src/databases/db";

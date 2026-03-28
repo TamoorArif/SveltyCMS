@@ -1,13 +1,16 @@
 <!--
-@file src/routes/setup/EmailConfig.svelte
-@component **Optional SMTP Configuration with Auto-Detection step for SveltyCMS setup wizard**
+@file src/routes/setup/email-config.svelte
+@component
+**Step 4 (Optional): SMTP Infrastructure configuration.**
+Provides a guided workflow for configuring system-wide email notifications with provider presets and real-time verification.
 
 ### Features:
-- Optional step - can be skipped without blocking setup
-- Tests SMTP connection before proceeding
-- Sends test email to admin's email address
-- Saves configuration to database on success
-- Clear explanation of why SMTP is needed
+- SMTP provider presets (Gmail, Outlook, SendGrid, Mailgun)
+- intelligent server/port auto-detection
+- integrated SMTP connectivity testing
+- test email delivery verification
+- secure credential management with visibility toggles
+- detailed troubleshooting for common mail server issues
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";

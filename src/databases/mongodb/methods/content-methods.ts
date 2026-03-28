@@ -276,6 +276,7 @@ export class MongoContentMethods {
         // Wrap filter with safeQuery to enforce tenant context
         const secureFilter = safeQuery(baseFilter as any, tenantId, {
           bypassTenantCheck: options?.bypassTenantCheck,
+          includeDeleted: true, // IMPORTANT: Include deleted items to ensure we find existing nodes regardless of status
         }) as MongoQueryFilter<ContentNode>;
 
         // If we are filtering by _id, we don't need to set it on insert

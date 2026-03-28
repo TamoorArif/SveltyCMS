@@ -160,17 +160,17 @@ export class CrudModule {
         const table = this.core.getTable(collection);
         const id = (data as Partial<T>)._id || (utils.generateId() as DatabaseId);
         const now = new Date(nowISODateString());
-        const values = {
+        const values = utils.convertISOToDates({
           ...data,
           _id: id,
           tenantId: tenantId || (data as any).tenantId,
           createdAt: now,
           updatedAt: now,
-        };
+        } as Record<string, unknown>);
 
         await this.db
           .insert(table as unknown as import("drizzle-orm/sqlite-core").SQLiteTable)
-          .values(values as unknown as Record<string, unknown>);
+          .values(values as Record<string, unknown>);
 
         const [result] = await this.db
           .select()
@@ -205,9 +205,14 @@ export class CrudModule {
           | undefined;
         const now = new Date(nowISODateString());
 
+        const values = utils.convertISOToDates({ ...data, updatedAt: now } as Record<
+          string,
+          unknown
+        >);
+
         await this.db
           .update(table as unknown as import("drizzle-orm/sqlite-core").SQLiteTable)
-          .set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+          .set(values as Record<string, unknown>)
           .where(where);
 
         const [result] = await this.db
@@ -381,16 +386,18 @@ export class CrudModule {
         }
         const table = this.core.getTable(collection);
         const now = new Date(nowISODateString());
-        const values = data.map((d) => ({
-          ...d,
-          _id: (d as any)._id || (utils.generateId() as DatabaseId),
-          tenantId: tenantId || (d as any).tenantId,
-          createdAt: now,
-          updatedAt: now,
-        }));
+        const values = data.map((d) =>
+          utils.convertISOToDates({
+            ...d,
+            _id: (d as any)._id || (utils.generateId() as DatabaseId),
+            tenantId: tenantId || (d as any).tenantId,
+            createdAt: now,
+            updatedAt: now,
+          } as Record<string, unknown>),
+        );
         await this.db
           .insert(table as unknown as import("drizzle-orm/sqlite-core").SQLiteTable)
-          .values(values as unknown as Record<string, unknown>[]);
+          .values(values as Record<string, unknown>[]);
 
         const ids = values.map((v) => v._id as string);
         const results = await this.db
@@ -423,9 +430,13 @@ export class CrudModule {
           | import("drizzle-orm").SQL
           | undefined;
         const now = new Date(nowISODateString());
+        const values = utils.convertISOToDates({ ...data, updatedAt: now } as Record<
+          string,
+          unknown
+        >);
         const result = await this.db
           .update(table as unknown as import("drizzle-orm/sqlite-core").SQLiteTable)
-          .set({ ...data, updatedAt: now } as unknown as Record<string, unknown>)
+          .set(values as Record<string, unknown>)
           .where(where);
         return { modifiedCount: (result as any).changes };
       }, "CRUD_UPDATE_MANY_FAILED")

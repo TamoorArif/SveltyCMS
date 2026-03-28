@@ -5,7 +5,7 @@
  * Security: Protected by hooks, admin-only.
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 
 // Unified Error Handling
@@ -22,7 +22,7 @@ export const GET = apiHandler(async ({ url, locals }) => {
 
   const children = contentManager.getNodeChildren(parentId, tenantId);
 
-  const navigationChildren = children.map((node) => ({
+  const navigationChildren = children.map((node: any) => ({
     _id: node._id,
     name: node.name,
     path: node.path,

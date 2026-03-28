@@ -14,7 +14,7 @@
 
 import { modifyRequest } from "@api/collections/modify-request";
 // Auth & Content
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { FieldInstance } from "@src/content/types";
 // Types
 import type { BaseEntity, CollectionModel, DatabaseId } from "@src/databases/db-interface";

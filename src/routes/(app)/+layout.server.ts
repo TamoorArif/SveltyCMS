@@ -15,7 +15,7 @@
  * - Content Versioning is cached
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { User } from "@src/databases/auth/types";
 import { auth } from "@src/databases/db";
 import { DEFAULT_THEME } from "@src/databases/theme-manager";

@@ -16,7 +16,7 @@
  */
 
 // Auth
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { getPrivateSettingSync } from "@src/services/settings-service";
 // Token Engine
 import { replaceTokens } from "@src/services/token/engine";

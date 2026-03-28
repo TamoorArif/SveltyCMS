@@ -263,6 +263,17 @@ function updateStatus(data: VersionApiResponse) {
 
 // Fetch version with retry logic
 async function checkVersion(retry = 0): Promise<void> {
+    if (isSetupRoute || isLoginRoute) {
+        isLoading = false;
+        error = null;
+        // Just show the installed version as 'current' for the wizard UI
+        githubVersion = pkg;
+        versionStatusMessage = "System setup in progress";
+        statusIcon = "mdi:check-circle";
+        statusSeverity = "success";
+        return;
+    }
+
 	if (isLoading && retry === 0) {
 		return; // Prevent duplicate requests
 	}

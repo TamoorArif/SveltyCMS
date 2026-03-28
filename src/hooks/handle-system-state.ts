@@ -112,7 +112,7 @@ export const resetInitializationState = () => {
 
 export const handleSystemState: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
-  const setupComplete = isSetupComplete() || process.env.TEST_MODE === "true";
+  const setupComplete = isSetupComplete();
 
   let systemState = getSystemState();
 

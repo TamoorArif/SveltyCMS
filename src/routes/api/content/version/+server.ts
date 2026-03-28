@@ -5,7 +5,7 @@
  * Security: Protected by hooks, admin-only.
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 
 // Unified Error Handling

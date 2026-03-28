@@ -1,10 +1,23 @@
 <!--
-@file src/routes/setup/SetupCardHeader.svelte
-@description Header component for the main content card.
-Displays the current step title and icon, and a reset button.
+@file src/routes/setup/setup-card-header.svelte
+@component
+**Internal header for the setup wizard content card.**
+Displays the contextual title, dynamic icon, and global reset controls for the current step.
+
+### Props
+- `currentStep` (number): The active step index (0-indexed).
+- `steps` (Array): Collection of step metadata (labels, icons).
+- `onreset` (function): Callback for triggering a global state reset.
+
+### Features:
+- dynamic icon synchronization based on step index
+- integrated state reset controls with tooltips
+- responsive layout with standardized typography
+- accessibility-first ARIA labeling
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";
+import { setup_reset_data } from "@src/paraglide/messages";
 
 // Using iconify-icon web component
 const { currentStep, steps, onreset = () => {} } = $props();
@@ -25,15 +38,15 @@ const icons = $derived([
 		{/if}
 		{steps[currentStep]?.label || 'Loading...'}
 	</h2>
-	<SystemTooltip title="Reset data">
+	<SystemTooltip title={setup_reset_data()}>
 		<button
 			onclick={() => onreset()}
 			type="button"
 			class="flex items-center dark:text-secondary-50 preset-outlined btn-sm rounded"
-			aria-label="Reset data"
+			aria-label={setup_reset_data()}
 		>
 			<iconify-icon icon="mdi:backup-restore" width={24} class="mr-1"></iconify-icon>
-			<span class="">Reset Data</span>
+			<span class="">{setup_reset_data()}</span>
 		</button>
 	</SystemTooltip>
 </div>

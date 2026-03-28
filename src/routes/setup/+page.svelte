@@ -1,7 +1,14 @@
 <!--
 @file src/routes/setup/+page.svelte
 @component
-**Professional multi-step setup wizard for SveltyCMS**
+**The main orchestrator component for the SveltyCMS Setup Wizard.**
+
+### Features:
+- multi-step wizard navigation
+- real-time localized form validation (Valibot)
+- integrated setup state management (runes)
+- solution preset selection & dependency detection
+- database connection & SMTP verification flows
 -->
 <script lang="ts">
 // Skeleton v4
@@ -30,6 +37,10 @@ import {
 	setup_step_email_desc,
 	setup_step_system,
 	setup_step_system_desc,
+	setup_reset_data,
+	db_error_reset_confirm,
+	common_confirm_yes,
+	common_confirm_no,
 } from "@src/paraglide/messages";
 import { locales as availableLocales, getLocale } from "@src/paraglide/runtime";
 // Stores
@@ -75,7 +86,7 @@ let currentLanguageTag = $state(getLocale());
 
 // --- 4. LIFECYCLE HOOKS ---
 onMount(() => {
-	loadStore();
+	loadStore(data.origin);
 	initialDataSnapshot = JSON.stringify(wizard);
 	setupPersistenceFn();
 
@@ -239,8 +250,10 @@ function selectLanguage(lang: string) {
 					{steps}
 					onreset={() => {
 						showConfirm({
-							title: 'Reset Setup Data',
-							body: 'Are you sure you want to clear all setup data? This cannot be undone.',
+							title: setup_reset_data(),
+							body: db_error_reset_confirm(),
+							confirmText: common_confirm_yes(),
+							cancelText: common_confirm_no(),
 							onConfirm: () => clearStore()
 						});
 					}}

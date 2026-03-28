@@ -1,24 +1,29 @@
 /**
  * @file src/routes/setup/seed.ts
- * @description Functions for seeding the database with initial data (settings, themes, collections)
- * during the setup process.
+ * @description
+ * Database seeding engine for the SveltyCMS Setup Wizard.
+ * Handles the initial population of roles, settings, themes, and collection schemas.
  *
- * This replaces the static configuration files with database settings.
- * Uses database-agnostic interfaces for compatibility across different database engines.
+ * Responsibilities include:
+ * - Seeding default system and content languages from `project.inlang/settings.json`.
+ * - Initializing core system settings and preferences.
+ * - Creating default roles and permissions (Admin, Editor, etc.).
+ * - Populating initial database schemas from compiled collection files.
+ * - Generating the initial system content structure and category nodes.
  *
- * Collection Seeding Strategy:
- * - seedCollectionsForSetup(): Lightweight version for setup that directly reads compiled
- * collections from filesystem and creates models. Bypassescontent-managerto avoid
- * global dbAdapter dependency issues during setup mode.
- * - This allowscontent-managerto have collections pre-cached when system fully initializes,
- * resulting in faster redirects and better UX after setup completion.
+ * ### Features:
+ * - database-agnostic seeding patterns
+ * - filesystem-to-database schema migration
+ * - demo content generation for starter presets
+ * - idempotent role and theme creation
+ * - parallelized seeding for performance
  */
 
 // Import inlang settings directly (TypeScript/SvelteKit handles JSON imports)
 import inlangSettings from "@root/project.inlang/settings.json";
-import { scanCompiledCollections } from "@src/content/content-reconciler/scan-files.server";
+import { scanCompiledCollections } from "@src/content/content-service.server";
 import type { ContentNode, DatabaseId, Schema } from "@src/content/types";
-import { generateCategoryNodesFromPaths } from "@src/content/content-utils";
+import { generateCategoryNodesFromPaths } from "@src/content";
 import { getAllPermissions } from "@src/databases/auth";
 import { defaultRoles as importedDefaultRoles } from "@src/databases/auth/default-roles";
 import type { DatabaseAdapter, Theme } from "@src/databases/db-interface";
@@ -475,7 +480,7 @@ export async function initSystemFromSetup(
   const [seedResults] = await Promise.all([
     (async () => {
       // NEW: UseContentManager for unified seeding
-      const { contentManager } = await import("@src/content/content-manager");
+      const { contentManager } = await import("@src/content");
       await contentManager.initialize(tenantId, false, adapter);
 
       if (isDemoSeed) {
@@ -565,15 +570,8 @@ export async function initSystemFast(
       // Fallback: the next request will trigger a cache load anyway
     }
 
-    // NEW: Pre-register collection models viaContentManager
-    // This creates the database tables/collections pre-emptively
-    try {
-      logger.info("📦 Pre-registering collection models...");
-      const { contentManager } = await import("@src/content/content-manager");
-      await contentManager.initialize(tenantId, false, adapter);
-    } catch (cmError) {
-      logger.warn("⚠️ContentManager pre-registration failed:", cmError);
-    }
+    // NEW: System monitor and heartbeat will be started after setup is fully complete
+    // to avoid background noise during orchestration.
 
     logger.info(
       `✅ Critical system initialization completed${tenantId ? ` for tenant ${tenantId}` : ""}`,
@@ -585,7 +583,7 @@ export async function initSystemFast(
     if (!adapter) {
       return;
     }
-    const { contentManager } = await import("@src/content/content-manager");
+    const { contentManager } = await import("@src/content");
     await contentManager.initialize(tenantId, false, adapter);
   };
 

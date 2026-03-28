@@ -131,7 +131,7 @@ const initialAdminUser: AdminUser = {
 };
 const initialSystemSettings: SystemSettings = {
   siteName: "SveltyCMS",
-  hostProd: "https://localhost:5173",
+  hostProd: "http://localhost:4173",
   defaultSystemLanguage: "en",
   systemLanguages: ["en", "de"], // Will be populated from DB after seeding (reads from settings.json)
   defaultContentLanguage: "en",
@@ -223,6 +223,7 @@ function createSetupStore() {
     successMessage: "",
     showDbDetails: false,
     // Seeding status
+    isSeeded: false,
     isSeeding: false,
     seedingProgress: 0,
     seedingError: null as string | null,
@@ -473,6 +474,11 @@ function createSetupStore() {
       return false;
     }
 
+    if (wizard.isSeeded) {
+      logger.info("[SetupStore] Database already seeded, skipping");
+      return true;
+    }
+
     wizard.isLoading = true;
 
     try {
@@ -502,6 +508,7 @@ function createSetupStore() {
 
         // The seeding is now parallelized on backend, no polling needed
         wizard.isSeeding = false;
+        wizard.isSeeded = true;
         wizard.seedingProgress = 100;
 
         return true;
@@ -688,6 +695,7 @@ function createSetupStore() {
       errorMessage: "",
       successMessage: "",
       showDbDetails: false,
+      isSeeded: false,
     };
 
     Object.assign(wizard, initialState);
@@ -700,8 +708,20 @@ function createSetupStore() {
   }
 
   // --- LOAD METHOD ---
-  function load() {
+  function load(serverOrigin?: string) {
+    // Normalize localhost vs 127.0.0.1 for local dev experience
+    if (serverOrigin && (serverOrigin.includes("127.0.0.1:4173") || serverOrigin.includes("127.0.0.1:5173"))) {
+      serverOrigin = serverOrigin.replace("127.0.0.1", "localhost");
+    }
+
     if (isLoaded || !storage) {
+      // Still apply origin if provided late
+      if (serverOrigin && wizard.systemSettings.hostProd === initialSystemSettings.hostProd) {
+        wizard.systemSettings.hostProd = serverOrigin;
+        if (wizard.systemSettings.siteName === initialSystemSettings.siteName) {
+           wizard.systemSettings.siteName = `SveltyCMS (${new URL(serverOrigin).hostname})`;
+        }
+      }
       return;
     }
     try {
@@ -749,6 +769,20 @@ function createSetupStore() {
       wizard.currentStep = Number.parseInt(storage.getItem(KEYS.step) || "0", 10);
       wizard.highestStepReached = Number.parseInt(storage.getItem(KEYS.highestStep) || "0", 10);
       wizard.dbTestPassed = storage.getItem(KEYS.dbTest) === "true";
+
+      // Apply server origin for new or unconfigured setups
+      if (serverOrigin && (wizard.systemSettings.hostProd === initialSystemSettings.hostProd || wizard.systemSettings.hostProd.includes("127.0.0.1"))) {
+        const origin = serverOrigin.replace("127.0.0.1", "localhost");
+        wizard.systemSettings.hostProd = origin;
+        // Also update siteName if it's default
+        if (wizard.systemSettings.siteName === initialSystemSettings.siteName) {
+          try {
+            wizard.systemSettings.siteName = `SveltyCMS (${new URL(origin).hostname})`;
+          } catch {
+            wizard.systemSettings.siteName = "SveltyCMS";
+          }
+        }
+      }
 
       // Sanity check
       if (wizard.currentStep > 0 && !wizard.dbTestPassed) {

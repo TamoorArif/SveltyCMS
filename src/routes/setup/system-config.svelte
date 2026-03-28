@@ -1,15 +1,22 @@
 <!--
-@file src/routes/setup/SystemConfig.svelte
+@file src/routes/setup/system-config.svelte
 @component
-**System configuration step**
+**Step 3: Core system and localization configuration.**
+Handles global settings including project blueprints, site identity, multi-language support, and performance optimizations.
 
-Features:
-- Project Blueprint selection
-- Basic site settings (Site Name, Prod URL, Timezone)
-- Media storage configuration
-- Language preferences
-- Performance & Mode toggles
+### Props
+- `systemSettings` (SystemSettings): Core configuration state (bindable).
+- `validationErrors` (Record<string, string>): Server-side validation feedback.
+- `redisAvailable` (boolean): Flag indicating local Redis presence (bindable).
 
+### Features:
+- project blueprint integration with `PresetSelector`
+- real-time localized site metadata validation (Valibot)
+- intelligent timezone auto-detection (Intl API)
+- multi-engine media storage configuration (Local, S3, R2, Cloudinary)
+- comprehensive i18n management (System & Content locales)
+- dynamic Redis performance optimization & connectivity testing
+- demo mode & multi-tenancy dependency orchestration
 -->
 <script lang="ts">
 import Autocomplete from "@src/components/autocomplete.svelte";

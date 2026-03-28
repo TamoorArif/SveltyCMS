@@ -1,6 +1,6 @@
 /**
- * @file tests/bun/api/setup-utils.test.ts
- * @description Unit tests for setup utility functions.
+ * @file tests/integration/api/setup-utils.test.ts
+ * @description Integration tests for setup utility functions.
  *
  * Tests the core logic for database connection string building and error classification
  * used during the initial setup process.

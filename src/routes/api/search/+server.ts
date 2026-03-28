@@ -18,7 +18,7 @@ import { json } from "@sveltejs/kit";
 // Auth
 
 import { modifyRequest } from "@api/collections/modify-request";
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 // Databases & Api
 import { dbAdapter } from "@src/databases/db";
 import type { CollectionModel } from "@src/databases/db-interface";

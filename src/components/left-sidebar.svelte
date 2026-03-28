@@ -16,7 +16,7 @@ import Slot from "@src/components/system/slot.svelte";
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";
 import ThemeToggle from "@src/components/theme-toggle.svelte";
 import VersionCheck from "@src/components/version-check.svelte";
-import { useContent } from "@src/content/content-context.svelte";
+import { useContent } from "@src/content";
 
 // Paraglide Messages
 import {

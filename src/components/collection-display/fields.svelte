@@ -44,7 +44,7 @@ import {
 	collectionValue,
 	setCollectionValue,
 } from "@src/stores/collection-store.svelte";
-import { useContent } from "@src/content/content-context.svelte";
+import { useContent } from "@src/content";
 import { publicEnv } from "@src/stores/global-settings.svelte";
 import {
 	contentLanguage,

@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 (globalThis as any).process.env.NODE_ENV = "test";
 
 // 1. Mock dependencies BEFORE importing handlers
-vi.mock("@src/content/content-manager", () => ({
+vi.mock("@src/content", () => ({
   contentManager: {
     getCollections: vi.fn(() => Promise.resolve([])),
   },
@@ -55,7 +55,7 @@ const { POST: updateStatus } = await import("@src/routes/api/widgets/status/+ser
 const { GET: validateWidgets } = await import("@src/routes/api/widgets/validate/+server");
 const { POST: syncWidgets } = await import("@src/routes/api/widgets/sync/+server");
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 
 describe("Widget API Security - IDOR and Tenant Isolation", () => {
   const mockUser = { _id: "user1", role: "admin" };

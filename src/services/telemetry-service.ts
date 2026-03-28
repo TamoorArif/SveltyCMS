@@ -198,7 +198,7 @@ export const telemetryService = {
           }
 
           // 4. Content Dependency
-          const { contentManager } = await import("@src/content/content-manager");
+          const { contentManager } = await import("@src/content");
 
           if (dbAdapter.ensureContent) {
             try {

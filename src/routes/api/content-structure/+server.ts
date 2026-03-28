@@ -14,7 +14,7 @@
 
 import type { ContentNodeOperation } from "@root/src/content/types";
 // Auth
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 // Redis
 import { cacheService } from "@src/databases/cache/cache-service";
 import { dbAdapter } from "@src/databases/db";

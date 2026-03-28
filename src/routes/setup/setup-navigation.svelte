@@ -1,15 +1,26 @@
 <!--
-@file src/routes/setup/SetupNavigation.svelte
-@component **Footer navigation component for the main content card**
+@file src/routes/setup/setup-navigation.svelte
+@component
+**Universal navigation footer for the SveltyCMS Setup Wizard.**
+Manages the step-by-step progression, state-aware button controls, and real-time database seeding progress visualization.
 
-Features:
-- Previous button
-- Next button
-- Complete button
-- Step indicator
-- Loading state
-- Error state	
+### Props
+- `currentStep` (number): The active step index.
+- `totalSteps` (number): Total number of configuration steps.
+- `canProceed` (boolean): Flag to enable/disable the 'Next' button based on validation.
+- `isLoading` (boolean): UI loading state during asynchronous operations.
+- `isSeeding` (boolean): Flag indicating background database seeding is active.
+- `seedingProgress` (number): Percentage of seeding completion (0-100).
+- `onprev` (function): Navigation callback for the previous step.
+- `onnext` (function): Navigation callback for the next step.
+- `oncomplete` (function): Finalization callback for the review step.
 
+### Features:
+- state-reactive navigation controls (Prev/Next/Complete)
+- animated progress bar for background seeding tasks
+- localized button labels and progress messaging
+- loading state indicators with spinners
+- accessibility-first ARIA progress and button labeling
 -->
 <script lang="ts">
 // Components

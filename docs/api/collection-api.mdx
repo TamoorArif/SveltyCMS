@@ -58,7 +58,7 @@ All mutations require an `Authorization: Bearer <token>` header and a valid `Con
 `/api/collections/[collectionId]`
 
 > [!NOTE]
-> Use the **Internal ID** (e.g., `23d772dd3783492...`) for `[collectionId]`, which you can find in the Collection list or the Settings JSON.
+> Use the **Internal ID** (e.g., `23d772dd3783492...`) for `[collectionId]`, which you can find in the Collection list or retrieve via the **Content Manager** (`contentManager.getCollectionById`).
 
 ### A. Create Entry (POST)
 
@@ -174,3 +174,5 @@ All Collection API responses include performance telemetry.
 ---
 
 **Next Steps**: For read-only access, transition to the [Search API Reference](./search-api.mdx) or the [GraphQL Playground](./graphql-api.mdx).
+
+For structural operations and collection metadata, refer to the [Content System Architecture](../architecture/content-system.mdx).

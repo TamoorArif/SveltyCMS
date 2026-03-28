@@ -1,11 +1,15 @@
 <!--
-@file src/routes/setup/ConnectionStatus.svelte
-@description Real-time connection status indicator with detailed feedback
+@file src/routes/setup/connection-status.svelte
+@component
+**Real-time database connection status indicator.**
+Provides visual feedback, technical latency stats, and intelligent troubleshooting tips during the setup process.
 
-Features:
-- Real-time connection status updates
-- Success and error details with troubleshooting tips
-- Animated testing indicator
+### Features:
+- real-time localized status updates (ParaglideJS)
+- automated error classification & troubleshooting
+- database statistics reporting (collections, data size)
+- animated testing state indicators
+- error retry orchestration
 -->
 <script lang="ts">
 import {

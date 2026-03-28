@@ -4,7 +4,7 @@
  */
 
 // Utils
-import { contentManager } from "@root/src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { ISODateString } from "@src/content/types";
 // System Logger
 import { generateGoogleAuthUrl, getOAuthRedirectUri } from "@src/databases/auth/google-auth";

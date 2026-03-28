@@ -6,7 +6,7 @@
 import { json } from "@sveltejs/kit";
 import { apiHandler } from "@utils/api-handler";
 import { AppError } from "@utils/error-handling";
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { getPrivateSettingSync } from "@src/services/settings-service";
 import type { DatabaseId } from "@src/databases/db-interface";
 

@@ -1,7 +1,16 @@
 <!--
-@file src/routes/setup/DatabaseConfig.svelte
-@description Database configuration step component extracted from +page.svelte for maintainability.
-Provides DB type, host, port, name, user, password inputs, validation display, test button, and change warning.
+@file src/routes/setup/database-config.svelte
+@component
+**Step 1: Database infrastructure configuration.**
+Provides a comprehensive interface for connection strings, credential management, and real-time connectivity testing across multiple database engines.
+
+### Features:
+- multi-engine support (MongoDB, MariaDB, PostgreSQL, SQLite)
+- connection string parsing & auto-fill
+- specialized MongoDB Atlas helper UI
+- real-time connection status monitoring
+- automatic database creation (where supported)
+- driver dependency detection & status indicators
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";
@@ -356,14 +365,14 @@ $effect(() => {
 			</div>
 			<p class="mt-1 text-sm">MariaDB support via Drizzle is in beta. Please report any issues on GitHub.</p>
 		</div>
-	{:else if dbConfig.type === 'sqlite'}
+	<!-- {:else if dbConfig.type === 'sqlite'}
 		<div class="mb-6 rounded p-4 bg-warning-500 text-white">
 			<div class="flex items-center gap-2">
 				<iconify-icon icon="mdi:flask-outline" width="20" class="text-error-500"></iconify-icon>
 				<p class="font-semibold">SQLite - Beta</p>
 			</div>
 			<p class="mt-1 text-sm">SQLite support via Drizzle is in beta. Perfect for local dev and edge. Please report any issues on GitHub.</p>
-		</div>
+		</div> -->
 	{:else if dbConfig.type === 'mysql'}
 		<div class="mb-6 rounded border border-blue-200 bg-blue-50 p-4 text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
 			<p class="font-semibold">{setup_db_coming_soon()}</p>
@@ -398,9 +407,9 @@ $effect(() => {
 				<select id="db-type" bind:value={dbConfig.type} onchange={handleTypeChange} class="input rounded">
 					<option value="mongodb">MongoDB (localhost/Docker)</option>
 					<option value="mongodb+srv">MongoDB Atlas (SRV)</option>
-					<option value="mariadb">MariaDB (via Drizzle) (Beta)</option>
-					<option value="postgresql">PostgreSQL (via Drizzle) (Beta)</option>
-					<option value="sqlite">SQLite (via Drizzle) (Beta)</option>
+					<option value="mariadb">MariaDB (via Drizzle)</option>
+					<option value="postgresql">PostgreSQL (via Drizzle)</option>
+					<option value="sqlite">SQLite (via Drizzle)</option>
 				</select>
 
 				{#if isInstallingDriver}

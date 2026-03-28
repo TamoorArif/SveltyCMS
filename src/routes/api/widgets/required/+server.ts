@@ -2,7 +2,7 @@
  * @file src/routes/api/widgets/required/+server.ts
  * @description API endpoint for getting widgets required by collections
  */
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 // Unified Error Handling
 import { apiHandler } from "@utils/api-handler";

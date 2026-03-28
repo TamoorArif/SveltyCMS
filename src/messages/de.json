@@ -436,6 +436,7 @@
   "setup_step_system": "System",
   "setup_step_system_desc": "Konfigurieren der Systemeinstellungen",
   "setup_skip": "Überspringen",
+  "setup_reset_data": "Daten zurücksetzen",
   "setup_next": "Weiter",
   "setup_back": "Zurück",
   "setup_email_why_title": "Warum SMTP konfigurieren?",

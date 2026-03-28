@@ -40,7 +40,7 @@
  */
 
 // Core SveltyCMS services
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { User } from "@src/databases/auth/types";
 import { collectionService } from "@src/services/collection-service";
 import { getPublicSettingSync } from "@src/services/settings-service";

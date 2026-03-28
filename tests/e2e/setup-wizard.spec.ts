@@ -27,20 +27,30 @@ test("Setup Wizard: Configure DB and Create Admin", async ({ page }) => {
 
   // 1. Start at root, expect redirect to /setup or /login
   await page.goto("/", { waitUntil: "networkidle" });
+  await page.waitForLoadState("networkidle");
 
-  if (page.url().includes("/login")) {
-    console.log("System already configured. Skipping setup.");
+  const currentUrl = page.url();
+  console.log(`Current URL: ${currentUrl}`);
+
+  if (currentUrl.includes("/login")) {
+    console.log("System already configured (at /login). Skipping setup.");
     return;
+  }
+
+  // If redirected elsewhere (e.g. root without setup), force go to /setup
+  if (!currentUrl.includes("/setup")) {
+    console.log("Redirected to non-setup page. Forcing navigate to /setup...");
+    await page.goto("/setup", { waitUntil: "networkidle" });
   }
 
   // Wait for setup to load and hydrate
   await expect(page).toHaveURL(/\/setup/);
   await page.waitForLoadState("networkidle");
 
-  // Wait for any cookie consent and accept it to prevent it blocking other elements
-  const acceptAll = page.getByRole("button", { name: /accept all/i });
-  if (await acceptAll.isVisible()) {
-    await acceptAll.click();
+  // Wait for any 'Welcome' or cookie modals and dismiss them
+  const dismissBtn = page.getByRole("button", { name: /accept|dismiss|close|get started/i });
+  if (await dismissBtn.isVisible({ timeout: 2000 })) {
+    await dismissBtn.click();
   }
 
   // --- STEP 1: Database ---

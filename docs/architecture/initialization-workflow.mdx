@@ -534,7 +534,7 @@ graph TB
         A12[User: Admin Form] --> A13[Action: completeSetup]
         A13 --> A14[Create Admin + Session]
         A13 --> A15[Init Global System]
-        A13 --> A16[ContentManager Init]
+        A13 --> A16[Content System Init]
         A16 --> A17[READY State]
     end
 
@@ -589,7 +589,7 @@ graph TB
     N --> O[Action: completeSetup]
     O --> P[Create Admin User]
     O --> Q[Initialize Global System]
-    O --> R[Initialize ContentManager]
+    O --> R[Initialize Content System]
     O --> S[Set Session Cookie]
 
     S --> T[Redirect to CMS]
@@ -625,7 +625,7 @@ graph TB
     K --> O[Initialize Services]
 
     O --> P[READY State]
-    P --> Q[ContentManager Auto-Init]
+    P --> Q[Content System Auto-Init]
     Q --> R[Register Collections]
 
     style A fill:#f0f0f0,stroke:#333,stroke-width:3px
@@ -957,7 +957,7 @@ Called when user submits admin user form.
 └─────────────────────────────────────────────────────┘
                         ↓
 ┌─────────────────────────────────────────────────────┐
-│ 5. Initialize ContentManager                       │
+│ 5. Initialize Content System                       │
 │    - contentManager.initialize(undefined, true)    │
 │    - Loads collections from database               │
 │    - Builds content structure cache                │
@@ -1114,7 +1114,7 @@ export const schema = {
 └─────────────────────────────────────────────────────┘
                         ↓
 ┌─────────────────────────────────────────────────────┐
-│ ContentManager auto-initializes on first access    │
+│ Content System auto-initializes on first access    │
 │  - Scans compiledCollections                       │
 │  - Registers collection models in database         │
 │  - Builds content structure cache                  │
@@ -1240,7 +1240,7 @@ const schemaUuidTransformer =
 | Service           | Purpose                      | File                              |
 | ----------------- | ---------------------------- | --------------------------------- |
 | `dbAdapter`       | Database abstraction layer   | `src/databases/db.ts`             |
-| `ContentManager`  | Collection management        | `src/content/content-manager.ts`  |
+| `contentManager`  | Public system facade         | `src/content/index.ts`            |
 | `Auth`            | Authentication/authorization | `src/databases/auth/index.ts`     |
 | `SettingsService` | Settings cache management    | `src/services/settingsService.ts` |
 
@@ -1372,7 +1372,7 @@ sequenceDiagram
     participant U as User (Browser)
     participant API as Setup API
     participant DB as Database
-    participant CM as ContentManager
+    participant CS as Content System
 
     V->>V: Check private.ts (missing)
     V->>V: Create blank private.ts
@@ -1394,7 +1394,7 @@ sequenceDiagram
     U->>API: POST /setup?/completeSetup
     API->>DB: Create admin user + session
     API->>API: initializeWithFreshConfig()
-    API->>CM: Initialize ContentManager
+    API->>CS: Initialize Content System
     API->>API: Invalidate caches
     API-->>U: Setup complete + redirect + session cookie
 
@@ -1435,7 +1435,7 @@ sequenceDiagram
 
     CM->>V: Compilation complete
     V->>DB: Initialize database connection
-    V->>CM: Initialize ContentManager
+    V->>CS: Initialize Content System
     CM->>DB: Register collection models
 ```
 

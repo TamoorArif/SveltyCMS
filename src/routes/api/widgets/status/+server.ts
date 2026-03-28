@@ -11,7 +11,7 @@ import { json } from "@sveltejs/kit";
 import { apiHandler } from "@utils/api-handler";
 import { AppError } from "@utils/error-handling";
 import { logger } from "@utils/logger.server";
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 
 export const POST = apiHandler(async ({ locals, request }) => {
   const start = performance.now();

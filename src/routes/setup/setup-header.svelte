@@ -1,7 +1,22 @@
 <!--
-@file src/routes/setup/SetupHeader.svelte
-@component Enhanced Header component for the setup wizard.
-Middle-ground height (h-[38px]), fixed dropdown borders, and right-aligned mobile menu.
+@file src/routes/setup/setup-header.svelte
+@component
+**Global branding and utility header for the SveltyCMS Setup Wizard.**
+Maintains consistent brand identity while providing essential tools for language selection, accessibility, and theme management.
+
+### Props
+- `siteName` (string): The CMS instance name for branding.
+- `systemLanguages` (string[]): Available locales for the setup interface.
+- `currentLanguageTag` (string): The currently active locale.
+- `onselectLanguage` (function): Callback for switching the system language.
+
+### Features:
+- responsive branding with SVG logo animation support
+- real-time version checking and status indicators
+- localized language selector with search/filtering
+- integrated accessibility portal and shortcuts
+- persistent dark mode / light mode toggle
+- SEO-optimized semantic heading hierarchy
 -->
 <script lang="ts">
 // Skeleton V4

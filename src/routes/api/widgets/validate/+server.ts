@@ -2,7 +2,7 @@
  * @file src/routes/api/widgets/validate/+server.ts
  * @description API endpoint for validating collections and widget integrity
  */
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import { json } from "@sveltejs/kit";
 import { logger } from "@utils/logger.server";
 

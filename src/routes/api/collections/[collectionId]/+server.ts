@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import { modifyRequest } from "../modify-request";
 // Databases
 // Auth
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 // Types
 import type { FieldInstance } from "@src/content/types";
 import { cacheService } from "@src/databases/cache/cache-service";

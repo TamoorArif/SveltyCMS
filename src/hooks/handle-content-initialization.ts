@@ -4,8 +4,8 @@
  */
 
 import { redirect, type Handle } from "@sveltejs/kit";
-import { isBootstrapRoute } from "@utils/setup-check";
-import { contentManager } from "@src/content/content-manager";
+import { isBootstrapRoute, isSetupCompleteAsync } from "@utils/setup-check";
+import { contentManager } from "@src/content";
 import { logger } from "@utils/logger.server";
 
 export const handleContentInitialization: Handle = async ({ event, resolve }) => {
@@ -13,8 +13,19 @@ export const handleContentInitialization: Handle = async ({ event, resolve }) =>
   const { pathname } = url;
   const tenantId = locals.tenantId ?? null;
 
+  // --- Phase 1: Gated Initialization ---
+  // We only initialize the content system if setup is complete.
+  // This prevents unnecessary background polling and warnings during installation.
+  if (locals.__setupConfigExists === undefined) {
+    locals.__setupConfigExists = await isSetupCompleteAsync();
+  }
+
+  if (!locals.__setupConfigExists) {
+    logger.debug("[handleContentInitialization] System in SETUP mode. Skipping content initialization.");
+    return await resolve(event);
+  }
+
   // Initialize content system for the resolved tenant if not already ready
-  // Reconciliation is handled only on server startup or forced refresh
   if (!contentManager.isInitializedForTenant(tenantId)) {
     // Set skipReconciliation to false to ensure stale DB nodes are cleaned up
     const initPromise = contentManager.initialize(tenantId, false);

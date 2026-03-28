@@ -13,7 +13,7 @@ import {
 	setCollection,
 } from "@src/stores/collection-store.svelte";
 import { ui } from "@src/stores/ui-store.svelte";
-import { useContent } from "@src/content/content-context.svelte";
+import { useContent } from "@src/content";
 import { validationStore } from "@src/stores/store.svelte.ts";
 import { toast } from "@src/stores/toast.svelte.ts";
 import { widgetStoreActions } from "@src/stores/widget-store.svelte.ts";

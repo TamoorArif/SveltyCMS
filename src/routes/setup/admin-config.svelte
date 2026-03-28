@@ -1,24 +1,22 @@
 <!--
-@file src/routes/setup/AdminConfig.svelte
+@file src/routes/setup/admin-config.svelte
 @component
-**Administrator account setup step**
+**Step 2: Administrator account setup.**
+Handles the creation of the first system administrator with real-time validation and password strength indicators.
 
 ### Props
-- `adminUser`
-- `validationErrors`
-- `passwordRequirements`
-- `showAdminPassword`
-- `showConfirmPassword`
-- `toggleAdminPassword`
-- `toggleConfirmPassword`
-- `checkPasswordRequirements`
+- `adminUser` (object): Shared state for admin credentials.
+- `validationErrors` (object): Server-side validation feedback.
+- `passwordRequirements` (object): Boolean flags for individual requirement status.
+- `showAdminPassword` (boolean): Visibility toggle state.
+- `showConfirmPassword` (boolean): Visibility toggle state.
 
-### Features
-- Real-time validation
-- Password strength meter
-- Password visibility toggle
-- Form submission handling
-
+### Features:
+- real-time localized validation (Valibot)
+- dynamic password strength meter
+- interactive requirement checklist
+- password visibility toggles
+- automated field sanitization (trimming)
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";

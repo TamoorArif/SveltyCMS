@@ -1,15 +1,21 @@
 <!--
-@file src/routes/setup/ReviewConfig.svelte
-@summary
-SveltyCMS Setup Wizard – Review & Complete Step
+@file src/routes/setup/review-config.svelte
+@component
+**Step 5: Final configuration review.**
+Presents a comprehensive summary of all previous setup steps for final verification before system initialization.
 
-This component presents a summary of all configuration steps before finalizing the SveltyCMS setup. It allows the user to:
-- Review database configuration
-- Review administrator account details
-- Review system settings (site name, language, timezone, media folder)
-- Confirm all information before completing setup
+### Props
+- `adminUser` (AdminUser): Final administrator credentials.
+- `dbConfig` (DbConfig): Verified database connection details.
+- `systemSettings` (SystemSettings): Core CMS preferences.
+- `emailSettings` (EmailSettings): SMTP configuration state.
 
-
+### Features:
+- unified configuration summary view
+- secure credential redaction (masking)
+- interactive tooltips for cross-step verification
+- multi-tenant & demo mode status reporting
+- Redis state & connection monitoring
 -->
 <script lang="ts">
 import SystemTooltip from "@src/components/system/system-tooltip.svelte";

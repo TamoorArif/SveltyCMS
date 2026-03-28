@@ -132,6 +132,35 @@ export function convertDatesToISO<T extends Record<string, unknown>>(row: T): T 
   return result;
 }
 
+/**
+ * Convert ISO strings to Date objects for SQLite insertion/update.
+ * This fixes the "value.getTime is not a function" error in Drizzle's timestamp_ms mode.
+ */
+export function convertISOToDates<T extends Record<string, unknown>>(data: T): T {
+  if (!data) return data;
+  const result = { ...data } as any;
+  const dateFields = [
+    "createdAt",
+    "updatedAt",
+    "publishedAt",
+    "expires",
+    "expiresAt",
+    "nextRunAt",
+    "appliedAt",
+    "fetchedAt",
+  ];
+
+  for (const key of dateFields) {
+    if (result[key] !== undefined && typeof result[key] === "string") {
+      const d = new Date(result[key]);
+      if (!Number.isNaN(d.getTime())) {
+        result[key] = d;
+      }
+    }
+  }
+  return result;
+}
+
 // Convert array of MySQL rows dates to ISO strings
 export function convertArrayDatesToISO<T extends Record<string, unknown>>(rows: T[]): T[] {
   return rows.map((row) => convertDatesToISO(row));

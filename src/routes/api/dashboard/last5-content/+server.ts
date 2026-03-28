@@ -11,7 +11,7 @@
  * - **Multi-Tenant Safe:** All data lookups are scoped to the current tenant.
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { BaseEntity, DatabaseId, ISODateString } from "@src/content/types";
 import { dbAdapter } from "@src/databases/db";
 import { getPrivateSettingSync } from "@src/services/settings-service";

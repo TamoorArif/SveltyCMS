@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 // Collections
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import type { Schema } from "@src/content/types";
 // Auth
 // Use hasPermissionWithRoles and roles from locals, like the example pattern

@@ -3,7 +3,7 @@
  * @description API endpoint for PageSpeed Insights plugin
  */
 
-import { contentManager } from "@src/content/content-manager";
+import { contentManager } from "@src/content";
 import {
   fetchPageSpeedInsights,
   getCachedResult,

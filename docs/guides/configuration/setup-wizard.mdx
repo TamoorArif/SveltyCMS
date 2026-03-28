@@ -6,7 +6,7 @@ order: 2
 icon: "mdi:wizard-hat"
 author: "SveltyCMS Team"
 created: "2025-10-30"
-updated: "2026-03-27"
+updated: "2026-03-28"
 tags:
   - "setup"
   - "wizard"
@@ -130,10 +130,12 @@ WCAG 2.1 AA compliant features:
 
 ### Component Structure
 
-```
+```text
 src/routes/setup/
-├── +page.svelte              # Main orchestrator
-├── +page.server.ts           # Server-side load function
+├── +page.svelte               # Main orchestrator UI
+├── +page.server.ts            # Server-side actions and load function
+├── setup-service.server.ts    # Tree-shakeable DB driver and setup logic
+├── error-classifier.ts        # Consolidated DB error mapping and classification
 ├── database-config.svelte     # Step 1: Database setup
 ├── admin-config.svelte        # Step 2: Admin user
 ├── system-config.svelte       # Step 3: System settings

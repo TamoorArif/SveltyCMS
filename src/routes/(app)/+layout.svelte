@@ -62,8 +62,8 @@ import CommandBar from "@src/components/command-bar.svelte";
 import { afterNavigate, beforeNavigate } from "$app/navigation";
 import { page } from "$app/state";
 import type { ContentNode, Schema } from "../../content/types";
-import { setContentContext } from "@src/content/content-context.svelte";
-import { contentManager } from "@src/content/content-manager";
+import { setContentContext } from "@src/content";
+import { contentManager } from "@src/content";
 
 // =============================================
 // TYPE DEFINITIONS

@@ -83,7 +83,7 @@
     "format": "oxfmt --write .",
     "check:all": "vp check",
     "-- OTHER ----------------------------------------------": "",
-    "preview": "vp preview --port 4173 --host 127.0.0.1",
+    "preview": "vp preview --port 4173 --host localhost",
     "prepare": "git config core.hooksPath .githooks",
     "paraglide": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
     "translate": "npx @inlang/cli machine translate --project ./project.inlang",

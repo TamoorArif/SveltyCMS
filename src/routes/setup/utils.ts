@@ -1,13 +1,28 @@
 /**
  * @file src/routes/setup/utils.ts
- * @description Core utility functions for the setup process, including database connection helpers,
- * adapter factories, and validation logic.
+ * @description
+ * Low-level utility engine for the SveltyCMS Setup Wizard.
+ * Orchestrates database adapter life-cycles, connection validation, and technical error handling.
+ *
+ * Responsibilities include:
+ * - Dynamic loading and initialization of database adapters during setup mode.
+ * - Validating raw connection strings and configuration payloads.
+ * - Implementing engine-specific connection health checks (MongoDB, SQL).
+ * - Identifying and classifying technical dependencies (e.g., missing drivers).
+ * - Providing a unified interface for database-agnostic operations during setup.
+ *
+ * ### Features:
+ * - transient adapter factory patterns
+ * - cross-engine connection verification
+ * - structured error normalization
+ * - driver availability heuristics
+ * - server-side validation logic orchestration
  */
 
 import type { IDBAdapter } from "@src/databases/db-interface";
 import type { DatabaseConfig } from "@src/databases/schemas";
 import { logger } from "@utils/logger.server";
-import { SetupDatabaseError } from "./setup-database-error";
+import { SetupDatabaseError } from "./error-classifier";
 import { classifyDatabaseError } from "./error-classifier";
 
 /**
@@ -38,9 +53,14 @@ export function buildDatabaseConnectionString(config: DatabaseConfig): string {
         : "";
       let queryParams = "";
       if (isSrv) {
-        queryParams = "?retryWrites=true&w=majority";
+        queryParams = "retryWrites=true&w=majority";
       }
-      return `${protocol}://${user}${config.host}${port}/${config.name}${queryParams}`;
+      // Add authSource if explicitly provided in config (or if we'll add it later in setup)
+      if ((config as any).authSource) {
+        queryParams += (queryParams ? "&" : "") + `authSource=${(config as any).authSource}`;
+      }
+      const finalParams = queryParams ? `?${queryParams}` : "";
+      return `${protocol}://${user}${config.host}${port}/${config.name}${finalParams}`;
     }
     case "mariadb": {
       const port = config.port ? `:${config.port}` : ":3306";
@@ -59,8 +79,13 @@ export function buildDatabaseConnectionString(config: DatabaseConfig): string {
       return `postgresql://${user}${config.host}${port}/${config.name}`;
     }
     case "sqlite": {
-      const path = config.host.endsWith("/") ? config.host : `${config.host}/`;
-      return `${path}${config.name}`;
+      // Standardize SQLite placement under config/database/ unless an absolute path is provided
+      const name = config.name.endsWith(".sqlite") ? config.name : `${config.name}.sqlite`;
+      if (config.host && (config.host.startsWith("/") || config.host.startsWith("C:"))) {
+        const path = config.host.endsWith("/") ? config.host : `${config.host}/`;
+        return `${path}${name}`;
+      }
+      return `config/database/${name}`;
     }
     default: {
       const EXHAUSTIVE_CHECK: never = config.type;
@@ -181,77 +206,67 @@ async function setupMongoDB(
     if (config.password) connectionOptions.pass = config.password;
   }
 
-  try {
-    logger.info("Attempting MongoDB connection (Stage 1)...", {
-      correlationId,
-    });
-    let connectResult = await dbAdapter.connect(connectionString, connectionOptions);
+  // Multi-phase Authentication Strategy
+  // 1. Try as provided (default or user-specified authSource)
+  // 2. Try authSource: "admin"
+  // 3. Try authSource: [dbName]
+  const authSourcesToTry = ["DEFAULT", "admin", config.name];
+  let lastError: any = null;
 
-    let needsRetry = false;
-    if (!connectResult.success) {
-      const classified = classifyDatabaseError(connectResult.error);
-      if (
-        classified.classification === "AUTH_FAILED" &&
-        config.user &&
-        connectionOptions.authSource !== "admin"
-      ) {
-        needsRetry = true;
+  for (const source of authSourcesToTry) {
+    try {
+      if (source !== "DEFAULT") {
+        logger.info(`🔄 Retrying MongoDB with authSource: ${source}...`, { correlationId });
+        await dbAdapter.disconnect().catch(() => {});
+        
+        // Update config and rebuild connection string
+        const retryConfig = { ...config, authSource: source } as any;
+        connectionString = buildDatabaseConnectionString(retryConfig);
+        connectionOptions.authSource = source;
       } else {
-        throw new SetupDatabaseError(classified, connectResult.error);
+        logger.info("📡 Attempting initial MongoDB connection...", { correlationId });
       }
-    } else {
-      // Verify with a probe
-      const probeResult = await dbAdapter.crud.count(
-        "system_content_structure",
-        {},
-        { silent: true },
-      );
-      if (!probeResult.success) {
-        const classified = classifyDatabaseError(probeResult.error);
-        if (
-          classified.classification === "AUTH_FAILED" &&
-          config.user &&
-          connectionOptions.authSource !== "admin"
-        ) {
-          needsRetry = true;
-        } else {
-          throw new SetupDatabaseError(classified, probeResult.error);
+
+      const connectResult = await dbAdapter.connect(connectionString, connectionOptions);
+      if (!connectResult.success) {
+        lastError = connectResult.error;
+        const classified = classifyDatabaseError(lastError);
+        if (classified.classification === "AUTH_FAILED" && config.user) {
+           continue; // Try next authSource
         }
+        throw new SetupDatabaseError(classified, lastError);
       }
-    }
 
-    if (needsRetry) {
-      logger.info("Retrying MongoDB with authSource: admin...", {
-        correlationId,
-      });
-      await dbAdapter.disconnect();
-      connectionOptions.authSource = "admin";
-      connectResult = await dbAdapter.connect(connectionString, connectionOptions);
-
-      if (connectResult.success) {
-        const secondProbeResult = await dbAdapter.crud.count(
-          "system_content_structure",
-          {},
-          { silent: true },
-        );
-        if (secondProbeResult.success) return dbAdapter;
-        throw new SetupDatabaseError(
-          classifyDatabaseError(secondProbeResult.error),
-          secondProbeResult.error,
-        );
-      } else {
-        throw new SetupDatabaseError(
-          classifyDatabaseError(connectResult.error),
-          connectResult.error,
-        );
+      // Verify connection with a probe
+      const probeResult = await dbAdapter.crud.count("system_content_structure", {}, { silent: true });
+      if (probeResult.success) {
+        logger.info(`✅ MongoDB connection successful (authSource: ${source === "DEFAULT" ? (config as any).authSource || "implicit" : source})`);
+        return dbAdapter;
       }
-    }
 
-    return dbAdapter;
-  } catch (err) {
-    if (err instanceof SetupDatabaseError) throw err;
-    throw toSetupError(err, config);
+      const classifiedProbe = classifyDatabaseError(probeResult.error);
+      if (classifiedProbe.classification === "AUTH_FAILED" && config.user) {
+        lastError = probeResult.error;
+        continue;
+      }
+      throw new SetupDatabaseError(classifiedProbe, probeResult.error);
+
+    } catch (err) {
+      if (err instanceof SetupDatabaseError) {
+        if (err.classification === "AUTH_FAILED" && config.user) {
+          lastError = err;
+          continue;
+        }
+        throw err;
+      }
+      throw toSetupError(err, config);
+    }
   }
+
+  // If we reach here, all retries failed
+  throw lastError instanceof SetupDatabaseError 
+    ? lastError 
+    : toSetupError(lastError || new Error("Authentication failed after all retries"), config);
 }
 
 // Strategy: setup MariaDB adapter

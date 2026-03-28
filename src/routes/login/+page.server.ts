@@ -39,7 +39,7 @@ import type { PageServerLoad } from "./$types";
 // Removed googleapis import
 
 // Content Manager for redirects
-import { contentManager } from "@root/src/content/content-manager";
+import { contentManager } from "@src/content";
 // Utils
 import type { ISODateString } from "@src/content/types";
 // Stores
