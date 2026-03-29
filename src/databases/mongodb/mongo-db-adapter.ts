@@ -666,8 +666,28 @@ export class MongoDBAdapter implements IDBAdapter {
       drafts: {
         ...this.content.drafts,
         create: contentMethods.createDraft.bind(contentMethods),
+        createMany: (drafts: any[]) =>
+          Promise.all(drafts.map((d) => contentMethods.createDraft(d))).then((results) => ({
+            success: true as const,
+            data: results.map((r) => r.data).filter(Boolean) as ContentDraft[],
+          })),
+        update: (draftId: DatabaseId, data: any) =>
+          draftsRepo.update(draftId as string, data),
+        publish: (draftId: DatabaseId) =>
+          contentMethods.publishManyDrafts([draftId]).then(() => ({
+            success: true as const,
+            data: undefined,
+          })),
         getForContent: contentMethods.getDraftsForContent.bind(contentMethods),
-        publishMany: contentMethods.publishManyDrafts.bind(contentMethods),
+        publishMany: (draftIds: DatabaseId[]) =>
+          contentMethods.publishManyDrafts(draftIds).then((r) => ({
+            success: true as const,
+            data: { publishedCount: r.data?.modifiedCount ?? 0 },
+          })),
+        delete: (draftId: DatabaseId) =>
+          draftsRepo.delete(draftId as string),
+        deleteMany: (draftIds: DatabaseId[]) =>
+          draftsRepo.deleteMany({ _id: { $in: draftIds } } as any),
       },
       revisions: {
         ...this.content.revisions,
