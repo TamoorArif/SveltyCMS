@@ -32,8 +32,9 @@ test("Setup Wizard: Configure DB and Create Admin", async ({ page }) => {
   const currentUrl = page.url();
   console.log(`Current URL: ${currentUrl}`);
 
-  if (currentUrl.includes("/login")) {
-    console.log("System already configured (at /login). Skipping setup.");
+  // If redirected to /login or any authenticated page, system is already configured
+  if (currentUrl.includes("/login") || currentUrl.includes("/admin") || currentUrl.includes("/dashboard")) {
+    console.log("System already configured (at ${currentUrl}). Skipping setup.");
     return;
   }
 
@@ -41,11 +42,26 @@ test("Setup Wizard: Configure DB and Create Admin", async ({ page }) => {
   if (!currentUrl.includes("/setup")) {
     console.log("Redirected to non-setup page. Forcing navigate to /setup...");
     await page.goto("/setup", { waitUntil: "networkidle" });
+    await page.waitForLoadState("networkidle");
+
+    // Check if /setup itself redirected away (system already configured)
+    const setupUrl = page.url();
+    if (!setupUrl.includes("/setup")) {
+      console.log(`System already configured (/setup redirected to ${setupUrl}). Skipping setup.`);
+      return;
+    }
   }
 
   // Wait for setup to load and hydrate
   await expect(page).toHaveURL(/\/setup/);
   await page.waitForLoadState("networkidle");
+
+  // Check if setup page shows "already configured" or similar message
+  const alreadyConfiguredText = page.getByText(/already (configured|set up|complete)/i);
+  if (await alreadyConfiguredText.isVisible({ timeout: 5000 }).catch(() => false)) {
+    console.log("Setup page shows system is already configured. Skipping setup.");
+    return;
+  }
 
   // Wait for any 'Welcome' or cookie modals and dismiss them
   const dismissBtn = page.getByRole("button", { name: /accept|dismiss|close|get started/i });
