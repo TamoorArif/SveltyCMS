@@ -36,10 +36,18 @@ setup.describe("E2E Role-Based Setup", () => {
     }
     expect(seedResponse.ok()).toBeTruthy();
 
-    // 3. Perform login
+    // 3. Mark setup as complete so the login page shows SIGN IN instead of SIGN UP
+    const setupResponse = await page.request.post("/api/testing", {
+      data: { action: "setup" },
+    });
+    if (!setupResponse.ok()) {
+      console.warn(`[Setup] Force setup failed with status ${setupResponse.status()} (non-fatal)`);
+    }
+
+    // 4. Perform login
     await loginAsAdmin(page);
 
-    // 4. Save admin storage state
+    // 5. Save admin storage state
     await page.context().storageState({ path: ADMIN_AUTH_FILE });
   });
 
