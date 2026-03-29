@@ -69,42 +69,23 @@ export const POST = apiHandler(async ({ request, locals }) => {
     }
 
     let successMessage = "";
-    let targetTokenIds = tokenIds;
-
-    // Resolve token values to _ids since some DB adapters (e.g. SQLite) only
-    // match by _id in their batch methods. PostgreSQL/MariaDB handle both via OR.
-    try {
-      const tokensResult = await auth.getAllTokens({ tenantId });
-      if (tokensResult.success && tokensResult.data) {
-        const tokenMap = new Map<string, string>();
-        for (const t of tokensResult.data) {
-          const id = (t as any)._id;
-          const val = (t as any).token || (t as any).value;
-          if (id) {
-            tokenMap.set(id, id);
-            if (val) tokenMap.set(val, id);
-          }
-        }
-        targetTokenIds = tokenIds.map((v) => tokenMap.get(v) || v);
-      }
-    } catch {
-      // If getAllTokens fails (e.g. not implemented), use raw tokenIds as-is
-    }
+    // All DB adapters (SQLite, PostgreSQL, MariaDB) now handle both _id and token
+    // value matching in their batch methods, so no pre-resolution is needed.
 
     // Directly invoke database-agnostic methods (now bound in auth adapter)
     switch (action) {
       case "delete": {
-        await auth.deleteTokens(targetTokenIds, tenantId || undefined);
+        await auth.deleteTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens deleted successfully.";
         break;
       }
       case "block": {
-        await auth.blockTokens(targetTokenIds, tenantId || undefined);
+        await auth.blockTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens blocked successfully.";
         break;
       }
       case "unblock": {
-        await auth.unblockTokens(targetTokenIds, tenantId || undefined);
+        await auth.unblockTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens unblocked successfully.";
         break;
       }
