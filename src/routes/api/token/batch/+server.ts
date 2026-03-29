@@ -99,22 +99,11 @@ export const POST = apiHandler(async ({ request, locals }) => {
     }
 
     let successMessage = "";
-
     let targetTokenIds = tokenIds;
-    // Map token values to their real _ids if possible, by retrieving them all
-    try {
-      const tokensResult = await auth.getAllTokens({ tenantId });
-      if (tokensResult.success && tokensResult.data) {
-        targetTokenIds = tokenIds.map((val) => {
-          const matched = tokensResult.data!.find(
-            (t) => t._id === val || (t as any).token === val || (t as any).value === val,
-          );
-          return matched ? (matched as any)._id || val : val;
-        });
-      }
-    } catch {
-      /* ignore */
-    }
+
+    // When MULTI_TENANT is off, batch methods (deleteTokens/blockTokens/unblockTokens)
+    // already handle both _id and token value matching via OR conditions, so no
+    // extra getAllTokens round-trip is needed.
 
     // Directly invoke database-agnostic methods (now bound in auth adapter)
     switch (action) {

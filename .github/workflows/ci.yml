@@ -293,7 +293,19 @@ jobs:
         run: |
           # Use curl polling for DB readiness if possible, or wait-on for TCP
           bun x wait-on tcp:127.0.0.1:${{ matrix.port }} --timeout 60000
-          sleep 5
+          sleep ${{ matrix.db == 'mongodb' && '10' || '5' }}
+
+      - name: Create MongoDB test user on target database
+        if: matrix.db == 'mongodb'
+        run: |
+          # MONGO_INITDB_ROOT_USERNAME creates user on admin db.
+          # Also create the user on sveltycms_test so auth works regardless of authSource.
+          docker exec $(docker ps -q --filter ancestor=mongo:7) mongosh \
+            -u testuser -p testpass --authenticationDatabase admin --eval '
+              db = db.getSiblingDB("sveltycms_test");
+              try { db.dropUser("testuser"); } catch(e) {}
+              db.createUser({ user: "testuser", pwd: "testpass", roles: [{ role: "readWrite", db: "sveltycms_test" }] });
+            ' 2>/dev/null || echo "User creation skipped (may already exist or container not ready)"
 
       - name: Run Integration Tests
         env:
