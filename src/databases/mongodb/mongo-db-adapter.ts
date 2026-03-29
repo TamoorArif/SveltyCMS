@@ -492,6 +492,11 @@ export class MongoDBAdapter implements IDBAdapter {
 
     this.system.preferences = new MongoSystemMethods(SystemPreferencesModel, SystemSettingModel);
     this.system.themes = new MongoThemeMethods(ThemeModel) as any;
+
+    // Initialize website tokens
+    const { MongoWebsiteTokenMethods } = await import("./methods/website-token-methods");
+    const { WebsiteTokenModel } = await import("./models/website-token");
+    this.system.websiteTokens = new MongoWebsiteTokenMethods(WebsiteTokenModel);
     this.system.virtualFolder = new MongoSystemVirtualFolderMethods();
     this.system.widgets = new MongoWidgetMethods(WidgetModel) as any;
 

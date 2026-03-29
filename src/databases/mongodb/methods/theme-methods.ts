@@ -269,7 +269,7 @@ export class MongoThemeMethods {
   async update(
     themeId: DatabaseId,
     themeData: Partial<Omit<Theme, "_id" | "createdAt" | "updatedAt">>,
-  ): Promise<Theme | null> {
+  ): Promise<DatabaseResult<Theme>> {
     try {
       // Use findOneAndUpdate with explicit _id filter to avoid Mongoose auto-casting
       // 24-character hex strings to ObjectId when the schema defines _id as String.
@@ -285,9 +285,21 @@ export class MongoThemeMethods {
       // Invalidate theme caches
       await invalidateCategoryCache(CacheCategory.THEME);
 
-      return result as unknown as Theme | null;
+      if (!result) {
+        return {
+          success: false,
+          message: "Theme not found",
+          error: { code: "THEME_NOT_FOUND", message: "Theme not found" },
+        };
+      }
+
+      return { success: true, data: result as unknown as Theme };
     } catch (error) {
-      throw createDatabaseError(error, "THEME_UPDATE_FAILED", "Failed to update theme");
+      return {
+        success: false,
+        message: "Failed to update theme",
+        error: createDatabaseError(error, "THEME_UPDATE_FAILED", "Failed to update theme"),
+      };
     }
   }
 
