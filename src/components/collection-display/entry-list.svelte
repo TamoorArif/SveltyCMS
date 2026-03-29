@@ -338,7 +338,7 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 								preloadUrl.searchParams.set('edit', entry._id as string);
 
 								// Use new warm-cache endpoint for batch preloading
-								await fetch('/api/collections/warm-cache', {
+								await fetch('/api/http/collections/warm-cache', {
 									method: 'POST',
 									headers: { 'Content-Type': 'application/json' },
 									body: JSON.stringify({

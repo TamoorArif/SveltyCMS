@@ -131,7 +131,7 @@ async function handleEditorSave(detail: any) {
 	if (detail.saveBehavior) formData.append("saveBehavior", detail.saveBehavior);
 
 	try {
-		const response = await fetch("/api/media/edit", {
+		const response = await fetch("/api/http/media/edit", {
 			method: "POST",
 			body: formData,
 		});

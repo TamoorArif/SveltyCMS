@@ -1,0 +1,167 @@
+/**
+ * @file src/routes/api/http/widgets/validate/+server.ts
+ * @description API endpoint for validating collections and widget integrity
+ */
+import { contentManager } from "@src/content";
+import { json } from "@sveltejs/kit";
+import { logger } from "@utils/logger.server";
+
+// Helper to calculate file processing hash (Placeholder for future implementation)
+// async function calculateWidgetHash(widgetName: string): Promise<string | null> { ... }
+
+// Unified Error Handling
+import { apiHandler } from "@utils/api-handler";
+import { AppError } from "@utils/error-handling";
+
+export const GET = apiHandler(async ({ locals, request, url }) => {
+  const start = performance.now();
+  const { user } = locals;
+
+  if (!user) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
+
+  // Resolve target tenant correctly to prevent IDOR
+  let targetTenantId = locals.tenantId || "default-tenant";
+  const requestedTenant = request.headers.get("X-Tenant-ID");
+
+  if (requestedTenant && requestedTenant !== targetTenantId) {
+    if (user.role !== "super-admin") {
+      throw new AppError(
+        "Forbidden: You cannot manage widgets for other tenants.",
+        403,
+        "FORBIDDEN",
+      );
+    }
+    targetTenantId = requestedTenant;
+  }
+
+  try {
+    // Get active widgets from query params (sent by client)
+    const activeWidgetsParam = url.searchParams.get("activeWidgets");
+    const activeWidgets = activeWidgetsParam ? activeWidgetsParam.split(",") : [];
+
+    logger.info("[API] Validation request started", {
+      tenantId: targetTenantId,
+      activeWidgetsCount: activeWidgets.length,
+    });
+
+    // Get all collections from ContentManager, scoped by targetTenantId
+    const allCollections = await contentManager.getCollections(targetTenantId);
+
+    if (!allCollections || Object.keys(allCollections).length === 0) {
+      return json({
+        success: true,
+        data: {
+          valid: 0,
+          invalid: 0,
+          warnings: [],
+          tenantId: targetTenantId,
+          integrityIssues: [],
+        },
+        message: "No collections found to validate",
+      });
+    }
+
+    const warnings: string[] = [];
+    const integrityIssues: string[] = [];
+    let validCollections = 0;
+    let invalidCollections = 0;
+
+    for (const collection of allCollections) {
+      const coll = collection as any;
+      if (!coll.fields) {
+        validCollections++;
+        continue;
+      }
+
+      let collectionValid = true;
+      const missingWidgets: string[] = [];
+
+      for (const field of coll.fields as any[]) {
+        if (field && typeof field === "object") {
+          let widgetType: string | undefined;
+
+          // Modern architecture: get widget name from widget.Name
+          if (
+            "widget" in field &&
+            field.widget &&
+            typeof field.widget === "object" &&
+            "Name" in field.widget
+          ) {
+            widgetType = String(field.widget.Name);
+          }
+          // Legacy compatibility: fallback to type property
+          else if ("type" in field && field.type) {
+            widgetType = String(field.type);
+          }
+
+          if (widgetType) {
+            const capitalizedWidget = widgetType.charAt(0).toUpperCase() + widgetType.slice(1);
+
+            if (!activeWidgets.includes(capitalizedWidget)) {
+              missingWidgets.push(capitalizedWidget);
+              collectionValid = false;
+            }
+          }
+        }
+      }
+
+      if (collectionValid) {
+        validCollections++;
+      } else {
+        invalidCollections++;
+        warnings.push(
+          `Collection "${(coll.name as string) || (coll._id as string)}" requires inactive widgets: ${missingWidgets.join(", ")}`,
+        );
+      }
+    }
+
+    // Security: Integrity Check (Placeholder for now)
+    // We would loop through active widgets and verify their signatures
+    if (activeWidgets.length > 0) {
+      // Example integrity check logic
+      // for (const widget of activeWidgets) {
+      // 	const hash = await calculateWidgetHash(widget);
+      // 	if (!hash) integrityIssues.push(`Integrity check failed for ${widget}`);
+      // }
+    }
+
+    const duration = performance.now() - start;
+    logger.info("[API] Validation completed", {
+      tenantId: targetTenantId,
+      stats: {
+        total: Object.keys(allCollections).length,
+        valid: validCollections,
+        invalid: invalidCollections,
+        warnings: warnings.length,
+        integrityIssues: integrityIssues.length,
+      },
+      duration: `${duration.toFixed(2)}ms`,
+    });
+
+    return json({
+      success: true,
+      data: {
+        valid: validCollections,
+        invalid: invalidCollections,
+        warnings,
+        integrityIssues,
+        total: Object.keys(allCollections).length,
+        tenantId: targetTenantId,
+      },
+      message: "Validation completed successfully",
+    });
+  } catch (err) {
+    const duration = performance.now() - start;
+    const message = `Failed to validate collections: ${err instanceof Error ? err.message : String(err)}`;
+    logger.error(message, {
+      duration: `${duration.toFixed(2)}ms`,
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError(message, 500, "VALIDATION_FAILED");
+  }
+});

@@ -22,7 +22,7 @@ const { totalUsers, isAdmin } = page.data;
 // GDPR: Data Portability
 async function handleExportData() {
 	try {
-		const res = await fetch("/api/gdpr", {
+		const res = await fetch("/api/http/gdpr", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ action: "export", userId: user._id }),
@@ -54,7 +54,7 @@ function handleAnonymize() {
 		body: "This will permanently anonymize your account. This action cannot be undone. Are you sure?",
 		onConfirm: async () => {
 			try {
-				const res = await fetch("/api/gdpr", {
+				const res = await fetch("/api/http/gdpr", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -67,7 +67,7 @@ function handleAnonymize() {
 				if (result.success) {
 					toast.success("Account anonymized successfully");
 					// Force logout by redirecting to logout
-					window.location.href = "/api/user/logout";
+					window.location.href = "/api/http/user/logout";
 				} else {
 					toast.error(result.error || "Anonymization failed");
 				}

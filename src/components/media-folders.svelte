@@ -60,7 +60,7 @@ async function loadFolders(): Promise<void> {
 	isLoading = true;
 	error = null;
 	try {
-		const res = await fetch("/api/systemVirtualFolder");
+		const res = await fetch("/api/http/systemVirtualFolder");
 		if (!res.ok) {
 			throw new Error("Network error");
 		}
@@ -170,7 +170,7 @@ async function reorder(
 	}
 
 	try {
-		const res = await fetch("/api/systemVirtualFolder", {
+		const res = await fetch("/api/http/systemVirtualFolder", {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

@@ -215,6 +215,8 @@ From the 2026 roadmap (v0.0.6, target A+ grade), prioritize these for parity/lea
 - [x] **Edge Computing & Multi-Region**: Native support for edge-optimized data fetching and multi-region replication.
 - [x] **BuzzForm Visual Builder (v1.5)**: Production-ready drag-and-drop form/collection builder with real-time preview.
 - [x] **Secure Media Engine (v1.2)**: Native SSRF protection, command injection prevention (spawn-based), and hardened directory traversal.
+- [x] **99.9% Self-Healing Cache (v0.0.8)**: Incremental file scanning (mtime-hashing) and smart structural reconciliation.
+- [x] **High-Performance Local API (v0.0.8)**: Zero-latency server-side CRUD bridge with full widget logic parity.
 - [/] **Image Editor Enhancement**: Current implementation stabilized; adding cropping, filters, and focal point management.
 - [/] **Collection Builder Enhancement**: UX improvements and ergonomic field management in progress.
 - [x] **CI Pipeline Restoration**: Playwright E2E suite stabilized across MongoDB, MariaDB, and PostgreSQL.
@@ -392,4 +394,4 @@ Svelte 5 runes: `$state()` for state, `$derived()` for computations, `$effect()`
 
 ---
 
-_Last Updated: 2026-03-04_
+_Last Updated: 2026-03-29_

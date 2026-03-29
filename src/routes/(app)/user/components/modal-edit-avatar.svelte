@@ -278,7 +278,7 @@ async function uploadAvatar(file: File): Promise<void> {
 		formData.append("avatar", processedFile);
 
 		// Upload with fetch
-		const response = await fetch("/api/user/save-avatar", {
+		const response = await fetch("/api/http/user/save-avatar", {
 			method: "POST",
 			body: formData,
 		});
@@ -331,7 +331,7 @@ async function deleteAvatar(): Promise<void> {
 				const currentAvatar = avatarSrc.value;
 				logger.info("Attempting to delete avatar:", currentAvatar);
 
-				const response = await fetch("/api/user/delete-avatar", {
+				const response = await fetch("/api/http/user/delete-avatar", {
 					method: "DELETE",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ avatarUrl: currentAvatar }),

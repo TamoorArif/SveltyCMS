@@ -13,7 +13,7 @@ import type { Handle } from "@sveltejs/kit";
 
 export const handleAuditLogging: Handle = async ({ event, resolve }) => {
   // 1. FAST-PATH: Only audit API mutations
-  if (!event.url.pathname.startsWith("/api/")) return resolve(event);
+  if (!event.url.pathname.startsWith("/api/http/")) return resolve(event);
 
   const method = event.request.method;
   const isMutation = ["POST", "PUT", "DELETE", "PATCH"].includes(method);

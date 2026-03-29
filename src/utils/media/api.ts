@@ -17,7 +17,7 @@ export async function updateMediaMetadata(
   patch: Record<string, unknown>,
 ): Promise<unknown> {
   try {
-    const res = await fetch(`/api/media/${encodeURIComponent(id)}`, {
+    const res = await fetch(`/api/http/media/${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ metadata: patch }),
@@ -38,9 +38,9 @@ export async function updateMediaMetadata(
 /** Fetch watermarks from collection (fallback URLs) */
 export async function fetchWatermarks(collectionId = "Watermarks"): Promise<Watermark[]> {
   const urls = [
-    `/api/collections/${collectionId}?limit=100`,
-    `/api/collections/${collectionId.toLowerCase()}?limit=100`,
-    `/api/collections/${collectionId}/entries?limit=100`,
+    `/api/http/collections/${collectionId}?limit=100`,
+    `/api/http/collections/${collectionId.toLowerCase()}?limit=100`,
+    `/api/http/collections/${collectionId}/entries?limit=100`,
   ];
 
   for (const url of urls) {

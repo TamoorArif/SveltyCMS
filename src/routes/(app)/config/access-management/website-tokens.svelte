@@ -140,7 +140,7 @@ onMount(async () => {
 async function fetchUsers() {
 	const usersRef = { value: users };
 	try {
-		const response = await fetch("/api/user");
+		const response = await fetch("/api/http/user");
 		if (response.ok) {
 			const result = await response.json();
 			usersRef.value = result.data;
@@ -185,7 +185,7 @@ async function fetchTokens() {
 
 			try {
 				const response = await fetch(
-					`/api/website-tokens?${params.toString()}`,
+					`/api/http/website-tokens?${params.toString()}`,
 				);
 				if (response.ok) {
 					const result = await response.json();
@@ -247,7 +247,7 @@ async function generateToken() {
 	}
 
 	try {
-		const response = await fetch("/api/website-tokens", {
+		const response = await fetch("/api/http/website-tokens", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -279,7 +279,7 @@ async function deleteToken(id: string, name: string) {
 		body: `Are you sure you want to delete the token "${name}"? This action cannot be undone.`,
 		onConfirm: async () => {
 			try {
-				const response = await fetch(`/api/website-tokens/${id}`, {
+				const response = await fetch(`/api/http/website-tokens/${id}`, {
 					method: "DELETE",
 				});
 
@@ -308,7 +308,7 @@ async function bulkDeleteTokens() {
 				async () => {
 					try {
 						const deletePromises = Array.from(selectedTokens).map((id) =>
-							fetch(`/api/website-tokens/${id}`, { method: "DELETE" }),
+							fetch(`/api/http/website-tokens/${id}`, { method: "DELETE" }),
 						);
 						const results = await Promise.all(deletePromises);
 

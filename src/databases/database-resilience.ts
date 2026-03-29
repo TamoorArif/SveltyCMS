@@ -12,6 +12,7 @@
 
 import { getSystemState, updateServiceHealth } from "@src/stores/system/state";
 import { logger } from "@utils/logger";
+import { sendMail } from "@utils/email.server";
 import type { DatabaseError } from "./db-interface";
 
 // Type definitions
@@ -564,23 +565,19 @@ export async function notifyAdminsOfDatabaseFailure(
       },
     };
 
-    // Send email via API (server-side fetch)
-    const { getPrivateSettingSync } = await import("@src/services/settings-service");
-    const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
-
-    const response = await fetch("/api/send-mail", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-internal-key": internalKey || "",
-      },
-      body: JSON.stringify(emailData),
+    // Send email directly via service
+    const mailResult = await sendMail({
+      recipientEmail: (emailData.recipientEmail as string[]).join(", "),
+      subject: emailData.subject,
+      templateName: emailData.templateName,
+      props: emailData.props,
+      languageTag: "en", // Default system language for alerts
     });
 
-    if (response.ok) {
-      logger.info(`Database failure notification sent to ${adminUsers.length} admin(s)`);
+    if (mailResult.success) {
+      logger.info(`Database failure notification sent directly to ${adminUsers.length} admin(s)`);
     } else {
-      logger.error(`Failed to send database failure notification: ${response.status}`);
+      logger.error(`Failed to send database failure notification: ${mailResult.message}`);
     }
   } catch (notificationError) {
     logger.error("Error sending admin notification", {

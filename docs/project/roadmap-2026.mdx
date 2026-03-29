@@ -28,11 +28,12 @@ SveltyCMS has transitioned from a high-performance CMS into the first **Intellig
 
 _Focus: Evolution from "Intelligent Tool" to "Proactive Agent Ecosystem."_
 
-- 🚀 **Conversational UI** - Full "Agent Mode" for the CMS dashboard using modern LLM tool-calling for system operations.
-- 🚀 **Enterprise Monitor UI** - Unified auditing dashboard for trash recovery, security incidents, and webhook health.
-- 🚀 **AI-Driven Layout Optimization** - Automated A/B testing of `json-render` layouts based on engagement metrics.
-- 🚀 **Autonomous Maintenance** - Self-healing cache fragmentation and automated database index optimization.
+- 🚀 **Unified API Architecture** - Consolidating all fragmented endpoints into a high-performance `LocalCMS` SDK and a unified HTTP dispatcher gate.
+- 🚀 **High-Performance Local SDK (Agency OS Core)** - Achieving sub-0.2ms internal latency by bypassing the SvelteKit network stack (Current result: **2.7x faster** than HTTP).
 - 🚀 **Svelte 5 Native UI Migration** - Eliminating dependency debt (Skeleton/Zag) to solve "ESM Storm" (<150 requests); see [UI Migration Roadmap](./ui_migration_roadmap.md.resolved).
+- 🚀 **Autonomous Maintenance** - Self-healing cache fragmentation and automated database index optimization via SDK.
+- 🔜 **Local-Only API Optimization** - Implementing trusted safety bypass for internal migrations and system initialization to reach <0.1ms overhead.
+- 🔜 **Documentation & Test Suite Parity** - Migrating 100% of API docs and unit tests to the SDK-first pattern.
 - 🔜 **Multi-DB CI/CD Parity** - Containerized E2E testing for PRs across all 4 database targets.
 
 ### 🚀 Phase 5: Secure Upgrade Strategy (Q1-Q2 2026)
@@ -47,13 +48,13 @@ _Focus: Transitioning from manual Git management to an automated, safe, and inte
 
 ## 📊 Competitor Comparison (March 2026)
 
-| Feature               | SveltyCMS            | Strapi 5   | Payload 3.0   | Sanity      |
-| :-------------------- | :------------------- | :--------- | :------------ | :---------- |
-| **API Latency (Hot)** | **✅ 3–12 ms**       | 30–80 ms   | 20–50 ms      | 30–100 ms   |
-| **Middleware**        | **✅ < 0.6 ms**      | 2–6 ms     | 1–4 ms        | N/A         |
-| **AI Architecture**   | **✅ MCP Native**    | ⚠️ Partial | ✅ MCP Native | ✅          |
-| **Live Preview**      | **✅ Visual DnD**    | ⚠️ Basic   | ⚠️ Basic      | ✅ Advanced |
-| **Multi-Tenancy**     | **✅ Adapter Level** | ❌ Paid    | ✅ Plugin     | ✅ Native   |
+| Feature               | SveltyCMS (Direct SDK) | Strapi 5   | Payload 3.0   | Sanity      |
+| :-------------------- | :--------------------- | :--------- | :------------ | :---------- |
+| **API Latency (Hot)** | **✅ 0.1 – 0.4 ms**    | 30–80 ms   | 20–50 ms      | 30–100 ms   |
+| **Middleware**        | **✅ < 0.1 ms**        | 2–6 ms     | 1–4 ms        | N/A         |
+| **AI Architecture**   | **✅ MCP Native**       | ⚠️ Partial | ✅ MCP Native | ✅          |
+| **Live Preview**      | **✅ Visual DnD**       | ⚠️ Basic   | ⚠️ Basic      | ✅ Advanced |
+| **Multi-Tenancy**     | **✅ Adapter Level**    | ❌ Paid    | ✅ Plugin     | ✅ Native   |
 
 ---
 

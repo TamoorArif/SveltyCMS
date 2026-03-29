@@ -70,7 +70,7 @@ let flow: AutomationFlow = $state({
 onMount(async () => {
 	if (!isNew) {
 		try {
-			const res = await fetch(`/api/automations/${page.params.id}`);
+			const res = await fetch(`/api/http/automations/${page.params.id}`);
 			const result = await res.json();
 			if (result.success) {
 				flow = result.data;
@@ -100,7 +100,7 @@ async function save() {
 	isSaving = true;
 	try {
 		const method = isNew ? "POST" : "PATCH";
-		const url = isNew ? "/api/automations" : `/api/automations/${flow.id}`;
+		const url = isNew ? "/api/http/automations" : `/api/http/automations/${flow.id}`;
 
 		const res = await fetch(url, {
 			method,
@@ -131,7 +131,7 @@ async function testFlow() {
 	isTesting = true;
 	testResult = null;
 	try {
-		const res = await fetch(`/api/automations/${flow.id}/test`, {
+		const res = await fetch(`/api/http/automations/${flow.id}/test`, {
 			method: "POST",
 		});
 		const result = await res.json();

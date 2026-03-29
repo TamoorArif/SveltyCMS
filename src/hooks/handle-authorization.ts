@@ -41,19 +41,19 @@ function isPublicRoute(
     "/forgot-password",
     "/setup",
     "/forbidden",
-    "/api/system/version",
-    "/api/user/login",
-    "/api/settings/public",
-    "/api/preview",
-    "/api/system/health",
+    "/api/http/system/version",
+    "/api/http/user/login",
+    "/api/http/settings/public",
+    "/api/http/preview",
+    "/api/http/system/health",
   ];
 
   if (testMode === "true") {
-    publicRoutes.push("/api/testing");
+    publicRoutes.push("/api/http/testing");
   }
 
   // Token validation endpoint is public (GET only) for registration flow
-  if (method === "GET" && pathname.startsWith("/api/token/") && pathname.length > 11) {
+  if (method === "GET" && pathname.startsWith("/api/http/token/") && pathname.length > 11) {
     return true;
   }
 
@@ -160,10 +160,10 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
   // Dynamic imports for settings to avoid circular dependencies in hooks
   const { getPrivateSettingSync } = await import("@src/services/settings-service");
 
-  const isApi = pathname.startsWith("/api/");
+  const isApi = pathname.startsWith("/api/http/");
   const isPublic = isPublicRoute(pathname, request.method, process.env.TEST_MODE);
 
-  if (pathname.includes("/api/testing")) {
+  if (pathname.includes("/api/http/testing")) {
     console.log(
       `[Authorization] Path: ${pathname}, TEST_MODE: ${process.env.TEST_MODE}, isPublic: ${isPublic}`,
     );
@@ -204,8 +204,8 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
     rolesData.length === 0 &&
     !pathname.startsWith("/setup") &&
     !isLocalizedSetup &&
-    !pathname.startsWith("/api/system") &&
-    !pathname.startsWith("/api/setup")
+    !pathname.startsWith("/api/http/system") &&
+    !pathname.startsWith("/api/http/setup")
   ) {
     // If handleSetup already declared setup complete, don't redirect
     // back to /setup — use fallback roles instead to prevent a redirect loop

@@ -41,7 +41,7 @@ const configItems = [
 	},
 	{
 		id: "graphql",
-		href: "/api/graphql",
+		href: "/api/http/graphql",
 		label: "GraphQL",
 		icon: "teenyicons:graphql-solid",
 		iconColor: "text-warning-600",
@@ -134,7 +134,7 @@ const configItems = [
 	},
 	{
 		id: "audit",
-		href: "/api/dashboard/audit?limit=50",
+		href: "/api/http/dashboard/audit?limit=50",
 		label: "Audit Log (Raw)",
 		icon: "mdi:history",
 		iconColor: "text-primary-500",

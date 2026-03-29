@@ -15,7 +15,7 @@ let filterStatus = $state("");
 async function loadLogs() {
 	isLoading = true;
 	const query = filterStatus ? `?status=${filterStatus}` : "";
-	const response = await fetchApi<any[]>(`/api/webhooks/logs${query}`);
+	const response = await fetchApi<any[]>(`/api/http/webhooks/logs${query}`);
 	if (response.success) {
 		logs = response.data || [];
 	} else {
@@ -25,7 +25,7 @@ async function loadLogs() {
 }
 
 async function retryWebhook(jobId: string) {
-	const response = await fetchApi(`/api/webhooks/logs/${jobId}/retry`, {
+	const response = await fetchApi(`/api/http/webhooks/logs/${jobId}/retry`, {
 		method: "POST",
 	});
 

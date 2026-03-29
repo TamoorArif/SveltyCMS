@@ -249,11 +249,11 @@ const actionConfig = $derived<Record<ActionType, ActionConfigItem>>({
 			type === "user" ? usermodaluser_editbody() : multibuttontoken_modalbody(),
 		endpoint: () => {
 			if (type === "user") {
-				return "/api/user/update-user-attributes";
+				return "/api/http/user/update-user-attributes";
 			}
 			const firstRow = safeSelectedRows[0];
 			if (isToken(firstRow)) {
-				return `/api/token/${firstRow.token}`;
+				return `/api/http/token/${firstRow.token}`;
 			}
 			throw new Error("No token selected for editing");
 		},
@@ -292,7 +292,7 @@ const actionConfig = $derived<Record<ActionType, ActionConfigItem>>({
 			}
 			return `Are you sure you want to <span class="text-error-500 font-semibold">delete</span> <span class="text-tertiary-500 font-medium">${safeSelectedRows.length} tokens</span>? This action cannot be undone and will permanently remove all selected tokens from the system.`;
 		},
-		endpoint: () => (type === "user" ? "/api/user/batch" : "/api/token/batch"),
+		endpoint: () => (type === "user" ? "/api/http/user/batch" : "/api/http/token/batch"),
 		method: () => "POST",
 		toastMessage: () => `${type === "user" ? "Users" : "Tokens"} Deleted`,
 		toastBackground: "preset-filled-success-500",
@@ -329,7 +329,7 @@ const actionConfig = $derived<Record<ActionType, ActionConfigItem>>({
 			}
 			return `Are you sure you want to <span class="text-error-500 font-semibold">block</span> <span class="text-tertiary-500 font-medium">${safeSelectedRows.length} tokens</span>? This will prevent them from being used.`;
 		},
-		endpoint: () => (type === "user" ? "/api/user/batch" : "/api/token/batch"),
+		endpoint: () => (type === "user" ? "/api/http/user/batch" : "/api/http/token/batch"),
 		method: () => "POST",
 		toastMessage: () => `${type === "user" ? "Users" : "Tokens"} Blocked`,
 		toastBackground: "preset-filled-success-500",
@@ -366,7 +366,7 @@ const actionConfig = $derived<Record<ActionType, ActionConfigItem>>({
 			}
 			return `Are you sure you want to <span class="text-success-500 font-semibold">unblock</span> <span class="text-tertiary-500 font-medium">${safeSelectedRows.length} tokens</span>? This will allow them to be used again.`;
 		},
-		endpoint: () => (type === "user" ? "/api/user/batch" : "/api/token/batch"),
+		endpoint: () => (type === "user" ? "/api/http/user/batch" : "/api/http/token/batch"),
 		method: () => "POST",
 		toastMessage: () => `${type === "user" ? "Users" : "Tokens"} Unblocked`,
 		toastBackground: "preset-filled-success-500",

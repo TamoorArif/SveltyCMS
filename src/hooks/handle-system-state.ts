@@ -118,7 +118,7 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 
   // Skip trace logging and heavy logic for static assets and health checks
   const isHealthCheck =
-    pathname.startsWith("/api/system/health") || pathname.startsWith("/api/dashboard/health");
+    pathname.startsWith("/api/http/system/health") || pathname.startsWith("/api/http/dashboard/health");
   const isAsset = STATIC_ASSET_REGEX.test(pathname);
 
   if (isAsset) {
@@ -368,7 +368,7 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
 
     return await resolve(event);
   } catch (err) {
-    if (pathname.startsWith("/api/")) {
+    if (pathname.startsWith("/api/http/")) {
       return handleApiError(err, event);
     }
 

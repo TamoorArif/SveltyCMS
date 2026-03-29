@@ -137,8 +137,8 @@ async function loadSettings(bypassCache = false) {
 	try {
 		// Load values from API with optional cache bypass
 		const url = bypassCache
-			? `/api/settings/${group.id}?refresh=true`
-			: `/api/settings/${group.id}`;
+			? `/api/http/settings/${group.id}?refresh=true`
+			: `/api/http/settings/${group.id}`;
 		const response = await fetch(url);
 		const data = await response.json();
 
@@ -401,7 +401,7 @@ async function saveSettings() {
 	error = null;
 
 	try {
-		const response = await fetch(`/api/settings/${group.id}`, {
+		const response = await fetch(`/api/http/settings/${group.id}`, {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
@@ -452,7 +452,7 @@ async function resetToDefaults() {
 			error = null;
 
 			try {
-				const response = await fetch(`/api/settings/${group.id}`, {
+				const response = await fetch(`/api/http/settings/${group.id}`, {
 					method: "DELETE",
 				});
 

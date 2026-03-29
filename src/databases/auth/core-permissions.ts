@@ -309,7 +309,7 @@ export const corePermissions: Permission[] = [
     name: "User API Access",
     action: PermissionAction.ACCESS,
     type: PermissionType.SYSTEM,
-    description: "Grants access to all API endpoints under /api/user/.",
+    description: "Grants access to all API endpoints under /api/http/user/.",
   },
   {
     _id: "api:send-mail",

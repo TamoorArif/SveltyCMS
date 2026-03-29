@@ -62,7 +62,7 @@ export async function fetchVirtualFolders(): Promise<void> {
 	isLoading = true;
 	error = null;
 	try {
-		const response = await fetch("/api/systemVirtualFolder");
+		const response = await fetch("/api/http/systemVirtualFolder");
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
@@ -96,7 +96,7 @@ export async function createFolder(): Promise<void> {
 	isLoading = true;
 
 	try {
-		const response = await fetch("/api/systemVirtualFolder", {
+		const response = await fetch("/api/http/systemVirtualFolder", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -132,7 +132,7 @@ export async function updateFolder(
 	newName: string,
 ): Promise<void> {
 	try {
-		const response = await fetch("/api/systemVirtualFolder", {
+		const response = await fetch("/api/http/systemVirtualFolder", {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ folderId, name: newName }),
@@ -154,7 +154,7 @@ export async function updateFolder(
 // Delete a folder
 export async function deleteFolder(folderId: string): Promise<void> {
 	try {
-		const response = await fetch("/api/systemVirtualFolder", {
+		const response = await fetch("/api/http/systemVirtualFolder", {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ folderId }),

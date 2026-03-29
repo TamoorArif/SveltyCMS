@@ -87,7 +87,7 @@ export const handleLocale: Handle = async ({ event, resolve }) => {
   const { url, cookies } = event;
 
   // Skip for API routes - performance fast-path
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith("/api/http/")) {
     return resolve(event);
   }
 

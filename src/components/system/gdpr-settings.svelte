@@ -35,7 +35,7 @@ async function handleExport() {
 	}
 	loadingExport = true;
 	try {
-		const res = await fetch("/api/gdpr", {
+		const res = await fetch("/api/http/gdpr", {
 			method: "POST",
 			body: JSON.stringify({ action: "export", userId: userIdExport }),
 		});
@@ -76,7 +76,7 @@ async function handleAnonymize() {
 
 	loadingAnonymize = true;
 	try {
-		const res = await fetch("/api/gdpr", {
+		const res = await fetch("/api/http/gdpr", {
 			method: "POST",
 			body: JSON.stringify({ action: "anonymize", userId: userIdAnonymize }),
 		});

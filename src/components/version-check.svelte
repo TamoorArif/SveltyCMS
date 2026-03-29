@@ -285,7 +285,7 @@ async function checkVersion(retry = 0): Promise<void> {
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), 10_000); // 10s timeout
 
-		const response = await fetch("/api/system/version", {
+		const response = await fetch("/api/http/system/version", {
 			signal: controller.signal,
 			headers: {
 				"Content-Type": "application/json",

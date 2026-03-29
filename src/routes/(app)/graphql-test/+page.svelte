@@ -19,7 +19,7 @@ let error: any = $state(null);
 
 onMount(() => {
 	const client = createClient({
-		url: "ws://localhost:3001/api/graphql",
+		url: "ws://localhost:3001/api/http/graphql",
 	});
 
 	client.subscribe(

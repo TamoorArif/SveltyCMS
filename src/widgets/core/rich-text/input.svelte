@@ -82,7 +82,7 @@ async function translateContent() {
 
 	translateLoading = true;
 	try {
-		const response = await fetch("/api/ai/enrich", {
+		const response = await fetch("/api/http/ai/enrich", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

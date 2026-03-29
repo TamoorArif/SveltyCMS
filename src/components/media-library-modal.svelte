@@ -53,7 +53,7 @@ async function fetchMedia() {
 			allowedTypes.length > 0 ? `&types=${allowedTypes.join(",")}` : "";
 		// Fetch more files for the library, e.g., 50, recursively from all folders
 		const response = await fetch(
-			`/api/media?limit=100&recursive=true${typesQuery}`,
+			`/api/http/media?limit=100&recursive=true${typesQuery}`,
 		);
 		if (!response.ok) {
 			throw new Error("Failed to fetch media");

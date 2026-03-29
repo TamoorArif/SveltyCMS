@@ -374,7 +374,7 @@ $effect(() => {
 
 $effect(() => {
 	if ((collectionValue as any).value?._id) {
-		apiUrl = `${location.origin}/api/collection/${collection.value?._id}/${(collectionValue as any).value._id}`;
+		apiUrl = `${location.origin}/api/http/collection/${collection.value?._id}/${(collectionValue as any).value._id}`;
 	}
 });
 

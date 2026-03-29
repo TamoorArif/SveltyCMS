@@ -94,7 +94,7 @@ export const actions = {
         const { getPrivateSettingSync } = await import("@src/services/settings-service");
         const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
 
-        const res = await eventFetch("/api/send-mail", {
+        const res = await eventFetch("/api/http/send-mail", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -112,7 +112,7 @@ export const actions = {
         if (!res.ok) {
           const errorText = await res.text();
           logger.error(
-            `Error from /api/send-mail endpoint during preview: ${res.status} ${errorText}`,
+            `Error from /api/http/send-mail endpoint during preview: ${res.status} ${errorText}`,
           );
           return {
             success: false,

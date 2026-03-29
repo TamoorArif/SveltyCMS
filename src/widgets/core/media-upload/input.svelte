@@ -45,7 +45,7 @@ async function fetchMediaData(ids: string[]): Promise<MediaFile[]> {
 	try {
 		const results: MediaFile[] = [];
 		for (const id of ids) {
-			const res = await fetch(`/api/media/${id}`);
+			const res = await fetch(`/api/http/media/${id}`);
 			if (res.ok) {
 				const found = await res.json();
 				results.push({

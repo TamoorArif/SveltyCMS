@@ -33,7 +33,7 @@ let interval: any;
 
 async function fetchStats() {
 	try {
-		const response = await fetch("/api/metrics/cache");
+		const response = await fetch("/api/http/metrics/cache");
 		if (response.ok) {
 			stats = await response.json();
 		}

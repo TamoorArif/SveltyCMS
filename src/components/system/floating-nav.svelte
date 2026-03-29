@@ -82,7 +82,7 @@ const ALL_ENDPOINTS: Endpoint[] = [
 
 	{
 		tooltip: "GraphQL Explorer",
-		url: { external: true, path: "/api/graphql" },
+		url: { external: true, path: "/api/http/graphql" },
 		icon: "teenyicons:graphql-outline",
 		color: "bg-pink-500",
 	},

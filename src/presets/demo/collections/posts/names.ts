@@ -14,7 +14,7 @@ export const schema: Schema = {
   description: "Scoped Names collection to test UUID collision with same filenames",
   status: "unpublish",
   revision: true,
-  livePreview: "/api/preview?slug=/posts/names/{slug}",
+  livePreview: "/api/http/preview?slug=/posts/names/{slug}",
 
   // Defined Fields that are used in your Collection
   // Widget fields can be inspected for individual options

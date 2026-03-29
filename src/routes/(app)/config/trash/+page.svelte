@@ -12,7 +12,7 @@ let isLoading = $state(true);
 
 async function loadTrash() {
 	isLoading = true;
-	const response = await fetchApi<any[]>("/api/trash");
+	const response = await fetchApi<any[]>("/api/http/trash");
 	if (response.success) {
 		trashedItems = response.data || [];
 	} else {
@@ -22,7 +22,7 @@ async function loadTrash() {
 }
 
 async function restoreItem(collectionId: string, entryId: string) {
-	const response = await fetchApi("/api/trash/restore", {
+	const response = await fetchApi("/api/http/trash/restore", {
 		method: "POST",
 		body: JSON.stringify({ collectionId, entryId }),
 	});

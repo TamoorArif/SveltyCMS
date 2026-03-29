@@ -117,7 +117,7 @@ async function loadSetupData() {
 	isLoading = true;
 
 	try {
-		const response = await fetch("/api/auth/2fa/setup", {
+		const response = await fetch("/api/http/auth/2fa/setup", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 		});
@@ -165,7 +165,7 @@ async function verify2FA() {
 	isLoading = true;
 
 	try {
-		const response = await fetch("/api/auth/2fa/verify", {
+		const response = await fetch("/api/http/auth/2fa/verify", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ code: verificationCode }),
@@ -213,7 +213,7 @@ async function disable2FA() {
 			isLoading = true;
 
 			try {
-				const response = await fetch("/api/auth/2fa/disable", {
+				const response = await fetch("/api/http/auth/2fa/disable", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ code }),
@@ -248,7 +248,7 @@ async function generateBackupCodes() {
 	isLoading = true;
 
 	try {
-		const response = await fetch("/api/auth/2fa/backup-codes", {
+		const response = await fetch("/api/http/auth/2fa/backup-codes", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 		});

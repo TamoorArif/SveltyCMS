@@ -209,7 +209,7 @@ export const widgetMeta = {
 <BaseWidget
 	{label}
 	{theme}
-	endpoint="/api/dashboard/systemInfo?type=memory"
+	endpoint="/api/http/dashboard/systemInfo?type=memory"
 	pollInterval={10000}
 	{icon}
 	{widgetId}

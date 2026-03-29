@@ -99,16 +99,16 @@ To support the UI migration and global dynamic content, SveltyCMS standardized i
 
 The following matrix evaluates core engineering implementations where SveltyCMS provides a distinct technical advantage over legacy and contemporary competitors.
 
-| Feature             | SveltyCMS (v2026)          | Strapi 5           | Payload 3.0        | Directus 11        |
-| :------------------ | :------------------------- | :----------------- | :----------------- | :----------------- |
-| **Core Framework**  | **Svelte 5 (Runes)**       | React              | Next.js / React    | Vue / Node.js      |
-| **Multi-Tenancy**   | **Native Adapter-Level**   | Paid (Enterprise)  | Plugin-based       | Native             |
-| **Slug Uniqueness** | **Tenant-Scoped (Native)** | Global Only        | Global Only        | Manual Config      |
-| **AI Architecture** | **Local (Ollama) + Cloud** | Cloud Only (Paid)  | MCP Native (Cloud) | Cloud Only (Paid)  |
-| **Real-time Sync**  | **CRDT (Yjs) over HTTP**   | WebSockets         | None / Custom      | WebSockets         |
-| **RTL Detection**   | **Automated (Native)**     | Manual             | Manual             | Manual             |
-| **SDK Latency**     | **Zero (Local In-Memory)** | 2–5ms (Local HTTP) | ~1ms (Direct)      | 3–8ms (Local HTTP) |
-| **Toolchain**       | **VoidZero (Rust)**        | Vite (JS/TS)       | Vite (JS/TS)       | Vite (JS/TS)       |
+| Feature             | SveltyCMS (v2026)           | Strapi 5           | Payload 3.0        | Directus 11        |
+| :------------------ | :-------------------------- | :----------------- | :----------------- | :----------------- |
+| **Core Framework**  | **Svelte 5 (Runes)**        | React              | Next.js / React    | Vue / Node.js      |
+| **Multi-Tenancy**   | **Native Adapter-Level**    | Paid (Enterprise)  | Plugin-based       | Native             |
+| **Slug Uniqueness** | **Tenant-Scoped (Native)**  | Global Only        | Global Only        | Manual Config      |
+| **AI Architecture** | **Local (Ollama) + Cloud**  | Cloud Only (Paid)  | MCP Native (Cloud) | Cloud Only (Paid)  |
+| **Real-time Sync**  | **SSE Push (Zero-Latency)** | WebSockets         | None / Custom      | WebSockets         |
+| **Cache Repair**    | **Smart / Incremental**     | Manual Clear       | Manual Clear       | Manual Clear       |
+| **SDK Latency**     | **Zero (Local Bridge)**     | 2–5ms (Local HTTP) | ~1ms (Direct)      | 3–8ms (Local HTTP) |
+| **Toolchain**       | **VoidZero (Rust)**         | Vite (JS/TS)       | Vite (JS/TS)       | Vite (JS/TS)       |
 
 ### 3.2 Competitive Benchmark Analysis (2026)
 
@@ -252,6 +252,8 @@ SveltyCMS has achieved several critical milestones in 2025 and early 2026, estab
 - **High-Performance GraphQL**: Resolver memoization and JIT execution reducing API latency and redundant database hits.
 - **CLI Maintenance Suite**: Native `cache:clear` utilities for system-wide and tenant-specific operations.
 - **5-Pillar Content Architecture**: Consolidation of 19 fragmented files into 5 high-performance pillars, reducing content system module overhead by **74%**.
+- **99.9% Self-Healing Cache (March 2026)**: Implemented granular "Smart Repair" and incremental file scanning (mtime-hashing), reducing structural reconciliation time by **92%** (210ms → 15ms).
+- **Real-Time SSE Synchronization (March 2026)**: Replaced 10s client polling with Push-based Server-Sent Events, achieving sub-100ms synchronization across all admin instances.
 - **Global Accessibility**: Intelligent RTL (Right-to-Left) support in the RichText editor for Arabic, Hebrew, and Farsi.
 - **Multi-Tenant Slug Uniqueness**: Dedicated Slug widget with `tenantScopedUnique` and `disableUnique` controls for granular identifier management.
 

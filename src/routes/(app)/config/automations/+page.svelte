@@ -45,7 +45,7 @@ let someSelected = $derived(selectedIds.length > 0 && !allSelected);
 async function loadFlows() {
 	isLoading = true;
 	try {
-		const res = await fetch("/api/automations");
+		const res = await fetch("/api/http/automations");
 		const result = await res.json();
 		if (result.success) {
 			flows = result.data;
@@ -61,7 +61,7 @@ async function loadFlows() {
 
 async function toggleFlow(flow: AutomationFlow) {
 	try {
-		const res = await fetch(`/api/automations/${flow.id}`, {
+		const res = await fetch(`/api/http/automations/${flow.id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ active: !flow.active }),
@@ -82,7 +82,7 @@ async function deleteFlow(flow: AutomationFlow) {
 	}
 
 	try {
-		const res = await fetch(`/api/automations/${flow.id}`, {
+		const res = await fetch(`/api/http/automations/${flow.id}`, {
 			method: "DELETE",
 		});
 		const result = await res.json();
@@ -97,7 +97,7 @@ async function deleteFlow(flow: AutomationFlow) {
 
 async function duplicateFlow(flow: AutomationFlow) {
 	try {
-		const res = await fetch("/api/automations", {
+		const res = await fetch("/api/http/automations", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -126,7 +126,7 @@ async function bulkToggle(active: boolean) {
 	try {
 		await Promise.all(
 			selectedIds.map((id) =>
-				fetch(`/api/automations/${id}`, {
+				fetch(`/api/http/automations/${id}`, {
 					method: "PATCH",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ active }),
@@ -154,7 +154,7 @@ async function bulkDelete() {
 	try {
 		await Promise.all(
 			selectedIds.map((id) =>
-				fetch(`/api/automations/${id}`, {
+				fetch(`/api/http/automations/${id}`, {
 					method: "DELETE",
 				}),
 			),
@@ -186,7 +186,7 @@ function toggleSelect(id: string) {
 async function testFlow(flow: AutomationFlow) {
 	toast.info(`Testing "${flow.name}"...`);
 	try {
-		const res = await fetch(`/api/automations/${flow.id}/test`, {
+		const res = await fetch(`/api/http/automations/${flow.id}/test`, {
 			method: "POST",
 		});
 		const result = await res.json();

@@ -141,7 +141,7 @@ async function exportAllData() {
 			exportProgress = Math.min(exportProgress + 10, 90);
 		}, 200);
 
-		const response = await fetch("/api/exportData", {
+		const response = await fetch("/api/http/exportData", {
 			method: "GET",
 		});
 
@@ -192,7 +192,7 @@ async function exportSelectedCollections() {
 			});
 
 			const response = await fetch(
-				`/api/collections/${collectionId}/export?${params}`,
+				`/api/http/collections/${collectionId}/export?${params}`,
 			);
 
 			if (response.ok) {
@@ -255,7 +255,7 @@ async function handleImport() {
 		}, 200);
 
 		// Import data
-		const response = await fetch("/api/importData", {
+		const response = await fetch("/api/http/importData", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

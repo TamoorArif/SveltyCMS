@@ -153,10 +153,12 @@ export class ContentModule {
       return this.core.wrap(async () => {
         const [updated] = await this.db
           .update(schema.contentNodes)
-          .set({
-            ...changes,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          } as any)
+          .set(
+            utils.convertISOToDates({
+              ...changes,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(eq(schema.contentNodes.path, path))
           .returning();
         return utils.convertDatesToISO(updated) as unknown as ContentNode;

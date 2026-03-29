@@ -32,7 +32,7 @@ $effect(() => {
 			const results: MediaFile[] = [];
 			for (const id of ids) {
 				try {
-					const response = await fetch(`/api/media/${id}`);
+					const response = await fetch(`/api/http/media/${id}`);
 					if (response.ok) {
 						const found = await response.json();
 						results.push({

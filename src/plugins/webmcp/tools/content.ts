@@ -55,10 +55,10 @@ export function registerContentTools() {
     },
     execute: async ({ collectionName, query }: { collectionName: string; query: string }) => {
       // In a real app, this would call the internal API
-      // using fetch to /api/graphql or /api/rest
+      // using fetch to /api/http/graphql or /api/http/rest
       try {
         const response = await fetch(
-          `/api/collections/${collectionName}?search=${encodeURIComponent(query || "")}`,
+          `/api/http/collections/${collectionName}?search=${encodeURIComponent(query || "")}`,
         );
         const data = await response.json();
         return {

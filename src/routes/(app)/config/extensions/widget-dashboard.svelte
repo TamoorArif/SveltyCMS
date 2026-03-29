@@ -130,7 +130,7 @@ async function loadWidgets() {
 	error = null;
 
 	try {
-		const response = await fetch(`/api/widgets/list?tenantId=${tenantId}`);
+		const response = await fetch(`/api/http/widgets/list?tenantId=${tenantId}`);
 
 		if (!response.ok) {
 			throw new Error(`Failed to load widgets: ${response.statusText}`);
@@ -173,7 +173,7 @@ async function toggleWidget(widgetName: string) {
 
 		const newStatus = !widget.isActive;
 
-		const response = await fetch("/api/widgets/status", {
+		const response = await fetch("/api/http/widgets/status", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -220,7 +220,7 @@ async function uninstallWidget(widgetName: string) {
 	}
 
 	try {
-		const response = await fetch("/api/widgets/uninstall", {
+		const response = await fetch("/api/http/widgets/uninstall", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

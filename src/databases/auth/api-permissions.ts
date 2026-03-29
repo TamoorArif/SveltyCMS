@@ -6,7 +6,7 @@
  * This provides coarse-grained but effective security for multi-tenant applications.
  *
  * Permission Structure:
- * - Key: API endpoint (first segment after /api/)
+ * - Key: API endpoint (first segment after /api/http/)
  * - Value: Array of roles that can access this endpoint
  *
  * Special roles:

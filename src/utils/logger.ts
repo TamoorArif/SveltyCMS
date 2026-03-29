@@ -121,7 +121,7 @@ const clientFormat =
                   ? "#22c55e"
                   : m === "false"
                     ? "#ef4444"
-                    : m.startsWith("/api/")
+                    : m.startsWith("/api/http/")
                       ? "#06b6d4"
                       : "#3b82f6";
             styles.push(`color:${color};font-weight:bold`);

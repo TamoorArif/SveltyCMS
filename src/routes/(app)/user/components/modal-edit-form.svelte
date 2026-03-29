@@ -166,7 +166,7 @@ async function onFormSubmit(event: SubmitEvent): Promise<void> {
 	}
 
 	try {
-		const response = await fetch("/api/user/update-user-attributes", {
+		const response = await fetch("/api/http/user/update-user-attributes", {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -219,7 +219,7 @@ async function verifyCurrentPassword() {
 		return;
 	}
 	try {
-		const res = await fetch("/api/user/verify-password", {
+		const res = await fetch("/api/http/user/verify-password", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ password: editForm.data.currentPassword }),
@@ -244,7 +244,7 @@ async function deleteUser() {
 		return;
 	}
 	try {
-		const response = await fetch("/api/user/batch", {
+		const response = await fetch("/api/http/user/batch", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

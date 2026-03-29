@@ -107,7 +107,7 @@ async function verifySetup(event: SubmitEvent) {
 	error = "";
 
 	try {
-		const response = await fetch("/api/auth/2fa/verify-setup", {
+		const response = await fetch("/api/http/auth/2fa/verify-setup", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ code: verificationCode.trim() }),

@@ -375,7 +375,12 @@ export class SQLiteQueryBuilder<T extends BaseEntity> implements QueryBuilder<T>
     try {
       let q = this.db
         .update(this.table as unknown as import("drizzle-orm/sqlite-core").SQLiteTable)
-        .set({ ...data, updatedAt: new Date() } as unknown as Record<string, unknown>)
+        .set(
+          utils.convertISOToDates({
+            ...data,
+            updatedAt: new Date(),
+          }) as unknown as Record<string, unknown>,
+        )
         .$dynamic();
       if (this.conditions.length > 0) {
         q = q.where(and(...this.conditions));

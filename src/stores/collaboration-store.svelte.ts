@@ -102,7 +102,7 @@ class CollaborationStore {
     }
 
     console.debug("RTC: Establishing connection...");
-    this.eventSource = new EventSource("/api/events");
+    this.eventSource = new EventSource("/api/http/events");
 
     this.eventSource.onopen = () => {
       this.isConnected = true;
@@ -263,7 +263,7 @@ class CollaborationStore {
         content: m.content,
       }));
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/http/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

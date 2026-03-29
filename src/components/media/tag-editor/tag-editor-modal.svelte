@@ -58,7 +58,7 @@ async function handleAITagging() {
 	}
 	isGenerating = true;
 	try {
-		const response = await fetch("/api/media/ai-tag", {
+		const response = await fetch("/api/http/media/ai-tag", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ mediaId: file._id }),
@@ -88,7 +88,7 @@ async function addManualTag() {
 	}
 	try {
 		// Add to aiTags "pending" area
-		const response = await fetch(`/api/media/${file._id}`, {
+		const response = await fetch(`/api/http/media/${file._id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -127,7 +127,7 @@ async function removeTag(tag: string, type: "ai" | "user") {
 			metadata.tags = metadata.tags?.filter((t) => t !== tag) || [];
 		}
 
-		const response = await fetch(`/api/media/${file._id}`, {
+		const response = await fetch(`/api/http/media/${file._id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ metadata }),
@@ -163,7 +163,7 @@ async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 				metadata.tags?.map((t) => (t === oldTag ? newTag.trim() : t)) || [];
 		}
 
-		const response = await fetch(`/api/media/${file._id}`, {
+		const response = await fetch(`/api/http/media/${file._id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ metadata }),
@@ -197,7 +197,7 @@ async function saveAITags() {
 			currentTags.add(t);
 		});
 
-		const response = await fetch(`/api/media/${file._id}`, {
+		const response = await fetch(`/api/http/media/${file._id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

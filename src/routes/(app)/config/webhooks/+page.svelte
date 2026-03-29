@@ -29,7 +29,7 @@ const eventTypes = [
 async function loadWebhooks() {
 	isLoading = true;
 	try {
-		const res = await fetch("/api/webhooks");
+		const res = await fetch("/api/http/webhooks");
 		const result = await res.json();
 		if (result.success) {
 			webhooks = result.data;
@@ -53,8 +53,8 @@ async function saveWebhook() {
 	try {
 		const method = editingWebhook.id ? "PATCH" : "POST";
 		const url = editingWebhook.id
-			? `/api/webhooks/${editingWebhook.id}`
-			: "/api/webhooks";
+			? `/api/http/webhooks/${editingWebhook.id}`
+			: "/api/http/webhooks";
 
 		const res = await fetch(url, {
 			method,
@@ -85,7 +85,7 @@ async function deleteWebhook(id: string) {
 	}
 
 	try {
-		const res = await fetch(`/api/webhooks/${id}`, { method: "DELETE" });
+		const res = await fetch(`/api/http/webhooks/${id}`, { method: "DELETE" });
 		const result = await res.json();
 		if (result.success) {
 			toast.success("Webhook deleted");
@@ -99,7 +99,7 @@ async function deleteWebhook(id: string) {
 async function testWebhook(webhook: Webhook) {
 	toast.info(`Sending test payload to ${webhook.name}...`);
 	try {
-		const res = await fetch(`/api/webhooks/${webhook.id}/test`, {
+		const res = await fetch(`/api/http/webhooks/${webhook.id}/test`, {
 			method: "POST",
 		});
 		const result = await res.json();
@@ -144,7 +144,7 @@ function toggleEvent(event: string) {
 onMount(loadWebhooks);
 </script>
 
-<PageTitle name="Webhooks" icon="mdi:webhook" showBackButton={true} backUrl="/config" helpUrl="/docs/api/Webhooks" />
+<PageTitle name="Webhooks" icon="mdi:webhook" showBackButton={true} backUrl="/config" helpUrl="/docs/api/http/Webhooks" />
 
 <div class="wrapper p-4">
 	<div class="flex items-center justify-between mb-6">

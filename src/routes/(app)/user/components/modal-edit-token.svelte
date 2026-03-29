@@ -127,8 +127,8 @@ async function onFormSubmit(event: SubmitEvent): Promise<void> {
 	try {
 		const isEditMode = !!tokenForm.data.token;
 		const endpoint = isEditMode
-			? `/api/token/${tokenForm.data.token}`
-			: "/api/token/create-token";
+			? `/api/http/token/${tokenForm.data.token}`
+			: "/api/http/token/create-token";
 		const method = isEditMode ? "PUT" : "POST";
 
 		const body = isEditMode
@@ -195,7 +195,7 @@ async function deleteToken(): Promise<void> {
 		return;
 	}
 	try {
-		const response = await fetch(`/api/token/${tokenForm.data.token}`, {
+		const response = await fetch(`/api/http/token/${tokenForm.data.token}`, {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 		});

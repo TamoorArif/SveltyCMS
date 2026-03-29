@@ -1,0 +1,119 @@
+---
+path: "docs/api/local-vs-http-api.mdx"
+title: "Local SDK vs HTTP/GraphQL API"
+description: "When to use the high-performance internal Local SDK versus the external REST/GraphQL API in SveltyCMS."
+order: 10
+icon: "mdi:lightning-bolt"
+author: "SveltyCMS Team"
+created: "2026-03-29"
+updated: "2026-03-29"
+tags:
+  - "architecture"
+  - "performance"
+  - "api"
+  - "sdk"
+  - "ssr"
+---
+
+# Local SDK vs HTTP/GraphQL API
+
+SveltyCMS provides two complementary ways to interact with content:
+
+- **External HTTP / GraphQL API** — Secure, public-facing, full middleware stack.
+- **Internal Local SDK** — Zero-overhead, server-side only, for maximum performance.
+
+---
+
+## When to Use Which API
+
+| Context                                         | Recommended API    | Typical Latency | Reason                             |
+| ----------------------------------------------- | ------------------ | --------------- | ---------------------------------- |
+| Client-side (`.svelte` files)                   | **HTTP / GraphQL** | 50–150 ms       | Runs in browser, needs auth & CORS |
+| Server-side (`+page.server.ts`, actions, hooks) | **Local SDK**      | **10–40 ms**    | No network, no serialization       |
+| Plugin hooks, background jobs                   | **Local SDK**      | **10–40 ms**    | Full widget & hook execution       |
+| External tools / third-party                    | **HTTP / GraphQL** | 80–300+ ms      | Requires API keys / JWT            |
+
+> [!TIP]
+> **Rule of thumb**: If your code runs in a file ending with `.server.ts`, **prefer** `event.locals.cms`. Only use `fetch()` when you intentionally want to go through the full HTTP stack (e.g., rate limiting, external service calls, or testing).
+
+---
+
+## Why the Local SDK Exists
+
+The Local SDK (`src/api/local-cms.ts`) is a direct facade over the database adapter. It:
+
+- Bypasses HTTP parsing and JSON serialization
+- Calls the same `modifyRequest` pipeline (widgets, field transformations, permissions)
+- Triggers identical cache invalidation and Pub/Sub events as the HTTP layer
+- Keeps the reactive Content System (SSE, TreeView, dashboard widgets) in sync
+
+This ensures **full consistency** between internal and external operations.
+
+### Example: Server-side Load Function
+
+```typescript
+// src/routes/blog/+page.server.ts
+export const load = async ({ locals }) => {
+  // Fast internal access
+  const posts = await locals.cms.find("posts", {
+    limit: 10,
+    filter: { status: "publish" },
+  });
+
+  return { posts };
+};
+```
+
+### Example: Creating an Entry from a Server Action
+
+```typescript
+// Server Action
+export const actions = {
+  create: async ({ locals, request }) => {
+    const formData = await request.formData();
+    const data = Object.fromEntries(formData);
+
+    const result = await locals.cms.create("posts", data);
+
+    if (result.success) {
+      return { success: true };
+    }
+    return { error: result.error };
+  },
+};
+```
+
+---
+
+## Technical Details
+
+### Local SDK Guarantees
+
+- All widget logic (`modifyRequest`) executes identically to HTTP requests
+- Cache invalidation and content version bump happen automatically
+- SSE / WebSocket clients receive real-time updates
+- Multi-tenancy and user context are automatically applied
+
+### When You Might Still Use HTTP from Server Code
+
+- Calling an external microservice
+- Testing full middleware stack
+- Intentionally triggering rate limiting / logging
+
+---
+
+## Best Practices
+
+1. Default to **Local SDK** in all `.server.ts` files.
+2. Never do `fetch('/api/...')` inside `+page.server.ts` or actions unless there’s a specific reason.
+3. Document any exceptions clearly.
+4. **Type safety**: Use the typed `App.Locals` interface so `locals.cms` is fully typed.
+
+---
+
+## Future Improvements
+
+- Bulk operations (`bulkCreate`, `bulkUpdate`)
+- Transaction support (where the database adapter allows)
+- Local query builder for complex joins
+- Telemetry for SDK call monitoring

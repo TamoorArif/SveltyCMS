@@ -86,7 +86,7 @@ const filteredGroups = $derived(
 // Check all groups for empty fields on page load using batch endpoint
 async function checkAllGroupsForEmptyFields() {
 	try {
-		const response = await fetch("/api/settings/all");
+		const response = await fetch("/api/http/settings/all");
 		const data = await response.json();
 
 		if (data.success && data.groups) {
@@ -125,7 +125,7 @@ async function checkAllGroupsForEmptyFields() {
 
 async function exportAll() {
 	try {
-		const res = await fetch("/api/settings/all");
+		const res = await fetch("/api/http/settings/all");
 		const data = await res.json();
 		if (data.success) {
 			const blob = new Blob([JSON.stringify(data.groups, null, 2)], {

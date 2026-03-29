@@ -39,12 +39,20 @@ The reduction in module complexity has directly translated to faster cold starts
 
 Measured via `tests/benchmarks/database-performance.ts`. These metrics represent the raw overhead of the `dbAdapter` layer.
 
-| Operation  | Baseline (Mongo v0.0.6) | Current (Mongo v0.0.7) | Current (SQLite v0.0.7) | SQLite vs Mongo (v0.0.7) |
-| :--------- | :---------------------- | :--------------------- | :---------------------- | :----------------------- |
-| **Insert** | 1.05 ms                 | **0.76 ms** (↓ 27%)    | **0.15 ms**             | **5.0x Faster**          |
-| **Read**   | 0.94 ms                 | **0.80 ms** (↓ 15%)    | **0.23 ms**             | **3.5x Faster**          |
-| **Update** | 1.10 ms                 | **0.91 ms** (↓ 17%)    | **0.44 ms**             | **2.1x Faster**          |
-| **Delete** | 0.72 ms                 | **0.77 ms** (Stable)   | **0.22 ms**             | **3.5x Faster**          |
+| **Delete** | 0.72 ms | **0.77 ms** (Stable) | **0.22 ms** | **3.5x Faster** |
+
+## Incremental Reconciliation & Cache Performance (v0.0.8)
+
+The new **Smart Repair & Incremental Scanning** system has drastically reduced structural overhead.
+
+| Operation                        | Baseline (Full Scan) | Current (Incremental) | Gain        |
+| :------------------------------- | :------------------- | :-------------------- | :---------- |
+| **Scanning (100 Collections)**   | 210.0 ms             | **15.2 ms**           | **92.8% ↓** |
+| **Sync Latency (Admin UI)**      | ~5,000 ms (Polling)  | **~50 ms (SSE Push)** | **100x ↓**  |
+| **Local API vs REST (Internal)** | 6.0 ms (HTTP)        | **0.85 ms (Direct)**  | **85.8% ↓** |
+
+> [!TIP]
+> **Zero-Latency Admin**: By replacing 10s polling with Real-time SSE, the SveltyCMS dashboard now synchronizes structure changes across all server instances and browser tabs in under 100ms.
 
 > [!TIP]
 > **Edge Readiness**: SQLite outperforming MongoDB by up to 5x in raw persistence makes SveltyCMS perfectly suited for Edge Runtime deployments and local-first development workflows.

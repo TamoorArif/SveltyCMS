@@ -37,7 +37,7 @@ const changeSummary = $derived(() => ({
 async function loadStatus() {
 	isLoading = true;
 	try {
-		const res = await fetch("/api/config_sync");
+		const res = await fetch("/api/http/config_sync");
 		if (!res.ok) {
 			throw new Error(`HTTP ${res.status}`);
 		}
@@ -64,7 +64,7 @@ async function performSync() {
 		const payload = { action: "import" };
 		toast.info("Performing standard filesystem sync...");
 
-		const res = await fetch("/api/config_sync", {
+		const res = await fetch("/api/http/config_sync", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),

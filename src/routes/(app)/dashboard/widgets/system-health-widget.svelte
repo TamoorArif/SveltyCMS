@@ -77,7 +77,7 @@ export const widgetMeta = {
 		try {
 			toast.warning('Reinitializing system...');
 
-			const response = await fetch('/api/system', {
+			const response = await fetch('/api/http/system', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'reinitialize', force: true })
@@ -171,7 +171,7 @@ export const widgetMeta = {
 	}
 </script>
 
-<BaseWidget {label} {theme} endpoint="/api/dashboard/health" pollInterval={5000} {icon} {widgetId} {size} {onSizeChange} onCloseRequest={onRemove}>
+<BaseWidget {label} {theme} endpoint="/api/http/dashboard/health" pollInterval={5000} {icon} {widgetId} {size} {onSizeChange} onCloseRequest={onRemove}>
 	{#snippet children({ data }: { data: HealthData | undefined })}
 		{#if data}
 			<div class="flex h-full flex-col gap-3">

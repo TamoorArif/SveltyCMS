@@ -99,7 +99,7 @@ async function updateRtcPreference(key: "enabled" | "sound", value: boolean) {
 	};
 
 	try {
-		const res = await fetch("/api/user/update-user-attributes", {
+		const res = await fetch("/api/http/user/update-user-attributes", {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ user_id: "self", newUserData }),
@@ -185,7 +185,7 @@ function modalConfirm(): void {
 		body: usermodalconfirmbody(),
 		// confirmText: usermodalconfirmdeleteuser(),
 		onConfirm: async () => {
-			const res = await fetch("/api/user/deleteUsers", {
+			const res = await fetch("/api/http/user/deleteUsers", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify([user]),

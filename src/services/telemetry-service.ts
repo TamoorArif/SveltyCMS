@@ -274,8 +274,8 @@ export const telemetryService = {
         const telemetryEndpoint =
           typeof globalThis !== "undefined"
             ? (globalThis as any).process?.env?.TELEMETRY_ENDPOINT ||
-              "https://telemetry.sveltycms.com/api/check-update"
-            : "https://telemetry.sveltycms.com/api/check-update";
+              "https://telemetry.sveltycms.com/api/http/check-update"
+            : "https://telemetry.sveltycms.com/api/http/check-update";
         const response = await fetch(telemetryEndpoint, {
           method: "POST",
           headers: {

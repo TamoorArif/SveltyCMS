@@ -4,51 +4,66 @@
  * for zero-latency, full-stack SvelteKit integration.
  */
 
-import { getDb } from "@src/databases/db";
+import { LocalCMS } from "@src/api/local/cms";
 import type { Handle } from "@sveltejs/kit";
 
 export const handleLocalSdk: Handle = async ({ event, resolve }) => {
-  const db = getDb();
+  const db = event.locals.dbAdapter;
 
   if (db) {
-    // Provide a simplified, developer-friendly "Local API" wrapper
+    const localCms = new LocalCMS(db);
+
+    // Inject high-performance Local API into locals
     event.locals.cms = {
-      find: async (collection: string, options?: any) => {
-        return db.crud.findMany(collection, options?.where || {}, {
-          limit: options?.limit,
-          offset: options?.offset,
-          sort: options?.sort,
-          populate: options?.populate,
-          tenantId: event.locals.tenantId as import("@src/databases/db-interface").DatabaseId,
-        });
-      },
-      findOne: async (collection: string, options?: any) => {
-        return db.crud.findOne(collection, options?.where || {}, {
-          populate: options?.populate,
-          tenantId: event.locals.tenantId as import("@src/databases/db-interface").DatabaseId,
-        });
-      },
-      create: async (collection: string, data: any) => {
-        return db.crud.insert(
-          collection,
-          data,
-          event.locals.tenantId as import("@src/databases/db-interface").DatabaseId,
-        );
-      },
-      update: async (collection: string, id: string, data: any) => {
-        return db.crud.update(
-          collection,
-          id as import("@src/databases/db-interface").DatabaseId,
-          data,
-          event.locals.tenantId as import("@src/databases/db-interface").DatabaseId,
-        );
-      },
-      delete: async (collection: string, id: string) => {
-        return db.crud.delete(collection, id as import("@src/databases/db-interface").DatabaseId, {
+      // Find entries with filters
+      find: (collection: string, options?: any) =>
+        localCms.find(collection, {
+          ...options,
           tenantId: event.locals.tenantId,
-        });
+          user: event.locals.user,
+        }),
+
+      // Find one entry by ID
+      findById: (collection: string, id: string, options?: any) =>
+        localCms.findById(collection, id, {
+          ...options,
+          tenantId: event.locals.tenantId,
+          user: event.locals.user,
+        }),
+
+      // Create entry (with widget logic + cache + pubsub)
+      create: (collection: string, data: any, options?: any) =>
+        localCms.create(collection, data, {
+          ...options,
+          tenantId: event.locals.tenantId,
+          user: event.locals.user,
+        }),
+
+      // Update entry (with widget logic + cache + pubsub)
+      update: (collection: string, id: string, data: any, options?: any) =>
+        localCms.update(collection, id, data, {
+          ...options,
+          tenantId: event.locals.tenantId,
+          user: event.locals.user,
+        }),
+
+      // Delete entry (with cache + pubsub)
+      delete: (collection: string, id: string, options?: any) =>
+        localCms.delete(collection, id, {
+          ...options,
+          tenantId: event.locals.tenantId,
+          user: event.locals.user,
+          permanent: options?.permanent,
+        }),
+
+      // Context bag for hooks to identify "local" calls
+      context: {
+        isLocal: true,
+        tenantId: event.locals.tenantId,
+        user: event.locals.user,
       },
-      // Access to the raw adapter for advanced queries
+
+      // Raw access for edge cases
       db,
     };
   }
