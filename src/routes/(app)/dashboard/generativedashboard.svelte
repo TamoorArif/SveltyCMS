@@ -39,7 +39,7 @@ async function handleRegenerate() {
 	if (!prompt.trim()) return;
 	isRegenerating = true;
 	try {
-		const response = await fetch("/api/http/ai/generate-layout", {
+		const response = await fetch("/api/ai/generate-layout", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

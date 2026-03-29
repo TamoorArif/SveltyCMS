@@ -22,7 +22,7 @@ export const handleTokenResolution: Handle = async ({ event, resolve }) => {
   // Only process JSON API responses
   const contentType = response.headers.get("content-type");
   const isJson = contentType?.includes("application/json");
-  const isApi = event.url.pathname.startsWith("/api/http/");
+  const isApi = event.url.pathname.startsWith("/api/");
 
   if (!(isJson && isApi)) {
     return response;
@@ -30,10 +30,10 @@ export const handleTokenResolution: Handle = async ({ event, resolve }) => {
 
   // Skip internal endpoints that shouldn't have token replacement
   if (
-    event.url.pathname.startsWith("/api/http/system") ||
-    event.url.pathname.startsWith("/api/http/dashboard") ||
-    event.url.pathname.startsWith("/api/http/auth") ||
-    event.url.pathname.startsWith("/api/http/graphql")
+    event.url.pathname.startsWith("/api/system") ||
+    event.url.pathname.startsWith("/api/dashboard") ||
+    event.url.pathname.startsWith("/api/auth") ||
+    event.url.pathname.startsWith("/api/graphql")
   ) {
     return response;
   }

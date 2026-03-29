@@ -73,10 +73,10 @@ The **RemoteVideo widget** provides a secure and efficient way to embed videos f
 
 ### Server-Side API Endpoint
 
-The RemoteVideo widget requires a server endpoint to fetch metadata. Create `/api/http/remoteVideo` route:
+The RemoteVideo widget requires a server endpoint to fetch metadata. Create `/api/remoteVideo` route:
 
 ```typescript
-// src/routes/api/http/remoteVideo/+server.ts
+// src/routes/api/remoteVideo/+server.ts
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 

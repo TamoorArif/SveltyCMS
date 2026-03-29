@@ -52,7 +52,7 @@ async function restartServer(skipConfirmation = false) {
 	isRestarting = true;
 
 	try {
-		const response = await fetch("/api/http/system/restart", {
+		const response = await fetch("/api/system/restart", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

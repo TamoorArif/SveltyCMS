@@ -219,7 +219,7 @@ class WidgetState {
         }
       } else if (typeof window !== "undefined") {
         // Fallback to API if adapter not passed (client-side)
-        const res = await fetch(`/api/http/widgets/active${this.isLoaded ? "" : "?refresh=true"}`, {
+        const res = await fetch(`/api/widgets/active${this.isLoaded ? "" : "?refresh=true"}`, {
           headers: { "X-Tenant-ID": tenantId },
         });
         if (res.ok) {
@@ -339,7 +339,7 @@ class WidgetState {
 
   private async updateInDatabase(name: string, active: boolean, tenantId: string) {
     if (typeof window !== "undefined") {
-      const res = await fetch("/api/http/widgets/status", {
+      const res = await fetch("/api/widgets/status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

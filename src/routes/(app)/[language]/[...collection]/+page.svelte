@@ -486,8 +486,8 @@ async function autoSaveDraft(): Promise<boolean> {
 		// Determine if creating new or updating existing
 		const isNewEntry = !entryData._id;
 		const endpoint = isNewEntry
-			? `/api/http/collections/${collectionId}`
-			: `/api/http/collections/${collectionId}/${entryData._id}`;
+			? `/api/collections/${collectionId}`
+			: `/api/collections/${collectionId}/${entryData._id}`;
 
 		const method = isNewEntry ? "POST" : "PUT";
 

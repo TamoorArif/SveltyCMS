@@ -44,7 +44,7 @@ async function fetchEntryDisplay(_id: string): Promise<string | null> {
 $effect(() => {
 	const ids = Array.isArray(value) ? value : value ? [value] : [];
 	if (ids.length > 0) {
-		// API Call: GET /api/http/entries/{field.collection}?ids={ids.join(',')}&fields={field.displayField}
+		// API Call: GET /api/entries/{field.collection}?ids={ids.join(',')}&fields={field.displayField}
 		// Optimized fetch for multiple entries
 		Promise.all(ids.map((id) => fetchEntryDisplay(id))).then((texts) => {
 			const validTexts = texts.filter((t) => t !== null) as string[];

@@ -270,7 +270,7 @@ export const contentStore = {
 
     logger.info("📡 Initializing Real-time Content Sync (SSE)");
 
-    const eventSource = new EventSource("/api/http/content/events");
+    const eventSource = new EventSource("/api/content/events");
 
     eventSource.onmessage = (event) => {
       try {
@@ -323,7 +323,7 @@ export const contentStore = {
 
     const checkVersion = async () => {
       try {
-        const response = await fetch("/api/http/content/version");
+        const response = await fetch("/api/content/version");
         if (!response.ok) throw new Error("Version check failed");
 
         const data = await response.json();

@@ -249,7 +249,7 @@ export function getWidgetError(fieldName: string): string | undefined {
  * async function checkEmailUnique() {
  *   const result = await handleAsyncWidgetValidation(
  *     async () => {
- *       const response = await fetchApi('/api/http/check-email', { email });
+ *       const response = await fetchApi('/api/check-email', { email });
  *       if (!response.success) throw new Error(response.message);
  *     },
  *     { fieldName: 'email' }

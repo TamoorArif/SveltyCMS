@@ -29,7 +29,7 @@ async function handleToggle(plugin: any) {
 	plugin.enabled = newEnabledState;
 
 	try {
-		const response = await fetch("/api/http/plugins/toggle", {
+		const response = await fetch("/api/plugins/toggle", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ pluginId: plugin.name, enabled: newEnabledState }),

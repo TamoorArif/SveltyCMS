@@ -19,6 +19,7 @@ const mockDb = {
 
 vi.mock("@src/databases/db", () => ({
   dbAdapter: mockDb,
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@utils/logger.server", () => ({

@@ -38,9 +38,12 @@ vi.mock("@src/databases/db", () => ({
     },
     crud: {
       updateMany: vi.fn().mockResolvedValue({ success: true, data: { modifiedCount: 1 } }),
+      findMany: vi.fn(),
+      findOne: vi.fn(),
     },
   },
   dbInitPromise: Promise.resolve(),
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@utils/api-handler", () => ({

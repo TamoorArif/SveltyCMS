@@ -51,7 +51,7 @@ export const widgetMeta = {
 		size = { w: 2, h: 2 } as WidgetSize,
 		onSizeChange = (_newSize: WidgetSize) => {},
 		onRemove = () => {},
-		endpoint = '/api/http/dashboard/logs',
+		endpoint = '/api/dashboard/logs',
 		pollInterval = 15_000
 	}: {
 		label?: string;

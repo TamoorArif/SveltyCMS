@@ -4,7 +4,7 @@
  * for zero-latency, full-stack SvelteKit integration.
  */
 
-import { LocalCMS } from "@src/api/local/cms";
+import { LocalCMS } from "@src/routes/api/cms";
 import type { Handle } from "@sveltejs/kit";
 
 export const handleLocalSdk: Handle = async ({ event, resolve }) => {
@@ -15,9 +15,12 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 
     // Inject high-performance Local API into locals
     event.locals.cms = {
-      // Find entries with filters
+      // Authentication
+      auth: localCms.auth,
+
+      // Collections
       find: (collection: string, options?: any) =>
-        localCms.find(collection, {
+        localCms.collections.find(collection, {
           ...options,
           tenantId: event.locals.tenantId,
           user: event.locals.user,
@@ -25,7 +28,7 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 
       // Find one entry by ID
       findById: (collection: string, id: string, options?: any) =>
-        localCms.findById(collection, id, {
+        localCms.collections.findById(collection, id, {
           ...options,
           tenantId: event.locals.tenantId,
           user: event.locals.user,
@@ -33,7 +36,7 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 
       // Create entry (with widget logic + cache + pubsub)
       create: (collection: string, data: any, options?: any) =>
-        localCms.create(collection, data, {
+        localCms.collections.create(collection, data, {
           ...options,
           tenantId: event.locals.tenantId,
           user: event.locals.user,
@@ -41,7 +44,7 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 
       // Update entry (with widget logic + cache + pubsub)
       update: (collection: string, id: string, data: any, options?: any) =>
-        localCms.update(collection, id, data, {
+        localCms.collections.update(collection, id, data, {
           ...options,
           tenantId: event.locals.tenantId,
           user: event.locals.user,
@@ -49,12 +52,21 @@ export const handleLocalSdk: Handle = async ({ event, resolve }) => {
 
       // Delete entry (with cache + pubsub)
       delete: (collection: string, id: string, options?: any) =>
-        localCms.delete(collection, id, {
+        localCms.collections.delete(collection, id, {
           ...options,
           tenantId: event.locals.tenantId,
           user: event.locals.user,
           permanent: options?.permanent,
         }),
+
+      // Media
+      media: localCms.media,
+
+      // Widgets
+      widgets: localCms.widgets,
+
+      // System
+      system: localCms.system,
 
       // Context bag for hooks to identify "local" calls
       context: {

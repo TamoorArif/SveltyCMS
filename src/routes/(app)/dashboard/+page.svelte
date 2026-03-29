@@ -110,7 +110,7 @@ async function toggleAiMode() {
 	try {
 		// In a real scenario, we could show a prompt modal first.
 		// For now, we use a default high-quality prompt that leverages the MCP knowledge.
-		const response = await fetch("/api/http/ai/generate-layout", {
+		const response = await fetch("/api/ai/generate-layout", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

@@ -45,7 +45,7 @@ import crypto from "node:crypto";
 function getApiEndpoint(pathname: string): string | null {
   const segments = pathname.split("/").filter(Boolean);
   // Expected structure: ['api', 'http'|'local', 'namespace', 'method']
-  if (segments[0] !== 'api') return null;
+  if (segments[0] !== "api") return null;
   return segments[2] || null; // Return the namespace (e.g. 'user', 'collections')
 }
 
@@ -64,30 +64,35 @@ function isPublicApiRoute(
   method: string | undefined,
   testMode: string | undefined,
 ): boolean {
-  // Allow /api/http/testing in TEST_MODE
-  if (testMode === "true" && (pathname.startsWith("/api/http/testing") || pathname.startsWith("/api/http/testing") || pathname.startsWith("/api/local/testing"))) {
+  // Allow /api/testing in TEST_MODE
+  if (
+    testMode === "true" &&
+    (pathname.startsWith("/api/testing") ||
+      pathname.startsWith("/api/testing") ||
+      pathname.startsWith("/api/local/testing"))
+  ) {
     return true;
   }
 
   // Token validation endpoint is public for GET only (registration flow)
-  // Format: /api/http/token/{tokenValue} or /api/http/token/{tokenValue}
-  const isTokenPath = pathname.startsWith("/api/http/token/") || pathname.startsWith("/api/http/token/");
+  // Format: /api/token/{tokenValue} or /api/token/{tokenValue}
+  const isTokenPath = pathname.startsWith("/api/token/") || pathname.startsWith("/api/token/");
   if (method === "GET" && isTokenPath) {
     return true;
   }
 
   // Legacy hardcoded list fallback (matches handleAuthorization.ts public routes)
   const legacyPublic = [
-    "/api/http/system/version",
-    "/api/http/system/version",
-    "/api/http/user/login",
-    "/api/http/user/login",
-    "/api/http/system/health",
-    "/api/http/system/health",
-    "/api/http/settings/public",
-    "/api/http/settings/public",
-    "/api/http/preview",
-    "/api/http/preview",
+    "/api/system/version",
+    "/api/system/version",
+    "/api/user/login",
+    "/api/user/login",
+    "/api/system/health",
+    "/api/system/health",
+    "/api/settings/public",
+    "/api/settings/public",
+    "/api/preview",
+    "/api/preview",
   ];
   return legacyPublic.some((r) => pathname.startsWith(r));
 }
@@ -96,7 +101,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
   const { url, locals, request } = event;
 
   // Early exit for non-API routes
-  if (!url.pathname.startsWith("/api/http/") && !url.pathname.startsWith("/api/local/")) {
+  if (!url.pathname.startsWith("/api/") && !url.pathname.startsWith("/api/local/")) {
     return resolve(event);
   }
 
@@ -117,7 +122,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
     metricsService.incrementApiRequests();
 
     // --- 0. Rate Limiting for Sensitive Endpoints ---
-    if (["/api/http/website-tokens", "/api/http/permission/update"].some((p) => url.pathname.startsWith(p))) {
+    if (["/api/website-tokens", "/api/permission/update"].some((p) => url.pathname.startsWith(p))) {
       // Basic implementation of an increment function using the single value atomic fallback pattern
       // If Redis is backing cacheService, it handles TTL well.
       const rateLimitKey = `ratelimit:api:sensitive:${locals.user._id}:${url.pathname}`;
@@ -149,7 +154,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
     }
 
     // --- 1. Authorization Check ---
-    if (url.pathname === "/api/http/user/logout") {
+    if (url.pathname === "/api/user/logout") {
       logger.trace("Logout endpoint - bypassing permission checks");
       // Proceed to resolve
     } else {
@@ -157,7 +162,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
       if (!hasApiPermission(locals.user.role, apiEndpoint, isAdmin)) {
         logger.warn(
           `User ${locals.user._id} (role: ${locals.user.role}, isAdmin: ${isAdmin}, tenant: ${locals.tenantId || "global"}) ` +
-            `denied access to /api/http/${apiEndpoint} - insufficient permissions`,
+            `denied access to /api/${apiEndpoint} - insufficient permissions`,
         );
         throw new AppError(
           `Forbidden: Your role (${locals.user.role}) does not have permission to access this API endpoint.`,
@@ -165,7 +170,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
           "FORBIDDEN",
         );
       }
-      logger.trace(`User ${locals.user._id} granted access to /api/http/${apiEndpoint}`, {
+      logger.trace(`User ${locals.user._id} granted access to /api/${apiEndpoint}`, {
         role: locals.user.role,
         isAdmin,
         tenant: locals.tenantId || "global",
@@ -253,12 +258,12 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
               logger.trace(`Background cache set complete for ${url.pathname}`);
             } catch (processingError) {
               logger.error(
-                `Error caching API response for /api/http/${apiEndpoint}: ${getErrorMessage(processingError)}`,
+                `Error caching API response for /api/${apiEndpoint}: ${getErrorMessage(processingError)}`,
               );
             }
           })();
         } else {
-          logger.trace(`Skipped caching non-JSON response for /api/http/${apiEndpoint}`);
+          logger.trace(`Skipped caching non-JSON response for /api/${apiEndpoint}`);
         }
 
         return response;
@@ -283,7 +288,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
         if (!locals.user?._id) {
           return response;
         }
-        const patternToInvalidate = `api:${locals.user._id}:/api/http/${apiEndpoint}`;
+        const patternToInvalidate = `api:${locals.user._id}:/api/${apiEndpoint}`;
         await cacheService.clearByPattern(`${patternToInvalidate}*`, locals.tenantId);
 
         logger.debug(
@@ -313,7 +318,7 @@ export async function invalidateApiCache(
   userId: string,
   tenantId?: string | null,
 ): Promise<void> {
-  const baseKey = `api:${userId}:/api/http/${apiEndpoint}`;
+  const baseKey = `api:${userId}:/api/${apiEndpoint}`;
   logger.debug(
     `Manually invalidating API cache for pattern ${baseKey}* (tenant: ${tenantId || "global"})`,
   );

@@ -60,7 +60,7 @@ export class SseProvider {
   private async fetchInitialState() {
     this.status = "syncing";
     try {
-      const res = await fetch(`/api/http/collaboration/yjs?docId=${this.docId}`);
+      const res = await fetch(`/api/collaboration/yjs?docId=${this.docId}`);
       const data = await res.json();
       if (data.success && data.stateBase64) {
         Y.applyUpdate(this.doc, decodeBase64ToYjs(data.stateBase64), "server");
@@ -75,7 +75,7 @@ export class SseProvider {
   private connectSSE() {
     if (this.eventSource) this.eventSource.close();
 
-    this.eventSource = new EventSource("/api/http/events");
+    this.eventSource = new EventSource("/api/events");
 
     this.eventSource.onopen = () => {
       if (this.status === "disconnected") {
@@ -126,7 +126,7 @@ export class SseProvider {
     this.batchTimeout = null;
 
     try {
-      await fetch("/api/http/collaboration/yjs", {
+      await fetch("/api/collaboration/yjs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

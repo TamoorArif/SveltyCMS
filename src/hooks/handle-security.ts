@@ -80,7 +80,7 @@ export const handleSecurity: Handle = async ({ event, resolve }) => {
     // 3. Request passed security checks
     return await resolve(event);
   } catch (err) {
-    if (url.pathname.startsWith("/api/http/")) {
+    if (url.pathname.startsWith("/api/")) {
       return handleApiError(err, event);
     }
     if (err instanceof AppError) {

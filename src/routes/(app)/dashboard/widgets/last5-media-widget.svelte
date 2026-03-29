@@ -90,7 +90,7 @@ export const widgetMeta = {
 <BaseWidget
 	{label}
 	{theme}
-	endpoint="/api/http/dashboard/last5media"
+	endpoint="/api/dashboard/last5media"
 	pollInterval={30000}
 	{icon}
 	{widgetId}

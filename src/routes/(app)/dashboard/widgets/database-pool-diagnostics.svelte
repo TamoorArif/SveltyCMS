@@ -98,7 +98,7 @@ export const widgetMeta = {
 	{icon}
 	{size}
 	{onSizeChange}
-	endpoint="/api/http/database/pool-diagnostics"
+	endpoint="/api/database/pool-diagnostics"
 	pollInterval={30000}
 	{widgetId}
 	onCloseRequest={onRemove}

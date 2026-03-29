@@ -208,7 +208,15 @@ moduleMock("@utils/logger", () => ({
   logger: mockLogger,
   default: mockLogger,
 }));
+moduleMock("@src/utils/logger", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
 moduleMock("@utils/logger.server", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
+moduleMock("@src/utils/logger.server", () => ({
   logger: mockLogger,
   default: mockLogger,
 }));
@@ -218,6 +226,14 @@ moduleMock("$app/environment", () => ({
   dev: true,
   building: false,
   version: "1.0.0",
+}));
+
+moduleMock("$app/navigation", () => ({
+  goto: mock(() => Promise.resolve()),
+  invalidate: mock(() => Promise.resolve()),
+  invalidateAll: mock(() => Promise.resolve()),
+  beforeNavigate: mock(() => {}),
+  afterNavigate: mock(() => {}),
 }));
 
 moduleMock("@sveltejs/kit", () => ({
@@ -603,6 +619,36 @@ moduleMock("@src/utils/error-handling", () => ({
     );
   }),
 }));
+moduleMock("@utils/error-handling", () => ({
+  AppError,
+  isAppError,
+  isHttpError,
+  getErrorMessage,
+  wrapError,
+  handleApiError: mock((err: any) => {
+    const status = err?.status || (isHttpError(err) ? (err as any).status : 500);
+    if (status >= 500) {
+      console.error("--- handleApiError Details:", {
+        message: getErrorMessage(err),
+        status,
+        code: err?.code,
+        stack: err instanceof Error ? err.stack : undefined,
+        err,
+      });
+    }
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: getErrorMessage(err),
+        code: err?.code || (isHttpError(err) ? `HTTP_${err.status}` : "INTERNAL_ERROR"),
+      }),
+      {
+        status,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }),
+}));
 
 // ============================================================================
 // CORE SERVICE MOCKS
@@ -734,6 +780,7 @@ const settingsMock = {
   invalidateSettingsCache: mock(async () => {}),
   isCacheLoaded: mock(() => true),
   getAllSettings: mock(async () => ({ public: {}, private: {} })),
+  updateSettingsFromSnapshot: mock(async () => ({ updated: 0 })),
   getUntypedSetting: mock(async () => undefined),
 };
 moduleMock("@src/services/settings-service", () => settingsMock);
@@ -769,6 +816,15 @@ const mockDbAdapter = {
       ),
     ),
     ensureAuth: mock(() => Promise.resolve()),
+    validateSession: mock((id: string) =>
+      Promise.resolve({
+        _id: id || "user123",
+        email: "test@example.com",
+        tenantId: "default",
+        role: "admin",
+        permissions: [],
+      }),
+    ),
     createSessionCookie: mock(() => ({
       name: "session",
       value: "secret",
@@ -786,8 +842,12 @@ const mockDbAdapter = {
       setMany: mock(() => Promise.resolve({ success: true })),
       deleteMany: mock(() => Promise.resolve({ success: true })),
     },
+    widgets: {
+      getActiveWidgets: mock(() => Promise.resolve({ success: true, data: [] })),
+    },
   },
   crud: {
+    insert: mock(() => Promise.resolve({ success: true, data: { _id: "mock-id" } })),
     update: mock(() => Promise.resolve({ success: true })),
     findOne: mock(() => Promise.resolve({ success: true, data: null })),
     findMany: mock(() => Promise.resolve({ success: true, data: [] })),
@@ -799,6 +859,7 @@ const mockDbAdapter = {
       delete: mock(() => Promise.resolve({ success: true })),
       deleteMany: mock(() => Promise.resolve({ success: true })),
       upload: mock(() => Promise.resolve({ success: true, data: "test.jpg" })),
+      getByFolder: mock(() => Promise.resolve({ success: true, data: [] })),
     },
   },
 };
@@ -824,8 +885,19 @@ const dbMock = {
   ),
   clearPrivateConfigCache: mock(() => {}),
   initializeWithConfig: mock(() => Promise.resolve({ status: "success" })),
+  reinitializeSystem: mock(() => Promise.resolve({ status: "initialized" })),
   initConnection: mock(() => Promise.resolve()),
+  getDbInitPromise: mock(() => Promise.resolve()),
+  resetDbInitPromise: mock(() => {}),
   dbInitPromise: Promise.resolve(),
+  collection: {
+    getModel: mock(() => Promise.resolve({ name: "mock_collection", fields: [] })),
+    listSchemas: mock(() => Promise.resolve({ success: true, data: [] })),
+  },
+  crud: mockDbAdapter.crud,
+  media: mockDbAdapter.media,
+  auth: mockDbAdapter.auth,
+  system: mockDbAdapter.system,
   loadSettingsFromDB: mock(() => Promise.resolve(true)),
 };
 moduleMock("@src/databases/db", () => dbMock);

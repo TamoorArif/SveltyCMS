@@ -237,7 +237,7 @@ export const widgetMeta = {
 			isLoading = true;
 			error = null;
 
-			const response = await fetch('/api/http/metrics/unified');
+			const response = await fetch('/api/metrics/unified');
 			if (!response.ok) {
 				throw new Error(`Metrics fetch failed: ${response.status}`);
 			}

@@ -952,7 +952,7 @@ export const defaultPrivateSettings: Array<{
     key: "PREVIEW_SECRET",
     value: "",
     description:
-      "Secret for live preview handshake (auto-generated via /api/http/system/preview-secret)",
+      "Secret for live preview handshake (auto-generated via /api/system/preview-secret)",
   },
 
   // AI Configuration

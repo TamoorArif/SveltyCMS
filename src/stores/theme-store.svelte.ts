@@ -291,7 +291,7 @@ export async function initializeThemeStore() {
   state.isLoading = true;
   state.error = null;
   try {
-    const response = await fetch("/api/http/theme/default");
+    const response = await fetch("/api/theme/default");
     if (!response.ok) {
       throw new Error(`Failed to fetch theme: ${response.statusText}`);
     }
@@ -311,7 +311,7 @@ export async function updateTheme(newThemeName: string) {
   state.isLoading = true;
   state.error = null;
   try {
-    const response = await fetch("/api/http/theme/update-theme", {
+    const response = await fetch("/api/theme/update-theme", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ themeName: newThemeName }),

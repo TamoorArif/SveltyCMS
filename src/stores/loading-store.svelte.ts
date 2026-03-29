@@ -264,7 +264,7 @@ export class LoadingStore {
    * await globalLoadingStore.withLoading(
    *   loadingOperations.dataFetch,
    *   async () => {
-   *     const data = await fetch('/api/http/data');
+   *     const data = await fetch('/api/data');
    *     return data.json();
    *   }
    * );

@@ -144,7 +144,7 @@ async function main() {
     console.log("🌱 Seeding database...");
     const seedForm = new FormData();
     seedForm.append("config", JSON.stringify(dbConfig));
-    seedForm.append("system", JSON.stringify({ preset: "blank" }));
+    seedForm.append("system", JSON.stringify({ preset: "blog" }));
     const seedRes = await postAction("seedDatabase", seedForm);
     const seedData = parseActionResult(seedRes);
 
@@ -178,6 +178,7 @@ async function main() {
         contentLanguages: ["en"],
         defaultSystemLanguage: "en",
         systemLanguages: ["en"],
+        preset: "blog",
       },
     };
     completeForm.append("data", JSON.stringify(payload));

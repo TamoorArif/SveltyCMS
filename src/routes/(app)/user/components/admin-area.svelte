@@ -130,7 +130,7 @@ async function fetchData() {
 	await globalLoadingStore.withLoading(
 		loadingOperations.dataFetch,
 		async () => {
-			const endpoint = showUserList ? "/api/http/user" : "/api/http/token";
+			const endpoint = showUserList ? "/api/user" : "/api/token";
 			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const params = new URLSearchParams();
 			params.set("page", String(currentPage));
@@ -476,7 +476,7 @@ async function performBlockAction(
 	actionPastTense: string,
 ) {
 	try {
-		const response = await fetch("/api/http/user/batch", {
+		const response = await fetch("/api/user/batch", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -540,7 +540,7 @@ async function performTokenBlockAction(
 	actionPastTense: string,
 ) {
 	try {
-		const response = await fetch("/api/http/token/batch", {
+		const response = await fetch("/api/token/batch", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

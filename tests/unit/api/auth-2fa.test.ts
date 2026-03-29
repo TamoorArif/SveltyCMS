@@ -16,12 +16,53 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
 
 // Mock all dependencies
-vi.mock("@src/databases/db", () => ({
+const mockDbAdapter = {
   auth: {
     authInterface: {},
     validateSession: vi.fn(),
     getUserById: vi.fn(),
+    updateUserAttributes: vi.fn().mockResolvedValue({ success: true }),
+    createSessionCookie: vi.fn().mockReturnValue({ name: "session", value: "val", attributes: {} }),
+    login: vi.fn(),
   },
+  collections: {
+    list: vi.fn(),
+    find: vi.fn(),
+    findById: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    search: vi.fn(),
+  },
+  media: {
+    find: vi.fn(),
+    findById: vi.fn(),
+    upload: vi.fn(),
+    delete: vi.fn(),
+  },
+  widgets: {
+    list: vi.fn(),
+    activate: vi.fn(),
+    deactivate: vi.fn(),
+  },
+  system: {
+    getHealth: vi.fn(),
+    reinitialize: vi.fn(),
+  },
+  crud: {
+    findMany: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+};
+
+vi.mock("@src/databases/db", () => ({
+  dbAdapter: mockDbAdapter,
+  auth: mockDbAdapter.auth,
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
+  getAuth: vi.fn().mockReturnValue(mockDbAdapter.auth),
 }));
 
 vi.mock("@src/databases/auth/two-factor-auth", () => ({
@@ -60,19 +101,81 @@ vi.mock("@src/databases/auth", () => ({
   validateUserPermission: vi.fn().mockReturnValue(true),
 }));
 
-// Import handlers after mocks
-const setupHandler = await import("@src/routes/api/auth/2fa/setup/+server.ts");
-const verifySetupHandler = await import("@src/routes/api/auth/2fa/verify-setup/+server.ts");
-const verifyHandler = await import("@src/routes/api/auth/2fa/verify/+server.ts");
-const disableHandler = await import("@src/routes/api/auth/2fa/disable/+server.ts");
-const backupCodesHandler = await import("@src/routes/api/auth/2fa/backup-codes/+server.ts");
+// Import dispatcher (handler)
+import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
-const POST_SETUP = setupHandler.POST;
-const POST_VERIFY_SETUP = verifySetupHandler.POST;
-const POST_VERIFY = verifyHandler.POST;
-const POST_DISABLE = disableHandler.POST;
-const GET_BACKUP_CODES = backupCodesHandler.GET;
-const POST_BACKUP_CODES = backupCodesHandler.POST;
+const POST_SETUP = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/setup" };
+  event.request = event.request || {};
+  event.request.method = "POST";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
+const POST_VERIFY_SETUP = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/verify-setup" };
+  event.request = event.request || {};
+  event.request.method = "POST";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
+const POST_VERIFY = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/verify" };
+  event.request = event.request || {};
+  event.request.method = "POST";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
+const POST_DISABLE = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/disable" };
+  event.request = event.request || {};
+  event.request.method = "POST";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
+const GET_BACKUP_CODES = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/backup-codes" };
+  event.request = event.request || {};
+  event.request.method = "GET";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
+const POST_BACKUP_CODES = (event: any) => {
+  event.params = { ...event.params, path: "auth/2fa/backup-codes" };
+  event.request = event.request || {};
+  event.request.method = "POST";
+  event.cookies = event.cookies || {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    serialize: vi.fn(),
+  };
+  return dispatcher(event);
+};
 
 describe("2FA API Unit Tests", () => {
   let mockTwoFactorService: any;
@@ -96,12 +199,23 @@ describe("2FA API Unit Tests", () => {
   // Helper to create mock event
   const createMockEvent = (body: any = {}, user: any = null, tenantId?: string) => {
     return {
+      url: new URL(`http://localhost/api/auth/2fa`),
       request: {
         json: vi.fn().mockResolvedValue(body),
+        method: "POST",
+        headers: new Map(),
       },
       locals: {
         user,
         tenantId,
+        dbAdapter: mockDbAdapter,
+      },
+      params: {},
+      cookies: {
+        get: vi.fn(),
+        set: vi.fn(),
+        delete: vi.fn(),
+        serialize: vi.fn(),
       },
     } as unknown as RequestEvent;
   };
@@ -110,8 +224,7 @@ describe("2FA API Unit Tests", () => {
     it("should verify TOTP code successfully", async () => {
       mockTwoFactorService.verify2FA.mockResolvedValue({
         success: true,
-        method: "totp",
-        message: "Success",
+        user: { _id: "user-1" },
       });
 
       const event = createMockEvent({ userId: "user-1", code: "123456" });
@@ -119,15 +232,13 @@ describe("2FA API Unit Tests", () => {
       const result = await response.json();
 
       expect(result.success).toBe(true);
-      expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith("user-1", "123456", null);
+      expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith("user-1", "123456", undefined);
     });
 
     it("should verify backup code successfully", async () => {
       mockTwoFactorService.verify2FA.mockResolvedValue({
         success: true,
-        method: "backup",
-        backupCodeUsed: true,
-        message: "Success",
+        user: { _id: "user-1" },
       });
 
       const event = createMockEvent({ userId: "user-1", code: "backup-123" });
@@ -135,7 +246,6 @@ describe("2FA API Unit Tests", () => {
       const result = await response.json();
 
       expect(result.success).toBe(true);
-      expect(result.backupCodeUsed).toBe(true);
     });
 
     it("should return success: false for invalid code", async () => {
@@ -165,10 +275,10 @@ describe("2FA API Unit Tests", () => {
       mockGetPrivateSettingSync.mockReturnValue(true);
       mockTwoFactorService.verify2FA.mockResolvedValue({ success: true });
 
-      const event = createMockEvent({ userId: "user-1", code: "123456" }, null, "tenant-A");
+      const event = createMockEvent({ userId: "user-1", code: "123456" }, null, "tenant-1");
       await POST_VERIFY(event);
 
-      expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith("user-1", "123456", "tenant-A");
+      expect(mockTwoFactorService.verify2FA).toHaveBeenCalledWith("user-1", "123456", "tenant-1");
     });
   });
 
@@ -176,7 +286,11 @@ describe("2FA API Unit Tests", () => {
     it("should initiate setup for authenticated user", async () => {
       const user = { _id: "user-1", email: "test@example.com" };
       mockTwoFactorService.initiate2FASetup.mockResolvedValue({
-        secret: "secret",
+        success: true,
+        data: {
+          qrCode: "qr-data",
+          secret: "secret",
+        },
       });
 
       const event = createMockEvent({}, user);
@@ -192,10 +306,16 @@ describe("2FA API Unit Tests", () => {
       await expect(POST_SETUP(event)).rejects.toThrow("Authentication required");
     });
 
-    it("should throw 2FA_ALREADY_ENABLED if user already has it", async () => {
+    it("should return success: false if user already has 2FA enabled during setup", async () => {
       const user = { _id: "user-1", is2FAEnabled: true };
+      mockTwoFactorService.initiate2FASetup.mockResolvedValue({
+        success: false,
+        message: "2FA is already enabled",
+      });
       const event = createMockEvent({}, user);
-      await expect(POST_SETUP(event)).rejects.toThrow("2FA is already enabled");
+      const response = await POST_SETUP(event);
+      const result = await response.json();
+      expect(result.success).toBe(false);
     });
   });
 
@@ -204,35 +324,21 @@ describe("2FA API Unit Tests", () => {
       const user = { _id: "user-1" };
       mockTwoFactorService.complete2FASetup.mockResolvedValue(true);
 
-      const event = createMockEvent(
-        {
-          secret: "secret",
-          verificationCode: "123456",
-          backupCodes: ["code1"],
-        },
-        user,
-      );
-
+      const event = createMockEvent({ code: "123456" }, user);
       const response = await POST_VERIFY_SETUP(event);
       const result = await response.json();
 
       expect(result.success).toBe(true);
     });
 
-    it("should throw INVALID_VERIFICATION_CODE for wrong code", async () => {
+    it("should return success: false for wrong code", async () => {
       const user = { _id: "user-1" };
       mockTwoFactorService.complete2FASetup.mockResolvedValue(false);
 
-      const event = createMockEvent(
-        {
-          secret: "secret",
-          verificationCode: "000000",
-          backupCodes: [],
-        },
-        user,
-      );
-
-      await expect(POST_VERIFY_SETUP(event)).rejects.toThrow("Invalid verification code");
+      const event = createMockEvent({ code: "000000" }, user);
+      const response = await POST_VERIFY_SETUP(event);
+      const result = await response.json();
+      expect(result.success).toBe(false);
     });
   });
 
@@ -243,8 +349,8 @@ describe("2FA API Unit Tests", () => {
         is2FAEnabled: true,
         password: "hashed_password",
       };
-      mockTwoFactorService.disable2FA.mockResolvedValue(true);
       mockVerifyPassword.mockResolvedValue(true);
+      mockTwoFactorService.disable2FA.mockResolvedValue(true);
 
       const event = createMockEvent({ password: "correct_password" }, user);
       const response = await POST_DISABLE(event);
@@ -253,16 +359,18 @@ describe("2FA API Unit Tests", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should throw 2FA_DISABLED if not enabled", async () => {
+    it("should return success: false if disable fails", async () => {
       const user = {
         _id: "user-1",
-        is2FAEnabled: false,
         password: "hashed_password",
       };
       mockVerifyPassword.mockResolvedValue(true);
+      mockTwoFactorService.disable2FA.mockResolvedValue(false);
 
       const event = createMockEvent({ password: "correct_password" }, user);
-      await expect(POST_DISABLE(event)).rejects.toThrow("2FA is not enabled");
+      const response = await POST_DISABLE(event);
+      const result = await response.json();
+      expect(result.success).toBe(false);
     });
   });
 
@@ -270,8 +378,8 @@ describe("2FA API Unit Tests", () => {
     it("should return 2FA status (GET)", async () => {
       const user = { _id: "user-1" };
       mockTwoFactorService.get2FAStatus.mockResolvedValue({
-        enabled: true,
-        backupCodesCount: 5,
+        is2FAEnabled: true,
+        backupCodesRemaining: 5,
       });
 
       const event = createMockEvent({}, user);
@@ -279,19 +387,19 @@ describe("2FA API Unit Tests", () => {
       const result = await response.json();
 
       expect(result.success).toBe(true);
-      expect(result.data.backupCodesCount).toBe(5);
+      expect(result.data.is2FAEnabled).toBe(true);
     });
 
     it("should regenerate backup codes (POST)", async () => {
-      const user = { _id: "user-1", is2FAEnabled: true };
-      mockTwoFactorService.regenerateBackupCodes.mockResolvedValue(["new1", "new2"]);
+      const user = { _id: "user-1" };
+      mockTwoFactorService.regenerateBackupCodes.mockResolvedValue(["n1", "n2"]);
 
       const event = createMockEvent({}, user);
       const response = await POST_BACKUP_CODES(event);
       const result = await response.json();
 
       expect(result.success).toBe(true);
-      expect(result.data.backupCodes).toHaveLength(2);
+      expect(result.backupCodes).toEqual(["n1", "n2"]);
     });
   });
 });

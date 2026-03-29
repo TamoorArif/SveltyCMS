@@ -171,7 +171,7 @@ async function fetchMedia(): Promise<void> {
 	error = null;
 
 	try {
-		const response = await fetch("/api/http/media");
+		const response = await fetch("/api/media");
 		if (!response.ok) {
 			throw new Error("Failed to load media");
 		}

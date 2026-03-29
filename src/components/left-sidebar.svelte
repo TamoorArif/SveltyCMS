@@ -198,7 +198,7 @@ function toggleSidebar(): void {
 
 async function signOut(): Promise<void> {
 	try {
-		await fetch("/api/http/user/logout", { method: "POST" });
+		await fetch("/api/user/logout", { method: "POST" });
 	} catch (error) {
 		logger.error("Error during sign-out:", error);
 	} finally {

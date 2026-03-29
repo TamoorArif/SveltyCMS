@@ -75,9 +75,9 @@ async function runRestBenchmark() {
   const baselineFile = path.join(RESULTS_DIR, "baseline-rest-api.json");
 
   try {
-    // Ensure server is up
+    // 1. Initial Health Check
     console.log("📡 Checking server health...");
-    const healthCheck = await safeFetch(`${API_BASE_URL}/api/system/health`);
+    const healthCheck = await safeFetch("http://localhost:4173/api/system/health");
     if (!healthCheck.ok) {
       throw new Error(
         `Server not reachable at ${API_BASE_URL}. Ensure 'bun run preview' is running.`,

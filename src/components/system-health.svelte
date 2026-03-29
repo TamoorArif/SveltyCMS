@@ -119,8 +119,8 @@ const formattedLastChecked = $derived(
 
 const apiHealthUrl = $derived(
 	typeof window !== "undefined"
-		? `${window.location.origin}/api/http/system?action=health`
-		: "/api/http/system?action=health",
+		? `${window.location.origin}/api/system?action=health`
+		: "/api/system?action=health",
 );
 
 const healthPercentage = $derived(
@@ -169,7 +169,7 @@ async function fetchHealth(): Promise<void> {
 	isLoading = true;
 
 	try {
-		const response = await fetch("/api/http/system?action=health", {
+		const response = await fetch("/api/system?action=health", {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
@@ -233,7 +233,7 @@ async function reinitializeSystem(): Promise<void> {
 	try {
 		toast.warning("Reinitializing system...");
 
-		const response = await fetch("/api/http/system", {
+		const response = await fetch("/api/system", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

@@ -170,7 +170,7 @@ const functions: Record<string, ModifierFunction> = {
       return "";
     }
     const style = args?.[0] || "original";
-    return `/api/http/media/${v}?style=${style}`;
+    return `/api/media/${v}?style=${style}`;
   },
 };
 

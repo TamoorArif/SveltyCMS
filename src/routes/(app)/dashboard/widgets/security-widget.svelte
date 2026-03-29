@@ -184,14 +184,14 @@ export const widgetMeta = {
 			error = null;
 
 			// Fetch security statistics
-			const statsResponse = await fetch('/api/http/security/stats');
+			const statsResponse = await fetch('/api/security/stats');
 			if (!statsResponse.ok) {
 				throw new Error(`Security stats fetch failed: ${statsResponse.status}`);
 			}
 			const stats = await statsResponse.json();
 
 			// Fetch active incidents
-			const incidentsResponse = await fetch('/api/http/security/incidents');
+			const incidentsResponse = await fetch('/api/security/incidents');
 			if (!incidentsResponse.ok) {
 				throw new Error(`Incidents fetch failed: ${incidentsResponse.status}`);
 			}
@@ -210,7 +210,7 @@ export const widgetMeta = {
 	// Incident management
 	async function resolveIncident(incidentId: string): Promise<void> {
 		try {
-			const response = await fetch(`/api/http/security/incidents/${incidentId}/resolve`, {
+			const response = await fetch(`/api/security/incidents/${incidentId}/resolve`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
 			});
@@ -228,7 +228,7 @@ export const widgetMeta = {
 
 	async function unblockIP(ip: string): Promise<void> {
 		try {
-			const response = await fetch('/api/http/security/unblock', {
+			const response = await fetch('/api/security/unblock', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ip })

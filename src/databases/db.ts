@@ -44,7 +44,7 @@ export {
 // Function to reset initialization state for self-healing (retries)
 export function resetDbInitPromise() {
   logger.warn("Resetting DB initialization promise for retry...");
-  DB_INIT_PROMISE = null;
+  initializationPromise = null;
   initializationPromise = null;
   adaptersLoaded = false;
   isInitialized = false;
@@ -87,19 +87,14 @@ export let dbAdapter: DatabaseAdapter | null = null; // Database adapter
 export let auth: AuthType | null = null; // Authentication instance
 export let isConnected = false; // Database connection state (primarily for external checks if needed)
 let isInitialized = false; // Initialization state
+// Create a proper Promise for lazy initialization
 let initializationPromise: Promise<void> | null = null; // Initialization promise
 
-// export function getPrivateEnv(): InferOutput<typeof privateConfigSchema> | null {
-// 	return privateEnv;
-// }
-
-// Create a proper Promise for lazy initialization
-let DB_INIT_PROMISE: Promise<void> | null = null;
 export function getDbInitPromise(forceInit = false): Promise<void> {
-  if (!DB_INIT_PROMISE || forceInit) {
-    DB_INIT_PROMISE = initializeOnRequest(forceInit);
+  if (!initializationPromise || forceInit) {
+    initializationPromise = initializeOnRequest(forceInit);
   }
-  return DB_INIT_PROMISE;
+  return initializationPromise;
 }
 // Export a real Promise that will be initialized on first access
 export const dbInitPromise = getDbInitPromise();
@@ -410,14 +405,21 @@ async function initializeSystem(
   skipSetupCheck = false,
   awaitBackground = false,
 ): Promise<void> {
-  // Prevent re-initialization
-  if (isInitialized) {
+  const isSetupProcess =
+    typeof process !== "undefined" && process.argv?.some((arg) => ["build", "check"].includes(arg));
+  if (isSetupProcess) return;
+
+  // Prevent re-initialization unless forced
+  if (isInitialized && !forceReload) {
     logger.debug("System already initialized. Skipping.");
     return;
   }
 
   const systemStartTime = performance.now();
   logger.info("Starting SvelteCMS System Initialization...");
+  console.log(
+    `[DB] initializeSystem called. forceReload=${forceReload}, skipSetupCheck=${skipSetupCheck}`,
+  );
 
   // Set system state to INITIALIZING
   setSystemState("INITIALIZING", "Starting system initialization");
@@ -788,7 +790,7 @@ export function initializeOnRequest(forceInit = false): Promise<void> {
         logger.error(`Initialization failed: ${err instanceof Error ? err.message : String(err)}`);
         logger.error("Clearing initialization promise to allow retry");
         initializationPromise = null;
-        DB_INIT_PROMISE = null;
+        initializationPromise = null;
       });
     }
   } else if (!initializationPromise) {
@@ -1081,6 +1083,7 @@ export async function initConnection(dbConfig: {
   if (!dbConfig?.type) {
     throw new Error("Database configuration is required");
   }
+  console.log(`[DB] initConnection started for type: ${dbConfig.type}`);
 
   const supportedTypes = ["mongodb", "mongodb+srv", "sqlite", "mariadb", "postgresql"];
   if (!supportedTypes.includes(dbConfig.type)) {

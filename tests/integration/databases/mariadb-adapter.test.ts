@@ -26,7 +26,14 @@ describe("MariaDB Adapter Functional Tests", () => {
     try {
       // @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
       const configModule = await import("../../../config/private.test");
-      privateEnv = configModule.privateEnv;
+      privateEnv = {
+        DB_TYPE: configModule.DB_TYPE,
+        DB_HOST: configModule.DB_HOST,
+        DB_PORT: configModule.DB_PORT,
+        DB_NAME: configModule.DB_NAME,
+        DB_USER: configModule.DB_USER,
+        DB_PASSWORD: configModule.DB_PASSWORD,
+      };
     } catch {
       privateEnv = {
         DB_TYPE: process.env.DB_TYPE,

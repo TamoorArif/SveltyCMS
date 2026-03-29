@@ -304,7 +304,7 @@ export function buildScimUser(user: Record<string, any>, baseUrl: string): Recor
       resourceType: "User",
       created: user.createdAt || new Date().toISOString(),
       lastModified: user.updatedAt || new Date().toISOString(),
-      location: `${baseUrl}/api/http/scim/v2/Users/${user._id}`,
+      location: `${baseUrl}/api/scim/v2/Users/${user._id}`,
       version: `W/"${user.updatedAt || user.createdAt || Date.now()}"`,
     },
   };
@@ -325,13 +325,13 @@ export function buildScimGroup(
     members: (members || []).map((m) => ({
       value: m._id,
       display: m.email,
-      $ref: `${baseUrl}/api/http/scim/v2/Users/${m._id}`,
+      $ref: `${baseUrl}/api/scim/v2/Users/${m._id}`,
     })),
     meta: {
       resourceType: "Group",
       created: role.createdAt || new Date().toISOString(),
       lastModified: role.updatedAt || new Date().toISOString(),
-      location: `${baseUrl}/api/http/scim/v2/Groups/${role._id}`,
+      location: `${baseUrl}/api/scim/v2/Groups/${role._id}`,
     },
   };
 }

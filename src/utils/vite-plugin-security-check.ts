@@ -78,7 +78,7 @@ export function securityCheckPlugin(options: SecurityCheckOptions = {}): Plugin 
       id.includes("+server.") ||
       id.includes("/hooks.server.") ||
       id.includes("/hooks/") || // All files in src/hooks/ are server-only
-      id.includes("/routes/api/http/") || // All API routes are server-only
+      id.includes("/routes/api/") || // All API routes are server-only
       id.includes("/auth/") || // Auth modules are server-only
       id.includes("/databases/") || // Database code is server-only
       id.includes("/src/stores/global-settings.ts") || // The store itself needs these functions

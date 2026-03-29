@@ -105,7 +105,7 @@ async function fetchYouTubeMetadata(videoId: string): Promise<ExternalVideoMetad
 
 // Fetches Vimeo video metadata
 async function fetchVimeoMetadata(videoId: string): Promise<ExternalVideoMetadata | null> {
-  const url = `https://vimeo.com/api/http/v2/video/${videoId}.json`;
+  const url = `https://vimeo.com/api/v2/video/${videoId}.json`;
   try {
     const response = await fetch(url);
     if (!response.ok) {

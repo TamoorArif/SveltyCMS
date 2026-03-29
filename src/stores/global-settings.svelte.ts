@@ -42,7 +42,7 @@ export function isInitialized(): boolean {
 // Fetches the latest public settings from the server
 async function fetchPublicSettings() {
   try {
-    const response = await fetch("/api/http/settings/public");
+    const response = await fetch("/api/settings/public");
     if (response.ok) {
       const data = await response.json();
       Object.assign(state, data);
@@ -70,7 +70,7 @@ function startListening() {
   }
 
   try {
-    eventSource = new EventSource("/api/http/settings/public/stream");
+    eventSource = new EventSource("/api/settings/public/stream");
 
     eventSource.addEventListener("message", async (event) => {
       try {

@@ -60,11 +60,11 @@ const DEFAULT_POLICIES: SecurityPolicy[] = [
 ];
 
 const ENDPOINT_RATE_LIMITS: Record<string, number> = {
-  "/api/http/auth/login": 5,
-  "/api/http/auth/saml/acs": 10,
-  "/api/http/auth/register": 3,
-  "/api/http/auth/forgot-password": 3,
-  "/api/http/scim/v2": 30,
+  "/api/auth/login": 5,
+  "/api/auth/saml/acs": 10,
+  "/api/auth/register": 3,
+  "/api/auth/forgot-password": 3,
+  "/api/scim/v2": 30,
 };
 
 const GLOBAL_RATE_LIMIT = 100;
@@ -89,7 +89,7 @@ class SecurityResponseService {
     endpoint: string,
     tenantId?: string,
   ): Promise<RateLimiterMemory | RateLimiterRedis> {
-    const isGraphql = endpoint.includes("/api/http/graphql");
+    const isGraphql = endpoint.includes("/api/graphql");
     const scope = ENDPOINT_RATE_LIMITS[endpoint] ? endpoint : isGraphql ? "graphql" : "global";
     const limit = ENDPOINT_RATE_LIMITS[scope] || GLOBAL_RATE_LIMIT;
 

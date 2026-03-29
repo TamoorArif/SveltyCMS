@@ -182,7 +182,7 @@ const fetchVideoMetadata = debounce.create((...args: unknown[]) => {
 	(async () => {
 		try {
 			// Call API endpoint to fetch metadata securely
-			const response = await fetch("/api/http/remoteVideo", {
+			const response = await fetch("/api/remoteVideo", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				// Send a JSON object

@@ -143,7 +143,7 @@ export function createEntry(
   collectionId: string,
   payload: Record<string, unknown>,
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}`, {
+  return fetchApi(`/api/collections/${collectionId}`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -154,7 +154,7 @@ export function updateEntry(
   entryId: string,
   payload: Record<string, unknown>,
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/${entryId}`, {
+  return fetchApi(`/api/collections/${collectionId}/${entryId}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
@@ -166,7 +166,7 @@ export function batchUpdateEntries(
 ): Promise<ApiResponse<unknown>> {
   const { ids, status, ...otherFields } = payload;
   if (status && ids && Array.isArray(ids)) {
-    return fetchApi(`/api/http/collections/${collectionId}/${ids[0]}/status`, {
+    return fetchApi(`/api/collections/${collectionId}/${ids[0]}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status, entries: ids, ...otherFields }),
     });
@@ -184,14 +184,14 @@ export function updateEntryStatus(
   entryId: string,
   status: string,
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/${entryId}/status`, {
+  return fetchApi(`/api/collections/${collectionId}/${entryId}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 }
 
 export function deleteEntry(collectionId: string, entryId: string): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/${entryId}`, {
+  return fetchApi(`/api/collections/${collectionId}/${entryId}`, {
     method: "DELETE",
   });
 }
@@ -200,7 +200,7 @@ export function batchDeleteEntries(
   collectionId: string,
   entryIds: string[],
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/batch`, {
+  return fetchApi(`/api/collections/${collectionId}/batch`, {
     method: "POST",
     body: JSON.stringify({ action: "delete", entryIds }),
   });
@@ -210,7 +210,7 @@ export function createClones(
   collectionId: string,
   entries: Record<string, unknown>[],
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/batch-clone`, {
+  return fetchApi(`/api/collections/${collectionId}/batch-clone`, {
     method: "POST",
     body: JSON.stringify({ entries }),
   });
@@ -220,7 +220,7 @@ export function batchCloneEntries(
   collectionId: string,
   entryIds: string[],
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/batch`, {
+  return fetchApi(`/api/collections/${collectionId}/batch`, {
     method: "POST",
     body: JSON.stringify({ action: "clone", entryIds }),
   });
@@ -231,7 +231,7 @@ export function batchUpdateEntriesStatus(
   entryIds: string[],
   status: string,
 ): Promise<ApiResponse<unknown>> {
-  return fetchApi(`/api/http/collections/${collectionId}/batch`, {
+  return fetchApi(`/api/collections/${collectionId}/batch`, {
     method: "POST",
     body: JSON.stringify({ action: "status", entryIds, status }),
   });
@@ -246,7 +246,7 @@ export async function getRevisionDiff(params: {
   currentData: Record<string, unknown>;
 }): Promise<ApiResponse<RevisionDiff>> {
   const { collectionId, entryId, revisionId, currentData } = params;
-  const endpoint = `/api/http/collections/${collectionId}/${entryId}/revisions/diff`;
+  const endpoint = `/api/collections/${collectionId}/${entryId}/revisions/diff`;
 
   return fetchApi(endpoint, {
     method: "POST",
@@ -265,7 +265,7 @@ export async function getRevisions(
     metaOnly?: boolean;
   } = {},
 ): Promise<ApiResponse<RevisionMeta[]>> {
-  const endpoint = `/api/http/collections/${collectionId}/${entryId}/revisions`;
+  const endpoint = `/api/collections/${collectionId}/${entryId}/revisions`;
   const searchParams = new URLSearchParams(options as Record<string, string>).toString();
   const url = `${endpoint}?${searchParams}`;
 
@@ -337,7 +337,7 @@ export async function getData(query: {
 
   const { collectionId, ...params } = query;
   const searchParams = new URLSearchParams(params as Record<string, string>).toString();
-  const endpoint = `/api/http/collections/${collectionId}?${searchParams}`;
+  const endpoint = `/api/collections/${collectionId}?${searchParams}`;
 
   const result = await fetchApi<GetDataResponse>(endpoint, { method: "GET" });
 
@@ -368,6 +368,6 @@ export async function getCollections(
   options: { includeFields?: boolean; includeStats?: boolean } = {},
 ): Promise<ApiResponse<Collection[]>> {
   const params = new URLSearchParams(options as Record<string, string>);
-  const endpoint = `/api/http/collections?${params.toString()}`;
+  const endpoint = `/api/collections?${params.toString()}`;
   return fetchApi(endpoint, { method: "GET" });
 }

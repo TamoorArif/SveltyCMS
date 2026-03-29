@@ -33,7 +33,7 @@ async function runBatch() {
 	const ids = Array.from(selectedIds);
 
 	try {
-		const response = await fetch("/api/http/media/batch-process", {
+		const response = await fetch("/api/media/batch-process", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

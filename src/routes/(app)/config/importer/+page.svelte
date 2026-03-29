@@ -48,7 +48,7 @@ async function nextStep() {
 async function runAIMapping() {
 	try {
 		loading = true;
-		const response = await fetch("/api/http/importer/external", {
+		const response = await fetch("/api/importer/external", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -78,7 +78,7 @@ async function startImport() {
 	try {
 		loading = true;
 		progress = 10;
-		const response = await fetch("/api/http/importer/external", {
+		const response = await fetch("/api/importer/external", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -121,7 +121,7 @@ async function handleScaffold() {
 		const name = prompt("Enter a name for the new collection:", contentType);
 		if (!name) return;
 
-		const response = await fetch("/api/http/importer/scaffold", {
+		const response = await fetch("/api/importer/scaffold", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

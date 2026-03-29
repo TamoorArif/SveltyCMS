@@ -11,7 +11,7 @@ import { getPrivateSetting } from "./settings-service";
 // import { env } from '$env/dynamic/private'; // TODO: Use env for URL
 
 // Default to the official SveltyCMS Knowledge Core
-const DEFAULT_KNOWLEDGE_URL = "https://mcp.sveltycms.com/api/http/v1/query";
+const DEFAULT_KNOWLEDGE_URL = "https://mcp.sveltycms.com/api/v1/query";
 
 interface KnowledgeResult {
   source: string;

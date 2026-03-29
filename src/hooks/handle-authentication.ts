@@ -416,11 +416,11 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
     "/register",
     "/forgot-password",
     "/setup",
-    "/api/http/settings/public",
-    "/api/http/system/health",
+    "/api/settings/public",
+    "/api/system/health",
   ];
   if (process.env.TEST_MODE === "true") {
-    publicRoutes.push("/api/http/testing");
+    publicRoutes.push("/api/testing");
   }
   const isLocalizedPublic =
     /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(setup|login|register|forgot-password)/.test(url.pathname);
@@ -631,7 +631,7 @@ export const handleAuthentication: Handle = async ({ event, resolve }) => {
 
     return await resolve(event);
   } catch (err) {
-    if (url.pathname.startsWith("/api/http/")) {
+    if (url.pathname.startsWith("/api/")) {
       return handleApiError(err, event);
     }
 

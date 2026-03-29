@@ -27,7 +27,7 @@ async function startTranscoding() {
 	progress = 0;
 
 	try {
-		const response = await fetch("/api/http/media/transcode", {
+		const response = await fetch("/api/media/transcode", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({

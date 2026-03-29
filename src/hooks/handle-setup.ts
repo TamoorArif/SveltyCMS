@@ -30,9 +30,11 @@ function isAllowedDuringSetup(pathname: string): boolean {
   return (
     pathname.startsWith("/setup") ||
     /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/setup/.test(pathname) || // Localized setup (e.g. /en/setup)
-    pathname.startsWith("/api/http/system") || // Allow system API during setup
-    pathname.startsWith("/api/http/settings/public") || // Allow public settings
-    pathname === "/api/http/system/version" ||
+    pathname.startsWith("/api/system") || // Allow system API during setup
+    pathname.startsWith("/api/settings/public") || // Allow public settings
+    pathname.startsWith("/api/user") || // Allow user logic during setup
+    pathname.startsWith("/api/auth") || // Allow auth logic during setup
+    pathname === "/api/system/version" ||
     ASSET_REGEX.test(pathname)
   );
 }
@@ -59,11 +61,11 @@ function createSetupResolver() {
 
 export const handleSetup: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
-  const isApi = pathname.startsWith("/api/http/");
+  const isApi = pathname.startsWith("/api/");
 
-  // Bypass setup checks in TEST_MODE to allow /api/http/testing to function
+  // Bypass setup checks in TEST_MODE to allow /api/testing to function
   // This matches the bypass pattern in handleSystemState
-  if (process.env.TEST_MODE === "true" && pathname.startsWith("/api/http/testing")) {
+  if (process.env.TEST_MODE === "true" && pathname.startsWith("/api/testing")) {
     return await resolve(event);
   }
 

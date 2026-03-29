@@ -200,22 +200,22 @@ export function invalidateSetupCache(
  */
 export function isBootstrapRoute(pathname: string): boolean {
   // 1. Setup flow (fresh install)
-  if (pathname.startsWith("/setup") || pathname.startsWith("/api/http/setup")) {
+  if (pathname.startsWith("/setup") || pathname.startsWith("/api/setup")) {
     return true;
   }
 
   // 2. Auth flow (login, register, logout)
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/http/auth")) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
     return true;
   }
 
   // 3. System core endpoints (health, debug, system state)
   if (
-    pathname.startsWith("/api/http/system") ||
-    pathname.startsWith("/api/http/debug") ||
-    pathname.startsWith("/api/http/settings/public") ||
-    pathname.startsWith("/api/http/content/version") ||
-    pathname.startsWith("/api/http/dashboard/health") ||
+    pathname.startsWith("/api/system") ||
+    pathname.startsWith("/api/debug") ||
+    pathname.startsWith("/api/settings/public") ||
+    pathname.startsWith("/api/content/version") ||
+    pathname.startsWith("/api/dashboard/health") ||
     pathname === "/"
   ) {
     return true;

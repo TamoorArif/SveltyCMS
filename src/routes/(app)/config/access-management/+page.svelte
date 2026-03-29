@@ -62,7 +62,7 @@ const saveAllChanges = async () => {
 		async () => {
 			try {
 				// Send the `rolesData` (which includes modifications from children) to the API
-				const response = await fetch("/api/http/permission/update", {
+				const response = await fetch("/api/permission/update", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",

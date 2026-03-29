@@ -20,6 +20,8 @@ declare global {
 
       // High-performance Local API (Payload style)
       cms?: {
+        auth: any;
+        collections?: any; // For legacy calls if any
         find: (
           collection: string,
           options?: any,
@@ -45,6 +47,9 @@ declare global {
           id: string,
           options?: any,
         ) => Promise<import("@src/databases/db-interface").DatabaseResult<void>>;
+        media: any;
+        widgets: any;
+        system: any;
         context: {
           isLocal: boolean;
           tenantId: string | null | undefined;

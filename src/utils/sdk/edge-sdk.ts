@@ -89,7 +89,7 @@ export class SveltyCMSEdge {
     if (options.language) params.set("lang", options.language);
 
     const query = params.toString();
-    const path = `/api/http/collections/${collection}${query ? `?${query}` : ""}`;
+    const path = `/api/collections/${collection}${query ? `?${query}` : ""}`;
 
     return this._fetch(path);
   }
@@ -107,7 +107,7 @@ export class SveltyCMSEdge {
     if (options.lang) params.set("lang", options.lang);
 
     const query = params.toString();
-    const path = `/api/http/collections/${collection}/${id}${query ? `?${query}` : ""}`;
+    const path = `/api/collections/${collection}/${id}${query ? `?${query}` : ""}`;
 
     return this._fetch(path);
   }
@@ -116,7 +116,7 @@ export class SveltyCMSEdge {
    * Execute a raw GraphQL query
    */
   async graphql(query: string, variables: Record<string, any> = {}) {
-    return this._fetch("/api/http/graphql", {
+    return this._fetch("/api/graphql", {
       method: "POST",
       body: JSON.stringify({ query, variables }),
     });
