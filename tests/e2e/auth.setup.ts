@@ -8,46 +8,53 @@ const AUTHOR_AUTH_FILE = "tests/e2e/.auth/author.json";
 
 setup.describe("E2E Role-Based Setup", () => {
   setup("authenticate as admin", async ({ page }) => {
-    // 1. Reset Database for a clean slate
-    console.log("[Setup] Resetting database via Testing API...");
-    const resetResponse = await page.request.post("/api/testing", {
-      data: { action: "reset" },
-    });
+    // Check if system is already configured (CI runs setup-system.ts before tests)
+    // In CI, we only need to ensure admin user exists — don't wipe config
+    const healthResponse = await page.request.get("/api/system/health");
+    const healthData = await healthResponse.json();
+    const isConfigured = healthData.overallStatus !== "IDLE";
 
-    if (!resetResponse.ok()) {
-      const errorBody = await resetResponse.text();
-      console.error(`[Setup] Reset failed with status ${resetResponse.status()}: ${errorBody}`);
+    if (isConfigured) {
+      // System already configured by setup-system.ts — just ensure admin exists via seed
+      console.log(`[Setup] System already configured, seeding admin user...`);
+      const seedResponse = await page.request.post("/api/testing", {
+        data: {
+          action: "seed",
+          email: ADMIN_CREDENTIALS.email,
+          password: ADMIN_CREDENTIALS.password,
+        },
+      });
+      // Seed may fail if user already exists — that's fine
+      if (!seedResponse.ok()) {
+        console.log(`[Setup] Seed returned ${seedResponse.status()} (user may already exist)`);
+      }
+    } else {
+      // Local testing — need full reset + seed + setup
+      console.log("[Setup] System not configured, performing full reset...");
+      const resetResponse = await page.request.post("/api/testing", {
+        data: { action: "reset" },
+      });
+      expect(resetResponse.ok()).toBeTruthy();
+
+      const seedResponse = await page.request.post("/api/testing", {
+        data: {
+          action: "seed",
+          email: ADMIN_CREDENTIALS.email,
+          password: ADMIN_CREDENTIALS.password,
+        },
+      });
+      expect(seedResponse.ok()).toBeTruthy();
+
+      const setupResponse = await page.request.post("/api/testing", {
+        data: { action: "setup" },
+      });
+      expect(setupResponse.ok()).toBeTruthy();
     }
-    expect(resetResponse.ok()).toBeTruthy();
 
-    // 2. Seed system via Testing API with explicit credentials
-    console.log(`[Setup] Seeding database with ${ADMIN_CREDENTIALS.email}...`);
-    const seedResponse = await page.request.post("/api/testing", {
-      data: {
-        action: "seed",
-        email: ADMIN_CREDENTIALS.email,
-        password: ADMIN_CREDENTIALS.password,
-      },
-    });
-
-    if (!seedResponse.ok()) {
-      const errorBody = await seedResponse.text();
-      console.error(`[Setup] Seeding failed with status ${seedResponse.status()}: ${errorBody}`);
-    }
-    expect(seedResponse.ok()).toBeTruthy();
-
-    // 3. Mark setup as complete so the login page shows SIGN IN instead of SIGN UP
-    const setupResponse = await page.request.post("/api/testing", {
-      data: { action: "setup" },
-    });
-    if (!setupResponse.ok()) {
-      console.warn(`[Setup] Force setup failed with status ${setupResponse.status()} (non-fatal)`);
-    }
-
-    // 4. Perform login
+    // Perform login
     await loginAsAdmin(page);
 
-    // 5. Save admin storage state
+    // Save admin storage state
     await page.context().storageState({ path: ADMIN_AUTH_FILE });
   });
 
