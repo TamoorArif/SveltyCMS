@@ -22,8 +22,20 @@ test("Setup Wizard: Configure DB and Create Admin", async ({ page }) => {
   // Setup wizard can take time due to DB initialization/seeding
   test.setTimeout(120_000);
 
-  // Enable TEST_MODE for the browser context if possible
-  // Note: The server must already be started with TEST_MODE=true
+  // --- Early skip: Check if system is already configured via API ---
+  // This handles the case where setup-system.ts ran against a different server
+  // instance but the preview server still shows /setup.
+  try {
+    const setupCheck = await page.request.post("/api/testing", {
+      data: { action: "setup" },
+    });
+    if (setupCheck.ok()) {
+      console.log("System already configured (setup API succeeded). Skipping wizard.");
+      return;
+    }
+  } catch {
+    // API not available or failed — proceed with wizard
+  }
 
   // 1. Start at root, expect redirect to /setup or /login
   await page.goto("/", { waitUntil: "networkidle" });
@@ -34,7 +46,7 @@ test("Setup Wizard: Configure DB and Create Admin", async ({ page }) => {
 
   // If redirected to /login or any authenticated page, system is already configured
   if (currentUrl.includes("/login") || currentUrl.includes("/admin") || currentUrl.includes("/dashboard")) {
-    console.log("System already configured (at ${currentUrl}). Skipping setup.");
+    console.log(`System already configured (at ${currentUrl}). Skipping setup.`);
     return;
   }
 

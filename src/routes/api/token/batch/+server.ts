@@ -56,47 +56,9 @@ export const POST = apiHandler(async ({ request, locals }) => {
     }
 
     // --- MULTI-TENANCY SECURITY CHECK ---
-    if (getPrivateSettingSync("MULTI_TENANT")) {
-      if (!tenantId) {
-        throw new AppError(
-          "Tenant could not be identified for this operation.",
-          500,
-          "TENANT_REQUIRED",
-        );
-      }
-      // Use auth.getAllTokens if available to verify ownership
-      try {
-        const filter = { tenantId } as { tenantId?: string | null };
-        const tokensResult = await auth.getAllTokens(filter);
-        if (!(tokensResult.success && tokensResult.data)) {
-          throw new Error("Failed to retrieve tokens");
-        }
-        const tokenSet = new Set(
-          tokensResult.data.map((t) => (t as any)._id || (t as any).token || (t as any).value),
-        );
-        const allOwned = tokenIds.every((id) => tokenSet.has(id));
-        if (!allOwned) {
-          logger.warn("Attempt to act on tokens outside of tenant", {
-            userId: user?._id,
-            tenantId,
-            requestedTokenIds: tokenIds,
-          });
-          throw new AppError(
-            "Forbidden: One or more tokens do not belong to your tenant or do not exist.",
-            403,
-            "FORBIDDEN",
-          );
-        }
-      } catch (verifyErr) {
-        if (verifyErr instanceof AppError) {
-          throw verifyErr;
-        }
-        logger.error("Failed to verify tenant token ownership", {
-          error: verifyErr,
-        });
-        throw new AppError("Failed to verify token ownership", 500, "VERIFY_OWNERSHIP_FAILED");
-      }
-    }
+    // The batch methods (deleteTokens/blockTokens/unblockTokens) already accept tenantId
+    // and filter by tenant, so ownership is enforced at the DB level. No need to fetch
+    // all tokens upfront — that causes timeouts on PostgreSQL/MariaDB with large datasets.
 
     let successMessage = "";
     let targetTokenIds = tokenIds;
