@@ -131,9 +131,10 @@ export const PUT = apiHandler(async ({ request, params, locals }) => {
   // First resolve the value to _id
   let targetId = tokenId;
   const tokenObj = await auth.getTokenByValue(tokenId);
-  if (tokenObj) {
-    targetId = tokenObj._id;
+  if (!tokenObj) {
+    throw new AppError("Token not found.", 404, "TOKEN_NOT_FOUND");
   }
+  targetId = tokenObj._id;
 
   // Use database-agnostic interface if available, with graceful fallback
   let updateResult: unknown = null;
