@@ -23,10 +23,15 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
   // Atomic Auth: Clear all previous session state to prevent session bleed
   console.log("[Auth] Clearing cookies and localStorage for atomic login...");
   await page.context().clearCookies();
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
+  try {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  } catch {
+    // localStorage may be inaccessible on about:blank or cross-origin pages
+    console.log("[Auth] localStorage not accessible, skipping clear (likely on about:blank)");
+  }
 
   // Inject session storage to bypass the welcome modal and cookie consent before navigation
   await page.addInitScript(() => {
@@ -166,10 +171,14 @@ export async function logout(page: Page) {
     console.log("[Auth] No logout button found, clearing cookies and localStorage");
     // If no logout button found, clear session manually
     await page.context().clearCookies();
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
+    try {
+      await page.evaluate(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+      });
+    } catch {
+      // localStorage may be inaccessible on certain pages
+    }
   } catch (error) {
     console.log("[Auth] Error during logout, continuing anyway:", error);
   }
