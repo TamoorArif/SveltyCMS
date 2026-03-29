@@ -116,7 +116,6 @@ export function classifyDatabaseError(
   err: unknown,
   context: ClassifyContext = {},
 ): ClassifiedError {
-<<<<<<< HEAD
   // Better extraction of raw error message - try to find the "real" error in details
   let raw = "";
   if (err instanceof Error) {
@@ -134,15 +133,6 @@ export function classifyDatabaseError(
   } else {
     raw = String(err);
   }
-=======
-  // Handle both Error objects and generic result objects from adapters
-  const raw =
-    err instanceof Error
-      ? err.message
-      : (err as any)?.message || (err as any)?.error?.message || String(err);
-  const lower = raw.toLowerCase();
-  const code = (err as any)?.code || (err as any)?.error?.code || (err as any)?.originalCode || "";
->>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
 
   const lower = raw.toLowerCase();
 
@@ -166,11 +156,8 @@ export function classifyDatabaseError(
     code === "DB_CONNECTION_FAILED" ||
     lower.includes("connection refused") ||
     lower.includes("failed to connect to server") ||
-<<<<<<< HEAD
-    lower.includes("enotfound")
-=======
+    lower.includes("enotfound") ||
     lower.includes("econnrefused")
->>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
   ) {
     const hostHint =
       context.host === "localhost" || context.host === "127.0.0.1"
@@ -217,10 +204,7 @@ export function classifyDatabaseError(
     lower.includes("requires authentication") ||
     lower.includes("bad auth") ||
     lower.includes("not authorized") ||
-<<<<<<< HEAD
     lower.includes("access denied") ||
-=======
->>>>>>> c95196fcf5b2ea4ade16fec033e4cba13194b567
     code === 18 || // MongoDB Auth failed
     code === "28P01" || // Postgres invalid_password
     code === 13 // MongoDB NotAuthorized

@@ -19,7 +19,7 @@
  */
 
 import { exec } from "node:child_process";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { SESSION_COOKIE_NAME } from "@src/databases/auth/constants";
@@ -978,7 +978,7 @@ export const actions: Actions = {
           "system_tenants",
           "system_widgets",
         ];
-        
+
         for (const coll of systemCollections) {
           try {
             await dbAdapter.crud.deleteMany(coll, {}, { bypassTenantCheck: true });

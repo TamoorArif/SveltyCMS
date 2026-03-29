@@ -71,7 +71,7 @@ To truly aim for "100%" system reliability, we go beyond simple functional tests
 ### 3. Static Analysis & Type Safety (Continuous)
 
 - **TypeScript**: Strict mode enabled (`strict: true`) for 100% type safety.
-- **Biome / Ultracite**: Enforce consistent code style and best practices with ultra-high performance (~0.8s for the entire project).
+- **oxlint / oxfmt**: Enforce consistent code style and best practices with ultra-high performance (<100ms for the entire project).
 - **Svelte Check**: Validates Svelte templates and reactivity graph (Runes).
 
 ### 4. Advanced Verification (Future Scope)
@@ -91,7 +91,7 @@ SveltyCMS uses a performance-optimized CI pipeline designed for maximum reliabil
 
 All static analysis and unit checks run in parallel:
 
-- **Lint & Type Check**: Biome/Ultracite linting + `svelte-check` validation.
+- **Lint & Type Check**: oxlint/oxfmt linting + `svelte-check` validation.
 - **Unit Tests & Coverage**: Bun-powered logic verification with Codecov reporting.
 - **Build Verification**: Production SSR and Client build.
 

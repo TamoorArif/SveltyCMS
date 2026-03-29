@@ -1,11 +1,11 @@
 /**
- * @file src/content/content-store.svelte.ts
+ * @file src/stores/content-store.svelte.ts
  * @description
  * Single Reactive Store for the SveltyCMS Content System.
  * Replaces content-structure, content-collections, and content-polling.
  * Uses Svelte 5 runes for tree-shakable reactivity.
  */
-import type { ContentNode, Schema } from "./types";
+import type { ContentNode, Schema } from "@src/content/types";
 import { browser } from "$app/environment";
 import { logger } from "@utils/logger";
 
@@ -142,7 +142,7 @@ export const contentStore = {
       // 1. Direct path lookup
       const path = identifier.startsWith("/") ? identifier : `/${identifier}`;
       node = this.getNodeByPath(path);
-      
+
       // 2. Fallback: Prefix-aware lookup (/collection/ prefix)
       if (!node) {
         if (path.startsWith("/collection/")) {
@@ -252,21 +252,67 @@ export const contentStore = {
     state = "initialized";
   },
 
-  // --- Polling (Browser Only) ---
   /**
-   * Periodically checks the server for content structure updates (sync token).
-   * Note: This 'version' is used for cache-invalidation of the collection tree, 
-   * and is separate from the application version (e.g. v0.0.6).
+   * Real-time Synchronization (SSE)
+   * Replaces 10s polling with push-based updates.
    */
+  startLiveSync(onUpdate: () => void) {
+    if (!browser) return;
+
+    // Reuse restricted route logic
+    const pathname = window.location.pathname;
+    const isRestrictedRoute =
+      /^\/([a-z]{2,5}(-[a-zA-Z]+)?\/)?(setup|login)/i.test(pathname) ||
+      pathname.includes("/setup") ||
+      pathname.includes("/login");
+
+    if (isRestrictedRoute) return;
+
+    logger.info("📡 Initializing Real-time Content Sync (SSE)");
+
+    const eventSource = new EventSource("/api/content/events");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.version && data.version > currentPollingVersion) {
+          logger.info(`🆕 Real-time update detected (v\${data.version})`);
+          currentPollingVersion = data.version;
+          onUpdate();
+        }
+      } catch (err) {
+        logger.error("[SSE] Failed to parse event data", err);
+      }
+    };
+
+    eventSource.addEventListener("connected", (event: any) => {
+      const data = JSON.parse(event.data);
+      logger.info("[SSE] Connected to real-time stream", data);
+    });
+
+    eventSource.onerror = (err) => {
+      logger.warn("[SSE] Connection lost, falling back to polling", err);
+      eventSource.close();
+      // Fallback to old polling logic if SSE fails
+      this.startPolling(onUpdate);
+    };
+
+    return () => {
+      logger.info("🔌 Closing real-time sync");
+      eventSource.close();
+    };
+  },
+
   startPolling(onNewVersion: () => void, intervalMs = 10000) {
     if (!browser) return;
 
     // Strict Guard: Never poll on setup or login routes
     const pathname = window.location.pathname;
-    const isRestrictedRoute = /^\/([a-z]{2,5}(-[a-zA-Z]+)?\/)?(setup|login)/i.test(pathname) || 
-                             pathname.includes("/setup") || 
-                             pathname.includes("/login");
-                             
+    const isRestrictedRoute =
+      /^\/([a-z]{2,5}(-[a-zA-Z]+)?\/)?(setup|login)/i.test(pathname) ||
+      pathname.includes("/setup") ||
+      pathname.includes("/login");
+
     if (isRestrictedRoute) {
       if (pollingInterval) this.stopPolling();
       return;

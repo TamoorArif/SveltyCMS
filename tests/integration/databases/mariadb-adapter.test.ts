@@ -24,7 +24,6 @@ describe("MariaDB Adapter Functional Tests", () => {
     adapterClass = adapterModule.MariaDBAdapter;
 
     try {
-      // biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
       // @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
       const configModule = await import("../../../config/private.test");
       privateEnv = configModule.privateEnv;

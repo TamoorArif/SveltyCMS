@@ -16,7 +16,6 @@ import { SvelteSet } from "svelte/reactivity";
 
 // Props
 let {
-	// biome-ignore lint/correctness/noUnusedVariables: Used in template
 	show = $bindable(),
 	file = $bindable(null),
 	onUpdate = () => {},
@@ -27,20 +26,16 @@ let {
 } = $props();
 
 let newTagInput = $state("");
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let isGenerating = $state(false);
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let isSaving = $state(false);
 
 // Edit state
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 let editingTag = $state<{
 	type: "ai" | "user";
 	index: number;
 	value: string;
 } | null>(null);
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function getImageUrl(file: MediaImage) {
 	// Try to get thumbnail, fallback to original url
 	const thumbs = file.thumbnails || {};
@@ -57,7 +52,6 @@ function getImageUrl(file: MediaImage) {
 	return file.url;
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function handleAITagging() {
 	if (!file?._id) {
 		return;
@@ -88,7 +82,6 @@ async function handleAITagging() {
 	}
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function addManualTag() {
 	if (!(file?._id && newTagInput.trim())) {
 		return;
@@ -122,7 +115,6 @@ async function addManualTag() {
 	}
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function removeTag(tag: string, type: "ai" | "user") {
 	if (!file?._id) {
 		return;
@@ -155,7 +147,6 @@ async function removeTag(tag: string, type: "ai" | "user") {
 	}
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 	if (!(file?._id && newTag.trim()) || oldTag === newTag) {
 		editingTag = null;
@@ -194,7 +185,6 @@ async function editTag(oldTag: string, newTag: string, type: "ai" | "user") {
 	}
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 async function saveAITags() {
 	if (!file?._id) {
 		return;
@@ -236,12 +226,10 @@ async function saveAITags() {
 	}
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function close() {
 	show = false;
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: Used in template
 function autofocus(node: HTMLElement) {
 	node.focus();
 }

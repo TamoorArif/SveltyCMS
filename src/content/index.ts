@@ -7,7 +7,7 @@
 import { setContext, getContext } from "svelte";
 import { browser } from "$app/environment";
 import { logger } from "@utils/logger";
-import { contentStore } from "./content-store.svelte";
+import { contentStore } from "@stores/content-store.svelte";
 import { contentNavigation, contentMetrics } from "./content-utils";
 import type { ContentNodeOperation, Schema, NavigationNode } from "./types";
 import type { IDBAdapter } from "@src/databases/db-interface";
@@ -15,7 +15,7 @@ import { CacheCategory } from "@src/databases/cache/types";
 
 // --- RE-EXPORTS ---
 export * from "./types";
-export { contentStore } from "./content-store.svelte";
+export { contentStore } from "@stores/content-store.svelte";
 export {
   contentNavigation,
   contentMetrics,
@@ -58,7 +58,7 @@ export const contentManager = {
   ): Promise<void> {
     if (browser) {
       if (contentStore.initState === "uninitialized") contentStore.initState = "initialized";
-      contentStore.startPolling(() => this.initialize(tenantId, true));
+      contentStore.startLiveSync(() => this.initialize(tenantId, true));
       return;
     }
 

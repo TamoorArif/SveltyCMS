@@ -1,5 +1,5 @@
 /**
- * @file src/stores/modeStateMachine.svelte.ts
+ * @file src/stores/ui-mode-store.svelte.ts
  * @description Centralized state machine for managing UI modes
  *
  * Features:
@@ -111,4 +111,4 @@ class ModeStateMachine {
   }
 }
 
-export const modeStateMachine = new ModeStateMachine();
+export const uiModeStore = new ModeStateMachine();

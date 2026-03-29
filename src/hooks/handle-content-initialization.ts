@@ -21,7 +21,9 @@ export const handleContentInitialization: Handle = async ({ event, resolve }) =>
   }
 
   if (!locals.__setupConfigExists) {
-    logger.debug("[handleContentInitialization] System in SETUP mode. Skipping content initialization.");
+    logger.debug(
+      "[handleContentInitialization] System in SETUP mode. Skipping content initialization.",
+    );
     return await resolve(event);
   }
 

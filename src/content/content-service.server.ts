@@ -12,10 +12,12 @@ import { CacheCategory } from "@src/databases/cache/types";
 import { dateToISODateString } from "@utils/date-utils";
 import { generateUUID as uuidv4 } from "@utils/native-utils";
 import { widgetRegistryService } from "@src/services/widget-registry-service";
-import { contentStore } from "./content-store.svelte";
+import { contentStore } from "@stores/content-store.svelte";
 import type { ContentNode, Schema, DatabaseId, MinimalContentNode } from "./types";
 import type { IDBAdapter } from "@src/databases/db-interface";
 import { generateCategoryNodesFromPaths } from "./content-utils";
+import { eventBus, SystemEvents } from "@utils/event-bus";
+import { cacheService } from "@src/databases/cache/cache-service";
 
 // --- HELPERS ---
 
@@ -140,17 +142,22 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 
 // --- FILE SCANNING ---
 
-async function recursivelyGetFiles(dir: string, ext: string): Promise<string[]> {
+async function recursivelyGetFilesWithStats(dir: string, ext: string): Promise<{ path: string; mtime: number }[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
-  const files: string[] = [];
+  const results: { path: string; mtime: number }[] = [];
+  
   await Promise.all(
     entries.map(async (entry) => {
       const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) files.push(...(await recursivelyGetFiles(fullPath, ext)));
-      else if (entry.isFile() && entry.name.endsWith(ext)) files.push(fullPath);
+      if (entry.isDirectory()) {
+         results.push(...(await recursivelyGetFilesWithStats(fullPath, ext)));
+      } else if (entry.isFile() && entry.name.endsWith(ext)) {
+        const stats = await fs.stat(fullPath);
+        results.push({ path: fullPath, mtime: stats.mtimeMs });
+      }
     }),
   );
-  return files;
+  return results;
 }
 
 export async function scanAndProcessFiles(): Promise<Schema[]> {
@@ -163,18 +170,23 @@ export async function scanAndProcessFiles(): Promise<Schema[]> {
     return [];
   }
 
-  const files = await recursivelyGetFiles(collectionsDir, extension);
+  const filesWithStats = await recursivelyGetFilesWithStats(collectionsDir, extension);
   const results = await Promise.all(
-    files.map(async (filePath) => {
+    filesWithStats.map(async ({ path: filePath, mtime }) => {
+      const cacheKey = `schema_mtime:${filePath}`;
+      const cachedData = await cacheService.get<{ mtime: number; schema: Schema }>(cacheKey);
+
+      // If mtime matches, return cached schema to avoid expensive parsing/eval
+      if (cachedData && cachedData.mtime === mtime) {
+        return cachedData.schema;
+      }
+
       try {
         const content = await fs.readFile(filePath, "utf-8");
         const moduleData = await processModule(content);
         if (!moduleData?.schema) return null;
 
         const schema = moduleData.schema;
-        // Canonical Path Generation:
-        // We ensure all dynamic collections are prefixed with /collection/
-        // Priority: schema.slug > schema.name > filename
         const collectionSlug =
           schema.slug ||
           (schema.name as string)?.toLowerCase() ||
@@ -186,11 +198,16 @@ export async function scanAndProcessFiles(): Promise<Schema[]> {
           schema._id = collectionSlug.replace(/[^a-z0-9]/g, "");
         }
 
-        return {
+        const finalSchema = {
           ...schema,
           path: cleanPath,
           name: schema.name || path.basename(filePath, extension),
         } as Schema;
+
+        // Persist to cache (category CONTENT has its own TTL, but we use it as a 2nd layer structure cache)
+        await cacheService.set(cacheKey, { mtime, schema: finalSchema }, 3600);
+        
+        return finalSchema;
       } catch (error) {
         logger.warn(`Failed to process collection file: ${filePath}`, error);
         return null;
@@ -365,6 +382,27 @@ export async function bulkUpsertWithParentIds(
   if (dbAdapter.monitoring?.cache?.invalidateCategory) {
     await dbAdapter.monitoring.cache.invalidateCategory(CacheCategory.CONTENT, tenantId);
   }
+
+  // Broadcast the update for real-time sync (SSE)
+  const updateData = {
+    version: Date.now(),
+    type: "reconcile",
+    tenantId: tenantId || "all",
+  };
+
+  // 1. Local Broadcast
+  eventBus.broadcast(SystemEvents.CONTENT_UPDATE, updateData);
+
+  // 2. Redis Pub/Sub Broadcast (for multi-server setup)
+  const redis = cacheService.getRedisClient();
+  if (redis && redis.isOpen) {
+    try {
+      await redis.publish("svelty:content_update", JSON.stringify(updateData));
+      logger.debug(`[Redis] Published content update for tenant: ${tenantId || "all"}`);
+    } catch (err) {
+      logger.warn("[Redis] Failed to publish content update:", err);
+    }
+  }
 }
 
 // --- ORCHESTRATION ---
@@ -463,6 +501,13 @@ export const contentService = {
       }));
       await dbAdapter.content.nodes.bulkUpdate(updates, { tenantId, bypassTenantCheck: true });
     }
+
+    // Broadcast reorder event
+    eventBus.broadcast(SystemEvents.CONTENT_UPDATE, {
+      version: Date.now(),
+      type: "reorder",
+      tenantId: tenantId || "all",
+    });
   },
 
   /**

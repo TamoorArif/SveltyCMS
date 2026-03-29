@@ -139,6 +139,26 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 		goto(newUrl, { keepFocus: true, noScroll: true });
 	}
 
+	// --- VIRTUALIZATION STATE ---
+	let scrollTop = $state(0);
+	let containerHeight = $state(0);
+	const rowHeight = 48; // Standard row height for our density
+	const buffer = 5;
+
+	const startIndex = $derived(Math.max(0, Math.floor(scrollTop / rowHeight) - buffer));
+	const endIndex = $derived(Math.min(tableData.length, Math.ceil((scrollTop + containerHeight) / rowHeight) + buffer));
+
+	const visibleData = $derived(tableData.slice(startIndex, endIndex));
+	const topPadding = $derived(startIndex * rowHeight);
+	const bottomPadding = $derived(Math.max(0, (tableData.length - endIndex) * rowHeight));
+
+	function handleScroll(e: Event) {
+		const target = e.target as HTMLElement;
+		scrollTop = target.scrollTop;
+		containerHeight = target.clientHeight;
+	}
+
+
 	function onUpdatePage(newPage: number) {
 		entryListPaginationSettings.currentPage = newPage;
 		updateURL({ page: newPage });
@@ -995,7 +1015,10 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 	{/if}
 
 	{#if tableData.length > 0 || hasActiveFilters}
-		<div class="table-container max-h-[calc(100dvh)] overflow-auto">
+		<div
+			onscroll={handleScroll}
+			class="table-container max-h-[calc(100dvh-200px)] overflow-auto"
+		>
 			<table class="table table-interactive table-hover">
 				<!-- Table Header -->
 				<thead class="sticky top-0 z-10 bg-secondary-100 text-tertiary-500 dark:bg-surface-900 dark:text-primary-500">
@@ -1084,7 +1107,12 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 				</thead>
 				<tbody>
 					{#if tableData.length > 0}
-						{#each tableData as entry, index (entry._id)}
+						{#if topPadding > 0}
+							<tr><td colspan={visibleTableHeaders.length + 1} style="height: {topPadding}px"></td></tr>
+						{/if}
+
+						{#each visibleData as entry, idx (entry._id)}
+							{@const index = startIndex + idx}
 							<tr
 								class="divide-x divide-surface-400 dark:divide-surface-700 {selectedMap[index] ? 'bg-primary-500/5 dark:bg-secondary-500/10' : ''}"
 								onmouseenter={() => entry._id && handleRowHoverStart(entry._id)}
@@ -1213,6 +1241,10 @@ export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 								{/if}
 							</tr>
 						{/each}
+
+						{#if bottomPadding > 0}
+							<tr><td colspan={visibleTableHeaders.length + 1} style="height: {bottomPadding}px"></td></tr>
+						{/if}
 					{:else}
 						<tr>
 							<td colspan={visibleTableHeaders.length + 1} class="p-4 text-center text-surface-500 dark:text-surface-50">No results found.</td>

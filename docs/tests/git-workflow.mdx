@@ -26,7 +26,7 @@ Our CI/CD and Local pipeline uses:
 
 - **Native Git Hooks**: Zero-dependency quality gate (`.githooks/pre-commit`).
 - **Dual Unit Test Suites**: Vitest (jsdom) for components + Bun (Native) for logic.
-- **Unified Formatting**: Biome-powered `bun run format` for sub-second cleanup.
+- **Unified Formatting**: oxfmt-powered `bun run format` for lightning-fast cleanup.
 - **Bun Tests**: Fast unit & integration testing (~741 tests).
 - **Playwright**: Comprehensive E2E testing (~40 tests).
 - **Semantic Release**: Automated versioning on `main`.
@@ -46,8 +46,8 @@ git config core.hooksPath .githooks
 
 The hook executes the following steps in sequence. If any step fails, the commit is aborted:
 
-1.  **Format**: `bun run format` (Biome)
-2.  **Lint**: `bun run lint` (Biome/ESLint)
+1.  **Format**: `bun run format` (oxfmt)
+2.  **Lint**: `bun run lint` (oxlint)
 3.  **Check**: `bun run check` (Svelte-Check)
 4.  **Unit (jsdom)**: `bun run test:unit` (Vitest)
 5.  **Unit (Native)**: `bun run test:unit:bun` (Bun Native)

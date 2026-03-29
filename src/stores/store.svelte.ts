@@ -104,7 +104,6 @@ function setCookie(name: string, value: string) {
   if (typeof document === "undefined" || !value) {
     return;
   }
-  // biome-ignore lint/suspicious/noDocumentCookie: intentional cookie write
   document.cookie = `${name}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${isProd ? "; Secure" : ""}`;
 }
 

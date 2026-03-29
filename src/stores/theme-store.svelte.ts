@@ -151,7 +151,6 @@ export function initializeDarkMode(initialPreference?: ThemePreference) {
 
   // 6. Clean up old 'darkMode' cookie if it exists
   if (document.cookie.includes("darkMode=")) {
-    // biome-ignore lint/suspicious/noDocumentCookie: intentional cookie cleanup
     document.cookie = "darkMode=; path=/; max-age=0";
     logger.debug("[Theme Init] Cleaned up old darkMode cookie");
   }
@@ -194,7 +193,6 @@ function setCookie(preference: ThemePreference) {
 
   // Overwrite cookie with explicit path and max-age
   // Note: We don't need to explicitly delete it first; overwriting with the same name and path works.
-  // biome-ignore lint/suspicious/noDocumentCookie: intentional cookie write for theme persistence
   document.cookie = `${THEME_COOKIE_KEY}=${preference}; path=/; max-age=31536000; SameSite=Lax`;
   logger.debug("[Theme] Updated cookie to:", preference);
 }

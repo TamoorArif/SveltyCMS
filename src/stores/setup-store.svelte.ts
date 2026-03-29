@@ -710,7 +710,10 @@ function createSetupStore() {
   // --- LOAD METHOD ---
   function load(serverOrigin?: string) {
     // Normalize localhost vs 127.0.0.1 for local dev experience
-    if (serverOrigin && (serverOrigin.includes("127.0.0.1:4173") || serverOrigin.includes("127.0.0.1:5173"))) {
+    if (
+      serverOrigin &&
+      (serverOrigin.includes("127.0.0.1:4173") || serverOrigin.includes("127.0.0.1:5173"))
+    ) {
       serverOrigin = serverOrigin.replace("127.0.0.1", "localhost");
     }
 
@@ -719,7 +722,7 @@ function createSetupStore() {
       if (serverOrigin && wizard.systemSettings.hostProd === initialSystemSettings.hostProd) {
         wizard.systemSettings.hostProd = serverOrigin;
         if (wizard.systemSettings.siteName === initialSystemSettings.siteName) {
-           wizard.systemSettings.siteName = `SveltyCMS (${new URL(serverOrigin).hostname})`;
+          wizard.systemSettings.siteName = `SveltyCMS (${new URL(serverOrigin).hostname})`;
         }
       }
       return;
@@ -771,7 +774,11 @@ function createSetupStore() {
       wizard.dbTestPassed = storage.getItem(KEYS.dbTest) === "true";
 
       // Apply server origin for new or unconfigured setups
-      if (serverOrigin && (wizard.systemSettings.hostProd === initialSystemSettings.hostProd || wizard.systemSettings.hostProd.includes("127.0.0.1"))) {
+      if (
+        serverOrigin &&
+        (wizard.systemSettings.hostProd === initialSystemSettings.hostProd ||
+          wizard.systemSettings.hostProd.includes("127.0.0.1"))
+      ) {
         const origin = serverOrigin.replace("127.0.0.1", "localhost");
         wizard.systemSettings.hostProd = origin;
         // Also update siteName if it's default

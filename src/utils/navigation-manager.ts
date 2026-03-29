@@ -13,7 +13,7 @@
 import { setCollectionValue } from "@src/stores/collection-store.svelte";
 import { globalLoadingStore, loadingOperations } from "@src/stores/loading-store.svelte.ts";
 // Stores
-import { modeStateMachine } from "@src/stores/mode-state-machine.svelte";
+import { uiModeStore } from "@stores/ui-mode-store.svelte";
 import { dataChangeStore } from "@src/stores/store.svelte.ts";
 // Utils
 import { logger } from "@utils/logger";
@@ -71,7 +71,7 @@ export class NavigationManager {
       setCollectionValue({});
 
       // Transition mode
-      const ok = await modeStateMachine.transitionTo("view");
+      const ok = await uiModeStore.transitionTo("view");
       if (!ok) {
         logger.error("[NavigationManager] Failed to transition to view mode");
         return;
@@ -99,7 +99,7 @@ export class NavigationManager {
     }
 
     await this.executeNavigation(`toEdit(${entryId})`, async () => {
-      const ok = await modeStateMachine.transitionTo("edit");
+      const ok = await uiModeStore.transitionTo("edit");
       if (!ok) {
         logger.error("[NavigationManager] Failed to transition to edit mode");
         return;
@@ -118,7 +118,7 @@ export class NavigationManager {
   // Navigate to create view
   async toCreate(): Promise<void> {
     await this.executeNavigation("toCreate", async () => {
-      const ok = await modeStateMachine.transitionTo("create");
+      const ok = await uiModeStore.transitionTo("create");
       if (!ok) {
         logger.error("[NavigationManager] Failed to transition to create mode");
         return;

@@ -13,6 +13,9 @@ import type { FieldInstance } from "@src/content/types";
 import type { DatabaseAdapter } from "@src/databases/db-interface";
 import { coreModules, customModules } from "@src/widgets/scanner";
 import type { WidgetDefinition, WidgetFactory } from "@src/widgets/types";
+import type { Schema, FieldDefinition } from "@src/content/types";
+import type { WidgetPlaceholder } from "@widgets/placeholder";
+export type { WidgetDefinition, WidgetFactory };
 import { logger } from "@utils/logger";
 
 export type WidgetStatus = "active" | "inactive";
@@ -21,6 +24,14 @@ export type WidgetStatus = "active" | "inactive";
  * Registry for all available widget functions
  */
 export type WidgetRegistry = Record<string, WidgetFactory | WidgetDefinition>;
+
+export interface CollectionWidgetDependency {
+  collectionId: string;
+  collectionName: string;
+  missingWidgets: string[];
+  optionalWidgets: string[];
+  requiredWidgets: string[];
+}
 
 class WidgetState {
   widgets = $state<Record<string, FieldInstance>>({});
@@ -36,6 +47,78 @@ class WidgetState {
   loading = $state(false);
   healthStatus = $state<"healthy" | "unhealthy" | "initializing">("initializing");
   lastHealthCheck = $state<number | undefined>(undefined);
+
+  // --- Analysis Helpers (Private) ---
+  private extractWidgetType(field: FieldDefinition): string | null {
+    if (typeof field === "object" && field !== null) {
+      if ("__widgetName" in field) return (field as WidgetPlaceholder).__widgetName;
+      if ("type" in field && typeof field.type === "string") return field.type;
+      if ("widget" in field && field.widget && typeof field.widget === "object") {
+        const widget = field.widget as { Name?: string; __widgetName?: string };
+        if (widget.Name) return widget.Name;
+        if (widget.__widgetName) return widget.__widgetName;
+      }
+    }
+    return null;
+  }
+
+  // Recursive field analyzer
+  private analyzeFields(
+    fields: FieldDefinition[],
+    required: string[],
+    optional: string[],
+  ) {
+    for (const field of fields) {
+      const widgetType = this.extractWidgetType(field);
+      if (widgetType) {
+        const isRequired =
+          typeof field === "object" && field !== null && "required" in field
+            ? (field as any).required
+            : true;
+        if (isRequired) {
+          if (!required.includes(widgetType)) required.push(widgetType);
+        } else if (!optional.includes(widgetType)) {
+          optional.push(widgetType);
+        }
+      }
+      if (
+        typeof field === "object" &&
+        field !== null &&
+        "fields" in field &&
+        Array.isArray((field as any).fields)
+      ) {
+        this.analyzeFields((field as any).fields, required, optional);
+      }
+    }
+  }
+
+  // --- Public Analysis Methods ---
+
+  analyzeCollection(schema: Schema): CollectionWidgetDependency {
+    const requiredWidgets: string[] = [];
+    const optionalWidgets: string[] = [];
+    this.analyzeFields(schema.fields || [], requiredWidgets, optionalWidgets);
+
+    return {
+      collectionId: schema._id as string,
+      collectionName: schema.name || "Unknown",
+      requiredWidgets,
+      optionalWidgets,
+      missingWidgets: requiredWidgets.filter((w) => !this.activeWidgets.includes(w)),
+    };
+  }
+
+  validateCollections(schemas: Schema[]) {
+    const analyses = schemas.map((s) => this.analyzeCollection(s));
+    const valid = analyses.filter((a) => a.missingWidgets.length === 0);
+    const invalid = analyses.filter((a) => a.missingWidgets.length > 0);
+    const warnings = invalid.map(
+      (a) =>
+        `Collection "${a.collectionName}" is missing widgets: \${a.missingWidgets.join(", ")}`,
+    );
+
+    return { valid, invalid, warnings };
+  }
 
   async initialize(tenantId = "default", dbAdapter?: DatabaseAdapter | null) {
     if (this.loading) {

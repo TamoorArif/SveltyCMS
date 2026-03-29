@@ -23,6 +23,7 @@ import { logger } from "@utils/logger";
 import { onMount } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 import { goto } from "$app/navigation";
+import { enhance } from "$app/forms";
 import { page } from "$app/state";
 import GenericSettingsGroup from "./generic-settings-group.svelte";
 import type { SettingGroup } from "./settings-groups";
@@ -47,6 +48,25 @@ beforeNavigate(({ cancel }) => {
 		}
 	}
 });
+
+// Repair Action State
+let isRepairing = $state(false);
+let repairResult = $state<{ success: boolean; message?: string; error?: string } | null>(null);
+
+function handleRepair() {
+	isRepairing = true;
+	repairResult = null;
+	return async ({ result }: any) => {
+		isRepairing = false;
+		if (result.type === 'success') {
+			repairResult = { success: true, message: result.data.message };
+			setTimeout(() => { repairResult = null; }, 5000);
+		} else if (result.type === 'failure' || result.type === 'error') {
+			repairResult = { success: false, error: result.data?.error || 'Repair failed' };
+		}
+	};
+}
+
 
 // Derived selection from URL
 const selectedGroupId = $derived(page.url.searchParams.get("group"));
@@ -153,11 +173,31 @@ onMount(() => {
 		"Restart Required" need a server restart. Settings are organized into <span class="font-bold text-primary-500">{availableGroups.length}</span>
 		logical groups for easy management.
 	</p>
-	<button onclick={exportAll} class="btn preset-filled-surface-500 w-full md:w-auto">
-		<span>📤</span>
-		<span>Export All JSON</span>
-	</button>
+	<div class="flex flex-col gap-2 md:flex-row">
+		<form method="POST" action="?/repairContentCache" use:enhance={handleRepair} class="w-full md:w-auto">
+			<button disabled={isRepairing} class="btn preset-filled-warning-500 w-full md:w-auto">
+				<span>{isRepairing ? '⏳' : '🛠️'}</span>
+				<span>{isRepairing ? 'Repairing...' : 'Repair & Rebuild Cache'}</span>
+			</button>
+		</form>
+
+		<button onclick={exportAll} class="btn preset-filled-surface-500 w-full md:w-auto">
+			<span>📤</span>
+			<span>Export All JSON</span>
+		</button>
+	</div>
 </div>
+
+{#if repairResult}
+	<div class="mb-6 px-2">
+		<div class="wrapper {repairResult.success ? 'preset-filled-success-500' : 'preset-filled-error-500'} text-surface-600 dark:text-surface-300">
+			<div class="flex items-center gap-3">
+				<span>{repairResult.success ? '✅' : '❌'}</span>
+				<p>{repairResult.success ? repairResult.message : repairResult.error}</p>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <!-- Mobile Navigation Tabs & Search -->
 <div class="mb-6 space-y-4 px-2">

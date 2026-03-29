@@ -67,15 +67,8 @@ src/paraglide/**/*.js
 *.db
 *.db-shm
 *.db-wal
-127.0.0.1/
 
 .idea
-.compiledCollections/Collections/Names.js
-.compiledCollections/Collections/Relation.js
-.compiledCollections/Collections/WidgetTest.js
-.compiledCollections/Collections/Posts/Names.js
-.compiledCollections/Collections/Posts/Posts.js
-.compiledCollections/Menu/Menu.js
 .mcp.json
 LOCAL.md
 bundle-report.json

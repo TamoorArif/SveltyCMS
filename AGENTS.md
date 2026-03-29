@@ -57,7 +57,7 @@ To stay ahead: Implement cleaner features (e.g., isomorphic plugins > Payload's 
 ## Technical Standards
 
 - **Modern Stack**: Latest TypeScript (^5.9.3), Node.js (>=24), Svelte 5 (^5.46.4), Vite 7 (^7.3.1), Bun (3-4x faster runtime)
-- **Code Quality**: Ensure 100% CI parity by running `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` before every push. This performs comprehensive formatting (Biome), linting (ESLint/Biome), type checking (svelte-check), and executes all 741+ unit tests in both Vitest (exhaustive jsdom) and Bun (fast native).
+- **Code Quality**: Ensure 100% CI parity by running `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` before every push. This performs comprehensive formatting (oxfmt), linting (oxlint), type checking (svelte-check), and executes all 741+ unit tests in both Vitest (exhaustive jsdom) and Bun (fast native).
 
 | Category          | Convention           | Examples                                                 |
 | :---------------- | :------------------- | :------------------------------------------------------- |
@@ -268,8 +268,8 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 |               | `bun run build`                                                                                 | Production build                                           |
 |               | `bun run preview`                                                                               | Preview on 127.0.0.1:4173                                  |
 | Code Quality  | `bun run check`                                                                                 | Type checking                                              |
-|               | `bun run lint`                                                                                  | Hybrid Lint (Biome + ESLint)                               |
-|               | `bun run format`                                                                                | Fast Format (Biome)                                        |
+|               | `bun run lint`                                                                                  | Fast Lint (oxlint)                                         |
+|               | `bun run format`                                                                                | Fast Format (oxfmt)                                        |
 | Testing       | `bun run test:unit`                                                                             | Unit tests (Vitest/jsdom)                                  |
 |               | `bun run test:unit:bun`                                                                         | Unit tests (Bun Native)                                    |
 |               | `bun run test:integration`                                                                      | Integration (DB required)                                  |

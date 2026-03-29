@@ -13,7 +13,7 @@
  * - Checks for Path Alignment Strategy (matches frontmatter path to filesystem).
  *
  * @note This is a specialized validator for MDX metadata. For code linting/formatting,
- * use `bun run lint` (Biome + ESLint) and `bun run format` (Biome).
+ * use `bun run lint` (oxlint) and `bun run format` (oxfmt).
  */
 
 import fs from "node:fs";

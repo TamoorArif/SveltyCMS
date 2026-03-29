@@ -218,7 +218,7 @@ async function setupMongoDB(
       if (source !== "DEFAULT") {
         logger.info(`🔄 Retrying MongoDB with authSource: ${source}...`, { correlationId });
         await dbAdapter.disconnect().catch(() => {});
-        
+
         // Update config and rebuild connection string
         const retryConfig = { ...config, authSource: source } as any;
         connectionString = buildDatabaseConnectionString(retryConfig);
@@ -232,15 +232,21 @@ async function setupMongoDB(
         lastError = connectResult.error;
         const classified = classifyDatabaseError(lastError);
         if (classified.classification === "AUTH_FAILED" && config.user) {
-           continue; // Try next authSource
+          continue; // Try next authSource
         }
         throw new SetupDatabaseError(classified, lastError);
       }
 
       // Verify connection with a probe
-      const probeResult = await dbAdapter.crud.count("system_content_structure", {}, { silent: true });
+      const probeResult = await dbAdapter.crud.count(
+        "system_content_structure",
+        {},
+        { silent: true },
+      );
       if (probeResult.success) {
-        logger.info(`✅ MongoDB connection successful (authSource: ${source === "DEFAULT" ? (config as any).authSource || "implicit" : source})`);
+        logger.info(
+          `✅ MongoDB connection successful (authSource: ${source === "DEFAULT" ? (config as any).authSource || "implicit" : source})`,
+        );
         return dbAdapter;
       }
 
@@ -250,7 +256,6 @@ async function setupMongoDB(
         continue;
       }
       throw new SetupDatabaseError(classifiedProbe, probeResult.error);
-
     } catch (err) {
       if (err instanceof SetupDatabaseError) {
         if (err.classification === "AUTH_FAILED" && config.user) {
@@ -264,8 +269,8 @@ async function setupMongoDB(
   }
 
   // If we reach here, all retries failed
-  throw lastError instanceof SetupDatabaseError 
-    ? lastError 
+  throw lastError instanceof SetupDatabaseError
+    ? lastError
     : toSetupError(lastError || new Error("Authentication failed after all retries"), config);
 }
 

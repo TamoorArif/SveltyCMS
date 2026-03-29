@@ -15,7 +15,6 @@ describe("Database Interface Contract Tests", () => {
   let db: IDBAdapter | null = null;
 
   beforeAll(async () => {
-    // biome-ignore lint/suspicious/noTsIgnore: private.test.ts is generated at runtime in CI
     // @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
     const { privateEnv } = await import("../../../config/private.test");
 
