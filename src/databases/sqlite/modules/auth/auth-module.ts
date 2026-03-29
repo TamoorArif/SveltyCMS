@@ -14,7 +14,7 @@
  * - Role management
  */
 
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { DatabaseResult, PaginationOption } from "../../../db-interface";
 import type { IAuthAdapter } from "../../../db-interface";
 import type { Role, Session, Token, User } from "../../../auth/types";
@@ -517,7 +517,11 @@ export class AuthModule implements IAuthAdapter {
     _tenantId?: string | null,
   ): Promise<DatabaseResult<{ deletedCount: number }>> {
     return this.core.wrap(async () => {
-      await this.db.delete(schema.authTokens).where(inArray(schema.authTokens._id, tokenIds));
+      await this.db
+        .delete(schema.authTokens)
+        .where(
+          or(inArray(schema.authTokens._id, tokenIds), inArray(schema.authTokens.token, tokenIds)),
+        );
       return { deletedCount: tokenIds.length };
     }, "DELETE_TOKENS_FAILED");
   }
@@ -537,7 +541,9 @@ export class AuthModule implements IAuthAdapter {
       await this.db
         .update(schema.authTokens)
         .set({ blocked: true })
-        .where(inArray(schema.authTokens._id, tokenIds));
+        .where(
+          or(inArray(schema.authTokens._id, tokenIds), inArray(schema.authTokens.token, tokenIds)),
+        );
       return { modifiedCount: tokenIds.length };
     }, "BLOCK_TOKENS_FAILED");
   }
@@ -550,7 +556,9 @@ export class AuthModule implements IAuthAdapter {
       await this.db
         .update(schema.authTokens)
         .set({ blocked: false })
-        .where(inArray(schema.authTokens._id, tokenIds));
+        .where(
+          or(inArray(schema.authTokens._id, tokenIds), inArray(schema.authTokens.token, tokenIds)),
+        );
       return { modifiedCount: tokenIds.length };
     }, "UNBLOCK_TOKENS_FAILED");
   }

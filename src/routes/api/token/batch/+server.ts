@@ -56,16 +56,40 @@ export const POST = apiHandler(async ({ request, locals }) => {
     }
 
     // --- MULTI-TENANCY SECURITY CHECK ---
-    // The batch methods (deleteTokens/blockTokens/unblockTokens) already accept tenantId
-    // and filter by tenant, so ownership is enforced at the DB level. No need to fetch
-    // all tokens upfront — that causes timeouts on PostgreSQL/MariaDB with large datasets.
+    if (getPrivateSettingSync("MULTI_TENANT")) {
+      if (!tenantId) {
+        throw new AppError(
+          "Tenant could not be identified for this operation.",
+          500,
+          "TENANT_REQUIRED",
+        );
+      }
+      // Batch methods filter by tenantId at DB level, so ownership is enforced there.
+      // No need to pre-fetch all tokens for verification.
+    }
 
     let successMessage = "";
     let targetTokenIds = tokenIds;
 
-    // When MULTI_TENANT is off, batch methods (deleteTokens/blockTokens/unblockTokens)
-    // already handle both _id and token value matching via OR conditions, so no
-    // extra getAllTokens round-trip is needed.
+    // Resolve token values to _ids since some DB adapters (e.g. SQLite) only
+    // match by _id in their batch methods. PostgreSQL/MariaDB handle both via OR.
+    try {
+      const tokensResult = await auth.getAllTokens({ tenantId });
+      if (tokensResult.success && tokensResult.data) {
+        const tokenMap = new Map<string, string>();
+        for (const t of tokensResult.data) {
+          const id = (t as any)._id;
+          const val = (t as any).token || (t as any).value;
+          if (id) {
+            tokenMap.set(id, id);
+            if (val) tokenMap.set(val, id);
+          }
+        }
+        targetTokenIds = tokenIds.map((v) => tokenMap.get(v) || v);
+      }
+    } catch {
+      // If getAllTokens fails (e.g. not implemented), use raw tokenIds as-is
+    }
 
     // Directly invoke database-agnostic methods (now bound in auth adapter)
     switch (action) {
