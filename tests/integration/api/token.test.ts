@@ -286,8 +286,9 @@ describe("Token API Endpoints", () => {
 
     beforeEach(async () => {
       // Create two tokens for batch operations
-      email1 = `batch1-${Date.now()}@example.com`;
-      email2 = `batch2-${Date.now()}@example.com`;
+      const ts = Date.now();
+      email1 = `batch1-${ts}@example.com`;
+      email2 = `batch2-${ts + 1}@example.com`;
 
       const [res1, res2] = await Promise.all([
         safeFetch(`${API_BASE_URL}/api/token/create-token`, {
