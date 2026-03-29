@@ -194,9 +194,12 @@ export class MongoDBAdapter implements IDBAdapter {
   };
   collection: IDBAdapter["collection"] = {} as IDBAdapter["collection"];
 
+  _featureInit: Record<string, boolean> = {};
+
   constructor() {
     this.auth = composeMongoAuthAdapter();
     this.crud = this._createCrudMethods();
+    this._featureInit.crud = true;
 
     // Initialize basic content interface (extended in ensureContent)
     this.content = {

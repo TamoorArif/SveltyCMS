@@ -8,15 +8,13 @@ const AUTHOR_AUTH_FILE = "tests/e2e/.auth/author.json";
 
 setup.describe("E2E Role-Based Setup", () => {
   setup("authenticate as admin", async ({ page }) => {
-    // Check if system is already configured (CI runs setup-system.ts before tests)
-    // In CI, we only need to ensure admin user exists — don't wipe config
-    const healthResponse = await page.request.get("/api/system/health");
-    const healthData = await healthResponse.json();
-    const isConfigured = healthData.overallStatus !== "IDLE";
+    // In CI, setup-system.ts already configured the system and created the admin.
+    // Only seed (not reset) to avoid wiping the config and reverting to "first user" mode.
+    // Locally, we need full reset + seed + setup since no setup-system.ts runs.
+    const isCI = !!process.env.CI;
 
-    if (isConfigured) {
-      // System already configured by setup-system.ts — just ensure admin exists via seed
-      console.log(`[Setup] System already configured, seeding admin user...`);
+    if (isCI) {
+      console.log("[Setup] CI detected — seeding admin user without reset...");
       const seedResponse = await page.request.post("/api/testing", {
         data: {
           action: "seed",
@@ -24,13 +22,13 @@ setup.describe("E2E Role-Based Setup", () => {
           password: ADMIN_CREDENTIALS.password,
         },
       });
-      // Seed may fail if user already exists — that's fine
+      // Seed may return 409 if user already exists — that's fine
       if (!seedResponse.ok()) {
         console.log(`[Setup] Seed returned ${seedResponse.status()} (user may already exist)`);
       }
     } else {
       // Local testing — need full reset + seed + setup
-      console.log("[Setup] System not configured, performing full reset...");
+      console.log("[Setup] Local mode — performing full reset...");
       const resetResponse = await page.request.post("/api/testing", {
         data: { action: "reset" },
       });
