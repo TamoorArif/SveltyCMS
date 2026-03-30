@@ -65,7 +65,7 @@ setup.describe("E2E Role-Based Setup", () => {
 
     const roles = ["Editor", "Author"];
     for (const role of roles) {
-      console.log(`[Setup] Inviting ${role}...`);
+      console.log(`[Setup] Creating ${role} user...`);
       const signupResponse = await page.request.post("/api/testing", {
         data: {
           action: "create-user",
@@ -83,16 +83,37 @@ setup.describe("E2E Role-Based Setup", () => {
       }
       expect(signupResponse.ok()).toBeTruthy();
 
+      // Clear cookies so we can log in as the new user (not admin)
+      await page.context().clearCookies();
+
       // Login as the new user to capture their state
       await page.goto("/login");
       await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(2000);
 
-      // Use the same selector strategy as loginAsAdmin helper
-      const emailInput = page.locator('input[name="email"]').first();
-      const passwordInput = page.locator('input[name="password"]').first();
-      await emailInput.fill(`${role.toLowerCase()}@example.com`);
-      await passwordInput.fill("Password123!");
-      await page.locator('button[type="submit"]').first().click();
+      // Dismiss cookie dialog if present
+      const acceptCookies = page.locator('button:has-text("Accept All")').first();
+      if (await acceptCookies.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await acceptCookies.click();
+        await page.waitForTimeout(500);
+      }
+
+      // Use loginAsAdmin helper with custom creds (works for any user)
+      const emailField = page.getByTestId("signin-email");
+      const passwordField = page.getByTestId("signin-password");
+      const emailByName = page.locator('input[name="email"]').first();
+
+      if (await emailField.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await emailField.fill(`${role.toLowerCase()}@example.com`);
+        await passwordField.fill("Password123!");
+        await page.getByTestId("signin-submit").click();
+      } else if (await emailByName.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await emailByName.fill(`${role.toLowerCase()}@example.com`);
+        await page.locator('input[name="password"]').first().fill("Password123!");
+        await page.locator('button[type="submit"]').first().click();
+      } else {
+        throw new Error(`[Setup] Could not find login form for ${role}`);
+      }
 
       await page.waitForURL("**/config/**", { timeout: 15_000 }).catch(() => {});
       await page.waitForTimeout(2000);
