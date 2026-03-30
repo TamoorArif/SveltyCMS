@@ -98,19 +98,9 @@ export default defineConfig({
 		}
 	],
 
-	/* Run your local dev server before starting the tests */
-	// In CI, the workflow starts the server manually, so we only use webServer locally
-	...(process.env.CI
-		? {}
-		: {
-				webServer: {
-					command: 'bun install && bun dev --port 5173',
-					port: 5173,
-					timeout: 60_000, // Increased timeout to 1 minute
-					reuseExistingServer: true,
-					env: {
-						PLAYWRIGHT_TEST: 'true'
-					}
-				}
-			})
+	/* Global setup: complete the setup wizard before tests run */
+	globalSetup: './tests/e2e/global.setup.ts',
+
+	/* Dev server is managed entirely by global.setup.ts */
+	/* In CI, the workflow starts the server and global.setup runs setup API */
 });
