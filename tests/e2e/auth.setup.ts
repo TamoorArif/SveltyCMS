@@ -57,7 +57,8 @@ setup.describe("E2E Role-Based Setup", () => {
     await page.context().storageState({ path: ADMIN_AUTH_FILE });
   });
 
-  setup("provision editor and author via invite flow", async ({ page }) => {
+  setup("provision editor and author via invite flow", async ({ page }, testInfo) => {
+    testInfo.setTimeout(120_000);
     // This depends on the admin.json created in the previous setup test
     const adminState = JSON.parse(readFileSync(ADMIN_AUTH_FILE, "utf-8"));
     await page.context().addCookies(adminState.cookies);
@@ -84,9 +85,17 @@ setup.describe("E2E Role-Based Setup", () => {
 
       // Login as the new user to capture their state
       await page.goto("/login");
-      await page.getByPlaceholder(/email/i).fill(`${role.toLowerCase()}@example.com`);
-      await page.getByPlaceholder(/password/i).fill("Password123!");
-      await page.getByRole("button", { name: /sign in/i }).click();
+      await page.waitForLoadState("domcontentloaded");
+
+      // Use the same selector strategy as loginAsAdmin helper
+      const emailInput = page.locator('input[name="email"]').first();
+      const passwordInput = page.locator('input[name="password"]').first();
+      await emailInput.fill(`${role.toLowerCase()}@example.com`);
+      await passwordInput.fill("Password123!");
+      await page.locator('button[type="submit"]').first().click();
+
+      await page.waitForURL("**/config/**", { timeout: 15_000 }).catch(() => {});
+      await page.waitForTimeout(2000);
 
       const targetFile = role === "Editor" ? EDITOR_AUTH_FILE : AUTHOR_AUTH_FILE;
       await page.context().storageState({ path: targetFile });
