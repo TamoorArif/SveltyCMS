@@ -170,6 +170,14 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForTimeout(1000);
 
+  // Dismiss cookie consent dialog if present (blocks all clicks)
+  const acceptCookies = page.locator('button:has-text("Accept All")').first();
+  if (await acceptCookies.isVisible({ timeout: 3000 }).catch(() => false)) {
+    console.log("[Auth] Dismissing cookie consent dialog...");
+    await acceptCookies.click();
+    await page.waitForTimeout(500);
+  }
+
   // Check if we're on the login selection page (SIGN IN / SIGN UP buttons)
   // Try data-testid first, then text-based fallback
   const signInIcon = page.getByTestId("signin-icon");
