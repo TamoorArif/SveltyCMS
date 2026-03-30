@@ -174,7 +174,7 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
   const acceptCookies = page.locator('button:has-text("Accept All")').first();
   if (await acceptCookies.isVisible({ timeout: 3000 }).catch(() => false)) {
     console.log("[Auth] Dismissing cookie consent dialog...");
-    await acceptCookies.click();
+    await acceptCookies.click({ force: true });
     await page.waitForTimeout(500);
   }
 

@@ -37,14 +37,14 @@ setup.describe("E2E Role-Based Setup", () => {
           },
         });
         console.log(`[Setup] Seed retry returned ${seedRetry.status()}`);
-        if (seedRetry.ok()) {
-          const setupRetry = await page.request.post("/api/testing", {
-            data: { action: "setup" },
-          });
-          console.log(`[Setup] Setup retry returned ${setupRetry.status()}`);
-        }
       }
     }
+
+    // Ensure setup state is recognized after seed
+    const setupResponse = await page.request.post("/api/testing", {
+      data: { action: "setup" },
+    });
+    console.log(`[Setup] Setup state returned ${setupResponse.status()}`);
 
     // Wait for the server to re-evaluate firstUserExists after seed
     console.log("[Setup] Waiting for server state to settle...");
@@ -93,7 +93,7 @@ setup.describe("E2E Role-Based Setup", () => {
       // Dismiss cookie dialog if present
       const acceptCookies = page.locator('button:has-text("Accept All")').first();
       if (await acceptCookies.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await acceptCookies.click();
+        await acceptCookies.click({ force: true });
         await page.waitForTimeout(500);
       }
 
