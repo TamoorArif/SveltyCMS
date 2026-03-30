@@ -87,9 +87,8 @@ setup.describe("E2E Role-Based Setup", () => {
       await page.context().clearCookies();
 
       // Login as the new user to capture their state
-      await page.goto("/login");
-      await page.waitForLoadState("domcontentloaded");
-      await page.waitForTimeout(2000);
+      await page.goto("/login", { waitUntil: "networkidle" });
+      await page.waitForTimeout(3000);
 
       // Dismiss cookie dialog if present
       const acceptCookies = page.locator('button:has-text("Accept All")').first();
@@ -98,11 +97,19 @@ setup.describe("E2E Role-Based Setup", () => {
         await page.waitForTimeout(500);
       }
 
-      // Click "Go to Sign In" if visible (login page may default to sign-up view)
-      const goToSignIn = page.locator('button:has-text("Go to Sign In")').first();
-      if (await goToSignIn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await goToSignIn.click();
-        await page.waitForTimeout(1000);
+      // The login page renders Sign In / Sign Up tabs but no form initially.
+      // Need to click a tab to activate the form.
+      // The DOM structure is: <button><button><img/><p>Sign In</p></button></button>
+      // Use text-based locator with force click to handle nested button issues
+      const signInTab = page.getByText("Sign In", { exact: true }).first();
+      if (await signInTab.isVisible({ timeout: 5000 }).catch(() => false)) {
+        console.log("[Setup] Clicking 'Sign In' tab...");
+        await signInTab.click({ force: true });
+        await page.waitForTimeout(2000); // Wait for CSS transition
+      } else {
+        console.log("[Setup] 'Sign In' tab not visible, trying reload...");
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForTimeout(2000);
       }
 
       // Use loginAsAdmin helper with custom creds (works for any user)
@@ -119,10 +126,11 @@ setup.describe("E2E Role-Based Setup", () => {
         await page.locator('input[name="password"]').first().fill("Password123!");
         await page.locator('button[type="submit"]').first().click();
       } else {
-        // Debug: dump what's on the page
+        // Debug: take screenshot and dump page state
+        const bodyText = await page.locator("body").innerText().catch(() => "empty");
         const inputs = await page.locator("input").count();
-        const buttons = await page.locator("button").allTextContents();
-        console.error(`[Setup] No form found. inputs=${inputs}, buttons=${JSON.stringify(buttons.slice(0, 10))}`);
+        console.error(`[Setup] No form found. inputs=${inputs}, url=${page.url()}`);
+        console.error(`[Setup] Page body (first 500 chars): ${bodyText.substring(0, 500)}`);
         throw new Error(`[Setup] Could not find login form for ${role}`);
       }
 

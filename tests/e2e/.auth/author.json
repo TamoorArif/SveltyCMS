@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "ratelimit",
-      "value": "aIa48GmWzzPxOGbGcM4o5%3B4db2f66d590739978245967df6ec232f14ffbc0e8677d958d36072f80218690e",
+      "value": "0Kl95cmuacPBIxxvOIJxH%3B49aa04522717338ac406d6c975a1e358becc55643c54f068def9b705f837d372",
       "domain": "localhost",
       "path": "/",
-      "expires": 1775498320.620163,
+      "expires": 1775498507.974602,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Strict"
@@ -15,7 +15,7 @@
       "value": "en",
       "domain": "localhost",
       "path": "/",
-      "expires": 1809453526.244463,
+      "expires": 1809453707.990517,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -25,20 +25,10 @@
       "value": "system",
       "domain": "localhost",
       "path": "/",
-      "expires": 1806429520.683775,
+      "expires": 1806429708.024343,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
-    },
-    {
-      "name": "auth_sessions",
-      "value": "1db39fedc7b9473db51ebbaabc2705cb",
-      "domain": "localhost",
-      "path": "/",
-      "expires": 1774979931.060968,
-      "httpOnly": true,
-      "secure": false,
-      "sameSite": "Strict"
     }
   ],
   "origins": [
@@ -47,7 +37,7 @@
       "localStorage": [
         {
           "name": "sveltycms_consent",
-          "value": "{\"responded\":true,\"necessary\":true,\"analytics\":false,\"marketing\":false}"
+          "value": "{\"necessary\":true,\"analytics\":true,\"marketing\":true,\"responded\":true}"
         }
       ]
     }
