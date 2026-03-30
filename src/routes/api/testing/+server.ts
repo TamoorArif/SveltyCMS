@@ -182,6 +182,11 @@ export async function POST(event: RequestEvent) {
           await import("@src/utils/setup-check");
         invalidateAfterSeed(true);
 
+        // Invalidate user count cache so login page shows sign-in (not sign-up)
+        const { invalidateUserCountCache } =
+          await import("@src/hooks/handle-authorization");
+        await invalidateUserCountCache();
+
         return json({ success: true, message: "Database seeded" });
       }
 

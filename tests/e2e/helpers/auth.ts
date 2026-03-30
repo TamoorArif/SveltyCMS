@@ -203,35 +203,21 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
 
   console.log("[Auth] Submitting login form...");
 
-  // Wait for login form to be visible - use data-testid, fallback to name attributes
-  console.log("[Auth] Waiting for signin-email field...");
-  const signinEmail = page.getByTestId("signin-email");
-  const emailByName = page.locator('input[name="email"]').first();
+  // Fill the now-visible SIGN IN form (after clicking tab above)
+  const signinEmailInput = page.getByTestId("signin-email");
+  const emailByNameInput = page.locator('input[name="email"]').first();
 
-  if (await signinEmail.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    console.log("[Auth] Using data-testid selectors.");
-    await signinEmail.fill(ADMIN_CREDENTIALS.email);
+  if (await signinEmailInput.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await signinEmailInput.fill(ADMIN_CREDENTIALS.email);
     await page.getByTestId("signin-password").fill(ADMIN_CREDENTIALS.password);
     await page.getByTestId("signin-submit").click();
-  } else if (await emailByName.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    console.log("[Auth] Using name attribute selectors (fallback).");
-    await emailByName.fill(ADMIN_CREDENTIALS.email);
+  } else if (await emailByNameInput.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await emailByNameInput.fill(ADMIN_CREDENTIALS.email);
     await page.locator('input[name="password"]').first().fill(ADMIN_CREDENTIALS.password);
-    const submitBtn = page.locator('button[type="submit"]').first();
-    await submitBtn.click();
+    await page.locator('button[type="submit"]').first().click();
   } else {
-    // Provide debug info about available inputs
-    const inputs = await page.locator("input").all();
-    for (let i = 0; i < inputs.length; i++) {
-      const input = inputs[i];
-      const name = await input.getAttribute("name");
-      const testId = await input.getAttribute("data-testid");
-      console.error(`[Auth]   Input ${i}: name=${name}, data-testid=${testId}`);
-    }
-    throw new Error("[Auth] No login form found on page.");
+    throw new Error("[Auth] No login form found after clicking SIGN IN.");
   }
-
-  console.log("[Auth] Submitting login form...");
 
   // Wait for redirect after successful login
   console.log("[Auth] Waiting for redirect...");
