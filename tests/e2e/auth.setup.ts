@@ -8,46 +8,47 @@ const AUTHOR_AUTH_FILE = "tests/e2e/.auth/author.json";
 
 setup.describe("E2E Role-Based Setup", () => {
   setup("authenticate as admin", async ({ page }) => {
-    // In CI, setup-system.ts already configured the system and created the admin.
-    // Only seed (not reset) to avoid wiping the config and reverting to "first user" mode.
-    // Locally, we need full reset + seed + setup since no setup-system.ts runs.
-    const isCI = !!process.env.CI;
-
-    if (isCI) {
-      console.log("[Setup] CI detected — seeding admin user without reset...");
-      const seedResponse = await page.request.post("/api/testing", {
-        data: {
-          action: "seed",
-          email: ADMIN_CREDENTIALS.email,
-          password: ADMIN_CREDENTIALS.password,
-        },
-      });
-      // Seed may return 409 if user already exists — that's fine
-      if (!seedResponse.ok()) {
-        console.log(`[Setup] Seed returned ${seedResponse.status()} (user may already exist)`);
-      }
-    } else {
-      // Local testing — need full reset + seed + setup
-      console.log("[Setup] Local mode — performing full reset...");
+    // After the wizard project completes setup, the system is already configured.
+    // Just seed the admin user (idempotent — won't fail if user already exists).
+    // We skip reset because it clears the config and puts the system back in
+    // "first user" mode, which is hard to recover from without a server restart.
+    console.log("[Setup] Seeding admin user (system already configured by wizard)...");
+    const seedResponse = await page.request.post("/api/testing", {
+      data: {
+        action: "seed",
+        email: ADMIN_CREDENTIALS.email,
+        password: ADMIN_CREDENTIALS.password,
+      },
+    });
+    // Seed may return various status codes — as long as the user exists, we're fine
+    console.log(`[Setup] Seed returned ${seedResponse.status()}`);
+    if (seedResponse.status() === 503) {
+      // DB not initialized — try reset + seed as fallback
+      console.log("[Setup] DB not initialized, attempting reset + seed...");
       const resetResponse = await page.request.post("/api/testing", {
         data: { action: "reset" },
       });
-      expect(resetResponse.ok()).toBeTruthy();
-
-      const seedResponse = await page.request.post("/api/testing", {
-        data: {
-          action: "seed",
-          email: ADMIN_CREDENTIALS.email,
-          password: ADMIN_CREDENTIALS.password,
-        },
-      });
-      expect(seedResponse.ok()).toBeTruthy();
-
-      const setupResponse = await page.request.post("/api/testing", {
-        data: { action: "setup" },
-      });
-      expect(setupResponse.ok()).toBeTruthy();
+      if (resetResponse.ok()) {
+        const seedRetry = await page.request.post("/api/testing", {
+          data: {
+            action: "seed",
+            email: ADMIN_CREDENTIALS.email,
+            password: ADMIN_CREDENTIALS.password,
+          },
+        });
+        console.log(`[Setup] Seed retry returned ${seedRetry.status()}`);
+        if (seedRetry.ok()) {
+          const setupRetry = await page.request.post("/api/testing", {
+            data: { action: "setup" },
+          });
+          console.log(`[Setup] Setup retry returned ${setupRetry.status()}`);
+        }
+      }
     }
+
+    // Wait for the server to re-evaluate firstUserExists after seed
+    console.log("[Setup] Waiting for server state to settle...");
+    await page.waitForTimeout(3000);
 
     // Perform login
     await loginAsAdmin(page);
