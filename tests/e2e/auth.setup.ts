@@ -98,6 +98,13 @@ setup.describe("E2E Role-Based Setup", () => {
         await page.waitForTimeout(500);
       }
 
+      // Click "Go to Sign In" if visible (login page may default to sign-up view)
+      const goToSignIn = page.locator('button:has-text("Go to Sign In")').first();
+      if (await goToSignIn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await goToSignIn.click();
+        await page.waitForTimeout(1000);
+      }
+
       // Use loginAsAdmin helper with custom creds (works for any user)
       const emailField = page.getByTestId("signin-email");
       const passwordField = page.getByTestId("signin-password");
@@ -112,6 +119,10 @@ setup.describe("E2E Role-Based Setup", () => {
         await page.locator('input[name="password"]').first().fill("Password123!");
         await page.locator('button[type="submit"]').first().click();
       } else {
+        // Debug: dump what's on the page
+        const inputs = await page.locator("input").count();
+        const buttons = await page.locator("button").allTextContents();
+        console.error(`[Setup] No form found. inputs=${inputs}, buttons=${JSON.stringify(buttons.slice(0, 10))}`);
         throw new Error(`[Setup] Could not find login form for ${role}`);
       }
 
