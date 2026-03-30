@@ -191,11 +191,44 @@ export async function loginAsAdmin(page: Page, waitForUrl?: string | RegExp) {
 
   if (signInIconVisible) {
     console.log("[Auth] Clicking SIGN IN icon...");
+
+    // Dismiss any blocking overlay (cookie dialog, welcome modal, etc.)
+    const overlay = page.locator('.fixed.inset-0.z-50');
+    if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+      console.log("[Auth] Dismissing blocking overlay...");
+      // Try clicking close/accept/dismiss buttons inside the overlay
+      const dismissBtn = overlay.locator('button:has-text("Accept All"), button:has-text("Close"), button:has-text("Dismiss"), button:has-text("Got it"), button:has-text("OK"), button[aria-label="Close"], button[aria-label="Dismiss"]').first();
+      if (await dismissBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await dismissBtn.click({ force: true });
+        await page.waitForTimeout(500);
+      } else {
+        // No dismiss button found — force click the sign-in icon through the overlay
+        console.log("[Auth] No dismiss button in overlay, using force click...");
+        await signInIcon.click({ force: true });
+        await page.waitForTimeout(2000);
+        // Already clicked, skip the normal click below
+        const signinEmail = page.getByTestId("signin-email");
+        if (await signinEmail.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await signinEmail.fill(ADMIN_CREDENTIALS.email);
+          await page.getByTestId("signin-password").fill(ADMIN_CREDENTIALS.password);
+          await page.getByTestId("signin-submit").click();
+          console.log("[Auth] Waiting for redirect...");
+          if (waitForUrl) {
+            await page.waitForURL(waitForUrl, { timeout: 15_000 });
+          } else {
+            await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+          }
+          console.log(`[Auth] Login successful, redirected to: ${page.url()}`);
+          return;
+        }
+      }
+    }
+
     await signInIcon.click();
     await page.waitForTimeout(2000);
   } else if (signInButtonVisible) {
     console.log("[Auth] Clicking SIGN IN button (fallback)...");
-    await signInButton.click();
+    await signInButton.click({ force: true });
     await page.waitForTimeout(2000);
   } else {
     // Provide debug info about available inputs
