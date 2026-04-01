@@ -72,21 +72,17 @@ describe("ToastStore", () => {
   });
 
   it("should store and read flash messages across sessions", () => {
-    const spySet = vi.spyOn(globalThis.sessionStorage, "setItem");
-    const spyRemove = vi.spyOn(globalThis.sessionStorage, "removeItem");
-
     toast.flash({ type: "success", message: "Flash Success" });
 
-    expect(spySet).toHaveBeenCalledWith("toast_flash", expect.any(String));
+    const stored = globalThis.sessionStorage.getItem("toast_flash");
+    expect(stored).toBeTruthy();
+    expect(JSON.parse(stored!)).toMatchObject({ type: "success", message: "Flash Success" });
 
     // Check flash logic
     toast.checkFlash();
     expect(toast.toasts.length).toBe(1);
     expect(toast.toasts[0].message).toBe("Flash Success");
-    expect(spyRemove).toHaveBeenCalledWith("toast_flash");
-
-    spySet.mockRestore();
-    spyRemove.mockRestore();
+    expect(globalThis.sessionStorage.getItem("toast_flash")).toBeNull();
   });
 
   it("should backward-compatibly support legacy API calls", () => {

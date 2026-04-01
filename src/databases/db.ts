@@ -19,8 +19,17 @@
  * - multi-tenant global startup
  */
 
-import { building } from "$app/environment";
 import { cacheService } from "@src/databases/cache/cache-service";
+
+// Detect building mode safely for both SvelteKit and unit tests
+let isBuilding = false;
+try {
+  const env = await import("$app/environment");
+  isBuilding = env.building;
+} catch {
+  // Fallback for tests
+  isBuilding = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+}
 
 // Handle private config that might not exist during setup
 import {
@@ -347,7 +356,7 @@ async function initializeThemeManager(): Promise<void> {
 async function initializeMediaFolder(): Promise<void> {
   // During setup, MEDIA_FOLDER might not be loaded yet, so use fallback
   const mediaFolderPath = (await getPublicSetting("MEDIA_FOLDER")) || "./mediaFolder";
-  if (building) {
+  if (isBuilding) {
     return;
   }
   const fs = await import("node:fs/promises");
@@ -409,10 +418,16 @@ async function initializeSystem(
     typeof process !== "undefined" && process.argv?.some((arg) => ["build", "check"].includes(arg));
   if (isSetupProcess) return;
 
-  // Prevent re-initialization unless forced
+  // Prevent re-initialization if already in progress or completed
   if (isInitialized && !forceReload) {
     logger.debug("System already initialized. Skipping.");
     return;
+  }
+
+  // Use the existing promise if one is already in flight to prevent race conditions
+  if (initializationPromise && !forceReload) {
+    logger.debug("System initialization already in progress. Waiting for existing promise.");
+    return initializationPromise;
   }
 
   const systemStartTime = performance.now();
@@ -761,37 +776,36 @@ export async function initializeForSetup(dbConfig: {
   }
 }
 
-/**
- * Initializes the system on the first non-setup request.
- * This prevents the server from trying to connect to the DB during setup.
- */
 export function initializeOnRequest(forceInit = false): Promise<void> {
   const isBuildProcess =
     typeof process !== "undefined" && process.argv?.some((arg) => ["build", "check"].includes(arg));
 
-  if (!(building || isBuildProcess)) {
+  if (!(isBuilding || isBuildProcess)) {
     if (!initializationPromise || forceInit) {
       logger.debug("Creating system initialization promise...");
 
       initializationPromise = (async () => {
-        // Check if private config exists and is valid
-        const privateConfig = await loadPrivateConfig(forceInit);
-        if (!(privateConfig?.DB_TYPE && privateConfig.DB_HOST)) {
-          logger.info("Private config not available – skipping initialization (setup mode)");
-          return Promise.resolve();
+        try {
+          // Check if private config exists and is valid
+          const privateConfig = await loadPrivateConfig(forceInit);
+          if (!(privateConfig?.DB_TYPE && privateConfig.DB_HOST)) {
+            logger.info("Private config not available – skipping initialization (setup mode)");
+            initializationPromise = null; // Clear so it can retry if config appears
+            return;
+          }
+
+          // Private config exists - run full initialization
+          logger.info("Private config found, starting full system initialization");
+          await initializeSystem(forceInit);
+        } catch (err) {
+          logger.error(
+            `Initialization failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+          logger.error("Clearing initialization promise to allow retry");
+          initializationPromise = null;
+          throw err;
         }
-
-        // Private config exists - run full initialization
-        logger.info("Private config found, starting full system initialization");
-        return initializeSystem(forceInit);
       })();
-
-      initializationPromise.catch((err) => {
-        logger.error(`Initialization failed: ${err instanceof Error ? err.message : String(err)}`);
-        logger.error("Clearing initialization promise to allow retry");
-        initializationPromise = null;
-        initializationPromise = null;
-      });
     }
   } else if (!initializationPromise) {
     logger.debug("Skipping system initialization during build process.");

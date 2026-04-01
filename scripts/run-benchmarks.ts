@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
 // ✨ Configuration Constants
-const HOST = process.env.HOST || "127.0.0.1";
+const HOST = process.env.HOST || "localhost";
 const PORT = "4173";
 const API_BASE_URL = `http://${HOST}:${PORT}`;
 const pkgManager = process.env.npm_execpath || "bun";

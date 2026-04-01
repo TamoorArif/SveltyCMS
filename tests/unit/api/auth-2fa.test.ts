@@ -16,54 +16,58 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
 
 // Mock all dependencies
-const mockDbAdapter = {
-  auth: {
-    authInterface: {},
-    validateSession: vi.fn(),
-    getUserById: vi.fn(),
-    updateUserAttributes: vi.fn().mockResolvedValue({ success: true }),
-    createSessionCookie: vi.fn().mockReturnValue({ name: "session", value: "val", attributes: {} }),
-    login: vi.fn(),
-  },
-  collections: {
-    list: vi.fn(),
-    find: vi.fn(),
-    findById: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    search: vi.fn(),
-  },
-  media: {
-    find: vi.fn(),
-    findById: vi.fn(),
-    upload: vi.fn(),
-    delete: vi.fn(),
-  },
-  widgets: {
-    list: vi.fn(),
-    activate: vi.fn(),
-    deactivate: vi.fn(),
-  },
-  system: {
-    getHealth: vi.fn(),
-    reinitialize: vi.fn(),
-  },
-  crud: {
-    findMany: vi.fn(),
-    findOne: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-};
+vi.mock("@src/databases/db", () => {
+  const mockAdapter = {
+    auth: {
+      authInterface: {},
+      validateSession: vi.fn(),
+      getUserById: vi.fn(),
+      updateUserAttributes: vi.fn().mockResolvedValue({ success: true }),
+      createSessionCookie: vi
+        .fn()
+        .mockReturnValue({ name: "session", value: "val", attributes: {} }),
+      login: vi.fn(),
+    },
+    collections: {
+      list: vi.fn(),
+      find: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      search: vi.fn(),
+    },
+    media: {
+      find: vi.fn(),
+      findById: vi.fn(),
+      upload: vi.fn(),
+      delete: vi.fn(),
+    },
+    widgets: {
+      list: vi.fn(),
+      activate: vi.fn(),
+      deactivate: vi.fn(),
+    },
+    system: {
+      getHealth: vi.fn(),
+      reinitialize: vi.fn(),
+    },
+    crud: {
+      findMany: vi.fn(),
+      findOne: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
 
-vi.mock("@src/databases/db", () => ({
-  dbAdapter: mockDbAdapter,
-  auth: mockDbAdapter.auth,
-  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
-  getAuth: vi.fn().mockReturnValue(mockDbAdapter.auth),
-}));
+  return {
+    dbAdapter: mockAdapter,
+    auth: mockAdapter.auth,
+    getDbInitPromise: vi.fn().mockResolvedValue(undefined),
+    getAuth: vi.fn().mockReturnValue(mockAdapter.auth),
+  };
+});
 
 vi.mock("@src/databases/auth/two-factor-auth", () => ({
   getDefaultTwoFactorAuthService: vi.fn().mockReturnValue({
@@ -78,6 +82,7 @@ vi.mock("@src/databases/auth/two-factor-auth", () => ({
 
 vi.mock("@src/services/settings-service", () => ({
   getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(undefined),
 }));
 
 vi.mock("@utils/logger.server", () => ({
@@ -102,7 +107,7 @@ vi.mock("@src/databases/auth", () => ({
 }));
 
 // Import dispatcher (handler)
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 const POST_SETUP = (event: any) => {
   event.params = { ...event.params, path: "auth/2fa/setup" };

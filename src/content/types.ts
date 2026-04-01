@@ -452,10 +452,11 @@ export const SENSITIVE_PATTERNS = [
 export type SortOrder = 0 | 1 | -1; // Strict type for sort order
 
 export interface TableHeader {
-  component?: string;
-  id: string;
+  id?: string;
+  name?: string;
+  key?: string;
   label: string;
-  name: string;
+  component?: string;
   props?: Record<string, string>;
   sortable?: boolean;
   visible: boolean;
@@ -488,5 +489,5 @@ export interface TablePaginationProps {
 }
 
 /* AUTOGEN_START: ContentTypes */
-export type ContentTypes = never;
+export type ContentTypes = "Authors" | "Categories" | "Posts";
 /* AUTOGEN_END: ContentTypes */

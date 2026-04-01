@@ -8,7 +8,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:4173";
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:4173";
 const rootDir = process.cwd();
 
 /**
@@ -83,6 +83,7 @@ async function waitForReady() {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
       if (res.ok || res.status === 503) {
         const data = (await res.json()) as any;
+        console.log(`[DEBUG] Health check response:`, JSON.stringify(data));
         // In setup mode, status might be 'IDLE' or 'SETUP'
         // We just need it to be responsive and not 'INITIALIZING'
         const okStatuses = ["READY", "SETUP", "IDLE", "DEGRADED", "WARMING", "WARMED"];

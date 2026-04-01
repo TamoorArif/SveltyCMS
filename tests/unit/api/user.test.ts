@@ -3,14 +3,20 @@
  * @description Unit tests for user management endpoints.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
+
+// Mock SvelteKit environment
+vi.mock("$app/environment", () => ({
+  browser: true,
+}));
 
 // Mock dependencies
 vi.mock("@src/databases/db", () => ({
   dbAdapter: {
     auth: {
       getAllUsers: vi.fn(),
+      getUserCount: vi.fn(),
       updateUserAttributes: vi.fn(),
       batchAction: vi.fn(),
     },
@@ -21,6 +27,7 @@ vi.mock("@src/databases/db", () => ({
 
 vi.mock("@src/services/settings-service", () => ({
   getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@utils/api-handler", () => ({
@@ -28,7 +35,7 @@ vi.mock("@utils/api-handler", () => ({
 }));
 
 // Import raw dispatcher handler
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 describe("User API Unit Tests", () => {
   const createMockEvent = (
@@ -53,6 +60,7 @@ describe("User API Unit Tests", () => {
         dbAdapter: {
           auth: {
             getAllUsers: vi.fn().mockResolvedValue({ success: true, data: [] }),
+            getUserCount: vi.fn().mockResolvedValue({ success: true, data: 0 }),
             updateUserAttributes: vi.fn().mockResolvedValue({ success: true }),
             batchAction: vi.fn().mockResolvedValue({ success: true }),
           },

@@ -6,7 +6,7 @@ order: 10
 icon: "mdi:lightning-bolt"
 author: "SveltyCMS Team"
 created: "2026-03-29"
-updated: "2026-03-29"
+updated: "2026-04-01"
 tags:
   - "architecture"
   - "performance"
@@ -22,6 +22,25 @@ SveltyCMS provides two complementary ways to interact with content:
 - **External HTTP / GraphQL API** — Secure, public-facing, full middleware stack.
 - **Internal Local SDK** — Zero-overhead, server-side only, for maximum performance.
 
+```mermaid
+graph TD
+    Client[Client Browser]
+    Server[SvelteKit Server]
+    
+    subgraph "External Access"
+        Client -->|Fetch/GraphQL| API[HTTP/GraphQL API]
+        API -->|Middleware/Auth| CMS_Core[CMS Core Logic]
+    end
+    
+    subgraph "Internal Access (High Performance)"
+        Server -->|Direct Call| LocalCMS[Local SDK]
+        LocalCMS -->|Zero Overhead| CMS_Core
+    end
+    
+    CMS_Core --> DB[(Database)]
+    CMS_Core --> Cache[Cache System]
+```
+
 ---
 
 ## When to Use Which API
@@ -29,40 +48,43 @@ SveltyCMS provides two complementary ways to interact with content:
 | Context                                         | Recommended API    | Typical Latency | Reason                             |
 | ----------------------------------------------- | ------------------ | --------------- | ---------------------------------- |
 | Client-side (`.svelte` files)                   | **HTTP / GraphQL** | 50–150 ms       | Runs in browser, needs auth & CORS |
-| Server-side (`+page.server.ts`, actions, hooks) | **Local SDK**      | **10–40 ms**    | No network, no serialization       |
-| Plugin hooks, background jobs                   | **Local SDK**      | **10–40 ms**    | Full widget & hook execution       |
+| Server-side (`+page.server.ts`, actions, hooks) | **Local SDK**      | **0–5 ms**      | Direct function calls, no overhead |
+| Plugin hooks, background jobs                   | **Local SDK**      | **0–5 ms**      | Native execution, full security    |
 | External tools / third-party                    | **HTTP / GraphQL** | 80–300+ ms      | Requires API keys / JWT            |
 
 > [!TIP]
-> **Rule of thumb**: If your code runs in a file ending with `.server.ts`, **prefer** `event.locals.cms`. Only use `fetch()` when you intentionally want to go through the full HTTP stack (e.g., rate limiting, external service calls, or testing).
+> **Rule of thumb**: If your code runs in a file ending with `.server.ts`, **always use** `LocalCMS`. Only use `fetch()` when calling external services. Local calls bypass HTTP-only middleware like **rate limiting**, **firewalls**, and **JSON serialization**, offering near-zero overhead.
 
 ---
 
 ## Why the Local SDK Exists
 
-The Local SDK (`src/api/local-cms.ts`) is a direct facade over the database adapter. It:
+The Local SDK (`src/routes/api/cms.ts`) provides a high-performance facade over the system. It:
 
-- Bypasses HTTP parsing and JSON serialization
-- Calls the same `modifyRequest` pipeline (widgets, field transformations, permissions)
-- Triggers identical cache invalidation and Pub/Sub events as the HTTP layer
-- Keeps the reactive Content System (SSE, TreeView, dashboard widgets) in sync
-
-This ensures **full consistency** between internal and external operations.
+- **Bypasses HTTP Overhead**: No network stack, no parsing, no serialization.
+- **Bypasses HTTP Security**: Since it's internal, it skips rate-limiting and web firewalls.
+- **Calls Core Logic Directly**: Executes the same `modifyRequest` pipeline as the HTTP layer.
+- **Maintains Consistency**: Triggers identical cache invalidation and real-time events (SSE).
 
 ### Example: Server-side Load Function
 
 ```typescript
-// src/routes/blog/+page.server.ts
+import { LocalCMS } from "@src/routes/api/cms";
+
 export const load = async ({ locals }) => {
-  // Fast internal access
-  const posts = await locals.cms.find("posts", {
+  const cms = new LocalCMS(locals.dbAdapter);
+
+  // High-performance internal access
+  const posts = await cms.collections.find("posts", {
     limit: 10,
     filter: { status: "publish" },
+    tenantId: locals.tenantId
   });
 
   return { posts };
 };
 ```
+
 
 ### Example: Creating an Entry from a Server Action
 

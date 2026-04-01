@@ -1,43 +1,19 @@
 <!-- 
-@file src/components/ui/tree-view.svelte
-@component
-**Superior Svelte 5 TreeView Primitive**
-
-A recursive, high-performance hierarchical tree view with drag-and-drop, 
-keyboard navigation, search/filter, and full accessibility.
-
-### Props
-- `items` (Array<TreeItem>): The hierarchical data structure.
-- `selectedId` (string | null): The currently selected item ID.
-- `search` (string): Filter text.
-- `expandedIds` (Set<string>): Bindable set of expanded item IDs.
-- `allowDragDrop` (boolean): Enable drag-and-drop reordering.
-- `onselect` (function): Callback when an item is clicked.
-- `onreorder` (function): Callback for drag-and-drop reordering.
-- `onhover` (function): Callback for mouse enter events.
-- `onexpand` (function): Callback for expansion events.
-- `class` (string): Additional classes for the container.
-- `compact` (boolean): Use smaller padding and font.
-- `dir` (string): 'ltr' | 'rtl' | 'auto'.
-
-### Features:
-- Recursive rendering with Svelte 5 snippets.
-- Full keyboard navigation (Arrows, Home, End, Enter, Space).
-- Drag and drop reordering with visual feedback.
-- RTL/LTR support.
-- Search/filter with auto-expansion of matches.
+ @src/routes/api/cms.ts src/components/ui/tree-view.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 TreeView Primitive
 -->
 
 <script module lang="ts">
-export interface TreeItem {
-	id: string;
-	label: string;
-	icon?: string;
-	children?: TreeItem[];
-	disabled?: boolean;
-	metadata?: any;
-	[key: string]: any;
-}
+    export interface TreeItem {
+        id: string;
+        label: string;
+        icon?: string;
+        children?: TreeItem[];
+        disabled?: boolean;
+        metadata?: any;
+        [key: string]: any;
+    }
 </script>
 
 <script lang="ts">

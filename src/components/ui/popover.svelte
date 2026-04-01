@@ -1,127 +1,99 @@
 <!-- 
-@file src/components/ui/popover.svelte
-@component
-**Premium Svelte 5 Popover/Tooltip Primitive**
-
-Native implementation using @floating-ui/dom for precise positioning.
-Completely Skeleton-free.
-
-### Props
-- `position` (string): Placement of the popover ('top', 'bottom', 'left', 'right'). Default: 'bottom'.
-- `arrow` (boolean): Whether to show an arrow indicator. Default: true.
-- `trigger` (Snippet): The element that triggers the popover.
-- `children` (Snippet): The content to display inside the popover.
+ @src/routes/api/cms.ts src/components/ui/popover.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Popover Primitive
 -->
 
 <script lang="ts">
-import {
-	computePosition,
-	autoUpdate,
-	offset,
-	flip,
-	shift,
-	arrow as floatArrow,
-	type Placement,
-} from "@floating-ui/dom";
-import { cn } from "@utils/cn";
-import { onMount, onDestroy } from "svelte";
-import type { Snippet } from "svelte";
-import Portal from "./portal.svelte";
+	import { computePosition, autoUpdate, offset, flip, shift, arrow as floatArrow, type Placement } from '@floating-ui/dom';
+	import { cn } from '@utils/cn';
+	import { onMount, onDestroy } from 'svelte';
+	import type { Snippet } from 'svelte';
+	import Portal from './portal.svelte';
 
-interface Props {
-	open?: boolean;
-	position?: Placement;
-	arrow?: boolean;
-	class?: string;
-	trigger?: Snippet;
-	children?: Snippet;
-	[key: string]: any;
-}
+	interface Props {
+		open?: boolean;
+		position?: Placement;
+		arrow?: boolean;
+		class?: string;
+		trigger?: Snippet;
+		children?: Snippet;
+		[key: string]: any;
+	}
 
-let {
-	open = $bindable(false),
-	position = "bottom",
-	arrow = true,
-	class: className,
-	trigger,
-	children,
-	...rest
-}: Props = $props();
+	let { 
+		open = $bindable(false),
+		position = 'bottom', 
+		arrow = true, 
+		class: className,
+		trigger, 
+		children,
+		...rest 
+	}: Props = $props();
 
-let referenceEl = $state<HTMLElement | null>(null);
-let floatingEl = $state<HTMLElement | null>(null);
-let arrowEl = $state<HTMLElement | null>(null);
+	let referenceEl = $state<HTMLElement | null>(null);
+	let floatingEl = $state<HTMLElement | null>(null);
+	let arrowEl = $state<HTMLElement | null>(null);
 
-let x = $state(0);
-let y = $state(0);
-let actualPlacement = $state<string>("bottom");
-let arrowX = $state<number | undefined>(0);
-let arrowY = $state<number | undefined>(0);
+	let x = $state(0);
+	let y = $state(0);
+	let actualPlacement = $state<string>('bottom');
+	let arrowX = $state<number | undefined>(0);
+	let arrowY = $state<number | undefined>(0);
 
-$effect(() => {
-	if (open && referenceEl && floatingEl) {
-		const cleanup = autoUpdate(referenceEl, floatingEl, async () => {
-			const {
-				x: nextX,
-				y: nextY,
-				placement: finalPlacement,
-				middlewareData,
-			} = await computePosition(referenceEl!, floatingEl!, {
-				placement: position,
-				middleware: [
-					offset(12),
-					flip(),
-					shift({ padding: 10 }),
-					arrow && floatArrow({ element: arrowEl! }),
-				].filter(Boolean) as any,
+	$effect(() => {
+		if (open && referenceEl && floatingEl) {
+			const cleanup = autoUpdate(referenceEl, floatingEl, async () => {
+				const { x: nextX, y: nextY, placement: finalPlacement, middlewareData } = await computePosition(referenceEl!, floatingEl!, {
+					placement: position,
+					middleware: [
+						offset(12),
+						flip(),
+						shift({ padding: 10 }),
+						arrow && floatArrow({ element: arrowEl! })
+					].filter(Boolean) as any
+				});
+
+				x = nextX;
+				y = nextY;
+				actualPlacement = finalPlacement;
+				
+				if (arrow) {
+					const { x: ax, y: ay } = middlewareData.arrow || {};
+					arrowX = ax;
+					arrowY = ay;
+				}
 			});
 
-			x = nextX;
-			y = nextY;
-			actualPlacement = finalPlacement;
+			return cleanup;
+		}
+	});
 
-			if (arrow) {
-				const { x: ax, y: ay } = middlewareData.arrow || {};
-				arrowX = ax;
-				arrowY = ay;
-			}
-		});
-
-		return cleanup;
+	// Handle click outside
+	function handleClickOutside(event: MouseEvent) {
+		if (open && referenceEl && floatingEl && 
+			!referenceEl.contains(event.target as Node) && 
+			!floatingEl.contains(event.target as Node)) {
+			open = false;
+		}
 	}
-});
 
-// Handle click outside
-function handleClickOutside(event: MouseEvent) {
-	if (
-		open &&
-		referenceEl &&
-		floatingEl &&
-		!referenceEl.contains(event.target as Node) &&
-		!floatingEl.contains(event.target as Node)
-	) {
-		open = false;
-	}
-}
+	onMount(() => {
+		document.addEventListener('click', handleClickOutside);
+	});
 
-onMount(() => {
-	document.addEventListener("click", handleClickOutside);
-});
+	onDestroy(() => {
+		if (typeof document !== 'undefined') {
+			document.removeEventListener('click', handleClickOutside);
+		}
+	});
 
-onDestroy(() => {
-	if (typeof document !== "undefined") {
-		document.removeEventListener("click", handleClickOutside);
-	}
-});
-
-const staticSide = $derived(
-	{
-		top: "bottom",
-		right: "left",
-		bottom: "top",
-		left: "right",
-	}[actualPlacement.split("-")[0]] as string,
-);
+	const staticSide = $derived({
+		top: 'bottom',
+		right: 'left',
+		bottom: 'top',
+		left: 'right'
+	}[actualPlacement.split('-')[0]] as string);
 </script>
 
 <div 

@@ -41,7 +41,7 @@ vi.mock("node:crypto", () => ({
 }));
 
 // Import dispatcher handler (raw logic for testing)
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 const GET_LIST = dispatcher;
 const POST_CREATE = dispatcher;
 const PATCH_ENTRY = dispatcher;

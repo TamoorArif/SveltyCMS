@@ -283,6 +283,27 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 
 ## Architecture Overview
 
+### High-Performance Local API (CRITICAL)
+
+SveltyCMS provides a zero-latency internal SDK bridge (`LocalCMS`) for server-to-server communication.
+
+- **Always use `LocalCMS` in `.server.ts`**: In all server-side files (hooks, actions, load functions), instantiate `new LocalCMS(adapter)`.
+- **Bypass HTTP Middleware**: Local calls are internal and **must bypass** HTTP-only layers like **Firewalls**, **Rate Limiting**, and **JSON serialization**.
+- **Full Parity**: The Local API uses the exact same `modifyRequest` pipeline as the REST/GraphQL layers, ensuring consistency while performing 10-50x faster.
+
+✅ **Correct (Server-side)**:
+
+```typescript
+const cms = new LocalCMS(adapter);
+const entries = await cms.collections.find("posts", { tenantId });
+```
+
+❌ **Wrong (Server-side)**:
+
+```typescript
+const res = await fetch("/api/collections/posts"); // Unnecessary HTTP/Network overhead
+```
+
 ### Database Adapter Pattern (CRITICAL)
 
 Use `dbAdapter` for agnosticism:

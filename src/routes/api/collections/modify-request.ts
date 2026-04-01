@@ -92,7 +92,10 @@ export async function modifyRequest({
 
           // Update data with results
           if (Array.isArray(batchResults) && batchResults.length === data.length) {
-            data = batchResults as EntryData[];
+            // Update the original array elements to ensure changes are returned
+            for (let i = 0; i < data.length; i++) {
+              data[i] = batchResults[i] as EntryData;
+            }
           } else {
             logger.warn(
               `Batch processing for ${fieldName} returned invalid results length. Expected ${data.length}, got ${batchResults?.length}`,
@@ -110,7 +113,7 @@ export async function modifyRequest({
         }
       } else if (modifyFn && typeof modifyFn === "function") {
         // --- INDIVIDUAL PROCESSING ---
-        data = await Promise.all(
+        const processedItems = await Promise.all(
           data.map(async (entry: EntryData) => {
             try {
               const entryCopy = { ...entry };
@@ -153,6 +156,11 @@ export async function modifyRequest({
             }
           }),
         );
+
+        // Update the original array elements to ensure changes are returned
+        for (let i = 0; i < data.length; i++) {
+          data[i] = processedItems[i];
+        }
 
         const fieldDuration = performance.now() - fieldStart;
         logger.trace(`Field ${fieldName} processed in ${fieldDuration.toFixed(2)}ms`);

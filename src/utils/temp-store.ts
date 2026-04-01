@@ -5,7 +5,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { generateUUID as uuidv4 } from "@utils/native-utils";
+import { generateUUID } from "@utils/native-utils";
 import { logger } from "./logger.server";
 
 const TEMP_DIR = path.join(process.cwd(), "tmp", "job-payloads");
@@ -26,7 +26,7 @@ async function ensureDir() {
  */
 export async function saveTempPayload(data: any): Promise<string> {
   await ensureDir();
-  const id = uuidv4();
+  const id = generateUUID();
   const filePath = path.join(TEMP_DIR, `${id}.json`);
   await fs.writeFile(filePath, JSON.stringify(data));
   return id;

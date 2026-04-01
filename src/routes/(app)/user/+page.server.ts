@@ -113,12 +113,22 @@ export const load: PageServerLoad = async (event) => {
     };
 
     // Return data to the client
+    const mappedRoles = roles.map((role) => ({
+      ...role,
+      _id: role._id.toString(),
+    }));
+
+    // Deduplicate roles to prevent UI glitches
+    const uniqueRolesMap = new Map();
+    for (const r of mappedRoles) {
+      if (!uniqueRolesMap.has(r._id)) {
+        uniqueRolesMap.set(r._id, r);
+      }
+    }
+
     return {
       user: safeUser,
-      roles: roles.map((role) => ({
-        ...role,
-        _id: role._id.toString(),
-      })),
+      roles: Array.from(uniqueRolesMap.values()),
       isFirstUser,
       is2FAEnabledGlobal: Boolean(getUntypedSetting("USE_2FA")),
       manageUsersPermissionConfig,

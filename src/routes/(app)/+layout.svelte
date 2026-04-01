@@ -70,13 +70,14 @@ import { contentManager } from "@src/content";
 // =============================================
 
 interface LayoutData {
-	contentStructure: ContentNode[] | Promise<ContentNode[]>;
-	firstCollection?: Schema | null | Promise<Schema | null>;
-	nonce: string;
-	publicSettings?: Record<string, any>;
-	theme?: string;
+	contentNodes: any[];
+	navigationStructure: NavigationNode[];
+	firstCollection?: Schema | null;
+	settings: Record<string, any>;
 	user: User | null;
 	tenantId?: string | null;
+	darkMode: boolean;
+	nonce: string;
 }
 
 interface Props {
@@ -101,7 +102,7 @@ let loadError = $state<Error | null>(null);
 // =============================================
 
 // seoDescription logic
-const siteName = publicEnv?.SITE_NAME || "SveltyCMS";
+const siteName = data.settings?.siteName || "SveltyCMS";
 const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`;
 
 // =============================================
@@ -133,29 +134,20 @@ $effect(() => {
 		}
 	};
 
-	// Handle streaming promises or direct data
-	Promise.resolve(data.contentStructure)
-		.then((structure) => {
-			if (Array.isArray(structure)) {
-				defer(() => {
-					setContentStructure(structure);
-					// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
-					contentManager.sync(structure);
-					globalLoadingStore.stopLoading(loadingOperations.initialization);
-				});
-			}
-		})
-		.catch((err) => {
-			console.error("Failed to load content structure", err);
-			loadError = err;
+	// Handle the nodes from server data
+	if (Array.isArray(data.contentNodes)) {
+		defer(() => {
+			setContentStructure(data.contentNodes);
+			// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
+			contentManager.sync(data.contentNodes);
+			globalLoadingStore.stopLoading(loadingOperations.initialization);
 		});
+	}
 
 	// Hydrate first collection if available and no collection is currently set
-	Promise.resolve(data.firstCollection).then((first) => {
-		if (first !== undefined && first !== null) {
-			defer(() => setCollection(first));
-		}
-	});
+	if (data.firstCollection) {
+		defer(() => setCollection(data.firstCollection));
+	}
 });
 
 // Effect: Handle system language changes

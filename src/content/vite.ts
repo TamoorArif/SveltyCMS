@@ -32,7 +32,7 @@ export async function generateContentTypes(
   try {
     // Load content-manager from server-side (not client store!)
     const { contentManager } = await server.ssrLoadModule(
-      path.join(process.cwd(), "src/content/content-manager.ts"),
+      path.join(process.cwd(), "src/content/index.ts"),
     );
 
     // Initializecontent-managerand get collections

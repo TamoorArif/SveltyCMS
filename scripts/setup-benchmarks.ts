@@ -4,7 +4,7 @@
  * @description Sets up relational collections and seeds data for GraphQL benchmarking using HTTP API.
  */
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:4173";
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:4173";
 
 async function main() {
   console.log(`🚀 Starting relational setup via API at ${API_BASE_URL}...`);

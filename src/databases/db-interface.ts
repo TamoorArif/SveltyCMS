@@ -505,6 +505,7 @@ export interface IAuthAdapter {
     sessionId: string,
   ): Promise<DatabaseResult<{ expiresAt: ISODateString; user_id: string } | null>>;
   getTokenByValue(token: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
+  getTokenById(tokenId: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
   getTokenData(
     token: string,
     userId?: string,

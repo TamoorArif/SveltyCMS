@@ -126,7 +126,7 @@ describe("Website Token API Endpoints", () => {
         body: JSON.stringify({ name: tokenName }),
       });
 
-      const response = await safeFetch(`${API_BASE_URL}/api/website-tokens`, {
+      const response = await safeFetch(`${API_BASE_URL}/api/website-tokens?raw=true`, {
         headers: { Cookie: authCookie },
       });
 
@@ -162,7 +162,7 @@ describe("Website Token API Endpoints", () => {
       expect(deleteRes.status).toBeLessThanOrEqual(204);
 
       // Verify gone (List shouldn't have it)
-      const listRes = await safeFetch(`${API_BASE_URL}/api/website-tokens`, {
+      const listRes = await safeFetch(`${API_BASE_URL}/api/website-tokens?raw=true`, {
         headers: { Cookie: authCookie },
       });
       const listData = await listRes.json();

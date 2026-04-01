@@ -42,6 +42,12 @@ class ModalState {
     return this.active !== null;
   }
 
+  set isOpen(value: boolean) {
+    if (!value) {
+      this.close();
+    }
+  }
+
   trigger(component: Component, props: Record<string, any> = {}, response?: (r: any) => void) {
     this.active = { component, props, response };
   }

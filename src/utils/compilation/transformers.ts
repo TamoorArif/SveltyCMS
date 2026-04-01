@@ -4,7 +4,7 @@
  */
 
 import * as ts from "typescript";
-import { generateUUID as uuidv4 } from "../native-utils";
+import { generateUUID } from "../native-utils";
 
 // Transformer factory for widget-related changes
 export const widgetTransformer: ts.TransformerFactory<ts.SourceFile> =
@@ -79,7 +79,7 @@ export const widgetTransformer: ts.TransformerFactory<ts.SourceFile> =
           if (!hasUuid) {
             const uuidProperty = ts.factory.createPropertyAssignment(
               "uuid",
-              ts.factory.createStringLiteral(uuidv4()),
+              ts.factory.createStringLiteral(generateUUID()),
             );
             const updatedProperties = [uuidProperty, ...objectLiteral.properties];
             const updatedObjectLiteral = ts.factory.updateObjectLiteralExpression(

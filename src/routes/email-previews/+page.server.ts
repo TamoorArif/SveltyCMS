@@ -68,68 +68,57 @@ export async function load({
   };
 }
 
+// Core SveltyCMS services
+import { LocalCMS } from "@src/routes/api/cms";
+
+// ... (rest of imports)
+
 export const actions = {
   ...createEmail,
   ...sendEmail({
-    customSendEmailFunction: async ({ /* from, */ to, subject /* html */ }) => {
+    customSendEmailFunction: async ({ /* from, */ to, subject /* html */ }, event) => {
       // Extract template name from subject or use default
       const templateName = subject?.includes("Preview:")
         ? subject.replace("Preview:", "").trim()
         : "welcomeUser";
 
-      logger.info("Email preview attempting to send via API:", {
+      logger.info("Email preview sending via Local API:", {
         recipientEmail: to,
         subject,
         templateName,
-      }); // Ensure essential props have fallbacks for robust previewing
+      });
 
       const previewProps = {
         username: "Preview User",
         email: to,
         sitename: "SveltyCMS (Preview)",
-        hostLink: "http://localhost:5173", // Add any other commonly required props with sensible defaults
+        hostLink: "http://localhost:5173",
       };
 
       try {
-        const { getPrivateSettingSync } = await import("@src/services/settings-service");
-        const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
+        const { locals } = event;
+        const adapter = locals.dbAdapter || (await import("@src/databases/db")).dbAdapter;
+        if (!adapter) throw new Error("Database adapter not available");
 
-        const res = await eventFetch("/api/send-mail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-key": internalKey || "",
-          },
-          body: JSON.stringify({
-            recipientEmail: to,
-            subject: subject || `Preview: ${templateName}`,
-            templateName,
-            props: previewProps,
-            languageTag: "en",
-          }),
+        const cms = new LocalCMS(adapter);
+        const result = await cms.system.sendMail({
+          recipientEmail: to,
+          subject: subject || `Preview: ${templateName}`,
+          templateName,
+          props: previewProps,
+          languageTag: "en",
         });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          logger.error(
-            `Error from /api/send-mail endpoint during preview: ${res.status} ${errorText}`,
-          );
-          return {
-            success: false,
-            error: `API Error (${res.status}): ${errorText}`,
-          };
-        }
-        const result = await res.json();
         if (result.success) {
-          logger.info("Email preview sent successfully via API.");
+          logger.info("Email preview sent successfully via Local API.");
         } else {
-          logger.warn("Email preview API call reported not successful:", {
+          logger.warn("Email preview Local API call reported not successful:", {
             message: result.message,
           });
         }
         return result;
       } catch (error) {
-        logger.error("Failed to send email via API endpoint during preview", {
+        logger.error("Failed to send email via Local API during preview", {
           error,
         });
         return {

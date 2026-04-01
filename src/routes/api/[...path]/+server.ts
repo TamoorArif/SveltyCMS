@@ -14,44 +14,94 @@ import { dbAdapter, getDbInitPromise, getAuth } from "@src/databases/db";
 import { LocalCMS } from "../cms";
 import { SESSION_COOKIE_NAME } from "@src/databases/auth/constants";
 import { getPrivateSettingSync } from "@src/services/settings-service";
+import { settingsGroups } from "../../(app)/config/system-settings/settings-groups";
+import crypto from "node:crypto";
 
 /**
  * Main Dispatcher handles all HTTP methods (GET, POST, PATCH, DELETE)
  */
-export const handler = async ({ request, url, params, locals, cookies }: RequestEvent) => {
+const dispatch = async ({ request, url, params, locals, cookies }: RequestEvent) => {
   const { path } = params;
   const { user, tenantId } = locals;
-
-  // Ensure DB is initialized
-  await getDbInitPromise();
 
   // Dispatch logic based on path segments
   const segments = path.split("/");
   const namespace = segments[0];
-  const method = segments[1]; // Note: for /api/collections/posts, method is 'posts'
+  const method = segments[1] || "";
+  const _entryId = segments[2] || "";
 
   // SPECIAL CASE: Health check must work even without a DB to allow orchestrators to wait for boot
   if (namespace === "system" && method === "health") {
     const health = {
       status: dbAdapter ? "healthy" : "initializing",
+      overallStatus: dbAdapter ? "READY" : "SETUP", // Match setup-system.ts expectations
       database: !!dbAdapter,
       uptime: process.uptime(),
       timestamp: Date.now(),
     };
     // Always return 200 during health check to let benchmark runner proceed
-    return json({ success: true, data: health }, { status: 200 });
+    return json(health, { status: 200 });
   }
 
-  const adapter = (locals as any).dbAdapter || dbAdapter;
+  // Ensure DB is initialized for all other routes
+  await getDbInitPromise();
+
+  // Re-import or access the latest dbAdapter from the module to ensure it's not the stale initial null
+  const { dbAdapter: latestAdapter } = await import("@src/databases/db");
+  const adapter = (locals as any).dbAdapter || latestAdapter;
+
   if (!adapter) {
+    logger.error("Database adapter still null after initialization promise resolved");
     throw new AppError("Database adapter not initialized. System may require setup.", 503);
   }
 
   const cms = new LocalCMS(adapter);
 
   try {
+    // --- ROOT-LEVEL ENDPOINTS (Directly under /api/) ---
+    if (!method) {
+      if (namespace === "search" && request.method === "GET") {
+        const query = url.searchParams.get("q") || "";
+        const collectionsParam = url.searchParams.get("collections");
+        const collections = collectionsParam
+          ? collectionsParam.split(",").map((c: string) => c.trim())
+          : undefined;
+        const result = await cms.collections.search(query, {
+          collections,
+          tenantId,
+          user,
+          isAdmin: (locals as any).isAdmin,
+        });
+        if (url.searchParams.get("raw") === "true") {
+          return json(result);
+        }
+        return json({ success: true, data: result });
+      }
+
+      if (namespace === "get-tokens-provided" && request.method === "GET") {
+        const tokensProvided = {
+          google: Boolean(getPrivateSettingSync("GOOGLE_API_KEY", tenantId!)),
+          twitch: Boolean(getPrivateSettingSync("TWITCH_TOKEN", tenantId!)),
+          tiktok: Boolean(getPrivateSettingSync("TIKTOK_TOKEN", tenantId!)),
+        };
+        return json(tokensProvided);
+      }
+    }
+
     // --- WAVE 1: AUTH, USER, 2FA, SAML ---
     if (namespace === "auth" || namespace === "user") {
+      // Root namespace request (e.g. GET /api/user)
+      if (!method) {
+        if (namespace === "user" && request.method === "GET") {
+          const data = await cms.auth.listUsers({ tenantId });
+          if (url.searchParams.get("raw") === "true") {
+            return json(data);
+          }
+          // Flatten pagination for AdminArea.svelte
+          return json({ success: true, ...data });
+        }
+      }
+
       // 2FA Routes
       if (method === "2fa") {
         const action = segments[2];
@@ -62,6 +112,7 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
         if (action === "setup" && request.method === "POST") {
           if (!user) throw new AppError("Authentication required", 401);
           const result = await twoFactorService.initiate2FASetup(user._id, user.email, tenantId);
+          // Tests expect result.success to be true at root of response
           return json(result);
         }
 
@@ -128,16 +179,38 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
           return json({ success: true, url });
         }
         if (action === "acs" && request.method === "POST") {
-          const { handleSAMLResponse } = await import("@src/databases/auth/saml-auth-handler");
+          const { handleSAMLResponse } = await import("@src/databases/auth/saml-auth");
           return handleSAMLResponse({ request, url, params, locals, cookies } as any);
         }
       }
 
       // User routes (batch, update, avatar)
       if (namespace === "user") {
+        if (!method && request.method === "GET") {
+          const search = url.searchParams.get("search") || undefined;
+          const page = Number(url.searchParams.get("page")) || 1;
+          const limit = Number(url.searchParams.get("limit")) || 10;
+          const sort = url.searchParams.get("sort") || undefined;
+          const order = (url.searchParams.get("order") as "asc" | "desc") || "desc";
+
+          const result = await cms.auth.listUsers({ tenantId, search, page, limit, sort, order });
+
+          if (url.searchParams.get("raw") === "true") {
+            return json(result.data);
+          }
+          return json({ success: true, ...result });
+        }
+        if (method === "create-user" && request.method === "POST") {
+          const body = await request.json();
+          const newUser = await adapter.auth.createUser({
+            ...body,
+            tenantId,
+          });
+          return json({ ...newUser }, { status: 201 });
+        }
         if (method === "batch" && request.method === "POST") {
           const { userIds, action: batchAction } = await request.json();
-          const result = await cms.auth.batchAction(userIds, batchAction, { user, tenantId });
+          const result = await cms.auth.batchAction(userIds, batchAction, tenantId);
           return json(result);
         }
         if (
@@ -145,24 +218,24 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
           (request.method === "PUT" || request.method === "PATCH")
         ) {
           const { user_id, newUserData } = await request.json();
-          const result = await cms.auth.updateUserAttributes(user_id, newUserData, {
-            user,
-            tenantId,
-          });
+          const result = await cms.auth.updateUserAttributes(user_id, newUserData, tenantId);
           return json(result);
         }
         if (method === "save-avatar" && request.method === "POST") {
           const formData = await request.formData();
-          const result = await cms.auth.saveAvatar(formData, { user, tenantId });
+          const avatarFile = formData.get("avatar") as File;
+          const { saveAvatarImage } = await import("@utils/media/media-storage.server");
+          const avatarUrl = await saveAvatarImage(avatarFile, user?._id || "guest");
+          const result = await cms.auth.saveAvatar(user?._id as string, avatarUrl, tenantId);
           return json(result);
         }
         if (method === "delete-avatar" && request.method === "DELETE") {
           const { userId } = await request.json().catch(() => ({}));
-          const result = await cms.auth.deleteAvatar(userId || user?._id, { user, tenantId });
+          const result = await cms.auth.deleteAvatar(userId || user?._id, tenantId);
           return json(result);
         }
         if (method && !segments[2] && request.method === "GET") {
-          const result = await cms.auth.getUserById(method, { tenantId });
+          const result = await cms.auth.getUserById(method, tenantId);
           return json({ success: true, data: result });
         }
       }
@@ -204,27 +277,16 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
 
       if (namespace === "user" && !method && request.method === "GET") {
         const data = await cms.auth.listUsers({ tenantId });
+        if (url.searchParams.get("raw") === "true") {
+          return json(data);
+        }
         return json({ success: true, data });
-      }
-
-      if (namespace === "user" && method === "save-avatar" && request.method === "POST") {
-        const { userId, avatar } = await request.json();
-        const result = await cms.auth.saveUserAvatar(userId, avatar, tenantId);
-        return json(result);
-      }
-
-      if (namespace === "user" && method === "delete-avatar" && request.method === "POST") {
-        const { userId } = await request.json();
-        const result = await cms.auth.deleteUserAvatar(userId, tenantId);
-        return json(result);
       }
     }
 
     if (namespace === "collections") {
-      const collectionId = method;
-      const entryId = segments[2];
-
-      if (request.method === "GET" && collectionId === "search") {
+      // /api/collections/search
+      if (method === "search" && request.method === "GET") {
         const query = url.searchParams.get("q") || "";
         const collectionsParam = url.searchParams.get("collections");
         const collections = collectionsParam
@@ -260,17 +322,27 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
         return json({ success: true, data: result });
       }
 
+      const collectionId = method;
+      const entryId = segments[2];
+
+      // /api/collections/[collectionId]/revisions
       if (request.method === "GET" && collectionId && entryId === "revisions") {
-        const result = await cms.collections.getRevisions(collectionId, segments[1], tenantId);
+        const result = await cms.collections.getRevisions(collectionId, entryId, tenantId);
         return json({ success: true, data: result });
       }
 
       if (request.method === "GET") {
-        if (!method) {
+        if (!method || method === "list") {
           const includeFields = url.searchParams.get("includeFields") === "true";
           const includeStats = url.searchParams.get("includeStats") === "true";
           const collections = await cms.collections.list({ tenantId, includeFields, includeStats });
-          return json({ success: true, data: { collections, total: collections.length } });
+
+          // If explicitly requested via internal list or search, return raw array.
+          // Otherwise wrap for standard API consistency expected by unit tests.
+          if (url.searchParams.get("raw") === "true") {
+            return json(collections);
+          }
+          return json({ success: true, data: collections });
         }
 
         if (entryId) {
@@ -318,15 +390,32 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
 
       if (request.method === "GET") {
         const fileId = method;
-        if (fileId && fileId !== "list") {
-          const data = await cms.media.findById(fileId, { tenantId });
-          return json({ success: true, data });
+        if (!fileId || fileId === "list") {
+          const result = await cms.media.find({ tenantId, limit, folderId, recursive });
+          return json(result);
         }
-        const result = await cms.media.find({ tenantId, limit, folderId, recursive });
-        return json(result);
+        const data = await cms.media.findById(fileId, { tenantId });
+        return json({ success: true, data });
       }
 
       if (request.method === "POST") {
+        // /api/media/upload or /api/media (legacy)
+        if (method === "upload" || !method) {
+          const formData = await request.formData();
+          const files = formData.getAll("files");
+          const results = [];
+          for (const file of files) {
+            if (file instanceof File) {
+              const res = await cms.media.upload(file, {
+                userId: (user?._id as string) || "",
+                tenantId,
+              });
+              results.push({ fileName: file.name, success: true, data: res });
+            }
+          }
+          return json({ success: true, data: results });
+        }
+
         if (method === "process") {
           const formData = await request.formData();
           const processType = formData.get("processType");
@@ -379,22 +468,30 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
     }
 
     if (namespace === "widgets") {
-      if (request.method === "GET" && method === "list") {
-        const widgetList = await cms.widgets.list(tenantId as string);
-        return json({
-          success: true,
-          data: {
-            widgets: widgetList,
-            summary: {
-              total: widgetList.length,
-              active: widgetList.filter((w: any) => w.isActive).length,
-              core: widgetList.filter((w: any) => w.isCore).length,
-              custom: widgetList.filter((w: any) => !w.isCore).length,
+      if (request.method === "GET") {
+        if (method === "active") {
+          const widgetList = await cms.widgets.list(tenantId as string);
+          const activeWidgets = widgetList.filter((w: any) => w.isActive);
+          return json({ success: true, data: activeWidgets });
+        }
+
+        if (method === "list") {
+          const widgetList = await cms.widgets.list(tenantId as string);
+          return json({
+            success: true,
+            data: {
+              widgets: widgetList,
+              summary: {
+                total: widgetList.length,
+                active: widgetList.filter((w: any) => w.isActive).length,
+                core: widgetList.filter((w: any) => w.isCore).length,
+                custom: widgetList.filter((w: any) => !w.isCore).length,
+              },
+              tenantId: tenantId || "default-tenant",
             },
-            tenantId: tenantId || "default-tenant",
-          },
-          message: "Widget list retrieved successfully",
-        });
+            message: "Widget list retrieved successfully",
+          });
+        }
       }
 
       if (request.method === "POST" && method === "activate" && segments[2]) {
@@ -405,6 +502,21 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
       if (request.method === "POST" && method === "deactivate" && segments[2]) {
         const result = await cms.widgets.deactivate(segments[2]);
         return json(result);
+      }
+
+      // /api/widgets/install
+      if (request.method === "POST" && method === "install") {
+        const { widgetId } = await request.json();
+        // Forward to activate for now as a mock or implement real install
+        const result = await cms.widgets.activate(widgetId);
+        return json({ success: result.success, data: { widgetId } });
+      }
+
+      // /api/widgets/uninstall
+      if (request.method === "POST" && method === "uninstall") {
+        const { widgetName } = await request.json();
+        const result = await cms.widgets.deactivate(widgetName);
+        return json({ success: result.success, data: { widgetName } });
       }
     }
 
@@ -424,15 +536,22 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
     if (namespace === "token") {
       if (request.method === "GET") {
         const tokenId = method; // /api/token/[tokenId]
-        if (tokenId && tokenId !== "list") {
-          const result = await cms.auth.tokens.findById(tokenId, tenantId);
-          return json(result);
+        if (!tokenId || tokenId === "list") {
+          const search = url.searchParams.get("search") || undefined;
+          const page = Number(url.searchParams.get("page")) || 1;
+          const limit = Number(url.searchParams.get("limit")) || 10;
+          const sort = url.searchParams.get("sort") || undefined;
+          const order = (url.searchParams.get("order") as "asc" | "desc") || "desc";
+
+          const result = await cms.auth.tokens.list({ tenantId, search, page, limit, sort, order });
+
+          if (url.searchParams.get("raw") === "true") {
+            return json(result.data);
+          }
+          return json({ success: true, ...result });
         }
-        const search = url.searchParams.get("search") || undefined;
-        const page = Number(url.searchParams.get("page")) || 1;
-        const limit = Number(url.searchParams.get("limit")) || 10;
-        const result = await cms.auth.tokens.list({ tenantId, search, page, limit });
-        return json({ success: true, data: result });
+        const result = await cms.auth.tokens.findById(tokenId, tenantId);
+        return json(result);
       }
 
       if (request.method === "PATCH" && method) {
@@ -443,8 +562,15 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
 
       if (request.method === "POST" && method === "create-token") {
         const data = await request.json();
+        // Map frontend expiresIn to backend expires
+        if (data.expiresIn && !data.expires) {
+          data.expires = data.expiresIn;
+        }
         const result = await cms.auth.tokens.create({ ...data, tenantId });
-        return json(result);
+        if (result.success) {
+          return json({ success: true, token: result.data });
+        }
+        return json(result, { status: 400 });
       }
 
       if (request.method === "POST" && method === "batch") {
@@ -469,7 +595,69 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
     if (namespace === "settings") {
       if (request.method === "GET" && method === "all") {
         const data = await cms.system.settings.getAll(tenantId as string);
-        return json({ success: true, data });
+        const groups: Record<string, Record<string, any>> = {};
+
+        // Merge public and private settings for flat lookup
+        const flatSettings = { ...(data.public as any), ...(data.private as any) };
+
+        for (const group of settingsGroups) {
+          groups[group.id] = {};
+          for (const field of group.fields) {
+            groups[group.id][field.key] = flatSettings[field.key];
+          }
+        }
+
+        return json({ success: true, groups });
+      }
+
+      if (request.method === "GET" && method === "public") {
+        const data = await cms.system.settings.getAll(tenantId as string);
+        const publicSettings = data.public || {};
+
+        if (_entryId === "stream") {
+          // SSE for public settings
+          const stream = new ReadableStream({
+            start(controller) {
+              let isClosed = false;
+              controller.enqueue(`data: ${JSON.stringify(publicSettings)}\n\n`);
+              // We could add an event listener here if settings-service supported it
+              // For now, just send initial and keep alive
+              const interval = setInterval(() => {
+                if (!isClosed) {
+                  try {
+                    controller.enqueue(`: keep-alive\n\n`);
+                  } catch (e) {
+                    isClosed = true;
+                    clearInterval(interval);
+                  }
+                }
+              }, 30000);
+
+              request.signal.addEventListener("abort", () => {
+                if (!isClosed) {
+                  isClosed = true;
+                  clearInterval(interval);
+                  try {
+                    controller.close();
+                  } catch (e) {}
+                }
+              });
+            },
+            cancel() {
+              // This is called when the client closes the connection
+            },
+          });
+
+          return new Response(stream, {
+            headers: {
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+            },
+          });
+        }
+
+        return json({ success: true, data: publicSettings });
       }
 
       if (request.method === "POST" && method === "import") {
@@ -539,16 +727,88 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
       }
     }
 
+    if (namespace === "website-tokens") {
+      const { withTenant } = await import("@src/databases/db-adapter-wrapper");
+      if (request.method === "GET") {
+        const page = Number(url.searchParams.get("page") ?? 1);
+        const limit = Number(url.searchParams.get("limit") ?? 10);
+        const sort = url.searchParams.get("sort") ?? "createdAt";
+        const order = url.searchParams.get("order") ?? "desc";
+
+        const result = await withTenant(
+          tenantId,
+          async () => {
+            return await adapter.system.websiteTokens.getAll({
+              limit,
+              skip: (page - 1) * limit,
+              sort,
+              order,
+            });
+          },
+          { collection: "websiteTokens" },
+        );
+        if (url.searchParams.get("raw") === "true") {
+          return json(result.data.data);
+        }
+        return json({ data: result.data.data, pagination: { totalItems: result.data.total } });
+      }
+
+      if (request.method === "POST") {
+        const body = await request.json();
+        const { name, permissions, expiresAt } = body;
+        const result = await withTenant(
+          tenantId,
+          async () => {
+            const token = `sv_${crypto.randomBytes(24).toString("hex")}`;
+            return await adapter.system.websiteTokens.create({
+              name,
+              token,
+              updatedAt: new Date().toISOString(),
+              createdBy: user!._id,
+              permissions: permissions || [],
+              expiresAt: expiresAt || undefined,
+            });
+          },
+          { collection: "websiteTokens" },
+        );
+        return json(result.data, { status: 201 });
+      }
+
+      if (request.method === "DELETE" && method) {
+        await withTenant(
+          tenantId,
+          async () => {
+            return await adapter.system.websiteTokens.delete(method as any);
+          },
+          { collection: "websiteTokens" },
+        );
+        return new Response(null, { status: 204 });
+      }
+    }
+
     if (namespace === "events") {
-      const { eventBus } = await import("@src/services/automation/event-bus");
+      const { eventBus } = await import("@utils/event-bus");
       const stream = new ReadableStream({
         start(controller) {
+          let isClosed = false;
           const unsubscribe = eventBus.on("*", (event: any) => {
-            controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
+            if (!isClosed) {
+              try {
+                controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
+              } catch (e) {
+                isClosed = true;
+                unsubscribe();
+              }
+            }
           });
           request.signal.addEventListener("abort", () => {
-            unsubscribe();
-            controller.close();
+            if (!isClosed) {
+              isClosed = true;
+              unsubscribe();
+              try {
+                controller.close();
+              } catch (e) {}
+            }
           });
         },
       });
@@ -561,6 +821,72 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
       });
     }
 
+    if (namespace === "content") {
+      if (method === "events") {
+        const { eventBus } = await import("@utils/event-bus");
+        const stream = new ReadableStream({
+          start(controller) {
+            let isClosed = false;
+            // Send initial connection event
+            try {
+              controller.enqueue(
+                `event: connected\ndata: ${JSON.stringify({ status: "active", timestamp: Date.now() })}\n\n`,
+              );
+            } catch (e) {
+              isClosed = true;
+            }
+
+            const unsubscribe = eventBus.on("*", (event: any) => {
+              if (!isClosed) {
+                try {
+                  controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
+                } catch (e) {
+                  isClosed = true;
+                  unsubscribe();
+                }
+              }
+            });
+
+            const interval = setInterval(() => {
+              if (!isClosed) {
+                try {
+                  controller.enqueue(`: keep-alive\n\n`);
+                } catch (e) {
+                  isClosed = true;
+                  clearInterval(interval);
+                  unsubscribe();
+                }
+              }
+            }, 30000);
+            request.signal.addEventListener("abort", () => {
+              if (!isClosed) {
+                isClosed = true;
+                unsubscribe();
+                clearInterval(interval);
+                try {
+                  controller.close();
+                } catch (e) {
+                  // Ignore if already closed
+                }
+              }
+            });
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+        });
+      }
+
+      if (method === "version") {
+        const { contentManager } = await import("@src/content");
+        return json({ version: contentManager.getContentVersion() });
+      }
+    }
+
     // --- FALLBACK ---
     throw new AppError(`Endpoint /api/${path} not implemented in dispatcher`, 404);
   } catch (err: any) {
@@ -570,4 +896,12 @@ export const handler = async ({ request, url, params, locals, cookies }: Request
   }
 };
 
-export const fallback = apiHandler(handler);
+/** @type {import('./$types').RequestHandler} */
+export const _handler = dispatch;
+
+export const GET = apiHandler(dispatch);
+export const POST = apiHandler(dispatch);
+export const PUT = apiHandler(dispatch);
+export const PATCH = apiHandler(dispatch);
+export const DELETE = apiHandler(dispatch);
+export const OPTIONS = apiHandler(dispatch);

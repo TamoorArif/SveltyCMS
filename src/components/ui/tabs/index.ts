@@ -1,3 +1,8 @@
+/**
+ * @file src/components/ui/tabs/index.ts
+ * @description This file exports the Tabs component and its subcomponents.
+ */
+
 import Root from "./tabs.svelte";
 import List from "./list.svelte";
 import Trigger from "./trigger.svelte";

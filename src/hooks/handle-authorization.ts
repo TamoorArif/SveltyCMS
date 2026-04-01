@@ -196,12 +196,21 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
   }
   // --- Load cached roles (database-only) ---
   const rolesData = await getCachedRoles(locals.tenantId);
-  locals.roles = rolesData;
+
+  // Deduplicate roles by ID to prevent UI glitches
+  const uniqueRolesMap = new Map();
+  for (const r of rolesData) {
+    if (!uniqueRolesMap.has(r._id.toString())) {
+      uniqueRolesMap.set(r._id.toString(), r);
+    }
+  }
+  const uniqueRoles = Array.from(uniqueRolesMap.values());
+  locals.roles = uniqueRoles;
 
   // --- Redirect to setup if database not initialized (no roles found) ---
   const isLocalizedSetup = /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/setup/.test(pathname);
   if (
-    rolesData.length === 0 &&
+    uniqueRoles.length === 0 &&
     !pathname.startsWith("/setup") &&
     !isLocalizedSetup &&
     !pathname.startsWith("/api/system") &&
@@ -231,7 +240,8 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
   // --- Handle authenticated users ---
   try {
     if (user) {
-      const userRole = rolesData.find((r) => r._id === user.role);
+      const currentRoles = locals.roles;
+      const userRole = currentRoles.find((r) => r._id.toString() === user.role?.toString());
       const isAdmin = !!userRole?.isAdmin || (user as any).isAdmin;
 
       // Ensure isAdmin is available on both locals and user object
@@ -240,7 +250,7 @@ export const handleAuthorization: Handle = async ({ event, resolve }) => {
       locals.isAdmin = isAdmin;
       locals.hasAdminPermission = isAdmin;
       locals.hasManageUsersPermission =
-        isAdmin || hasPermissionByAction(user, "manage", "user", undefined, rolesData);
+        isAdmin || hasPermissionByAction(user, "manage", "user", undefined, currentRoles);
 
       // Redirect authenticated users away from public routes
       if (isPublic && !isOAuthRoute(pathname) && !isApi) {

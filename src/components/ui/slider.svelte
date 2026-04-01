@@ -1,21 +1,11 @@
 <!-- 
-@file src/components/ui/slider.svelte
-@component
-**Native Svelte 5 Range Slider Primitive**
-
-A premium range slider with Tailwind styling and bindable value.
-
-### Props
-- `value` (number): Bindable current value.
-- `min` (number): Minimum value (default: 0).
-- `max` (number): Maximum value (default: 100).
-- `step` (number): Step increment (default: 1).
-- `disabled` (boolean): Disable interaction.
-- `class` (string): Additional classes.
+ @src/routes/api/cms.ts src/components/ui/slider.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Slider Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
+import { cn } from '@utils/cn';
 
 interface Props {
 	value?: number;
@@ -33,8 +23,8 @@ let {
 	max = 100,
 	step = 1,
 	disabled = false,
-	class: className = "",
-	onchange,
+	class: className = '',
+	onchange
 }: Props = $props();
 
 const percentage = $derived(((value - min) / (max - min)) * 100);

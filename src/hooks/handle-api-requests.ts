@@ -44,9 +44,13 @@ import crypto from "node:crypto";
 /** Extracts the API endpoint from the URL pathname. */
 function getApiEndpoint(pathname: string): string | null {
   const segments = pathname.split("/").filter(Boolean);
-  // Expected structure: ['api', 'http'|'local', 'namespace', 'method']
   if (segments[0] !== "api") return null;
-  return segments[2] || null; // Return the namespace (e.g. 'user', 'collections')
+  // Unified path: /api/namespace/method -> namespace is segments[1]
+  // Local SDK path: /api/local/namespace/method -> namespace is segments[2]
+  if (segments[1] === "local") {
+    return segments[2] || null;
+  }
+  return segments[1] || null;
 }
 
 /** Generates a cache key for API responses. */

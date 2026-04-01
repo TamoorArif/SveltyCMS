@@ -7,7 +7,7 @@
 
 import { dbAdapter, getDbInitPromise } from "@src/databases/db";
 import { LocalCMS } from "@src/routes/api/cms";
-import { fallback as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 import { contentManager } from "@src/content";
 
 async function runBenchmark() {

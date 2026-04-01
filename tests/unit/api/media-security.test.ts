@@ -90,12 +90,14 @@ vi.mock("@src/databases/db", () => {
 // Mock MediaService to return the mock object
 vi.mock("@src/utils/media/media-service.server", () => {
   return {
-    MediaService: vi.fn().mockImplementation(() => mockMediaService),
+    MediaService: vi.fn().mockImplementation(function (this: any) {
+      return mockMediaService;
+    }),
   };
 });
 
 // Import dispatcher instead of handlers
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 import { dbAdapter } from "@src/databases/db";
 

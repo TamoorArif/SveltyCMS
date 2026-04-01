@@ -121,16 +121,17 @@ export async function POST(event: RequestEvent) {
         // Wipe uploaded media files from tests
         try {
           const { getPublicSetting } = await import("@src/services/settings-service");
-          const fs = await import("node:fs/promises");
+          const fs = await import("node:fs");
+          const fsp = await import("node:fs/promises");
           const path = await import("node:path");
           const mediaFolderPath = (await getPublicSetting("MEDIA_FOLDER")) || "mediaFolder";
           const fullPath = path.resolve(process.cwd(), mediaFolderPath);
 
           // Recursively empty the folder rather than deleting it completely to avoid EBUSY on Windows
-          if (require("node:fs").existsSync(fullPath)) {
-            const items = await fs.readdir(fullPath);
+          if (fs.existsSync(fullPath)) {
+            const items = await fsp.readdir(fullPath);
             for (const item of items) {
-              await fs.rm(path.join(fullPath, item), {
+              await fsp.rm(path.join(fullPath, item), {
                 recursive: true,
                 force: true,
               });

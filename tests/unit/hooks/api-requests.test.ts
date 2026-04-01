@@ -3,7 +3,7 @@
  * @description Tests for handleApiRequests middleware.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { handleApiRequests } from "@src/hooks/handle-api-requests";
 import type { RequestEvent } from "@sveltejs/kit";
 

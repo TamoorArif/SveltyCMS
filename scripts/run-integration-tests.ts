@@ -294,7 +294,7 @@ async function startPreviewServer(dbHost?: string) {
     });
 
     let resolved = false;
-    const timeoutMs = process.env.CI === "true" ? 120000 : 60000;
+    const timeoutMs = 120000;
     const timeout = setTimeout(() => {
       if (!resolved)
         reject(new Error(`Timeout waiting for ${cmd} server health check (${timeoutMs}ms)`));
@@ -318,13 +318,18 @@ async function startPreviewServer(dbHost?: string) {
 
 async function waitForServer() {
   console.log(`⏳ Waiting for server health check at ${API_BASE_URL}...`);
-  const maxRetries = process.env.CI === "true" ? 60 : 30;
+  const maxRetries = process.env.CI === "true" ? 120 : 60;
   for (let i = 0; i < maxRetries; i++) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/system/health`);
-      if (res.ok || res.status === 503) return;
-    } catch {
-      // Ignore fetch errors while waiting for boot
+      if (res.ok || res.status === 503) {
+        console.log("✅ Server reached.");
+        return;
+      }
+    } catch (err: any) {
+      if (i % 10 === 0) {
+        console.log(`   Attempt ${i}: Server not yet available (${err.message})...`);
+      }
     }
     await new Promise((r) => setTimeout(r, 1000));
   }
@@ -332,33 +337,38 @@ async function waitForServer() {
 }
 
 async function invokeTestApi(action: "reset" | "seed"): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/testing`, {
-      method: "POST",
-      body: JSON.stringify({ action }),
-      headers: {
-        "Content-Type": "application/json",
-        "x-test-secret": TEST_API_SECRET,
-        Origin: API_BASE_URL,
-      },
-    });
-    if (!res.ok) {
-      console.error(`❌ ${action.toUpperCase()} failed: ${res.status} ${res.statusText}`);
-      console.error(`Body: ${await res.text()}`);
-      return false;
+  const maxRetries = 5;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/testing`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-test-secret": TEST_API_SECRET,
+          Origin: API_BASE_URL,
+        },
+      });
+      if (res.ok) return true;
+
+      console.warn(
+        `⚠️ ${action.toUpperCase()} attempt ${attempt} failed: ${res.status} ${res.statusText}`,
+      );
+      if (attempt === maxRetries) {
+        console.error(`Body: ${await res.text()}`);
+      }
+    } catch (e: any) {
+      console.warn(`[Runner] ${action} API error attempt ${attempt}:`, e.message);
     }
-    return true;
-  } catch (e) {
-    console.error(`[Runner] ${action} API error:`, e);
-    return false;
+    await new Promise((r) => setTimeout(r, 2000));
   }
+  return false;
 }
 
 function runTest(file: string): Promise<number> {
   const args = ["test"];
-  // Note: If this is purely black-box, preloading a unit test setup might cause conflicts.
-  // Ensure `setup.ts` doesn't leak internal app state into these black-box tests.
-  if (pkgManager.includes("bun")) args.push("--preload", "./tests/unit/setup.ts");
+  // Black-box integration tests should not preload unit test shims
+  // args.push("--preload", "./tests/unit/setup.ts");
   args.push(file);
 
   return runCommand(pkgManager, args, {

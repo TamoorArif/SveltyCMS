@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
 
 // Import raw dispatcher handler
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 describe("Media Security Critical Unit Tests", () => {
   const createMockEvent = (

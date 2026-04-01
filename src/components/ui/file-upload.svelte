@@ -1,26 +1,11 @@
 <!-- 
-@file src/components/ui/file-upload.svelte
-@component
-A premium Svelte 5 File Upload primitive with drag-and-drop and multiple file support.
-
-### Props
-- `files` (File[]): Bound array of selected files.
-- `multiple` (boolean): Allow multiple file selection.
-- `accept` (string): Allowed file types (e.g., "image/*").
-- `maxSize` (number): Maximum file size in bytes.
-- `label` (string): Primary label for the drop zone.
-- `helper` (string): Helper text shown below label.
-- `disabled` (boolean): Disable interaction.
-- `onchange` (function): Callback when files change.
-
-### Features
-- Native drag-and-drop with visual feedback.
-- Accessible input wrapping.
-- Snippet-based customization for icon/label.
+ @src/routes/api/cms.ts src/components/ui/file-upload.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 FileUpload Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
+import { cn } from '@utils/cn';
 
 interface Props {
 	files?: File[];
@@ -33,22 +18,22 @@ interface Props {
 	class?: string;
 	onchange?: (files: File[]) => void;
 	// Snippets
-	icon?: import("svelte").Snippet;
-	children?: import("svelte").Snippet;
+	icon?: import('svelte').Snippet;
+	children?: import('svelte').Snippet;
 }
 
 let {
 	files = $bindable([]),
 	multiple = false,
-	accept = "*",
+	accept = '*',
 	maxSize,
-	label = "Click or drag files to upload",
-	helper = "Supports most file types",
+	label = 'Click or drag files to upload',
+	helper = 'Supports most file types',
 	disabled = false,
-	class: className = "",
+	class: className = '',
 	onchange,
 	icon,
-	children,
+	children
 }: Props = $props();
 
 let isDragging = $state(false);
@@ -56,8 +41,8 @@ let inputElement = $state<HTMLInputElement>();
 
 function handleFiles(newFiles: FileList | null) {
 	if (!newFiles || disabled) return;
-
-	const filteredFiles = Array.from(newFiles).filter((file) => {
+	
+	const filteredFiles = Array.from(newFiles).filter(file => {
 		if (maxSize && file.size > maxSize) return false;
 		return true;
 	});

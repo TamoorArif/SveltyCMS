@@ -3,7 +3,7 @@
  * @description Unit tests for handleAuthorization middleware.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { handleAuthorization } from "@src/hooks/handle-authorization";
 import type { RequestEvent } from "@sveltejs/kit";
 

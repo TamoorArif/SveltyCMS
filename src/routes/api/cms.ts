@@ -89,21 +89,138 @@ class AuthNamespace {
     return this._dbAdapter.auth;
   }
 
-  async listUsers(options: { tenantId?: string | null } = {}) {
-    const { tenantId } = options;
+  async listUsers(
+    options: {
+      tenantId?: string | null;
+      page?: number;
+      limit?: number;
+      search?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+    } = {},
+  ) {
+    const { tenantId, page = 1, limit = 10, search, sort, order } = options;
     const auth = await this.getAuth();
     if (!auth) throw new AppError("Authentication system not initialized", 500);
-    return auth.getAllUsers({ filter: { tenantId: tenantId ?? undefined } });
+
+    const filter: Record<string, any> = { tenantId: tenantId ?? undefined };
+    if (search) {
+      filter.$or = [
+        { email: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const sortOption: any = {};
+    if (sort) {
+      sortOption[sort] = order === "asc" ? 1 : -1;
+    } else {
+      sortOption.createdAt = -1;
+    }
+
+    const [usersResult, totalResult] = await Promise.all([
+      auth.getAllUsers({
+        filter,
+        limit,
+        offset: (page - 1) * limit,
+        sort: sortOption,
+      }),
+      auth.getUserCount(filter),
+    ]);
+
+    if (!usersResult.success) throw new AppError(usersResult.message, 500);
+    if (!totalResult.success) throw new AppError(totalResult.message, 500);
+
+    return {
+      data: usersResult.data,
+      pagination: {
+        totalItems: totalResult.data,
+        page,
+        limit,
+        totalPages: Math.ceil(totalResult.data / limit),
+      },
+    };
   }
 
-  async saveUserAvatar(userId: string, avatar: string, tenantId?: string | null) {
+  async saveAvatar(userId: string, avatar: string, tenantId?: string | null) {
     const auth = await this.getAuth();
+    if (!auth) throw new AppError("Authentication system not initialized", 500);
     return auth.updateUserAttributes(userId, { avatar }, tenantId ?? undefined);
   }
 
-  async deleteUserAvatar(userId: string, tenantId?: string | null) {
+  async deleteAvatar(userId: string, tenantId?: string | null) {
     const auth = await this.getAuth();
     return auth.updateUserAttributes(userId, { avatar: undefined }, tenantId ?? undefined);
+  }
+
+  /**
+   * Retrieves a list of tokens.
+   */
+  async list(
+    options: {
+      tenantId?: string | null;
+      page?: number;
+      limit?: number;
+      search?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+    } = {},
+  ) {
+    const { tenantId, page = 1, limit = 10, search, sort, order } = options;
+    const auth = await this._dbAdapter.auth;
+    if (!auth) throw new AppError("Authentication system not initialized", 500);
+
+    const filter: Record<string, any> = { tenantId: tenantId ?? undefined };
+    if (search) {
+      filter.$or = [
+        { email: { $regex: search, $options: "i" } },
+        { type: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const sortOption: any = {};
+    if (sort) {
+      sortOption[sort] = order === "asc" ? 1 : -1;
+    } else {
+      sortOption.createdAt = -1;
+    }
+
+    const result = await auth.getAllTokens(filter);
+    if (!result.success) throw new AppError(result.message, 500);
+
+    // Apply manual pagination and sorting for tokens (as getAllTokens doesn't support them natively yet)
+    let filteredTokens = result.data;
+    if (sort) {
+      filteredTokens.sort((a: any, b: any) => {
+        const valA = a[sort];
+        const valB = b[sort];
+        if (order === "asc") return valA > valB ? 1 : -1;
+        return valA < valB ? 1 : -1;
+      });
+    }
+
+    const totalItems = filteredTokens.length;
+    const paginatedTokens = filteredTokens.slice((page - 1) * limit, page * limit);
+
+    return {
+      data: paginatedTokens,
+      pagination: {
+        totalItems,
+        page,
+        limit,
+        totalPages: Math.ceil(totalItems / limit),
+      },
+    };
+  }
+
+  async getUserById(userId: string, tenantId?: string | null) {
+    const auth = await this.getAuth();
+    if (!auth) throw new AppError("Authentication system not initialized", 500);
+    const result = await auth.getUserById(userId, tenantId ?? undefined);
+    if (!result.success || !result.data) {
+      throw new AppError("User not found", 404);
+    }
+    return result.data;
   }
 
   async updateUserAttributes(userId: string, data: any, tenantId?: string | null) {
@@ -122,12 +239,12 @@ class AuthNamespace {
     if (!auth) throw new AppError("Authentication system not initialized", 500);
 
     // Multi-tenant check
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required for login", 400);
     }
 
     const userLookup: { email: string; tenantId?: string | null } = { email };
-    if (getPrivateSettingSync("MULTI_TENANT")) userLookup.tenantId = tenantId;
+    if (getPrivateSettingSync("MULTI_TENANT") === true) userLookup.tenantId = tenantId;
 
     const result = await auth.getUserByEmail(userLookup);
     if (!result.success || !result.data) {
@@ -247,6 +364,26 @@ class AuthNamespace {
     if (!hasAdmin) return { isValid: false, error: "At least one admin role required" };
     return { isValid: true };
   }
+
+  async batchAction(
+    userIds: string[],
+    action: "delete" | "block" | "unblock",
+    tenantId?: string | null,
+  ) {
+    const auth = await this.getAuth();
+    if (!auth) throw new AppError("Authentication system not initialized", 500);
+
+    switch (action) {
+      case "delete":
+        return auth.deleteUsers(userIds, tenantId ?? undefined);
+      case "block":
+        return auth.blockUsers(userIds, tenantId ?? undefined);
+      case "unblock":
+        return auth.unblockUsers(userIds, tenantId ?? undefined);
+      default:
+        throw new AppError("Invalid action", 400);
+    }
+  }
 }
 
 /**
@@ -256,9 +393,16 @@ class TokensNamespace {
   constructor(private _dbAdapter: IDBAdapter) {}
 
   async list(
-    options: { tenantId?: string | null; search?: string; page?: number; limit?: number } = {},
+    options: {
+      tenantId?: string | null;
+      search?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+      order?: "asc" | "desc";
+    } = {},
   ) {
-    const { tenantId, search, page = 1, limit = 10 } = options;
+    const { tenantId, search, page = 1, limit = 10, sort, order } = options;
     const filter: Record<string, any> = {};
     if (tenantId) filter.tenantId = tenantId;
     if (search) {
@@ -271,10 +415,29 @@ class TokensNamespace {
     const result = await this._dbAdapter.auth.getAllTokens(filter);
     if (!result.success) throw new AppError("Failed to fetch tokens", 500);
 
+    let tokens = result.data;
+
+    // Apply manual sorting if requested
+    if (sort) {
+      tokens.sort((a: any, b: any) => {
+        const valA = a[sort];
+        const valB = b[sort];
+        if (order === "asc") return valA > valB ? 1 : -1;
+        return valA < valB ? 1 : -1;
+      });
+    }
+
     const startIndex = (page - 1) * limit;
+    const paginatedItems = tokens.slice(startIndex, startIndex + limit);
+
     return {
-      tokens: result.data.slice(startIndex, startIndex + limit),
-      total: result.data.length,
+      data: paginatedItems,
+      pagination: {
+        totalItems: tokens.length,
+        page,
+        limit,
+        totalPages: Math.ceil(tokens.length / limit),
+      },
     };
   }
 
@@ -286,14 +449,41 @@ class TokensNamespace {
     return this._dbAdapter.auth.updateToken(tokenId, data, tenantId ?? undefined);
   }
 
-  async create(data: { email: string; expires: string; _role: string; tenantId?: string | null }) {
-    const { email, expires, tenantId } = data;
+  async create(data: { email: string; expires: string; role: string; tenantId?: string | null }) {
+    const { email, expires, role, tenantId } = data;
     const userId = (await import("@utils/native-utils")).generateUUID();
+
+    // Convert expiresIn string (e.g. "2 days") to ISO Date
+    let expiresDate: string;
+    const now = Date.now();
+    switch (expires) {
+      case "2 hrs":
+        expiresDate = new Date(now + 2 * 60 * 60 * 1000).toISOString();
+        break;
+      case "12 hrs":
+        expiresDate = new Date(now + 12 * 60 * 60 * 1000).toISOString();
+        break;
+      case "2 days":
+        expiresDate = new Date(now + 2 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "1 week":
+        expiresDate = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "2 weeks":
+        expiresDate = new Date(now + 14 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "1 month":
+        expiresDate = new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      default:
+        expiresDate = expires; // Assume already ISO if no match
+    }
 
     return this._dbAdapter.auth.createToken({
       user_id: userId,
       email: email.toLowerCase(),
-      expires: expires as ISODateString,
+      role: role,
+      expires: expiresDate as ISODateString,
       type: "invite",
       tenantId: tenantId ?? undefined,
     });
@@ -378,7 +568,7 @@ class CollectionsNamespace {
   ) {
     const { tenantId, includeFields = false, includeStats = false } = options;
 
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
 
@@ -555,7 +745,7 @@ class CollectionsNamespace {
   async create(collectionId: string, data: any, options: LocalApiOptions = {}) {
     const { user, tenantId } = options;
     if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
 
@@ -603,7 +793,7 @@ class CollectionsNamespace {
   async update(collectionId: string, entryId: string, data: any, options: LocalApiOptions = {}) {
     const { user, tenantId } = options;
     if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
 
@@ -644,7 +834,7 @@ class CollectionsNamespace {
   async delete(collectionId: string, entryId: string, options: LocalApiOptions = {}) {
     const { user, tenantId, permanent = false } = options;
     if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
-    if (getPrivateSettingSync("MULTI_TENANT") && !tenantId) {
+    if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
 
@@ -896,6 +1086,17 @@ class SystemNamespace {
     const { userId, scope = "system" } = options;
     return this._dbAdapter.system.preferences.set(key, value, scope, userId as DatabaseId);
   }
+
+  async sendMail(params: {
+    recipientEmail: string;
+    subject: string;
+    templateName: string;
+    props?: any;
+    languageTag?: string;
+  }) {
+    const { sendMail: coreSendMail } = await import("@utils/email.server");
+    return coreSendMail(params);
+  }
 }
 
 /**
@@ -1083,7 +1284,7 @@ class ImporterNamespace {
                 value,
                 (_user?._id as string) || "",
                 "public",
-                tenantId,
+                tenantId ?? undefined,
               );
               value = media._id;
             } catch {

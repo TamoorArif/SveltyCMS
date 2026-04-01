@@ -92,11 +92,11 @@ describe("handleAuthentication Middleware", () => {
       await handleAuthentication({ event, resolve: mockResolve });
 
       expect(mockResolve).toHaveBeenCalled();
-      expect(auth.validateSession).toHaveBeenCalledWith("valid-session-id");
+      expect(auth!.validateSession).toHaveBeenCalledWith("valid-session-id");
     });
 
     it("should delete invalid session cookie when auth is ready", async () => {
-      (auth.validateSession as any).mockImplementation(() => Promise.resolve(null));
+      (auth!.validateSession as any).mockImplementation(() => Promise.resolve(null));
 
       const event = createMockEvent("/dashboard", "invalid-session");
       await handleAuthentication({ event, resolve: mockResolve });
@@ -108,7 +108,7 @@ describe("handleAuthentication Middleware", () => {
   describe("Tenant Isolation", () => {
     it("should reject session from different tenant", async () => {
       const mockUser = { _id: "user123", tenantId: "tenant1" };
-      (auth.validateSession as any).mockImplementation(() => Promise.resolve(mockUser));
+      (auth!.validateSession as any).mockImplementation(() => Promise.resolve(mockUser));
 
       const event = createMockEvent("/dashboard", "session-t1", "tenant2.example.com");
       event.locals.tenantId = "tenant2";
@@ -124,14 +124,14 @@ describe("handleAuthentication Middleware", () => {
 
     it("should allow global admin to access any tenant", async () => {
       const mockUser = { _id: "admin123", tenantId: null };
-      (auth.validateSession as any).mockImplementation(() => Promise.resolve(mockUser));
+      (auth!.validateSession as any).mockImplementation(() => Promise.resolve(mockUser));
 
       const event = createMockEvent("/dashboard", "session-global", "tenant2.example.com");
       event.locals.tenantId = "tenant2";
 
       await handleAuthentication({ event, resolve: mockResolve });
       expect(mockResolve).toHaveBeenCalled();
-      expect(event.locals.user._id).toBe("admin123");
+      expect(event.locals.user!._id).toBe("admin123");
     });
   });
 

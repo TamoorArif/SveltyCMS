@@ -1,5 +1,5 @@
 /**
- * @file src/utils/media/media-service.server.ts
+ * @file src/services/media-service.server.ts
  * @description Provides a service class for media operations.
  *
  * ### Features
@@ -27,53 +27,49 @@
  */
 
 import { exec } from "node:child_process";
-import { unlinkSync, writeFileSync } from "node:fs";
+import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import Path from "node:path";
 import { promisify } from "node:util";
 import { error } from "@sveltejs/kit";
-import sharp from "sharp";
-import { cacheService } from "@src/databases/cache/cache-service";
-import { getPublicSettingSync } from "@src/services/settings-service";
-import { jobQueue } from "@src/services/jobs/job-queue-service";
-import { AppError } from "@utils/error-handling";
-import { logger } from "@utils/logger.server";
-import { getSanitizedFileName } from "@src/utils/media/media-processing";
-import { hashFileContent, mediaProcessingService } from "@src/utils/media/media-processing.server";
-import { isCloud } from "@src/utils/media/cloud-storage";
-import {
-  deleteFile,
-  saveFileToDisk,
-  saveResizedImages,
-} from "@src/utils/media/media-storage.server";
-import { validateMediaFileServer } from "@src/utils/media/media-utils";
-import mime from "./mime-utils";
-
-// Types
-import type { BaseEntity, DatabaseId, ISODateString } from "@src/content/types";
-import type { Role, User } from "@src/databases/auth/types";
-import type {
-  EntityCreate,
-  IDBAdapter,
-  MediaItem as DbMediaItem,
-} from "@src/databases/db-interface";
-import {
-  MediaType as MediaTypeEnumValue,
-  type CmsMediaMetadata,
-  type MediaAccess,
-  type MediaBase,
-  type MediaItem,
-  type ResizedImage,
-  type WatermarkOptions,
-} from "./media-models";
+import mime from "mime-types";
 
 const execAsync = promisify(exec);
+
+// Types
+import type { BaseEntity, ISODateString } from "@src/content/types";
+import type { Role, User } from "@src/databases/auth/types";
+// Media Cache
+import { cacheService } from "@src/databases/cache/cache-service";
+// Database Interface
+import type { DatabaseId, IDBAdapter } from "@src/databases/db-interface";
+import { getPublicSettingSync } from "@src/services/settings-service";
+import { isCloud } from "@src/utils/media/cloud-storage";
+import { getSanitizedFileName } from "@src/utils/media/media-processing";
+import { hashFileContent, mediaProcessingService } from "@src/utils/media/media-processing.server";
+import { saveFileToDisk, saveResizedImages } from "@src/utils/media/media-storage.server";
+// IMPORT SERVER-SIDE VALIDATION
+import { validateMediaFileServer } from "@src/utils/media/media-utils";
+import { AppError } from "@utils/error-handling";
+// System Logger
+import { logger } from "@utils/logger.server";
+import type {
+  MediaAccess,
+  MediaBase,
+  MediaItem,
+  MediaTypeEnum,
+  CmsMediaMetadata,
+  ResizedImage,
+  WatermarkOptions,
+} from "@utils/media/media-models";
+import { MediaType as MediaTypeEnumValue } from "@utils/media/media-models";
+import sharp from "sharp";
 
 // Extended MediaBase interface to include thumbnails
 interface MediaBaseWithThumbnails extends MediaBase {
   height?: number;
   originalId?: DatabaseId | null;
-  thumbnails?: Record<string, { url: string; width: number; height: number } | undefined>;
+  thumbnails?: Record<string, ResizedImage>;
   width?: number;
 }
 
@@ -138,10 +134,11 @@ export class MediaService {
       if (watermarkOptions && mimeType.startsWith("image/")) {
         try {
           const watermarkImagePath = Path.join(process.cwd(), "static", watermarkOptions.url);
-          const metadata = await sharp(imageBuffer).metadata();
           const watermarkBuffer = await sharp(watermarkImagePath)
             .resize({
-              width: Math.floor((metadata.width ?? 0) * (watermarkOptions.scale / 100)),
+              width: Math.floor(
+                (await sharp(imageBuffer).metadata()).width! * (watermarkOptions.scale / 100),
+              ),
             })
             .png()
             .toBuffer();
@@ -186,10 +183,20 @@ export class MediaService {
 
       // Process image if it's an image type
       const isImage = mimeType.startsWith("image/");
-      const resizedImages: Record<string, ResizedImage> = {};
+      let resizedImages: Record<string, ResizedImage> = {};
 
-      // NOTE: Resizing is now handled asynchronously via JobQueueService
-      // We skip it here to ensure sub-millisecond API response times.
+      if (isImage && ext !== "svg") {
+        // Don't resize SVGs
+        logger.debug("Processing image variants", { fileName, mimeType });
+        // saveResizedImages signature: (buffer, hash, baseName, ext, baseDir)
+        resizedImages = await saveResizedImages(
+          imageBuffer,
+          hash,
+          sanitizedFileName,
+          ext,
+          basePath,
+        );
+      }
 
       logger.info("File upload completed", {
         fileName,
@@ -197,6 +204,7 @@ export class MediaService {
         relativePath,
         fileSize: imageBuffer.length,
         isImage,
+        resizedVariants: Object.keys(resizedImages),
         totalProcessingTime: performance.now() - startTime,
       });
 
@@ -222,26 +230,22 @@ export class MediaService {
    * Saves a file to storage and creates a database record.
    */
 
+  // Saves a media file and its associated data
   public async saveMedia(
     file: File,
     userId: string,
     access: MediaAccess,
-    tenantId: string | null = null,
-    basePath?: string,
+    tenantId?: string | null,
+    basePath = "global",
     watermarkOptions?: WatermarkOptions,
     originalId?: DatabaseId | null,
   ): Promise<MediaItem> {
     const startTime = performance.now();
     this.ensureInitialized();
-
-    const effectiveBasePath = basePath || tenantId || "global";
-
     logger.trace("Starting media upload process", {
       filename: file.name,
       fileSize: file.size,
       mimeType: file.type,
-      tenantId,
-      basePath: effectiveBasePath,
     });
     if (!file) {
       const message = "File is required";
@@ -254,36 +258,29 @@ export class MediaService {
     let mimeType = file.type || mime.lookup(file.name) || "application/octet-stream";
     let extension = mime.extension(mimeType) || getSanitizedFileName(file.name).ext;
 
-    // --- ENHANCED MIME TYPE & EXTENSION DETECTION (SlimSniffer) ---
+    // --- ENHANCED MIME TYPE & EXTENSION DETECTION ---
     try {
-      const { sniffMimeType } = await import("@utils/media/slim-sniffer.server");
-      const detected = sniffMimeType(buffer);
-      if (detected) {
-        logger.debug("Detected file type from buffer (SlimSniffer):", detected);
+      const { sniff } = await import("@src/utils/native-utils");
+      const detectedType = sniff(buffer);
+      if (detectedType) {
+        logger.debug("Detected file type from buffer (native):", detectedType);
         // Override if it was generic or unknown, or if we trust binary inspection more
         if (mimeType === "application/octet-stream" || !mimeType) {
-          mimeType = detected.mime;
-          extension = detected.ext;
-        } else if (mimeType !== detected.mime) {
-          // Log mismatch but trust detected type for consistency
+          mimeType = detectedType.mime;
+          extension = detectedType.ext;
+        } else if (mimeType !== detectedType.mime) {
+          // Log mismatch but maybe trust detected type for consistency
           logger.warn(
-            `MIME type mismatch: provided=${mimeType}, detected=${detected.mime}. Using detected.`,
+            `MIME type mismatch: provided=${mimeType}, detected=${detectedType.mime}. Using detected.`,
           );
-          mimeType = detected.mime;
-          extension = detected.ext;
+          mimeType = detectedType.mime;
+          extension = detectedType.ext;
         }
       } else {
-        logger.warn("SlimSniffer could not detect file type from buffer.");
+        logger.warn("Could not detect file type from buffer (native).");
       }
     } catch (err) {
-      logger.warn("Error during SlimSniffer detection:", err);
-    }
-
-    // Fix keys in file object if possible, effectively wrapped in new File below or just used directly
-    // But we already have buffer. We should ensure fileName matches extension if it was corrupted.
-    if (extension && !file.name.endsWith(`.${extension}`)) {
-      // Append extension if missing or wrong
-      // Actually, let's just make sure we pass the correct info to uploadFile
+      logger.warn("Error during native file-type detection:", err);
     }
 
     // USE SERVER-SIDE VALIDATION
@@ -293,12 +290,6 @@ export class MediaService {
       this.mimeTypePattern,
       50 * 1024 * 1024,
     ); // 50MB limit
-    // We override the validation to check the DETECTED mime type, not just the name-based one validation usually checks.
-    // validation.valid is based on name in validateMediaFileServer. Let's re-check against pattern manually if needed.
-    if (!this.mimeTypePattern.test(mimeType)) {
-      // Skip error for specific cases or throw?
-      // If detected type is valid image, we proceed.
-    }
 
     if (!(validation.valid || this.mimeTypePattern.test(mimeType))) {
       // Only throw if BOTH name-based and content-based validation fail to match allow-list
@@ -322,27 +313,13 @@ export class MediaService {
         safeFileName = `${safeFileName}.${extension}`;
       }
 
-      // 1. Quota Enforcement (CRITICAL)
-      if (effectiveBasePath && effectiveBasePath !== "global") {
-        try {
-          const { tenantService: ts } = await import("@src/services/tenant-service");
-          await ts.checkQuota(effectiveBasePath, "maxStorageBytes", file.size);
-        } catch (quotaError) {
-          logger.warn(`Storage quota exceeded for tenant ${effectiveBasePath}`, {
-            fileSize: file.size,
-            error: quotaError,
-          });
-          throw quotaError; // Propagate quota error (403)
-        }
-      }
-
       // First upload the file and get basic file info
-      const { url, path, hash } = await this.uploadFile(
+      const { url, path, hash, resized } = await this.uploadFile(
         buffer,
         safeFileName,
         mimeType,
         userId,
-        effectiveBasePath,
+        basePath,
         watermarkOptions,
       );
 
@@ -351,6 +328,7 @@ export class MediaService {
       let advancedMetadata: CmsMediaMetadata = {};
       let width: number | undefined;
       let height: number | undefined;
+      let thumbnailBuffer: Buffer | null = null;
 
       if (isImage && !mimeType.includes("svg")) {
         try {
@@ -369,10 +347,26 @@ export class MediaService {
           width = dimensions.width;
           height = dimensions.height;
           advancedMetadata = { width, height };
+
+          // Generate a real thumbnail image from the video
+          thumbnailBuffer = await this.captureVideoThumbnail(buffer);
         } catch (vError) {
           logger.error("Video processing failed", {
             fileName: file.name,
             error: vError,
+          });
+        }
+      } else if (mimeType === "application/pdf") {
+        try {
+          // Generate a thumbnail image from the first page of the PDF
+          thumbnailBuffer = await this.generatePdfThumbnail(buffer);
+          logger.info("PDF thumbnail generated successfully", {
+            fileName: file.name,
+          });
+        } catch (pError) {
+          logger.error("PDF thumbnail generation failed", {
+            fileName: file.name,
+            error: pError,
           });
         }
       }
@@ -389,20 +383,19 @@ export class MediaService {
       }
 
       const media: Omit<MediaBaseWithThumbnails, "_id"> = {
-        tenantId,
         type: mediaType,
         hash,
+        size: file.size,
         filename: safeFileName, // Use the sanitized filename with extension
-        originalFilename: file.name, // For DB agnosticism
         path, // Store the relative path
         url, // Store the public URL
         mimeType,
-        size: file.size,
-        user: userId as DatabaseId,
-        createdBy: userId as DatabaseId, // For DB agnosticism
-        updatedBy: userId as DatabaseId, // For DB agnosticism
+        originalFilename: file.name,
         createdAt: new Date().toISOString() as ISODateString,
         updatedAt: new Date().toISOString() as ISODateString,
+        createdBy: userId as DatabaseId,
+        updatedBy: userId as DatabaseId,
+        user: userId as DatabaseId,
         metadata: {
           originalFilename: file.name,
           uploadedBy: userId,
@@ -415,15 +408,35 @@ export class MediaService {
           {
             version: 1,
             url,
-            createdBy: userId as DatabaseId,
             createdAt: new Date().toISOString() as ISODateString,
+            createdBy: userId as DatabaseId,
           },
         ],
         width,
         height,
         access,
-        thumbnails: {},
+        thumbnails: resized || {},
       };
+
+      // If we have a video or PDF thumbnail, process it into resizing variants
+      if ((isVideo || mimeType === "application/pdf") && thumbnailBuffer) {
+        try {
+          const { fileNameWithoutExt } = getSanitizedFileName(file.name);
+          const resizedThumbnails = await saveResizedImages(
+            thumbnailBuffer,
+            hash,
+            fileNameWithoutExt,
+            "jpg",
+            basePath,
+          );
+          media.thumbnails = { ...media.thumbnails, ...resizedThumbnails };
+        } catch (rError) {
+          logger.error("Failed to process thumbnail variants", {
+            fileName: file.name,
+            error: rError,
+          });
+        }
+      }
 
       // Create clean media object for database storage
       const cleanMedia = this.createCleanMediaObject(media);
@@ -434,83 +447,12 @@ export class MediaService {
       });
 
       // Use db-agnostic media adapter
-      // Use db-agnostic media adapter with tenantId enforcement
-      const result = await this.db.media.files.upload(
-        cleanMedia as EntityCreate<DbMediaItem>,
-        tenantId,
-      );
+      const result = await this.db.media.files.upload(cleanMedia as any, tenantId);
 
       if (!result.success) {
         throw result.error;
       }
-
       const savedMedia = result.data as unknown as MediaItem;
-
-      // Automatically tag images with AI if enabled
-      if (isImage && !mimeType.includes("svg")) {
-        try {
-          const { getPrivateSetting } = await import("@src/services/settings-service");
-          const useAi = await getPrivateSetting("USE_AI_TAGGING");
-          if (useAi) {
-            logger.debug(`Dispatching automatic AI tagging for media ${savedMedia._id}`);
-            const { aiService } = await import("@src/services/ai-service");
-            aiService
-              .tagImage(buffer)
-              .then(async (aiTags) => {
-                if (aiTags && aiTags.length > 0) {
-                  const existingAiTags = (savedMedia.metadata?.aiTags as string[]) || [];
-                  const updatedAiTags = Array.from(new Set([...existingAiTags, ...aiTags]));
-                  await this.updateMedia(
-                    savedMedia._id as string,
-                    {
-                      metadata: {
-                        ...savedMedia.metadata,
-                        aiTags: updatedAiTags,
-                      },
-                    },
-                    tenantId,
-                  );
-                  logger.info(
-                    `Successfully auto-tagged media ${savedMedia._id} with ${aiTags.length} tags.`,
-                  );
-                }
-              })
-              .catch((err) => {
-                logger.error(`Failed to auto-tag media ${savedMedia._id}`, err);
-              });
-          }
-        } catch (e) {
-          logger.error(`Error checking USE_AI_TAGGING or auto-tagging`, e);
-        }
-      }
-
-      // 2. Dispatch background processing job
-      const isPdf = mimeType === "application/pdf";
-      if ((isImage && !mimeType.includes("svg")) || isVideo || isPdf) {
-        logger.debug(`Dispatching background processing for media ${savedMedia._id}`);
-        await jobQueue.dispatch(
-          "process-media",
-          {
-            fileId: savedMedia._id as string,
-            basePath: effectiveBasePath,
-          },
-          effectiveBasePath !== "global" ? effectiveBasePath : undefined,
-        );
-      }
-
-      // 3. Increment usage upon successful DB record creation
-      if (effectiveBasePath && effectiveBasePath !== "global") {
-        try {
-          const { tenantService: ts } = await import("@src/services/tenant-service");
-          await ts.incrementUsage(effectiveBasePath, "maxStorageBytes", file.size);
-        } catch (incError) {
-          logger.error(
-            `Failed to increment storage usage for tenant ${effectiveBasePath}`,
-            incError,
-          );
-        }
-      }
-
       const mediaId = savedMedia._id;
 
       logger.debug("Media saved to database", {
@@ -550,7 +492,6 @@ export class MediaService {
   ): Omit<MediaItem, "_id" | "createdAt" | "updatedAt"> {
     // Type-safe mapping from MediaBaseWithThumbnails to a database-ready object
     const clean: Record<string, unknown> = {
-      tenantId: object.tenantId,
       filename: object.filename,
       originalFilename: (object.metadata?.originalFilename as string) || object.filename,
       hash: object.hash,
@@ -560,12 +501,12 @@ export class MediaService {
       thumbnails: object.thumbnails || {},
       metadata: object.metadata || {},
       access: object.access,
-      user: object.user,
-      createdBy: object.user,
-      updatedBy: object.user,
+      user: object.user as DatabaseId,
       type: object.type,
       width: object.width,
       height: object.height,
+      createdBy: object.user as DatabaseId,
+      updatedBy: object.user as DatabaseId,
       folderId: null,
     };
 
@@ -601,7 +542,7 @@ export class MediaService {
       saveBehavior?: "new" | "overwrite";
     },
     userId: string,
-    tenantId: string | null = null,
+    tenantId?: string | null,
   ): Promise<MediaItem> {
     this.ensureInitialized();
 
@@ -672,14 +613,10 @@ export class MediaService {
       }
       if (grayscale && grayscale > 0) {
         instance = instance.grayscale();
-        if (grayscale < 100) {
-          // Fallback: full grayscale is easier, partial requires more complex compositing
-          // but for now we'll just apply full if > 0 as a first pass or use a matrix
-        }
       }
       if (sepia && sepia > 0) {
         // Sepia matrix implementation (normalized)
-        (instance as unknown as { colorMatrix: (matrix: number[]) => sharp.Sharp }).colorMatrix([
+        instance = (instance as any).colorMatrix([
           0.3588, 0.7044, 0.1355, 0, 0, 0.299, 0.587, 0.114, 0, 0, 0.2392, 0.4696, 0.0912, 0, 0, 0,
           0, 0, 1, 0,
         ]);
@@ -737,7 +674,7 @@ export class MediaService {
 
     if (manipulations.saveBehavior === "new") {
       // Create a COMPLETELY NEW media record
-      const newMedia: Partial<MediaItem> = {
+      const newMedia: any = {
         ...mediaItem,
         url: publicUrl,
         path: relativePath,
@@ -759,17 +696,14 @@ export class MediaService {
       delete newMedia.createdAt;
       delete newMedia.updatedAt;
 
-      const result = await db.media.files.upload(
-        newMedia as unknown as EntityCreate<DbMediaItem>,
-        tenantId,
-      );
+      const result = await db.media.files.upload(newMedia);
       if (!result.success) {
         throw result.error;
       }
       return result.data as unknown as MediaItem;
     } else {
       // Overwrite / Update existing
-      await this.updateMedia(id, updates, tenantId);
+      await this.updateMedia(id, updates);
       return { ...mediaItem, ...updates } as MediaItem;
     }
   }
@@ -778,7 +712,7 @@ export class MediaService {
   public async updateMedia(
     id: string,
     updates: Partial<MediaItem>,
-    tenantId: string | null = null,
+    tenantId?: string | null,
   ): Promise<void> {
     this.ensureInitialized();
     if (!id || typeof id !== "string" || id.trim().length === 0) {
@@ -790,12 +724,7 @@ export class MediaService {
     }
     try {
       const db = await this.getDb();
-      const result = await db.crud.update(
-        "media",
-        id as DatabaseId,
-        updates as Partial<MediaItem>,
-        tenantId,
-      );
+      const result = await db.crud.update("media", id as DatabaseId, updates as any, tenantId);
 
       if (!result.success) {
         throw result.error;
@@ -806,8 +735,41 @@ export class MediaService {
     } catch (err) {
       const message = `Error updating media: ${err instanceof Error ? err.message : String(err)}`;
       logger.error(message, { error: err });
-      throw error(500, message);
     }
+  }
+
+  /**
+   * Batch process multiple images with the same manipulations.
+   * Processes in parallel and handles partial failures gracefully by continuing with other items.
+   *
+   * @param ids - Array of media item IDs to process
+   * @param config - Manipulation configuration (filters, rotation, crop, etc.)
+   * @param userId - ID of the user performing the manipulation
+   * @param tenantId - Optional tenantId for scoping
+   * @returns Promise resolving to an array of successfully processed MediaItems
+   */
+  public async batchProcessImages(
+    ids: string[],
+    config: any,
+    userId: string,
+    tenantId?: string | null,
+  ): Promise<MediaItem[]> {
+    this.ensureInitialized();
+    if (!Array.isArray(ids)) {
+      throw new Error("Invalid ids: Must be an array of strings");
+    }
+
+    const promises = ids.map(async (id) => {
+      try {
+        return await this.manipulateMedia(id, config, userId, tenantId);
+      } catch (err) {
+        logger.error(`Error processing image ${id} in batch:`, { error: err });
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter((item): item is MediaItem => item !== null);
   }
 
   /**
@@ -817,7 +779,7 @@ export class MediaService {
     id: string,
     file: File,
     userId: string,
-    tenantId: string | null = null,
+    tenantId?: string | null,
     action = "update",
   ): Promise<MediaItem> {
     this.ensureInitialized();
@@ -852,8 +814,8 @@ export class MediaService {
     const newVersionNumber = (mediaItem.versions?.length || 0) + 1;
     const newVersion = {
       version: newVersionNumber,
-      url,
-      path,
+      url: url,
+      path: path,
       hash,
       size: file.size,
       createdAt: new Date().toISOString() as ISODateString,
@@ -875,34 +837,12 @@ export class MediaService {
   }
 
   // Deletes a media item
-  public async deleteMedia(id: string, tenantId: string | null = null): Promise<void> {
+  public async deleteMedia(id: string, tenantId?: string | null): Promise<void> {
     this.ensureInitialized();
     if (!id || typeof id !== "string" || id.trim().length === 0) {
       throw new Error("Invalid id: Must be a non-empty string");
     }
     try {
-      // 1. Get media item first to get its path for disk deletion
-      const db = await this.getDb();
-      const mediaResult = await db.crud.findOne<MediaItem>(
-        "media",
-        { _id: id as DatabaseId },
-        { tenantId },
-      );
-      if (mediaResult.success && mediaResult.data) {
-        const mediaItem = mediaResult.data;
-        // 2. Delete from storage (best effort)
-        if (mediaItem.url) {
-          await deleteFile(mediaItem.url);
-        }
-        // Also delete thumbnails if present
-        if (mediaItem.thumbnails) {
-          for (const thumb of Object.values(mediaItem.thumbnails as Record<string, ResizedImage>)) {
-            if (thumb.url) await deleteFile(thumb.url);
-          }
-        }
-      }
-
-      // 3. Delete from database
       const result = await this.db.media.files.delete(id as DatabaseId, tenantId);
       if (!result.success) {
         throw result.error;
@@ -918,11 +858,7 @@ export class MediaService {
   }
 
   // Sets access permissions for a media item
-  public async setMediaAccess(
-    id: string,
-    access: MediaAccess,
-    tenantId: string | null = null,
-  ): Promise<void> {
+  public async setMediaAccess(id: string, access: MediaAccess): Promise<void> {
     this.ensureInitialized();
     if (!id || typeof id !== "string" || id.trim().length === 0) {
       throw new Error("Invalid id: Must be a non-empty string");
@@ -931,12 +867,7 @@ export class MediaService {
     // Access is now a string union, not array
     try {
       const db = await this.getDb();
-      const result = await db.crud.update(
-        "media",
-        id as DatabaseId,
-        { access } as Partial<MediaItem>,
-        tenantId,
-      );
+      const result = await db.crud.update("media", id as DatabaseId, { access } as any);
       if (!result.success) {
         throw result.error;
       }
@@ -951,12 +882,7 @@ export class MediaService {
   }
 
   // Retrieves a media item by its ID, enforcing access control
-  public async getMedia(
-    id: string,
-    user: User,
-    roles: Role[],
-    tenantId: string | null = null,
-  ): Promise<MediaItem> {
+  public async getMedia(id: string, user: User, roles: Role[]): Promise<MediaItem> {
     this.ensureInitialized();
     if (!id || typeof id !== "string" || id.trim().length === 0) {
       throw new Error("Invalid id: Must be a non-empty string");
@@ -976,13 +902,9 @@ export class MediaService {
       }
 
       const db = await this.getDb();
-      const result = await db.crud.findOne<MediaItem>(
-        "media",
-        {
-          _id: id as DatabaseId,
-        },
-        { tenantId },
-      );
+      const result = await db.crud.findOne<MediaItem>("media", {
+        _id: id as DatabaseId,
+      });
 
       if (!result.success) {
         throw result.error;
@@ -994,13 +916,11 @@ export class MediaService {
       }
 
       // Access Control Logic
-      // Access Control Logic
       const isAdmin = roles.some((r) => r.isAdmin);
       const isOwner = media.user === user._id; // Updated to match MediaBase
       const isPublic = media.access === "public";
 
       if (!(isAdmin || isOwner || isPublic)) {
-        // TODO: Add fine-grained permission check (e.g. 'media.read') if needed
         logger.warn("Access denied to media item", {
           mediaId: id,
           userId: user._id,
@@ -1044,39 +964,14 @@ export class MediaService {
   }
 
   // Bulk delete media items
-  public async bulkDeleteMedia(ids: string[], tenantId: string | null = null): Promise<void> {
+  public async bulkDeleteMedia(ids: string[]): Promise<void> {
     this.ensureInitialized();
     if (!Array.isArray(ids) || ids.some((id) => typeof id !== "string" || id.trim().length === 0)) {
       throw new Error("Invalid ids: Must be an array of non-empty strings");
     }
     try {
       const convertedIds = ids.map((id) => id as DatabaseId);
-
-      // 1. Get all media items first for disk deletion
-      const db = await this.getDb();
-      const mediaItemsResult = await db.crud.findMany<MediaItem>(
-        "media",
-        { _id: { $in: convertedIds } as any },
-        { tenantId },
-      );
-
-      if (mediaItemsResult.success && mediaItemsResult.data) {
-        for (const item of mediaItemsResult.data) {
-          // 2. Delete from storage (best effort)
-          if (item.url) {
-            await deleteFile(item.url);
-          }
-          // Also delete thumbnails
-          if (item.thumbnails) {
-            for (const thumb of Object.values(item.thumbnails as Record<string, ResizedImage>)) {
-              if (thumb.url) await deleteFile(thumb.url);
-            }
-          }
-        }
-      }
-
-      // 3. Delete from database
-      const result = await this.db.media.files.deleteMany(convertedIds, tenantId);
+      const result = await this.db.media.files.deleteMany(convertedIds);
       if (!result.success) {
         throw result.error;
       }
@@ -1093,7 +988,6 @@ export class MediaService {
   // Search media items
   public async searchMedia(
     query: string,
-    tenantId: string | null = null,
     page = 1,
     limit = 20,
   ): Promise<{ media: MediaItem[]; total: number }> {
@@ -1107,7 +1001,7 @@ export class MediaService {
         ],
       };
 
-      const options = { offset: (page - 1) * limit, limit, tenantId };
+      const options = { offset: (page - 1) * limit, limit };
 
       const [mediaResult, totalResult] = await Promise.all([
         db.crud.findMany<MediaItem>(
@@ -1115,7 +1009,7 @@ export class MediaService {
           searchCriteria as unknown as Partial<MediaItem>,
           options,
         ),
-        db.crud.count("media", searchCriteria as unknown as Partial<BaseEntity>, { tenantId }),
+        db.crud.count("media", searchCriteria as unknown as Partial<BaseEntity>),
       ]);
 
       if (!mediaResult.success) {
@@ -1137,20 +1031,15 @@ export class MediaService {
   }
 
   // List media items
-  public async listMedia(
-    tenantId: string | null = null,
-    page = 1,
-    limit = 20,
-  ): Promise<{ media: MediaItem[]; total: number }> {
+  public async listMedia(page = 1, limit = 20): Promise<{ media: MediaItem[]; total: number }> {
     this.ensureInitialized();
     try {
       const db = await this.getDb();
-      const filter = tenantId ? { tenantId } : {};
-      const options = { offset: (page - 1) * limit, limit, tenantId };
+      const options = { offset: (page - 1) * limit, limit };
 
       const [mediaResult, totalResult] = await Promise.all([
-        db.crud.findMany<MediaItem>("media", filter as Partial<MediaItem>, options),
-        db.crud.count("media", filter, { tenantId: tenantId ?? undefined }),
+        db.crud.findMany<MediaItem>("media", {}, options),
+        db.crud.count("media", {}),
       ]);
 
       if (!mediaResult.success) {
@@ -1195,8 +1084,82 @@ export class MediaService {
     }
   }
 
+  /**
+   * Captures a thumbnail from a video at the 1s mark using ffmpeg
+   */
+  private async captureVideoThumbnail(buffer: Buffer): Promise<Buffer | null> {
+    const tempInput = Path.join(os.tmpdir(), `ffmpeg-input-${Date.now()}.mp4`);
+    const tempOutput = Path.join(os.tmpdir(), `ffmpeg-output-${Date.now()}.jpg`);
+    try {
+      writeFileSync(tempInput, buffer);
+      // Capture frame at 1s mark
+      await execAsync(
+        `ffmpeg -ss 00:00:01 -i "${tempInput}" -frames:v 1 -q:v 2 "${tempOutput}" -y`,
+      );
+      return readFileSync(tempOutput);
+    } catch (err) {
+      logger.error("Error capturing video thumbnail", { error: err });
+      return null;
+    } finally {
+      try {
+        if (os.platform() !== "win32") {
+          if (tempInput) {
+            unlinkSync(tempInput);
+          }
+          if (tempOutput) {
+            unlinkSync(tempOutput);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  /**
+   * Generates a thumbnail from the first page of a PDF using ImageMagick
+   */
+  private async generatePdfThumbnail(buffer: Buffer): Promise<Buffer | null> {
+    const tempInput = Path.join(os.tmpdir(), `pdf-input-${Date.now()}.pdf`);
+    const tempOutput = Path.join(os.tmpdir(), `pdf-output-${Date.now()}.jpg`);
+    try {
+      writeFileSync(tempInput, buffer);
+      // Use ImageMagick (magick) to extract the first page [0] at 150 DPI
+      // -background white -flatten handles transparency
+      await execAsync(
+        `magick -density 150 "${tempInput}[0]" -background white -flatten -alpha remove -quality 90 "${tempOutput}"`,
+      );
+      return readFileSync(tempOutput);
+    } catch (err) {
+      const isMagickMissing =
+        err instanceof Error &&
+        (err.message.includes("not found") || err.message.includes("not recognized"));
+      if (isMagickMissing) {
+        logger.warn(
+          'PDF thumbnail generation skipped: "magick" command not found. Install ImageMagick and Ghostscript to enable PDF previews.',
+        );
+      } else {
+        logger.error("Error generating PDF thumbnail", { error: err });
+      }
+      return null;
+    } finally {
+      try {
+        if (os.platform() !== "win32") {
+          if (tempInput) {
+            unlinkSync(tempInput);
+          }
+          if (tempOutput) {
+            unlinkSync(tempOutput);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   // Determines the media type based on the MIME type
-  private getMediaType(mimeType: string): MediaTypeEnumValue {
+  private getMediaType(mimeType: string): MediaTypeEnum {
     if (!mimeType) {
       throw new Error("Mime type is required");
     }
@@ -1220,73 +1183,12 @@ export class MediaService {
     throw new Error(`Unsupported media type: ${mimeType}`);
   }
 
-  /**
-   * Processes multiple images in bulk with specific filters
-   */
-  public async batchProcessImages(
-    ids: string[],
-    options: {
-      filters: {
-        brightness?: number;
-        contrast?: number;
-        saturation?: number;
-        grayscale?: number;
-        sepia?: number;
-      };
-      saveBehavior: "new" | "overwrite";
-    },
-    userId: string,
-    tenantId: string | null = null,
-  ): Promise<MediaItem[]> {
-    this.ensureInitialized();
-    const results: MediaItem[] = [];
-
-    logger.info(`Starting batch processing for ${ids.length} items`, {
-      userId,
-      options,
-      tenantId,
-    });
-
-    // Process in parallel with concurrency limit if needed, but for now direct parallel
-    const promises = ids.map((id) =>
-      this.manipulateMedia(
-        id,
-        {
-          filters: options.filters,
-          saveBehavior: options.saveBehavior,
-        },
-        userId,
-        tenantId,
-      ).catch((err) => {
-        logger.error(`Batch item ${id} failed:`, err);
-        return null;
-      }),
-    );
-
-    const processed = await Promise.all(promises);
-    for (const item of processed) {
-      if (item) results.push(item);
-    }
-
-    return results;
-  }
-
-  /**
-   * Saves a remote file from a URL to the storage.
-   */
   public async saveRemoteMedia(
     url: string,
     userId: string,
     access: MediaAccess,
-    tenantId: string | null = null,
     basePath = "global",
   ): Promise<MediaItem> {
-    this.ensureInitialized();
-
-    // SSRF Prevention: Validate URL before fetching
-    const { validateRemoteUrl } = await import("@src/utils/security/url-validator");
-    await validateRemoteUrl(url);
-
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch remote file: ${response.statusText}`);
@@ -1297,6 +1199,6 @@ export class MediaService {
       response.headers.get("content-type") || mime.lookup(fileName) || "application/octet-stream";
     const file = new File([buffer], fileName, { type: mimeType });
 
-    return this.saveMedia(file, userId, access, tenantId, basePath);
+    return this.saveMedia(file, userId, access, basePath);
   }
 }

@@ -101,7 +101,7 @@ describe("Collections & Content API", () => {
     });
   };
 
-  testGetEndpoint("/api/collections");
+  testGetEndpoint("/api/collections?raw=true");
   testGetEndpoint("/api/content-structure?action=getContentStructure");
   // testGetEndpoint('/api/exportData'); // Often fails if no data exists, enable if needed
 
@@ -111,6 +111,7 @@ describe("Collections & Content API", () => {
       const queryParams = new URLSearchParams({
         q: "test",
         collections: TEST_COLLECTION_NAME,
+        raw: "true",
       });
       const response = await fetch(`${API_BASE_URL}/api/search?${queryParams.toString()}`, {
         method: "GET",
@@ -124,7 +125,7 @@ describe("Collections & Content API", () => {
     });
 
     it("should handle empty queries gracefully", async () => {
-      const response = await fetch(`${API_BASE_URL}/api/search?q=`, {
+      const response = await fetch(`${API_BASE_URL}/api/search?q=&raw=true`, {
         method: "GET",
         headers: { Cookie: adminCookie },
       });

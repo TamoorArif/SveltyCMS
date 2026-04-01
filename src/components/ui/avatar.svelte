@@ -1,20 +1,13 @@
 <!-- 
-@file src/components/ui/avatar.svelte
-@component
-**Native Svelte 5 Avatar Primitive**
-
-### Props
-- `src` (string): Image source URL.
-- `alt` (string): Alt text for the image.
-- `initials` (string): Fallback initials.
-- `size` (string): Size class (e.g., 'size-10').
-- `rounded` (string): Rounding class (e.g., 'rounded-full').
+ @src/routes/api/cms.ts src/components/ui/avatar.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Avatar Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { Snippet } from "svelte";
-import type { HTMLAttributes } from "svelte/elements";
+import { cn } from '@utils/cn';
+import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
 
 type Props = HTMLAttributes<HTMLDivElement> & {
 	src?: string;
@@ -28,29 +21,27 @@ type Props = HTMLAttributes<HTMLDivElement> & {
 
 let props: Props = $props();
 
-let status = $state<"loading" | "loaded" | "error">("loading");
+let status = $state<'loading' | 'loaded' | 'error'>('loading');
 
 $effect(() => {
 	const currentSrc = props.src;
 	if (currentSrc) {
-		status = "loading";
+		status = 'loading';
 		const img = new Image();
 		img.src = currentSrc;
-		img.onload = () => (status = "loaded");
-		img.onerror = () => (status = "error");
+		img.onload = () => (status = 'loaded');
+		img.onerror = () => (status = 'error');
 	} else {
-		status = "error";
+		status = 'error';
 	}
 });
 
-const classes = $derived(
-	cn(
-		"relative flex shrink-0 overflow-hidden",
-		props.size || "size-10",
-		props.rounded || "rounded-full",
-		props.class,
-	),
-);
+const classes = $derived(cn(
+	'relative flex shrink-0 overflow-hidden',
+	props.size || 'size-10',
+	props.rounded || 'rounded-full',
+	props.class
+));
 </script>
 
 <div class={classes} role="img" aria-label={props.alt || props.initials || 'Avatar'} {...props}>

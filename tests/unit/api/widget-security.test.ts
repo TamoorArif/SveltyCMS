@@ -9,6 +9,7 @@ import type { RequestEvent } from "@sveltejs/kit";
 // Mock SvelteKit environment
 vi.mock("$app/environment", () => ({
   building: false,
+  browser: true,
 }));
 
 // Mock all dependencies
@@ -45,6 +46,7 @@ vi.mock("@src/stores/widget-store.svelte.ts", () => ({
 
 vi.mock("@src/services/settings-service", () => ({
   getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@utils/logger.server", () => ({
@@ -57,7 +59,7 @@ vi.mock("@utils/logger.server", () => ({
 }));
 
 // Import dispatcher
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 describe("Widget API Security - Tenant Isolation", () => {
   let mockDbAdapter: any;

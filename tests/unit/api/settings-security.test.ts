@@ -3,8 +3,13 @@
  * @description Unit tests for settings security and isolation.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
+
+// Mock SvelteKit environment
+vi.mock("$app/environment", () => ({
+  browser: true,
+}));
 
 // Mock dependencies
 vi.mock("@src/databases/db", () => ({
@@ -17,6 +22,7 @@ vi.mock("@src/databases/db", () => ({
 
 vi.mock("@src/services/settings-service", () => ({
   getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(true),
   getAllSettings: vi.fn().mockResolvedValue({ public: {}, private: {} }),
   updateSettingsFromSnapshot: vi.fn().mockResolvedValue({ success: true }),
 }));
@@ -26,7 +32,7 @@ vi.mock("@utils/api-handler", () => ({
 }));
 
 // Import raw dispatcher handler
-import { handler as dispatcher } from "@src/routes/api/[...path]/+server";
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
 describe("Settings API Security Unit Tests", () => {
   const createMockEvent = (

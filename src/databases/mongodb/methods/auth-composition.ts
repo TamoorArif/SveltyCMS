@@ -254,6 +254,7 @@ export function composeMongoAuthAdapter(): AuthInterface {
     validateToken: tokenAdapter.validateToken.bind(tokenAdapter),
     consumeToken: tokenAdapter.consumeToken.bind(tokenAdapter),
     getTokenByValue: tokenAdapter.getTokenByValue.bind(tokenAdapter),
+    getTokenById: tokenAdapter.getTokenById.bind(tokenAdapter),
     deleteExpiredTokens: tokenAdapter.deleteExpiredTokens.bind(tokenAdapter),
     getAllTokens: tokenAdapter.getAllTokens.bind(tokenAdapter),
     updateToken: tokenAdapter.updateToken.bind(tokenAdapter),
