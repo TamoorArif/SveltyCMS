@@ -1,234 +1,97 @@
 ---
 path: "docs/api/widget-api.mdx"
-title: "Widget Management API"
-description: "API reference for the SveltyCMS 3-Pillar Widget system — discovery, status management, registry sync, and marketplace installation."
+title: "Widget Management API Reference"
+description: "Reference for the SveltyCMS 3-Pillar Widget system — discovery, status management, and registry synchronization."
 order: 42
 icon: "mdi:puzzle-outline"
 author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-03-27"
+updated: "2026-04-01"
 tags:
   - "api"
   - "widgets"
-  - "3-pillar"
   - "management"
 ---
 
-# Widget Management API
+# Widget Management API Reference
 
-The Widget API manages the lifecycle of SveltyCMS extensions. Unlike standard collections, widgets follow a strict **3-Pillar Architecture** (Definition, Input, Display) and are registered in a global runtime store (`widget-store.svelte.ts`).
-
-> [!NOTE]
-> All widget management operations require the `api:widgets` permission. Requests without this permission return `403 FORBIDDEN`.
+The Widget API manages the lifecycle and availability of SveltyCMS extensions. Unlike standard content collections, widgets follow a strict **3-Pillar Architecture** (Definition, Input, Display) and are registered in a global runtime store.
 
 ---
 
-## 👥 Choose Your Path
+## ⚡ Quick Start
 
-- 🔍 **[Widget Discovery](#1-widget-discovery)** — Listing and filtering available widgets.
-- ⚙️ **[Lifecycle Management](#2-lifecycle-management)** — Syncing, toggling status, and validating.
-- 📦 **[Installation](#3-installation--uninstallation)** — Adding and removing marketplace widgets.
-- 🛡️ **[Security & Permissions](#4-security--permissions)** — Authentication and multi-tenant isolation.
-
----
-
-## 🚀 Quick Reference
-
-| Method | Endpoint                 | Description                                             |
-| :----- | :----------------------- | :------------------------------------------------------ |
-| GET    | `/api/widgets/list`      | List all widgets (core + custom)                        |
-| GET    | `/api/widgets/active`    | List only active widgets for the current tenant         |
-| GET    | `/api/widgets/installed` | List non-core, user-installed widgets                   |
-| GET    | `/api/widgets/required`  | List system-required widgets that cannot be deactivated |
-| POST   | `/api/widgets/sync`      | Scan the filesystem and update the widget registry      |
-| POST   | `/api/widgets/status`    | Toggle a widget's active/inactive state                 |
-| POST   | `/api/widgets/validate`  | Validate a widget's definition and dependency graph     |
-| POST   | `/api/widgets/install`   | Install a widget from the marketplace                   |
-| POST   | `/api/widgets/uninstall` | Remove a marketplace-installed widget                   |
+| Feature | HTTP Endpoint | Local SDK Equivalent |
+| :--- | :--- | :--- |
+| **List All Widgets** | `GET /api/widgets/list` | `locals.cms.widgets.list` |
+| **Activate Widget** | `POST /api/widgets/status` | `locals.cms.widgets.activate` |
+| **Deactivate Widget** | `POST /api/widgets/status` | `locals.cms.widgets.deactivate` |
 
 ---
 
-## 1. Widget Discovery
+## 1. The Goal
+Discover available field types (widgets), enable or disable them for specific tenants, and ensure the system registry is in sync with the physical files on disk.
 
-Discovery endpoints allow the Admin Studio to map field types to their corresponding UI components and populate the Collection Builder.
+---
 
-### A. List All Widgets
+## 2. The Solution
 
-**Endpoint**: `GET /api/widgets/list`
-
-Returns every widget registered in the system — both core and custom. Results respect the current tenant's configuration.
-
-**Response Excerpt**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "widgets": [
-      {
-        "name": "Text",
-        "icon": "mdi:text",
-        "isCore": true,
-        "isActive": true,
-        "pillar": {
-          "definition": { "name": "Text", "guiSchema": 5 },
-          "input": { "exists": true, "componentPath": "/widgets/text/Input.svelte" },
-          "display": { "exists": true, "componentPath": "/widgets/text/Display.svelte" }
-        }
-      }
-    ]
-  }
-}
-```
-
-### B. Get Active Widgets
+### Discovering Field Types
+To see which widgets are available for building a new collection.
 
 **Endpoint**: `GET /api/widgets/active`
-
-Returns only widgets that are currently **enabled** for the authenticated tenant. This is the endpoint used to populate the "Field Type" dropdown in the Collection Builder.
-
-### C. List Installed (Custom) Widgets
-
-**Endpoint**: `GET /api/widgets/installed`
-
-Returns only non-core, user-installed widgets. Useful for marketplace management, update checks, and display of installed extensions.
-
-### D. List Required Widgets
-
-**Endpoint**: `GET /api/widgets/required`
-
-Returns the set of system-critical widgets that are always active and cannot be toggled or uninstalled. These include foundational field types the CMS engine depends on internally.
-
----
-
-## 2. Lifecycle Management
-
-Widgets are not just static files — they have an operational state maintained in the database that controls availability per tenant.
-
-### A. Sync Registry
-
-**Endpoint**: `POST /api/widgets/sync`
-
-Forces the CMS to scan the `/src/widgets` directory and update the database registry to match what's on disk. Run this after manually adding a new widget folder or updating an `index.ts` definition file.
-
 **Response**:
-
 ```json
 {
   "success": true,
   "data": {
-    "discovered": 24,
-    "added": 1,
-    "removed": 0,
-    "unchanged": 23
+    "widgets": [{ "name": "Text", "icon": "mdi:text", "isCore": true }]
   }
 }
 ```
 
-### B. Toggle Status
+### Local SDK (Recommended for Setup Scripts)
+Use the Local SDK to programmatically enable custom widgets during tenant provisioning.
 
-**Endpoint**: `POST /api/widgets/status`
-
-**Payload**:
-
-```json
-{
-  "widgetName": "myCustomWidget",
-  "isActive": true
-}
+```typescript
+// Enable a specialized SEO widget for a new tenant
+await locals.cms.widgets.activate("seoAnalyzer");
 ```
+
+---
+
+## 3. The Mechanics
+
+SveltyCMS widgets are registered in a **Singleton Runtime Store** that bridges the gap between the filesystem (`src/widgets/`) and the database configuration.
+
+```mermaid
+sequenceDiagram
+    participant Admin as Admin UI / SDK
+    participant API as Widget API
+    participant Store as Widget Store (Svelte State)
+    participant FS as Filesystem (src/widgets)
+    participant DB as Database (system_widgets)
+    
+    Admin->>API: POST /api/widgets/sync
+    API->>FS: Scan directories
+    FS-->>API: List of widget definitions
+    API->>DB: Upsert registry (isCore, path, name)
+    API->>Store: Refresh Runtime State
+    Store-->>Admin: Sync Success (n added, n removed)
+```
+
+### The 3-Pillar Requirement
+Every widget must provide three distinct "pillars" to be considered valid by the API:
+1. **Definition**: The JSON schema and metadata (`index.ts`).
+2. **Input**: The Svelte 5 component used for editing content.
+3. **Display**: The Svelte 5 component used for viewing content in tables/lists.
 
 > [!IMPORTANT]
-> **Core Widgets** (e.g., Text, Number, Relation) cannot be deactivated. Any attempt returns `403 FORBIDDEN` with a `CORE_WIDGET` error code. Use `GET /api/widgets/required` to check which widgets are protected before calling this endpoint.
-
-### C. Validate Widget
-
-**Endpoint**: `POST /api/widgets/validate`
-
-Checks a widget's definition against its dependency tree. If a widget requires another widget (e.g., `MediaUpload`) that is not installed or active, validation fails.
-
-**Response (failure example)**:
-
-```json
-{
-  "success": false,
-  "error": "Dependency not met",
-  "details": ["Widget 'MediaUpload' is required but not active."]
-}
-```
+> **Core Protection**: Foundation widgets (Text, Number, Relation, etc.) are marked as `isCore: true` and **cannot be deactivated**. Any attempt to disable a core widget via the API will return `403 FORBIDDEN`.
 
 ---
 
-## 3. Installation & Uninstallation
-
-These endpoints manage widgets sourced from the SveltyCMS marketplace.
-
-### A. Install Widget
-
-**Endpoint**: `POST /api/widgets/install`
-
-**Payload**:
-
-```json
-{
-  "widgetId": "marketplace-widget-slug",
-  "tenantId": "tenant_xyz"
-}
-```
-
-> [!WARNING]
-> **Current Status**: Marketplace widget installation is **scaffolded but not yet connected to the marketplace**. The endpoint validates permissions and performs a security scan (regex-based pattern matching for `eval`, `child_process`, `exec`, `spawn`, and `fs` module access), but the actual file download and registration flow is pending marketplace integration. The endpoint returns a mock success response in the current build.
-
-**Security Scan**: Before installation, the widget source code is checked for dangerous patterns:
-
-| Pattern              | Reason Blocked            |
-| :------------------- | :------------------------ |
-| `eval()`             | Arbitrary code execution  |
-| `child_process`      | OS-level process spawning |
-| `exec()` / `spawn()` | Shell command injection   |
-| `fs.*`               | Direct filesystem access  |
-
-> [!IMPORTANT]
-> The current scan is regex-based and can be bypassed by obfuscated code. A production-grade AST sandbox (e.g., QuickJS) is planned for the marketplace launch.
-
-**Permission**: Requires `api:widgets`. Only `super-admin` users may install widgets for a tenant other than their own.
-
-### B. Uninstall Widget
-
-**Endpoint**: `POST /api/widgets/uninstall`
-
-Removes a non-core, marketplace-installed widget from the current tenant's configuration.
-
-**Payload**:
-
-```json
-{ "widgetName": "myCustomWidget" }
-```
-
-Core widgets cannot be uninstalled. Attempting to do so returns `403 FORBIDDEN`.
-
----
-
-## 4. Security & Permissions
-
-### Required Permission
-
-All widget management operations require the `api:widgets` permission, checked via `hasPermissionWithRoles(user, "api:widgets", roles)`.
-
-### Required Headers
-
-```http
-Authorization: Bearer <token>
-```
-
-### Multi-Tenant Isolation
-
-| Widget Type             | Scope                                                                                                                                                          |
-| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Core Widgets**        | Shared across all tenants automatically.                                                                                                                       |
-| **Custom Widgets**      | Can be globally installed or scoped to a specific `tenantId`.                                                                                                  |
-| **Discovery Endpoints** | `GET /api/widgets/list` and `GET /api/widgets/active` respect the `tenantId` from the authenticated session, showing only what the tenant is permitted to use. |
-
----
-
-**Next Steps**: Learn how to build your own widgets in the [Widget Development Guide](../guides/development/widgets/index.mdx). For the widget architecture overview, see [Widget System Architecture](../architecture/widgets/architecture.mdx).
+## Related Documents
+- [Widget Development Guide](../guides/development/widgets/index.mdx)
+- [Collection API Reference](./collection-api.mdx)
+- [3-Pillar Architecture Overview](../architecture/widgets/architecture.mdx)

@@ -47,6 +47,16 @@ declare global {
           id: string,
           options?: any,
         ) => Promise<import("@src/databases/db-interface").DatabaseResult<void>>;
+
+        // Bulk Operations
+        bulkCreate: (collection: string, data: any[], options?: any) => Promise<any>;
+        bulkUpdate: (collection: string, updates: any[], options?: any) => Promise<any>;
+        bulkDelete: (collection: string, ids: string[], options?: any) => Promise<any>;
+
+        // Advanced Querying
+        queryBuilder: (collection: string, options?: any) => any;
+        transaction: (fn: any, options?: any) => Promise<any>;
+
         media: any;
         widgets: any;
         system: any;

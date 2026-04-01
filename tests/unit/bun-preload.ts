@@ -40,9 +40,7 @@ plugin({
         }
       }
 
-      // Svelte 5 SSR components are functions that take (result, props)
-      // and return a string or an object with body/head.
-      // Our tests expect a render(Component, { props }) function.
+      // our tests expect a render(Component, { props }) function.
 
       return {
         contents,
@@ -51,3 +49,23 @@ plugin({
     });
   },
 });
+
+// --- GLOBAL MOCKS FOR BUN:TEST ---
+import { vi } from "vitest";
+
+// Mock metrics-service
+const mockMetrics = {
+  recordMetric: vi.fn(),
+  incrementApiRequests: vi.fn(),
+  incrementApiErrors: vi.fn(),
+  recordResponseTime: vi.fn(),
+  recordHookExecutionTime: vi.fn(),
+  getReport: vi.fn().mockReturnValue({}),
+};
+
+vi.mock("@src/services/metrics-service", () => ({
+  metricsService: mockMetrics,
+}));
+
+// Also attach to globalThis for safety in some execution contexts
+(globalThis as any).metricsService = mockMetrics;

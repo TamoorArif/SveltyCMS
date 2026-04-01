@@ -41,7 +41,6 @@ import {
 	setContentStructure,
 	setMode,
 } from "@src/stores/collection-store.svelte.ts";
-import { publicEnv } from "@src/stores/global-settings.svelte.ts";
 import {
 	globalLoadingStore,
 	loadingOperations,
@@ -61,7 +60,7 @@ import CommandBar from "@src/components/command-bar.svelte";
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from "$app/navigation";
 import { page } from "$app/state";
-import type { ContentNode, Schema } from "../../content/types";
+import type { Schema, NavigationNode } from "../../content/types";
 import { setContentContext } from "@src/content";
 import { contentManager } from "@src/content";
 
@@ -70,14 +69,14 @@ import { contentManager } from "@src/content";
 // =============================================
 
 interface LayoutData {
-	contentNodes: any[];
-	navigationStructure: NavigationNode[];
-	firstCollection?: Schema | null;
+	contentStructure: Promise<NavigationNode[]>;
+	firstCollection: Promise<Schema | null>;
 	settings: Record<string, any>;
 	user: User | null;
 	tenantId?: string | null;
 	darkMode: boolean;
 	nonce: string;
+	theme: import("@src/databases/db-interface").Theme;
 }
 
 interface Props {
@@ -102,8 +101,8 @@ let loadError = $state<Error | null>(null);
 // =============================================
 
 // seoDescription logic
-const siteName = data.settings?.siteName || "SveltyCMS";
-const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`;
+const siteName = $derived(data.settings?.siteName || "SveltyCMS");
+const seoDescription = $derived(`${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`);
 
 // =============================================
 // REACTIVE EFFECTS
@@ -135,18 +134,26 @@ $effect(() => {
 	};
 
 	// Handle the nodes from server data
-	if (Array.isArray(data.contentNodes)) {
-		defer(() => {
-			setContentStructure(data.contentNodes);
-			// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
-			contentManager.sync(data.contentNodes);
-			globalLoadingStore.stopLoading(loadingOperations.initialization);
+	if (data.contentStructure) {
+		data.contentStructure.then((nodes) => {
+			if (Array.isArray(nodes)) {
+				defer(() => {
+					setContentStructure(nodes as any);
+					// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
+					contentManager.sync(nodes as any);
+					globalLoadingStore.stopLoading(loadingOperations.initialization);
+				});
+			}
 		});
 	}
 
 	// Hydrate first collection if available and no collection is currently set
 	if (data.firstCollection) {
-		defer(() => setCollection(data.firstCollection));
+		data.firstCollection.then((collection) => {
+			if (collection) {
+				defer(() => setCollection(collection));
+			}
+		});
 	}
 });
 

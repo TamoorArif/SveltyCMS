@@ -82,4 +82,19 @@ export class CacheModule {
       }
     }, "CACHE_INVALIDATE_CATEGORY_FAILED");
   }
+
+  async getVersion(tenantId?: string | null): Promise<DatabaseResult<number>> {
+    const { cacheService } = await import("@src/databases/cache/cache-service");
+    const version = await cacheService.get<number>(`system:content_version`, tenantId);
+    return { success: true, data: version || 0 };
+  }
+
+  async incrementVersion(tenantId?: string | null): Promise<DatabaseResult<number>> {
+    const { cacheService } = await import("@src/databases/cache/cache-service");
+    const key = `system:content_version`;
+    const current = (await cacheService.get<number>(key, tenantId)) || 0;
+    const next = current + 1;
+    await cacheService.set(key, next, 0, tenantId);
+    return { success: true, data: next };
+  }
 }

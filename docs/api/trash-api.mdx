@@ -1,12 +1,12 @@
 ---
 path: "docs/api/trash-api.mdx"
-title: "Trash & Soft Delete API"
-description: "API reference for the SveltyCMS Trash system — list, restore, and permanently delete soft-deleted content entries."
+title: "Trash & Recovery API Reference"
+description: "API reference for the SveltyCMS soft-delete system — listing, restoring, and permanently purging content entries."
 order: 16
 icon: "mdi:trash-can-outline"
 author: "SveltyCMS Team"
 created: "2026-03-18"
-updated: "2026-03-27"
+updated: "2026-04-01"
 tags:
   - "api"
   - "trash"
@@ -14,97 +14,86 @@ tags:
   - "recovery"
 ---
 
-# Trash & Soft Delete API
+# Trash & Recovery API Reference
 
-SveltyCMS implements a **Native Soft Delete** system. By default, when an entry is deleted via the API or GUI, it is moved to the **Trash** rather than being permanently removed from the database.
-
-## 🗑️ How Soft Delete Works
-
-### Mangle-on-Delete
-
-To prevent **Unique Index Collisions** (e.g., trying to create a new post with the same slug as a deleted one), SveltyCMS automatically mangles unique fields upon deletion.
-
-- **Original**: `my-awesome-post`
-- **Trashed**: `my-awesome-post_DELETED_1710793389`
-
-### Global Query Filtering
-
-The `safeQuery` middleware automatically filters out trashed items from all standard CMS queries. Trashed items are only visible when explicitly requested via the `includeDeleted` option in the database adapter.
+SveltyCMS implements a **Native Soft Delete** system. By default, content is moved to a "Trash" state rather than being permanently removed, allowing for accidental deletion recovery while maintaining database integrity.
 
 ---
 
-## 🚀 Quick Reference
+## ⚡ Quick Start
 
-| Method | Endpoint                                         | Description                                    |
-| :----- | :----------------------------------------------- | :--------------------------------------------- |
-| GET    | `/api/trash`                                     | List all soft-deleted items across collections |
-| POST   | `/api/trash` (body: `restore` action)            | Restore a soft-deleted item                    |
-| DELETE | `/api/collections/[id]/[entryId]?permanent=true` | Permanently delete (skip trash)                |
+| Feature | HTTP Endpoint | Local SDK Equivalent |
+| :--- | :--- | :--- |
+| **Soft Delete** | `DELETE /api/collections/[id]/[entry]` | `locals.cms.delete(id, entry)` |
+| **Restore** | `POST /api/trash/restore` | `locals.cms.collections.update(id, entry, { isDeleted: false })` |
+| **Hard Delete** | `DELETE ...?permanent=true` | `locals.cms.delete(id, entry, { permanent: true })` |
 
 ---
 
-## 📡 Endpoints
+## 1. The Goal
+Safely remove content from public view without data loss, or recover previously deleted items to their active state.
 
-### 1. List Trashed Items
+---
 
-**Endpoint**: `GET /api/trash`
+## 2. The Solution
 
-Lists soft-deleted items across all collections for the current tenant, sorted by deletion date (newest first). The endpoint queries each collection in sequence and filters for items where `isDeleted === true`.
+### Soft Deleting Content
+By default, all delete operations are "soft."
 
-**Query Parameters**:
+**Endpoint**: `DELETE /api/collections/posts/123`
+**Mechanics**: Sets `isDeleted: true` and appends a `_DELETED_[timestamp]` suffix to unique fields (like slugs) to prevent index collisions.
 
-| Parameter | Type     | Default | Description                                                                              |
-| :-------- | :------- | :------ | :--------------------------------------------------------------------------------------- |
-| `limit`   | `number` | `50`    | Maximum number of results **per collection**. Keep this value small for large instances. |
-
-**Response**:
-
+### Restoring from Trash
+**Endpoint**: `POST /api/trash/restore`
+**Payload**:
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "_id": "65f...",
-      "collectionId": "Posts",
-      "collectionName": "Blog Posts",
-      "title": "Old Post",
-      "deletedAt": "2026-03-18T10:00:00Z",
-      "deletedBy": "user_123"
-    }
-  ]
+  "collectionId": "posts",
+  "entryId": "123"
 }
 ```
 
-### 2. Restore an Item
+### Local SDK (Permanent Purge)
+To bypass the trash and remove data forever (e.g., for GDPR compliance).
 
-**POST** `/api/trash/restore`
-
-Restores a specific item from the trash, de-mangling its unique fields and restoring its active status.
-
-**Body**:
-
-```json
-{
-  "collectionId": "Posts",
-  "entryId": "65f..."
-}
+```typescript
+await locals.cms.delete("posts", "123", { permanent: true });
 ```
-
-> [!NOTE]
-> **Collision Handling**: If restoring an item would cause a unique-index collision (e.g., another active entry now uses the same slug), the API returns `409 Conflict`. The mangled suffix (e.g., `_DELETED_1710793389`) must be manually resolved before retrying.
-
-### 3. Permanent Deletion
-
-To hard-delete an item without sending it to the trash, pass `?permanent=true` on the standard collection delete endpoint.
-
-**Endpoint**: `DELETE /api/collections/[collectionId]/[entryId]?permanent=true`
-
-> [!CAUTION]
-> This action is irreversible. The entry and all its revision history will be permanently removed from the database.
 
 ---
 
-## 🛡️ Security
+## 3. The Mechanics
 
-- **Tenant Isolation**: Users can only view or restore items within their own tenant.
-- **Permissions**: Requires `content:delete` permission for the target collection.
+The Trash system uses a **Filter-at-Source** pattern to ensure deleted content never leaks into public queries.
+
+```mermaid
+graph TD
+    A[Delete Request] --> B{Permanent?}
+    B -- Yes --> C[Hard Delete from DB]
+    B -- No --> D[Soft Delete]
+    
+    D --> E[isDeleted = true]
+    E --> F[Mangle Unique Fields]
+    F --> G[Invalidate Cache]
+    
+    subgraph "Query Layer"
+    H[findMany / Search] --> I{Include Deleted?}
+    I -- No (Default) --> J[Filter: {isDeleted: false}]
+    I -- Yes --> K[Return All]
+    end
+```
+
+### Unique Field Mangling
+To prevent "Slug Collisions" (where a new post wants a slug used by a deleted one), SveltyCMS mangles unique fields:
+- **Active**: `my-post`
+- **Trashed**: `my-post_DELETED_1710793389`
+
+> [!WARNING]
+> **Restore Collisions**: If you attempt to restore an item but a new active item already exists with the same unique value (e.g., same slug), the restore will fail with `409 CONFLICT`. You must rename one of the items before restoring.
+
+---
+
+## Related Documents
+- [Collection API Reference](./collection-api.mdx)
+- [Audit Log System](../architecture/admin-user-management.mdx)
+- [Database Adapter Architecture](../architecture/database/database-methods.mdx)

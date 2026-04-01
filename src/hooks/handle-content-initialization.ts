@@ -45,13 +45,26 @@ export const handleContentInitialization: Handle = async ({ event, resolve }) =>
   // FRESH INSTALL: If no collections exist, redirect authenticated users to builder or dashboard
   if (locals.user) {
     const pathname = url.pathname;
-    const isApi = pathname.startsWith("/api");
-    const isConfig = pathname.startsWith("/config");
-    const isUser = pathname.startsWith("/user");
-    const isDashboard = pathname.startsWith("/dashboard");
-    const isLogin = pathname.includes("/login");
+    // Enhanced whitelist check that handles both unlocalized and localized paths
+    const isWhitelisted = (path: string) => {
+      // Check unlocalized
+      if (
+        path.startsWith("/api") ||
+        path.startsWith("/config") ||
+        path.startsWith("/user") ||
+        path.startsWith("/dashboard") ||
+        path.startsWith("/mediagallery") ||
+        path.includes("/login")
+      ) {
+        return true;
+      }
+      // Check localized versions (e.g. /en/mediagallery)
+      return /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/(api|config|user|dashboard|mediagallery|login)/.test(
+        path,
+      );
+    };
 
-    if (!isApi && !isConfig && !isUser && !isDashboard && !isLogin) {
+    if (!isWhitelisted(pathname)) {
       const collections = contentManager.getCollections(tenantId);
       if (collections.length === 0) {
         // Admins go to collection builder, others to dashboard

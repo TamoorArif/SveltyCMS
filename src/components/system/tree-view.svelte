@@ -72,7 +72,6 @@ export interface TreeNode {
 		compact?: boolean;
 		dir?: 'ltr' | 'rtl' | 'auto';
 		iconColorClass?: string;
-		k?: any;
 		nodes: TreeNode[];
 		onExpand?: ((node: TreeNode) => void) | null;
 		onHover?: ((node: TreeNode) => void) | null;
@@ -218,13 +217,13 @@ export interface TreeNode {
 		const nodeData = nodeMap.get(node.id);
 
 		if (direction === expandKey) {
-			if (node.children && !isNodeExpanded(node.id)) {
+			if (node.children && !isNodeExpanded(node)) {
 				toggleNode(node);
-			} else if (node.children && isNodeExpanded(node.id)) {
+			} else if (node.children && isNodeExpanded(node)) {
 				focusNextNode(node.id);
 			}
 		} else if (direction === collapseKey) {
-			if (node.children && isNodeExpanded(node.id)) {
+			if (node.children && isNodeExpanded(node)) {
 				toggleNode(node);
 			} else if (nodeData?.parentId) {
 				focusNodeById(nodeData.parentId);
@@ -239,7 +238,7 @@ export interface TreeNode {
 		function traverse(nodesToTraverse: TreeNode[]) {
 			nodesToTraverse.forEach((n) => {
 				visible.push(n.id);
-				if (n.children && isNodeExpanded(n.id)) {
+				if (n.children && isNodeExpanded(n)) {
 					traverse(n.children);
 				}
 			});
@@ -523,7 +522,6 @@ export interface TreeNode {
 					{#if node.isExpanded}
 						<div transition:fly|local={{ y: -10, duration: transitionDuration }}>
 							<TreeView
-								{k}
 								nodes={node.children}
 								{selectedId}
 								ariaLabel={`Children of ${node.name}`}

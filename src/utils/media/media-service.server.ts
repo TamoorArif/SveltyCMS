@@ -260,8 +260,8 @@ export class MediaService {
 
     // --- ENHANCED MIME TYPE & EXTENSION DETECTION ---
     try {
-      const { sniff } = await import("@src/utils/native-utils");
-      const detectedType = sniff(buffer);
+      const { sniffMimeType } = await import("@src/utils/media/slim-sniffer.server");
+      const detectedType = sniffMimeType(buffer);
       if (detectedType) {
         logger.debug("Detected file type from buffer (native):", detectedType);
         // Override if it was generic or unknown, or if we trust binary inspection more

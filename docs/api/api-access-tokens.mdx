@@ -1,239 +1,108 @@
 ---
 path: "docs/api/api-access-tokens.mdx"
-title: "API & Invitation Tokens"
-description: "Reference for managing API access tokens and user invitation tokens — listing, creating, and batch-deleting tokens with multi-tenant isolation."
+title: "Invitation Tokens API Reference"
+description: "Reference for managing user invitation tokens — onboarding new team members with pre-assigned roles and automated emails."
 order: 12
+icon: "mdi:key-chain"
 author: "SveltyCMS Team"
 created: "2025-12-16"
-updated: "2026-03-27"
-icon: "mdi:key-chain"
+updated: "2026-04-01"
 tags:
   - "api"
-  - "security"
   - "tokens"
   - "invitations"
-  - "multi-tenancy"
+  - "onboarding"
 ---
 
-# API & Invitation Tokens
+# Invitation Tokens API Reference
 
-SveltyCMS uses two distinct token mechanisms for programmatic access:
-
-1. **Invitation Tokens** — Time-limited, single-use tokens for onboarding new users via email.
-2. **Website / API Tokens** — Long-lived tokens for headless frontends and CI/CD pipelines.
-
-> [!NOTE]
-> Invitation tokens are tied to an **email** and a **role**. They are not the same as session cookies — they provide a one-time registration link, not ongoing API access. For ongoing API access, use API tokens configured in **Settings > Access Management**.
+Invitation tokens are single-use, time-limited keys used to onboard new users to SveltyCMS. They allow administrators to pre-assign roles and deliver secure registration links via email.
 
 ---
 
-## 👥 Choose Your Path
+## ⚡ Quick Reference
 
-- 📋 **[List Tokens](#1-list-tokens)** — Paginated, searchable token registry.
-- ✉️ **[Create Invitation Token](#2-create-invitation-token)** — Send a timed invite link to a new team member.
-- 🗂️ **[Manage a Single Token](#3-single-token-management)** — View or delete a specific token by ID.
-- 📦 **[Batch Operations](#4-batch-token-operations)** — Bulk-delete stale tokens.
-- 🔒 **[Auth Middleware](#5-how-tokens-are-validated)** — How `handleTokenResolution` works at request time.
-
----
-
-## 🚀 Quick Reference
-
-| Method | Endpoint                  | Permission     | Description                                  |
-| :----- | :------------------------ | :------------- | :------------------------------------------- |
-| GET    | `/api/token`              | `manage_users` | List all invitation tokens (paginated)       |
-| POST   | `/api/token/create-token` | `manage_users` | Create an invitation token and send an email |
-| GET    | `/api/token/[tokenID]`    | `manage_users` | Retrieve a single token by its ID            |
-| DELETE | `/api/token/[tokenID]`    | `manage_users` | Delete a specific token                      |
-| POST   | `/api/token/batch`        | `manage_users` | Bulk-delete multiple tokens                  |
+| Feature | HTTP Endpoint | Local SDK Equivalent |
+| :--- | :--- | :--- |
+| **Create Invite** | `POST /api/token/create-token` | `locals.cms.auth.createToken` |
+| **List Invites** | `GET /api/token` | `locals.cms.auth.listTokens` |
+| **Revoke Invite** | `DELETE /api/token/[id]` | `locals.cms.auth.revokeToken` |
 
 ---
 
-## 1. List Tokens
+## 1. The Goal
+Invite a new team member to join a specific tenant with a predefined role (e.g., Editor) while ensuring they set their own secure password during registration.
 
+---
+
+## 2. The Solution
+
+### Sending an Invite (Local SDK)
+Ideal for automated provisioning or custom admin tools.
+
+```typescript
+const invite = await locals.cms.auth.createToken({
+  email: "newhire@company.com",
+  role: "editor",
+  expiresIn: "2 days"
+});
+
+// The link sent in the email will be:
+// https://cms.com/login?invite_token=${invite.value}
+```
+
+### Listing Active Invites
 **Endpoint**: `GET /api/token`
-
-Returns a paginated, searchable list of invitation tokens for the current tenant.
-
-### Query Parameters
-
-| Parameter | Type        | Default     | Description                                            |
-| :-------- | :---------- | :---------- | :----------------------------------------------------- |
-| `page`    | `number`    | `1`         | Current page.                                          |
-| `limit`   | `number`    | `10`        | Results per page.                                      |
-| `sort`    | `string`    | `createdAt` | Field to sort by (e.g., `expires`, `email`).           |
-| `order`   | `asc\|desc` | `desc`      | Sort direction.                                        |
-| `search`  | `string`    | `""`        | Case-insensitive match against `email` or token value. |
-
-### Response Shape
-
+**Response**:
 ```json
 {
   "success": true,
   "data": [
-    {
-      "_id": "token_abc123",
-      "email": "newuser@example.com",
-      "type": "invite",
-      "expires": "2026-04-03T09:00:00.000Z",
-      "tenantId": "tenant_xyz"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "totalItems": 4,
-    "totalPages": 1
-  }
+    { "email": "test@test.com", "role": "user", "expires": "2026-04-03T..." }
+  ]
 }
 ```
 
 ---
 
-## 2. Create Invitation Token
+## 3. The Mechanics
 
-**Endpoint**: `POST /api/token/create-token`
-
-Creates an invitation token for a new user and sends them a registration link via email.
-
-### Payload
-
-```json
-{
-  "email": "neweditor@example.com",
-  "role": "editor",
-  "expiresIn": "2 days"
-}
-```
-
-| Field       | Type     | Required | Description                                                 |
-| :---------- | :------- | :------- | :---------------------------------------------------------- |
-| `email`     | `string` | ✅       | The invitee's email address.                                |
-| `role`      | `string` | ✅       | Role ID to grant on registration (e.g., `editor`, `admin`). |
-| `expiresIn` | `string` | ✅       | Token validity window (see table below).                    |
-
-### Valid `expiresIn` Values
-
-| Value       | Expiry   |
-| :---------- | :------- |
-| `"2 hrs"`   | 2 hours  |
-| `"12 hrs"`  | 12 hours |
-| `"2 days"`  | 2 days   |
-| `"1 week"`  | 7 days   |
-| `"2 weeks"` | 14 days  |
-| `"1 month"` | 30 days  |
-
-> [!IMPORTANT]
-> Only one invitation token may exist per email address within a tenant. Attempting to create a second one returns `409 TOKEN_EXISTS`. Delete the existing token first, then re-invite.
-
-### Pre-flight Checks
-
-Before creating the token, the endpoint verifies:
-
-1. No existing **user** account has this email in the current tenant (`409 USER_EXISTS` if so).
-2. No existing **token** already targets this email (`409 TOKEN_EXISTS` if so).
-3. The `role` value corresponds to a valid system role.
-
-### Response
-
-**Success (SMTP configured)**:
-
-```json
-{
-  "success": true,
-  "message": "Token created and email sent successfully.",
-  "token": { "value": "<token>", "expires": "2026-04-03T..." },
-  "email_sent": true
-}
-```
-
-**Success (SMTP not configured — token preserved for manual delivery)**:
-
-```json
-{
-  "success": true,
-  "message": "Token created; email not sent - SMTP not configured.",
-  "token": { "value": "<token>", "expires": "2026-04-03T..." },
-  "email_sent": false,
-  "smtp_not_configured": true
-}
-```
-
-> [!TIP]
-> Even when email delivery fails or SMTP is not configured, the token is **preserved** in the database. Admins can retrieve the `token.value` from this response and deliver the link manually: `<origin>/login?invite_token=<token>`.
-
----
-
-## 3. Single Token Management
-
-### Get Token
-
-**Endpoint**: `GET /api/token/[tokenID]`
-
-Fetches the details of a specific token by its database ID. Useful for checking expiry status before resending an invite.
-
-### Delete Token
-
-**Endpoint**: `DELETE /api/token/[tokenID]`
-
-Immediately invalidates the token. The invitation link becomes unusable. The user record is not affected (if they already registered before deletion).
-
----
-
-## 4. Batch Token Operations
-
-**Endpoint**: `POST /api/token/batch`
-
-Bulk-delete multiple expired or redundant tokens.
-
-**Payload**:
-
-```json
-{
-  "tokenIds": ["token_id_1", "token_id_2"],
-  "action": "delete"
-}
-```
-
----
-
-## 5. How Tokens Are Validated
-
-API and invitation tokens pass through the `handleTokenResolution` middleware on every authenticated request:
+The invitation flow ensures that user identities are verified via email before an account is fully activated.
 
 ```mermaid
-flowchart LR
-    A([Request]) --> B[Extract Bearer Token\nfrom Authorization header]
-    B --> C{Token in DB\nfor this tenant?}
-    C -- No --> D([401 Unauthorized])
-    C -- Yes --> E{Token expired?}
-    E -- Yes --> F([401 Unauthorized])
-    E -- No --> G[Hydrate locals.user\nwith Token User + Role]
-    G --> H([Request proceeds\nwith role-scoped permissions])
+sequenceDiagram
+    participant Admin
+    participant API as Token API
+    participant Mail as Email Service
+    participant User
+    participant Auth as handleAuthentication
+    
+    Admin->>API: Create Invite (email, role)
+    API->>API: Generate Hashed Token
+    API->>Mail: Send Link with Raw Token
+    Mail-->>User: Email Notification
+    
+    User->>Auth: Clicks link (/login?invite_token=...)
+    Auth->>Auth: Validate Token & Expiry
+    Auth-->>User: Show Registration Form
+    
+    User->>Auth: Submit Password
+    Auth->>Auth: Create User + Consume Token
+    Auth-->>User: Session Established
 ```
 
-### Security Properties
+### Expiration Policies
+Tokens must have an explicit expiration window. The following strings are supported:
+- `2 hrs`, `12 hrs`
+- `2 days`, `1 week`
+- `2 weeks`, `1 month`
 
-| Property              | Detail                                                                    |
-| :-------------------- | :------------------------------------------------------------------------ |
-| **Storage**           | SHA-256 hashed in the database. Raw value is never stored.                |
-| **Tenant Isolation**  | A token from Tenant A is mathematically invalid for Tenant B.             |
-| **Audit Logging**     | Every request authenticated via token is logged with its unique token ID. |
-| **Replay Protection** | Nonce-based validation prevents replay attacks on sensitive operations.   |
-
----
-
-## Troubleshooting
-
-| Error                | HTTP | Meaning                                                          |
-| :------------------- | :--- | :--------------------------------------------------------------- |
-| `TOKEN_EXISTS`       | 409  | An invite for this email already exists. Delete it first.        |
-| `USER_EXISTS`        | 409  | A user account with this email already exists in the tenant.     |
-| `INVALID_ROLE`       | 400  | The `role` field does not match a valid system role ID.          |
-| `INVALID_EXPIRATION` | 400  | The `expiresIn` value is not one of the six allowed strings.     |
-| Unauthorized         | 401  | Token is expired, missing, or invalid for this tenant.           |
-| Forbidden            | 403  | Token is valid but lacks permissions for the requested resource. |
+> [!IMPORTANT]
+> **One-per-Email**: SveltyCMS enforces a strict policy of one active invitation per email address. Attempting to create a second invite for the same email will return `409 CONFLICT`.
 
 ---
 
-**Next Steps**: For long-lived website/API tokens, see **Settings > Access Management** in the Admin Studio. For understanding the full auth flow, see the [User Management API](./user-management-api.mdx).
+## Related Documents
+- [User Management API Reference](./user-management-api.mdx)
+- [Programmatic API Tokens Reference](./user-token-management-api.mdx)
+- [Email System Configuration](../guides/development/email-system.mdx)

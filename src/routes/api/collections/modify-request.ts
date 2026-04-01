@@ -112,50 +112,54 @@ export async function modifyRequest({
           logger.error(`Batch widget error for field ${fieldName}: ${errorMessage}`);
         }
       } else if (modifyFn && typeof modifyFn === "function") {
-        // --- INDIVIDUAL PROCESSING ---
-        const processedItems = await Promise.all(
-          data.map(async (entry: EntryData) => {
-            try {
-              const entryCopy = { ...entry };
-              const dataAccessor: DataAccessor<unknown> = {
-                get() {
-                  return entryCopy[fieldName];
-                },
-                update(newData: unknown) {
-                  entryCopy[fieldName] = newData;
-                },
-              };
+        // --- CHUNKED INDIVIDUAL PROCESSING (Vectorized Optimization) ---
+        const chunkSize = 100; // Process 100 items at a time to keep event loop responsive
+        const processedItems: EntryData[] = [];
 
+        for (let i = 0; i < data.length; i += chunkSize) {
+          const chunk = data.slice(i, i + chunkSize);
+          const processedChunk = await Promise.all(
+            chunk.map(async (entry: EntryData) => {
               try {
-                await modifyFn({
-                  collection,
-                  field,
-                  data: dataAccessor,
-                  user,
-                  type,
-                  tenantId,
-                  collectionName,
-                });
-              } catch (widgetError) {
-                const errorMessage =
-                  widgetError instanceof Error ? widgetError.message : "Unknown widget error";
-                const errorStack = widgetError instanceof Error ? widgetError.stack : "";
-                logger.error(`Widget error for field ${fieldName}: ${errorMessage}`, {
-                  stack: errorStack,
-                });
-              }
+                const entryCopy = { ...entry };
+                const dataAccessor: DataAccessor<unknown> = {
+                  get() {
+                    return entryCopy[fieldName];
+                  },
+                  update(newData: unknown) {
+                    entryCopy[fieldName] = newData;
+                  },
+                };
 
-              return entryCopy;
-            } catch (error) {
-              const errorMessage = error instanceof Error ? error.message : "Unknown error";
-              const errorStack = error instanceof Error ? error.stack : "";
-              logger.error(`Error processing entry: ${errorMessage}`, {
-                stack: errorStack,
-              });
-              return entry;
-            }
-          }),
-        );
+                try {
+                  await modifyFn({
+                    collection,
+                    field,
+                    data: dataAccessor,
+                    user,
+                    type,
+                    tenantId,
+                    collectionName,
+                  });
+                } catch (widgetError) {
+                  const errorMessage =
+                    widgetError instanceof Error ? widgetError.message : "Unknown widget error";
+                  logger.error(`Widget error for field ${fieldName}: ${errorMessage}`);
+                }
+
+                return entryCopy;
+              } catch {
+                return entry;
+              }
+            }),
+          );
+          processedItems.push(...processedChunk);
+
+          // Yield to event loop if processing large data
+          if (data.length > 500) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+        }
 
         // Update the original array elements to ensure changes are returned
         for (let i = 0; i < data.length; i++) {

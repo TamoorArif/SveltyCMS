@@ -554,6 +554,17 @@ export class MongoDBAdapter implements IDBAdapter {
           cacheService
             .clearByPattern(`*:${category}:*`, tenantId || "*")
             .then(() => ({ success: true, data: undefined })),
+        getVersion: async (tenantId?: string | null) => {
+          const version = await cacheService.get(`system:content_version`, tenantId);
+          return { success: true, data: (version as number) || 0 };
+        },
+        incrementVersion: async (tenantId?: string | null) => {
+          const key = `system:content_version`;
+          const current = ((await cacheService.get(key, tenantId)) as number) || 0;
+          const next = current + 1;
+          await cacheService.set(key, next, 0, tenantId); // 0 = no TTL
+          return { success: true, data: next };
+        },
       },
       performance: {
         getMetrics: () => Promise.resolve({ success: true, data: {} as PerformanceMetrics }),

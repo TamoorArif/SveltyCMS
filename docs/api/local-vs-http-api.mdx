@@ -1,7 +1,7 @@
 ---
 path: "docs/api/local-vs-http-api.mdx"
 title: "Local SDK vs HTTP/GraphQL API"
-description: "When to use the high-performance internal Local SDK versus the external REST/GraphQL API in SveltyCMS."
+description: "Choose between the high-performance internal Local SDK and the external REST/GraphQL API in SveltyCMS."
 order: 10
 icon: "mdi:lightning-bolt"
 author: "SveltyCMS Team"
@@ -17,92 +17,128 @@ tags:
 
 # Local SDK vs HTTP/GraphQL API
 
-SveltyCMS provides two complementary ways to interact with content:
+SveltyCMS offers two ways to interact with content:
 
-- **External HTTP / GraphQL API** — Secure, public-facing, full middleware stack.
-- **Internal Local SDK** — Zero-overhead, server-side only, for maximum performance.
+- **External HTTP / GraphQL API** — The secure, public-facing interface with the full middleware stack (auth, rate limiting, CORS, etc.).
+- **Internal Local SDK** — A zero-overhead, server-side-only API for maximum performance in your SvelteKit backend code.
+
+**Recommendation**: In all server-side code (`+page.server.ts`, actions, hooks, etc.), **prefer the Local SDK** unless you have a specific reason to test the full HTTP stack.
 
 ```mermaid
-graph TD
-    Client[Client Browser]
-    Server[SvelteKit Server]
-    
-    subgraph "External Access"
-        Client -->|Fetch/GraphQL| API[HTTP/GraphQL API]
-        API -->|Middleware/Auth| CMS_Core[CMS Core Logic]
+graph TB
+    subgraph Client["Client Tier (Slowest)"]
+        CB[Browser / App]
     end
-    
-    subgraph "Internal Access (High Performance)"
-        Server -->|Direct Call| LocalCMS[Local SDK]
-        LocalCMS -->|Zero Overhead| CMS_Core
+
+    subgraph Network["Network Tier (Medium)"]
+        HTTP[HTTP / GraphQL / REST]
+        Auth[Auth / JWT / CORS]
+        Firewall[WAF / Rate Limit]
     end
-    
-    CMS_Core --> DB[(Database)]
-    CMS_Core --> Cache[Cache System]
+
+    subgraph Server["Server Tier (Fastest)"]
+        direction TB
+        subgraph Logic["CMS Core Logic"]
+            MC[modifyRequest]
+            VB[Valibot Validation]
+            CH[Cache Hooks]
+            EB[Event Bus]
+        end
+        
+        subgraph API["Access Layers"]
+            EX[External API Handler]
+            SDK[Local SDK / cms.ts]
+        end
+    end
+
+    subgraph Data["Data Tier"]
+        DB[(Database)]
+        RD[(Redis Cache)]
+    end
+
+    %% External Flow
+    CB -->|150ms+| HTTP
+    HTTP --> Auth
+    Auth --> Firewall
+    Firewall -->|JSON Parsed| EX
+    EX --> Logic
+
+    %% Internal Flow
+    Server_Load[+page.server.ts / Actions] -->|0.1ms| SDK
+    SDK -->|Native Calls| Logic
+
+    %% Core to Data
+    Logic --> DB
+    Logic --> RD
+
+    style SDK fill:#4ade80,stroke:#166534,stroke-width:2px,color:#000
+    style Logic fill:#fef08a,stroke:#854d0e,stroke-width:2px,color:#000
+    style Network fill:#fecaca,stroke:#991b1b,stroke-dasharray: 5 5,color:#000
 ```
 
 ---
 
-## When to Use Which API
+## When to Use Which
 
-| Context                                         | Recommended API    | Typical Latency | Reason                             |
-| ----------------------------------------------- | ------------------ | --------------- | ---------------------------------- |
-| Client-side (`.svelte` files)                   | **HTTP / GraphQL** | 50–150 ms       | Runs in browser, needs auth & CORS |
-| Server-side (`+page.server.ts`, actions, hooks) | **Local SDK**      | **0–5 ms**      | Direct function calls, no overhead |
-| Plugin hooks, background jobs                   | **Local SDK**      | **0–5 ms**      | Native execution, full security    |
-| External tools / third-party                    | **HTTP / GraphQL** | 80–300+ ms      | Requires API keys / JWT            |
+| Context | Recommended | Latency | Reason |
+| :--- | :--- | :--- | :--- |
+| **Client-side** (`.svelte`, `+page.ts`) | **HTTP / GraphQL** | 50–150 ms | Browser environment; requires auth, CORS, and network. |
+| **Server-side** (`.server.ts`, actions) | **Local SDK** | **0–5 ms** | Direct function calls; zero serialization or network overhead. |
+| **Plugins / Background Jobs** | **Local SDK** | **0–5 ms** | Full access to core logic and security context. |
+| **External / Third-party** | **HTTP / GraphQL** | 80–300+ ms | Needs API keys / JWT; works across network boundaries. |
 
 > [!TIP]
-> **Rule of thumb**: If your code runs in a file ending with `.server.ts`, **always use** `LocalCMS`. Only use `fetch()` when calling external services. Local calls bypass HTTP-only middleware like **rate limiting**, **firewalls**, and **JSON serialization**, offering near-zero overhead.
+> **Rule of thumb**: If your code runs server-side (files ending in `.server.ts` or inside `+server.ts` routes), use the Local SDK.
+> Only use `fetch('/api/...')` when you need to:
+> - Call an external service
+> - Intentionally test the full middleware stack (auth, rate limiting, logging)
+> - Communicate between separate SvelteKit instances
 
 ---
 
 ## Why the Local SDK Exists
 
-The Local SDK (`src/routes/api/cms.ts`) provides a high-performance facade over the system. It:
+The Local SDK (`src/routes/api/cms.ts` or injected via `locals.cms`) is a high-performance facade that:
 
-- **Bypasses HTTP Overhead**: No network stack, no parsing, no serialization.
-- **Bypasses HTTP Security**: Since it's internal, it skips rate-limiting and web firewalls.
-- **Calls Core Logic Directly**: Executes the same `modifyRequest` pipeline as the HTTP layer.
-- **Maintains Consistency**: Triggers identical cache invalidation and real-time events (SSE).
+1. **Eliminates overhead**: No network stack, JSON parsing, or serialization.
+2. **Bypasses external security**: Safely skips WAF and rate-limiting because it runs with server privileges.
+3. **Calls Core Logic**: Executes the exact same `modifyRequest` pipeline as the HTTP layer.
+4. **Maintains Consistency**: Automatically triggers cache invalidation and real-time events (SSE).
 
-### Example: Server-side Load Function
+---
+
+## Example: Data Loading in `+page.server.ts`
 
 ```typescript
-import { LocalCMS } from "@src/routes/api/cms";
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ locals }) => {
-  const cms = new LocalCMS(locals.dbAdapter);
-
-  // High-performance internal access
-  const posts = await cms.collections.find("posts", {
+export const load: PageServerLoad = async ({ locals }) => {
+  // locals.cms is the recommended way (typed via App.Locals)
+  const posts = await locals.cms.collections.find("posts", {
     limit: 10,
     filter: { status: "publish" },
-    tenantId: locals.tenantId
+    tenantId: locals.tenantId,
   });
 
   return { posts };
 };
 ```
 
-
-### Example: Creating an Entry from a Server Action
+## Example: Bulk Creation
 
 ```typescript
-// Server Action
-export const actions = {
-  create: async ({ locals, request }) => {
-    const formData = await request.formData();
-    const data = Object.fromEntries(formData);
+// Create 1000 items in a single high-performance database call
+const result = await locals.cms.bulkCreate("products", largeDataArray);
+```
 
-    const result = await locals.cms.create("posts", data);
+## Example: Database Transactions
 
-    if (result.success) {
-      return { success: true };
-    }
-    return { error: result.error };
-  },
-};
+```typescript
+// Atomically update multiple collections
+await locals.cms.transaction(async (tx) => {
+  await tx.collections.update("orders", orderId, { status: "paid" });
+  await tx.collections.create("audit_log", { event: "payment_received" });
+});
 ```
 
 ---
@@ -110,32 +146,27 @@ export const actions = {
 ## Technical Details
 
 ### Local SDK Guarantees
+- Widget/request modification pipeline (`modifyRequest`) runs identically to HTTP requests.
+- Cache hooks, invalidation, and version bumping happen automatically.
+- Real-time updates (SSE / WebSocket) are triggered for connected clients.
+- Multi-tenancy, user context, and permissions are applied consistently.
 
-- All widget logic (`modifyRequest`) executes identically to HTTP requests
-- Cache invalidation and content version bump happen automatically
-- SSE / WebSocket clients receive real-time updates
-- Multi-tenancy and user context are automatically applied
+### Advanced Features Available
+- **Bulk operations**: `bulkCreate`, `bulkUpdate`, `bulkDelete` for high-throughput tasks.
+- **Transactions**: Full atomic transaction support (wrapped from database adapter).
+- **Fluent Query Builder**: Native `queryBuilder` support for complex filtering and joins.
+- **SDK Telemetry**: Automated performance metrics via `metricsService`.
 
 ### When You Might Still Use HTTP from Server Code
-
-- Calling an external microservice
-- Testing full middleware stack
-- Intentionally triggering rate limiting / logging
+- Calling a completely external microservice or third-party API.
+- Deliberately exercising the full external middleware (e.g., for testing or logging).
+- Cross-origin or cross-instance communication.
 
 ---
 
 ## Best Practices
 
-1. Default to **Local SDK** in all `.server.ts` files.
-2. Never do `fetch('/api/...')` inside `+page.server.ts` or actions unless there’s a specific reason.
-3. Document any exceptions clearly.
-4. **Type safety**: Use the typed `App.Locals` interface so `locals.cms` is fully typed.
-
----
-
-## Future Improvements
-
-- Bulk operations (`bulkCreate`, `bulkUpdate`)
-- Transaction support (where the database adapter allows)
-- Local query builder for complex joins
-- Telemetry for SDK call monitoring
+1. **Default to Local SDK** in every `.server.ts` file, server actions, and hooks.
+2. **Avoid `fetch('/api/cms/...')`** inside server code — it adds unnecessary latency and stack depth.
+3. **Use `locals.cms`** (injected via hooks) for clean, typed access throughout your app.
+4. **Leverage `event.fetch`** only when you specifically need the full HTTP context of an internal route.

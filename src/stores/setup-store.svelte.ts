@@ -722,7 +722,7 @@ function createSetupStore() {
       if (serverOrigin && wizard.systemSettings.hostProd === initialSystemSettings.hostProd) {
         wizard.systemSettings.hostProd = serverOrigin;
         if (wizard.systemSettings.siteName === initialSystemSettings.siteName) {
-          wizard.systemSettings.siteName = `SveltyCMS (${new URL(serverOrigin).hostname})`;
+          wizard.systemSettings.siteName = "SveltyCMS";
         }
       }
       return;
@@ -783,11 +783,7 @@ function createSetupStore() {
         wizard.systemSettings.hostProd = origin;
         // Also update siteName if it's default
         if (wizard.systemSettings.siteName === initialSystemSettings.siteName) {
-          try {
-            wizard.systemSettings.siteName = `SveltyCMS (${new URL(origin).hostname})`;
-          } catch {
-            wizard.systemSettings.siteName = "SveltyCMS";
-          }
+          wizard.systemSettings.siteName = "SveltyCMS";
         }
       }
 

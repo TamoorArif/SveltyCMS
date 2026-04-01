@@ -45,6 +45,7 @@ export interface LocalApiOptions {
   tenantId?: string | null;
   permanent?: boolean;
   bypassCache?: boolean;
+  system?: boolean;
 }
 
 /**
@@ -71,6 +72,34 @@ export class LocalCMS {
     this.media = new MediaNamespace(this._dbAdapter);
     this.widgets = new WidgetsNamespace(this._dbAdapter);
     this.system = new SystemNamespace(this._dbAdapter);
+
+    // Register SDK initialization in metrics
+    if (typeof metricsService?.recordMetric === "function") {
+      metricsService.recordMetric("sdk:init", 1);
+    }
+  }
+
+  /**
+   * Execute multiple operations within a single database transaction.
+   * Only supported by database adapters that have supportsTransactions: true.
+   */
+  async transaction(
+    fn: (transaction: any) => Promise<any>,
+    options?: { timeout?: number; isolationLevel?: string },
+  ) {
+    const start = performance.now();
+    try {
+      const result = await this._dbAdapter.transaction(fn, options);
+      if (typeof metricsService?.recordMetric === "function") {
+        metricsService.recordMetric("sdk:transaction:duration", performance.now() - start);
+      }
+      return result;
+    } catch (error: any) {
+      if (typeof metricsService?.recordMetric === "function") {
+        metricsService.recordMetric("sdk:transaction:error", 1);
+      }
+      throw error;
+    }
   }
 }
 
@@ -732,6 +761,118 @@ class CollectionsNamespace {
     });
   }
 
+  /**
+   * Returns a fluent QueryBuilder for a specific collection.
+   * Supports native joins and complex filtering if the adapter allows.
+   */
+  queryBuilder(collectionId: string, options: { tenantId?: string | null } = {}) {
+    const { tenantId } = options;
+    const collectionName = this.getCollectionName(collectionId);
+    const builder = this._dbAdapter.queryBuilder<any>(collectionName);
+
+    if (tenantId) {
+      builder.where({ tenantId } as any);
+    }
+
+    return builder;
+  }
+
+  async bulkCreate(collectionId: string, data: any[], options: LocalApiOptions = {}) {
+    const { user, tenantId } = options;
+    if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    const schema = await this.getSchema(collectionId, tenantId);
+
+    const entries = data.map((item) => ({
+      ...item,
+      tenantId,
+      createdBy: user?._id,
+      createdAt: new Date().toISOString(),
+    }));
+
+    // Note: modifyRequest currently only handles single items or arrays in-place
+    // For large bulk, we might need a more optimized modifyRequestBulk
+    const collectionModel = await this._dbAdapter.collection.getModel(schema._id as string);
+    await modifyRequest({
+      data: entries,
+      fields: schema.fields as FieldInstance[],
+      collection: collectionModel,
+      user,
+      type: "POST",
+      tenantId,
+      collectionName: schema.name,
+    });
+
+    const result = await this._dbAdapter.batch.bulkInsert(
+      this.getCollectionName(schema._id as string),
+      entries,
+    );
+
+    if (result.success) {
+      await this.invalidateCache(schema, tenantId);
+      // Publish event
+      try {
+        const { pubSub } = await import("@src/services/pub-sub");
+        pubSub.publish("entryUpdated", {
+          collection: schema.name || (schema._id as string),
+          id: "bulk",
+          action: "bulkCreate",
+          data: { count: entries.length },
+          timestamp: new Date().toISOString(),
+          user,
+        });
+      } catch {}
+    }
+
+    return result;
+  }
+
+  async bulkUpdate(
+    collectionId: string,
+    updates: Array<{ id: string; data: any }>,
+    options: LocalApiOptions = {},
+  ) {
+    const { user, tenantId } = options;
+    if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    const schema = await this.getSchema(collectionId, tenantId);
+
+    const formattedUpdates = updates.map((u) => ({
+      id: u.id as DatabaseId,
+      data: {
+        ...u.data,
+        updatedBy: user?._id,
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+
+    const result = await this._dbAdapter.batch.bulkUpdate(
+      this.getCollectionName(schema._id as string),
+      formattedUpdates,
+    );
+
+    if (result.success) {
+      await this.invalidateCache(schema, tenantId);
+    }
+
+    return result;
+  }
+
+  async bulkDelete(collectionId: string, ids: string[], options: LocalApiOptions = {}) {
+    const { user, tenantId } = options;
+    if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    const schema = await this.getSchema(collectionId, tenantId);
+
+    const result = await this._dbAdapter.batch.bulkDelete(
+      this.getCollectionName(schema._id as string),
+      ids as DatabaseId[],
+    );
+
+    if (result.success) {
+      await this.invalidateCache(schema, tenantId);
+    }
+
+    return result;
+  }
+
   async findById(collectionId: string, entryId: string, options: LocalApiOptions = {}) {
     const { tenantId } = options;
     const schema = await this.getSchema(collectionId, tenantId);
@@ -743,8 +884,8 @@ class CollectionsNamespace {
   }
 
   async create(collectionId: string, data: any, options: LocalApiOptions = {}) {
-    const { user, tenantId } = options;
-    if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    const { user, tenantId, system } = options;
+    if (!user && !system) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
     if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
@@ -754,17 +895,19 @@ class CollectionsNamespace {
     const entryData = {
       ...data,
       tenantId,
-      createdBy: user?._id,
+      createdBy: system ? "system" : user?._id,
       createdAt: new Date().toISOString(),
     };
 
     const collectionModel = await this._dbAdapter.collection.getModel(schema._id as string);
 
+    const effectiveUser = system ? { _id: "system", role: "admin" } : user;
+
     await modifyRequest({
       data: [entryData],
       fields: schema.fields as FieldInstance[],
       collection: collectionModel,
-      user,
+      user: effectiveUser,
       type: "POST",
       tenantId,
       collectionName: schema.name,
@@ -783,7 +926,7 @@ class CollectionsNamespace {
         "create",
         result.data._id as string,
         result.data,
-        user,
+        effectiveUser,
       );
     }
 
@@ -791,8 +934,8 @@ class CollectionsNamespace {
   }
 
   async update(collectionId: string, entryId: string, data: any, options: LocalApiOptions = {}) {
-    const { user, tenantId } = options;
-    if (!user) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
+    const { user, tenantId, system } = options;
+    if (!user && !system) throw new AppError("Authentication required", 401, "UNAUTHORIZED");
     if (getPrivateSettingSync("MULTI_TENANT") === true && !tenantId) {
       throw new AppError("Tenant ID required", 400, "TENANT_MISSING");
     }
@@ -801,17 +944,19 @@ class CollectionsNamespace {
 
     const updateData = {
       ...data,
-      updatedBy: user?._id,
+      updatedBy: system ? "system" : user?._id,
       updatedAt: new Date().toISOString(),
     };
 
     const collectionModel = await this._dbAdapter.collection.getModel(schema._id as string);
 
+    const effectiveUser = system ? { _id: "system", role: "admin" } : user;
+
     await modifyRequest({
       data: [updateData],
       fields: schema.fields as FieldInstance[],
       collection: collectionModel,
-      user,
+      user: effectiveUser,
       type: "PATCH",
       tenantId,
       collectionName: schema.name,
@@ -825,7 +970,7 @@ class CollectionsNamespace {
     );
 
     if (result.success && result.data) {
-      await this.afterMutation(schema, tenantId, "update", entryId, result.data, user);
+      await this.afterMutation(schema, tenantId, "update", entryId, result.data, effectiveUser);
     }
 
     return result;

@@ -1,285 +1,118 @@
 ---
 path: "docs/api/user-management-api.mdx"
 title: "User Management API Reference"
-description: "Complete API reference for SveltyCMS identity management — user listing, invitations, profile updates, avatar management, and batch operations."
+description: "Complete API reference for SveltyCMS identity management — user listing, invitations, profile updates, and authentication."
 order: 45
 icon: "mdi:account-group-outline"
 author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-03-27"
+updated: "2026-04-01"
 tags:
   - "api"
   - "users"
   - "auth"
   - "security"
-  - "avatar"
 ---
 
 # User Management API Reference
 
-The User Management API is the core identity layer of SveltyCMS. It covers user listing, invitation-based creation, profile management, avatar handling, and batch administration — all with multi-tenant isolation built in.
+The User Management API is the core identity layer of SveltyCMS. It handles user authentication, profile management, role-based access control, and multi-tenant isolation.
 
 ---
 
-## 👥 Choose Your Path
+## ⚡ Quick Start
 
-- 📋 **[User Listing](#1-user-listing)** — Paginated, filterable user list for administrators.
-- ✉️ **[User Invitation](#2-user-invitation-post)** — Creating users via the invite-token flow.
-- 👤 **[Profile Management](#3-profile-management)** — Updating attributes, passwords, and avatars.
-- 📦 **[Batch Operations](#4-batch-operations)** — Bulk block, unblock, and delete.
-- 🛡️ **[Password Security](#5-password-security)** — Argon2id implementation details.
-
----
-
-## 🚀 Quick Reference
-
-| Method | Endpoint                           | Description                                     | Permission                    |
-| :----- | :--------------------------------- | :---------------------------------------------- | :---------------------------- |
-| GET    | `/api/user`                        | List users (paginated, filterable)              | `manage_users`                |
-| POST   | `/api/user`                        | Invite a new user (creates + sends email token) | `manage_users`                |
-| POST   | `/api/user/create-user`            | Create user directly (no email invite)          | `manage_users`                |
-| PATCH  | `/api/user/update-user-attributes` | Update username, email, or password             | Own profile or `manage_users` |
-| POST   | `/api/user/save-avatar`            | Upload a new avatar image                       | Own profile or Admin          |
-| DELETE | `/api/user/delete-avatar`          | Remove avatar and revert to default             | Own profile or Admin          |
-| POST   | `/api/user/verify-password`        | Verify the current user's password              | Authenticated user            |
-| POST   | `/api/user/login`                  | Authenticate and open a session                 | Public                        |
-| POST   | `/api/user/logout`                 | Terminate the current session                   | Authenticated user            |
-| POST   | `/api/user/batch`                  | Bulk delete, block, or unblock users            | `manage_users`                |
+| Feature | HTTP Endpoint | Local SDK Equivalent |
+| :--- | :--- | :--- |
+| **Login** | `POST /api/user/login` | `locals.cms.auth.login` |
+| **Get User** | `GET /api/user/[id]` | `locals.cms.auth.getUser` |
+| **Update Profile** | `PATCH /api/user/update-user-attributes` | `locals.cms.auth.updateUser` |
+| **List Users** | `GET /api/user` | `locals.cms.auth.listUsers` |
 
 ---
 
-## 1. User Listing
-
-### `GET /api/user`
-
-Returns a paginated, searchable list of users. Requires the `manage_users` permission (i.e., admin-level access).
-
-#### Query Parameters
-
-| Parameter | Type        | Default     | Description                                                      |
-| :-------- | :---------- | :---------- | :--------------------------------------------------------------- |
-| `page`    | `number`    | `1`         | Current page.                                                    |
-| `limit`   | `number`    | `10`        | Results per page.                                                |
-| `sort`    | `string`    | `createdAt` | Field to sort by.                                                |
-| `order`   | `asc\|desc` | `desc`      | Sort direction. `asc` = `1`, `desc` = `-1`.                      |
-| `search`  | `string`    | `""`        | Case-insensitive substring match against `username` and `email`. |
-
-#### Response Shape
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "user_abc123",
-      "email": "editor@example.com",
-      "username": "editor",
-      "role": "editor",
-      "tenantId": "tenant_xyz",
-      "createdAt": "2026-01-10T09:00:00.000Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "totalItems": 42,
-    "totalPages": 5
-  }
-}
-```
-
-> [!NOTE]
-> In multi-tenant mode, results are automatically scoped to the authenticated user's `tenantId`. An admin on Tenant A cannot list users from Tenant B.
+## 1. The Goal
+Manage the complete lifecycle of a user identity—from initial invitation and login to profile updates and account deactivation.
 
 ---
 
-## 2. User Invitation (`POST`)
+## 2. The Solution
 
-### `POST /api/user`
-
-Creates a new user record and sends them an invite email with a time-limited registration link. Use this instead of `create-user` when you want the user to set their own password.
-
-#### Payload
-
-```json
-{
-  "email": "neweditor@example.com",
-  "role": "editor",
-  "expiresIn": "2 days"
-}
-```
-
-| Field       | Type     | Required | Description                                                                                    |
-| :---------- | :------- | :------- | :--------------------------------------------------------------------------------------------- |
-| `email`     | `string` | ✅       | The new user's email address.                                                                  |
-| `role`      | `string` | ✅       | Assigned role (e.g., `editor`, `admin`).                                                       |
-| `expiresIn` | `string` | ✅       | Token expiry. One of: `"2 hrs"`, `"12 hrs"`, `"2 days"`, `"1 week"`, `"2 weeks"`, `"1 month"`. |
-
-#### Mechanics
-
-1. Validates that no user with the same email already exists in the tenant.
-2. Creates the user record in the database.
-3. Generates a `user-invite` token scoped to the new user.
-4. Sends an email to the provided address via `POST /api/send-mail` with a link to `/login?invite_token=<token>`.
-
-**Response** (`201 Created`): Returns the new user object.
-
-> [!WARNING]
-> If `expiresIn` is not one of the four allowed strings, the endpoint returns `400 INVALID_EXPIRATION`. There is no fallback default.
-
----
-
-## 3. Profile Management
-
-### A. Update Attributes (`PATCH`)
-
-**Endpoint**: `PATCH /api/user/update-user-attributes`
-
-Supports updating `username`, `email`, or `password`. Passwords are re-hashed via Argon2id on update.
-
-#### Field-Level Permissions
-
-| Field      | Non-Admin Restriction                                                |
-| :--------- | :------------------------------------------------------------------- |
-| `username` | Can only update own profile.                                         |
-| `email`    | Can only update own profile. Triggers email change notification.     |
-| `password` | Can only update own profile. Requires current password verification. |
-| `role`     | **Admin only.** Non-admins cannot elevate their own role.            |
-| `isActive` | **Admin only.** Used to enable/disable accounts.                     |
-
-### B. Save Avatar (`POST`)
-
-**Endpoint**: `POST /api/user/save-avatar`
-
-**Payload**: `multipart/form-data`
-
-| Field    | Type     | Description                                                                     |
-| :------- | :------- | :------------------------------------------------------------------------------ |
-| `avatar` | `File`   | The image to upload.                                                            |
-| `userId` | `string` | _(Optional)_ Target user ID. Defaults to self. Admins may specify another user. |
-
-**Allowed MIME types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/svg+xml`, `image/avif`.
-
-**Mechanics**:
-
-- If the user already has a non-default avatar, it is **moved to trash** before the new file is saved.
-- The new file is processed by `saveAvatarImage()`, which handles both local and cloud (S3/R2) storage.
-- The user's session cache is immediately invalidated so the new avatar appears without a page reload.
-
-**Response**:
-
-```json
-{
-  "success": true,
-  "message": "Avatar saved successfully",
-  "avatarUrl": "/files/avatars/user_abc123.webp"
-}
-```
-
-> [!IMPORTANT]
-> **Security**: A non-admin user may only update their own avatar. Attempting to pass a different `userId` without admin permissions returns `403 FORBIDDEN`. In multi-tenant mode, admins may only update avatars for users within their own tenant.
-
-### C. Delete Avatar (`DELETE`)
-
-**Endpoint**: `DELETE /api/user/delete-avatar`
-
-Moves the current avatar to trash and resets the user's profile to the default placeholder (`/Default_User.svg`).
-
-### D. Verify Password (`POST`)
-
-**Endpoint**: `POST /api/user/verify-password`
-
-Used by the UI before allowing sensitive operations (e.g., enabling 2FA, changing email).
-
+### User Authentication (Login)
+**Endpoint**: `POST /api/user/login`
 **Payload**:
-
 ```json
-{ "password": "currentUserPassword" }
+{ "email": "admin@example.com", "password": "..." }
 ```
 
-**Response**:
+### Local SDK (Recommended for Hooks/Server)
+Use the Local SDK to manage users directly within your SvelteKit backend.
 
-```json
-{ "success": true }
+```typescript
+// Update a user's role (Admin only)
+await locals.cms.auth.updateUser(targetUserId, { role: "editor" });
+
+// Check if a password is valid
+const isValid = await locals.cms.auth.verifyPassword(userId, password);
 ```
 
-Returns `401` if the password is incorrect.
-
----
-
-## 4. Batch Operations
-
-### `POST /api/user/batch`
-
-Administrators can perform bulk actions on multiple users in a single request.
-
+### Batch User Operations
+**Endpoint**: `POST /api/user/batch`
 **Payload**:
-
 ```json
 {
-  "userIds": ["id1", "id2", "id3"],
+  "userIds": ["user1", "user2"],
   "action": "block"
 }
 ```
 
-| `action`  | Description                                                               |
-| :-------- | :------------------------------------------------------------------------ |
-| `block`   | Suspends all listed accounts. Existing sessions remain until they expire. |
-| `unblock` | Restores access for all listed accounts.                                  |
-| `delete`  | Permanently removes each user record **and all their active sessions**.   |
+---
 
-> [!CAUTION]
-> You cannot include your own user ID in a batch operation. The endpoint returns `400 SELF_ACTION_DENIED` if your session's user ID appears in `userIds`.
+## 3. The Mechanics
 
-#### Partial Failure Handling (Delete)
+SveltyCMS uses an **Identity-at-the-Edge** pattern, where user sessions are hydrated by the `handleAuthentication` middleware before reaching your route logic.
 
-The `delete` action processes users individually. If some deletions fail, the operation does **not** roll back. The response message reflects the partial outcome:
-
-```json
-{
-  "success": true,
-  "message": "2 of 3 user(s) deleted (4 sessions cleaned up). Some deletions failed."
-}
+```mermaid
+sequenceDiagram
+    participant App as External App / UI
+    participant Hook as handleAuthentication
+    participant Auth as Auth Service
+    participant DB as Database (auth_users)
+    participant Cache as Redis/In-Memory Cache
+    
+    App->>Hook: Request (with Session Cookie)
+    Hook->>Cache: Lookup Session ID
+    Cache-->>Hook: Session Data (userId, role)
+    
+    alt Cache Miss
+        Hook->>DB: Fetch User + Role
+        DB-->>Hook: User Object
+        Hook->>Cache: Set Session
+    end
+    
+    Hook->>Hook: Hydrate locals.user
+    Hook-->>App: Proceed to Route (+page.server.ts)
 ```
 
-A `success: true` response with a partial message indicates the action ran but not all targets were affected. Check server logs for individual failure causes.
+### Password Security (Argon2id)
+All passwords are hashed using **Argon2id**, the winner of the Password Hashing Competition. It is specifically designed to resist both GPU-based brute force and side-channel attacks.
+
+| Parameter | Value | Rationale |
+| :--- | :--- | :--- |
+| **Memory Cost** | 64 MB | Defeats parallel ASIC/GPU attacks. |
+| **Iterations** | 3 | Balances safety with login latency. |
+| **Parallelism** | 4 | Optimizes for multi-core server hardware. |
 
 ---
 
-## 5. Password Security
-
-SveltyCMS uses **Argon2id** for all password hashing — both at user creation and on every password update.
-
-### Argon2id Parameters
-
-| Parameter   | Value        | Rationale                                                                 |
-| :---------- | :----------- | :------------------------------------------------------------------------ |
-| Memory Cost | 64 MB        | Forces GPU/ASIC to allocate physical RAM, defeating parallel brute-force. |
-| Time Cost   | 3 iterations | Balances security cost against login latency.                             |
-| Parallelism | 4 threads    | Matches typical server core counts for efficiency.                        |
-
-This configuration is **memory-hard**, meaning that brute-force attacks requiring millions of guesses become physically impossible at scale. The same properties that defeat GPU farms also constrain quantum computing acceleration (Grover's algorithm), maintaining a high security floor.
+## Security & Isolation
+- **Tenant Scope**: User lists and management actions are strictly scoped to the current `tenantId`.
+- **Self-Action Prevention**: Users are blocked from performing destructive actions (delete, block) on their own accounts via the API.
+- **Role Hierarchy**: Only users with the `admin` role can modify the roles or status of other users.
 
 ---
 
-## 6. Authentication Lifecycle
-
-### Login (`POST /api/user/login`)
-
-**Payload**:
-
-```json
-{ "email": "user@example.com", "password": "securePassword123" }
-```
-
-On success, the server sets an `HttpOnly; Secure; SameSite=Strict` session cookie. The user object is **not** returned in the login response. Use `GET /api/user` or access `locals.user` in SvelteKit `load()` functions to read session data after login.
-
-If 2FA is enabled, the response returns `200` with `{ "requires2FA": true }`. The session is not fully established until `POST /api/auth/2fa/verify` succeeds.
-
-### Logout (`POST /api/user/logout`)
-
-Immediately invalidates the session record in the database and clears the client-side cookie.
-
----
-
-**Next Steps**: For automated provisioning at enterprise scale, see the [SCIM 2.0 API Reference](./scim-v2-api.mdx) or the [SAML SSO Guide](./saml-sso-api.mdx).
+## Related Documents
+- [Auth Token API Reference](./api-access-tokens.mdx)
+- [Multi-Tenant Architecture](../architecture/multi-tenancy.mdx)
+- [SAML SSO Integration](../guides/configuration/access-management.mdx)

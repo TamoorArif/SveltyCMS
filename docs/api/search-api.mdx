@@ -1,12 +1,12 @@
 ---
 path: "docs/api/search-api.mdx"
 title: "Search API Reference"
-description: "Programmatic interface for full-text and cross-collection search in SveltyCMS — query syntax, filtering, pagination, and DB-agnostic implementation."
+description: "Programmatic interface for full-text and cross-collection search in SveltyCMS — query syntax, filtering, and performance."
 order: 44
 icon: "mdi:magnify-expand"
 author: "SveltyCMS Team"
 created: "2025-10-05"
-updated: "2026-03-27"
+updated: "2026-04-01"
 tags:
   - "api"
   - "search"
@@ -16,180 +16,94 @@ tags:
 
 # Search API Reference
 
-The Search API is the primary **Content Delivery** interface for headless implementations. It provides a single `GET` endpoint to query content across one or multiple collections with filtering, sorting, and permission-aware results.
-
-> [!NOTE]
-> **SSR-First Reminder**: If your frontend runs inside SvelteKit, use `dbAdapter.crud.findMany` in your `load()` function for better performance. The Search API is optimized for external consumers — headless frontends (Next.js, Nuxt, Astro) and third-party integrations.
+The Search API is the primary **Content Delivery** interface for headless implementations. It provides a single `GET` endpoint to query content across one or multiple collections with substring matching, field-level filtering, and permission-aware results.
 
 ---
 
-## 👥 Choose Your Path
+## ⚡ Quick Start
 
-- 🏗️ **[Why Search replaces Collection GET](./collection-api.mdx#1-architecture-the-ssr-first-shift)** — Architecture context.
-- 🔍 **[Global Search Endpoint](#1-global-search-endpoint)** — Parameter reference.
-- 🧩 **[Query Syntax](#2-query-syntax)** — Using field-level filters and status gates.
-- 🧪 **[Integration Examples](#3-integration-examples)** — Svelte 5, cURL walkthroughs.
-- 🔒 **[Multi-Tenant Isolation](#4-multi-tenant-isolation)** — How access is gated per tenant.
-
----
-
-## 🚀 Quick Reference
-
-| Method | Endpoint      | Description                       |
-| :----- | :------------ | :-------------------------------- |
-| GET    | `/api/search` | Cross-collection full-text search |
+| Feature | HTTP Endpoint | Local SDK Equivalent |
+| :--- | :--- | :--- |
+| **Global Search** | `GET /api/search?q=...` | `locals.cms.collections.find` |
+| **Filtered Search** | `GET /api/search?filter={...}` | `locals.cms.queryBuilder` |
 
 ---
 
-## 1. Global Search Endpoint
-
-`GET /api/search`
-
-All parameters are passed as URL query strings.
-
-### Query Parameters
-
-| Parameter       | Type        | Default       | Description                                                                                                                |
-| :-------------- | :---------- | :------------ | :------------------------------------------------------------------------------------------------------------------------- |
-| `q`             | `string`    | `""`          | The search term. Matched against `title`, `content`, `description`, and `name` fields.                                     |
-| `collections`   | `string`    | _(all)_       | Comma-separated list of collection IDs (e.g. `posts,pages`). If omitted, all collections the user can access are searched. |
-| `page`          | `number`    | `1`           | Pagination — the current page number.                                                                                      |
-| `limit`         | `number`    | `25`          | Results per page. Capped at `100` per collection per request.                                                              |
-| `sortField`     | `string`    | `updatedAt`   | Field to sort results by.                                                                                                  |
-| `sortDirection` | `asc\|desc` | `desc`        | Sort direction.                                                                                                            |
-| `filter`        | `json`      | `{}`          | A URL-encoded JSON string for exact-match filtering (e.g. `{"author":"admin123"}`).                                        |
-| `status`        | `string`    | _(see below)_ | Filter by entry status. Admins may pass any value. Non-admins are **always** restricted to `published`.                    |
-
-> [!IMPORTANT]
-> **Status Gate**: Non-admin users cannot override the `status` filter. Their results are always scoped to `status == "published"`, regardless of what value they pass. Admin users may filter by `draft`, `archived`, or any custom status.
+## 1. The Goal
+Find specific content across the entire CMS or a subset of collections using natural language terms or exact field filters.
 
 ---
 
-## 2. Query Syntax
+## 2. The Solution
 
-The search engine performs **substring matching** across a fixed set of common fields: `title`, `content`, `description`, and `name`. The match is case-insensitive.
+### External Headless Search
+Ideal for search bars in React, Vue, or mobile applications.
 
-### Field-Level Filtering via `filter`
-
-For exact-match precision on any field, use the `filter` parameter:
-
-```
-GET /api/search?q=svelte&filter={"author":"userId123","status":"published"}
-```
-
-### Status Filtering (Admin Only)
-
-Administrators can retrieve drafts or archived content:
-
-```
-GET /api/search?collections=posts&status=draft
-```
-
----
-
-## 3. Integration Examples
-
-### Authorization
-
-All requests require a valid session cookie or `Authorization: Bearer <token>` header.
-
-### Svelte 5 — Debounced Search Component
-
-```svelte
-<script lang="ts">
-  let query = $state('');
-  let results = $state<unknown[]>([]);
-  let isLoading = $state(false);
-
-  let debounceTimer: ReturnType<typeof setTimeout>;
-
-  $effect(() => {
-    clearTimeout(debounceTimer);
-    if (!query.trim()) {
-      results = [];
-      return;
-    }
-    debounceTimer = setTimeout(async () => {
-      isLoading = true;
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10`);
-      const json = await res.json();
-      results = json.data?.items ?? [];
-      isLoading = false;
-    }, 300);
-  });
-</script>
-
-{#if isLoading}
-  <p>Searching...</p>
-{:else}
-  {#each results as item}
-    <div>{(item as Record<string, string>).title}</div>
-  {/each}
-{/if}
-```
-
-### cURL Example
-
-```bash
-curl -X GET \
-  "https://your-cms.com/api/search?q=introduction&collections=posts&limit=5" \
-  -H "Authorization: Bearer <token>"
-```
-
-### Response Shape
-
+**Endpoint**: `GET /api/search?q=svelte&collections=posts,pages`
+**Response**:
 ```json
 {
   "success": true,
   "data": {
-    "items": [
-      {
-        "_id": "entry123",
-        "title": "Introduction to SveltyCMS",
-        "_collection": {
-          "id": "posts",
-          "name": "Posts",
-          "label": "Blog Posts"
-        }
-      }
-    ],
-    "total": 0,
-    "page": 1,
-    "pageSize": 25,
-    "totalPages": 0,
-    "collectionsSearched": 4,
-    "query": "introduction"
-  },
-  "performance": {
-    "duration": 45.2
+    "items": [{ "_id": "123", "title": "Intro to Svelte", "collection": "posts" }],
+    "total": 1
   }
 }
 ```
 
-> [!NOTE]
-> `total` reflects the count of all results across collections before pagination. `collectionsSearched` shows how many collections were queried in parallel. The `query` field echoes back the original `q` parameter for client-side confirmation.
+### Local SDK (Recommended for SvelteKit)
+In your `+page.server.ts`, use the Local SDK to query the database directly with **0ms network overhead**.
 
-### Error Codes
+```typescript
+export const load = async ({ locals, url }) => {
+  const q = url.searchParams.get('q');
+  
+  // High-performance internal search
+  const results = await locals.cms.collections.find("posts", {
+    filter: { title: { $regex: q, $options: 'i' } },
+    limit: 10
+  });
 
-| Code             | HTTP | Meaning                                                                        |
-| :--------------- | :--- | :----------------------------------------------------------------------------- |
-| `UNAUTHORIZED`   | 401  | Request is not authenticated.                                                  |
-| `TENANT_MISSING` | 400  | Multi-tenant mode is enabled but no tenant could be resolved from the session. |
-| `INVALID_FILTER` | 400  | The `filter` parameter is not valid JSON.                                      |
-| `SEARCH_ERROR`   | 500  | An unexpected internal error occurred.                                         |
-
----
-
-## 4. Multi-Tenant Isolation
-
-The Search API is **security-first**. Results are strictly gated on three levels:
-
-1. **Tenant ID**: Only results belonging to the authenticated user's `tenantId` are returned. Cross-tenant data is invisible.
-2. **Permission Check**: If a user lacks `read` access to a collection, its entries will not appear in results, even if they match the search term.
-3. **Status Gate**: Non-admin users see only `published` entries. Admins may query any status.
-
-The system searches all specified collections **in parallel** using `Promise.all`. If a single collection query fails (e.g., due to a schema mismatch), it is skipped with a `warn`-level log entry rather than failing the entire request.
+  return { results };
+};
+```
 
 ---
 
-**Next Steps**: For relational queries, use the [GraphQL API Reference](./graphql-api.mdx). For index-based search on collection lists, use `dbAdapter.crud.findMany` in your `+page.server.ts`.
+## 3. The Mechanics
+
+The Search API executes queries **in parallel** across all authorized collections, applying a strict "Status Gate" to protect non-public data.
+
+```mermaid
+sequenceDiagram
+    participant App as External App
+    participant API as Search API
+    participant Auth as Permission Layer
+    participant DB as Database Adapter
+    
+    App->>API: GET /api/search?q=term
+    API->>Auth: Identify User & Tenant
+    Auth-->>API: Authorized Collections (Posts, Pages)
+    
+    par Query Posts
+        API->>DB: findMany(Posts, q, status:published)
+    and Query Pages
+        API->>DB: findMany(Pages, q, status:published)
+    end
+    
+    DB-->>API: Results Array
+    API->>API: Flatten & Sort by updatedAt
+    API-->>App: JSON Payload (Items + Meta)
+```
+
+### Status & Permission Gating
+- **Public Users**: Are **always** restricted to `status: "published"`. Even if they pass `status: "draft"` in the URL, the system overrides it.
+- **Admins**: Can query any status (`draft`, `archived`, `scheduled`).
+- **Collection Access**: If a user lacks `read` permissions for a collection, that collection is silently excluded from the search results to prevent metadata leakage.
+
+---
+
+## Related Documents
+- [Collection API Reference](./collection-api.mdx)
+- [GraphQL API Reference](./graphql-api.mdx)
+- [Local SDK vs HTTP API](./local-vs-http-api.mdx)

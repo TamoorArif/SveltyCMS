@@ -626,7 +626,7 @@ const dispatch = async ({ request, url, params, locals, cookies }: RequestEvent)
                 if (!isClosed) {
                   try {
                     controller.enqueue(`: keep-alive\n\n`);
-                  } catch (e) {
+                  } catch {
                     isClosed = true;
                     clearInterval(interval);
                   }
@@ -639,7 +639,7 @@ const dispatch = async ({ request, url, params, locals, cookies }: RequestEvent)
                   clearInterval(interval);
                   try {
                     controller.close();
-                  } catch (e) {}
+                  } catch {}
                 }
               });
             },
@@ -791,23 +791,24 @@ const dispatch = async ({ request, url, params, locals, cookies }: RequestEvent)
       const stream = new ReadableStream({
         start(controller) {
           let isClosed = false;
-          const unsubscribe = eventBus.on("*", (event: any) => {
+          const handler = (event: any) => {
             if (!isClosed) {
               try {
                 controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
-              } catch (e) {
+              } catch {
                 isClosed = true;
-                unsubscribe();
+                eventBus.off("*", handler);
               }
             }
-          });
+          };
+          eventBus.on("*", handler);
           request.signal.addEventListener("abort", () => {
             if (!isClosed) {
               isClosed = true;
-              unsubscribe();
+              eventBus.off("*", handler);
               try {
                 controller.close();
-              } catch (e) {}
+              } catch {}
             }
           });
         },
@@ -832,40 +833,42 @@ const dispatch = async ({ request, url, params, locals, cookies }: RequestEvent)
               controller.enqueue(
                 `event: connected\ndata: ${JSON.stringify({ status: "active", timestamp: Date.now() })}\n\n`,
               );
-            } catch (e) {
+            } catch {
               isClosed = true;
             }
 
-            const unsubscribe = eventBus.on("*", (event: any) => {
+            const handler = (event: any) => {
               if (!isClosed) {
                 try {
                   controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
-                } catch (e) {
+                } catch {
                   isClosed = true;
-                  unsubscribe();
+                  eventBus.off("*", handler);
                 }
               }
-            });
+            };
+
+            eventBus.on("*", handler);
 
             const interval = setInterval(() => {
               if (!isClosed) {
                 try {
                   controller.enqueue(`: keep-alive\n\n`);
-                } catch (e) {
+                } catch {
                   isClosed = true;
                   clearInterval(interval);
-                  unsubscribe();
+                  eventBus.off("*", handler);
                 }
               }
             }, 30000);
             request.signal.addEventListener("abort", () => {
               if (!isClosed) {
                 isClosed = true;
-                unsubscribe();
+                eventBus.off("*", handler);
                 clearInterval(interval);
                 try {
                   controller.close();
-                } catch (e) {
+                } catch {
                   // Ignore if already closed
                 }
               }
