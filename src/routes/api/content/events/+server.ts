@@ -7,7 +7,6 @@
 import { eventBus, SystemEvents } from "@utils/event-bus";
 import { logger } from "@utils/logger";
 
-
 export const GET = async ({ request }: any) => {
   const stream = new ReadableStream({
     start(controller) {

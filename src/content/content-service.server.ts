@@ -142,15 +142,18 @@ export async function processModule(content: string): Promise<{ schema?: Schema 
 
 // --- FILE SCANNING ---
 
-async function recursivelyGetFilesWithStats(dir: string, ext: string): Promise<{ path: string; mtime: number }[]> {
+async function recursivelyGetFilesWithStats(
+  dir: string,
+  ext: string,
+): Promise<{ path: string; mtime: number }[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const results: { path: string; mtime: number }[] = [];
-  
+
   await Promise.all(
     entries.map(async (entry) => {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-         results.push(...(await recursivelyGetFilesWithStats(fullPath, ext)));
+        results.push(...(await recursivelyGetFilesWithStats(fullPath, ext)));
       } else if (entry.isFile() && entry.name.endsWith(ext)) {
         const stats = await fs.stat(fullPath);
         results.push({ path: fullPath, mtime: stats.mtimeMs });
@@ -206,7 +209,7 @@ export async function scanAndProcessFiles(): Promise<Schema[]> {
 
         // Persist to cache (category CONTENT has its own TTL, but we use it as a 2nd layer structure cache)
         await cacheService.set(cacheKey, { mtime, schema: finalSchema }, 3600);
-        
+
         return finalSchema;
       } catch (error) {
         logger.warn(`Failed to process collection file: ${filePath}`, error);

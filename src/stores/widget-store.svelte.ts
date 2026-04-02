@@ -63,11 +63,7 @@ class WidgetState {
   }
 
   // Recursive field analyzer
-  private analyzeFields(
-    fields: FieldDefinition[],
-    required: string[],
-    optional: string[],
-  ) {
+  private analyzeFields(fields: FieldDefinition[], required: string[], optional: string[]) {
     for (const field of fields) {
       const widgetType = this.extractWidgetType(field);
       if (widgetType) {
@@ -113,8 +109,7 @@ class WidgetState {
     const valid = analyses.filter((a) => a.missingWidgets.length === 0);
     const invalid = analyses.filter((a) => a.missingWidgets.length > 0);
     const warnings = invalid.map(
-      (a) =>
-        `Collection "${a.collectionName}" is missing widgets: \${a.missingWidgets.join(", ")}`,
+      (a) => `Collection "${a.collectionName}" is missing widgets: \${a.missingWidgets.join(", ")}`,
     );
 
     return { valid, invalid, warnings };

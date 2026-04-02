@@ -1,6 +1,6 @@
 /**
- * @file src/databases/mariadb/performance/cache-module.ts
- * @description Cache module for MariaDB
+ * @file src/databases/sqlite/performance/cache-module.ts
+ * @description Cache module for SQLite
  *
  * Features:
  * - Get cache
@@ -48,5 +48,20 @@ export class CacheModule {
     _tenantId?: string | null,
   ): Promise<DatabaseResult<void>> {
     return this.core.notImplemented("cache.invalidateCategory");
+  }
+
+  async getVersion(tenantId?: string | null): Promise<DatabaseResult<number>> {
+    const { cacheService } = await import("@src/databases/cache/cache-service");
+    const version = await cacheService.get(`system:content_version`, tenantId);
+    return { success: true, data: (version as number) || 0 };
+  }
+
+  async incrementVersion(tenantId?: string | null): Promise<DatabaseResult<number>> {
+    const { cacheService } = await import("@src/databases/cache/cache-service");
+    const key = `system:content_version`;
+    const current = ((await cacheService.get(key, tenantId)) as number) || 0;
+    const next = current + 1;
+    await cacheService.set(key, next, 0, tenantId);
+    return { success: true, data: next };
   }
 }

@@ -8,10 +8,11 @@
 import type { ContentNode, Schema } from "@src/content/types";
 import { browser } from "$app/environment";
 import { logger } from "@utils/logger";
+import { SvelteMap } from "svelte/reactivity";
 
 // --- STATE ---
-let nodeMap = $state(new Map<string, ContentNode>());
-let pathMap = $state(new Map<string, string>());
+let nodeMap = $state(new SvelteMap<string, ContentNode>());
+let pathMap = $state(new SvelteMap<string, string>());
 let version = $state(Date.now());
 let state = $state<"uninitialized" | "initializing" | "initialized" | "error">("uninitialized");
 

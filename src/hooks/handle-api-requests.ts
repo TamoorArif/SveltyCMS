@@ -43,8 +43,14 @@ import crypto from "node:crypto";
 
 /** Extracts the API endpoint from the URL pathname. */
 function getApiEndpoint(pathname: string): string | null {
-  const parts = pathname.split("/api/")[1]?.split("/");
-  return parts?.[0] || null;
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] !== "api") return null;
+  // Unified path: /api/namespace/method -> namespace is segments[1]
+  // Local SDK path: /api/local/namespace/method -> namespace is segments[2]
+  if (segments[1] === "local") {
+    return segments[2] || null;
+  }
+  return segments[1] || null;
 }
 
 /** Generates a cache key for API responses. */
@@ -63,22 +69,33 @@ function isPublicApiRoute(
   testMode: string | undefined,
 ): boolean {
   // Allow /api/testing in TEST_MODE
-  if (testMode === "true" && pathname.startsWith("/api/testing")) {
+  if (
+    testMode === "true" &&
+    (pathname.startsWith("/api/testing") ||
+      pathname.startsWith("/api/testing") ||
+      pathname.startsWith("/api/local/testing"))
+  ) {
     return true;
   }
 
   // Token validation endpoint is public for GET only (registration flow)
-  // Format: /api/token/{tokenValue} - not the list endpoint /api/token
-  if (method === "GET" && pathname.startsWith("/api/token/") && pathname.length > 11) {
+  // Format: /api/token/{tokenValue} or /api/token/{tokenValue}
+  const isTokenPath = pathname.startsWith("/api/token/") || pathname.startsWith("/api/token/");
+  if (method === "GET" && isTokenPath) {
     return true;
   }
 
   // Legacy hardcoded list fallback (matches handleAuthorization.ts public routes)
   const legacyPublic = [
     "/api/system/version",
+    "/api/system/version",
+    "/api/user/login",
     "/api/user/login",
     "/api/system/health",
+    "/api/system/health",
     "/api/settings/public",
+    "/api/settings/public",
+    "/api/preview",
     "/api/preview",
   ];
   return legacyPublic.some((r) => pathname.startsWith(r));
@@ -88,7 +105,7 @@ export const handleApiRequests: Handle = async ({ event, resolve }) => {
   const { url, locals, request } = event;
 
   // Early exit for non-API routes
-  if (!url.pathname.startsWith("/api/")) {
+  if (!url.pathname.startsWith("/api/") && !url.pathname.startsWith("/api/local/")) {
     return resolve(event);
   }
 

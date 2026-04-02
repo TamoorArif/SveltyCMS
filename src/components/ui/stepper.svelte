@@ -1,19 +1,7 @@
-<!--
-@file src/components/ui/stepper.svelte
-@component
-**Reusable Stepper component for guided multi-step workflows**
-
-### Props
-- `steps` (Array): Array of objects `{ label: string, description?: string, icon?: string }`
-- `currentStep` (number): 0-indexed current active step
-- `completedSteps` (Set<number>): Set of indices for completed steps
-- `orientation` (string): 'horizontal' | 'vertical' (default: 'vertical' on desktop, 'horizontal' on mobile)
-- `onStepClick` (function): Callback when a clickable step is clicked
-
-### Features:
-- Responsive design (horizontal on mobile)
-- Svelte 5 Runes for reactivity
-- Accessible with ARIA roles
+<!-- 
+ @src/routes/api/cms.ts src/components/ui/stepper.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Stepper Primitive
 -->
 <script lang="ts">
 interface Step {

@@ -1,38 +1,32 @@
 <!-- 
-@file src/components/ui/collapsible.svelte
-@component
-**Native Svelte 5 Collapsible Primitive**
-
-### Props
-- `open` (boolean): Bindable open state.
-- `disabled` (boolean): Whether the collapsible is disabled.
-- `trigger` (Snippet): Snippet for the trigger element.
-- `direction` ('vertical' | 'horizontal'): Animation direction. Default: 'vertical'.
+ @src/routes/api/cms.ts src/components/ui/collapsible.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Collapsible Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import { slide } from "svelte/transition";
-import type { Snippet } from "svelte";
-import type { HTMLAttributes } from "svelte/elements";
+import { cn } from '@utils/cn';
+import { slide } from 'svelte/transition';
+import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
 
 type Props = HTMLAttributes<HTMLDivElement> & {
 	open?: boolean;
 	disabled?: boolean;
 	trigger: Snippet;
 	children: Snippet;
-	direction?: "vertical" | "horizontal";
+	direction?: 'vertical' | 'horizontal';
 	class?: string;
 };
 
-let {
-	open = $bindable(false),
-	disabled = false,
-	trigger,
-	children,
-	direction = "vertical",
+let { 
+	open = $bindable(false), 
+	disabled = false, 
+	trigger, 
+	children, 
+	direction = 'vertical',
 	class: className,
-	...rest
+	...rest 
 }: Props = $props();
 
 function toggle() {

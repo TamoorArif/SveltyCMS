@@ -26,7 +26,20 @@ describe("MariaDB Adapter Functional Tests", () => {
     try {
       // @ts-ignore - private.test.ts is generated at runtime in CI, not present at type-check time
       const configModule = await import("../../../config/private.test");
-      privateEnv = configModule.privateEnv;
+      privateEnv = {
+        // @ts-ignore
+        DB_TYPE: (configModule.DB_TYPE = "mariadb"),
+        // @ts-ignore
+        DB_HOST: (configModule.DB_HOST = "localhost"),
+        // @ts-ignore
+        DB_PORT: (configModule.DB_PORT = 3306),
+        // @ts-ignore
+        DB_NAME: (configModule.DB_NAME = "sveltycms_test"),
+        // @ts-ignore
+        DB_USER: (configModule.DB_USER = "root"),
+        // @ts-ignore
+        DB_PASSWORD: (configModule.DB_PASSWORD = ""),
+      };
     } catch {
       privateEnv = {
         DB_TYPE: process.env.DB_TYPE,

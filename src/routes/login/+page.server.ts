@@ -51,6 +51,8 @@ import { publicEnv } from "@src/stores/global-settings.svelte";
 import { app } from "@src/stores/store.svelte";
 // System Logger
 import { logger } from "@utils/logger.server";
+// Email Utility
+import { sendMail } from "@utils/email.server";
 
 const limiter = new RateLimiter({
   IP: [200, "h"], // 200 requests per hour per IP
@@ -540,37 +542,26 @@ export const load: PageServerLoad = async ({ url, cookies, fetch, request, local
             hostLink: publicEnv.HOST_PROD || `https://${request.headers.get("host")}`,
             sitename: publicEnv.SITE_NAME || "SveltyCMS",
           };
-          const { getPrivateSettingSync } = await import("@src/services/settings-service");
-          const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
-
+          await import("@src/services/settings-service");
           try {
-            const mailResponse = await fetch("/api/send-mail", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-internal-key": internalKey || "",
-              },
-              body: JSON.stringify({
-                recipientEmail: email,
-                subject: `Welcome to ${emailProps.sitename}`,
-                templateName: "welcomeUser",
-                props: emailProps,
-                languageTag: app.systemLanguage,
-              }),
+            const mailResult = await sendMail({
+              recipientEmail: email,
+              subject: `Welcome to ${emailProps.sitename}`,
+              templateName: "welcomeUser",
+              props: emailProps,
+              languageTag: app.systemLanguage as string,
             });
-            if (mailResponse.ok) {
-              logger.info("OAuth: Welcome email request sent to invited user via API", { email });
+
+            if (mailResult.success) {
+              logger.info("OAuth: Welcome email sent directly to invited user", { email });
             } else {
-              logger.error(
-                `OAuth: Failed to send welcome email to invited user via API. Status: ${mailResponse.status}`,
-                {
-                  email,
-                  responseText: await mailResponse.text(),
-                },
-              );
+              logger.error("OAuth: Failed to send welcome email directly to invited user", {
+                email,
+                message: mailResult.message,
+              });
             }
           } catch (emailError) {
-            logger.error("OAuth: Error fetching /api/send-mail for invited user", {
+            logger.error("OAuth: Error calling sendMail for invited user", {
               email,
               error: emailError,
             });
@@ -886,39 +877,30 @@ export const actions: Actions = {
 
       // Send welcome email (best-effort; do not fail signup on email issues)
       try {
-        const { getPrivateSettingSync } = await import("@src/services/settings-service");
-        const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
-
         const emailProps = {
           username: username || email,
           email,
           hostLink: publicEnv.HOST_PROD || `https://${event.request.headers.get("host")}`,
           sitename: publicEnv.SITE_NAME || "SveltyCMS",
         };
-        const mailResponse = await event.fetch("/api/send-mail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-key": internalKey || "",
-          },
-          body: JSON.stringify({
-            recipientEmail: email,
-            subject: `Welcome to ${emailProps.sitename}`,
-            templateName: "welcomeUser",
-            props: emailProps,
-            languageTag: userLanguage,
-          }),
+        const mailResult = await sendMail({
+          recipientEmail: email,
+          subject: `Welcome to ${emailProps.sitename}`,
+          templateName: "welcomeUser",
+          props: emailProps,
+          languageTag: userLanguage,
         });
-        if (mailResponse.ok) {
-          logger.info("Welcome email request sent via API", { email });
+
+        if (mailResult.success) {
+          logger.info("Welcome email sent directly", { email });
         } else {
-          logger.error(`Failed to send welcome email via API. Status: ${mailResponse.status}`, {
+          logger.error(`Failed to send welcome email directly.`, {
             email,
-            responseText: await mailResponse.text(),
+            message: mailResult.message,
           });
         }
       } catch (emailError) {
-        logger.error("Error invoking /api/send-mail for invited user", {
+        logger.error("Error calling sendMail for invited user", {
           email,
           error: emailError,
         });
@@ -1275,27 +1257,16 @@ export const actions: Actions = {
           sitename: publicEnv.SITE_NAME || "SveltyCMS",
         };
 
-        const { getPrivateSettingSync } = await import("@src/services/settings-service");
-        const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
-
-        // Use SvelteKit's fetch for server-side API calls
-        const mailResponse = await event.fetch("/api/send-mail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-key": internalKey || "",
-          },
-          body: JSON.stringify({
-            recipientEmail: email,
-            subject: `Password Reset Request for ${emailProps.sitename}`,
-            templateName: "forgottenPassword",
-            props: emailProps,
-            languageTag: userLanguage,
-          }),
+        const mailResult = await sendMail({
+          recipientEmail: email,
+          subject: `Password Reset Request for ${emailProps.sitename}`,
+          templateName: "forgottenPassword",
+          props: emailProps,
+          languageTag: userLanguage,
         });
 
-        if (mailResponse.ok) {
-          logger.info("Forgotten password email request sent via API", {
+        if (mailResult.success) {
+          logger.info("Forgotten password email sent directly", {
             email,
           });
           return fail(400, {
@@ -1304,13 +1275,6 @@ export const actions: Actions = {
             emailSent: true,
           });
         }
-        logger.error(
-          `Failed to send forgotten password email via API. Status: ${mailResponse.status}`,
-          {
-            email,
-            responseText: await mailResponse.text(),
-          },
-        );
         // Still return success but with emailSent: false to handle on frontend
         return fail(400, {
           message: "Password reset email sent successfully.",
@@ -1394,37 +1358,23 @@ export const actions: Actions = {
           sitename: publicEnv.SITE_NAME || "SveltyCMS",
         };
         try {
-          const { getPrivateSettingSync } = await import("@src/services/settings-service");
-          const internalKey = getPrivateSettingSync("JWT_SECRET_KEY");
-
-          // Use SvelteKit's fetch for server-side API calls
-          const mailResponse = await event.fetch("/api/send-mail", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-internal-key": internalKey || "",
-            },
-            body: JSON.stringify({
-              recipientEmail: email,
-              subject: `Your Password for ${emailProps.sitename} Has Been Updated`,
-              templateName: "updatedPassword", // Ensure this template exists
-              props: emailProps,
-              languageTag: userLanguage,
-            }),
+          const mailResult = await sendMail({
+            recipientEmail: email,
+            subject: `Your Password for ${emailProps.sitename} Has Been Updated`,
+            templateName: "updatedPassword", // Ensure this template exists
+            props: emailProps,
+            languageTag: userLanguage,
           });
-          if (mailResponse.ok) {
-            logger.info("Password updated confirmation email request sent via API", { email });
+          if (mailResult.success) {
+            logger.info("Password updated confirmation email sent directly", { email });
           } else {
-            logger.error(
-              `Failed to send password updated email via API. Status: ${mailResponse.status}`,
-              {
-                email,
-                responseText: await mailResponse.text(),
-              },
-            );
+            logger.error(`Failed to send password updated email directly.`, {
+              email,
+              message: mailResult.message,
+            });
           }
         } catch (emailError) {
-          logger.error("Error fetching /api/send-mail for password updated confirmation", {
+          logger.error("Error calling sendMail for password updated confirmation", {
             email,
             error: emailError,
           });

@@ -1,54 +1,41 @@
 <!-- 
-@file src/components/ui/table/pagination.svelte
-@component
-**Superior Svelte 5 Table Pagination Primitive**
-
-A clean, accessible pagination control for data tables.
-
-### Props
-- `currentPage` (number): Bindable current page.
-- `rowsPerPage` (number): Bindable rows per page.
-- `totalItems` (number): Total count of items.
-- `pagesCount` (number): Optional total pages count (calculated if omitted).
-- `rowsPerPageOptions` (number[]): Options for rows per page.
+ @src/routes/api/cms.ts src/components/ui/table/pagination.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Pagination Primitive
 -->
 
 <script lang="ts">
-import Button from "../button.svelte";
+import Button from '../button.svelte';
 
 let {
-	currentPage = $bindable(1),
-	rowsPerPage = $bindable(10),
-	totalItems = 0,
-	pagesCount,
-	rowsPerPageOptions = [5, 10, 25, 50, 100],
-	onchange,
-	onUpdatePage,
-	onUpdateRowsPerPage,
+    currentPage = $bindable(1),
+    rowsPerPage = $bindable(10),
+    totalItems = 0,
+    pagesCount,
+    rowsPerPageOptions = [5, 10, 25, 50, 100],
+    onchange,
+    onUpdatePage,
+    onUpdateRowsPerPage
 }: {
-	currentPage?: number;
-	rowsPerPage?: number;
-	totalItems?: number;
-	pagesCount?: number;
-	rowsPerPageOptions?: number[];
-	onchange?: () => void;
-	onUpdatePage?: (page: number) => void;
-	onUpdateRowsPerPage?: (rows: number) => void;
+    currentPage?: number;
+    rowsPerPage?: number;
+    totalItems?: number;
+    pagesCount?: number;
+    rowsPerPageOptions?: number[];
+    onchange?: () => void;
+    onUpdatePage?: (page: number) => void;
+    onUpdateRowsPerPage?: (rows: number) => void;
 } = $props();
 
-const computedPagesCount = $derived(
-	pagesCount ?? Math.max(1, Math.ceil(totalItems / rowsPerPage)),
-);
-const startItem = $derived(
-	totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1,
-);
+const computedPagesCount = $derived(pagesCount ?? Math.max(1, Math.ceil(totalItems / rowsPerPage)));
+const startItem = $derived(totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1);
 const endItem = $derived(Math.min(currentPage * rowsPerPage, totalItems));
 
 function setPage(page: number) {
-	if (page < 1 || page > computedPagesCount || page === currentPage) return;
-	currentPage = page;
-	onchange?.();
-	onUpdatePage?.(page);
+    if (page < 1 || page > computedPagesCount || page === currentPage) return;
+    currentPage = page;
+    onchange?.();
+    onUpdatePage?.(page);
 }
 </script>
 

@@ -40,13 +40,13 @@ export class WebsiteTokensModule {
         expiresAt = new Date(expiresAt);
       }
 
-      const insertData = {
+      const insertData = utils.convertISOToDates({
         ...token,
         _id: id,
         expiresAt,
         createdAt: now,
         updatedAt: now,
-      };
+      });
 
       await this.db
         .insert(schema.websiteTokens)

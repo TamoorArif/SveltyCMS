@@ -3,18 +3,16 @@
  * @description Helper functions for server interaction in integration tests.
  */
 
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:4173";
-
 /**
  * Base URL constant for tests (alias for getApiBaseUrl for compatibility)
  */
-export const BASE_URL = process.env.API_BASE_URL || DEFAULT_API_BASE_URL;
+export const BASE_URL = "http://localhost:4173";
 
 /**
  * Returns the API base URL from environment or default.
  */
 export function getApiBaseUrl(): string {
-  return process.env.API_BASE_URL || DEFAULT_API_BASE_URL;
+  return "http://localhost:4173";
 }
 
 /**

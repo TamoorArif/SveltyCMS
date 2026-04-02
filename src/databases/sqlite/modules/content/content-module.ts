@@ -153,10 +153,12 @@ export class ContentModule {
       return this.core.wrap(async () => {
         const [updated] = await this.db
           .update(schema.contentNodes)
-          .set({
-            ...changes,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          } as any)
+          .set(
+            utils.convertISOToDates({
+              ...changes,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(eq(schema.contentNodes.path, path))
           .returning();
         return utils.convertDatesToISO(updated) as unknown as ContentNode;
@@ -174,7 +176,13 @@ export class ContentModule {
       return this.core.wrap(async () => {
         const results: ContentNode[] = [];
         for (const update of updates) {
-          const res = await this.nodes.update(update.path, update.changes);
+          const res = await this.crud.upsert<ContentNode>(
+            "content_nodes",
+            { path: update.path } as any,
+            update.changes as any,
+            _options?.tenantId,
+            _options?.bypassTenantCheck,
+          );
           if (res.success && res.data) results.push(res.data);
         }
         return results;

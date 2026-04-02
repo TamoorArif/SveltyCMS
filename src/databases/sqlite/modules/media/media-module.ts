@@ -263,10 +263,12 @@ export class MediaModule {
 
         const [updated] = await this.db
           .update(schema.mediaItems)
-          .set({
-            metadata: newMetadata,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          })
+          .set(
+            utils.convertISOToDates({
+              metadata: newMetadata,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(and(...conditions))
           .returning();
 
@@ -285,10 +287,12 @@ export class MediaModule {
 
         const results = await this.db
           .update(schema.mediaItems)
-          .set({
-            folderId: (targetFolderId || null) as string | null,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          })
+          .set(
+            utils.convertISOToDates({
+              folderId: (targetFolderId || null) as string | null,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(and(...conditions))
           .returning();
         return { movedCount: results.length };
@@ -326,7 +330,7 @@ export class MediaModule {
 
         const [created] = await this.db
           .insert(schema.mediaItems)
-          .values(copy as typeof schema.mediaItems.$inferInsert)
+          .values(utils.convertISOToDates(copy) as typeof schema.mediaItems.$inferInsert)
           .returning();
 
         return utils.convertDatesToISO(created) as unknown as MediaItem;
@@ -352,7 +356,7 @@ export class MediaModule {
         };
         const [result] = await this.db
           .insert(schema.systemVirtualFolders)
-          .values(values as any)
+          .values(utils.convertISOToDates(values) as any)
           .returning();
         return utils.convertDatesToISO(result) as unknown as MediaFolder;
       }, "CREATE_MEDIA_FOLDER_FAILED");
@@ -374,7 +378,7 @@ export class MediaModule {
         }));
         const results = await this.db
           .insert(schema.systemVirtualFolders)
-          .values(values as (typeof schema.systemVirtualFolders.$inferInsert)[])
+          .values(values.map((v) => utils.convertISOToDates(v)) as any)
           .returning();
 
         return utils.convertArrayDatesToISO(results) as unknown as MediaFolder[];
@@ -463,10 +467,12 @@ export class MediaModule {
 
         const [updated] = await this.db
           .update(schema.systemVirtualFolders)
-          .set({
-            parentId: (targetParentId || null) as string | null,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          })
+          .set(
+            utils.convertISOToDates({
+              parentId: (targetParentId || null) as string | null,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(and(...conditions))
           .returning();
 

@@ -1,105 +1,79 @@
 <!-- 
-@file src/components/ui/modal.svelte
-@component
-**Premium Svelte 5 Modal/Dialog Primitive**
-
-Native implementation using the HTML5 <dialog> element.
-Completely Skeleton-free.
-
-### Props
-- `open` (boolean): Bindable open state.
-- `title` (string): Optional title.
-- `size` (string): Size variant ('sm', 'md', 'lg', 'xl', 'fullscreen'). Default: 'md'.
-- `color` (string): Base color theme ('surface', 'primary', 'error', etc.).
-- `header` (Snippet): Optional header content.
-- `footer` (Snippet): Optional footer content.
-- `children` (Snippet): Main body content.
+ @src/routes/api/cms.ts src/components/ui/modal.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Modal Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { Snippet } from "svelte";
-import Portal from "./portal.svelte";
+	import { cn } from '@utils/cn';
+	import type { Snippet } from 'svelte';
+	import Portal from './portal.svelte';
 
-interface Props {
-	open?: boolean;
-	title?: string;
-	size?: "sm" | "md" | "lg" | "xl" | "fullscreen";
-	color?:
-		| "surface"
-		| "primary"
-		| "secondary"
-		| "tertiary"
-		| "success"
-		| "warning"
-		| "error";
-	class?: string;
-	header?: Snippet;
-	footer?: Snippet;
-	children?: Snippet;
-	[key: string]: any;
-}
-
-let {
-	open = $bindable(false),
-	title,
-	size = "md",
-	color = "surface",
-	class: className,
-	header,
-	footer,
-	children,
-	...rest
-}: Props = $props();
-
-let dialogEl = $state<HTMLDialogElement | null>(null);
-
-$effect(() => {
-	if (open) {
-		dialogEl?.showModal();
-		document.body.style.overflow = "hidden";
-	} else {
-		dialogEl?.close();
-		document.body.style.overflow = "";
+	interface Props {
+		open?: boolean;
+		title?: string;
+		size?: 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen';
+		color?: 'surface' | 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error';
+		class?: string;
+		header?: Snippet;
+		footer?: Snippet;
+		children?: Snippet;
+		[key: string]: any;
 	}
-});
 
-const isFullscreen = $derived(size === "fullscreen");
+	let { 
+		open = $bindable(false), 
+		title, 
+		size = 'md', 
+		color = 'surface',
+		class: className,
+		header, 
+		footer, 
+		children,
+		...rest 
+	}: Props = $props();
 
-const sizeClasses = {
-	sm: "max-w-sm",
-	md: "max-w-lg",
-	lg: "max-w-2xl",
-	xl: "max-w-4xl",
-	fullscreen: "h-full w-full rounded-none border-0",
-};
+	let dialogEl = $state<HTMLDialogElement | null>(null);
 
-const colorClasses = {
-	surface:
-		"bg-surface-100 dark:bg-surface-900 border-surface-200 dark:border-surface-800",
-	primary:
-		"bg-primary-50 dark:bg-primary-950 border-primary-200 dark:border-primary-800",
-	secondary:
-		"bg-secondary-50 dark:bg-secondary-950 border-secondary-200 dark:border-secondary-800",
-	tertiary:
-		"bg-tertiary-50 dark:bg-tertiary-950 border-tertiary-200 dark:border-tertiary-800",
-	success:
-		"bg-success-50 dark:bg-success-950 border-success-200 dark:border-surface-800",
-	warning:
-		"bg-warning-50 dark:bg-warning-950 border-warning-200 dark:border-surface-800",
-	error:
-		"bg-error-50 dark:bg-error-950 border-error-200 dark:border-surface-800",
-};
+	$effect(() => {
+		if (open) {
+			dialogEl?.showModal();
+			document.body.style.overflow = 'hidden';
+		} else {
+			dialogEl?.close();
+			document.body.style.overflow = '';
+		}
+	});
 
-function handleBackdropClick(e: MouseEvent) {
-	if (e.target === dialogEl) {
+	const isFullscreen = $derived(size === 'fullscreen');
+
+	const sizeClasses = {
+		sm: 'max-w-sm',
+		md: 'max-w-lg',
+		lg: 'max-w-2xl',
+		xl: 'max-w-4xl',
+		fullscreen: 'h-full w-full rounded-none border-0'
+	};
+
+	const colorClasses = {
+		surface: 'bg-surface-100 dark:bg-surface-900 border-surface-200 dark:border-surface-800',
+		primary: 'bg-primary-50 dark:bg-primary-950 border-primary-200 dark:border-primary-800',
+		secondary: 'bg-secondary-50 dark:bg-secondary-950 border-secondary-200 dark:border-secondary-800',
+		tertiary: 'bg-tertiary-50 dark:bg-tertiary-950 border-tertiary-200 dark:border-tertiary-800',
+		success: 'bg-success-50 dark:bg-success-950 border-success-200 dark:border-surface-800',
+		warning: 'bg-warning-50 dark:bg-warning-950 border-warning-200 dark:border-surface-800',
+		error: 'bg-error-50 dark:bg-error-950 border-error-200 dark:border-surface-800'
+	};
+
+	function handleBackdropClick(e: MouseEvent) {
+		if (e.target === dialogEl) {
+			open = false;
+		}
+	}
+
+	function handleClose() {
 		open = false;
 	}
-}
-
-function handleClose() {
-	open = false;
-}
 </script>
 
 <Portal>

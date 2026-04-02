@@ -29,17 +29,22 @@ async function getDBConfig() {
 
   const extract = (key: string) => {
     // Handle both 'key': 'value' and key: value (unquoted or numbers)
-    const match = content.match(new RegExp(`${key}\\s*:\\s*['"]?(.*?)['"]?,?(\\s|$)`, "i"));
-    return match ? match[1].trim() : process.env[key] || null;
+    const regex = new RegExp(`${key}\\s*:\\s*['"]?(.*?)['"]?([,\\s]|$)`, "i");
+    const match = content.match(regex);
+    if (match) return match[1].trim();
+    return process.env[key] || null;
   };
 
   return {
-    DB_TYPE: extract("DB_TYPE") || "mongodb",
-    DB_HOST: extract("DB_HOST") || "localhost",
-    DB_PORT: extract("DB_PORT") || "27017",
-    DB_NAME: extract("DB_NAME") || "svelty-cms",
-    DB_USER: extract("DB_USER") || "",
-    DB_PASSWORD: extract("DB_PASSWORD") || "",
+    config: {
+      DB_TYPE: extract("DB_TYPE") || "mongodb",
+      DB_HOST: extract("DB_HOST") || "localhost",
+      DB_PORT: extract("DB_PORT") || "27017",
+      DB_NAME: extract("DB_NAME") || "svelty-cms",
+      DB_USER: extract("DB_USER") || "",
+      DB_PASSWORD: extract("DB_PASSWORD") || "",
+    },
+    content,
   };
 }
 
@@ -47,7 +52,7 @@ async function runDatabaseBenchmark() {
   console.log("\n🚀 SveltyCMS Raw Database Performance Benchmark");
   console.log(`Date: ${new Date().toISOString()}`);
 
-  const config = await getDBConfig();
+  const { config, content } = await getDBConfig();
   const dbType = config.DB_TYPE.toLowerCase();
   console.log(`📂 DB: ${dbType.toUpperCase()} | ${config.DB_NAME}`);
 
@@ -58,7 +63,11 @@ async function runDatabaseBenchmark() {
     const auth = config.DB_USER
       ? `${config.DB_USER}:${encodeURIComponent(config.DB_PASSWORD)}@`
       : "";
-    const uri = `mongodb://${auth}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}?authSource=admin`;
+
+    // Improved MongoDB connection string with authSource fallback
+    const authSourceMatch = content.match(/authSource\s*:\s*['"]?(.*?)['"]?,?/i);
+    const authSource = authSourceMatch ? authSourceMatch[1] : "admin";
+    const uri = `mongodb://${auth}${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}?authSource=${authSource}`;
     try {
       await mongoose.connect(uri);
       console.log("✅ Connected to MongoDB via raw driver.");

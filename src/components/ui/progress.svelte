@@ -1,70 +1,47 @@
 <!-- 
-@file src/components/ui/progress.svelte
-@component
-**Native Svelte 5 Progress Primitive**
-
-### Props
-- `value` (number): Current progress value.
-- `max` (number): Maximum progress value. Default: 100.
-- `min` (number): Minimum progress value. Default: 0.
-- `indeterminate` (boolean): Whether the progress is indeterminate.
-- `color` (string): Progress range color (e.g., 'primary'). Default: 'primary'.
-- `height` (string): Height class (e.g., 'h-2'). Default: 'h-2'.
+ @src/routes/api/cms.ts src/components/ui/progress.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Progress Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { HTMLAttributes } from "svelte/elements";
+import { cn } from '@utils/cn';
+import type { HTMLAttributes } from 'svelte/elements';
 
 type Props = HTMLAttributes<HTMLDivElement> & {
 	value?: number;
 	max?: number;
 	min?: number;
 	indeterminate?: boolean;
-	color?:
-		| "primary"
-		| "secondary"
-		| "tertiary"
-		| "success"
-		| "warning"
-		| "error"
-		| "surface";
+	color?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
 	height?: string;
 	class?: string;
 };
 
-let {
-	value = 0,
-	max = 100,
-	min = 0,
-	indeterminate = false,
-	color = "primary",
-	height = "h-2",
+let { 
+	value = 0, 
+	max = 100, 
+	min = 0, 
+	indeterminate = false, 
+	color = 'primary', 
+	height = 'h-2',
 	class: className,
-	...rest
+	...rest 
 }: Props = $props();
 
-const percentage = $derived(
-	indeterminate
-		? 100
-		: Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100),
-);
+const percentage = $derived(indeterminate ? 100 : Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100));
 
-const classes = $derived(
-	cn(
-		"relative overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800",
-		height,
-		className,
-	),
-);
+const classes = $derived(cn(
+	'relative overflow-hidden rounded-full bg-surface-200 dark:bg-surface-800',
+	height,
+	className
+));
 
-const rangeClasses = $derived(
-	cn(
-		"h-full w-full flex-1 transition-all duration-500 ease-in-out",
-		`bg-${color}-500`,
-		indeterminate && "animate-progress-indeterminate",
-	),
-);
+const rangeClasses = $derived(cn(
+	'h-full w-full flex-1 transition-all duration-500 ease-in-out',
+	`bg-${color}-500`,
+	indeterminate && 'animate-progress-indeterminate'
+));
 </script>
 
 <div 

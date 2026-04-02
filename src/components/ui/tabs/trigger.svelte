@@ -1,38 +1,34 @@
 <!-- 
-@file src/components/ui/tabs/trigger.svelte
-@component TRIGGER
+ @src/routes/api/cms.ts src/components/ui/tabs/trigger.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Trigger Primitive
 -->
 <script lang="ts">
-import { getContext } from "svelte";
-import { cn } from "@utils/cn";
-import type { Snippet } from "svelte";
+	import { getContext } from 'svelte';
+	import { cn } from '@utils/cn';
+	import type { Snippet } from 'svelte';
 
-interface TabsContext {
-	value: any;
-	setTab: (val: any) => void;
-}
+	interface TabsContext {
+		value: any;
+		setTab: (val: any) => void;
+	}
 
-interface Props {
-	value: any;
-	disabled?: boolean;
-	children?: Snippet;
-	class?: string;
-}
+	interface Props {
+		value: any;
+		disabled?: boolean;
+		children?: Snippet;
+		class?: string;
+	}
 
-let {
-	value: triggerValue,
-	disabled = false,
-	children,
-	class: className = "",
-}: Props = $props();
+	let { value: triggerValue, disabled = false, children, class: className = '' }: Props = $props();
+	
+	const context = getContext<TabsContext>('TABS_CONTEXT');
+	const active = $derived(context?.value === triggerValue);
 
-const context = getContext<TabsContext>("TABS_CONTEXT");
-const active = $derived(context?.value === triggerValue);
-
-function handleClick() {
-	if (disabled) return;
-	context?.setTab(triggerValue);
-}
+	function handleClick() {
+		if (disabled) return;
+		context?.setTab(triggerValue);
+	}
 </script>
 
 <button

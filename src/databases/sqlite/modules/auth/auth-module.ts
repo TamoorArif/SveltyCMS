@@ -417,7 +417,24 @@ export class AuthModule implements IAuthAdapter {
     }, "GET_SESSION_TOKEN_DATA_FAILED");
   }
 
-  // Token methods
+  async getTokenById(
+    tokenId: string,
+    tenantId?: string | null,
+  ): Promise<DatabaseResult<Token | null>> {
+    return this.core.wrap(async () => {
+      const conditions = [eq(schema.authTokens._id, tokenId as string)];
+      if (tenantId) {
+        conditions.push(eq(schema.authTokens.tenantId, tenantId));
+      }
+      const [t] = await this.db
+        .select()
+        .from(schema.authTokens)
+        .where(and(...conditions))
+        .limit(1);
+      return t ? (utils.convertDatesToISO(t) as unknown as Token) : null;
+    }, "GET_TOKEN_BY_ID_FAILED");
+  }
+
   async createToken(tokenData: {
     user_id: string;
     email: string;

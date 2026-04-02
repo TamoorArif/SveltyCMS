@@ -98,8 +98,8 @@ let initializationState: "pending" | "in-progress" | "complete" | "failed" = "pe
 let initError: Error | null = null;
 let initStartTime = 0;
 
-// Timeout protection (30 seconds max for initialization)
-const INIT_TIMEOUT_MS = 30_000;
+// Timeout protection (60 seconds max for initialization)
+const INIT_TIMEOUT_MS = 60_000;
 
 /**
  * RESET initialization state for testing
@@ -199,9 +199,9 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
           initStartTime = Date.now();
 
           try {
-            const { resetDbInitPromise } = await import("@src/databases/db");
-            await resetDbInitPromise();
-            const { dbInitPromise: newPromise } = await import("@src/databases/db");
+            const { resetDbInitPromise, getDbInitPromise } = await import("@src/databases/db");
+            resetDbInitPromise();
+            const newPromise = getDbInitPromise(true);
 
             await Promise.race([
               newPromise,
@@ -210,9 +210,12 @@ export const handleSystemState: Handle = async ({ event, resolve }) => {
               ),
             ]);
             initializationState = "complete";
+            initError = null;
+            logger.info("[Self-Healing] System successfully recovered.");
           } catch (recoveryErr) {
             initializationState = "failed";
             initError = recoveryErr instanceof Error ? recoveryErr : new Error(String(recoveryErr));
+            logger.error(`[Self-Healing] System recovery failed: ${initError.message}`);
             throw new AppError("System recovery failed.", 503, "RECOVERY_FAILED");
           }
         } else {

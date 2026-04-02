@@ -58,9 +58,20 @@ let {
 	role = "admin",
 	expires = "",
 	user = page.data.user,
-	roles = page.data.roles,
+	roles: initialRoles = page.data.roles,
 	close,
 }: Props = $props();
+
+// Deduplicate roles to prevent UI glitches
+const roles = $derived.by(() => {
+	const uniqueMap = new Map();
+	for (const r of initialRoles || []) {
+		if (r?._id && !uniqueMap.has(r._id.toString())) {
+			uniqueMap.set(r._id.toString(), r);
+		}
+	}
+	return Array.from(uniqueMap.values());
+});
 
 // Form Data with format conversion
 function convertLegacyFormat(expires: string): string {

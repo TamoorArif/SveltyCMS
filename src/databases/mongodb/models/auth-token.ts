@@ -540,6 +540,46 @@ export class TokenAdapter {
     }
   }
 
+  /**
+   * Get token details by ID (_id)
+   */
+  async getTokenById(
+    tokenId: string,
+    tenantId?: string | null,
+  ): Promise<DatabaseResult<Token | null>> {
+    try {
+      const filter: Record<string, unknown> = { _id: tokenId };
+      if (tenantId) {
+        filter.tenantId = tenantId;
+      }
+      const tokenDoc = await this.TokenModel.findOne(filter).lean();
+      const result = tokenDoc
+        ? {
+            _id: tokenDoc._id.toString(),
+            user_id: tokenDoc.user_id,
+            token: tokenDoc.token,
+            email: tokenDoc.email,
+            expires: tokenDoc.expires,
+            type: tokenDoc.type,
+            blocked: tokenDoc.blocked,
+            username: tokenDoc.username,
+            role: tokenDoc.role,
+            createdAt: tokenDoc.createdAt,
+            updatedAt: tokenDoc.updatedAt,
+          }
+        : null;
+      return { success: true, data: result };
+    } catch (err) {
+      const message = `Error in TokenAdapter.getTokenById: ${err instanceof Error ? err.message : String(err)}`;
+      logger.error(message, { tokenId });
+      return {
+        success: false,
+        message,
+        error: { code: "TOKEN_RETRIEVAL_ERROR", message },
+      };
+    }
+  }
+
   private formatToken(token: Partial<Token> & { _id?: string | mongoose.Types.ObjectId }): Token {
     // Accepts both TokenDocument and plain objects from .lean()
     const { _id, ...tokenData } = token;

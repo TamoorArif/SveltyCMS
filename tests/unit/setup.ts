@@ -1,39 +1,11 @@
-/**
- * @file tests/unit/setup.ts
- * @description Master Unit Test Setup for Bun and Vitest.
- */
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
 
-console.log("--- Master Test Setup Loading... (Bun:", typeof Bun !== "undefined", ")");
-
-if (typeof Bun !== "undefined") {
-  const earlyShim = {
-    hoisted: (f: any) => f(),
-    fn: (f: any) => f,
-    mock: () => {},
-    doMock: () => {},
-  };
-  try {
-    Object.defineProperty(globalThis, "vi", {
-      value: earlyShim,
-      configurable: true,
-      writable: true,
-    });
-    Object.defineProperty(globalThis, "vitest", {
-      value: earlyShim,
-      configurable: true,
-      writable: true,
-    });
-  } catch {
-    (globalThis as any).vi = earlyShim;
-    (globalThis as any).vitest = earlyShim;
-  }
-}
+// 1. EARLY DOM SHIMS (Critical for Bun; Vitest uses native jsdom)
+const isBun = typeof Bun !== "undefined";
 
 const setGlobal = (name: string, value: any) => {
-  try {
-    // Force delete first to override non-configurable properties if possible
-    delete (globalThis as any)[name];
-  } catch {}
+  if (globalThis[name as keyof typeof globalThis] !== undefined) return;
   try {
     Object.defineProperty(globalThis, name, {
       value,
@@ -42,16 +14,117 @@ const setGlobal = (name: string, value: any) => {
       enumerable: true,
     });
   } catch {
-    // Fallback for non-configurable
     (globalThis as any)[name] = value;
   }
 };
 
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
+class Node {
+  nodeType = 1;
+  ownerDocument: any;
+  appendChild(el: any) {
+    return el;
+  }
+  removeChild(el: any) {
+    return el;
+  }
+  addEventListener() {}
+  removeEventListener() {}
+}
+
+class HTMLElement extends Node {
+  style = {};
+  classList = {
+    add: () => {},
+    remove: () => {},
+    contains: () => false,
+    toggle: () => false,
+  };
+  setAttribute() {}
+  getAttribute() {
+    return null;
+  }
+  get nodeName() {
+    return (this as any)._nodeName || "DIV";
+  }
+  set nodeName(v: string) {
+    (this as any)._nodeName = v;
+  }
+}
+
+const windowMock: any = {
+  setTimeout,
+  clearTimeout,
+  setInterval,
+  clearInterval,
+  innerWidth: 1024,
+  innerHeight: 768,
+  location: new URL("http://localhost"),
+  matchMedia: () => ({
+    matches: false,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
+  }),
+  Node,
+  HTMLElement,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+};
+
+const documentMock: any = {
+  nodeType: 9,
+  cookie: "",
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => true,
+  querySelector: () => null,
+  createElement: (tag: string) => {
+    const el = new HTMLElement();
+    el.nodeName = tag.toUpperCase();
+    el.ownerDocument = documentMock;
+    return el;
+  },
+};
+
+windowMock.document = documentMock;
+documentMock.defaultView = windowMock;
+
+if (isBun) {
+  setGlobal("Node", Node);
+  setGlobal("HTMLElement", HTMLElement);
+  setGlobal("window", windowMock);
+  setGlobal("document", documentMock);
+  setGlobal("navigator", { userAgent: "bun" });
+
+  const documentBodyMock = new HTMLElement();
+  documentBodyMock.ownerDocument = documentMock;
+  documentBodyMock.nodeName = "BODY";
+  documentMock.body = documentBodyMock;
+} else if (typeof window !== "undefined") {
+  // Vitest / JSDOM environment
+  if (!window.matchMedia) {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {}, // Deprecated
+        removeListener: () => {}, // Deprecated
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => true,
+      }),
+    });
+  }
+}
+
+// 2. TESTING LIBRARIES (Dynamic import to avoid hoisting before shims)
+await import("@testing-library/jest-dom/vitest");
 
 // detect environment
-const isBun = typeof Bun !== "undefined";
 let mock: any;
 let vitest: any;
 
@@ -208,7 +281,15 @@ moduleMock("@utils/logger", () => ({
   logger: mockLogger,
   default: mockLogger,
 }));
+moduleMock("@src/utils/logger", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
 moduleMock("@utils/logger.server", () => ({
+  logger: mockLogger,
+  default: mockLogger,
+}));
+moduleMock("@src/utils/logger.server", () => ({
   logger: mockLogger,
   default: mockLogger,
 }));
@@ -218,6 +299,14 @@ moduleMock("$app/environment", () => ({
   dev: true,
   building: false,
   version: "1.0.0",
+}));
+
+moduleMock("$app/navigation", () => ({
+  goto: mock(() => Promise.resolve()),
+  invalidate: mock(() => Promise.resolve()),
+  invalidateAll: mock(() => Promise.resolve()),
+  beforeNavigate: mock(() => {}),
+  afterNavigate: mock(() => {}),
 }));
 
 moduleMock("@sveltejs/kit", () => ({
@@ -289,12 +378,12 @@ moduleMock("sveltekit-rate-limiter/server", () => ({
 }));
 
 // 2. ENVIRONMENT GLOBALS
-setGlobal("browser", true);
+setGlobal("browser", false);
 setGlobal("dev", true);
 setGlobal("building", false);
 setGlobal("logger", mockLogger);
 
-process.env.BROWSER = "true";
+process.env.BROWSER = "false";
 process.env.NODE_ENV = "test";
 process.env.TEST_MODE = "true";
 
@@ -323,6 +412,7 @@ const $state = Object.assign(
     return v;
   },
   {
+    raw: (v: any) => v,
     snapshot: (v: any) => {
       if (typeof v !== "object" || v === null) return v;
       try {
@@ -417,18 +507,52 @@ const svelteCommon = {
   getContext: () => undefined,
   setContext: (_unused: any, v: any) => v,
   hasContext: () => false,
-  createContext: () => [() => ({}), (v: any) => v],
+  mount: (component: any, options: any) => ({ component, options, unmount: () => {} }),
+  hydrate: (component: any, options: any) => ({ component, options, unmount: () => {} }),
+  unmount: () => {},
+  flushSync: (cb?: any) => cb?.(),
+  createContext: () => [() => {}, () => {}],
 };
 
-moduleMock("svelte", () => svelteCommon);
-moduleMock("svelte/server", () => svelteCommon);
-moduleMock("svelte/internal", () => ({
-  noop: () => {},
-  safe_not_equal: () => true,
-  subscribe: () => () => {},
-  run_all: () => {},
-  is_function: (v: any) => typeof v === "function",
-}));
+const svelteServerMock = {
+  ...svelteCommon,
+  render: mock((component: any, options: any) => {
+    let html = "";
+    const renderer = {
+      push: (s: string) => {
+        html += s;
+      },
+      component: (fn: any) => {
+        fn(renderer);
+      },
+    };
+
+    try {
+      // Svelte 5 SSR component call signature: (renderer, props)
+      component(renderer, options.props || {});
+      return {
+        body: html,
+        head: "",
+        html: html,
+      };
+    } catch (e) {
+      console.error("Error in SSR render mock:", e);
+      return { body: "", head: "", html: "" };
+    }
+  }),
+};
+
+if (isBun) {
+  moduleMock("svelte", () => svelteCommon);
+  moduleMock("svelte/server", () => svelteServerMock);
+  moduleMock("svelte/internal", () => ({
+    noop: () => {},
+    safe_not_equal: () => true,
+    subscribe: () => () => {},
+    run_all: () => {},
+    is_function: (v: any) => typeof v === "function",
+  }));
+}
 
 // 5. STORAGE MOCK
 class StorageMock implements Storage {
@@ -459,54 +583,7 @@ const sessionStorage = new StorageMock();
 setGlobal("localStorage", localStorage);
 setGlobal("sessionStorage", sessionStorage);
 
-// 6. WINDOW & DOCUMENT
-const windowMock = {
-  setTimeout,
-  clearTimeout,
-  setInterval,
-  clearInterval,
-  innerWidth: 1024,
-  innerHeight: 768,
-  location: new URL("http://localhost"),
-  matchMedia: mock((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: mock(() => {}),
-    removeListener: mock(() => {}),
-    addEventListener: mock(() => {}),
-    removeEventListener: mock(() => {}),
-    dispatchEvent: mock(() => true),
-  })),
-  localStorage,
-  sessionStorage,
-  crypto: { randomUUID: () => crypto.randomUUID() },
-  fetch: mock(() => Promise.resolve(new Response("{}"))),
-  requestAnimationFrame: (cb: any) => setTimeout(cb, 0),
-  cancelAnimationFrame: (id: any) => clearTimeout(id),
-  addEventListener: mock(() => {}),
-  removeEventListener: mock(() => {}),
-};
-
-setGlobal("window", windowMock);
-setGlobal("document", {
-  cookie: "",
-  addEventListener: mock(() => {}),
-  removeEventListener: mock(() => {}),
-  dispatchEvent: mock(() => true),
-  createElement: mock(() => ({
-    style: {},
-    appendChild: mock(() => {}),
-    setAttribute: mock(() => {}),
-    classList: {
-      add: mock(() => {}),
-      remove: mock(() => {}),
-      contains: mock(() => false),
-      toggle: mock(() => false),
-    },
-  })),
-});
-setGlobal("navigator", { userAgent: "node" });
+// 7. navigator
 setGlobal("requestAnimationFrame", (cb: any) => setTimeout(cb, 0));
 setGlobal("cancelAnimationFrame", (id: any) => clearTimeout(id));
 
@@ -574,6 +651,36 @@ const wrapError = (error: any, message = "An unexpected error occurred", status 
 };
 
 moduleMock("@src/utils/error-handling", () => ({
+  AppError,
+  isAppError,
+  isHttpError,
+  getErrorMessage,
+  wrapError,
+  handleApiError: mock((err: any) => {
+    const status = err?.status || (isHttpError(err) ? (err as any).status : 500);
+    if (status >= 500) {
+      console.error("--- handleApiError Details:", {
+        message: getErrorMessage(err),
+        status,
+        code: err?.code,
+        stack: err instanceof Error ? err.stack : undefined,
+        err,
+      });
+    }
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: getErrorMessage(err),
+        code: err?.code || (isHttpError(err) ? `HTTP_${err.status}` : "INTERNAL_ERROR"),
+      }),
+      {
+        status,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }),
+}));
+moduleMock("@utils/error-handling", () => ({
   AppError,
   isAppError,
   isHttpError,
@@ -734,6 +841,7 @@ const settingsMock = {
   invalidateSettingsCache: mock(async () => {}),
   isCacheLoaded: mock(() => true),
   getAllSettings: mock(async () => ({ public: {}, private: {} })),
+  updateSettingsFromSnapshot: mock(async () => ({ updated: 0 })),
   getUntypedSetting: mock(async () => undefined),
 };
 moduleMock("@src/services/settings-service", () => settingsMock);
@@ -755,6 +863,7 @@ const mockDbAdapter = {
     deleteTokens: mock(() => Promise.resolve(1)),
     getAllTokens: mock(() => Promise.resolve({ success: true, data: [] })),
     createToken: mock(() => Promise.resolve({ success: true, data: "token-123" })),
+    getTokenById: mock(() => Promise.resolve({ success: true, data: null })),
     blockTokens: mock(() => Promise.resolve(1)),
     unblockTokens: mock(() => Promise.resolve(1)),
     updateUserAttributes: mock(() => Promise.resolve({ success: true })),
@@ -769,6 +878,15 @@ const mockDbAdapter = {
       ),
     ),
     ensureAuth: mock(() => Promise.resolve()),
+    validateSession: mock((id: string) =>
+      Promise.resolve({
+        _id: id || "user123",
+        email: "test@example.com",
+        tenantId: "default",
+        role: "admin",
+        permissions: [],
+      }),
+    ),
     createSessionCookie: mock(() => ({
       name: "session",
       value: "secret",
@@ -786,8 +904,12 @@ const mockDbAdapter = {
       setMany: mock(() => Promise.resolve({ success: true })),
       deleteMany: mock(() => Promise.resolve({ success: true })),
     },
+    widgets: {
+      getActiveWidgets: mock(() => Promise.resolve({ success: true, data: [] })),
+    },
   },
   crud: {
+    insert: mock(() => Promise.resolve({ success: true, data: { _id: "mock-id" } })),
     update: mock(() => Promise.resolve({ success: true })),
     findOne: mock(() => Promise.resolve({ success: true, data: null })),
     findMany: mock(() => Promise.resolve({ success: true, data: [] })),
@@ -799,6 +921,7 @@ const mockDbAdapter = {
       delete: mock(() => Promise.resolve({ success: true })),
       deleteMany: mock(() => Promise.resolve({ success: true })),
       upload: mock(() => Promise.resolve({ success: true, data: "test.jpg" })),
+      getByFolder: mock(() => Promise.resolve({ success: true, data: [] })),
     },
   },
 };
@@ -824,8 +947,18 @@ const dbMock = {
   ),
   clearPrivateConfigCache: mock(() => {}),
   initializeWithConfig: mock(() => Promise.resolve({ status: "success" })),
+  reinitializeSystem: mock(() => Promise.resolve({ status: "initialized" })),
   initConnection: mock(() => Promise.resolve()),
+  getDbInitPromise: mock(() => Promise.resolve()),
+  resetDbInitPromise: mock(() => {}),
   dbInitPromise: Promise.resolve(),
+  collection: {
+    getModel: mock(() => Promise.resolve({ name: "mock_collection", fields: [] })),
+    listSchemas: mock(() => Promise.resolve({ success: true, data: [] })),
+  },
+  crud: mockDbAdapter.crud,
+  media: mockDbAdapter.media,
+  system: mockDbAdapter.system,
   loadSettingsFromDB: mock(() => Promise.resolve(true)),
 };
 moduleMock("@src/databases/db", () => dbMock);
@@ -1037,4 +1170,3 @@ if (typeof (globalThis as any).beforeEach !== "undefined") {
 }
 
 console.log("✅ Master Test Setup Loaded - (AGNOSTIC RUNES + AUTO-RESET)");
-console.log("Diagnostic - browser:", (globalThis as any).browser);

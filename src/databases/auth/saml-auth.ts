@@ -10,8 +10,11 @@
  */
 
 import { getPrivateSettingSync, getPublicSettingSync } from "@src/services/settings-service";
-import { logger } from "@utils/logger";
+import { logger } from "@utils/logger.server";
 import jackson from "@boxyhq/saml-jackson";
+import { dbAdapter, getAuth } from "@src/databases/db";
+import { json } from "@sveltejs/kit";
+import { dateToISODateString } from "@utils/date-utils";
 
 // Use any for Jackson instance to avoid version-specific type mismatches in build environments
 let jacksonInstance: any = null;
@@ -128,4 +131,85 @@ export async function generateSAMLAuthUrl(tenant: string, product: string): Prom
     state: "sveltycms",
   });
   return redirect_url as string;
+}
+
+/**
+ * Handles the SAML Assertion Consumer Service (ACS) callback.
+ * Processes the SAMLResponse, identifies/provisions the user, and creates a session.
+ */
+export async function handleSAMLResponse({ request, cookies }: any): Promise<Response> {
+  try {
+    const j = await getJackson();
+    const formData = await request.formData();
+
+    // Jackson's oauthController can handle the SAMLResponse directly
+    // when passed as 'code' in the token exchange.
+    const body = Object.fromEntries(formData.entries());
+
+    const { access_token } = await j.oauthController.token({
+      client_id: `tenant=${body.tenant || "default"}&product=sveltycms`,
+      client_secret: "sveltycms-jackson-secret",
+      code: body.SAMLResponse,
+      grant_type: "authorization_code",
+      redirect_uri:
+        (getPublicSettingSync("HOST_DEV") ||
+          getPublicSettingSync("HOST_PROD") ||
+          "http://localhost:5173") + "/api/auth/saml/acs",
+    });
+
+    const profile = await j.oauthController.userinfo(access_token);
+
+    if (!profile || !profile.email) {
+      throw new Error("Failed to retrieve user profile from SAML provider");
+    }
+
+    if (!dbAdapter) throw new Error("Database adapter not initialized");
+
+    // Provision or find user
+    const userRes = await dbAdapter.auth.getUserByEmail({
+      email: profile.email,
+      tenantId: (body.tenant as string) || null,
+    });
+    if (!userRes.success) throw new Error(`User lookup failed: ${userRes.message}`);
+    let user = userRes.data;
+
+    if (!user) {
+      // JIT Provisioning
+      const newUserRes = await dbAdapter.auth.createUser({
+        email: profile.email,
+        username: profile.email.split("@")[0],
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        role: "user", // Correct singular 'role' field
+        blocked: false, // Correct field from User interface
+        tenantId: (body.tenant as string) || null,
+      });
+      if (!newUserRes.success) throw new Error(`User creation failed: ${newUserRes.message}`);
+      user = newUserRes.data;
+      logger.info(`JIT Provisioned SAML user: ${profile.email}`);
+    }
+
+    // Create SveltyCMS Session
+    const auth = getAuth();
+    if (!auth) throw new Error("Auth system not initialized");
+
+    // Calculate expiry (30 days) and convert to branded ISODateString
+    const expiresAt = dateToISODateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+    const sessionRes = await dbAdapter.auth.createSession({
+      user_id: user._id,
+      expires: expiresAt,
+      tenantId: (body.tenant as string) || null,
+    });
+
+    if (!sessionRes.success) throw new Error(`SSO session failure: ${sessionRes.message}`);
+
+    const sessionCookie = auth.createSessionCookie(sessionRes.data._id);
+
+    cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes as any);
+
+    return json({ success: true, data: { user } });
+  } catch (error: any) {
+    logger.error(`SAML ACS Error: ${error.message}`);
+    return json({ success: false, message: error.message }, { status: 500 });
+  }
 }

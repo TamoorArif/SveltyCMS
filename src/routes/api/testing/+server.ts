@@ -53,30 +53,41 @@ export async function POST(event: RequestEvent) {
       dbAdapter: initialDb,
       auth: initialAuth,
       reinitializeSystem,
+      getDbInitPromise,
     } = await import("@src/databases/db");
+
+    // Wait for any existing initialization to complete
+    await getDbInitPromise();
 
     if (!initialDb || !initialAuth) {
       console.log(
         "[API/Testing] Database/Auth not fully initialized. Attempting re-initialization...",
       );
-      const result = await reinitializeSystem(true);
-      if (result.status === "failed") {
-        console.error("[API/Testing] Re-initialization failed:", result.error);
-        return json(
-          {
-            error: "System re-initialization failed",
-            details: result.error,
-            status: result.status,
-          },
-          { status: 503 },
-        );
+
+      let attempts = 0;
+      while (attempts < 3) {
+        const result = await reinitializeSystem(true);
+        console.log(`[API/Testing] Re-initialization attempt ${attempts + 1}: ${result.status}`);
+
+        const {
+          getDbInitPromise: getNewInitPromise,
+          getDb,
+          getAuth,
+        } = await import("@src/databases/db");
+        await getNewInitPromise();
+
+        if (getDb() && getAuth()) {
+          break;
+        }
+        attempts++;
+        await new Promise((r) => setTimeout(r, 1000));
       }
     }
 
     // Re-import after initialization (module-level `dbAdapter` may have been reassigned)
-    const db = await import("@src/databases/db");
-    const currentDbAdapter = db.dbAdapter;
-    const currentAuth = db.auth;
+    const { getDb, getAuth } = await import("@src/databases/db");
+    const currentDbAdapter = getDb();
+    const currentAuth = getAuth();
 
     if (!(currentDbAdapter && currentAuth)) {
       console.error("[API/Testing] Database or Auth still missing after init attempt", {
@@ -110,16 +121,17 @@ export async function POST(event: RequestEvent) {
         // Wipe uploaded media files from tests
         try {
           const { getPublicSetting } = await import("@src/services/settings-service");
-          const fs = await import("node:fs/promises");
+          const fs = await import("node:fs");
+          const fsp = await import("node:fs/promises");
           const path = await import("node:path");
           const mediaFolderPath = (await getPublicSetting("MEDIA_FOLDER")) || "mediaFolder";
           const fullPath = path.resolve(process.cwd(), mediaFolderPath);
 
           // Recursively empty the folder rather than deleting it completely to avoid EBUSY on Windows
-          if (require("node:fs").existsSync(fullPath)) {
-            const items = await fs.readdir(fullPath);
+          if (fs.existsSync(fullPath)) {
+            const items = await fsp.readdir(fullPath);
             for (const item of items) {
-              await fs.rm(path.join(fullPath, item), {
+              await fsp.rm(path.join(fullPath, item), {
                 recursive: true,
                 force: true,
               });

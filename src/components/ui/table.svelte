@@ -1,122 +1,103 @@
 <!-- 
-@file src/components/ui/table.svelte
-@component
-**Superior Svelte 5 Table / DataGrid Primitive**
-
-A high-performance, accessible data table with built-in sorting, 
-selection, pagination, and filtering.
-
-### Props
-- `data` (Array<any>): The data to display.
-- `columns` (Array<Column>): Column definitions.
-- `selectable` (boolean): Enable row selection.
-- `loading` (boolean): Show loading skeletons.
-- `sortKey` (string): Bindable sort key.
-- `sortOrder` (string): 'asc' | 'desc'.
-- `density` (string): 'compact' | 'normal' | 'comfortable'.
+ @src/routes/api/cms.ts src/components/ui/table.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Table Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { Snippet } from "svelte";
-import Pagination from "./table/pagination.svelte";
+import { cn } from '@utils/cn';
+import type { Snippet } from 'svelte';
+import Pagination from './table/pagination.svelte';
 
 interface Column {
-	key: string;
-	label: string;
-	sortable?: boolean;
-	class?: string;
-	width?: string;
+    key: string;
+    label: string;
+    sortable?: boolean;
+    class?: string;
+    width?: string;
 }
 
 interface Props {
-	data: any[];
-	columns: Column[];
-	sortKey?: string;
-	sortOrder?: "asc" | "desc";
-	selectable?: boolean;
-	selectedIds?: Set<any>;
-	loading?: boolean;
-	density?: "compact" | "normal" | "comfortable";
-	class?: string;
-	// Pagination props
-	totalItems?: number;
-	currentPage?: number;
-	rowsPerPage?: number;
-	// Snippets
-	header?: Snippet;
-	footer?: Snippet;
-	cell?: Snippet<[{ row: any; column: Column }]>;
-	row?: Snippet<[{ row: any; index: number }]>;
-	expand?: Snippet<[{ row: any }]>;
-	// Events
-	onrowclick?: (row: any) => void;
-	onselect?: (selectedIds: Set<any>) => void;
+    data: any[];
+    columns: Column[];
+    sortKey?: string;
+    sortOrder?: 'asc' | 'desc';
+    selectable?: boolean;
+    selectedIds?: Set<any>;
+    loading?: boolean;
+    density?: 'compact' | 'normal' | 'comfortable';
+    class?: string;
+    // Pagination props
+    totalItems?: number;
+    currentPage?: number;
+    rowsPerPage?: number;
+    // Snippets
+    header?: Snippet;
+    footer?: Snippet;
+    cell?: Snippet<[{ row: any, column: Column }]>;
+    row?: Snippet<[{ row: any, index: number }]>;
+    expand?: Snippet<[{ row: any }]>;
+    // Events
+    onrowclick?: (row: any) => void;
+    onselect?: (selectedIds: Set<any>) => void;
 }
 
-let {
-	data = [],
-	columns = [],
-	sortKey = $bindable(),
-	sortOrder = $bindable("asc"),
-	selectable = false,
-	selectedIds = $bindable(new Set()),
-	loading = false,
-	density = $bindable("normal"),
-	class: className,
-	totalItems = 0,
-	currentPage = $bindable(1),
-	rowsPerPage = $bindable(10),
-	header,
-	footer,
-	cell,
-	row: rowSnippet,
-	expand,
-	onrowclick,
-	onselect,
+let { 
+    data = [], 
+    columns = [], 
+    sortKey = $bindable(), 
+    sortOrder = $bindable('asc'),
+    selectable = false,
+    selectedIds = $bindable(new Set()),
+    loading = false,
+    density = $bindable('normal'),
+    class: className,
+    totalItems = 0,
+    currentPage = $bindable(1),
+    rowsPerPage = $bindable(10),
+    header,
+    footer,
+    cell,
+    row: rowSnippet,
+    expand,
+    onrowclick,
+    onselect
 }: Props = $props();
 
 // --- METHODS ---
 function handleSort(key: string) {
-	if (sortKey === key) {
-		sortOrder = sortOrder === "asc" ? "desc" : "asc";
-	} else {
-		sortKey = key;
-		sortOrder = "asc";
-	}
+    if (sortKey === key) {
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortKey = key;
+        sortOrder = 'asc';
+    }
 }
 
 function toggleSelectAll() {
-	if (selectedIds.size === data.length) {
-		selectedIds.clear();
-	} else {
-		data.forEach((row) => selectedIds.add(row._id || row.id));
-	}
-	onselect?.(selectedIds);
+    if (selectedIds.size === data.length) {
+        selectedIds.clear();
+    } else {
+        data.forEach(row => selectedIds.add(row._id || row.id));
+    }
+    onselect?.(selectedIds);
 }
 
 function toggleSelectRow(id: any) {
-	if (selectedIds.has(id)) selectedIds.delete(id);
-	else selectedIds.add(id);
-	onselect?.(selectedIds);
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    onselect?.(selectedIds);
 }
 
-const allSelected = $derived(
-	data.length > 0 && selectedIds.size === data.length,
-);
-const someSelected = $derived(
-	selectedIds.size > 0 && selectedIds.size < data.length,
-);
+const allSelected = $derived(data.length > 0 && selectedIds.size === data.length);
+const someSelected = $derived(selectedIds.size > 0 && selectedIds.size < data.length);
 
 const densityClass = $derived.by(() => {
-	switch (density) {
-		case "compact":
-			return "p-2 text-xs";
-		case "comfortable":
-			return "p-6 text-base";
-		default:
-			return "p-4 text-sm";
-	}
+    switch(density) {
+        case 'compact': return 'p-2 text-xs';
+        case 'comfortable': return 'p-6 text-base';
+        default: return 'p-4 text-sm';
+    }
 });
 </script>
 

@@ -49,8 +49,11 @@ import SiteName from "./site-name.svelte";
 	const { char = null, siteName: propSiteName, highlight, textClass = 'text-black dark:text-white' }: Props = $props();
 
 	// Get site name dynamically from global settings store (updates live!)
-	// Fallback chain: prop → live store → default (removed page.data access which causes SSR issues)
-	const siteName = $derived(propSiteName || publicEnv?.SITE_NAME || 'SveltyCMS');
+	// Strip '(localhost)' or '(127.0.0.1)' if appended during setup
+	const siteName = $derived.by(() => {
+		const rawName = propSiteName || publicEnv?.SITE_NAME || 'SveltyCMS';
+		return rawName.replace(/\s*\((localhost|127\.0\.0\.1)\)/i, '');
+	});
 
 	// Split site name into parts if highlight is provided
 	const parts = $derived.by(() => {

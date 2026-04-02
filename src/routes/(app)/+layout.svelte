@@ -41,7 +41,6 @@ import {
 	setContentStructure,
 	setMode,
 } from "@src/stores/collection-store.svelte.ts";
-import { publicEnv } from "@src/stores/global-settings.svelte.ts";
 import {
 	globalLoadingStore,
 	loadingOperations,
@@ -61,7 +60,7 @@ import CommandBar from "@src/components/command-bar.svelte";
 // SvelteKit Navigation
 import { afterNavigate, beforeNavigate } from "$app/navigation";
 import { page } from "$app/state";
-import type { ContentNode, Schema } from "../../content/types";
+import type { Schema, NavigationNode } from "../../content/types";
 import { setContentContext } from "@src/content";
 import { contentManager } from "@src/content";
 
@@ -70,13 +69,14 @@ import { contentManager } from "@src/content";
 // =============================================
 
 interface LayoutData {
-	contentStructure: ContentNode[] | Promise<ContentNode[]>;
-	firstCollection?: Schema | null | Promise<Schema | null>;
-	nonce: string;
-	publicSettings?: Record<string, any>;
-	theme?: string;
+	contentStructure: Promise<NavigationNode[]>;
+	firstCollection: Promise<Schema | null>;
+	settings: Record<string, any>;
 	user: User | null;
 	tenantId?: string | null;
+	darkMode: boolean;
+	nonce: string;
+	theme: import("@src/databases/db-interface").Theme;
 }
 
 interface Props {
@@ -101,8 +101,8 @@ let loadError = $state<Error | null>(null);
 // =============================================
 
 // seoDescription logic
-const siteName = publicEnv?.SITE_NAME || "SveltyCMS";
-const seoDescription = `${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`;
+const siteName = $derived(data.settings?.siteName || "SveltyCMS");
+const seoDescription = $derived(`${siteName} - a modern, powerful, and easy-to-use CMS powered by SvelteKit. Manage your content with ease & take advantage of the latest web technologies.`);
 
 // =============================================
 // REACTIVE EFFECTS
@@ -133,29 +133,28 @@ $effect(() => {
 		}
 	};
 
-	// Handle streaming promises or direct data
-	Promise.resolve(data.contentStructure)
-		.then((structure) => {
-			if (Array.isArray(structure)) {
+	// Handle the nodes from server data
+	if (data.contentStructure) {
+		data.contentStructure.then((nodes) => {
+			if (Array.isArray(nodes)) {
 				defer(() => {
-					setContentStructure(structure);
+					setContentStructure(nodes as any);
 					// Synchronize contentManager structure on client (Fixes "Initializing..." hang)
-					contentManager.sync(structure);
+					contentManager.sync(nodes as any);
 					globalLoadingStore.stopLoading(loadingOperations.initialization);
 				});
 			}
-		})
-		.catch((err) => {
-			console.error("Failed to load content structure", err);
-			loadError = err;
 		});
+	}
 
 	// Hydrate first collection if available and no collection is currently set
-	Promise.resolve(data.firstCollection).then((first) => {
-		if (first !== undefined && first !== null) {
-			defer(() => setCollection(first));
-		}
-	});
+	if (data.firstCollection) {
+		data.firstCollection.then((collection) => {
+			if (collection) {
+				defer(() => setCollection(collection));
+			}
+		});
+	}
 });
 
 // Effect: Handle system language changes

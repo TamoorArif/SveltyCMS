@@ -27,6 +27,7 @@ import { enhance } from "$app/forms";
 import { page } from "$app/state";
 import GenericSettingsGroup from "./generic-settings-group.svelte";
 import type { SettingGroup } from "./settings-groups";
+
 // Import settings structure
 import { getSettingGroupsByRole } from "./settings-groups";
 import { beforeNavigate } from "$app/navigation";

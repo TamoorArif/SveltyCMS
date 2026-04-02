@@ -1,24 +1,11 @@
 <!-- 
-@file src/components/ui/date-picker.svelte
-@component
-A premium Svelte 5 Date Picker primitive using native date input with enhanced Skeleton v4 styling.
-
-### Props
-- `value` (string): Bound date string (YYYY-MM-DD).
-- `label` (string): Optional label for the input.
-- `min` (string): Minimum allowed date.
-- `max` (string): Maximum allowed date.
-- `disabled` (boolean): Disable interaction.
-- `onchange` (function): Callback when date changes.
-
-### Features:
-- Native browser date picker support (mobile optimized).
-- Premium Skeleton v4 input styling.
-- Svelte 5 rune-based reactivity.
+ @src/routes/api/cms.ts src/components/ui/date-picker.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 DatePicker Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
+import { cn } from '@utils/cn';
 
 interface Props {
 	value?: string;
@@ -31,24 +18,22 @@ interface Props {
 }
 
 let {
-	value = $bindable(""),
+	value = $bindable(''),
 	label,
 	min,
 	max,
 	disabled = false,
-	class: className = "",
-	onchange,
+	class: className = '',
+	onchange
 }: Props = $props();
 
-const classes = $derived(
-	cn(
-		"input px-3 py-2 rounded-lg border transition-all duration-200",
-		"bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700",
-		"focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
-		disabled && "opacity-50 cursor-not-allowed grayscale",
-		className,
-	),
-);
+const classes = $derived(cn(
+	'input px-3 py-2 rounded-lg border transition-all duration-200',
+	'bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700',
+	'focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+	disabled && 'opacity-50 cursor-not-allowed grayscale',
+	className
+));
 
 const id = Math.random().toString(36).substring(7);
 </script>

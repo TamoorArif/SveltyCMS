@@ -1,27 +1,13 @@
 <!-- 
-@file src/components/ui/combobox.svelte
-@component
-A premium Svelte 5 Combobox primitive with fuzzy search, keyboard navigation, and ARIA compliance.
-
-### Props
-- `value` (any): Bound selected value.
-- `options` (Array<{label: string, value: any}>): List of options.
-- `placeholder` (string): Input placeholder.
-- `disabled` (boolean): Disable interaction.
-- `allowCustom` (boolean): Allow values not in options.
-- `onchange` (function): Callback when selection changes.
-
-### Features
-- Fuzzy search scoring for better results.
-- Full keyboard support (Arrows, Enter, Escape).
-- Snippet-based option rendering.
-- Premium Skeleton v4 styling.
+ @src/routes/api/cms.ts src/components/ui/combobox.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Combobox Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import { slide } from "svelte/transition";
-import { onMount, type Snippet } from "svelte";
+import { cn } from '@utils/cn';
+import { slide } from 'svelte/transition';
+import { onMount, type Snippet } from 'svelte';
 
 interface Option {
 	label: string;
@@ -41,23 +27,23 @@ interface Props {
 	label?: string;
 	error?: string;
 	// Snippets
-	option?: Snippet<[{ item: Option; selected: boolean; active: boolean }]>;
+	option?: Snippet<[{ item: Option, selected: boolean, active: boolean }]>;
 }
 
 let {
 	value = $bindable(),
 	options = [],
-	placeholder = "Select...",
+	placeholder = 'Select...',
 	disabled = false,
 	allowCustom = false,
-	class: className = "",
+	class: className = '',
 	onchange,
 	label,
 	error,
-	option: optionSnippet,
+	option: optionSnippet
 }: Props = $props();
 
-let searchTerm = $state("");
+let searchTerm = $state('');
 let isOpen = $state(false);
 let activeIndex = $state(-1);
 let listElement = $state<HTMLElement>();
@@ -68,7 +54,7 @@ const filteredOptions = $derived.by(() => {
 	if (!searchTerm.trim()) return options;
 	const term = searchTerm.toLowerCase();
 	return options
-		.map((opt) => {
+		.map(opt => {
 			const label = opt.label.toLowerCase();
 			let score = 0;
 			if (label === term) score = 100;
@@ -76,7 +62,7 @@ const filteredOptions = $derived.by(() => {
 			else if (label.includes(term)) score = 25;
 			return { ...opt, score };
 		})
-		.filter((opt) => opt.score > 0)
+		.filter(opt => opt.score > 0)
 		.sort((a, b) => b.score - a.score);
 });
 
@@ -97,17 +83,16 @@ function selectOption(opt: Option) {
 
 function handleKeydown(e: KeyboardEvent) {
 	if (disabled) return;
-
-	if (e.key === "ArrowDown") {
+	
+	if (e.key === 'ArrowDown') {
 		e.preventDefault();
 		isOpen = true;
 		activeIndex = (activeIndex + 1) % filteredOptions.length;
-	} else if (e.key === "ArrowUp") {
+	} else if (e.key === 'ArrowUp') {
 		e.preventDefault();
 		isOpen = true;
-		activeIndex =
-			(activeIndex - 1 + filteredOptions.length) % filteredOptions.length;
-	} else if (e.key === "Enter") {
+		activeIndex = (activeIndex - 1 + filteredOptions.length) % filteredOptions.length;
+	} else if (e.key === 'Enter') {
 		e.preventDefault();
 		if (isOpen && activeIndex >= 0) {
 			selectOption(filteredOptions[activeIndex]);
@@ -116,7 +101,7 @@ function handleKeydown(e: KeyboardEvent) {
 			isOpen = false;
 			onchange?.(value);
 		}
-	} else if (e.key === "Escape") {
+	} else if (e.key === 'Escape') {
 		isOpen = false;
 	}
 }
@@ -127,26 +112,20 @@ function toggleDropdown() {
 }
 
 function handleClickOutside(e: MouseEvent) {
-	if (
-		isOpen &&
-		inputElement &&
-		!inputElement.contains(e.target as Node) &&
-		listElement &&
-		!listElement.contains(e.target as Node)
-	) {
+	if (isOpen && inputElement && !inputElement.contains(e.target as Node) && listElement && !listElement.contains(e.target as Node)) {
 		isOpen = false;
 	}
 }
 
 onMount(() => {
-	document.addEventListener("mousedown", handleClickOutside);
-	return () => document.removeEventListener("mousedown", handleClickOutside);
+	document.addEventListener('mousedown', handleClickOutside);
+	return () => document.removeEventListener('mousedown', handleClickOutside);
 });
 
 // Sync input search term with value label
 $effect(() => {
 	if (value !== undefined) {
-		const matched = options.find((o) => o.value === value);
+		const matched = options.find(o => o.value === value);
 		if (matched) searchTerm = matched.label;
 		else if (allowCustom) searchTerm = String(value);
 	}

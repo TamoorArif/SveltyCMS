@@ -302,6 +302,29 @@ class MetricsService {
     }
   }
 
+  /**
+   * Generic method to record any metric.
+   * Maps specific names to their corresponding counters.
+   */
+  recordMetric(name: string, value: number, tenantId?: string): void {
+    const counters = this.getCounters(tenantId);
+    switch (name) {
+      case "sdk:init":
+        counters.api.requests += value;
+        break;
+      case "sdk:transaction:duration":
+        counters.performance.totalHookTime += value;
+        counters.performance.hookExecutions++;
+        break;
+      case "sdk:transaction:error":
+        counters.api.errors += value;
+        break;
+      default:
+        // Log unmapped metrics for future extension
+        logger.trace(`Generic metric recorded: ${name} = ${value}`);
+    }
+  }
+
   // --- REPORTING ---
 
   // Generate a comprehensive metrics report

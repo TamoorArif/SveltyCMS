@@ -58,12 +58,8 @@ export interface TreeNode {
 </script>
 
 <script lang="ts">
-	type _any = any;
-
 	import { logger } from '@utils/logger';
-	import TreeViewComponent from './tree-view.svelte';
-
-	const TreeView = TreeViewComponent;
+	import TreeView from './tree-view.svelte';
 
 	import { onMount } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -76,7 +72,6 @@ export interface TreeNode {
 		compact?: boolean;
 		dir?: 'ltr' | 'rtl' | 'auto';
 		iconColorClass?: string;
-		k?: _any;
 		nodes: TreeNode[];
 		onExpand?: ((node: TreeNode) => void) | null;
 		onHover?: ((node: TreeNode) => void) | null;
@@ -88,7 +83,6 @@ export interface TreeNode {
 
 	// Destructure props with clearer names and defaults
 	const {
-		k = undefined,
 		nodes: initialNodes,
 		selectedId = null,
 		ariaLabel = 'Navigation tree',
@@ -111,16 +105,16 @@ export interface TreeNode {
 	let dropPosition = $state<'before' | 'after' | 'inside' | null>(null);
 	let prefersReducedMotion = $state(false);
 
-	// Helper: check expansion
-	function isNodeExpanded(nodeId: string): boolean {
-		return expandedNodeIds.has(nodeId);
+	// Helper: check expansion (respects both local state and node prop)
+	function isNodeExpanded(node: TreeNode): boolean {
+		return expandedNodeIds.has(node.id) || !!node.isExpanded;
 	}
 
 	// Map nodes with derived expansion state
 	function mapNodesWithDerivedState(nodesToMap: TreeNode[]): TreeNode[] {
 		return nodesToMap.map((node) => ({
 			...node,
-			isExpanded: isNodeExpanded(node.id),
+			isExpanded: isNodeExpanded(node),
 			children: node.children ? mapNodesWithDerivedState(node.children) : undefined
 		}));
 	}
@@ -223,13 +217,13 @@ export interface TreeNode {
 		const nodeData = nodeMap.get(node.id);
 
 		if (direction === expandKey) {
-			if (node.children && !isNodeExpanded(node.id)) {
+			if (node.children && !isNodeExpanded(node)) {
 				toggleNode(node);
-			} else if (node.children && isNodeExpanded(node.id)) {
+			} else if (node.children && isNodeExpanded(node)) {
 				focusNextNode(node.id);
 			}
 		} else if (direction === collapseKey) {
-			if (node.children && isNodeExpanded(node.id)) {
+			if (node.children && isNodeExpanded(node)) {
 				toggleNode(node);
 			} else if (nodeData?.parentId) {
 				focusNodeById(nodeData.parentId);
@@ -244,7 +238,7 @@ export interface TreeNode {
 		function traverse(nodesToTraverse: TreeNode[]) {
 			nodesToTraverse.forEach((n) => {
 				visible.push(n.id);
-				if (n.children && isNodeExpanded(n.id)) {
+				if (n.children && isNodeExpanded(n)) {
 					traverse(n.children);
 				}
 			});
@@ -528,7 +522,6 @@ export interface TreeNode {
 					{#if node.isExpanded}
 						<div transition:fly|local={{ y: -10, duration: transitionDuration }}>
 							<TreeView
-								{k}
 								nodes={node.children}
 								{selectedId}
 								ariaLabel={`Children of ${node.name}`}

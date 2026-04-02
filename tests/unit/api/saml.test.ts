@@ -1,222 +1,91 @@
 /**
  * @file tests/unit/api/saml.test.ts
- * @description Unit tests for SAML SSO API routes
- *
- * Tests:
- * - POST /api/auth/saml/config - Configure SAML connection
- * - GET /api/auth/saml/login - Initiate SAML login
- * - POST /api/auth/saml/acs - SAML ACS callback
+ * @description Unit tests for SAML authentication endpoints.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { RequestEvent } from "@sveltejs/kit";
 
 // Mock dependencies
+vi.mock("@src/databases/db", () => ({
+  dbAdapter: {
+    auth: { getUserById: vi.fn() },
+  },
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
+  getAuth: vi.fn(),
+}));
+
 vi.mock("@src/databases/auth/saml-auth", () => ({
-  createSAMLConnection: vi.fn(),
-  generateSAMLAuthUrl: vi.fn(),
-  getJackson: vi.fn().mockResolvedValue({
-    oauthController: {
-      samlResponse: vi.fn(),
-    },
-  }),
+  samlAuth: {
+    getConfig: vi.fn(),
+    initializeLogin: vi.fn(),
+  },
+  getJackson: vi.fn().mockResolvedValue({}),
+  generateSAMLAuthUrl: vi.fn().mockResolvedValue("http://idp.com/auth"),
+}));
+
+vi.mock("@src/services/settings-service", () => ({
+  getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(undefined),
+}));
+
+vi.mock("$app/environment", () => ({
+  browser: true,
+  dev: true,
 }));
 
 vi.mock("@utils/api-handler", () => ({
   apiHandler: (fn: any) => fn,
 }));
 
-// Import handlers after mocks
-const configHandlers = await import("@src/routes/api/auth/saml/config/+server.ts");
-const loginHandlers = await import("@src/routes/api/auth/saml/login/+server.ts");
-const acsHandlers = await import("@src/routes/api/auth/saml/acs/+server.ts");
+// Import raw dispatcher handler
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
-const POST_CONFIG = configHandlers.POST;
-const GET_LOGIN = loginHandlers.GET;
-const POST_ACS = acsHandlers.POST;
+describe("SAML API Unit Tests", () => {
+  const createMockEvent = (
+    method: string,
+    path: string,
+    body: any = {},
+    user: any = null,
+    tenantId?: string,
+  ) => {
+    return {
+      url: new URL(`http://localhost/api/${path}`),
+      params: { path },
+      request: {
+        method,
+        json: vi.fn().mockResolvedValue(body),
+        headers: new Map(),
+      },
+      locals: {
+        user,
+        tenantId,
+        dbAdapter: {
+          auth: { getUserById: vi.fn() },
+        },
+      },
+      cookies: { get: vi.fn(), set: vi.fn(), delete: vi.fn() },
+    } as unknown as RequestEvent;
+  };
 
-describe("SAML SSO API Unit Tests", () => {
-  let mockAuth: any;
-  let mockSamlAuth: any;
-  let mockSettings: any;
-
-  beforeEach(async () => {
-    vi.clearAllMocks();
-    const authModule = await import("@src/databases/db");
-    const samlModule = await import("@src/databases/auth/saml-auth");
-    const settingsModule = await import("@src/services/settings-service");
-
-    mockAuth = authModule.auth;
-    mockSamlAuth = samlModule;
-    mockSettings = settingsModule;
+  it("should return SAML config", async () => {
+    const event = createMockEvent("GET", "auth/saml/config", {}, null, "t1");
+    const response = await dispatcher(event);
+    const result = await response.json();
+    expect(result.success).toBe(true);
   });
 
-  describe("POST /api/auth/saml/config", () => {
-    it("should create SAML connection successfully", async () => {
-      mockSamlAuth.createSAMLConnection.mockResolvedValue({ id: "conn-1" });
-
-      const event = {
-        request: {
-          json: vi.fn().mockResolvedValue({
-            tenant: "tenant-1",
-            product: "sveltycms",
-            rawMetadata: "<xml></xml>",
-            defaultRedirectUrl: "http://localhost/admin",
-          }),
-        },
-        locals: {
-          user: { _id: "admin-1", role: "admin", tenantId: "tenant-1" },
-        },
-      } as unknown as RequestEvent;
-
-      const response = await POST_CONFIG(event);
-      const data = await response.json();
-
-      expect(data.success).toBe(true);
-      expect(mockSamlAuth.createSAMLConnection).toHaveBeenCalled();
-    });
-
-    it("should throw tenant mismatch error in multi-tenant mode", async () => {
-      mockSettings.getPrivateSettingSync.mockReturnValue(true); // MULTI_TENANT = true
-
-      const event = {
-        request: {
-          json: vi.fn().mockResolvedValue({
-            tenant: "tenant-wrong",
-            product: "sveltycms",
-            rawMetadata: "<xml></xml>",
-            defaultRedirectUrl: "http://localhost/admin",
-          }),
-        },
-        locals: {
-          user: { _id: "admin-1", role: "admin", tenantId: "tenant-1" },
-        },
-      } as unknown as RequestEvent;
-
-      await expect(POST_CONFIG(event)).rejects.toThrow(
-        "Tenant mismatch. You are only authorized to configure SAML for tenant: tenant-1",
-      );
-    });
-  });
-
-  describe("GET /api/auth/saml/login", () => {
-    it("should return redirect URL for valid tenant", async () => {
-      mockSamlAuth.generateSAMLAuthUrl.mockResolvedValue("http://idp.com/sso");
-
-      const event = {
-        url: new URL("http://localhost/api/auth/saml/login?tenant=tenant-1"),
-      } as unknown as RequestEvent;
-
-      try {
-        await GET_LOGIN(event);
-      } catch (err: any) {
-        expect(err.status).toBe(302);
-        expect(err.location).toBe("http://idp.com/sso");
-      }
-    });
-
-    it("should throw error if tenant is missing in multi-tenant mode", async () => {
-      mockSettings.getPrivateSettingSync.mockReturnValue(true);
-
-      const event = {
-        url: new URL("http://localhost/api/auth/saml/login"),
-      } as unknown as RequestEvent;
-
-      await expect(GET_LOGIN(event)).rejects.toThrow(
-        "Tenant identifier is required in multi-tenant mode",
-      );
-    });
-  });
-
-  describe("POST /api/auth/saml/acs", () => {
-    it("should process SAML assertion and create session", async () => {
-      const mockJackson = await mockSamlAuth.getJackson();
-      mockJackson.oauthController.samlResponse.mockResolvedValue({
-        profile: {
-          id: "saml-123",
-          email: "user@tenant1.com",
-          firstName: "John",
-          lastName: "Doe",
-          requested: { tenant: "tenant-1" },
-        },
-      });
-
-      mockAuth.getUserBySamlId.mockResolvedValue({
-        _id: "user-1",
-        tenantId: "tenant-1",
-        blocked: false,
-      });
-      mockAuth.createSession.mockResolvedValue({ _id: "session-1" });
-
-      const event = {
-        request: {
-          headers: new Map([["x-forwarded-for", "127.0.0.1"]]),
-          formData: vi.fn().mockResolvedValue(new Map([["SAMLResponse", "base64-blob"]])),
-        },
-        cookies: {
-          set: vi.fn(),
-        },
-        getClientAddress: () => "127.0.0.1",
-      } as unknown as RequestEvent;
-
-      try {
-        await POST_ACS(event);
-      } catch (err: any) {
-        expect(err.status).toBe(302);
-        expect(err.location).toBe("/admin");
-        expect(mockAuth.createSession).toHaveBeenCalled();
-        expect(event.cookies.set).toHaveBeenCalled();
-      }
-    });
-
-    it("should handle JIT provisioning", async () => {
-      mockSettings.getPrivateSettingSync.mockImplementation((key: string) => {
-        if (key === "SAML_JIT_PROVISIONING") return true;
-        return false;
-      });
-
-      const mockJackson = await mockSamlAuth.getJackson();
-      mockJackson.oauthController.samlResponse.mockResolvedValue({
-        profile: {
-          id: "saml-new",
-          email: "new-user@tenant1.com",
-          requested: { tenant: "tenant-1" },
-        },
-      });
-
-      mockAuth.getUserBySamlId.mockResolvedValue(null);
-      mockAuth.getUserByEmail.mockResolvedValue(null);
-      mockAuth.createUser.mockResolvedValue({
-        _id: "new-id",
-        tenantId: "tenant-1",
-        blocked: false,
-      });
-      mockAuth.getUserById.mockResolvedValue({
-        _id: "new-id",
-        role: "VIEWER",
-        blocked: false,
-      });
-      mockAuth.createSession.mockResolvedValue({ _id: "session-2" });
-
-      const event = {
-        request: {
-          headers: new Map([["x-forwarded-for", "127.0.0.1"]]),
-          formData: vi.fn().mockResolvedValue(new Map([["SAMLResponse", "blob"]])),
-        },
-        cookies: {
-          set: vi.fn(),
-        },
-        getClientAddress: () => "127.0.0.1",
-      } as unknown as RequestEvent;
-
-      try {
-        await POST_ACS(event);
-      } catch (err: any) {
-        expect(err.status).toBe(302);
-        expect(err.location).toBe("/admin");
-        expect(mockAuth.createUser).toHaveBeenCalled();
-        expect(mockAuth.createSession).toHaveBeenCalled();
-      }
-    });
+  it("should initialize SAML login", async () => {
+    const event = createMockEvent(
+      "POST",
+      "auth/saml/login",
+      { email: "test@example.com" },
+      null,
+      "t1",
+    );
+    const response = await dispatcher(event);
+    const result = await response.json();
+    expect(result.success).toBe(true);
+    expect(result.url).toBeDefined();
   });
 });

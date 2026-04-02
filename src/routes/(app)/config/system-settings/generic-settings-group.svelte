@@ -22,6 +22,7 @@ import { logger } from "@utils/logger";
 import { showConfirm } from "@utils/modal-utils";
 import { onMount } from "svelte";
 import type { SvelteSet } from "svelte/reactivity";
+
 // Types and Utilities
 import type { SettingField, SettingGroup } from "./settings-groups";
 
@@ -804,7 +805,7 @@ onMount(() => {
 									{/if}
 								</select>
 								{#if errors[baseLocaleField.key]}
-									<div class="mt-1 text-xs text-error-500">{errors[baseLocaleField.key]}</div>
+									<div id="{baseLocaleField.key}-error" class="mt-1 text-xs text-error-500">{errors[baseLocaleField.key]}</div>
 								{/if}
 							</div>
 						{/if}

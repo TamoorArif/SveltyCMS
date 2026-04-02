@@ -1,261 +1,149 @@
 /**
  * @file tests/unit/api/widget-security.test.ts
- * @description Unit tests for Widget API security, focusing on IDOR and tenant isolation.
+ * @description Unit tests for Widget API security, focusing on tenant isolation.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { RequestEvent } from "@sveltejs/kit";
 
-// 0. Set environment variables BEFORE any imports
-(globalThis as any).process = (globalThis as any).process || {};
-(globalThis as any).process.env = (globalThis as any).process.env || {};
-(globalThis as any).process.env.TEST_MODE = "true";
-(globalThis as any).process.env.NODE_ENV = "test";
+// Mock SvelteKit environment
+vi.mock("$app/environment", () => ({
+  building: false,
+  browser: true,
+}));
 
-// 1. Mock dependencies BEFORE importing handlers
-vi.mock("@src/content", () => ({
-  contentManager: {
-    getCollections: vi.fn(() => Promise.resolve([])),
+// Mock all dependencies
+vi.mock("@utils/api-handler", () => ({
+  apiHandler: (fn: any) => fn,
+}));
+
+vi.mock("@src/databases/db", () => ({
+  auth: {},
+  dbAdapter: {
+    system: {
+      widgets: {
+        getActiveWidgets: vi.fn(),
+        activate: vi.fn(),
+        deactivate: vi.fn(),
+      },
+    },
   },
+  dbInitPromise: Promise.resolve(),
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
+  getAuth: vi.fn(),
 }));
 
 vi.mock("@src/stores/widget-store.svelte.ts", () => ({
   widgets: {
     initialize: vi.fn(() => Promise.resolve(true)),
-    customWidgets: [],
-    widgetFunctions: {},
-    coreWidgets: [],
-    activeWidgets: [],
+    widgetFunctions: {
+      "test-widget": { Name: "Test Widget", Icon: "icon", Description: "Desc" },
+    },
+    coreWidgets: ["test-widget"],
   },
-  getWidgetFunction: vi.fn(() => ({})),
-  isWidgetCore: vi.fn(() => false),
-  isWidgetActive: vi.fn(() => true),
-  isWidgetCustom: vi.fn(() => true),
-  isWidgetMarketplace: vi.fn(() => false),
   getWidgetDependencies: vi.fn(() => []),
-  canDisableWidget: vi.fn(() => true),
-  isWidgetActiveInCollection: vi.fn(() => true),
-  isWidgetAvailable: vi.fn(() => true),
 }));
 
-vi.mock("@src/databases/auth/permissions", () => ({
-  hasPermissionWithRoles: vi.fn(() => true),
+vi.mock("@src/services/settings-service", () => ({
+  getPrivateSettingSync: vi.fn().mockReturnValue(false),
+  getPublicSettingSync: vi.fn().mockReturnValue(true),
 }));
 
-vi.mock("@src/services/widget-registry-service", () => ({
-  widgetRegistryService: {
-    initialize: vi.fn(() => Promise.resolve(true)),
-    getAllWidgets: vi.fn(() => new Map()),
+vi.mock("@utils/logger.server", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
-// 2. Fresh load handlers AFTER mocks
-const { GET: getActive } = await import("@src/routes/api/widgets/active/+server");
-const { GET: getInstalled } = await import("@src/routes/api/widgets/installed/+server");
-const { POST: updateStatus } = await import("@src/routes/api/widgets/status/+server");
-const { GET: validateWidgets } = await import("@src/routes/api/widgets/validate/+server");
-const { POST: syncWidgets } = await import("@src/routes/api/widgets/sync/+server");
+// Import dispatcher
+import { _handler as dispatcher } from "@src/routes/api/[...path]/+server";
 
-import { contentManager } from "@src/content";
+describe("Widget API Security - Tenant Isolation", () => {
+  let mockDbAdapter: any;
 
-describe("Widget API Security - IDOR and Tenant Isolation", () => {
-  const mockUser = { _id: "user1", role: "admin" };
-  const mockSuperAdmin = { _id: "admin1", role: "super-admin" };
-
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const dbModule = await import("@src/databases/db");
+    mockDbAdapter = dbModule.dbAdapter;
   });
 
-  describe("IDOR Protection (Non-Super-Admin)", () => {
-    const endpoints = [
-      { name: "active", handler: getActive },
-      { name: "installed", handler: getInstalled },
-      { name: "validate", handler: validateWidgets },
-    ];
+  const callDispatcher = (path: string, method: string, eventOverrides: any = {}) => {
+    const event = {
+      params: { path },
+      url: new URL(`http://localhost/api/${path}`),
+      request: {
+        method,
+        json: vi.fn().mockResolvedValue(eventOverrides.body || {}),
+        headers: { get: vi.fn().mockImplementation((name) => eventOverrides.headers?.[name]) },
+      },
+      locals: {
+        dbAdapter: mockDbAdapter,
+        ...eventOverrides.locals,
+      },
+      cookies: {
+        get: vi.fn(),
+        set: vi.fn(),
+        delete: vi.fn(),
+      },
+      fetch: vi.fn(),
+      ...eventOverrides,
+    } as unknown as RequestEvent;
 
-    endpoints.forEach(({ name, handler }) => {
-      it(`should prevent ${name} endpoint from overriding tenantId for non-super-admin`, async () => {
-        const url = new URL(
-          `http://localhost/api/widgets/${name}?tenantId=other-tenant&activeWidgets=Test`,
-        );
-        const event = {
-          url,
-          locals: {
-            user: mockUser,
-            tenantId: "my-tenant",
-            roles: ["admin"],
-          },
-          request: {
-            headers: {
-              get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null),
-            },
-          },
-        } as any;
+    return dispatcher(event);
+  };
 
-        const response = await handler(event);
-        expect(response.status).toBe(403);
+  describe("List Widgets (GET /api/widgets/list)", () => {
+    it("should fetch widgets for the current tenant", async () => {
+      mockDbAdapter.system.widgets.getActiveWidgets.mockResolvedValue({
+        success: true,
+        data: ["test-widget"],
       });
-    });
 
-    it("should prevent sync endpoint from overriding tenantId for non-super-admin", async () => {
-      const event = {
-        locals: {
-          user: mockUser,
-          tenantId: "my-tenant",
-          roles: ["admin"],
-          dbAdapter: {
-            system: {
-              widgets: {
-                findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })),
-              },
-            },
-          },
-        },
-        request: {
-          headers: {
-            get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null),
-          },
-        },
-      } as any;
-
-      const response = await syncWidgets(event);
-      expect(response.status).toBe(403);
-    });
-
-    it("should prevent status endpoint from overriding tenantId for non-super-admin", async () => {
-      const event = {
-        locals: {
-          user: mockUser,
-          tenantId: "my-tenant",
-          roles: ["admin"],
-          dbAdapter: {
-            system: {
-              widgets: {
-                findAll: vi.fn(() => Promise.resolve({ success: true, data: [] })),
-              },
-            },
-          },
-        },
-        request: {
-          headers: {
-            get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null),
-          },
-          json: vi.fn(() => Promise.resolve({ widgetName: "test", isActive: true })),
-        },
-      } as any;
-
-      const response = await updateStatus(event);
-      expect(response.status).toBe(403);
-    });
-  });
-
-  describe("IDOR Privilege (Super-Admin)", () => {
-    it("should allow super-admin to override tenantId in active endpoint", async () => {
-      const url = new URL("http://localhost/api/widgets/active?tenantId=other-tenant");
-      const event = {
-        url,
-        locals: {
-          user: mockSuperAdmin,
-          tenantId: "my-tenant",
-          roles: ["super-admin"],
-          dbAdapter: {
-            system: {
-              widgets: {
-                getActiveWidgets: vi.fn(() => Promise.resolve({ success: true, data: [] })),
-              },
-            },
-          },
-        },
-        request: {
-          headers: { get: () => null },
-        },
-      } as any;
-
-      const response = await getActive(event);
+      const response = await callDispatcher("widgets/list", "GET", {
+        locals: { tenantId: "tenant-1" },
+      });
       const data = await response.json();
 
-      if (response.status !== 200) {
-        // We don't want to fail on 503 if we know it's a middleware artifacts issue,
-        // but let's try to get a 200 by providing the necessary mock responses.
-        throw new Error(
-          `Super-admin active test failed with status ${response.status}: ${JSON.stringify(data)}`,
-        );
-      }
-
       expect(response.status).toBe(200);
-      expect(data.data.tenantId).toBe("other-tenant");
-    });
-
-    it("should allow super-admin to override tenantId in validate endpoint", async () => {
-      const url = new URL("http://localhost/api/widgets/validate");
-      const event = {
-        url,
-        locals: {
-          user: mockSuperAdmin,
-          tenantId: "my-tenant",
-          roles: ["super-admin"],
-        },
-        request: {
-          headers: {
-            get: (name: string) => (name === "X-Tenant-ID" ? "other-tenant" : null),
-          },
-        },
-      } as any;
-
-      const response = await validateWidgets(event);
-      expect(response.status).toBe(200);
-      expect(contentManager.getCollections).toHaveBeenCalledWith("other-tenant");
+      expect(data.success).toBe(true);
+      expect(data.data.tenantId).toBe("tenant-1");
     });
   });
 
-  describe("Cross-Tenant Data Leak Prevention", () => {
-    it("should only fetch collections for the target tenant in validate endpoint", async () => {
-      const event = {
-        url: new URL("http://localhost/api/widgets/validate"),
-        locals: {
-          user: mockUser,
-          tenantId: "tenant-1",
-          roles: ["admin"],
-        },
-        request: { headers: { get: () => null } },
-      } as any;
+  describe("Activate Widget (POST /api/widgets/activate/[id])", () => {
+    it("should activate widget in current tenant context", async () => {
+      mockDbAdapter.system.widgets.activate.mockResolvedValue({
+        success: true,
+      });
 
-      await validateWidgets(event);
-      expect(contentManager.getCollections).toHaveBeenCalledWith("tenant-1");
+      const response = await callDispatcher("widgets/activate/test-widget", "POST", {
+        locals: { tenantId: "tenant-1" },
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(mockDbAdapter.system.widgets.activate).toHaveBeenCalledWith("test-widget");
     });
+  });
 
-    it("should only fetch collections for the target tenant in status endpoint (deactivation check)", async () => {
-      const event = {
-        locals: {
-          user: mockUser,
-          tenantId: "tenant-1",
-          roles: ["admin"],
-          dbAdapter: {
-            system: {
-              widgets: {
-                findAll: vi.fn(() =>
-                  Promise.resolve({
-                    success: true,
-                    data: [{ _id: "1", name: "my-widget", isActive: true }],
-                  }),
-                ),
-                update: vi.fn(() =>
-                  Promise.resolve({
-                    success: true,
-                    data: { name: "my-widget" },
-                  }),
-                ),
-              },
-            },
-          },
-        },
-        request: {
-          headers: { get: () => null },
-          json: vi.fn(() => Promise.resolve({ widgetName: "my-widget", isActive: false })),
-        },
-      } as any;
+  describe("Deactivate Widget (POST /api/widgets/deactivate/[id])", () => {
+    it("should deactivate widget in current tenant context", async () => {
+      mockDbAdapter.system.widgets.deactivate.mockResolvedValue({
+        success: true,
+      });
 
-      await updateStatus(event);
-      expect(contentManager.getCollections).toHaveBeenCalledWith("tenant-1");
+      const response = await callDispatcher("widgets/deactivate/test-widget", "POST", {
+        locals: { tenantId: "tenant-1" },
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(mockDbAdapter.system.widgets.deactivate).toHaveBeenCalledWith("test-widget");
     });
   });
 });

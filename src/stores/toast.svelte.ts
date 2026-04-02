@@ -13,8 +13,10 @@ import { screen, ScreenSize } from "./screen-size-store.svelte";
 
 // Test-friendly browser check
 const isTest =
-  typeof globalThis !== "undefined" && (globalThis as any).process?.env?.TEST_MODE === "true";
-const isBrowser = browser || isTest;
+  typeof globalThis !== "undefined" &&
+  ((globalThis as any).process?.env?.TEST_MODE === "true" ||
+    (globalThis as any).process?.env?.NODE_ENV === "test");
+const isBrowser = browser || isTest || typeof window !== "undefined";
 
 export type ToastType = "success" | "error" | "warning" | "info" | "loading";
 
@@ -233,16 +235,16 @@ class ToastStore {
       timestamp: Date.now(),
     };
 
-    sessionStorage.setItem(FLASH_KEY, JSON.stringify(flashData));
+    globalThis.sessionStorage.setItem(FLASH_KEY, JSON.stringify(flashData));
   }
 
   checkFlash(): void {
     if (!isBrowser) return;
 
-    const raw = sessionStorage.getItem(FLASH_KEY);
+    const raw = globalThis.sessionStorage.getItem(FLASH_KEY);
     if (!raw) return;
 
-    sessionStorage.removeItem(FLASH_KEY);
+    globalThis.sessionStorage.removeItem(FLASH_KEY);
 
     try {
       const flash = JSON.parse(raw);
@@ -459,7 +461,7 @@ class ToastStore {
       }));
 
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(savable));
+      globalThis.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(savable));
     } catch (e) {
       console.warn("[ToastStore] Failed to persist:", e);
     }
@@ -467,7 +469,7 @@ class ToastStore {
 
   private hydrate(): void {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const raw = globalThis.sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return;
 
       const parsed: Toast[] = JSON.parse(raw);
@@ -498,7 +500,7 @@ class ToastStore {
       }, 0);
     } catch (e) {
       console.error("[ToastStore] Hydration failed:", e);
-      sessionStorage.removeItem(STORAGE_KEY);
+      globalThis.sessionStorage.removeItem(STORAGE_KEY);
     }
   }
 

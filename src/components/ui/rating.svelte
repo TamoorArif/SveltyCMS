@@ -1,23 +1,14 @@
 <!-- 
-@file src/components/ui/rating.svelte
-@component
-**Native Svelte 5 Rating Primitive**
-
-### Props
-- `value` (number): Bindable current rating value.
-- `count` (number): Total number of items. Default: 5.
-- `icon` (string): Icon for full state. Default: 'mdi:star'.
-- `iconEmpty` (string): Icon for empty state. Default: 'mdi:star-outline'.
-- `disabled` (boolean): Whether the rating is disabled.
-- `readonly` (boolean): Whether the rating is readonly.
-- `color` (string): Color for active state. Default: 'text-warning-500'.
+ @src/routes/api/cms.ts src/components/ui/rating.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Rating Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { HTMLAttributes } from "svelte/elements";
+import { cn } from '@utils/cn';
+import type { HTMLAttributes } from 'svelte/elements';
 
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "value"> & {
+type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value'> & {
 	value?: number;
 	count?: number;
 	icon?: string;
@@ -28,16 +19,16 @@ type Props = Omit<HTMLAttributes<HTMLDivElement>, "value"> & {
 	class?: string;
 };
 
-let {
-	value = $bindable(0),
-	count = 5,
-	icon = "mdi:star",
-	iconEmpty = "mdi:star-outline",
-	disabled = false,
-	readonly = false,
-	color = "text-warning-500",
+let { 
+	value = $bindable(0), 
+	count = 5, 
+	icon = 'mdi:star', 
+	iconEmpty = 'mdi:star-outline', 
+	disabled = false, 
+	readonly = false, 
+	color = 'text-warning-500',
 	class: className,
-	...rest
+	...rest 
 }: Props = $props();
 
 let hoveredValue = $state(0);

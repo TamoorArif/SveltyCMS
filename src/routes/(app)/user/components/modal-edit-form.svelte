@@ -32,8 +32,19 @@ import { invalidateAll } from "$app/navigation";
 import { page } from "$app/state";
 
 // Get data from page store
-const { roles, user } = page.data;
+const { roles: initialRoles, user } = page.data;
 const isFirstUser = page.data.isFirstUser;
+
+// Deduplicate roles to prevent UI glitches
+const roles = $derived.by(() => {
+	const uniqueMap = new Map();
+	for (const r of initialRoles || []) {
+		if (r?._id && !uniqueMap.has(r._id.toString())) {
+			uniqueMap.set(r._id.toString(), r);
+		}
+	}
+	return Array.from(uniqueMap.values());
+});
 
 import { Form } from "@root/src/utils/form.svelte.ts";
 

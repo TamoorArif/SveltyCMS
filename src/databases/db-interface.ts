@@ -455,6 +455,7 @@ export interface IAuthAdapter {
     expires: ISODateString;
     type: string;
     tenantId?: string | null;
+    role?: string;
   }): Promise<DatabaseResult<string>>;
   createUser(userData: Partial<User>): Promise<DatabaseResult<User>>;
   createUserAndSession(
@@ -505,6 +506,7 @@ export interface IAuthAdapter {
     sessionId: string,
   ): Promise<DatabaseResult<{ expiresAt: ISODateString; user_id: string } | null>>;
   getTokenByValue(token: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
+  getTokenById(tokenId: string, tenantId?: string | null): Promise<DatabaseResult<Token | null>>;
   getTokenData(
     token: string,
     userId?: string,
@@ -1018,6 +1020,15 @@ export interface IMonitoringAdapter {
       tenantId?: string | null,
     ): Promise<DatabaseResult<void>>;
     invalidateCategory(category: string, tenantId?: string | null): Promise<DatabaseResult<void>>;
+    /**
+     * Gets the current content version for a tenant or system-wide.
+     */
+    getVersion(tenantId?: string | null): Promise<DatabaseResult<number>>;
+    /**
+     * Atomically increments the content version.
+     * Returns the new version number.
+     */
+    incrementVersion(tenantId?: string | null): Promise<DatabaseResult<number>>;
   };
   getConnectionPoolStats?(): Promise<DatabaseResult<ConnectionPoolStats>>;
   performance: {

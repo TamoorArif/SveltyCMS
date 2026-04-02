@@ -47,12 +47,14 @@ export class WidgetsModule {
       if (exists.length > 0) {
         await this.db
           .update(schema.widgets)
-          .set({
-            isActive: widget.isActive,
-            instances: widget.instances as Record<string, unknown>,
-            dependencies: widget.dependencies as string[],
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          })
+          .set(
+            utils.convertISOToDates({
+              isActive: widget.isActive,
+              instances: widget.instances as Record<string, unknown>,
+              dependencies: widget.dependencies as string[],
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as any,
+          )
           .where(eq(schema.widgets.name, widget.name));
         const [updated] = await this.db
           .select()
@@ -62,15 +64,17 @@ export class WidgetsModule {
         return utils.convertDatesToISO(updated) as unknown as Widget;
       }
       const id = utils.generateId();
-      await this.db.insert(schema.widgets).values({
-        _id: id,
-        name: widget.name,
-        isActive: widget.isActive,
-        instances: widget.instances as Record<string, unknown>,
-        dependencies: widget.dependencies as string[],
-        createdAt: isoDateStringToDate(nowISODateString()),
-        updatedAt: isoDateStringToDate(nowISODateString()),
-      });
+      await this.db.insert(schema.widgets).values(
+        utils.convertISOToDates({
+          _id: id,
+          name: widget.name,
+          isActive: widget.isActive,
+          instances: widget.instances as Record<string, unknown>,
+          dependencies: widget.dependencies as string[],
+          createdAt: isoDateStringToDate(nowISODateString()),
+          updatedAt: isoDateStringToDate(nowISODateString()),
+        }) as any,
+      );
       const [created] = await this.db
         .select()
         .from(schema.widgets)
@@ -128,10 +132,12 @@ export class WidgetsModule {
     return this.core.wrap(async () => {
       await this.db
         .update(schema.widgets)
-        .set({
-          ...widget,
-          updatedAt: isoDateStringToDate(nowISODateString()),
-        } as typeof schema.widgets.$inferInsert)
+        .set(
+          utils.convertISOToDates({
+            ...widget,
+            updatedAt: isoDateStringToDate(nowISODateString()),
+          }) as typeof schema.widgets.$inferInsert,
+        )
         .where(eq(schema.widgets._id, widgetId));
       const [updated] = await this.db
         .select()

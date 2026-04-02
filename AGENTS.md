@@ -215,6 +215,8 @@ From the 2026 roadmap (v0.0.6, target A+ grade), prioritize these for parity/lea
 - [x] **Edge Computing & Multi-Region**: Native support for edge-optimized data fetching and multi-region replication.
 - [x] **BuzzForm Visual Builder (v1.5)**: Production-ready drag-and-drop form/collection builder with real-time preview.
 - [x] **Secure Media Engine (v1.2)**: Native SSRF protection, command injection prevention (spawn-based), and hardened directory traversal.
+- [x] **99.9% Self-Healing Cache (v0.0.8)**: Incremental file scanning (mtime-hashing) and smart structural reconciliation.
+- [x] **High-Performance Local API (v0.0.8)**: Zero-latency server-side CRUD bridge with full widget logic parity.
 - [/] **Image Editor Enhancement**: Current implementation stabilized; adding cropping, filters, and focal point management.
 - [/] **Collection Builder Enhancement**: UX improvements and ergonomic field management in progress.
 - [x] **CI Pipeline Restoration**: Playwright E2E suite stabilized across MongoDB, MariaDB, and PostgreSQL.
@@ -280,6 +282,27 @@ This occurs if an `ISODateString` is passed to a Drizzle SQLite column configure
 | **CI Parity** | `bun run format && bun run lint && bun run check && bun run test:unit && bun run test:unit:bun` | **Mandatory before commit** (performs full local CI check) |
 
 ## Architecture Overview
+
+### High-Performance Local API (CRITICAL)
+
+SveltyCMS provides a zero-latency internal SDK bridge (`LocalCMS`) for server-to-server communication.
+
+- **Always use `LocalCMS` in `.server.ts`**: In all server-side files (hooks, actions, load functions), instantiate `new LocalCMS(adapter)`.
+- **Bypass HTTP Middleware**: Local calls are internal and **must bypass** HTTP-only layers like **Firewalls**, **Rate Limiting**, and **JSON serialization**.
+- **Full Parity**: The Local API uses the exact same `modifyRequest` pipeline as the REST/GraphQL layers, ensuring consistency while performing 10-50x faster.
+
+✅ **Correct (Server-side)**:
+
+```typescript
+const cms = new LocalCMS(adapter);
+const entries = await cms.collections.find("posts", { tenantId });
+```
+
+❌ **Wrong (Server-side)**:
+
+```typescript
+const res = await fetch("/api/collections/posts"); // Unnecessary HTTP/Network overhead
+```
 
 ### Database Adapter Pattern (CRITICAL)
 
@@ -392,4 +415,4 @@ Svelte 5 runes: `$state()` for state, `$derived()` for computations, `$effect()`
 
 ---
 
-_Last Updated: 2026-03-04_
+_Last Updated: 2026-03-29_

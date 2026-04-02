@@ -4,7 +4,7 @@
  */
 
 import crypto from "node:crypto";
-import { generateUUID as uuidv4 } from "@utils/native-utils";
+import { generateUUID } from "@utils/native-utils";
 import { logger } from "@utils/logger.server";
 import type { Webhook, WebhookEvent } from "@src/services/webhook-service";
 
@@ -26,14 +26,14 @@ export async function webhookDeliveryHandler(jobPayload: WebhookJobPayload) {
     timestamp: new Date().toISOString(),
     payload,
     webhookId: webhook.id,
-    deliveryId: uuidv4(),
+    deliveryId: generateUUID(),
     tenantId: webhook.tenantId,
   });
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-SveltyCMS-Event": event,
-    "X-SveltyCMS-Delivery": uuidv4(),
+    "X-SveltyCMS-Delivery": generateUUID(),
     "X-SveltyCMS-Timestamp": Math.floor(Date.now() / 1000).toString(),
     "User-Agent": "SveltyCMS-Webhook/1.0 (JobQueue)",
     ...webhook.headers,

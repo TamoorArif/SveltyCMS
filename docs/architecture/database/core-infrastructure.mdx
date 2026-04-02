@@ -33,6 +33,7 @@ graph TD
     subgraph "Orchestration Layer (db.ts)"
         MGR[Database Manager]
         INIT[Initialization Logic]
+        VER[ContentVersionManager]
     end
 
     subgraph "Abstraction Layer (db-interface.ts)"
@@ -49,9 +50,10 @@ graph TD
     MGR --> INIT
     INIT --> IFACE
     IFACE --> MA & PA & SA
+    VER --> IFACE
 ```
 
-### The Three Pillars
+### The Four Pillars
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -60,18 +62,15 @@ graph TD
 │                                                      │
 │  1. db.ts (Manager)                                 │
 │     └─ Orchestrates database lifecycle              │
-│     └─ Loads adapters dynamically                   │
-│     └─ Manages settings cache                       │
 │                                                      │
 │  2. db-interface.ts (Contract)                       │
-│     └─ Defines adapter interface                    │
-│     └─ Type definitions                             │
-│     └─ Result wrappers                              │
+│     └─ Defines adapter interface & Monitoring        │
 │                                                      │
-│  3. theme-manager.ts (Service)                       │
-│     └─ Theme loading & caching                      │
-│     └─ Multi-tenant theme support                   │
-│     └─ Fallback handling                            │
+│  3. ContentVersionManager (State)                    │
+│     └─ Atomic increments & SSE broadcasting         │
+│                                                      │
+│  4. theme-manager.ts (Service)                       │
+│     └─ Theme loading & multi-tenant caching         │
 │                                                      │
 └──────────────────────────────────────────────────────┘
 ```

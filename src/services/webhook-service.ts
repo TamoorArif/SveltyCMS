@@ -5,7 +5,7 @@
  */
 
 import { logger } from "@utils/logger.server";
-import { generateUUID as uuidv4 } from "@utils/native-utils";
+import { generateUUID } from "@utils/native-utils";
 
 // Types
 export interface Webhook {
@@ -179,7 +179,7 @@ export class WebhookService {
 
     const newWebhook = {
       ...webhook,
-      id: webhook.id || uuidv4(),
+      id: webhook.id || generateUUID(),
       active: webhook.active ?? true,
       events: webhook.events || [],
       name: webhook.name || "Untitled Webhook",

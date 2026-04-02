@@ -82,7 +82,7 @@ export const actions: Actions = {
     try {
       // 1. Clear any mtime/schema caches to force a fresh scan
       // (Optionally done here or inside fullReload)
-      
+
       // 2. Trigger full structural reconciliation
       await contentService.fullReload();
 

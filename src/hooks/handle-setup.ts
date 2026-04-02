@@ -32,6 +32,8 @@ function isAllowedDuringSetup(pathname: string): boolean {
     /^\/[a-z]{2,5}(-[a-zA-Z]+)?\/setup/.test(pathname) || // Localized setup (e.g. /en/setup)
     pathname.startsWith("/api/system") || // Allow system API during setup
     pathname.startsWith("/api/settings/public") || // Allow public settings
+    pathname.startsWith("/api/user") || // Allow user logic during setup
+    pathname.startsWith("/api/auth") || // Allow auth logic during setup
     pathname === "/api/system/version" ||
     ASSET_REGEX.test(pathname)
   );

@@ -102,6 +102,10 @@ function startListening() {
  * @param data The public settings loaded from the server.
  */
 export function initPublicEnv(data: PublicEnv): void {
+  // CLEANUP: Strip '(localhost)' or '(127.0.0.1)' appended during setup
+  if (data.SITE_NAME) {
+    data.SITE_NAME = data.SITE_NAME.replace(/\s*\((localhost|127\.0\.0\.1)\)/i, "");
+  }
   Object.assign(state, data);
   startListening();
 }
@@ -111,6 +115,9 @@ export function initPublicEnv(data: PublicEnv): void {
  * Useful for instant UI updates after configuration changes.
  */
 export function updatePublicEnv(data: Partial<PublicEnv>): void {
+  if (data.SITE_NAME) {
+    data.SITE_NAME = data.SITE_NAME.replace(/\s*\((localhost|127\.0\.0\.1)\)/i, "");
+  }
   Object.assign(state, data);
   logger.debug("Public environment updated locally");
 }

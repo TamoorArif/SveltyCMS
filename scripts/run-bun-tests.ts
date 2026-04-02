@@ -25,7 +25,17 @@ async function run() {
 
     // 2. Use native Bun.spawnSync instead of node:child_process
     const proc = Bun.spawnSync(
-      ["bun", "test", "--preload", "./tests/unit/setup.ts", "--timeout", "20000", file],
+      [
+        "bun",
+        "test",
+        "--preload",
+        "./tests/unit/bun-preload.ts",
+        "--preload",
+        "./tests/unit/setup.ts",
+        "--timeout",
+        "20000",
+        file,
+      ],
       {
         stdio: ["inherit", "inherit", "inherit"],
       },

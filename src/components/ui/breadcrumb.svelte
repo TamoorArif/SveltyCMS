@@ -1,22 +1,11 @@
 <!-- 
-@file src/components/ui/breadcrumb.svelte
-@component
-A premium Svelte 5 Breadcrumb primitive with customizable separators and icons.
-
-### Props
-- `items` (Array<{label: string, icon?: string, href?: string}>): Breadcrumb items.
-- `separator` (string): Icon name for the separator. Default: 'mdi:chevron-right'.
-- `class` (string): Additional classes for the nav.
-
-### Features:
-- Accessible <nav> and <ol> structure.
-- ARIA current page indicator.
-- Support for icons and links.
-- Premium Skeleton v4 styling.
+ @src/routes/api/cms.ts src/components/ui/breadcrumb.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Breadcrumb Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
+import { cn } from '@utils/cn';
 
 interface Crumb {
 	label: string;
@@ -30,10 +19,10 @@ interface Props {
 	class?: string;
 }
 
-let {
-	items = [],
-	separator = "mdi:chevron-right",
-	class: className,
+let { 
+	items = [], 
+	separator = 'mdi:chevron-right',
+	class: className 
 }: Props = $props();
 </script>
 

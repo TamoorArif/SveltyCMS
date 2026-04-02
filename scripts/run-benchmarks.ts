@@ -6,7 +6,7 @@
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readdirSync, statSync, openSync } from "node:fs";
+import { existsSync, readdirSync, statSync, openSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -15,11 +15,37 @@ const __dirname = dirname(__filename);
 const rootDir = join(__dirname, "..");
 
 // ✨ Configuration Constants
-const HOST = process.env.HOST || (process.env.CI ? "127.0.0.1" : "localhost");
+const HOST = process.env.HOST || "localhost";
 const PORT = "4173";
 const API_BASE_URL = `http://${HOST}:${PORT}`;
 const pkgManager = process.env.npm_execpath || "bun";
 const TEST_API_SECRET = "test-secret-123456789";
+
+// Ensure config directory exists
+const configDir = join(rootDir, "config");
+if (!existsSync(configDir)) {
+  const { mkdirSync } = await import("node:fs");
+  mkdirSync(configDir);
+}
+
+// Pre-create private.test.ts for SQLite to ensure TEST_MODE boot
+const privateTestPath = join(configDir, "private.test.ts");
+if (!existsSync(privateTestPath)) {
+  console.log("📝 Pre-creating config/private.test.ts for benchmark...");
+  const configContent = `
+export const privateEnv = {
+  DB_TYPE: "sqlite",
+  DB_NAME: "sveltycms_test.db",
+  DB_HOST: ".",
+  DB_PORT: "",
+  DB_USER: "",
+  DB_PASSWORD: "",
+  TEST_API_SECRET: "${TEST_API_SECRET}",
+  MULTI_TENANT: false
+};
+`;
+  writeFileSync(privateTestPath, configContent);
+}
 
 let previewProcess: ChildProcess | null = null;
 
@@ -170,14 +196,14 @@ async function startPreviewServer() {
 
     const logFile = join(rootDir, "benchmark-server.log");
     const out = openSync(logFile, "a");
-    previewProcess = spawn("bun", ["run", "dev", "--port", PORT], {
+    previewProcess = spawn("bun", ["run", "preview", "--port", PORT], {
       cwd: rootDir,
       stdio: ["ignore", out, out],
       detached: process.platform !== "win32",
       shell: process.platform === "win32",
       env: {
         ...process.env,
-        NODE_ENV: "development",
+        NODE_ENV: "production",
         TEST_MODE: "true",
         TEST_API_SECRET,
         PORT,
@@ -208,13 +234,18 @@ async function startPreviewServer() {
 }
 
 async function waitForServer() {
-  console.log(`⏳ Waiting for server health check at ${API_BASE_URL}...`);
+  console.log(`⏳ Waiting for server health check at ${API_BASE_URL}/api/system/health...`);
+  const urls = [`${API_BASE_URL}/api/system/health`, `http://localhost:${PORT}/api/system/health`];
+
   for (let i = 0; i < 30; i++) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/system/health`);
-      if (res.ok || res.status === 503) return;
-    } catch {
-      // Ignore errors while waiting
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        console.log(`[HealthCheck] Attempt ${i + 1} (${url}): Status ${res.status}`);
+        if (res.ok || res.status === 503) return;
+      } catch {
+        // console.log(`[HealthCheck] Attempt ${i + 1} (${url}): Connection failed`);
+      }
     }
     await new Promise((r) => setTimeout(r, 1000));
   }

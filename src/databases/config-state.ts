@@ -53,6 +53,12 @@ export async function loadPrivateConfig(forceReload = false) {
 
         try {
           module = await import(/* @vite-ignore */ configURL);
+          if (!module.privateEnv && (module as any).DB_TYPE) {
+            module = {
+              privateEnv: { ...module } as any,
+              __VIRTUAL__: true,
+            };
+          }
         } catch (err) {
           // Fallback for Node.js (e.g. vite preview) which cannot import .ts files natively
           logger.debug(

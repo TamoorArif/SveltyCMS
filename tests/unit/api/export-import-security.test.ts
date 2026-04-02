@@ -27,6 +27,7 @@ vi.mock("@src/databases/db", () => ({
       },
     },
   },
+  getDbInitPromise: vi.fn().mockResolvedValue(undefined),
   getDb: vi.fn().mockReturnValue({
     system: {
       preferences: {

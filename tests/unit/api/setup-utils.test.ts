@@ -6,6 +6,7 @@
  * used during the initial setup process.
  */
 
+import { describe, expect, it } from "vitest";
 import type { DatabaseConfig } from "@src/databases/schemas";
 import { classifyDatabaseError } from "@src/routes/setup/error-classifier";
 import { buildDatabaseConnectionString } from "@src/routes/setup/utils";
@@ -121,8 +122,8 @@ describe("Error Classifier - MongoDB Errors", () => {
 
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
-    expect(result.classification).toBe("HOST_UNREACHABLE");
-    expect(result.userFriendly).toContain("host");
+    expect(result.classification).toBe("CONNECTION_REFUSED");
+    expect(result.userFriendly).toContain("refused");
   });
 
   it("should classify timeout errors", () => {
@@ -184,7 +185,7 @@ describe("Error Classifier - MongoDB Errors", () => {
     const result = classifyDatabaseError(error, { name: "mongodb" });
 
     expect(result.classification).toBe("AUTH_FAILED");
-    expect(result.userFriendly).toContain("permission");
+    expect(result.userFriendly).toContain("The provided user does not have permission");
   });
   it("should provide raw error message in all cases", () => {
     const error = new Error("Unknown database error");

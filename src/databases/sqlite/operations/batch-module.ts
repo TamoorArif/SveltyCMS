@@ -134,10 +134,12 @@ export class BatchModule {
       for (const update of updates) {
         const result = await this.db
           .update(table as any)
-          .set({
-            ...update.data,
-            updatedAt: isoDateStringToDate(nowISODateString()),
-          } as unknown as Record<string, unknown>)
+          .set(
+            utils.convertISOToDates({
+              ...update.data,
+              updatedAt: isoDateStringToDate(nowISODateString()),
+            }) as unknown as Record<string, unknown>,
+          )
           .where(eq((table as any)._id, update.id as string));
         modifiedCount += (result as unknown as { changes: number }).changes;
       }

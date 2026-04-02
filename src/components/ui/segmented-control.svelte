@@ -1,19 +1,12 @@
 <!-- 
-@file src/components/ui/segmented-control.svelte
-@component
-**Native Svelte 5 Segmented Control Primitive**
-
-### Props
-- `options` (Array<{ label: string, value: any, icon?: string, disabled?: boolean }>): Options to display.
-- `value` (any): Bindable current value.
-- `name` (string): Input name for form submission.
-- `disabled` (boolean): Whether the whole control is disabled.
-- `rounded` (string): Rounding class. Default: 'rounded-token'.
+ @src/routes/api/cms.ts src/components/ui/segmented-control.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 SegmentedControl Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { HTMLAttributes } from "svelte/elements";
+import { cn } from '@utils/cn';
+import type { HTMLAttributes } from 'svelte/elements';
 
 type Option = {
 	label: string;
@@ -22,7 +15,7 @@ type Option = {
 	disabled?: boolean;
 };
 
-type Props = Omit<HTMLAttributes<HTMLDivElement>, "value" | "onchange"> & {
+type Props = Omit<HTMLAttributes<HTMLDivElement>, 'value' | 'onchange'> & {
 	options: Option[];
 	value: any;
 	name?: string;
@@ -32,25 +25,23 @@ type Props = Omit<HTMLAttributes<HTMLDivElement>, "value" | "onchange"> & {
 	onchange?: (value: any) => void;
 };
 
-let {
-	options = [],
-	value = $bindable(),
-	name = crypto.randomUUID(),
-	disabled = false,
-	rounded = "rounded-token",
+let { 
+	options = [], 
+	value = $bindable(), 
+	name = crypto.randomUUID(), 
+	disabled = false, 
+	rounded = 'rounded-token',
 	class: className,
 	onchange,
-	...rest
+	...rest 
 }: Props = $props();
 
-const segmentClasses = $derived(
-	cn(
-		"flex bg-surface-200/50 dark:bg-surface-800/50 p-1",
-		rounded,
-		disabled && "opacity-50 pointer-events-none",
-		className,
-	),
-);
+const segmentClasses = $derived(cn(
+	'flex bg-surface-200/50 dark:bg-surface-800/50 p-1',
+	rounded,
+	disabled && 'opacity-50 pointer-events-none',
+	className
+));
 
 function select(val: any) {
 	if (disabled) return;

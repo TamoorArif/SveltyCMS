@@ -1,64 +1,47 @@
 <!-- 
-@file src/components/ui/alert.svelte
-@component
-**Native Svelte 5 Alert primitive with customizable colors and presets**
-
-### Props
-- `color` (string): The theme color (primary, secondary, tertiary, surface, success, warning, error)
-- `preset` (string): The preset style (filled, tonal, outlined)
-- `icon` (string): Optional iconify icon to display
-- `children` (Snippet): The main alert content
+ @src/routes/api/cms.ts src/components/ui/alert.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Alert Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
+import { cn } from '@utils/cn';
 
 interface Props {
-	variant?: "info" | "success" | "warning" | "error" | "surface";
-	color?:
-		| "primary"
-		| "secondary"
-		| "tertiary"
-		| "surface"
-		| "success"
-		| "warning"
-		| "error";
-	preset?: "filled" | "tonal" | "outlined";
-	icon?: string;
-	title?: string;
-	class?: string;
-	children?: import("svelte").Snippet;
+    variant?: 'info' | 'success' | 'warning' | 'error' | 'surface';
+    color?: 'primary' | 'secondary' | 'tertiary' | 'surface' | 'success' | 'warning' | 'error';
+    preset?: 'filled' | 'tonal' | 'outlined';
+    icon?: string;
+    title?: string;
+    class?: string;
+    children?: import('svelte').Snippet;
 }
 
-const {
-	variant,
-	color: propColor,
-	preset = "tonal",
-	icon: propIcon,
-	title,
-	class: className,
-	children,
+const { 
+    variant,
+    color: propColor, 
+    preset = 'tonal', 
+    icon: propIcon, 
+    title,
+    class: className, 
+    children 
 }: Props = $props();
 
 const variantMap = {
-	info: { color: "primary", icon: "mingcute:information-line" },
-	success: { color: "success", icon: "mingcute:check-circle-line" },
-	warning: { color: "warning", icon: "mingcute:warning-line" },
-	error: { color: "error", icon: "mingcute:error-line" },
-	surface: { color: "surface", icon: undefined },
+    info: { color: 'primary', icon: 'mingcute:information-line' },
+    success: { color: 'success', icon: 'mingcute:check-circle-line' },
+    warning: { color: 'warning', icon: 'mingcute:warning-line' },
+    error: { color: 'error', icon: 'mingcute:error-line' },
+    surface: { color: 'surface', icon: undefined }
 } as const;
 
-const finalColor = $derived(
-	propColor || (variant ? variantMap[variant].color : "surface"),
-);
-const finalIcon = $derived(
-	propIcon || (variant ? variantMap[variant].icon : undefined),
-);
+const finalColor = $derived(propColor || (variant ? variantMap[variant].color : 'surface'));
+const finalIcon = $derived(propIcon || (variant ? variantMap[variant].icon : undefined));
 
 const presetClass = $derived.by(() => {
-	if (preset === "filled") return `preset-filled-${finalColor}-500`;
-	if (preset === "outlined") return `preset-outlined-${finalColor}-500`;
-	return `preset-tonal-${finalColor}`;
+    if (preset === 'filled') return `preset-filled-${finalColor}-500`;
+    if (preset === 'outlined') return `preset-outlined-${finalColor}-500`;
+    return `preset-tonal-${finalColor}`;
 });
 </script>
 

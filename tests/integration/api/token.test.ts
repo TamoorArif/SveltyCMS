@@ -155,20 +155,19 @@ describe("Token API Endpoints", () => {
         }),
       });
 
-      const response = await safeFetch(`${API_BASE_URL}/api/token`, {
+      const response = await safeFetch(`${API_BASE_URL}/api/token?raw=true`, {
         headers: { Cookie: authCookie },
       });
 
       const result = await response.json();
       expect(response.status).toBe(200);
-      expect(result.success).toBe(true);
-      // API returns data as array directly, with pagination info
-      expect(Array.isArray(result.data)).toBe(true);
-      expect(result.data.length).toBeGreaterThan(0);
+      // When raw=true, result is the array itself
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
     });
 
     it("should reject listing tokens without authentication", async () => {
-      const response = await safeFetch(`${API_BASE_URL}/api/token`);
+      const response = await safeFetch(`${API_BASE_URL}/api/token?raw=true`);
       // Returns 401 or 403 depending on auth state
       expect(response.status).toBeGreaterThanOrEqual(401);
       expect(response.status).toBeLessThanOrEqual(403);
@@ -473,14 +472,14 @@ describe("Token API Endpoints", () => {
         }),
       });
 
-      const response = await safeFetch(`${API_BASE_URL}/api/token?search=${searchTerm}`, {
+      const response = await safeFetch(`${API_BASE_URL}/api/token?raw=true&search=${searchTerm}`, {
         headers: { Cookie: authCookie },
       });
 
       const result = await response.json();
       expect(response.status).toBe(200);
-      expect(result.success).toBe(true);
       // The search should find the token with the matching email
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 

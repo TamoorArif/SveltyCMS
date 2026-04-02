@@ -120,7 +120,7 @@ describe("User API Integration", () => {
       expect(response.status).toBe(200);
 
       // Verify
-      const verify = await fetch(`${API_BASE_URL}/api/user`, {
+      const verify = await fetch(`${API_BASE_URL}/api/user?raw=true`, {
         headers: { Cookie: adminCookie },
       });
       const result = await verify.json();
@@ -171,7 +171,7 @@ describe("User API Integration", () => {
   // --- TEST SUITE 5: LIST USERS ---
   describe("GET /api/user", () => {
     it("should list users", async () => {
-      const response = await fetch(`${API_BASE_URL}/api/user`, {
+      const response = await fetch(`${API_BASE_URL}/api/user?raw=true`, {
         headers: { Cookie: adminCookie },
       });
 

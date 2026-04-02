@@ -1,79 +1,66 @@
 <!-- 
-@file src/components/ui/toggle.svelte
-@component
-**Generic toggle switch component (Switch) with Svelte 5 runes**
-
-### Props
-- `value` (boolean): The toggle state (bindable).
-- `label` (string): Optional label for the toggle.
-- `description` (string): Optional description below the label.
-- `disabled` (boolean): Whether the toggle is disabled.
-- `size` ('sm' | 'md' | 'lg'): Size of the toggle.
-- `class` (string): Additional classes for the container.
-
-### Features:
-- Svelte 5 runes for fine-grained reactivity
-- Accessible with ARIA attributes and keyboard support
-- Clean Tailwind 4 styling with smooth transitions
+ @src/routes/api/cms.ts src/components/ui/toggle.svelte
+ @src/components/system/admin-component-registry.ts
+ Superior Svelte 5 Toggle Primitive
 -->
 
 <script lang="ts">
-import { cn } from "@utils/cn";
-import type { HTMLAttributes } from "svelte/elements";
+	import { cn } from '@utils/cn';
+	import type { HTMLAttributes } from 'svelte/elements';
 
-type Props = {
-	value?: boolean;
-	label?: string;
-	labelColor?: string;
-	description?: string;
-	disabled?: boolean;
-	iconOn?: string;
-	iconOff?: string;
-	size?: "sm" | "md" | "lg";
-	class?: string;
-	onToggle?: (value: boolean) => void | Promise<any>;
-} & HTMLAttributes<HTMLDivElement>;
+	type Props = {
+		value?: boolean;
+		label?: string;
+		labelColor?: string;
+		description?: string;
+		disabled?: boolean;
+		iconOn?: string;
+		iconOff?: string;
+		size?: 'sm' | 'md' | 'lg';
+		class?: string;
+		onToggle?: (value: boolean) => void | Promise<any>;
+	} & HTMLAttributes<HTMLDivElement>;
 
-let {
-	value = $bindable(false),
-	label,
-	labelColor = "text-primary-500",
-	description,
-	disabled = false,
-	iconOn,
-	iconOff,
-	size = "md",
-	class: className,
-	onToggle,
-	...rest
-}: Props = $props();
+	let {
+		value = $bindable(false),
+		label,
+		labelColor = 'text-primary-500',
+		description,
+		disabled = false,
+		iconOn,
+		iconOff,
+		size = 'md',
+		class: className,
+		onToggle,
+		...rest
+	}: Props = $props();
 
-// Sizes
-const sizes = {
-	sm: {
-		track: "h-6 w-10 min-w-[40px]",
-		thumb: "h-4 w-4 translate-x-1 peer-checked:translate-x-5",
-		icon: "16",
-	},
-	md: {
-		track: "h-8 w-14 min-w-[48px]",
-		thumb: "h-6 w-6 translate-x-1 peer-checked:translate-x-7",
-		icon: "24",
-	},
-	lg: {
-		track: "h-10 w-20 min-w-[56px]",
-		thumb: "h-8 w-8 translate-x-1 peer-checked:translate-x-11",
-		icon: "32",
-	},
-};
+	// Sizes
+	const sizes = {
+		sm: {
+			track: 'h-6 w-10 min-w-[40px]',
+			thumb: 'h-4 w-4 translate-x-1 peer-checked:translate-x-5',
+			icon: '16'
+		},
+		md: {
+			track: 'h-8 w-14 min-w-[48px]',
+			thumb: 'h-6 w-6 translate-x-1 peer-checked:translate-x-7',
+			icon: '24'
+		},
+		lg: {
+			track: 'h-10 w-20 min-w-[56px]',
+			thumb: 'h-8 w-8 translate-x-1 peer-checked:translate-x-11',
+			icon: '32'
+		}
+	};
 
-function toggle() {
-	if (disabled) return;
-	value = !value;
-	if (onToggle) onToggle(value);
-}
+	function toggle() {
+		if (disabled) return;
+		value = !value;
+		if (onToggle) onToggle(value);
+	}
 
-const id = `toggle-${Math.random().toString(36).substring(7)}`;
+	const id = `toggle-${Math.random().toString(36).substring(7)}`;
 </script>
 
 <div class={cn('flex items-start gap-3', className)} {...rest}>
