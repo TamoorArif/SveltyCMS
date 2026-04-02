@@ -103,7 +103,7 @@ export async function prepareAuthenticatedContext(): Promise<string> {
   }
 
   // Small delay to ensure DB state is stable
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   // 3. Login as admin
   console.log("🔑 Logging in as admin...");

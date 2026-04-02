@@ -15,6 +15,7 @@ import type {
   ISystemAdapter,
   IMonitoringAdapter,
   DatabaseId,
+  DatabaseError,
   BaseEntity,
   QueryBuilder,
   DatabaseTransaction,
@@ -22,6 +23,9 @@ import type {
   Schema,
   PerformanceMetrics,
   QueryFilter,
+  BatchOperation,
+  BatchResult,
+  EntityCreate,
 } from "../db-interface";
 import { MongoCrudMethods } from "./methods/crud-methods";
 import { composeMongoAuthAdapter } from "./methods/auth-composition";
@@ -40,12 +44,162 @@ export class MongoDBAdapter implements IDBAdapter {
   media: IMediaAdapter = {} as IMediaAdapter;
   system: ISystemAdapter = {} as ISystemAdapter;
   monitoring: IMonitoringAdapter = {} as IMonitoringAdapter;
-  batch: IDBAdapter["batch"] = {} as IDBAdapter["batch"];
+  batch: IDBAdapter["batch"] = {
+    execute: async <T extends BaseEntity>(
+      operations: BatchOperation<T>[],
+    ): Promise<DatabaseResult<BatchResult<T>>> => {
+      const results: DatabaseResult<T>[] = [];
+      let totalProcessed = 0;
+      const errors: DatabaseError[] = [];
+
+      for (const op of operations) {
+        try {
+          let res: DatabaseResult<T | undefined>;
+          switch (op.operation) {
+            case "insert":
+              res = await this.crud.insert(
+                op.collection,
+                op.data as Omit<T & BaseEntity, "_id" | "createdAt" | "updatedAt">,
+              );
+              break;
+            case "update":
+              if (!op.id) throw new Error("ID required for update operation");
+              res = await this.crud.update(
+                op.collection,
+                op.id,
+                op.data as Partial<Omit<T & BaseEntity, "_id" | "createdAt" | "updatedAt">>,
+              );
+              break;
+            case "delete":
+              if (!op.id) throw new Error("ID required for delete operation");
+              res = (await this.crud.delete(op.collection, op.id)) as unknown as DatabaseResult<T>;
+              break;
+            case "upsert":
+              if (!(op.query && op.data)) throw new Error("Query and data required for upsert operation");
+              res = await this.crud.upsert(
+                op.collection,
+                op.query as QueryFilter<T>,
+                op.data as Omit<T & BaseEntity, "_id" | "createdAt" | "updatedAt">,
+              );
+              break;
+            default:
+              throw new Error(`Unsupported batch operation: ${op.operation}`);
+          }
+          results.push(res as DatabaseResult<T>);
+          if (res.success) {
+            totalProcessed++;
+          } else {
+            errors.push(res.error!);
+          }
+        } catch (error) {
+          const dbError: DatabaseError = {
+            code: "BATCH_OP_FAILED",
+            message: error instanceof Error ? error.message : String(error),
+          };
+          results.push({ success: false, message: dbError.message, error: dbError });
+          errors.push(dbError);
+        }
+      }
+
+      return {
+        success: errors.length === 0,
+        data: { results, totalProcessed, errors, success: errors.length === 0 },
+      };
+    },
+
+    bulkInsert: async <T extends BaseEntity>(
+      collection: string,
+      items: EntityCreate<T>[],
+    ): Promise<DatabaseResult<T[]>> => {
+      try {
+        const model = this._getOrCreateModel(collection);
+        const docs = await model.insertMany(items as any[]);
+        const inserted = Array.isArray(docs)
+          ? docs.map((d) => d.toObject?.() ?? d)
+          : [];
+        return { success: true, data: inserted as T[] };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          error: { code: "BULK_INSERT_FAILED", message: error instanceof Error ? error.message : String(error) },
+        };
+      }
+    },
+
+    bulkUpdate: async <T extends BaseEntity>(
+      collection: string,
+      updates: Array<{ id: DatabaseId; data: Partial<T> }>,
+    ): Promise<DatabaseResult<{ modifiedCount: number }>> => {
+      try {
+        const model = this._getOrCreateModel(collection);
+        let modifiedCount = 0;
+        for (const { id, data } of updates) {
+          const result = await model.updateOne(
+            { _id: id },
+            { $set: { ...data, updatedAt: new Date() } } as any,
+          );
+          modifiedCount += result.modifiedCount;
+        }
+        return { success: true, data: { modifiedCount } };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          error: { code: "BULK_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) },
+        };
+      }
+    },
+
+    bulkDelete: async (
+      collection: string,
+      ids: DatabaseId[],
+    ): Promise<DatabaseResult<{ deletedCount: number }>> => {
+      try {
+        const model = this._getOrCreateModel(collection);
+        const result = await model.deleteMany({ _id: { $in: ids } });
+        return { success: true, data: { deletedCount: result.deletedCount } };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          error: { code: "BULK_DELETE_FAILED", message: error instanceof Error ? error.message : String(error) },
+        };
+      }
+    },
+
+    bulkUpsert: async <T extends BaseEntity>(
+      collection: string,
+      items: Array<Partial<T> & { id?: DatabaseId }>,
+    ): Promise<DatabaseResult<T[]>> => {
+      try {
+        const model = this._getOrCreateModel(collection);
+        const bulkOps = items.map((item) => ({
+          updateOne: {
+            filter: item.id ? { _id: item.id } : (item as any),
+            update: { $set: item, $setOnInsert: { createdAt: new Date() } },
+            upsert: true,
+          },
+        }));
+        await model.bulkWrite(bulkOps);
+        return { success: true, data: items as T[] };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          error: { code: "BULK_UPSERT_FAILED", message: error instanceof Error ? error.message : String(error) },
+        };
+      }
+    },
+  };
   collection: IDBAdapter["collection"] = {} as IDBAdapter["collection"];
+
+  _featureInit: Record<string, boolean> = {};
 
   constructor() {
     this.auth = composeMongoAuthAdapter();
     this.crud = this._createCrudMethods();
+    this._featureInit.crud = true;
 
     // Initialize basic content interface (extended in ensureContent)
     this.content = {
@@ -338,6 +492,11 @@ export class MongoDBAdapter implements IDBAdapter {
 
     this.system.preferences = new MongoSystemMethods(SystemPreferencesModel, SystemSettingModel);
     this.system.themes = new MongoThemeMethods(ThemeModel) as any;
+
+    // Initialize website tokens
+    const { MongoWebsiteTokenMethods } = await import("./methods/website-token-methods");
+    const { WebsiteTokenModel } = await import("./models/website-token");
+    this.system.websiteTokens = new MongoWebsiteTokenMethods(WebsiteTokenModel);
     this.system.virtualFolder = new MongoSystemVirtualFolderMethods();
     this.system.widgets = new MongoWidgetMethods(WidgetModel) as any;
 
@@ -515,8 +674,28 @@ export class MongoDBAdapter implements IDBAdapter {
       drafts: {
         ...this.content.drafts,
         create: contentMethods.createDraft.bind(contentMethods),
+        createMany: (drafts: any[]) =>
+          Promise.all(drafts.map((d) => contentMethods.createDraft(d))).then((results) => ({
+            success: true as const,
+            data: results.map((r) => r.data).filter(Boolean) as ContentDraft[],
+          })),
+        update: (draftId: DatabaseId, data: any) =>
+          draftsRepo.update(draftId as string, data),
+        publish: (draftId: DatabaseId) =>
+          contentMethods.publishManyDrafts([draftId]).then(() => ({
+            success: true as const,
+            data: undefined,
+          })),
         getForContent: contentMethods.getDraftsForContent.bind(contentMethods),
-        publishMany: contentMethods.publishManyDrafts.bind(contentMethods),
+        publishMany: (draftIds: DatabaseId[]) =>
+          contentMethods.publishManyDrafts(draftIds).then((r) => ({
+            success: true as const,
+            data: { publishedCount: r.data?.modifiedCount ?? 0 },
+          })),
+        delete: (draftId: DatabaseId) =>
+          draftsRepo.delete(draftId as string),
+        deleteMany: (draftIds: DatabaseId[]) =>
+          draftsRepo.deleteMany({ _id: { $in: draftIds } } as any),
       },
       revisions: {
         ...this.content.revisions,

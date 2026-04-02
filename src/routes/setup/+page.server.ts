@@ -28,6 +28,7 @@ import { databaseConfigSchema } from "@src/databases/schemas";
 import { setupAdminSchema, smtpConfigSchema } from "@utils/form-schemas";
 import { logger } from "@utils/logger.server";
 import nodemailer from "nodemailer";
+import { invalidateUserCountCache } from "@src/hooks/handle-authorization";
 import { safeParse } from "valibot";
 import { version as pkgVersion } from "../../../package.json";
 import type { Actions, PageServerLoad } from "./$types";
@@ -380,6 +381,9 @@ export const actions: Actions = {
           return { success: false, error: "Failed to create user" };
         }
         session = authResult.data.session;
+
+        // Invalidate user count cache so login page shows sign-in (not sign-up)
+        await invalidateUserCountCache();
       }
 
       if (!session) {

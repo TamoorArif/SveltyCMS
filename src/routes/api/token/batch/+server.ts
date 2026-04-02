@@ -64,72 +64,28 @@ export const POST = apiHandler(async ({ request, locals }) => {
           "TENANT_REQUIRED",
         );
       }
-      // Use auth.getAllTokens if available to verify ownership
-      try {
-        const filter = { tenantId } as { tenantId?: string | null };
-        const tokensResult = await auth.getAllTokens(filter);
-        if (!(tokensResult.success && tokensResult.data)) {
-          throw new Error("Failed to retrieve tokens");
-        }
-        const tokenSet = new Set(
-          tokensResult.data.map((t) => (t as any)._id || (t as any).token || (t as any).value),
-        );
-        const allOwned = tokenIds.every((id) => tokenSet.has(id));
-        if (!allOwned) {
-          logger.warn("Attempt to act on tokens outside of tenant", {
-            userId: user?._id,
-            tenantId,
-            requestedTokenIds: tokenIds,
-          });
-          throw new AppError(
-            "Forbidden: One or more tokens do not belong to your tenant or do not exist.",
-            403,
-            "FORBIDDEN",
-          );
-        }
-      } catch (verifyErr) {
-        if (verifyErr instanceof AppError) {
-          throw verifyErr;
-        }
-        logger.error("Failed to verify tenant token ownership", {
-          error: verifyErr,
-        });
-        throw new AppError("Failed to verify token ownership", 500, "VERIFY_OWNERSHIP_FAILED");
-      }
+      // Batch methods filter by tenantId at DB level, so ownership is enforced there.
+      // No need to pre-fetch all tokens for verification.
     }
 
     let successMessage = "";
-
-    let targetTokenIds = tokenIds;
-    // Map token values to their real _ids if possible, by retrieving them all
-    try {
-      const tokensResult = await auth.getAllTokens({ tenantId });
-      if (tokensResult.success && tokensResult.data) {
-        targetTokenIds = tokenIds.map((val) => {
-          const matched = tokensResult.data!.find(
-            (t) => t._id === val || (t as any).token === val || (t as any).value === val,
-          );
-          return matched ? (matched as any)._id || val : val;
-        });
-      }
-    } catch {
-      /* ignore */
-    }
+    // All DB adapters (SQLite, PostgreSQL, MariaDB) now handle both _id and token
+    // value matching in their batch methods, so no pre-resolution is needed.
 
     // Directly invoke database-agnostic methods (now bound in auth adapter)
     switch (action) {
       case "delete": {
-        await auth.deleteTokens(targetTokenIds, tenantId || undefined);
+        await auth.deleteTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens deleted successfully.";
         break;
       }
       case "block": {
-        await auth.blockTokens(targetTokenIds, tenantId || undefined);
+        await auth.blockTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens blocked successfully.";
         break;
       }
       case "unblock": {
-        await auth.unblockTokens(targetTokenIds, tenantId || undefined);
+        await auth.unblockTokens(tokenIds, tenantId || undefined);
         successMessage = "Tokens unblocked successfully.";
         break;
       }
